@@ -1,25 +1,16 @@
 package auth
 
 import (
-	"bytes"
-	"context"
 	"crypto/rsa"
-	"crypto/tls"
 	"crypto/x509"
-	"encoding/base64"
-	"encoding/json"
-	"encoding/pem"
 	"fmt"
-	"io/ioutil"
-	"math/big"
 	"net/http"
-	"time"
 
 	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/sentry-go"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
 )
 
 type JWTMiddleware interface {
@@ -49,7 +40,7 @@ func NewAuthMiddleware(certURL string, certCA string) (*AuthMiddleware, error) {
 	middleware.jwtmw = jwtmiddleware.New(jwtmiddleware.Options{
 		ValidationKeyGetter: middleware.getValidationToken,
 		SigningMethod:       jwt.SigningMethodRS256,
-		UserProperty:        util.ContextAuthKey,
+		UserProperty:        ContextAuthKey,
 		// TODO once we have better debugging tools, we should optionally enable this
 		Debug: false,
 	})
@@ -69,7 +60,7 @@ func (a *AuthMiddleware) AuthenticateAccountJWT(next http.Handler) http.Handler 
 		}
 		// Update the context, as the jwt middleware will update it
 		ctx = r.Context()
-		payload, err := util.GetAuthPayload(r)
+		payload, err := GetAuthPayload(r)
 		if err != nil {
 			handleError(ctx, w, errors.ErrorUnauthorized, fmt.Sprintf("Unable to get payload details from JWT token: %s", err))
 			return
@@ -82,7 +73,7 @@ func (a *AuthMiddleware) AuthenticateAccountJWT(next http.Handler) http.Handler 
 		// Add username to sentry context
 		if hub := sentry.GetHubFromContext(ctx); hub != nil {
 			hub.ConfigureScope(func(scope *sentry.Scope) {
-				scope.SetUser(sentry.User{ID: username})
+				scope.SetUser(sentry.User{ID: payload.Username})
 			})
 		}
 
@@ -104,4 +95,20 @@ func (a *AuthMiddleware) populateKeyMap() error {
 	// Try to read the JWT public key object file.
 	a.keyMap, err = downloadPublicKeys(a.CertURL, trustedCAs)
 	return err
+}
+
+func (a *AuthMiddleware) getValidationToken(token *jwt.Token) (interface{}, error) {
+	// Try to get the token kid.
+	kid, ok := token.Header["kid"]
+	if !ok {
+		return nil, fmt.Errorf("no kid found in jwt token")
+	}
+
+	// Try to get currect cert from certs map.
+	key, ok := a.keyMap[kid.(string)]
+	if !ok {
+		return nil, fmt.Errorf("No matching key in auth keymap for key id [%v]", kid)
+	}
+
+	return key, nil
 }

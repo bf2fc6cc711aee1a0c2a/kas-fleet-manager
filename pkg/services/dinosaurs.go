@@ -3,14 +3,14 @@ package services
 import (
 	"context"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/db"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
 )
 
 type DinosaurService interface {
 	Get(ctx context.Context, id string) (*api.Dinosaur, *errors.ServiceError)
-	List(ctx context.Context) (api.DinosaurList, *errors.ServiceError)
+	List(ctx context.Context, listArgs *ListArguments) (api.DinosaurList, *api.PagingMeta, *errors.ServiceError)
 	Create(ctx context.Context, dinosaur *api.Dinosaur) (*api.Dinosaur, *errors.ServiceError)
 	Replace(ctx context.Context, dinosaur *api.Dinosaur) (*api.Dinosaur, *errors.ServiceError)
 	Delete(ctx context.Context, id string) *errors.ServiceError
@@ -42,9 +42,9 @@ func (s *sqlDinosaurService) Get(ctx context.Context, id string) (*api.Dinosaur,
 	return &dinosaur, nil
 }
 
-func (s *sqlDinosaurService) List(ctx context.Context) (api.DinosaurList, *errors.ServiceError) {
+func (s *sqlDinosaurService) List(ctx context.Context, listArgs *ListArguments) (api.DinosaurList, *api.PagingMeta, *errors.ServiceError) {
 	// TODO
-	return errors.NotImplemented("")
+	return api.DinosaurList{}, &api.PagingMeta{}, errors.NotImplemented("")
 }
 
 func (s *sqlDinosaurService) Create(ctx context.Context, dinosaur *api.Dinosaur) (*api.Dinosaur, *errors.ServiceError) {
@@ -91,12 +91,11 @@ func (s *sqlDinosaurService) FindByIDs(ctx context.Context, ids []string) (api.D
 func (s *sqlDinosaurService) FindBySpecies(ctx context.Context, species string) (api.DinosaurList, *errors.ServiceError) {
 	gorm := s.ConnectionFactory.New()
 
-	var dinosaur api.Dinosaur
 	results := api.DinosaurList{}
 	if err := gorm.Where("species = ?", species).Find(&results).Error; err != nil {
 		return nil, handleGetError("Dinosaur", "species", species, err)
 	}
-	return &dinosaur, nil
+	return results, nil
 }
 
 func (s *sqlDinosaurService) All(ctx context.Context) (api.DinosaurList, *errors.ServiceError) {

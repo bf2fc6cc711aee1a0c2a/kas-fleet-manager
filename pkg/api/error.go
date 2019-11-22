@@ -8,7 +8,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
 )
 
 // SendNotFound sends a 404 response with some details about the non existing resource.
@@ -25,8 +25,8 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 	body := Error{
 		Type:   ErrorType,
 		ID:     id,
-		HREF:   "/api/accounts_mgmt/v1/errors/" + id,
-		Code:   "ACCOUNTS-MGMT-" + id,
+		HREF:   "/api/ocm-example-service/v1/errors/" + id,
+		Code:   "OCM-EX-" + id,
 		Reason: reason,
 	}
 	data, err := json.Marshal(body)
@@ -96,8 +96,8 @@ func init() {
 	panicError := Error{
 		Type: ErrorType,
 		ID:   panicID,
-		HREF: "/api/accounts_mgmt/v1/" + panicID,
-		Code: "CUSTOMERS-MGMT-" + panicID,
+		HREF: "/api/ocm-example-service/v1/" + panicID,
+		Code: "OCM-EX-" + panicID,
 		Reason: "An unexpected error happened, please check the log of the service " +
 			"for details",
 	}

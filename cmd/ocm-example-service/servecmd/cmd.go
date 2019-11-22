@@ -1,11 +1,11 @@
-package serve
+package servecmd
 
 import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/cmd/ocm-example-service/environments"
-	"gitlab.cee.redhat.com/service/ocm-example-service/cmd/ocm-example-service/server"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/environments"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/server"
 )
 
 func NewServeCommand() *cobra.Command {

@@ -2,7 +2,6 @@ package environments
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/services/ebs"
 	"os"
 	"sync"
 
@@ -10,10 +9,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/client/ocm_authz"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/config"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/db"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/services"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/client/ocm"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/config"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/services"
 )
 
 const (
@@ -38,7 +37,7 @@ type Services struct {
 }
 
 type Clients struct {
-	OCMAuthz *ocmauthz.Client
+	OCM *ocm.Client
 }
 
 type ConfigDefaults struct {
@@ -121,7 +120,7 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
-	dinosaurs := services.NewDinosaurService()
+	dinosaurs := services.NewDinosaurService(env.DBFactory)
 
 	env.Services.Dinosaurs = dinosaurs
 }
@@ -129,12 +128,21 @@ func (env *Env) LoadServices() {
 func (env *Env) LoadClients() error {
 	var err error
 
+	ocmConfig := ocm.Config{
+		BaseURL:      env.Config.OCM.BaseURL,
+		ClientID:     env.Config.OCM.ClientID,
+		ClientSecret: env.Config.OCM.ClientSecret,
+		SelfToken:    env.Config.OCM.SelfToken,
+		TokenURL:     env.Config.OCM.TokenURL,
+		Debug:        env.Config.OCM.Debug,
+	}
+
 	// Create OCM Authz client
 	if env.Config.OCM.EnableMock {
 		glog.Infof("Using Mock OCM Authz Client")
-		env.Clients.OCMAuthz, err = ocmauthz.NewClientMock(env.Config.OCM)
+		env.Clients.OCM, err = ocm.NewClientMock(ocmConfig)
 	} else {
-		env.Clients.OCMAuthz, err = ocmauthz.NewClient(env.Config.OCM)
+		env.Clients.OCM, err = ocm.NewClient(ocmConfig)
 	}
 	if err != nil {
 		glog.Errorf("Unable to create OCM Authz client: %s", err.Error())
@@ -186,7 +194,7 @@ func (env *Env) Teardown() {
 		if err := env.DBFactory.Close(); err != nil {
 			glog.Fatalf("Unable to close db connection: %s", err.Error())
 		}
-		env.Clients.UHC.Close()
+		env.Clients.OCM.Close()
 	}
 }
 

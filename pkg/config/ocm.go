@@ -21,8 +21,8 @@ func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
 		BaseURL:          "https://api-integration.6943.hive-integration.openshiftapps.com",
 		TokenURL:         "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		ClientIDFile:     "secrets/ocm-example-service.clientId",
-		ClientSecretFile: "secrets/ocm-example-service.clientSecret",
+		ClientIDFile:     "secrets/ocm-service.clientId",
+		ClientSecretFile: "secrets/ocm-service.clientSecret",
 		SelfTokenFile:    "",
 		Debug:            false,
 		EnableMock:       false,

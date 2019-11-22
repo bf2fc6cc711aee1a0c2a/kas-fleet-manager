@@ -17,7 +17,7 @@ type ApplicationConfig struct {
 	Metrics     *MetricsConfig     `json:"metrics"`
 	HealthCheck *HealthCheckConfig `json:"health_check"`
 	Database    *DatabaseConfig    `json:"database"`
-	OCM         *OCM               `json:"ocm"`
+	OCM         *OCMConfig         `json:"ocm"`
 	Sentry      *SentryConfig      `json:"sentry"`
 }
 

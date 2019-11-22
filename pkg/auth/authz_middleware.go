@@ -11,10 +11,9 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
 
-	"github.com/openshift-online/ocm-sdk-go"
-
-	"gitlab.cee.redhat.com/service/uhc-example-service/pkg/api"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/client/ocm"
 )
 
 type AuthorizationMiddleware interface {
@@ -25,16 +24,16 @@ type authzMiddleware struct {
 	action       string
 	resourceType string
 
-	ocmClient *sdk.Connection
+	ocmClient *ocm.Client
 }
 
 var _ AuthorizationMiddleware = &authzMiddleware{}
 
-func NewAuthzMiddleware(ocmClient *sdk.Connection, action, resourceType string) AuthorizationMiddleware {
+func NewAuthzMiddleware(ocmClient *ocm.Client, action, resourceType string) AuthorizationMiddleware {
 	return &authzMiddleware{
 		ocmClient:    ocmClient,
 		action:       action,
-		resourcetype: resourceType,
+		resourceType: resourceType,
 	}
 }
 
@@ -43,11 +42,12 @@ func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		// Get username from context
-		username, err := PreferredUsernameFromContext(ctx)
-		if err != nil {
+		username := GetUsernameFromContext(ctx)
+		if username == "" {
 			fmt.Errorf("Authenticated username not present in request context")
-			body := api.E500.Format(r, "Authentication details not present in context")
-			api.SendError(w, r, &body)
+			// TODO
+			//body := api.E500.Format(r, "Authentication details not present in context")
+			//api.SendError(w, r, &body)
 			return
 		}
 
@@ -55,8 +55,9 @@ func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 			ctx, username, a.action, a.resourceType, "", "", "")
 		if err != nil {
 			fmt.Errorf("Unable to make authorization request: %s", err)
-			body := api.E500.Format(r, "Unable to make authorization request")
-			api.SendError(w, r, &body)
+			// TODO
+			//body := api.E500.Format(r, "Unable to make authorization request")
+			//api.SendError(w, r, &body)
 			return
 		}
 
@@ -64,7 +65,8 @@ func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		}
 
-		body := api.E403.Format(r, "")
-		api.SendError(w, r, &body)
+		// TODO
+		//body := api.E403.Format(r, "")
+		//api.SendError(w, r, &body)
 	})
 }
