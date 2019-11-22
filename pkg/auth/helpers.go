@@ -1,12 +1,24 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"crypto/rsa"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"fmt"
+	"io/ioutil"
+	"math/big"
 	"net/http"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/logger"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/golang/glog"
+
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
 )
 
 // jwtCert on jwt key

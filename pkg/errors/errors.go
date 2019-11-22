@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
 )
 
 const (
@@ -74,7 +74,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorNotFound, "Resource not found", http.StatusNotFound},
 		ServiceError{ErrorValidation, "General validation failure", http.StatusBadRequest},
 		ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError},
-		ServiceError{ErrorNotImplemented, "Action not implemented", http.StatusMethodNotAllowed},
+		ServiceError{ErrorNotImplemented, "HTTP Method not implemented for this endpoint", http.StatusMethodNotAllowed},
 		ServiceError{ErrorUnauthorized, "Account is unauthorized to perform this action", http.StatusForbidden},
 		ServiceError{ErrorUnauthenticated, "Account authentication could not be verified", http.StatusUnauthorized},
 		ServiceError{ErrorMalformedRequest, "Unable to read request body", http.StatusBadRequest},
@@ -111,7 +111,7 @@ func New(code ServiceErrorCode, reason string, values ...interface{}) *ServiceEr
 }
 
 func (e *ServiceError) Error() string {
-	return fmt.Sprintf("%s: %s", CodeStr(e.code), e.Reason)
+	return fmt.Sprintf("%s: %s", CodeStr(e.Code), e.Reason)
 }
 
 func (e *ServiceError) AsError() error {
@@ -128,10 +128,6 @@ func (e *ServiceError) IsConflict() bool {
 
 func (e *ServiceError) IsForbidden() bool {
 	return e.Code == Forbidden("").Code
-}
-
-func (e *ServiceError) IsBanned() bool {
-	return e.Code == Banned("").Code
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
