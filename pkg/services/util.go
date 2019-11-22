@@ -1,14 +1,12 @@
 package services
 
 import (
-	"context"
 	"reflect"
 	"strings"
 
 	"github.com/jinzhu/gorm"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
 )
 
 // Field names suspected to contain personally identifiable information
@@ -50,15 +48,6 @@ func handleUpdateError(resourceType string, err error) *errors.ServiceError {
 
 func handleDeleteError(resourceType string, err error) *errors.ServiceError {
 	return errors.GeneralError("Unable to delete %s: %s", resourceType, err.Error())
-}
-
-func containsResourceType(list []api.ResourceType, searchElement api.ResourceType) bool {
-	for _, listElement := range list {
-		if listElement == searchElement {
-			return true
-		}
-	}
-	return false
 }
 
 func fields(obj interface{}) map[string]interface{} {

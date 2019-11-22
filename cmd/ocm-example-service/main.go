@@ -6,7 +6,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/cmd/ocm-example-service/servecmd"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/migrate"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/servecmd"
 )
 
 //nolint
@@ -33,10 +34,11 @@ func main() {
 	}
 
 	// All subcommands under root
+	migrateCmd := migrate.NewMigrateCommand()
 	serveCmd := servecmd.NewServeCommand()
 
 	// Add subcommand(s)
-	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(migrateCmd, serveCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)

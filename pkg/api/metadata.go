@@ -40,7 +40,7 @@ func SendAPI(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	body := Metadata{
-		ID:       "account_mgmt",
+		ID:       "ocm_example",
 		Kind:     "API",
 		HREF:     r.URL.Path,
 		Versions: versions,
@@ -70,19 +70,9 @@ func SendAPIV1(w http.ResponseWriter, r *http.Request) {
 	id := "v1"
 	collections := []CollectionMetadata{
 		{
-			ID:   "accounts",
-			Kind: "AccountList",
-			HREF: r.URL.Path + "/accounts",
-		},
-		{
-			ID:   "organizations",
-			Kind: "OrganizationList",
-			HREF: r.URL.Path + "/organizations",
-		},
-		{
-			ID:   "registry_credentials",
-			Kind: "RegistryCredentialList",
-			HREF: r.URL.Path + "/registry_credentials",
+			ID:   "dinosaurs",
+			Kind: "DinosaurList",
+			HREF: r.URL.Path + "/dinosaurs",
 		},
 	}
 	body := VersionMetadata{

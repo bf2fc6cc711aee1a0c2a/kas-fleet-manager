@@ -4,19 +4,26 @@ import (
 	"fmt"
 
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
-
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/config"
 )
 
 type Client struct {
-	config     *config.OCMConfig
+	config     *Config
 	logger     sdkClient.Logger
 	connection *sdkClient.Connection
 
 	Authorization OCMAuthorization
 }
 
-func NewClient(config *config.OCMConfig) (*Client, error) {
+type Config struct {
+	BaseURL      string
+	ClientID     string
+	ClientSecret string
+	SelfToken    string
+	TokenURL     string
+	Debug        bool
+}
+
+func NewClient(config Config) (*Client, error) {
 	// Create a logger that has the debug level enabled:
 	logger, err := sdkClient.NewGoLoggerBuilder().
 		Debug(config.Debug).
@@ -26,20 +33,20 @@ func NewClient(config *config.OCMConfig) (*Client, error) {
 	}
 
 	client := &Client{
-		config: config,
+		config: &config,
 		logger: logger,
 	}
 	err = client.newConnection()
 	if err != nil {
 		return nil, fmt.Errorf("Unable to build OCM connection: %s", err.Error())
 	}
-	client.Authorization = &Authorization{client: client}
+	client.Authorization = &authorization{client: client}
 	return client, nil
 }
 
-func NewClientMock(config *config.OCMConfig) (*Client, error) {
+func NewClientMock(config Config) (*Client, error) {
 	client := &Client{
-		config: config,
+		config: &config,
 	}
 	client.Authorization = &authorizationMock{client: client}
 	return client, nil

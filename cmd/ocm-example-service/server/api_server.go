@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 
 	_ "github.com/auth0/go-jwt-middleware"
@@ -17,15 +15,15 @@ import (
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/data/generated/openapi"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/auth"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/db"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/environments"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/handlers"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/logger"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/server/logging"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/environments"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/server/logging"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/data/generated/openapi"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/auth"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/handlers"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
 )
 
 type apiServer struct {
@@ -44,12 +42,13 @@ func NewAPIServer() Server {
 	s := &apiServer{}
 	services := &env().Services
 
-	openAPIDefinitions, err := s.loadOpenAPISpec("openapi.yaml")
+	openAPIDefinitions, err := s.loadOpenAPISpec("ocm-example-service.yaml")
 	if err != nil {
 		check(err, "Can't load OpenAPI specification")
 	}
 
 	dinosaurHandler := handlers.NewDinosaurHandler(services.Dinosaurs)
+	errorsHandler := handlers.NewErrorsHandler()
 
 	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
 	if env().Config.Server.EnableJWT {
@@ -57,10 +56,12 @@ func NewAPIServer() Server {
 		check(err, "Unable to create auth middleware")
 	}
 
+	/* TODO
 	var authzMiddleware auth.AuthorizationMiddleware = auth.NewAuthzMiddlewareMock()
 	if env().Config.Server.EnableAuthz {
 		authzMiddleware = auth.NewAuthzMiddleware(services.AccessReview, env().Config.Authz.AuthzRules)
 	}
+	*/
 
 	// mainRouter is top level "/"
 	mainRouter := mux.NewRouter()
@@ -102,7 +103,9 @@ func NewAPIServer() Server {
 	apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
 	//  /api/ocm-example-service/v1/errors
-	apiV1Router.HandleFunc("/errors/{id}", handlers.NewErrorsHandler().Get).Methods(http.MethodGet)
+	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
+	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
+	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
 
 	//  /api/ocm-example-service/v1/dinosaurs
 	apiV1DinosaursRouter := apiV1Router.PathPrefix("/dinosaurs").Subrouter()

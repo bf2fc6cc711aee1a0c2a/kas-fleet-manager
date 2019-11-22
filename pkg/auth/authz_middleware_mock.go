@@ -1,5 +1,10 @@
 package auth
 
+import (
+	"fmt"
+	"net/http"
+)
+
 type authzMiddlewareMock struct {
 	action       string
 	resourceType string
@@ -16,7 +21,7 @@ func NewAuthzMiddlewareMock(action, resourceType string) AuthorizationMiddleware
 
 func (a authzMiddlewareMock) AuthorizeApi(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("Mock authz implementation allowing %q on %q for method %q on url %q", a.action, a.resourceType, r.Method, r.Url)
+		fmt.Printf("Mock authz implementation allowing %q on %q for method %q on url %q", a.action, a.resourceType, r.Method, r.URL)
 		next.ServeHTTP(w, r)
 	})
 }

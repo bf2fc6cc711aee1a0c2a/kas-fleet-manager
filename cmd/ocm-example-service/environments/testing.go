@@ -3,19 +3,19 @@ package environments
 import (
 	"os"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
 )
 
 var testingConfigDefaults map[string]string = map[string]string{
-	"v":                     "0",
-	"logtostderr":           "true",
-	"ocm-base-url":          "https://api-integration.6943.hive-integration.openshiftapps.com",
-	"enable-https":          "false",
-	"enable-metrics-https":  "false",
-	"enable-authz":          "true",
-	"ocm-authz-debug":       "false",
-	"enable-ocm-authz-mock": "false",
-	"enable-sentry":         "false",
+	"v":                    "0",
+	"logtostderr":          "true",
+	"ocm-base-url":         "https://api-integration.6943.hive-integration.openshiftapps.com",
+	"enable-https":         "false",
+	"enable-metrics-https": "false",
+	"enable-authz":         "true",
+	"ocm-debug":            "false",
+	"enable-ocm-mock":      "false",
+	"enable-sentry":        "false",
 }
 
 // The testing environment is specifically for automated testing
