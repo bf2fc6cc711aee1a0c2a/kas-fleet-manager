@@ -1,6 +1,13 @@
 package auth
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+)
 
 // Context key type defined to avoid collisions in other pkgs using context
 // See https://golang.org/pkg/context/#WithValue
@@ -26,7 +33,7 @@ type AuthPayload struct {
 }
 
 func SetUsernameContext(ctx context.Context, username string) context.Context {
-	return context.WithValue(ctx, ContextAccountIDKey, username)
+	return context.WithValue(ctx, ContextUsernameKey, username)
 }
 
 func GetUsernameFromContext(ctx context.Context) string {
@@ -38,7 +45,7 @@ func GetUsernameFromContext(ctx context.Context) string {
 }
 
 // Get authorization payload api object from context
-func GetAuthPayloadFromContext(ctx context.Context) (AuthPayload, error) {
+func GetAuthPayloadFromContext(ctx context.Context) (*AuthPayload, error) {
 	// Get user token from request context and validate
 	user := ctx.Value(ContextAuthKey)
 	if user == nil {
@@ -70,7 +77,7 @@ func GetAuthPayloadFromContext(ctx context.Context) (AuthPayload, error) {
 	//	return nil, err
 	//}
 
-	payload := &api.AuthPayload{}
+	payload := &AuthPayload{}
 	// default to the values we expect from RHSSO
 	payload.Username, _ = claims["username"].(string)
 	payload.FirstName, _ = claims["first_name"].(string)
@@ -106,6 +113,6 @@ func GetAuthPayloadFromContext(ctx context.Context) (AuthPayload, error) {
 	return payload, nil
 }
 
-func GetAuthPayload(r *http.Request) (*api.AuthPayload, error) {
+func GetAuthPayload(r *http.Request) (*AuthPayload, error) {
 	return GetAuthPayloadFromContext(r.Context())
 }

@@ -25,7 +25,7 @@ import (
 //
 // 4. Create one function in a separate file that returns your Migration. Add that single function call to this list.
 var migrations []*gormigrate.Migration = []*gormigrate.Migration{
-	addDinosaurs,
+	addDinosaurs(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {
@@ -35,10 +35,6 @@ func Migrate(conFactory *ConnectionFactory) {
 
 	if err := m.Migrate(); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
-	}
-
-	if err := Seed(gorm); err != nil {
-		glog.Fatalf("Could not seed data: %v", err)
 	}
 }
 
@@ -78,4 +74,12 @@ func addFKs(tx *gorm.DB, fks []fkMigration) error {
 		}
 	}
 	return nil
+}
+
+// Model represents the base model struct. All entities will have this struct embedded.
+type Model struct {
+	ID        string `gorm:"primary_key"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `sql:"index"`
 }

@@ -4,11 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api/presenters"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/services"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/presenters"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/services"
 )
 
 var _ RestHandler = dinosaurHandler{}
@@ -17,7 +17,7 @@ type dinosaurHandler struct {
 	service services.DinosaurService
 }
 
-func NewDinosaurHandler(genericService services.GenericService, service services.DinosaurService) *dinosaurHandler {
+func NewDinosaurHandler(service services.DinosaurService) *dinosaurHandler {
 	return &dinosaurHandler{
 		service: service,
 	}
@@ -29,7 +29,7 @@ func (h dinosaurHandler) Create(w http.ResponseWriter, r *http.Request) {
 		&dinosaur,
 		[]validate{
 			validateEmpty(&dinosaur.Id, "id"),
-			validateNotEmpty(&dinosaur.Name, "name"),
+			validateNotEmpty(&dinosaur.Species, "species"),
 		},
 		func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -52,7 +52,7 @@ func (h dinosaurHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		&patch,
 		[]validate{
-			validateDinosaurPatch(&patch),
+			validateNotEmpty(patch.Species, "species"),
 		},
 		func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -60,16 +60,6 @@ func (h dinosaurHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			found, err := h.service.Get(ctx, id)
 			if err != nil {
 				return nil, err
-			}
-
-			if patch.Name != nil {
-				found.Name = *patch.Name
-			}
-			if patch.ExternalID != nil {
-				found.ExternalID = *patch.ExternalID
-			}
-			if patch.EbsAccountID != nil {
-				found.EbsAccountID = *patch.EbsAccountID
 			}
 
 			dino, err := h.service.Replace(ctx, found)
@@ -88,14 +78,9 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			username, userErr := getAuthenticatedAccountUsername(r)
-			if userErr != nil {
-				return nil, userErr
-			}
 
 			listArgs := services.NewListArguments(r.URL.Query())
-			dinosaurs := []api.Dinosaur{}
-			paging, err := h.service.List(ctx, username, listArgs, &dinosaurs)
+			dinosaurs, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
@@ -107,8 +92,8 @@ func (h dinosaurHandler) List(w http.ResponseWriter, r *http.Request) {
 				Items: []openapi.Dinosaur{},
 			}
 
-			for _, o := range dinosaurs {
-				converted := presenters.PresentDinosaur(&o)
+			for _, dino := range dinosaurs {
+				converted := presenters.PresentDinosaur(dino)
 				dinoList.Items = append(dinoList.Items, converted)
 			}
 			return dinoList, nil

@@ -8,9 +8,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/handlers"
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/logger"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/handlers"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
 )
 
 func NewMetricsServer() Server {
@@ -18,13 +18,8 @@ func NewMetricsServer() Server {
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
 
 	// metrics endpoint
-	accountService := env().Services.Account
-	prometheusMetricsHandler := handlers.NewPrometheusMetricsHandler(accountService)
+	prometheusMetricsHandler := handlers.NewPrometheusMetricsHandler()
 	mainRouter.Handle("/metrics", prometheusMetricsHandler.Handler())
-
-	// labels endpoint
-	prometheusLabelService := env().Services.PrometheusLabel
-	mainRouter.Handle("/labels", prometheusLabelService.Handler())
 
 	var mainHandler http.Handler = mainRouter
 

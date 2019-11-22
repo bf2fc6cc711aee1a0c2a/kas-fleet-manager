@@ -111,4 +111,10 @@ generate:
 	gofmt -w pkg/api/openapi
 .PHONY: generate
 
+run: install
+	ocm-example-service migrate
+	ocm-example-service serve
+.PHONY: run
+
 # TODO CRC Deployment stuff
+

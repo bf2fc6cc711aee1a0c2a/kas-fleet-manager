@@ -1,14 +1,14 @@
 package environments
 
 import (
-	"gitlab.cee.redhat.com/service/ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
 )
 
 var productionConfigDefaults map[string]string = map[string]string{
-	"v":                     "1",
-	"ocm-authz-debug":       "false",
-	"enable-ocm-authz-mock": "false",
-	"enable-sentry":         "true",
+	"v":               "1",
+	"ocm-debug":       "false",
+	"enable-ocm-mock": "false",
+	"enable-sentry":   "true",
 }
 
 func loadProduction(env *Env) error {
