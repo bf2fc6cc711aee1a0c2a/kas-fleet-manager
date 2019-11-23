@@ -8,7 +8,7 @@ import (
 
 func validateNotEmpty(value *string, field string) validate {
 	return func() *errors.ServiceError {
-		if len(*value) == 0 {
+		if value == nil || len(*value) == 0 {
 			return errors.Validation("%s is required", field)
 		}
 		return nil
