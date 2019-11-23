@@ -9,24 +9,19 @@ import (
 // ListArguments are arguments relevant for listing objects.
 // This struct is common to all service List funcs in this package
 type ListArguments struct {
-	Page           int
-	Size           int
-	OrganizationId string
-	SubscriptionId string
-	HideInternal   bool
-	Preloads       []string
-	Search         string
-	OrderBy        []string
+	Page     int
+	Size     int
+	Preloads []string
+	Search   string
+	OrderBy  []string
 }
 
 // Create ListArguments from url query parameters with sane defaults
 func NewListArguments(params url.Values) *ListArguments {
 	listArgs := &ListArguments{
-		Page:           1,
-		Size:           100,
-		Search:         "",
-		OrganizationId: "",
-		SubscriptionId: "",
+		Page:   1,
+		Size:   100,
+		Search: "",
 	}
 	if v := params.Get("page"); v != "" {
 		listArgs.Page, _ = strconv.Atoi(v)
