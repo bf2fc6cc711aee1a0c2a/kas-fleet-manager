@@ -51,9 +51,7 @@ func (h dinosaurHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 	cfg := &handlerConfig{
 		&patch,
-		[]validate{
-			validateNotEmpty(patch.Species, "species"),
-		},
+		[]validate{},
 		func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			id := mux.Vars(r)["id"]
@@ -61,6 +59,11 @@ func (h dinosaurHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
+
+			if patch.Species == nil {
+				return nil, errors.Validation("species is required")
+			}
+			found.Species = *patch.Species
 
 			dino, err := h.service.Replace(ctx, found)
 			if err != nil {
