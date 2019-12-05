@@ -4,14 +4,14 @@ All URIs are relative to *https://api.openshift.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ApiDinosaursMgmtV1DinosaursGet**](DefaultApi.md#ApiDinosaursMgmtV1DinosaursGet) | **Get** /api/dinosaurs_mgmt/v1/dinosaurs | Returns a list of dinosaurs
-[**ApiDinosaursMgmtV1DinosaursIdGet**](DefaultApi.md#ApiDinosaursMgmtV1DinosaursIdGet) | **Get** /api/dinosaurs_mgmt/v1/dinosaurs/{id} | Get an dinosaur by id
-[**ApiDinosaursMgmtV1DinosaursIdPatch**](DefaultApi.md#ApiDinosaursMgmtV1DinosaursIdPatch) | **Patch** /api/dinosaurs_mgmt/v1/dinosaurs/{id} | Update an dinosaur
-[**ApiDinosaursMgmtV1DinosaursPost**](DefaultApi.md#ApiDinosaursMgmtV1DinosaursPost) | **Post** /api/dinosaurs_mgmt/v1/dinosaurs | Create a new dinosaur
+[**ApiOcmExampleServiceV1DinosaursGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursGet) | **Get** /api/ocm-example-service/v1/dinosaurs | Returns a list of dinosaurs
+[**ApiOcmExampleServiceV1DinosaursIdGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdGet) | **Get** /api/ocm-example-service/v1/dinosaurs/{id} | Get an dinosaur by id
+[**ApiOcmExampleServiceV1DinosaursIdPatch**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdPatch) | **Patch** /api/ocm-example-service/v1/dinosaurs/{id} | Update an dinosaur
+[**ApiOcmExampleServiceV1DinosaursPost**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursPost) | **Post** /api/ocm-example-service/v1/dinosaurs | Create a new dinosaur
 
 
-# **ApiDinosaursMgmtV1DinosaursGet**
-> DinosaurList ApiDinosaursMgmtV1DinosaursGet(ctx, optional)
+# **ApiOcmExampleServiceV1DinosaursGet**
+> DinosaurList ApiOcmExampleServiceV1DinosaursGet(ctx, optional)
 Returns a list of dinosaurs
 
 ### Required Parameters
@@ -19,10 +19,10 @@ Returns a list of dinosaurs
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
- **optional** | ***ApiDinosaursMgmtV1DinosaursGetOpts** | optional parameters | nil if no parameters
+ **optional** | ***ApiOcmExampleServiceV1DinosaursGetOpts** | optional parameters | nil if no parameters
 
 ### Optional Parameters
-Optional parameters are passed through a pointer to a ApiDinosaursMgmtV1DinosaursGetOpts struct
+Optional parameters are passed through a pointer to a ApiOcmExampleServiceV1DinosaursGetOpts struct
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
@@ -46,8 +46,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **ApiDinosaursMgmtV1DinosaursIdGet**
-> Dinosaur ApiDinosaursMgmtV1DinosaursIdGet(ctx, id)
+# **ApiOcmExampleServiceV1DinosaursIdGet**
+> Dinosaur ApiOcmExampleServiceV1DinosaursIdGet(ctx, id)
 Get an dinosaur by id
 
 ### Required Parameters
@@ -72,8 +72,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **ApiDinosaursMgmtV1DinosaursIdPatch**
-> Dinosaur ApiDinosaursMgmtV1DinosaursIdPatch(ctx, id, dinosaurPatchRequest)
+# **ApiOcmExampleServiceV1DinosaursIdPatch**
+> Dinosaur ApiOcmExampleServiceV1DinosaursIdPatch(ctx, id, dinosaurPatchRequest)
 Update an dinosaur
 
 ### Required Parameters
@@ -99,8 +99,8 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **ApiDinosaursMgmtV1DinosaursPost**
-> Dinosaur ApiDinosaursMgmtV1DinosaursPost(ctx, dinosaur)
+# **ApiOcmExampleServiceV1DinosaursPost**
+> Dinosaur ApiOcmExampleServiceV1DinosaursPost(ctx, dinosaur)
 Create a new dinosaur
 
 ### Required Parameters

@@ -9,9 +9,15 @@
 
 package openapi
 
+import (
+	"time"
+)
+
 type Dinosaur struct {
-	Id      string `json:"id,omitempty"`
-	Kind    string `json:"kind,omitempty"`
-	Href    string `json:"href,omitempty"`
-	Species string `json:"species,omitempty"`
+	Id        string    `json:"id,omitempty"`
+	Kind      string    `json:"kind,omitempty"`
+	Href      string    `json:"href,omitempty"`
+	Species   string    `json:"species,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }

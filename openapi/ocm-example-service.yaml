@@ -11,7 +11,7 @@ servers:
 - url: /
   description: current domain
 paths:
-  /api/dinosaurs_mgmt/v1/dinosaurs:
+  /api/ocm-example-service/v1/dinosaurs:
     get:
       summary: Returns a list of dinosaurs
       security:
@@ -94,7 +94,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /api/dinosaurs_mgmt/v1/dinosaurs/{id}:
+  /api/ocm-example-service/v1/dinosaurs/{id}:
     get:
       summary: Get an dinosaur by id
       security:
@@ -246,6 +246,12 @@ components:
         properties:
           species:
             type: string
+          created_at:
+            type: string
+            format: date-time
+          updated_at:
+            type: string
+            format: date-time
     DinosaurList:
       allOf:
       - $ref: '#/components/schemas/List'
