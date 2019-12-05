@@ -14,7 +14,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"enable-metrics-https": "false",
 	"enable-authz":         "true",
 	"ocm-debug":            "false",
-	"enable-ocm-mock":      "false",
+	"enable-ocm-mock":      "true",
 	"enable-sentry":        "false",
 }
 

@@ -30,10 +30,10 @@ All URIs are relative to *https://api.openshift.com*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DefaultApi* | [**ApiDinosaursMgmtV1DinosaursGet**](docs/DefaultApi.md#apidinosaursmgmtv1dinosaursget) | **Get** /api/dinosaurs_mgmt/v1/dinosaurs | Returns a list of dinosaurs
-*DefaultApi* | [**ApiDinosaursMgmtV1DinosaursIdGet**](docs/DefaultApi.md#apidinosaursmgmtv1dinosaursidget) | **Get** /api/dinosaurs_mgmt/v1/dinosaurs/{id} | Get an dinosaur by id
-*DefaultApi* | [**ApiDinosaursMgmtV1DinosaursIdPatch**](docs/DefaultApi.md#apidinosaursmgmtv1dinosaursidpatch) | **Patch** /api/dinosaurs_mgmt/v1/dinosaurs/{id} | Update an dinosaur
-*DefaultApi* | [**ApiDinosaursMgmtV1DinosaursPost**](docs/DefaultApi.md#apidinosaursmgmtv1dinosaurspost) | **Post** /api/dinosaurs_mgmt/v1/dinosaurs | Create a new dinosaur
+*DefaultApi* | [**ApiOcmExampleServiceV1DinosaursGet**](docs/DefaultApi.md#apiocmexampleservicev1dinosaursget) | **Get** /api/ocm-example-service/v1/dinosaurs | Returns a list of dinosaurs
+*DefaultApi* | [**ApiOcmExampleServiceV1DinosaursIdGet**](docs/DefaultApi.md#apiocmexampleservicev1dinosaursidget) | **Get** /api/ocm-example-service/v1/dinosaurs/{id} | Get an dinosaur by id
+*DefaultApi* | [**ApiOcmExampleServiceV1DinosaursIdPatch**](docs/DefaultApi.md#apiocmexampleservicev1dinosaursidpatch) | **Patch** /api/ocm-example-service/v1/dinosaurs/{id} | Update an dinosaur
+*DefaultApi* | [**ApiOcmExampleServiceV1DinosaursPost**](docs/DefaultApi.md#apiocmexampleservicev1dinosaurspost) | **Post** /api/ocm-example-service/v1/dinosaurs | Create a new dinosaur
 
 
 ## Documentation For Models

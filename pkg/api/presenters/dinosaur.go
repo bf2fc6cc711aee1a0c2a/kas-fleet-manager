@@ -17,9 +17,11 @@ func ConvertDinosaur(org openapi.Dinosaur) *api.Dinosaur {
 func PresentDinosaur(dinosaur *api.Dinosaur) openapi.Dinosaur {
 	reference := PresentReference(dinosaur.ID, dinosaur)
 	return openapi.Dinosaur{
-		Id:      reference.Id,
-		Kind:    reference.Kind,
-		Href:    reference.Href,
-		Species: dinosaur.Species,
+		Id:        reference.Id,
+		Kind:      reference.Kind,
+		Href:      reference.Href,
+		Species:   dinosaur.Species,
+		CreatedAt: dinosaur.CreatedAt,
+		UpdatedAt: dinosaur.UpdatedAt,
 	}
 }

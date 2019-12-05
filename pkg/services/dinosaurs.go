@@ -46,7 +46,9 @@ func (s *sqlDinosaurService) Get(ctx context.Context, id string) (*api.Dinosaur,
 func (s *sqlDinosaurService) List(ctx context.Context, listArgs *ListArguments) (api.DinosaurList, *api.PagingMeta, *errors.ServiceError) {
 	gorm := s.connectionFactory.New()
 	ulog := logger.NewUHCLogger(ctx)
-	pagingMeta := api.PagingMeta{}
+	pagingMeta := api.PagingMeta{
+		Page: listArgs.Page,
+	}
 
 	// Unbounded list operations should be discouraged, as they can result in very long API operations
 	if listArgs.Size < 0 {
