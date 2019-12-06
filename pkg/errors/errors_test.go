@@ -14,9 +14,9 @@ func TestErrorFormatting(t *testing.T) {
 
 func TestErrorFind(t *testing.T) {
 	RegisterTestingT(t)
-	exists, err := Find(ErrorInvalidToken)
+	exists, err := Find(ErrorNotFound)
 	Expect(exists).To(Equal(true))
-	Expect(err.Code).To(Equal(ErrorInvalidToken))
+	Expect(err.Code).To(Equal(ErrorNotFound))
 
 	// Hopefully we never reach 91,823,719 error codes or this test will fail
 	exists, err = Find(ServiceErrorCode(91823719))

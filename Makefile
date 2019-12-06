@@ -22,6 +22,9 @@ help:
 	@echo "$(fake)"
 .PHONY: help
 
+### Constants:
+version:=$(shell date +%s)
+
 ### Envrionment-sourced variables with defaults
 # Can be overriden by setting environment var before running
 # Example:

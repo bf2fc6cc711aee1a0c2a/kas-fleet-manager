@@ -29,7 +29,7 @@ type DefaultApiService service
 /*
 DefaultApiService Returns a list of dinosaurs
  * @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *ApiDinosaursMgmtV1DinosaursGetOpts - Optional Parameters:
+ * @param optional nil or *ApiOcmExampleServiceV1DinosaursGetOpts - Optional Parameters:
  * @param "Page" (optional.Int32) -  Page number of record list when record list exceeds specified page size
  * @param "Size" (optional.Int32) -  Maximum number of records to return
  * @param "Search" (optional.String) -  Specifies the search criteria. The syntax of this parameter is similar to the syntax of the _where_ clause of an SQL statement, using the names of the json attributes / column names of the account.  For example, in order to retrieve all the accounts with a username starting with `my`:  ```sql username like 'my%' ```  The search criteria can also be applied on related resource. For example, in order to retrieve all the subscriptions labeled by `foo=bar`,  ```sql subscription_labels.key = 'foo' and subscription_labels.value = 'bar' ```  If the parameter isn't provided, or if the value is empty, then all the accounts that the user has permission to see will be returned.
@@ -37,14 +37,14 @@ DefaultApiService Returns a list of dinosaurs
 @return DinosaurList
 */
 
-type ApiDinosaursMgmtV1DinosaursGetOpts struct {
+type ApiOcmExampleServiceV1DinosaursGetOpts struct {
 	Page    optional.Int32
 	Size    optional.Int32
 	Search  optional.String
 	OrderBy optional.String
 }
 
-func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursGet(ctx context.Context, localVarOptionals *ApiDinosaursMgmtV1DinosaursGetOpts) (DinosaurList, *http.Response, error) {
+func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursGet(ctx context.Context, localVarOptionals *ApiOcmExampleServiceV1DinosaursGetOpts) (DinosaurList, *http.Response, error) {
 	var (
 		localVarHttpMethod   = strings.ToUpper("Get")
 		localVarPostBody     interface{}
@@ -55,7 +55,7 @@ func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursGet(ctx context.Context, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/dinosaurs"
+	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -172,7 +172,7 @@ DefaultApiService Get an dinosaur by id
  * @param id The id of record
 @return Dinosaur
 */
-func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursIdGet(ctx context.Context, id string) (Dinosaur, *http.Response, error) {
+func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursIdGet(ctx context.Context, id string) (Dinosaur, *http.Response, error) {
 	var (
 		localVarHttpMethod   = strings.ToUpper("Get")
 		localVarPostBody     interface{}
@@ -183,7 +183,7 @@ func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursIdGet(ctx context.Context
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/dinosaurs/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -300,7 +300,7 @@ DefaultApiService Update an dinosaur
  * @param dinosaurPatchRequest Updated dinosaur data
 @return Dinosaur
 */
-func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursIdPatch(ctx context.Context, id string, dinosaurPatchRequest DinosaurPatchRequest) (Dinosaur, *http.Response, error) {
+func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursIdPatch(ctx context.Context, id string, dinosaurPatchRequest DinosaurPatchRequest) (Dinosaur, *http.Response, error) {
 	var (
 		localVarHttpMethod   = strings.ToUpper("Patch")
 		localVarPostBody     interface{}
@@ -311,7 +311,7 @@ func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursIdPatch(ctx context.Conte
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/dinosaurs/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -449,7 +449,7 @@ DefaultApiService Create a new dinosaur
  * @param dinosaur Dinosaur data
 @return Dinosaur
 */
-func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursPost(ctx context.Context, dinosaur Dinosaur) (Dinosaur, *http.Response, error) {
+func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursPost(ctx context.Context, dinosaur Dinosaur) (Dinosaur, *http.Response, error) {
 	var (
 		localVarHttpMethod   = strings.ToUpper("Post")
 		localVarPostBody     interface{}
@@ -460,7 +460,7 @@ func (a *DefaultApiService) ApiDinosaursMgmtV1DinosaursPost(ctx context.Context,
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/dinosaurs_mgmt/v1/dinosaurs"
+	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
