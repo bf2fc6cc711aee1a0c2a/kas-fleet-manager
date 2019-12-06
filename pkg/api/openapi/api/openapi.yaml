@@ -11,7 +11,7 @@ servers:
 - description: current domain
   url: /
 paths:
-  /api/dinosaurs_mgmt/v1/dinosaurs:
+  /api/ocm-example-service/v1/dinosaurs:
     get:
       parameters:
       - description: Page number of record list when record list exceeds specified page size
@@ -154,7 +154,7 @@ paths:
       security:
       - Bearer: []
       summary: Create a new dinosaur
-  /api/dinosaurs_mgmt/v1/dinosaurs/{id}:
+  /api/ocm-example-service/v1/dinosaurs/{id}:
     get:
       parameters:
       - description: The id of record
@@ -395,6 +395,12 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - properties:
           species:
+            type: string
+          created_at:
+            format: date-time
+            type: string
+          updated_at:
+            format: date-time
             type: string
         type: object
     DinosaurList:

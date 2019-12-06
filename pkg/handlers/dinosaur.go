@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
 	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/presenters"
@@ -51,7 +52,9 @@ func (h dinosaurHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 	cfg := &handlerConfig{
 		&patch,
-		[]validate{},
+		[]validate{
+			validateDinosaurPatch(&patch),
+		},
 		func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			id := mux.Vars(r)["id"]
@@ -60,9 +63,6 @@ func (h dinosaurHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			if patch.Species == nil {
-				return nil, errors.Validation("species is required")
-			}
 			found.Species = *patch.Species
 
 			dino, err := h.service.Replace(ctx, found)

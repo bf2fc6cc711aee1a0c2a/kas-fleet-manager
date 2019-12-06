@@ -137,7 +137,7 @@ func GetProjectRootDir() string {
 	var rootPath string
 	for _, d := range dirs {
 		rootPath = rootPath + "/" + d
-		if d == "ocm-example-service" {
+		if d == "sdb-ocm-example-service" {
 			break
 		}
 	}

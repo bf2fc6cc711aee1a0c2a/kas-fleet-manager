@@ -6,15 +6,19 @@ require (
 	github.com/Masterminds/squirrel v1.1.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
+	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-resty/resty v1.8.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.3
 	github.com/jinzhu/gorm v1.9.8
 	github.com/lib/pq v1.1.1
+	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/mongodb/mongo-go-driver v0.3.0 // indirect
 	github.com/onsi/gomega v1.7.1
 	github.com/openshift-online/ocm-sdk-go v0.1.59
