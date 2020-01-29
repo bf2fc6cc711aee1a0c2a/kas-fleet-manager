@@ -24,6 +24,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			err := errors.GeneralError("")
 			operationID := logger.GetOperationID(ctx)
 			writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
+			return
 		}
 
 		// Set the value of the request pointer to the value of a new copy of the request with the new context key,vale stored in it
