@@ -174,7 +174,7 @@ parameters:
 
 objects:
   - kind: Deployment
-    apiVersion: apps/v1beta1
+    apiVersion: apps/v1
     metadata:
       name: ocm-ex-service
       labels:
