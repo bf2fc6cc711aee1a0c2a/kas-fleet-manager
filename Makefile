@@ -119,5 +119,14 @@ run: install
 	ocm-example-service serve
 .PHONY: run
 
+db/setup:
+	./local_db_setup.sh
+.PHONY: db/setup
+
+db/teardown:
+	-docker stop ocm-managed-service-api-db
+	-docker rm ocm-managed-service-api-db
+.PHONY: db/teardown
+
 # TODO CRC Deployment stuff
 
