@@ -313,14 +313,14 @@ func (helper *Helper) MigrateDBTo(migrationID string) {
 }
 
 func (helper *Helper) ClearAllTables() {
-	helper.DeleteAll(&api.Dinosaur{})
+	helper.DeleteAll(&api.Kafka{})
 }
 
 func (helper *Helper) CleanDB() {
 	gorm := helper.DBFactory.New()
 
 	for _, table := range []string{
-		"dinosaurs",
+		"kafkas",
 		"migrations",
 	} {
 		if gorm.HasTable(table) {

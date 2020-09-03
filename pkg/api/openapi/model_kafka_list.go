@@ -9,11 +9,11 @@
 
 package openapi
 
-// ErrorList struct for ErrorList
-type ErrorList struct {
+// KafkaList struct for KafkaList
+type KafkaList struct {
 	Kind  string  `json:"kind"`
 	Page  int32   `json:"page"`
 	Size  int32   `json:"size"`
 	Total int32   `json:"total"`
-	Items []Error `json:"items"`
+	Items []Kafka `json:"items"`
 }

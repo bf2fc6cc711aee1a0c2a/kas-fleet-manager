@@ -4,25 +4,31 @@ All URIs are relative to *https://api.openshift.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ApiOcmExampleServiceV1DinosaursGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursGet) | **Get** /api/managed-services-api/v1/dinosaurs | Returns a list of dinosaurs
-[**ApiOcmExampleServiceV1DinosaursIdGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdGet) | **Get** /api/managed-services-api/v1/dinosaurs/{id} | Get an dinosaur by id
-[**ApiOcmExampleServiceV1DinosaursIdPatch**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdPatch) | **Patch** /api/managed-services-api/v1/dinosaurs/{id} | Update an dinosaur
-[**ApiOcmExampleServiceV1DinosaursPost**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursPost) | **Post** /api/managed-services-api/v1/dinosaurs | Create a new dinosaur
+[**ApiOcmExampleServiceV1KafkasGet**](DefaultApi.md#ApiOcmExampleServiceV1KafkasGet) | **Get** /api/ocm-example-service/v1/kafkas | Returns a list of kafkas
+[**ApiOcmExampleServiceV1KafkasIdGet**](DefaultApi.md#ApiOcmExampleServiceV1KafkasIdGet) | **Get** /api/ocm-example-service/v1/kafkas/{id} | Get an kafka by id
+[**ApiOcmExampleServiceV1KafkasIdPatch**](DefaultApi.md#ApiOcmExampleServiceV1KafkasIdPatch) | **Patch** /api/ocm-example-service/v1/kafkas/{id} | Update an kafka
+[**ApiOcmExampleServiceV1KafkasPost**](DefaultApi.md#ApiOcmExampleServiceV1KafkasPost) | **Post** /api/ocm-example-service/v1/kafkas | Create a new kafka
 
 
-# **ApiOcmExampleServiceV1DinosaursGet**
-> DinosaurList ApiOcmExampleServiceV1DinosaursGet(ctx, optional)
-Returns a list of dinosaurs
+
+## ApiOcmExampleServiceV1KafkasGet
+
+> KafkaList ApiOcmExampleServiceV1KafkasGet(ctx, optional)
+
+Returns a list of kafkas
 
 ### Required Parameters
 
+
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
- **optional** | ***ApiOcmExampleServiceV1DinosaursGetOpts** | optional parameters | nil if no parameters
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+ **optional** | ***ApiOcmExampleServiceV1KafkasGetOpts** | optional parameters | nil if no parameters
 
 ### Optional Parameters
-Optional parameters are passed through a pointer to a ApiOcmExampleServiceV1DinosaursGetOpts struct
+
+Optional parameters are passed through a pointer to a ApiOcmExampleServiceV1KafkasGetOpts struct
+
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
@@ -33,7 +39,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**DinosaurList**](DinosaurList.md)
+[**KafkaList**](KafkaList.md)
 
 ### Authorization
 
@@ -41,25 +47,31 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: application/json
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
-# **ApiOcmExampleServiceV1DinosaursIdGet**
-> Dinosaur ApiOcmExampleServiceV1DinosaursIdGet(ctx, id)
-Get an dinosaur by id
+
+## ApiOcmExampleServiceV1KafkasIdGet
+
+> Kafka ApiOcmExampleServiceV1KafkasIdGet(ctx, id)
+
+Get an kafka by id
 
 ### Required Parameters
 
+
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **id** | **string**| The id of record | 
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **string**| The id of record | 
 
 ### Return type
 
-[**Dinosaur**](Dinosaur.md)
+[**Kafka**](Kafka.md)
 
 ### Authorization
 
@@ -67,26 +79,32 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
- - **Accept**: application/json
+- **Content-Type**: Not defined
+- **Accept**: application/json
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
-# **ApiOcmExampleServiceV1DinosaursIdPatch**
-> Dinosaur ApiOcmExampleServiceV1DinosaursIdPatch(ctx, id, dinosaurPatchRequest)
-Update an dinosaur
+
+## ApiOcmExampleServiceV1KafkasIdPatch
+
+> Kafka ApiOcmExampleServiceV1KafkasIdPatch(ctx, id, kafkaPatchRequest)
+
+Update an kafka
 
 ### Required Parameters
 
+
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **id** | **string**| The id of record | 
-  **dinosaurPatchRequest** | [**DinosaurPatchRequest**](DinosaurPatchRequest.md)| Updated dinosaur data | 
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **string**| The id of record | 
+**kafkaPatchRequest** | [**KafkaPatchRequest**](KafkaPatchRequest.md)| Updated kafka data | 
 
 ### Return type
 
-[**Dinosaur**](Dinosaur.md)
+[**Kafka**](Kafka.md)
 
 ### Authorization
 
@@ -94,25 +112,31 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
- - **Accept**: application/json
+- **Content-Type**: application/json
+- **Accept**: application/json
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 
-# **ApiOcmExampleServiceV1DinosaursPost**
-> Dinosaur ApiOcmExampleServiceV1DinosaursPost(ctx, dinosaur)
-Create a new dinosaur
+
+## ApiOcmExampleServiceV1KafkasPost
+
+> Kafka ApiOcmExampleServiceV1KafkasPost(ctx, kafka)
+
+Create a new kafka
 
 ### Required Parameters
 
+
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
-  **dinosaur** | [**Dinosaur**](Dinosaur.md)| Dinosaur data | 
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**kafka** | [**Kafka**](Kafka.md)| Kafka data | 
 
 ### Return type
 
-[**Dinosaur**](Dinosaur.md)
+[**Kafka**](Kafka.md)
 
 ### Authorization
 
@@ -120,8 +144,10 @@ Name | Type | Description  | Notes
 
 ### HTTP request headers
 
- - **Content-Type**: application/json
- - **Accept**: application/json
+- **Content-Type**: application/json
+- **Accept**: application/json
 
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
 

@@ -33,7 +33,7 @@ type Env struct {
 }
 
 type Services struct {
-	Dinosaurs services.DinosaurService
+	Kafka services.KafkaService
 }
 
 type Clients struct {
@@ -120,9 +120,10 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
-	dinosaurs := services.NewDinosaurService(env.DBFactory)
+	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
+	kafka := services.NewKafkaService(env.DBFactory, syncsetService)
 
-	env.Services.Dinosaurs = dinosaurs
+	env.Services.Kafka = kafka
 }
 
 func (env *Env) LoadClients() error {

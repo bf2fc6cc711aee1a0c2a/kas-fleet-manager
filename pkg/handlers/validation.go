@@ -3,7 +3,6 @@ package handlers
 import (
 	"strings"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
@@ -45,14 +44,14 @@ func validateNonNegative(value *int32, field string) validate {
 	}
 }
 
-func validateDinosaurPatch(patch *api.DinosaurPatchRequest) validate {
-	return func() *errors.ServiceError {
-		if patch.Species == nil {
-			return errors.Validation("species is required")
-		}
-		if patch.Species != nil && len(*patch.Species) == 0 {
-			return errors.Validation("species cannot be empty")
-		}
-		return nil
-	}
-}
+// func validateDinosaurPatch(patch *api.DinosaurPatchRequest) validate {
+// 	return func() *errors.ServiceError {
+// 		if patch.Species == nil {
+// 			return errors.Validation("species is required")
+// 		}
+// 		if patch.Species != nil && len(*patch.Species) == 0 {
+// 			return errors.Validation("species cannot be empty")
+// 		}
+// 		return nil
+// 	}
+// }

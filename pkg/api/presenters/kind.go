@@ -7,8 +7,8 @@ import (
 
 func ObjectKind(i interface{}) string {
 	switch i.(type) {
-	case api.Dinosaur, *api.Dinosaur:
-		return "Dinosaur"
+	case api.Kafka, *api.Kafka:
+		return "Kafka"
 	case errors.ServiceError, *errors.ServiceError:
 		return "Error"
 	default:
