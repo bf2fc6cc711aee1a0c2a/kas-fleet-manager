@@ -10,7 +10,6 @@ package auth
 */
 
 import (
-	"fmt"
 	"net/http"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/ocm"
@@ -44,7 +43,7 @@ func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 		// Get username from context
 		username := GetUsernameFromContext(ctx)
 		if username == "" {
-			fmt.Errorf("Authenticated username not present in request context")
+			// fmt.Errorf("Authenticated username not present in request context")
 			// TODO
 			//body := api.E500.Format(r, "Authentication details not present in context")
 			//api.SendError(w, r, &body)
@@ -54,7 +53,7 @@ func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 		allowed, err := a.ocmClient.Authorization.AccessReview(
 			ctx, username, a.action, a.resourceType, "", "", "")
 		if err != nil {
-			fmt.Errorf("Unable to make authorization request: %s", err)
+			// fmt.Errorf("Unable to make authorization request: %s", err)
 			// TODO
 			//body := api.E500.Format(r, "Unable to make authorization request")
 			//api.SendError(w, r, &body)
