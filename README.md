@@ -49,3 +49,17 @@ To stop and remove the container when finished, run:
 make db/teardown
 ```
 
+## Merge request checks 
+Upon opening or updating a merge request, a pr check job will be triggered in jenkins. 
+
+This job runs the `pr_check.sh` script, which starts a docker container with a postgres database and executes various make targets. For now, this includes only the `make verify` target. The tests that are run inside the container are defined in the `pr_check_docker.sh` script. 
+
+The container can be run locally by executing the `pr_check.sh` script, or simply running `make test/run`.
+
+## Staging deployments 
+Upon making changes to the master branch, a build job will be triggered in jenkins. 
+
+This job will run the `build_deploy.sh` script:
+- Two environment variables are expected to be defined: `QUAY_USER` and `QUAY_TOKEN`. These define how to reach the quay repository where the resulting image should be pushed. These should be defined already in Jenkins.
+- The `VERSION` of the build is defined as the first 7 digits of the commit hash. This is used as the `image_tag` supplied to the deployment template in later steps
+- The image is built and pushed to the Quay repo using `make version=VERSION image/push`.
