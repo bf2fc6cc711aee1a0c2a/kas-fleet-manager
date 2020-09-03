@@ -4,15 +4,15 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/environments"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/server"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server"
 )
 
 func NewServeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",
-		Short: "Serve the ocm-example-service",
-		Long:  "Serve the ocm-example-service.",
+		Short: "Serve the managed-services-api",
+		Long:  "Serve the managed-services-api.",
 		Run:   runServe,
 	}
 	err := environments.Environment().AddFlags(cmd.PersistentFlags())

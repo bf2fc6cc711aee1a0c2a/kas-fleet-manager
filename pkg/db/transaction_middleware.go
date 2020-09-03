@@ -7,8 +7,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
 )
 
 // TransactionMiddleware creates a new HTTP middleware that begins a database transaction

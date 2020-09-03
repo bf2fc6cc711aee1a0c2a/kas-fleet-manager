@@ -219,7 +219,7 @@ objects:
             - name: rds
               mountPath: /secrets/rds
             command:
-            - /usr/local/bin/ocm-example-service
+            - /usr/local/bin/managed-services-api
             - migrate
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
@@ -243,7 +243,7 @@ objects:
               - name: "AMS_ENV"
                 value: "${ENVIRONMENT}"
             command:
-            - /usr/local/bin/ocm-example-service
+            - /usr/local/bin/managed-services-api
             - serve
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
@@ -290,7 +290,7 @@ objects:
                 memory: ${MEMORY_LIMIT}
             livenessProbe:
               httpGet:
-                path: /api/ocm-example-service
+                path: /api/managed-services-api
                 port: 8000
                 scheme: HTTPS
               initialDelaySeconds: 15

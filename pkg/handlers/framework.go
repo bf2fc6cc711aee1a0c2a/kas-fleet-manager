@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
 )
 
 // handlerConfig defines the common things each REST controller must do.

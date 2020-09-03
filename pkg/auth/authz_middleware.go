@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/client/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/ocm"
 )
 
 type AuthorizationMiddleware interface {

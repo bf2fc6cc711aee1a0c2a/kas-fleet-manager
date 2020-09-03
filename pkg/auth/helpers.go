@@ -17,8 +17,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
 )
 
 // jwtCert on jwt key

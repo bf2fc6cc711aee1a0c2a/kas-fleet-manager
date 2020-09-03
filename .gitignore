@@ -30,7 +30,7 @@
 /coverage
 
 # Ignore built binaries
-/ocm-example-service
+/managed-services-api
 
 # Ignore generated templates
 /templates/*-template.json

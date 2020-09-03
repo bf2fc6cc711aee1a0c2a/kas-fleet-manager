@@ -7,7 +7,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 	ERROR_CODE_PREFIX = "OCM-EX"
 
 	// HREF for API errors
-	ERROR_HREF = "/api/ocm-example-service/v1/errors/"
+	ERROR_HREF = "/api/managed-services-api/v1/errors/"
 
 	// Forbidden occurs when a user has been blacklisted
 	ErrorForbidden ServiceErrorCode = 4

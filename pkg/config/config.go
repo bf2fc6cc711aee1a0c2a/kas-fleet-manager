@@ -137,7 +137,7 @@ func GetProjectRootDir() string {
 	var rootPath string
 	for _, d := range dirs {
 		rootPath = rootPath + "/" + d
-		if d == "ocm-managed-service-api" {
+		if d == "managed-services-api" {
 			break
 		}
 	}
