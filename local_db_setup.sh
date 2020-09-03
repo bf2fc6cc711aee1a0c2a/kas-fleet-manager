@@ -8,11 +8,11 @@
 
 set -e
 
-docker network create --subnet=172.18.0.0/16 ocm-managed-service-api-network || true
+docker network create --subnet=172.18.0.0/16 managed-services-api-network || true
 
 docker run \
-  --name=ocm-managed-service-api-db \
-  --net ocm-managed-service-api-network \
+  --name=managed-services-api-db \
+  --net managed-services-api-network \
   --ip 172.18.0.22 \
   -e POSTGRES_PASSWORD=$(cat secrets/db.password) \
   -e POSTGRES_USER=$(cat secrets/db.user) \

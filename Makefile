@@ -1,5 +1,43 @@
 .DEFAULT_GOAL := help
 
+# The details of the application:
+binary:=managed-services-api
+
+# The version needs to be different for each deployment because otherwise the
+# cluster will not pull the new image from the internal registry:
+version:=$(shell date +%s)
+
+# Default namespace for local deployments
+namespace:=managed-services-${USER}
+
+# The name of the image repository needs to start with the name of an existing
+# namespace because when the image is pushed to the internal registry of a
+# cluster it will assume that that namespace exists and will try to create a
+# corresponding image stream inside that namespace. If the namespace doesn't
+# exist the push fails. This doesn't apply when the image is pushed to a public
+# repository, like `docker.io` or `quay.io`.
+image_repository:=$(namespace)/managed-services-api
+
+# Tag for the image:
+image_tag:=$(version)
+
+# In the development environment we are pushing the image directly to the image
+# registry inside the development cluster. That registry has a different name
+# when it is accessed from outside the cluster and when it is acessed from
+# inside the cluster. We need the external name to push the image, and the
+# internal name to pull it.
+external_image_registry:=default-route-openshift-image-registry.apps-crc.testing
+internal_image_registry:=image-registry.openshift-image-registry.svc:5000
+
+# Test image name that will be used for PR checks
+test_image:=test/managed-services-api
+
+ifeq ($(shell uname -s | tr A-Z a-z), darwin)
+        PGHOST:="127.0.0.1"
+else
+        PGHOST:="172.18.0.22"
+endif
+
 # Prints a list of useful targets.
 help:
 	@echo ""
@@ -124,9 +162,31 @@ db/setup:
 .PHONY: db/setup
 
 db/teardown:
-	-docker stop ocm-managed-service-api-db
-	-docker rm ocm-managed-service-api-db
+	-docker stop managed-services-api-db
+	-docker rm managed-services-api-db
 .PHONY: db/teardown
 
-# TODO CRC Deployment stuff
+# Login to docker 
+docker/login: 
+	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
+.PHONE: docker/login
 
+# Build the binary and image
+image/build: binary
+	docker --config="${DOCKER_CONFIG}" build -t "$(external_image_registry)/$(image_repository):$(image_tag)" .
+.PHONY: image/build
+
+# Build and push the image
+image/push: image/build
+	docker --config="${DOCKER_CONFIG}" push "$(external_image_registry)/$(image_repository):$(image_tag)"
+.PHONY: image/push
+
+# Build the binary and test image 
+image/build/test: binary
+	docker build -t "$(test_image)" -f Dockerfile.integration.test .
+.PHONY: image/build/test
+
+# Run the test container
+test/run: image/build/test
+	docker run -i "$(test_image)"
+.PHONY: test/run
