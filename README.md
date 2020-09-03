@@ -38,6 +38,12 @@ make test
 make test-integration
 ```
 
+### Run locally
+
+```
+make run
+```
+
 To stop and remove the container when finished, run:
 ```
 make db/teardown
