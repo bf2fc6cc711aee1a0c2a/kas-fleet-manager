@@ -3,12 +3,12 @@ package presenters
 import (
 	"fmt"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 const (
-	BasePath = "/api/ocm-example-service/v1"
+	BasePath = "/api/managed-services-api/v1"
 )
 
 func ObjectPath(id string, obj interface{}) string {

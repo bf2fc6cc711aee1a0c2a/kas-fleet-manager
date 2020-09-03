@@ -9,7 +9,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/environments"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 )
 
 type Server interface {

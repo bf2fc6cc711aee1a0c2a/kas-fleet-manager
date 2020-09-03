@@ -1,7 +1,7 @@
 package environments
 
 import (
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 )
 
 // The development environment is intended for use while developing features, requiring manual verification

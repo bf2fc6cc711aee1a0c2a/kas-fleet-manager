@@ -10,7 +10,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/sentry-go"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 type JWTMiddleware interface {

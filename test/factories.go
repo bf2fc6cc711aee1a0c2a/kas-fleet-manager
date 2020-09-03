@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 )
 
 func (helper *Helper) NewDinosaur(species string) *api.Dinosaur {

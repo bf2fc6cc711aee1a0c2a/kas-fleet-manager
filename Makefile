@@ -64,12 +64,12 @@ lint:
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 binary: check-gopath
-	go build ./cmd/ocm-example-service
+	go build ./cmd/managed-services-api
 .PHONY: binary
 
 # Install
 install: check-gopath
-	go install ./cmd/ocm-example-service
+	go install ./cmd/managed-services-api
 .PHONY: install
 
 # Runs the unit tests.
@@ -109,14 +109,14 @@ test-integration: test-prepare
 # Regenerate openapi client and models
 generate:
 	rm -rf pkg/api/openapi
-	openapi-generator generate -i openapi/ocm-example-service.yaml -g go -o pkg/api/openapi
-	go generate ./cmd/ocm-example-service
+	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi
+	go generate ./cmd/managed-services-api
 	gofmt -w pkg/api/openapi
 .PHONY: generate
 
 run: install
-	ocm-example-service migrate
-	ocm-example-service serve
+	managed-services-api migrate
+	managed-services-api serve
 .PHONY: run
 
 db/setup:

@@ -55,7 +55,7 @@ func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursGet(ctx context.Conte
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs"
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/dinosaurs"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
@@ -183,7 +183,7 @@ func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursIdGet(ctx context.Con
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/dinosaurs/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -311,7 +311,7 @@ func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursIdPatch(ctx context.C
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/dinosaurs/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", fmt.Sprintf("%v", id), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -460,7 +460,7 @@ func (a *DefaultApiService) ApiOcmExampleServiceV1DinosaursPost(ctx context.Cont
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/ocm-example-service/v1/dinosaurs"
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/dinosaurs"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

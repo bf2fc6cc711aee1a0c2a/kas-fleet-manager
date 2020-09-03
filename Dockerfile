@@ -8,9 +8,9 @@ RUN \
     yum clean all
 
 COPY \
-    ocm-example-service \
+    managed-services-api \
     /usr/local/bin/
 
 EXPOSE 8000
 
-ENTRYPOINT ["/usr/local/bin/ocm-example-service", "serve"]
+ENTRYPOINT ["/usr/local/bin/managed-services-api", "serve"]

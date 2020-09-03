@@ -7,8 +7,8 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/spf13/cobra"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/config"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 )
 
 var dbConfig = config.NewDatabaseConfig()

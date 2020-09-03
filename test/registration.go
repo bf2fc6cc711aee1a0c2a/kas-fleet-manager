@@ -5,7 +5,7 @@ import (
 
 	gm "github.com/onsi/gomega"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 )
 
 // Register a test

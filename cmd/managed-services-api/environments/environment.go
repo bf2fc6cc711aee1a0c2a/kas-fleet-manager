@@ -9,10 +9,10 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/client/ocm"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/config"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/services"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
 const (
