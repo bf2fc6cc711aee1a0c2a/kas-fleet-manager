@@ -15,15 +15,15 @@ import (
 	gorillahandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/environments"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/server/logging"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/data/generated/openapi"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/auth"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/handlers"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server/logging"
+	"gitlab.cee.redhat.com/service/managed-services-api/data/generated/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/handlers"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
 )
 
 type apiServer struct {
@@ -42,7 +42,7 @@ func NewAPIServer() Server {
 	s := &apiServer{}
 	services := &env().Services
 
-	openAPIDefinitions, err := s.loadOpenAPISpec("ocm-example-service.yaml")
+	openAPIDefinitions, err := s.loadOpenAPISpec("managed-services-api.yaml")
 	if err != nil {
 		check(err, "Can't load OpenAPI specification")
 	}
@@ -87,27 +87,27 @@ func NewAPIServer() Server {
 	// Request logging middleware logs pertinent information about the request and response
 	mainRouter.Use(logging.RequestLoggingMiddleware)
 
-	//  /api/ocm-example-service
-	apiRouter := mainRouter.PathPrefix("/api/ocm-example-service").Subrouter()
+	//  /api/managed-services-api
+	apiRouter := mainRouter.PathPrefix("/api/managed-services-api").Subrouter()
 	apiRouter.HandleFunc("", api.SendAPI).Methods(http.MethodGet)
 	apiRouter.Use(MetricsMiddleware)
 	apiRouter.Use(db.TransactionMiddleware)
 	apiRouter.Use(gorillahandlers.CompressHandler)
 
-	//  /api/ocm-example-service/v1
+	//  /api/managed-services-api/v1
 	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
 	apiV1Router.HandleFunc("", api.SendAPIV1).Methods(http.MethodGet)
 	apiV1Router.HandleFunc("/", api.SendAPIV1).Methods(http.MethodGet)
 
-	//  /api/ocm-example-service/v1/openapi
+	//  /api/managed-services-api/v1/openapi
 	apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
-	//  /api/ocm-example-service/v1/errors
+	//  /api/managed-services-api/v1/errors
 	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
 	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
 
-	//  /api/ocm-example-service/v1/dinosaurs
+	//  /api/managed-services-api/v1/dinosaurs
 	apiV1DinosaursRouter := apiV1Router.PathPrefix("/dinosaurs").Subrouter()
 	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).Methods(http.MethodGet)
 	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Get).Methods(http.MethodGet)

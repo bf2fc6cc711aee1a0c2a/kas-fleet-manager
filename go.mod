@@ -1,4 +1,4 @@
-module gitlab.cee.redhat.com/service/sdb-ocm-example-service
+module gitlab.cee.redhat.com/service/managed-services-api
 
 go 1.12
 
@@ -19,7 +19,6 @@ require (
 	github.com/jinzhu/gorm v1.9.8
 	github.com/lib/pq v1.1.1
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
-	github.com/mongodb/mongo-go-driver v0.3.0 // indirect
 	github.com/onsi/gomega v1.7.1
 	github.com/openshift-online/ocm-sdk-go v0.1.59
 	github.com/prometheus/client_golang v0.9.3

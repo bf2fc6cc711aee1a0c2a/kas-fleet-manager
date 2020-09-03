@@ -23,13 +23,13 @@ import (
 
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/environments"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/server"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/config"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/test/mocks"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
 const (
@@ -214,7 +214,7 @@ func (helper *Helper) RestURL(path string) string {
 	if helper.AppConfig.Server.EnableHTTPS {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s/api/ocm-example-service/v1%s", protocol, helper.AppConfig.Server.BindAddress, path)
+	return fmt.Sprintf("%s://%s/api/managed-services-api/v1%s", protocol, helper.AppConfig.Server.BindAddress, path)
 }
 
 func (helper *Helper) MetricsURL(path string) string {
@@ -434,7 +434,7 @@ func getProjectRootDir() string {
 	var rootPath string
 	for _, d := range dirs {
 		rootPath = rootPath + "/" + d
-		if d == "ocm-managed-service-api" {
+		if d == "managed-services-api" {
 			break
 		}
 	}

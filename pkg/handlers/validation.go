@@ -3,8 +3,8 @@ package handlers
 import (
 	"strings"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 func validateNotEmpty(value *string, field string) validate {

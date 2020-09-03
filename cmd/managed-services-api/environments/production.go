@@ -1,7 +1,7 @@
 package environments
 
 import (
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 )
 
 var productionConfigDefaults map[string]string = map[string]string{

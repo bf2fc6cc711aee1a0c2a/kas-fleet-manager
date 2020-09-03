@@ -5,11 +5,11 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api/presenters"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/services"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
 var _ RestHandler = dinosaurHandler{}
