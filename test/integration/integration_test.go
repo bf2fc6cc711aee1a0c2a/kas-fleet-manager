@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/test"
+	"gitlab.cee.redhat.com/service/managed-services-api/test"
 )
 
 func TestMain(m *testing.M) {

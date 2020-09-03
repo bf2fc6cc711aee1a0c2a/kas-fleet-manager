@@ -6,8 +6,8 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/migrate"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/cmd/ocm-example-service/servecmd"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/migrate"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/servecmd"
 )
 
 //nolint
@@ -29,8 +29,8 @@ func main() {
 	}
 
 	rootCmd := &cobra.Command{
-		Use:  "ocm-example-service",
-		Long: "ocm-example-service serves as an example service template for new microservices",
+		Use:  "managed-services-api",
+		Long: "managed-services-api serves as an example service template for new microservices",
 	}
 
 	// All subcommands under root

@@ -6,7 +6,7 @@ import (
 
 	"github.com/jinzhu/gorm"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 // Field names suspected to contain personally identifiable information

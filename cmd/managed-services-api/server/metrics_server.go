@@ -8,9 +8,9 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/api"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/handlers"
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/logger"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/handlers"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
 )
 
 func NewMetricsServer() Server {

@@ -8,7 +8,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 
-	"gitlab.cee.redhat.com/service/sdb-ocm-example-service/pkg/config"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 )
 
 var singleton *ConnectionFactory
