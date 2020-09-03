@@ -8,12 +8,11 @@
 
 set -e
 
-docker network create --subnet=172.18.0.0/16 managed-services-api-network || true
+docker network create managed-services-api-network || true
 
 docker run \
   --name=managed-services-api-db \
   --net managed-services-api-network \
-  --ip 172.18.0.22 \
   -e POSTGRES_PASSWORD=$(cat secrets/db.password) \
   -e POSTGRES_USER=$(cat secrets/db.user) \
   -e POSTGRES_DB=$(cat secrets/db.name) \
