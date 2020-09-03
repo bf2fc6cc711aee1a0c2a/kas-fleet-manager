@@ -4,10 +4,10 @@ All URIs are relative to *https://api.openshift.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ApiOcmExampleServiceV1DinosaursGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursGet) | **Get** /api/ocm-example-service/v1/dinosaurs | Returns a list of dinosaurs
-[**ApiOcmExampleServiceV1DinosaursIdGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdGet) | **Get** /api/ocm-example-service/v1/dinosaurs/{id} | Get an dinosaur by id
-[**ApiOcmExampleServiceV1DinosaursIdPatch**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdPatch) | **Patch** /api/ocm-example-service/v1/dinosaurs/{id} | Update an dinosaur
-[**ApiOcmExampleServiceV1DinosaursPost**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursPost) | **Post** /api/ocm-example-service/v1/dinosaurs | Create a new dinosaur
+[**ApiOcmExampleServiceV1DinosaursGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursGet) | **Get** /api/managed-services-api/v1/dinosaurs | Returns a list of dinosaurs
+[**ApiOcmExampleServiceV1DinosaursIdGet**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdGet) | **Get** /api/managed-services-api/v1/dinosaurs/{id} | Get an dinosaur by id
+[**ApiOcmExampleServiceV1DinosaursIdPatch**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursIdPatch) | **Patch** /api/managed-services-api/v1/dinosaurs/{id} | Update an dinosaur
+[**ApiOcmExampleServiceV1DinosaursPost**](DefaultApi.md#ApiOcmExampleServiceV1DinosaursPost) | **Post** /api/managed-services-api/v1/dinosaurs | Create a new dinosaur
 
 
 # **ApiOcmExampleServiceV1DinosaursGet**
