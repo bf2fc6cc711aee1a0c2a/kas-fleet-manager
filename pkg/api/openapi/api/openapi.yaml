@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  description: OCM Example Service API
-  title: OCM Example Service API
+  description: OCM Managed Service API
+  title: OCM Managed Service API
   version: 0.0.1
 servers:
 - description: Main (production) server
@@ -11,17 +11,17 @@ servers:
 - description: current domain
   url: /
 paths:
-  /api/managed-services-api/v1/dinosaurs:
+  /api/ocm-example-service/v1/kafkas:
     get:
       parameters:
-      - description: Page number of record list when record list exceeds specified page size
+      - description: Page number of record list when record list exceeds specified
+          page size
         explode: true
         in: query
         name: page
         required: false
         schema:
           default: 1
-          format: int32
           minimum: 1
           type: integer
         style: form
@@ -32,7 +32,6 @@ paths:
         required: false
         schema:
           default: 100
-          format: int32
           minimum: 0
           type: integer
         style: form
@@ -79,25 +78,25 @@ paths:
           type: string
         style: form
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DinosaurList'
-          description: A JSON array of dinosaur objects
-        401:
+                $ref: '#/components/schemas/KafkaList'
+          description: A JSON array of kafka objects
+        "401":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
-        403:
+        "403":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unauthorized to perform operation
-        500:
+        "500":
           content:
             application/json:
               schema:
@@ -105,56 +104,56 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Returns a list of dinosaurs
+      summary: Returns a list of kafkas
     post:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Dinosaur'
-        description: Dinosaur data
+              $ref: '#/components/schemas/Kafka'
+        description: Kafka data
         required: true
       responses:
-        201:
+        "201":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
+                $ref: '#/components/schemas/Kafka'
           description: Created
-        400:
+        "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Validation errors occurred
-        401:
+        "401":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
-        403:
+        "403":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unauthorized to perform operation
-        409:
+        "409":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: Dinosaur already exists
-        500:
+          description: Kafka already exists
+        "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: An unexpected error occurred creating the dinosaur
+          description: An unexpected error occurred creating the kafka
       security:
       - Bearer: []
-      summary: Create a new dinosaur
-  /api/managed-services-api/v1/dinosaurs/{id}:
+      summary: Create a new kafka
+  /api/ocm-example-service/v1/kafkas/{id}:
     get:
       parameters:
       - description: The id of record
@@ -166,31 +165,31 @@ paths:
           type: string
         style: simple
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
-          description: Dinosaur found by id
-        401:
+                $ref: '#/components/schemas/Kafka'
+          description: Kafka found by id
+        "401":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
-        403:
+        "403":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unauthorized to perform operation
-        404:
+        "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No dinosaur with specified id exists
-        500:
+          description: No kafka with specified id exists
+        "500":
           content:
             application/json:
               schema:
@@ -198,7 +197,7 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Get an dinosaur by id
+      summary: Get an kafka by id
     patch:
       parameters:
       - description: The id of record
@@ -213,55 +212,55 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DinosaurPatchRequest'
-        description: Updated dinosaur data
+              $ref: '#/components/schemas/KafkaPatchRequest'
+        description: Updated kafka data
         required: true
       responses:
-        200:
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dinosaur'
-          description: Dinosaur updated successfully
-        400:
+                $ref: '#/components/schemas/Kafka'
+          description: Kafka updated successfully
+        "400":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Validation errors occurred
-        401:
+        "401":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
-        403:
+        "403":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unauthorized to perform operation
-        404:
+        "404":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No dinosaur with specified id exists
-        409:
+          description: No kafka with specified id exists
+        "409":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: Dinosaur already exists
-        500:
+          description: Kafka already exists
+        "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-          description: Unexpected error updating dinosaur
+          description: Unexpected error updating kafka
       security:
       - Bearer: []
-      summary: Update an dinosaur
+      summary: Update an kafka
 components:
   parameters:
     id:
@@ -274,14 +273,14 @@ components:
         type: string
       style: simple
     page:
-      description: Page number of record list when record list exceeds specified page size
+      description: Page number of record list when record list exceeds specified page
+        size
       explode: true
       in: query
       name: page
       required: false
       schema:
         default: 1
-        format: int32
         minimum: 1
         type: integer
       style: form
@@ -293,7 +292,6 @@ components:
       required: false
       schema:
         default: 100
-        format: int32
         minimum: 0
         type: integer
       style: form
@@ -355,13 +353,10 @@ components:
         kind:
           type: string
         page:
-          format: int32
           type: integer
         size:
-          format: int32
           type: integer
         total:
-          format: int32
           type: integer
       required:
       - items
@@ -373,53 +368,67 @@ components:
     Error:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
-      - properties:
-          code:
-            type: string
-          reason:
-            type: string
-          operation_id:
-            type: string
-        type: object
+      - $ref: '#/components/schemas/Error_allOf'
     ErrorList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - properties:
-          items:
-            items:
-              $ref: '#/components/schemas/Error'
-            type: array
-        type: object
-    Dinosaur:
+      - $ref: '#/components/schemas/ErrorList_allOf'
+    Kafka:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
-      - properties:
-          species:
-            type: string
-          created_at:
-            format: date-time
-            type: string
-          updated_at:
-            format: date-time
-            type: string
-        type: object
-    DinosaurList:
+      - $ref: '#/components/schemas/Kafka_allOf'
+    KafkaList:
       allOf:
       - $ref: '#/components/schemas/List'
-      - properties:
-          items:
-            items:
-              allOf:
-              - $ref: '#/components/schemas/Dinosaur'
-            type: array
-        type: object
-    DinosaurPatchRequest:
+      - $ref: '#/components/schemas/KafkaList_allOf'
+    KafkaPatchRequest:
       example:
-        species: species
+        cluster_id: cluster_id
       properties:
-        species:
+        cluster_id:
           type: string
       type: object
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+    ErrorList_allOf:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/Error'
+          type: array
+    Kafka_allOf:
+      properties:
+        clusterID:
+          type: string
+        status:
+          type: string
+        cloud_provider:
+          type: string
+        multiAZ:
+          type: string
+        region:
+          type: string
+        name:
+          type: string
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+    KafkaList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/Kafka'
+          type: array
   securitySchemes:
     Bearer:
       bearerFormat: JWT

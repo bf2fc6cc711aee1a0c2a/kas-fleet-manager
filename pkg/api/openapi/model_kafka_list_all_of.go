@@ -9,10 +9,7 @@
 
 package openapi
 
-// List struct for List
-type List struct {
-	Kind  string `json:"kind"`
-	Page  int32  `json:"page"`
-	Size  int32  `json:"size"`
-	Total int32  `json:"total"`
+// KafkaListAllOf struct for KafkaListAllOf
+type KafkaListAllOf struct {
+	Items []Kafka `json:"items,omitempty"`
 }

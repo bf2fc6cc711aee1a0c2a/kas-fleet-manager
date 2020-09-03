@@ -10,22 +10,25 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
-func addDinosaurs() *gormigrate.Migration {
-	type Dinosaur struct {
+func addKafka() *gormigrate.Migration {
+	type Kafka struct {
 		Model
-		Species string `gorm:"index"`
+		Region        string
+		ClusterID     string
+		CloudProvider string
+		Name          string `gorm:"index"`
 	}
 
 	return &gormigrate.Migration{
-		ID: "201911212019",
+		ID: "202009040909",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&Dinosaur{}).Error; err != nil {
+			if err := tx.AutoMigrate(&Kafka{}).Error; err != nil {
 				return err
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.DropTable(&Dinosaur{}).Error; err != nil {
+			if err := tx.DropTable(&Kafka{}).Error; err != nil {
 				return err
 			}
 			return nil
