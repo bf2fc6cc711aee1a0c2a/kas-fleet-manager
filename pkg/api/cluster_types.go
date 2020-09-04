@@ -1,16 +1,15 @@
 package api
 
+import (
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+)
+
 type Cluster struct {
 	Meta
-	CloudProvider     string `json:"cloud_provider"`
-	ClusterID         string `json:"cluster_id"`   // maps to id in an osd cluster object
-	ClusterUUID       string `json:"cluster_uuid"` // maps to external id in an osd cluster object
-	MultiAZ           string `json:"multiAZ"`
-	Region            string `json:"region"`
-	Status            string `json:"status"`
-	AvailableCapacity *AvailableClusterCapacity
-}
-
-type AvailableClusterCapacity struct {
-	// Storage, etc.
+	CloudProvider string `json:"cloud_provider"`
+	ClusterID     string
+	ExternalID    string
+	MultiAZ       bool   `json:"multi_az"`
+	Region        string `json:"region"`
+	State         clustersmgmtv1.ClusterState
 }

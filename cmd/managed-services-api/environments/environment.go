@@ -104,6 +104,13 @@ func (e *Env) Initialize() error {
 		err = fmt.Errorf("Unable to read configuration files: %s", err)
 		glog.Error(err)
 		sentry.CaptureException(err)
+		return err
+	}
+
+	// Add check to ensure aws config is set in the secrets/aws.* files
+	awsConfig := environment.Config.AWS
+	if awsConfig.AccessKey == "" || awsConfig.AccountID == "" || awsConfig.SecretAccessKey == "" {
+		return fmt.Errorf("No AWS access key, account id or secret access key has been provided")
 	}
 
 	switch e.Name {
