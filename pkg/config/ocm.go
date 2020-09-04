@@ -23,7 +23,7 @@ func NewOCMConfig() *OCMConfig {
 		TokenURL:         "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
 		ClientIDFile:     "secrets/ocm-service.clientId",
 		ClientSecretFile: "secrets/ocm-service.clientSecret",
-		SelfTokenFile:    "",
+		SelfTokenFile:    "secrets/ocm-service.token",
 		Debug:            false,
 		EnableMock:       false,
 	}

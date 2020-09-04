@@ -9,6 +9,7 @@ require (
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.0.2 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
@@ -16,7 +17,7 @@ require (
 	github.com/go-resty/resty v1.8.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/uuid v1.1.1
-	github.com/gorilla/handlers v1.4.0
+	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3
 	github.com/jinzhu/gorm v1.9.8
 	github.com/lib/pq v1.1.1
@@ -25,12 +26,12 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.124
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/common v0.13.0 // indirect
+	github.com/rs/xid v1.2.1
 	github.com/segmentio/ksuid v1.0.2
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v0.0.6
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
-	gitlab.cee.redhat.com/service/uhc-account-manager v0.0.0-20191122195659-c7e0227a654b
-	gitlab.cee.redhat.com/service/uhc-example-service v0.0.0-20191122090335-b06941ce57b9
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	golang.org/x/sys v0.0.0-20200831180312-196b9ba8737a // indirect
 	google.golang.org/protobuf v1.25.0 // indirect

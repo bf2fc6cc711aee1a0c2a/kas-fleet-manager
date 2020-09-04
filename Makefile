@@ -196,3 +196,13 @@ image/build/test: binary
 test/run: image/build/test
 	docker run -i "$(test_image)"
 .PHONY: test/run
+
+# Setup for AWS credentials
+aws/setup:
+	@echo -n "$(AWS_ACCOUNT_ID)" > secrets/aws.accountid
+	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
+	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
+.PHONY: aws/setup
+
+# TODO CRC Deployment stuff
+

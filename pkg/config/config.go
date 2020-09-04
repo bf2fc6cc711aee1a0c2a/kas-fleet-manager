@@ -19,6 +19,7 @@ type ApplicationConfig struct {
 	Database    *DatabaseConfig    `json:"database"`
 	OCM         *OCMConfig         `json:"ocm"`
 	Sentry      *SentryConfig      `json:"sentry"`
+	AWS         *AWSConfig         `json:"aws"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
@@ -29,6 +30,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		Database:    NewDatabaseConfig(),
 		OCM:         NewOCMConfig(),
 		Sentry:      NewSentryConfig(),
+		AWS:         NewAWSConfig(),
 	}
 }
 
@@ -40,6 +42,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Database.AddFlags(flagset)
 	c.OCM.AddFlags(flagset)
 	c.Sentry.AddFlags(flagset)
+	c.AWS.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
@@ -64,6 +67,10 @@ func (c *ApplicationConfig) ReadFiles() error {
 		return err
 	}
 	err = c.Sentry.ReadFiles()
+	if err != nil {
+		return err
+	}
+	err = c.AWS.ReadFiles()
 	return err
 }
 
