@@ -47,7 +47,8 @@ func NewAPIServer() Server {
 		check(err, "Can't load OpenAPI specification")
 	}
 
-	kafkaHandler := handlers.NewKafkaHandler(services.Kafka)
+
+	kafkaHandler := handlers.NewKafkaHandler(services.Kafka, services.ClusterService)
 	errorsHandler := handlers.NewErrorsHandler()
 
 	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
@@ -110,6 +111,10 @@ func NewAPIServer() Server {
 	//  /api/managed-services-api/v1/kafkas
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
+
+	// TODO: Remove this later once https://issues.redhat.com/browse/MGDSTRM-22
+	// is verified!
+	apiV1KafkasRouter.HandleFunc("/osd", kafkaHandler.ClusterCreate).Methods(http.MethodPost)
 	apiV1KafkasRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers

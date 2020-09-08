@@ -34,6 +34,10 @@ type Env struct {
 
 type Services struct {
 	Kafka services.KafkaService
+
+	// TODO: Remove this later once https://issues.redhat.com/browse/MGDSTRM-22
+	// is verified
+	ClusterService services.ClusterService
 }
 
 type Clients struct {
@@ -107,12 +111,6 @@ func (e *Env) Initialize() error {
 		return err
 	}
 
-	// Add check to ensure aws config is set in the secrets/aws.* files
-	awsConfig := environment.Config.AWS
-	if awsConfig.AccessKey == "" || awsConfig.AccountID == "" || awsConfig.SecretAccessKey == "" {
-		return fmt.Errorf("No AWS access key, account id or secret access key has been provided")
-	}
-
 	switch e.Name {
 	case DevelopmentEnv:
 		err = loadDevelopment(environment)
@@ -127,10 +125,15 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
+	clusterService := services.NewClusterService(env.Clients.OCM.Connection, environment.Config.AWS)
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
-	kafka := services.NewKafkaService(env.DBFactory, syncsetService)
+	kafka := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 
 	env.Services.Kafka = kafka
+
+	// TODO: Remove this later once https://issues.redhat.com/browse/MGDSTRM-22
+	// is verified
+	env.Services.ClusterService = clusterService
 }
 
 func (env *Env) LoadClients() error {

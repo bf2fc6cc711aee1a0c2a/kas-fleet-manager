@@ -1,7 +1,6 @@
 package services
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/rs/xid"
@@ -18,7 +17,7 @@ const (
 )
 
 type ClusterService interface {
-	Create(ctx context.Context, cluster *api.Cluster) (*clustersmgmtv1.Cluster, *errors.ServiceError)
+	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *errors.ServiceError)
 }
 
 type clusterService struct {
@@ -27,7 +26,7 @@ type clusterService struct {
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(ocmClient *sdkClient.Connection, awsConfig *config.AWSConfig) *clusterService {
+func NewClusterService(ocmClient *sdkClient.Connection, awsConfig *config.AWSConfig) ClusterService {
 	return &clusterService{
 		ocmClient: ocmClient,
 		awsConfig: awsConfig,

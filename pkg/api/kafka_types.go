@@ -9,6 +9,7 @@ type Kafka struct {
 	CloudProvider string `json:"cloud_provider"`
 	Name          string `json:"cluster_name"`
 	Status        string `json:"status"`
+	Owner         string `json:"owner"` // TODO: ocm owner?
 }
 
 type KafkaList []*Kafka
