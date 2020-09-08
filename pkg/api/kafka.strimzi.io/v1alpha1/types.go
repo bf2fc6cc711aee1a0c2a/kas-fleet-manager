@@ -33,12 +33,7 @@ type KafkaStorage struct {
 	DeleteClaim bool   `json:"deleteClaim,omitempty"`
 }
 
-type KafkaSpecKafkaConfig struct {
-	OffsetsTopicReplicationFactor        string `json:"offsets.topic.replication.factor,omitempty"`
-	TransactionStateLogReplicationFactor string `json:"transaction.state.log.replication.factor,omitempty"`
-	TransactionStateLogMinIsr            string `json:"transaction.state.log.min.isr,omitempty"`
-	LogMessageFormatVersion              string `json:"log.message.format.version,omitempty"`
-}
+type KafkaSpecKafkaConfig struct{}
 
 // InstallationSpec defines the desired state of Installation
 // +k8s:openapi-gen=true

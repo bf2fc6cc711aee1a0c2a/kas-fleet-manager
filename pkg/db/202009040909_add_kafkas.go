@@ -17,6 +17,8 @@ func addKafka() *gormigrate.Migration {
 		ClusterID     string
 		CloudProvider string
 		Name          string `gorm:"index"`
+		Status        string
+		Owner         string
 	}
 
 	return &gormigrate.Migration{

@@ -1,4 +1,7 @@
 .DEFAULT_GOAL := help
+AWS_ACCOUNT_ID := "dummy-aws-account-id"
+AWS_ACCESS_KEY := "dummy-aws-access-key"
+AWS_SECRET_ACCESS_KEY := "dummy-aws-secret-access-key"
 
 # The details of the application:
 binary:=managed-services-api
