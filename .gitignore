@@ -44,3 +44,4 @@ cmd/managed-services-api
 
 # Ignore AWS secret files
 /secrets/aws.*
+/secrets/ocm-service.token

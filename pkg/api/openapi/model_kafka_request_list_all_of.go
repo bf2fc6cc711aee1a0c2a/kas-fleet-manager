@@ -9,7 +9,7 @@
 
 package openapi
 
-// ErrorListAllOf struct for ErrorListAllOf
-type ErrorListAllOf struct {
-	Items []Error `json:"items,omitempty"`
+// KafkaRequestListAllOf struct for KafkaRequestListAllOf
+type KafkaRequestListAllOf struct {
+	Items []KafkaRequest `json:"items,omitempty"`
 }

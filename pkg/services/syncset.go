@@ -10,7 +10,6 @@ import (
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1alpha1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	//corev1 "k8s.io/api/core/v1"
 )
 
 type SyncsetService interface {
@@ -53,7 +52,7 @@ func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, c
 }
 
 // syncset builder for a kafka/strimzi custom resource
-func newKafkaSyncsetBuilder(kafka *api.Kafka) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
+func newKafkaSyncsetBuilder(kafka *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
 	kafkaName := fmt.Sprintf("%s-%s", kafka.Name, xid.New().String())
 
 	// build array of objects to be created by the syncset

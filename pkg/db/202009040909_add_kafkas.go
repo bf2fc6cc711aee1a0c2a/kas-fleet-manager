@@ -10,12 +10,13 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
-func addKafka() *gormigrate.Migration {
-	type Kafka struct {
+func addKafkaRequest() *gormigrate.Migration {
+	type KafkaRequest struct {
 		Model
 		Region        string
 		ClusterID     string
 		CloudProvider string
+		MultiAZ       string
 		Name          string `gorm:"index"`
 		Status        string
 		Owner         string
@@ -24,13 +25,13 @@ func addKafka() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202009040909",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&Kafka{}).Error; err != nil {
+			if err := tx.AutoMigrate(&KafkaRequest{}).Error; err != nil {
 				return err
 			}
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.DropTable(&Kafka{}).Error; err != nil {
+			if err := tx.DropTable(&KafkaRequest{}).Error; err != nil {
 				return err
 			}
 			return nil

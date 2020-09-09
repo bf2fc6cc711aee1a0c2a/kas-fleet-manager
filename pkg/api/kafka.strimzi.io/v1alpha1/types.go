@@ -35,7 +35,7 @@ type KafkaStorage struct {
 
 type KafkaSpecKafkaConfig struct{}
 
-// InstallationSpec defines the desired state of Installation
+// KafkaSpec defines the desired state of Kafka
 // +k8s:openapi-gen=true
 type KafkaSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -46,7 +46,7 @@ type KafkaSpec struct {
 	EntityOperator KafkaSpecEntityOperator `json:"entityOperator,omitempty"`
 }
 
-// InstallationStatus defines the observed state of Installation
+// KafkaStatus defines the observed state of Kafka
 // +k8s:openapi-gen=true
 type KafkaStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
@@ -56,7 +56,7 @@ type KafkaStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// Installation is the Schema for the installations API
+// Kafka is the Schema for the Kafka API
 // +k8s:openapi-gen=true
 type Kafka struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -68,13 +68,13 @@ type Kafka struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// InstallationList contains a list of Installation
+// KafkaList contains a list of Kafkas
 type KafkaList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Kafka `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&Kafka{}, &KafkaList{})
-}
+//func init() {
+//	SchemeBuilder.Register(&Kafka{}, &KafkaList{})
+//}
