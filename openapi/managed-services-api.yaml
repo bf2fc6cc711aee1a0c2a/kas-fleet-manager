@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: OCM Managed Service API
-  description: OCM Managed Service API
+  title: Managed Service API
+  description: Managed Service API
   version: 0.0.1
 servers:
   - url: https://api.openshift.com
@@ -11,43 +11,9 @@ servers:
   - url: /
     description: current domain
 paths:
-  /api/ocm-example-service/v1/kafkas:
-    get:
-      summary: Returns a list of kafkas
-      security:
-        - Bearer: []
-      responses:
-        '200':
-          description: A JSON array of kafka objects
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/KafkaList'
-        '401':
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Unauthorized to perform operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/size'
-        - $ref: '#/components/parameters/search'
-        - $ref: '#/components/parameters/orderBy'
+  /api/managed-services-api/v1/kafkas:
     post:
-      summary: Create a new kafka
+      summary: Create a new kafka Request
       security:
         - Bearer: []
       requestBody:
@@ -56,14 +22,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Kafka'
+              $ref: '#/components/schemas/KafkaRequest'
       responses:
-        '201':
-          description: Created
+        '202':
+          description: Accepted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Kafka'
+                $ref: '#/components/schemas/KafkaRequest'
         '400':
           description: Validation errors occurred
           content:
@@ -89,103 +55,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: An unexpected error occurred creating the kafka
+          description: An unexpected error occurred creating the Kafka Request
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /api/ocm-example-service/v1/kafkas/{id}:
-    get:
-      summary: Get an kafka by id
-      security:
-        - Bearer: []
-      responses:
-        '200':
-          description: Kafka found by id
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Kafka'
-        '401':
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Unauthorized to perform operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: No kafka with specified id exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    patch:
-      summary: Update an kafka
-      security:
-        - Bearer: []
-      requestBody:
-        description: Updated kafka data
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/KafkaPatchRequest'
-      responses:
-        '200':
-          description: Kafka updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Kafka'
-        '400':
-          description: Validation errors occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Unauthorized to perform operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: No kafka with specified id exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Kafka already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Unexpected error updating kafka
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-    parameters:
-      - $ref: '#/components/parameters/id'
 components:
   securitySchemes:
     Bearer:
@@ -239,7 +113,7 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Error'
-    Kafka:
+    KafkaRequest:
       allOf:
         - $ref: '#/components/schemas/ObjectReference'
         - type: object
@@ -250,9 +124,11 @@ components:
               type: string
             cloud_provider:
               type: string
-            multiAZ:
+            multi_az:
               type: string
             region:
+              type: string
+            owner:
               type: string
             name:
               type: string
@@ -262,7 +138,7 @@ components:
             updated_at:
               type: string
               format: date-time
-    KafkaList:
+    KafkaRequestList:
       allOf:
         - $ref: '#/components/schemas/List'
         - type: object
@@ -271,12 +147,7 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/Kafka'
-    KafkaPatchRequest:
-      type: object
-      properties:
-        cluster_id:
-          type: string
+                  - $ref: '#/components/schemas/KafkaRequest'
   parameters:
     id:
       name: id

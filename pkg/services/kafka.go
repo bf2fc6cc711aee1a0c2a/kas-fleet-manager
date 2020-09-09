@@ -9,39 +9,35 @@ import (
 )
 
 type KafkaService interface {
-	Create(kafka *api.Kafka) *errors.ServiceError
-	RegisterKafkaJob(kafka *api.Kafka) *errors.ServiceError
+	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
 
 type kafkaService struct {
 	connectionFactory *db.ConnectionFactory
 	syncsetService    SyncsetService
-	clusterService    ClusterService
 }
 
 type kafkaStatus string
-
-var _ KafkaService = &kafkaService{}
 
 const (
 	statusAccepted kafkaStatus = "accepted"
 )
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
 		syncsetService:    syncsetService,
-		clusterService:    clusterService,
 	}
 }
 
 // RegisterKafkaJob registers a new job in the kafka table
-func (k *kafkaService) RegisterKafkaJob(kafka *api.Kafka) *errors.ServiceError {
+func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	kafka.Owner = "dummy-owner"
-	kafka.Status = string(statusAccepted)
-	if err := dbConn.Save(kafka).Error; err != nil {
-		return errors.GeneralError("failed to create kafka job:", err)
+	kafkaRequest.Owner = "dummy-owner"
+	kafkaRequest.Status = string(statusAccepted)
+	if err := dbConn.Save(kafkaRequest).Error; err != nil {
+		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
 	return nil
 }
@@ -51,7 +47,7 @@ func (k *kafkaService) RegisterKafkaJob(kafka *api.Kafka) *errors.ServiceError {
 // in the desired region for the desired cloud provider.
 // The kafka object in the database will be updated with a completed_at
 // timestamp and the corresponding cluster identifier.
-func (k *kafkaService) Create(kafka *api.Kafka) *errors.ServiceError {
+func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	// TODO: Call out to the cluster service
@@ -62,23 +58,23 @@ func (k *kafkaService) Create(kafka *api.Kafka) *errors.ServiceError {
 	}
 
 	// update the kafka object to point to the cluster id
-	kafka.ClusterID = cluster.ClusterID
+	kafkaRequest.ClusterID = cluster.ClusterID
 
 	// create the syncset builder
-	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafka)
+	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest)
 	if err != nil {
-		return errors.GeneralError("error creating kafka syncset builder:", err)
+		return errors.GeneralError("error creating kafka syncset builder: %v", err)
 	}
 
 	// create the syncset
-	_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafka.ClusterID)
+	_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
 	if err != nil {
-		return errors.GeneralError("error creating syncset:", err)
+		return errors.GeneralError("error creating syncset: %v", err)
 	}
 
 	// update kafka completed_at timestamp
-	if err := dbConn.Model(&kafka).Update("completed_at", time.Now()).Error; err != nil {
-		return errors.GeneralError("failed to update completed at time:", err)
+	if err := dbConn.Model(&kafkaRequest).Update("completed_at", time.Now()).Error; err != nil {
+		return errors.GeneralError("failed to update completed at time: %v", err)
 	}
 
 	return nil

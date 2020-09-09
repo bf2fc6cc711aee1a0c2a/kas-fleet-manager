@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"net/http"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -10,62 +9,37 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
-//var _ RestHandler = &kafkaHandler{}
-
 type kafkaHandler struct {
 	service services.KafkaService
-	clusterService services.ClusterService
 }
 
-func NewKafkaHandler(service services.KafkaService, clusterService services.ClusterService) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService) *kafkaHandler {
 	return &kafkaHandler{
 		service: service,
-		clusterService: clusterService,
 	}
 }
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var kafka openapi.Kafka
+	var kafkaRequest openapi.KafkaRequest
 	cfg := &handlerConfig{
-		MarshalInto: &kafka,
+		MarshalInto: &kafkaRequest,
 		Validate: []validate{
-			validateEmpty(&kafka.Id, "id"),
-			validateNotEmpty(&kafka.Region, "region"),
-			validateNotEmpty(&kafka.CloudProvider, "cloud_provider"),
-			validateNotEmpty(&kafka.Name, "cluster_name"),
+			validateEmpty(&kafkaRequest.Id, "id"),
+			validateNotEmpty(&kafkaRequest.Region, "region"),
+			validateNotEmpty(&kafkaRequest.CloudProvider, "cloud_provider"),
+			validateNotEmpty(&kafkaRequest.Name, "cluster_name"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			convKafka := presenters.ConvertKafka(kafka)
+			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
 			err := h.service.RegisterKafkaJob(convKafka)
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentKafka(convKafka), nil
+			return presenters.PresentKafkaRequest(convKafka), nil
 		},
 		ErrorHandler: handleError,
 	}
 
 	// return 202 status accepted
 	handle(w, r, cfg, http.StatusAccepted)
-}
-
-// TODO: Temporary endpoint for verification only!!!!
-// Jira: https://issues.redhat.com/browse/MGDSTRM-22
-func (h kafkaHandler) ClusterCreate(w http.ResponseWriter, r *http.Request) {
-	cluster := api.Cluster{
-		CloudProvider: "aws",
-		Region:        "eu-west-1",
-	}
-	cfg := &handlerConfig{
-		Action: func() (interface{}, *errors.ServiceError) {
-			if _, err := h.clusterService.Create(&cluster); err != nil {
-				return nil, err
-			}
-			return nil, nil
-		},
-		ErrorHandler: handleError,
-	}
-
-	// return 201 status created
-	handle(w, r, cfg, http.StatusCreated)
 }

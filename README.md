@@ -5,8 +5,10 @@ This project is based on OCM microservice.
 
 ## Prerequisites
 * [OpenAPI Generator](https://openapi-generator.tech/docs/installation/)
-* [docker](https://docs.docker.com/get-docker/) - to create database
+* [Golang](https://golang.org/dl/)
+* [Docker](https://docs.docker.com/get-docker/) - to create database
 * [gotestsum](https://github.com/gotestyourself/gotestsum#install) - to run the tests
+* [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
 ## Running the service locally
 An instance of Postgres is required to run this service locally, the following steps will install and setup a postgres locally for you with Docker. 
@@ -16,7 +18,7 @@ make db/setup
 
 To log in to the database: 
 ```
-psql -h 172.18.0.22 -d serviceapitests -U ocm_managed_service_api -W 
+docker exec -it managed-services-api-db psql -d serviceapitests -U ocm_managed_service_api -W
 password: foobar-bizz-buzz
 ```
 
@@ -25,12 +27,21 @@ Set up the AWS credential files (only needed if creating new OSD clusters):
 make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
 ```
 
-Modify the `ocm-service.token` file in the `secrets` directory to point to your OCM offline token. The OSD offline token can be found [here](https://qaprodauth.cloud.redhat.com/openshift/token).
+Modify the `ocm-service.token` file in the `secrets` directory to point to your temporary ocm token. 
+```sh
+# Log in to ocm
+# osd_offline_token can be retrieved from https://qaprodauth.cloud.redhat.com/openshift/token
+ocm login --url="http://localhost:8000" --token="<osd_offline_token>"
+
+# Generate a new temporary token
+# and update ocm-service.token file
+echo -n $(ocm token) > secrets/ocm-service.token
+
+```
 
 To run the service: 
 ```
 make run 
-ocm login --url="http://localhost:8000" --token="<OSD_TOKEN>"
 ```
 
 ### Run the tests

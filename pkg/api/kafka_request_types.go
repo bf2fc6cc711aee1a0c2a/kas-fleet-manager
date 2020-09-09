@@ -2,18 +2,19 @@ package api
 
 import "github.com/jinzhu/gorm"
 
-type Kafka struct {
+type KafkaRequest struct {
 	Meta
 	Region        string `json:"region"`
 	ClusterID     string `json:"clusterID"`
 	CloudProvider string `json:"cloud_provider"`
+	MultiAZ       string `json:"multi_az"`
 	Name          string `json:"cluster_name"`
 	Status        string `json:"status"`
 	Owner         string `json:"owner"` // TODO: ocm owner?
 }
 
-type KafkaList []*Kafka
-type KafkaIndex map[string]*Kafka
+type KafkaList []*KafkaRequest
+type KafkaIndex map[string]*KafkaRequest
 
 func (l KafkaList) Index() KafkaIndex {
 	index := KafkaIndex{}
@@ -23,6 +24,6 @@ func (l KafkaList) Index() KafkaIndex {
 	return index
 }
 
-func (org *Kafka) BeforeCreate(scope *gorm.Scope) error {
+func (org *KafkaRequest) BeforeCreate(scope *gorm.Scope) error {
 	return scope.SetColumn("ID", NewID())
 }

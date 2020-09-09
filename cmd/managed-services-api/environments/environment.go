@@ -34,10 +34,6 @@ type Env struct {
 
 type Services struct {
 	Kafka services.KafkaService
-
-	// TODO: Remove this later once https://issues.redhat.com/browse/MGDSTRM-22
-	// is verified
-	ClusterService services.ClusterService
 }
 
 type Clients struct {
@@ -125,15 +121,10 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
-	clusterService := services.NewClusterService(env.Clients.OCM.Connection, environment.Config.AWS)
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
-	kafka := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
 
-	env.Services.Kafka = kafka
-
-	// TODO: Remove this later once https://issues.redhat.com/browse/MGDSTRM-22
-	// is verified
-	env.Services.ClusterService = clusterService
+	env.Services.Kafka = kafkaService
 }
 
 func (env *Env) LoadClients() error {

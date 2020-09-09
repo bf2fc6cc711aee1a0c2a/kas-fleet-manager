@@ -5,27 +5,33 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 )
 
-func ConvertKafka(org openapi.Kafka) *api.Kafka {
-	return &api.Kafka{
+func ConvertKafkaRequest(kafkaRequest openapi.KafkaRequest) *api.KafkaRequest {
+	return &api.KafkaRequest{
 		Meta: api.Meta{
-			ID: org.Id,
+			ID: kafkaRequest.Id,
 		},
-		Region:    org.Region,
-		Name:      org.Name,
-		ClusterID: org.ClusterID,
+		Region:        kafkaRequest.Region,
+		Name:          kafkaRequest.Name,
+		ClusterID:     kafkaRequest.ClusterID,
+		CloudProvider: kafkaRequest.CloudProvider,
+		MultiAZ:       kafkaRequest.MultiAz,
+		Owner:         kafkaRequest.Owner,
 	}
 }
 
-func PresentKafka(kafka *api.Kafka) openapi.Kafka {
-	reference := PresentReference(kafka.ID, kafka)
-	return openapi.Kafka{
-		Id:        reference.Id,
-		Kind:      reference.Kind,
-		Href:      reference.Href,
-		Region:    kafka.Region,
-		Name:      kafka.Name,
-		ClusterID: kafka.ClusterID,
-		CreatedAt: kafka.CreatedAt,
-		UpdatedAt: kafka.UpdatedAt,
+func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) openapi.KafkaRequest {
+	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
+	return openapi.KafkaRequest{
+		Id:            reference.Id,
+		Kind:          reference.Kind,
+		Href:          reference.Href,
+		Region:        kafkaRequest.Region,
+		Name:          kafkaRequest.Name,
+		ClusterID:     kafkaRequest.ClusterID,
+		CloudProvider: kafkaRequest.CloudProvider,
+		MultiAz:       kafkaRequest.MultiAZ,
+		Owner:         kafkaRequest.Owner,
+		CreatedAt:     kafkaRequest.CreatedAt,
+		UpdatedAt:     kafkaRequest.UpdatedAt,
 	}
 }

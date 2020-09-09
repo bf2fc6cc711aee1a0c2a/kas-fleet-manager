@@ -17,7 +17,7 @@ func ObjectPath(id string, obj interface{}) string {
 
 func path(i interface{}) string {
 	switch i.(type) {
-	case api.Kafka, *api.Kafka:
+	case api.KafkaRequest, *api.KafkaRequest:
 		return "kafkas"
 	case errors.ServiceError, *errors.ServiceError:
 		return "errors"

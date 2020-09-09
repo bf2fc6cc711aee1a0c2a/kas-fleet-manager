@@ -59,7 +59,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 // buildNewClusterObject creates a new Cluster object based on the cluster configuration passed
 func (c clusterService) buildNewClusterObject(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error) {
 	clusterBuilder := clustersmgmtv1.NewCluster()
-	clusterBuilder.Name(fmt.Sprintf("%s-%s", clusterNamePrefix, xid.New().String()))
+	clusterBuilder.Name(fmt.Sprintf("%s%s", clusterNamePrefix, xid.New().String()))
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cluster.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(cluster.Region))
 	// clusterBuilder.MultiAZ(cluster.MultiAZ) // Currently disabled as we do not have quota for this type of cluster.

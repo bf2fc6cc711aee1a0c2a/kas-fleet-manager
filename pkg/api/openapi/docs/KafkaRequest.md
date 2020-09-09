@@ -1,14 +1,18 @@
-# KafkaAllOf
+# KafkaRequest
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
+**Id** | **string** |  | [optional] 
+**Kind** | **string** |  | [optional] 
+**Href** | **string** |  | [optional] 
 **ClusterID** | **string** |  | [optional] 
 **Status** | **string** |  | [optional] 
 **CloudProvider** | **string** |  | [optional] 
-**MultiAZ** | **string** |  | [optional] 
+**MultiAz** | **string** |  | [optional] 
 **Region** | **string** |  | [optional] 
+**Owner** | **string** |  | [optional] 
 **Name** | **string** |  | [optional] 
 **CreatedAt** | [**time.Time**](time.Time.md) |  | [optional] 
 **UpdatedAt** | [**time.Time**](time.Time.md) |  | [optional] 

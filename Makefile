@@ -1,7 +1,5 @@
 .DEFAULT_GOAL := help
-AWS_ACCOUNT_ID := "dummy-aws-account-id"
-AWS_ACCESS_KEY := "dummy-aws-access-key"
-AWS_SECRET_ACCESS_KEY := "dummy-aws-secret-access-key"
+SHELL = bash
 
 # The details of the application:
 binary:=managed-services-api
@@ -44,7 +42,7 @@ endif
 # Prints a list of useful targets.
 help:
 	@echo ""
-	@echo "OpenShift CLuster Manager Example Service"
+	@echo "OpenShift Managed Services API"
 	@echo ""
 	@echo "make verify               verify source code"
 	@echo "make lint                 run golangci-lint"

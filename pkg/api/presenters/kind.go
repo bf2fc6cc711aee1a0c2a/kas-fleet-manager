@@ -7,7 +7,7 @@ import (
 
 func ObjectKind(i interface{}) string {
 	switch i.(type) {
-	case api.Kafka, *api.Kafka:
+	case api.KafkaRequest, *api.KafkaRequest:
 		return "Kafka"
 	case errors.ServiceError, *errors.ServiceError:
 		return "Error"
