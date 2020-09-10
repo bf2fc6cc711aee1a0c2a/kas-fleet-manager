@@ -162,8 +162,7 @@ db/setup:
 .PHONY: db/setup
 
 db/teardown:
-	-docker stop managed-services-api-db
-	-docker rm managed-services-api-db
+	./local_db_teardown.sh
 .PHONY: db/teardown
 
 # Login to docker 
