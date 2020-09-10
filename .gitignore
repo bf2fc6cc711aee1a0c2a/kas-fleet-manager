@@ -30,6 +30,7 @@
 /coverage
 
 # Ignore built binaries
+/managed-services-api
 cmd/managed-services-api
 
 # Ignore generated templates
