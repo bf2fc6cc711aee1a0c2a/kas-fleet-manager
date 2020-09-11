@@ -17,7 +17,7 @@ type authorization service
 var _ OCMAuthorization = &authorization{}
 
 func (a authorization) SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error) {
-	con := a.client.connection
+	con := a.client.Connection
 	selfAccessReview := con.Authorizations().V1().SelfAccessReview()
 
 	request, err := azv1.NewSelfAccessReviewRequest().
@@ -46,7 +46,7 @@ func (a authorization) SelfAccessReview(ctx context.Context, action, resourceTyp
 }
 
 func (a authorization) AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error) {
-	con := a.client.connection
+	con := a.client.Connection
 	accessReview := con.Authorizations().V1().AccessReview()
 
 	request, err := azv1.NewAccessReviewRequest().

@@ -33,7 +33,7 @@ type Env struct {
 }
 
 type Services struct {
-	Dinosaurs services.DinosaurService
+	Kafka services.KafkaService
 }
 
 type Clients struct {
@@ -104,6 +104,7 @@ func (e *Env) Initialize() error {
 		err = fmt.Errorf("Unable to read configuration files: %s", err)
 		glog.Error(err)
 		sentry.CaptureException(err)
+		return err
 	}
 
 	switch e.Name {
@@ -120,9 +121,10 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
-	dinosaurs := services.NewDinosaurService(env.DBFactory)
+	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
 
-	env.Services.Dinosaurs = dinosaurs
+	env.Services.Kafka = kafkaService
 }
 
 func (env *Env) LoadClients() error {

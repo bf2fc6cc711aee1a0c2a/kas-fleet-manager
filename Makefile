@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := help
+SHELL = bash
 
 # The details of the application:
 binary:=managed-services-api
@@ -41,7 +42,7 @@ endif
 # Prints a list of useful targets.
 help:
 	@echo ""
-	@echo "OpenShift CLuster Manager Example Service"
+	@echo "OpenShift Managed Services API"
 	@echo ""
 	@echo "make verify               verify source code"
 	@echo "make lint                 run golangci-lint"
@@ -196,3 +197,13 @@ image/build/test: binary
 test/run: image/build/test
 	docker run -i "$(test_image)"
 .PHONY: test/run
+
+# Setup for AWS credentials
+aws/setup:
+	@echo -n "$(AWS_ACCOUNT_ID)" > secrets/aws.accountid
+	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
+	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
+.PHONY: aws/setup
+
+# TODO CRC Deployment stuff
+
