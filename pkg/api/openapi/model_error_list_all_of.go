@@ -9,10 +9,7 @@
 
 package openapi
 
-// List struct for List
-type List struct {
-	Kind  string `json:"kind"`
-	Page  int32  `json:"page"`
-	Size  int32  `json:"size"`
-	Total int32  `json:"total"`
+// ErrorListAllOf struct for ErrorListAllOf
+type ErrorListAllOf struct {
+	Items []Error `json:"items,omitempty"`
 }

@@ -3,29 +3,45 @@ OCM Managed Service API
 
 This project is based on OCM microservice.
 
-To help you while reading the code the service implements a simple collection
-of _dinosaurs_, so you can inmediatelly know when something is infrastructure or
-business logic. Anything that talks about dinosaurs is business logic, which you
-will want to replace with your our concepts. The rest is infrastructure, and you
-will probably want to preserve without change.
-
-For a real service written using the same infrastructure see the
-https://gitlab.cee.redhat.com/service/uhc-account-manager
-
-To contact the people that created this infrastructure go to the
-https://coreos.slack.com/ #service-development-b channel.
-
 ## Prerequisites
-[OpenAPI Generator](https://openapi-generator.tech/docs/installation/)
-[go-bindata](https://github.com/go-bindata/go-bindata#installation)
-[docker](https://docs.docker.com/get-docker/) - to create database
-[gotestsum](https://github.com/gotestyourself/gotestsum#install) - to run the tests
+* [OpenAPI Generator](https://openapi-generator.tech/docs/installation/)
+* [Golang](https://golang.org/dl/)
+* [Docker](https://docs.docker.com/get-docker/) - to create database
+* [gotestsum](https://github.com/gotestyourself/gotestsum#install) - to run the tests
+* [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
-## Running the tests locally
-### Setup Postgres
+## Running the service locally
 An instance of Postgres is required to run this service locally, the following steps will install and setup a postgres locally for you with Docker. 
 ```
 make db/setup
+```
+
+To log in to the database: 
+```
+docker exec -it managed-services-api-db psql -d serviceapitests -U ocm_managed_service_api -W
+password: foobar-bizz-buzz
+```
+
+Set up the AWS credential files (only needed if creating new OSD clusters):
+```
+make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
+```
+
+Modify the `ocm-service.token` file in the `secrets` directory to point to your temporary ocm token. 
+```sh
+# Log in to ocm
+# osd_offline_token can be retrieved from https://qaprodauth.cloud.redhat.com/openshift/token
+ocm login --url="http://localhost:8000" --token="<osd_offline_token>"
+
+# Generate a new temporary token
+# and update ocm-service.token file
+echo -n $(ocm token) > secrets/ocm-service.token
+
+```
+
+To run the service: 
+```
+make run 
 ```
 
 ### Run the tests
@@ -38,13 +54,7 @@ make test
 make test-integration
 ```
 
-### Run locally
-
-```
-make run
-```
-
-To stop and remove the container when finished, run:
+To stop and remove the database container when finished, run:
 ```
 make db/teardown
 ```

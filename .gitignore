@@ -41,3 +41,7 @@ cmd/managed-services-api
 
 # Ignore IntelliJ config
 .idea/
+
+# Ignore AWS secret files
+/secrets/aws.*
+/secrets/ocm-service.token

@@ -9,7 +9,7 @@ import (
 type Client struct {
 	config     *Config
 	logger     sdkClient.Logger
-	connection *sdkClient.Connection
+	Connection *sdkClient.Connection
 
 	Authorization OCMAuthorization
 }
@@ -71,13 +71,13 @@ func (c *Client) newConnection() error {
 	if err != nil {
 		return fmt.Errorf("Can't build OCM client connection: %s", err.Error())
 	}
-	c.connection = connection
+	c.Connection = connection
 	return nil
 }
 
 func (c *Client) Close() {
-	if c.connection != nil {
-		c.connection.Close()
+	if c.Connection != nil {
+		c.Connection.Close()
 	}
 }
 

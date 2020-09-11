@@ -47,7 +47,7 @@ func NewAPIServer() Server {
 		check(err, "Can't load OpenAPI specification")
 	}
 
-	dinosaurHandler := handlers.NewDinosaurHandler(services.Dinosaurs)
+	kafkaHandler := handlers.NewKafkaHandler(services.Kafka)
 	errorsHandler := handlers.NewErrorsHandler()
 
 	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
@@ -107,15 +107,10 @@ func NewAPIServer() Server {
 	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
 
-	//  /api/managed-services-api/v1/dinosaurs
-	apiV1DinosaursRouter := apiV1Router.PathPrefix("/dinosaurs").Subrouter()
-	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).Methods(http.MethodGet)
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Get).Methods(http.MethodGet)
-	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.Create).Methods(http.MethodPost)
-	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Patch).Methods(http.MethodPatch)
-	apiV1DinosaursRouter.Use(authMiddleware.AuthenticateAccountJWT)
-	// TODO
-	// apiV1DinosaursRouter.Use(authzMiddleware.AuthorizeApi)
+	//  /api/managed-services-api/v1/kafkas
+	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
+	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
+	apiV1KafkasRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
