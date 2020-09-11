@@ -48,6 +48,7 @@ help:
 	@echo "make binary               compile binaries"
 	@echo "make install              compile binaries and install in GOPATH bin"
 	@echo "make run                  run the application"
+	@echo "make run/docs             run swagger and host the api spec"
 	@echo "make test                 run unit tests"
 	@echo "make test-integration     run integration tests"
 	@echo "make generate             generate openapi modules"
@@ -156,6 +157,12 @@ run: install
 	managed-services-api migrate
 	managed-services-api serve
 .PHONY: run
+
+# Run Swagger and host the api docs
+run/docs:
+	@echo "Please open http://localhost/"
+	docker run -d -p 80:8080 -e SWAGGER_JSON=/managed-services-api.yaml -v $(PWD)/openapi/managed-services-api.yaml:/managed-services-api.yaml swaggerapi/swagger-ui
+.PHONY: run/docs
 
 db/setup:
 	./local_db_setup.sh
