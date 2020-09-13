@@ -18,8 +18,7 @@ make db/setup
 
 To log in to the database: 
 ```
-docker exec -it managed-services-api-db psql -d serviceapitests -U ocm_managed_service_api -W
-password: foobar-bizz-buzz
+make db/login
 ```
 
 Set up the AWS credential files (only needed if creating new OSD clusters):

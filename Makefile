@@ -173,6 +173,10 @@ db/teardown:
 	./local_db_teardown.sh
 .PHONY: db/teardown
 
+db/login:
+	docker exec -it managed-services-api-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+.PHONY: db/login
+
 # Login to docker 
 docker/login: 
 	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
