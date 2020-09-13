@@ -43,6 +43,15 @@ To run the service:
 make run 
 ```
 
+### Additional CLI commands
+
+In addition to the REST API exposed via `make run`, there are additional commands to interact directly
+with cluster creation logic etc without having to run the server.
+
+To use these commands, run `make binary` to create the `./managed-services-api` CLI.
+
+Run `./managed-services-api -h` for information on the addional commands.
+
 ### Run the tests
 ```
 make test
