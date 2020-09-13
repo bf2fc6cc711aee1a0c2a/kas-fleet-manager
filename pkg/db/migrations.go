@@ -26,6 +26,7 @@ import (
 // 4. Create one function in a separate file that returns your Migration. Add that single function call to this list.
 var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addKafkaRequest(),
+	addClusters(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {
