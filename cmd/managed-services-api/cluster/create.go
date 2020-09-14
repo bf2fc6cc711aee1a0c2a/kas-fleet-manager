@@ -28,7 +28,7 @@ func NewCreateCommand() *cobra.Command {
 	return cmd
 }
 
-func runCreate(cmd *cobra.Command, args []string) {
+func runCreate(cmd *cobra.Command, _ []string) {
 	region, err := cmd.Flags().GetString("region")
 	if err != nil {
 		glog.Fatalf("Unable to parse region flag: %s", err.Error())
