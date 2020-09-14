@@ -24,6 +24,9 @@ var _ Client = &ClientMock{}
 //             CreateManagedKafkaAddonFunc: func(id string) (*v1.AddOnInstallation, error) {
 // 	               panic("mock out the CreateManagedKafkaAddon method")
 //             },
+//             GetCloudProvidersFunc: func() (*v1.CloudProviderList, error) {
+// 	               panic("mock out the GetCloudProviders method")
+//             },
 //             GetClusterIngressesFunc: func(clusterID string) (*v1.IngressesListResponse, error) {
 // 	               panic("mock out the GetClusterIngresses method")
 //             },
@@ -32,6 +35,9 @@ var _ Client = &ClientMock{}
 //             },
 //             GetManagedKafkaAddonFunc: func(id string) (*v1.AddOnInstallation, error) {
 // 	               panic("mock out the GetManagedKafkaAddon method")
+//             },
+//             GetRegionsFunc: func(provider *v1.CloudProvider) (*v1.CloudRegionList, error) {
+// 	               panic("mock out the GetRegions method")
 //             },
 //         }
 //
@@ -46,6 +52,9 @@ type ClientMock struct {
 	// CreateManagedKafkaAddonFunc mocks the CreateManagedKafkaAddon method.
 	CreateManagedKafkaAddonFunc func(id string) (*v1.AddOnInstallation, error)
 
+	// GetCloudProvidersFunc mocks the GetCloudProviders method.
+	GetCloudProvidersFunc func() (*v1.CloudProviderList, error)
+
 	// GetClusterIngressesFunc mocks the GetClusterIngresses method.
 	GetClusterIngressesFunc func(clusterID string) (*v1.IngressesListResponse, error)
 
@@ -54,6 +63,9 @@ type ClientMock struct {
 
 	// GetManagedKafkaAddonFunc mocks the GetManagedKafkaAddon method.
 	GetManagedKafkaAddonFunc func(id string) (*v1.AddOnInstallation, error)
+
+	// GetRegionsFunc mocks the GetRegions method.
+	GetRegionsFunc func(provider *v1.CloudProvider) (*v1.CloudRegionList, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -66,6 +78,9 @@ type ClientMock struct {
 		CreateManagedKafkaAddon []struct {
 			// ID is the id argument value.
 			ID string
+		}
+		// GetCloudProviders holds details about calls to the GetCloudProviders method.
+		GetCloudProviders []struct {
 		}
 		// GetClusterIngresses holds details about calls to the GetClusterIngresses method.
 		GetClusterIngresses []struct {
@@ -82,12 +97,19 @@ type ClientMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetRegions holds details about calls to the GetRegions method.
+		GetRegions []struct {
+			// Provider is the provider argument value.
+			Provider *v1.CloudProvider
+		}
 	}
 	lockCreateCluster           sync.RWMutex
 	lockCreateManagedKafkaAddon sync.RWMutex
+	lockGetCloudProviders       sync.RWMutex
 	lockGetClusterIngresses     sync.RWMutex
 	lockGetClusterStatus        sync.RWMutex
 	lockGetManagedKafkaAddon    sync.RWMutex
+	lockGetRegions              sync.RWMutex
 }
 
 // CreateCluster calls CreateClusterFunc.
@@ -149,6 +171,32 @@ func (mock *ClientMock) CreateManagedKafkaAddonCalls() []struct {
 	mock.lockCreateManagedKafkaAddon.RLock()
 	calls = mock.calls.CreateManagedKafkaAddon
 	mock.lockCreateManagedKafkaAddon.RUnlock()
+	return calls
+}
+
+// GetCloudProviders calls GetCloudProvidersFunc.
+func (mock *ClientMock) GetCloudProviders() (*v1.CloudProviderList, error) {
+	if mock.GetCloudProvidersFunc == nil {
+		panic("ClientMock.GetCloudProvidersFunc: method is nil but Client.GetCloudProviders was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetCloudProviders.Lock()
+	mock.calls.GetCloudProviders = append(mock.calls.GetCloudProviders, callInfo)
+	mock.lockGetCloudProviders.Unlock()
+	return mock.GetCloudProvidersFunc()
+}
+
+// GetCloudProvidersCalls gets all the calls that were made to GetCloudProviders.
+// Check the length with:
+//     len(mockedClient.GetCloudProvidersCalls())
+func (mock *ClientMock) GetCloudProvidersCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetCloudProviders.RLock()
+	calls = mock.calls.GetCloudProviders
+	mock.lockGetCloudProviders.RUnlock()
 	return calls
 }
 
@@ -242,5 +290,36 @@ func (mock *ClientMock) GetManagedKafkaAddonCalls() []struct {
 	mock.lockGetManagedKafkaAddon.RLock()
 	calls = mock.calls.GetManagedKafkaAddon
 	mock.lockGetManagedKafkaAddon.RUnlock()
+	return calls
+}
+
+// GetRegions calls GetRegionsFunc.
+func (mock *ClientMock) GetRegions(provider *v1.CloudProvider) (*v1.CloudRegionList, error) {
+	if mock.GetRegionsFunc == nil {
+		panic("ClientMock.GetRegionsFunc: method is nil but Client.GetRegions was just called")
+	}
+	callInfo := struct {
+		Provider *v1.CloudProvider
+	}{
+		Provider: provider,
+	}
+	mock.lockGetRegions.Lock()
+	mock.calls.GetRegions = append(mock.calls.GetRegions, callInfo)
+	mock.lockGetRegions.Unlock()
+	return mock.GetRegionsFunc(provider)
+}
+
+// GetRegionsCalls gets all the calls that were made to GetRegions.
+// Check the length with:
+//     len(mockedClient.GetRegionsCalls())
+func (mock *ClientMock) GetRegionsCalls() []struct {
+	Provider *v1.CloudProvider
+} {
+	var calls []struct {
+		Provider *v1.CloudProvider
+	}
+	mock.lockGetRegions.RLock()
+	calls = mock.calls.GetRegions
+	mock.lockGetRegions.RUnlock()
 	return calls
 }
