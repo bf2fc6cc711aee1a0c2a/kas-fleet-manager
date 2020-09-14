@@ -50,7 +50,7 @@ with cluster creation logic etc without having to run the server.
 
 To use these commands, run `make binary` to create the `./managed-services-api` CLI.
 
-Run `./managed-services-api -h` for information on the addional commands.
+Run `./managed-services-api -h` for information on the additional commands.
 
 ### Run the tests
 ```
