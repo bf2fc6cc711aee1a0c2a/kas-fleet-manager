@@ -44,7 +44,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 		return nil, err
 	}
 	if cluster == nil {
-		return nil, errors.NewUndefinedVariableError("cluster")
+		return nil, errors.New(errors.ErrorValidation, "cluster is not defined")
 	}
 
 	clusterBuilder := clustersmgmtv1.NewCluster()
@@ -68,12 +68,12 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 }
 
 // validate validate the state of the clusterBuilder struct.
-func (r clusterBuilder) validate() error {
+func (r clusterBuilder) validate() *errors.ServiceError {
 	if r.idGenerator == nil {
-		return errors.NewUndefinedVariableError("idGenerator")
+		return errors.New(errors.ErrorValidation, "idGenerator is not defined")
 	}
 	if r.awsConfig == nil {
-		return errors.NewUndefinedVariableError("awsConfig")
+		return errors.New(errors.ErrorValidation, "awsConfig is not defined")
 	}
 	return nil
 }
