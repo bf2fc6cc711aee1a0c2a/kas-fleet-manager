@@ -6,6 +6,7 @@ import (
 
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/workers"
 )
 
 func NewServeCommand() *cobra.Command {
@@ -43,6 +44,13 @@ func runServe(cmd *cobra.Command, args []string) {
 	go func() {
 		healthcheckServer := server.NewHealthCheckServer()
 		healthcheckServer.Start()
+	}()
+
+	// Run the cluster manager
+	go func() {
+		clusterService := environments.Environment().Services.Cluster
+		clusterManager := workers.NewClusterManager(clusterService)
+		clusterManager.Start()
 	}()
 
 	select {}
