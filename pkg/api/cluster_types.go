@@ -17,8 +17,8 @@ type Cluster struct {
 	State         clustersmgmtv1.ClusterState
 }
 
-type ClusterList []*KafkaRequest
-type ClusterIndex map[string]*KafkaRequest
+type ClusterList []*Cluster
+type ClusterIndex map[string]*Cluster
 
 func (c ClusterList) Index() ClusterIndex {
 	index := ClusterIndex{}
