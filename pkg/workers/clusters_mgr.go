@@ -20,14 +20,16 @@ const (
 type ClusterManager struct {
 	ocmClient      ocm.Client
 	clusterService services.ClusterService
+	cloudProvidersService services.CloudProvidersService
 	timer          *time.Timer
 }
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(clusterService services.ClusterService, ocmClient ocm.Client) *ClusterManager {
+func NewClusterManager(clusterService services.ClusterService,  cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client) *ClusterManager {
 	return &ClusterManager{
 		ocmClient:      ocmClient,
 		clusterService: clusterService,
+		cloudProvidersService: cloudProvidersService,
 	}
 }
 
@@ -59,6 +61,20 @@ func (c *ClusterManager) reconcile() {
 	glog.Infoln("reconciling clusters")
 
 	// reconcile the status of existing clusters in a non-ready state
+
+	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
+	if err != nil {
+		glog.Error("Error retrieving cloud providers and regions", err)
+	}
+
+	for _, cloudProvider := range cloudProviders {
+		cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
+			regionName := region.ID()
+			glog.Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
+			return true
+		})
+
+	}
 
 	provisioningClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioning)
 	if listErr != nil {
