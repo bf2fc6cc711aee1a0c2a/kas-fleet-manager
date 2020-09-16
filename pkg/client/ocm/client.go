@@ -44,6 +44,17 @@ func NewClient(config Config) (*Client, error) {
 	return client, nil
 }
 
+func NewIntegrationClientMock(config Config) (*Client, error) {
+	client := &Client{
+		config: &config,
+	}
+	if err := client.newConnection(); err != nil {
+		return nil, err
+	}
+	client.Authorization = &authorizationMock{client: client}
+	return client, nil
+}
+
 func NewClientMock(config Config) (*Client, error) {
 	client := &Client{
 		config: &config,
@@ -67,7 +78,6 @@ func (c *Client) newConnection() error {
 	}
 
 	connection, err := builder.Build()
-
 	if err != nil {
 		return fmt.Errorf("Can't build OCM client connection: %s", err.Error())
 	}

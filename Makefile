@@ -139,7 +139,7 @@ test: install
 
 # Precompile everything required for development/test.
 test-prepare: install
-	OCM_ENV=testing go test -i ./test/integration/...
+	OCM_ENV=integration go test -i ./test/integration/...
 .PHONY: test-prepare
 
 # Runs the integration tests.
@@ -153,7 +153,7 @@ test-prepare: install
 #   make test-integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test-integration TESTFLAGS="-short"                skips long-run tests
 test-integration: test-prepare
-	OCM_ENV=testing gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 1h $(TESTFLAGS) \
+	OCM_ENV=integration gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 1h $(TESTFLAGS) \
 			./test/integration
 .PHONY: test-integration
 

@@ -20,6 +20,7 @@ const (
 	DevelopmentEnv string = "development"
 	ProductionEnv  string = "production"
 	StageEnv       string = "stage"
+	IntegrationEnv string = "integration"
 
 	EnvironmentStringKey string = "OCM_ENV"
 	EnvironmentDefault   string = DevelopmentEnv
@@ -89,6 +90,8 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 		defaults = productionConfigDefaults
 	case StageEnv:
 		defaults = stageConfigDefaults
+	case IntegrationEnv:
+		defaults = integrationConfigDefaults
 	default:
 		return fmt.Errorf("Unsupported environment %q", e.Name)
 	}
@@ -120,6 +123,8 @@ func (e *Env) Initialize() error {
 		err = loadProduction(environment)
 	case StageEnv:
 		err = loadStage(environment)
+	case IntegrationEnv:
+		err = loadIntegration(environment)
 	default:
 		err = fmt.Errorf("Unsupported environment %q", e.Name)
 	}
@@ -149,8 +154,12 @@ func (env *Env) LoadClients() error {
 
 	// Create OCM Authz client
 	if env.Config.OCM.EnableMock {
-		glog.Infof("Using Mock OCM Authz Client")
-		env.Clients.OCM, err = ocm.NewClientMock(ocmConfig)
+		if env.Config.OCM.MockMode == config.MockModeEmulateServer {
+			env.Clients.OCM, err = ocm.NewIntegrationClientMock(ocmConfig)
+		} else {
+			glog.Infof("Using Mock OCM Authz Client")
+			env.Clients.OCM, err = ocm.NewClientMock(ocmConfig)
+		}
 	} else {
 		env.Clients.OCM, err = ocm.NewClient(ocmConfig)
 	}

@@ -9,6 +9,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"net/http"
 	"testing"
 )
@@ -17,14 +18,24 @@ const (
 	mockKafkaName = "test"
 )
 
+// TestKafkaPost tests the POST /kafkas endpoint
+// This test should act as a "golden" integration test, it should be well documented and act as a reference for future
+// integration tests.
 func TestKafkaPost(t *testing.T) {
-	h, client := test.RegisterIntegration(t)
+	// create a mock ocm api server, keep all endpoints as defaults
+	// see the mocks package for more information on the configurable mock server
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client := test.RegisterIntegration(t, ocmServer)
+	defer h.StopServer()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
 
 	// POST responses per openapi spec: 201, 409, 500
-
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
@@ -51,7 +62,11 @@ func TestKafkaPost(t *testing.T) {
 }
 
 func TestKafkaGet(t *testing.T) {
-	h, client := test.RegisterIntegration(t)
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client := test.RegisterIntegration(t, ocmServer)
+	defer h.StopServer()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
