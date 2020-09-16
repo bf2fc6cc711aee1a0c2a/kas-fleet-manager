@@ -38,8 +38,8 @@ func TestConvertFromOCMCluster(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewClusterFromOCMCluster(tt.args.clusterFn()); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewClusterFromOCMCluster() = %v, want %v", got, tt.want)
+			if got := ConvertCluster(tt.args.clusterFn()); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConvertCluster() = %v, want %v", got, tt.want)
 			}
 		})
 	}

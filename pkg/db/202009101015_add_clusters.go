@@ -19,7 +19,6 @@ func addClusters() *gormigrate.Migration {
 		ExternalID    string
 		MultiAZ       bool
 		Region        string
-		State         string
 		BYOC          bool
 		Managed       bool
 	}
