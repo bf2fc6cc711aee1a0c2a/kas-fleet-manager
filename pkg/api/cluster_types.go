@@ -1,7 +1,7 @@
 package api
 
 import (
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/jinzhu/gorm"
 )
 
 type Cluster struct {
@@ -11,5 +11,21 @@ type Cluster struct {
 	ExternalID    string
 	MultiAZ       bool   `json:"multi_az"`
 	Region        string `json:"region"`
-	State         clustersmgmtv1.ClusterState
+	BYOC          bool
+	Managed       bool
+}
+
+type ClusterList []*Cluster
+type ClusterIndex map[string]*Cluster
+
+func (c ClusterList) Index() ClusterIndex {
+	index := ClusterIndex{}
+	for _, o := range c {
+		index[o.ID] = o
+	}
+	return index
+}
+
+func (org *Cluster) BeforeCreate(scope *gorm.Scope) error {
+	return scope.SetColumn("ID", org.ClusterID)
 }

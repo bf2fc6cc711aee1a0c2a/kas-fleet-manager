@@ -1,9 +1,10 @@
 package services
 
 import (
-	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm/converters"
 
-	"github.com/rs/xid"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -12,24 +13,24 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
-const (
-	clusterNamePrefix = "ms-"
-)
-
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *errors.ServiceError)
 }
 
 type clusterService struct {
-	ocmClient *sdkClient.Connection
-	awsConfig *config.AWSConfig
+	connectionFactory *db.ConnectionFactory
+	ocmClient         *sdkClient.Connection
+	awsConfig         *config.AWSConfig
+	clusterBuilder    ocm.ClusterBuilder
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(ocmClient *sdkClient.Connection, awsConfig *config.AWSConfig) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient *sdkClient.Connection, awsConfig *config.AWSConfig) ClusterService {
 	return &clusterService{
-		ocmClient: ocmClient,
-		awsConfig: awsConfig,
+		connectionFactory: connectionFactory,
+		ocmClient:         ocmClient,
+		awsConfig:         awsConfig,
+		clusterBuilder:    ocm.NewClusterBuilder(awsConfig),
 	}
 }
 
@@ -37,8 +38,10 @@ func NewClusterService(ocmClient *sdkClient.Connection, awsConfig *config.AWSCon
 //
 // Returns the newly created cluster object
 func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *errors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
 	// Build a new OSD cluster object
-	newCluster, err := c.buildNewClusterObject(cluster)
+	newCluster, err := c.clusterBuilder.NewOCMClusterFromCluster(cluster)
 	if err != nil {
 		return &clustersmgmtv1.Cluster{}, errors.New(errors.ErrorGeneral, err.Error())
 	}
@@ -50,27 +53,13 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 		return &clustersmgmtv1.Cluster{}, errors.New(errors.ErrorGeneral, err.Error())
 	}
 
+	// persist cluster information to database
 	createdCluster := response.Body()
-	// TODO: Store cluster info in DB
+
+	// convert the cluster to the cluster type this service understands before saving
+	if err := dbConn.Save(converters.ConvertCluster(createdCluster)).Error; err != nil {
+		return &clustersmgmtv1.Cluster{}, errors.New(errors.ErrorGeneral, err.Error())
+	}
 
 	return createdCluster, nil
-}
-
-// buildNewClusterObject creates a new Cluster object based on the cluster configuration passed
-func (c clusterService) buildNewClusterObject(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error) {
-	clusterBuilder := clustersmgmtv1.NewCluster()
-	clusterBuilder.Name(fmt.Sprintf("%s%s", clusterNamePrefix, xid.New().String()))
-	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cluster.CloudProvider))
-	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(cluster.Region))
-	// clusterBuilder.MultiAZ(cluster.MultiAZ) // Currently disabled as we do not have quota for this type of cluster.
-
-	// Setting BYOC to always be true for now as this is the only available cluster type within our quota.
-	clusterBuilder.BYOC(true)
-	clusterBuilder.Managed(true)
-
-	// AWS config read from the secrets/aws.* files
-	awsBuilder := clustersmgmtv1.NewAWS().AccountID(c.awsConfig.AccountID).AccessKeyID(c.awsConfig.AccessKey).SecretAccessKey(c.awsConfig.SecretAccessKey)
-	clusterBuilder.AWS(awsBuilder)
-
-	return clusterBuilder.Build()
 }
