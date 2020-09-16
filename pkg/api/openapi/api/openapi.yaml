@@ -116,72 +116,6 @@ components:
       schema:
         type: string
       style: simple
-    page:
-      description: Page number of record list when record list exceeds specified page
-        size
-      explode: true
-      in: query
-      name: page
-      required: false
-      schema:
-        default: 1
-        minimum: 1
-        type: integer
-      style: form
-    size:
-      description: Maximum number of records to return
-      explode: true
-      in: query
-      name: size
-      required: false
-      schema:
-        default: 100
-        minimum: 0
-        type: integer
-      style: form
-    search:
-      description: "Specifies the search criteria. The syntax of this parameter is\n\
-        similar to the syntax of the _where_ clause of an SQL statement,\nusing the\
-        \ names of the json attributes / column names of the account. \nFor example,\
-        \ in order to retrieve all the accounts with a username\nstarting with `my`:\n\
-        \n```sql\nusername like 'my%'\n```\n\nThe search criteria can also be applied\
-        \ on related resource.\nFor example, in order to retrieve all the subscriptions\
-        \ labeled by `foo=bar`,\n\n```sql\nsubscription_labels.key = 'foo' and subscription_labels.value\
-        \ = 'bar'\n```\n\nIf the parameter isn't provided, or if the value is empty,\
-        \ then\nall the accounts that the user has permission to see will be\nreturned."
-      explode: true
-      in: query
-      name: search
-      required: false
-      schema:
-        type: string
-      style: form
-    orderBy:
-      description: |-
-        Specifies the order by criteria. The syntax of this parameter is
-        similar to the syntax of the _order by_ clause of an SQL statement,
-        but using the names of the json attributes / column of the account.
-        For example, in order to retrieve all accounts ordered by username:
-
-        ```sql
-        username asc
-        ```
-
-        Or in order to retrieve all accounts ordered by username _and_ first name:
-
-        ```sql
-        username asc, firstName asc
-        ```
-
-        If the parameter isn't provided, or if the value is empty, then
-        no explicit ordering will be applied.
-      explode: true
-      in: query
-      name: orderBy
-      required: false
-      schema:
-        type: string
-      style: form
   schemas:
     ObjectReference:
       properties:
@@ -221,10 +155,6 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/KafkaRequest_allOf'
-    KafkaRequestList:
-      allOf:
-      - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/KafkaRequestList_allOf'
     Error_allOf:
       properties:
         code:
@@ -261,13 +191,6 @@ components:
         updated_at:
           format: date-time
           type: string
-    KafkaRequestList_allOf:
-      properties:
-        items:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/KafkaRequest'
-          type: array
   securitySchemes:
     Bearer:
       bearerFormat: JWT

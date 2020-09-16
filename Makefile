@@ -52,7 +52,10 @@ help:
 	@echo "make run/docs             run swagger and host the api spec"
 	@echo "make test                 run unit tests"
 	@echo "make test-integration     run integration tests"
-	@echo "make generate             generate openapi modules"
+	@echo "make code/fix             format files"
+	@echo "make generate             generate go and openapi modules"
+	@echo "make openapi/generate     generate openapi modules"
+	@echo "make openapi/validate     validate openapi schema"
 	@echo "make image                build docker image"
 	@echo "make push                 push docker image"
 	@echo "make deploy               deploy via templates to local openshift instance"
@@ -149,14 +152,29 @@ test-integration: test-prepare
 			./test/integration
 .PHONY: test-integration
 
-
-# Regenerate openapi client and models
-generate:
-	rm -rf pkg/api/openapi
-	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi
-	go generate ./cmd/managed-services-api
+# generate files
+generate: openapi/generate
+	go generate ./...
 	gofmt -w pkg/api/openapi
 .PHONY: generate
+
+# validate the openapi schema
+openapi/validate:
+	openapi-generator validate -i openapi/managed-services-api.yaml
+.PHONY: openapi/validate
+
+# generate the openapi schema
+openapi/generate:
+	rm -rf pkg/api/openapi
+	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
+	openapi-generator validate -i openapi/managed-services-api.yaml
+.PHONY: openapi/generate
+
+# clean up code and dependencies
+code/fix:
+	@go mod tidy
+	@gofmt -w `find . -type f -name '*.go' -not -path "./vendor/*"`
+.PHONY: code/fix
 
 run: install
 	managed-services-api migrate

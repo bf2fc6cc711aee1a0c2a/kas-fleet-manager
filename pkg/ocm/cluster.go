@@ -10,7 +10,7 @@ import (
 // ClusterNamePrefix a prefix used for new OCM cluster names
 const (
 	ClusterNamePrefix = "ms-"
-	OpenShift_4_5_10 = "openshift-v4.5.10"
+	OpenShift_4_5_10  = "openshift-v4.5.10"
 )
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider

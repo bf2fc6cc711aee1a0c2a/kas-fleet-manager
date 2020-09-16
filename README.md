@@ -8,6 +8,7 @@ This project is based on OCM microservice.
 * [Golang](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [gotestsum](https://github.com/gotestyourself/gotestsum#install) - to run the tests
+* [go-bindata (3.1.2+)](https://github.com/go-bindata/go-bindata) - for code generation
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
 ## Running the service locally

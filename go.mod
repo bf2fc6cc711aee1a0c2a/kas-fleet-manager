@@ -37,5 +37,6 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/gormigrate.v1 v1.6.0
+	k8s.io/api v0.18.5
 	k8s.io/apimachinery v0.18.6
 )
