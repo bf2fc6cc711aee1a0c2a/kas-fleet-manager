@@ -75,7 +75,6 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					ClusterID:     clusterservicetest.MockClusterID,
 					ExternalID:    clusterservicetest.MockClusterExternalID,
 					Region:        clusterservicetest.MockClusterRegion,
-					State:         clusterservicetest.MockClusterState,
 					BYOC:          clusterservicetest.MockClusterBYOC,
 					Managed:       clusterservicetest.MockClusterManaged,
 					MultiAZ:       clusterservicetest.MockClusterMultiAZ,

@@ -57,7 +57,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	createdCluster := response.Body()
 
 	// convert the cluster to the cluster type this service understands before saving
-	if err := dbConn.Save(converters.NewClusterFromOCMCluster(createdCluster)).Error; err != nil {
+	if err := dbConn.Save(converters.ConvertCluster(createdCluster)).Error; err != nil {
 		return &clustersmgmtv1.Cluster{}, errors.New(errors.ErrorGeneral, err.Error())
 	}
 
