@@ -4,6 +4,11 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const (
+	MockModeStubServer    = "stub-server"
+	MockModeEmulateServer = "emulate-server"
+)
+
 type OCMConfig struct {
 	BaseURL          string `json:"base_url"`
 	ClientID         string `json:"client-id"`
@@ -15,6 +20,7 @@ type OCMConfig struct {
 	TokenURL         string `json:"token_url"`
 	Debug            bool   `json:"debug"`
 	EnableMock       bool   `json:"enable_mock"`
+	MockMode         string `json:"mock_type"`
 }
 
 func NewOCMConfig() *OCMConfig {
@@ -26,6 +32,7 @@ func NewOCMConfig() *OCMConfig {
 		SelfTokenFile:    "secrets/ocm-service.token",
 		Debug:            false,
 		EnableMock:       false,
+		MockMode:         MockModeStubServer,
 	}
 }
 
@@ -37,6 +44,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.TokenURL, "ocm-token-url", c.TokenURL, "The base URL that OCM uses to request tokens, stage by default")
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
+	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
 }
 
 func (c *OCMConfig) ReadFiles() error {
