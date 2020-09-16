@@ -44,8 +44,6 @@ Class | Method | HTTP request | Description
  - [ErrorListAllOf](docs/ErrorListAllOf.md)
  - [KafkaRequest](docs/KafkaRequest.md)
  - [KafkaRequestAllOf](docs/KafkaRequestAllOf.md)
- - [KafkaRequestList](docs/KafkaRequestList.md)
- - [KafkaRequestListAllOf](docs/KafkaRequestListAllOf.md)
  - [List](docs/List.md)
  - [ObjectReference](docs/ObjectReference.md)
 

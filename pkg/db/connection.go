@@ -15,8 +15,8 @@ var singleton *ConnectionFactory
 var once sync.Once
 
 type ConnectionFactory struct {
-	config *config.DatabaseConfig
-	db     *gorm.DB
+	Config *config.DatabaseConfig
+	DB     *gorm.DB
 }
 
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
@@ -36,7 +36,7 @@ func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
 		}
 		db.DB().SetMaxOpenConns(config.MaxOpenConnections)
 
-		singleton = &ConnectionFactory{config: config, db: db}
+		singleton = &ConnectionFactory{Config: config, DB: db}
 	})
 	return singleton
 }
@@ -60,22 +60,22 @@ func NewMockConnectionFactory(dbConfig *config.DatabaseConfig) *ConnectionFactor
 
 // New returns a new database connection
 func (f *ConnectionFactory) New() *gorm.DB {
-	if f.config.Debug {
-		return f.db.New().Debug()
+	if f.Config.Debug {
+		return f.DB.New().Debug()
 	}
-	return f.db.New()
+	return f.DB.New()
 }
 
 // Checks to ensure a connection is present
 func (f *ConnectionFactory) CheckConnection() error {
-	return f.db.Exec("SELECT 1").Error
+	return f.DB.Exec("SELECT 1").Error
 }
 
 // Close will close the connection to the database.
 // THIS MUST **NOT** BE CALLED UNTIL THE SERVER/PROCESS IS EXITING!!
 // This should only ever be called once for the entire duration of the application and only at the end.
 func (f *ConnectionFactory) Close() error {
-	return f.db.Close()
+	return f.DB.Close()
 }
 
 // By default do no roll back transaction.
@@ -96,7 +96,7 @@ type rollbackFlag struct {
 
 // newTransaction constructs a new Transaction object.
 func newTransaction() (*txFactory, error) {
-	tx, err := singleton.db.DB().Begin()
+	tx, err := singleton.DB.DB().Begin()
 	if err != nil {
 		return nil, err
 	}

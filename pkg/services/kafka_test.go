@@ -1,14 +1,40 @@
 package services
 
 import (
+	"reflect"
+	"testing"
+
+	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
-	"reflect"
-	"testing"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
+
+var (
+	testKafkaRequestRegion   = "eu-west-1"
+	testKafkaRequestProvider = "aws"
+	testKafkaRequestName     = "test-cluster"
+	testClusterID            = "test-cluster-id"
+	testSyncsetID            = "test-syncset-id"
+)
+
+// build a test kafka request
+func buildKafkaRequest(modifyFn func(kafkaRequest *api.KafkaRequest)) *api.KafkaRequest {
+	kafkaRequest := &api.KafkaRequest{
+		Region:        testKafkaRequestRegion,
+		ClusterID:     testClusterID,
+		CloudProvider: testKafkaRequestProvider,
+		Name:          testKafkaRequestName,
+	}
+	if modifyFn != nil {
+		modifyFn(kafkaRequest)
+	}
+	return kafkaRequest
+}
 
 // This test should act as a "golden" test to describe the general testing approach taken in the service, for people
 // onboarding into development of the service.
@@ -118,6 +144,139 @@ func Test_kafkaService_Get(t *testing.T) {
 			// can use reflect.DeepEqual to compare the actual struct with the expected struct
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Get() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_kafkaService_Create(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+	}
+	type args struct {
+		kafkaRequest *api.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+	}{
+		{
+			name: "successful syncset creation",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
+						return syncset, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed syncset creation",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+						return nil, errors.New(errors.ErrorBadRequest, "")
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+			}
+
+			if err := k.Create(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
+				t.Errorf("Create() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+	}
+	type args struct {
+		kafkaRequest *api.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+	}{
+		{
+			name: "registering kafka job succeeds",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithReply(nil)
+			},
+			wantErr: false,
+		},
+		{
+			name: "registering kafka job fails: postgres error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+			}
+
+			if err := k.RegisterKafkaJob(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
+				t.Errorf("RegisterKafkaJob() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 		})
 	}
