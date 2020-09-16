@@ -31,7 +31,7 @@
 
 # Ignore built binaries
 /managed-services-api
-cmd/managed-services-api
+cmd/managed-services-api/managed-services-api
 
 # Ignore generated templates
 /templates/*-template.json

@@ -18,8 +18,7 @@ make db/setup
 
 To log in to the database: 
 ```
-docker exec -it managed-services-api-db psql -d serviceapitests -U ocm_managed_service_api -W
-password: foobar-bizz-buzz
+make db/login
 ```
 
 Set up the AWS credential files (only needed if creating new OSD clusters):
@@ -43,6 +42,15 @@ To run the service:
 ```
 make run 
 ```
+
+### Additional CLI commands
+
+In addition to the REST API exposed via `make run`, there are additional commands to interact directly
+with cluster creation logic etc without having to run the server.
+
+To use these commands, run `make binary` to create the `./managed-services-api` CLI.
+
+Run `./managed-services-api -h` for information on the additional commands.
 
 ### Run the tests
 ```
