@@ -6,7 +6,6 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"reflect"
 	"testing"
 )
@@ -111,7 +110,7 @@ func Test_kafkaService_Get(t *testing.T) {
 			got, err := k.Get(tt.args.id)
 			// in our test case we used 'wantErr' to define if we expect and error to be returned from the function or
 			// not, now we test that expectation
-			if (err != (*errors.ServiceError)(nil)) != tt.wantErr {
+			if (err != nil) != tt.wantErr {
 				t.Errorf("NewOCMClusterFromCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}

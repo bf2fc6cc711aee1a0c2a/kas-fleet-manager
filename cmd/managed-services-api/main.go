@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/kafka"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -40,7 +41,7 @@ func main() {
 	clusterCmd := cluster.NewClusterCommand()
 
 	// Add subcommand(s)
-	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd)
+	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)
