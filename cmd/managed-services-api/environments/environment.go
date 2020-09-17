@@ -33,7 +33,8 @@ type Env struct {
 }
 
 type Services struct {
-	Kafka services.KafkaService
+	Kafka   services.KafkaService
+	Cluster services.ClusterService
 }
 
 type Clients struct {
@@ -121,10 +122,12 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
+	clusterService := services.NewClusterService(env.DBFactory, env.Clients.OCM.Connection, env.Config.AWS)
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
 
 	env.Services.Kafka = kafkaService
+	env.Services.Cluster = clusterService
 }
 
 func (env *Env) LoadClients() error {
