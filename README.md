@@ -26,16 +26,10 @@ Set up the AWS credential files (only needed if creating new OSD clusters):
 make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
 ```
 
-Modify the `ocm-service.token` file in the `secrets` directory to point to your temporary ocm token. 
-```sh
-# Log in to ocm
-# osd_offline_token can be retrieved from https://qaprodauth.cloud.redhat.com/openshift/token
-ocm login --url="http://localhost:8000" --token="<osd_offline_token>"
-
-# Generate a new temporary token
-# and update ocm-service.token file
-echo -n $(ocm token) > secrets/ocm-service.token
-
+Set up the `ocm-service.token` file in the `secrets` directory to point to your temporary ocm token.
+ocm-offline-token can be retrieved from https://qaprodauth.cloud.redhat.com/openshift/token
+```
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
 ```
 
 To run the service: 

@@ -79,6 +79,10 @@ ifndef TEST_SUMMARY_FORMAT
 	TEST_SUMMARY_FORMAT=short-verbose
 endif
 
+ifndef SERVER_URL
+	SERVER_URL:=http://localhost:8000
+endif
+
 # Checks if a GOPATH is set, or emits an error message
 check-gopath:
 ifndef GOPATH
@@ -208,6 +212,12 @@ aws/setup:
 	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
 .PHONY: aws/setup
+
+# Setup OCM token
+ocm/setup:
+	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
+	@echo -n "$(shell ocm token)" > secrets/ocm-service.token
+.PHONY: ocm/setup
 
 # TODO CRC Deployment stuff
 
