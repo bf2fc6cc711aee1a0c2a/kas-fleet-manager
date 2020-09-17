@@ -64,6 +64,9 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	awsBuilder := clustersmgmtv1.NewAWS().AccountID(r.awsConfig.AccountID).AccessKeyID(r.awsConfig.AccessKey).SecretAccessKey(r.awsConfig.SecretAccessKey)
 	clusterBuilder.AWS(awsBuilder)
 
+	//TEMPORARILY pin the openshift cluster version to 4.5.10 for the first 30 days
+	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID("openshift-v4.5.10"))
+
 	return clusterBuilder.Build()
 }
 
