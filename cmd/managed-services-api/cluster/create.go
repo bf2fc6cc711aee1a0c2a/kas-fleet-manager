@@ -1,11 +1,13 @@
 package cluster
 
 import (
+	"bytes"
 	"github.com/golang/glog"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -22,23 +24,17 @@ func NewCreateCommand() *cobra.Command {
 		glog.Fatalf("Unable to add environment flags to serve command: %s", err.Error())
 	}
 
-	cmd.Flags().String("region", "eu-west-1", "Cluster region ID")
-	cmd.Flags().String("provider", "aws", "Cluster provider")
+	cmd.Flags().String(FlagRegion, "eu-west-1", "Cluster region ID")
+	cmd.Flags().String(FlagProvider, "aws", "Cluster provider")
 
 	return cmd
 }
 
 func runCreate(cmd *cobra.Command, _ []string) {
-	region, err := cmd.Flags().GetString("region")
-	if err != nil {
-		glog.Fatalf("Unable to parse region flag: %s", err.Error())
-	}
-	provider, err := cmd.Flags().GetString("provider")
-	if err != nil {
-		glog.Fatalf("Unable to parse provider flag: %s", err.Error())
-	}
+	region := flags.MustGetDefinedString(FlagRegion, cmd.Flags())
+	provider := flags.MustGetDefinedString(FlagProvider, cmd.Flags())
 
-	if err = environments.Environment().Initialize(); err != nil {
+	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
 
@@ -50,9 +46,13 @@ func runCreate(cmd *cobra.Command, _ []string) {
 		CloudProvider: provider,
 		Region:        region,
 	})
-	// see https://yourbasic.org/golang/gotcha-why-nil-error-not-equal-nil/ for the reason for casting.
-	if err != (*errors.ServiceError)(nil) {
+	if err != nil {
 		glog.Fatalf("Unable to create cluster: %s", err.Error())
 	}
-	glog.Infof("Cluster %s created", cluster.ID())
+
+	indentedCluster := new(bytes.Buffer)
+	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
+		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
+	}
+	glog.Infof("%s", indentedCluster.String())
 }
