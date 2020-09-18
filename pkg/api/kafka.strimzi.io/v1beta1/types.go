@@ -1,0 +1,263 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1beta1
+
+import (
+	networkingv1 "k8s.io/api/networking/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// CertAndKeySecretSource reference to the Secret which holds the certificate and private key pair.
+// The certificate can optionally contain the whole chain.
+type CertAndKeySecretSource struct {
+	Certificate string `json:"certificate"`
+	Key         string `json:"key"`
+	SecretName  string `json:"secretName"`
+}
+
+// StorageType type of possible storages.
+type StorageType string
+
+// StorageType constants.
+const (
+	Ephemeral       StorageType = "ephemeral"
+	PersistentClaim StorageType = "persistent-claim"
+	Jbod            StorageType = "jbod"
+)
+
+// EphemeralStorage storage of ephemeral type.
+type EphemeralStorage struct {
+	ID        int    `json:"id,omitempty"`
+	SizeLimit string `json:"sizeLimit,omitempty"`
+}
+
+// PersistentClaimStorageOverride overrides for individual brokers.
+type PersistentClaimStorageOverride struct {
+	Class  string `json:"class"`
+	Broker int    `json:"broker"`
+}
+
+// PersistentClaimStorage storage of persistent-claim type.
+type PersistentClaimStorage struct {
+	ID          int                              `json:"id,omitempty"`
+	Size        string                           `json:"size,omitempty"`
+	Selector    map[string]string                `json:"selector,omitempty"`
+	DeleteClaim bool                             `json:"deleteClaim,omitempty"`
+	Class       string                           `json:"class,omitempty"`
+	Overrides   []PersistentClaimStorageOverride `json:"overrides,omitempty"`
+}
+
+// JbodVolume volume in a jbod storage.
+// Just one of the storage fields has to be not nil.
+type JbodVolume struct {
+	EphemeralStorage
+	PersistentClaimStorage
+}
+
+// JbodStorage storage of jbod type.
+type JbodStorage struct {
+	Volumes []JbodVolume `json:"volumes,omitempty"`
+}
+
+// Storage configuration (disk). Cannot be updated.
+// The type depends on the value of the Type property within the given object, which must be one of [ephemeral, persistent-claim, jbod].
+// Just one of the storage fields has to be not nil.
+type Storage struct {
+	Type StorageType `json:"type"`
+	EphemeralStorage
+	PersistentClaimStorage
+	JbodStorage
+}
+
+// KafkaListenerAuthenticationType type of possible authentication mechanisms.
+type KafkaListenerAuthenticationType string
+
+// KafkaListenerAuthenticationType constants.
+const (
+	TLS         KafkaListenerAuthenticationType = "tls"
+	ScramSha512 KafkaListenerAuthenticationType = "scram-sha-512"
+	OAuth       KafkaListenerAuthenticationType = "oauth"
+)
+
+// KafkaListenerAuthentication authentication configuration for Kafka brokers.
+// The type depends on the value of the Type property within the given object, which must be one of [tls, scram-sha-512, oauth].
+// Just one of the authentication fields has to be not nil.
+type KafkaListenerAuthentication struct {
+	Type KafkaListenerAuthenticationType `json:"type"`
+	// TODO: additional fields for different types/structs of authentication
+}
+
+// KafkaListenerPlain configures plain listener on port 9092.
+type KafkaListenerPlain struct {
+	Authentication     *KafkaListenerAuthentication     `json:"authentication,omitempty"`
+	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer `json:"networkPolicyPeers,omitempty"`
+}
+
+// TLSListenerConfiguration configuration of TLS listener.
+type TLSListenerConfiguration struct {
+	BrokerCertChainAndKey CertAndKeySecretSource `json:"brokerCertChainAndKey,omitempty"`
+}
+
+// KafkaListenerTLS configures TLS listener on port 9093.
+type KafkaListenerTLS struct {
+	Authentication     *KafkaListenerAuthentication     `json:"authentication,omitempty"`
+	Configuration      *TLSListenerConfiguration        `json:"configuration,omitempty"`
+	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer `json:"networkPolicyPeers,omitempty"`
+}
+
+// KafkaListenerExternalType type of possible external listeners.
+type KafkaListenerExternalType string
+
+// KafkaListenerExternalType constants.
+const (
+	Route        KafkaListenerExternalType = "route"
+	LoadBalancer KafkaListenerExternalType = "loadbalancer"
+	NodePort     KafkaListenerExternalType = "nodeport"
+	Ingress      KafkaListenerExternalType = "ingress"
+)
+
+// RouteListenerBootstrapOverride external bootstrap service configuration.
+type RouteListenerBootstrapOverride struct {
+	Address string `json:"address,omitempty"`
+	Host    string `json:"host"`
+}
+
+// RouteListenerBrokerOverride external broker services configuration.
+type RouteListenerBrokerOverride struct {
+	Broker         int    `java:"broker"`
+	AdvertisedHost string `java:"advertisedHost,omitempty"`
+	AdvertisedPort string `java:"advertisedPort,omitempty"`
+	Host           string `java:"host"`
+}
+
+// RouteListenerOverride overrides for external bootstrap and broker services and externally advertised addresses.
+type RouteListenerOverride struct {
+	Bootstrap *RouteListenerBootstrapOverride `json:"bootstrap,omitempty"`
+	Brokers   []RouteListenerBrokerOverride   `json:"brokers,omitempty"`
+}
+
+// KafkaListenerExternalConfiguration external listener configuration.
+type KafkaListenerExternalConfiguration struct {
+	BrokerCertChainAndKey CertAndKeySecretSource `json:"brokerCertChainAndKey"`
+}
+
+// KafkaListenerExternalRoute external listener of type route
+type KafkaListenerExternalRoute struct {
+	Authentication     *KafkaListenerAuthentication        `json:"authentication,omitempty"`
+	Overrides          *RouteListenerOverride              `json:"overrides,omitempty"`
+	Configuration      *KafkaListenerExternalConfiguration `json:"configuration,omitempty"`
+	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer    `json:"networkPolicyPeers,omitempty"`
+}
+
+// KafkaListenerExternalLoadBalancer external listener of type loadbalancer
+type KafkaListenerExternalLoadBalancer struct {
+}
+
+// KafkaListenerExternalNodePort external listener of type nodeport
+type KafkaListenerExternalNodePort struct {
+}
+
+// KafkaListenerExternalIngress external listener of type ingress
+type KafkaListenerExternalIngress struct {
+}
+
+// KafkaListenerExternal configures external listener on port 9094.
+// The type depends on the value of the Type property within the given object, which must be one of [route, loadbalancer, nodeport, ingress].
+// Just one of the external listener fields has to be not nil.
+type KafkaListenerExternal struct {
+	Type KafkaListenerExternalType `json:"type,omitempty"`
+	KafkaListenerExternalRoute
+	KafkaListenerExternalLoadBalancer
+	KafkaListenerExternalNodePort
+	KafkaListenerExternalIngress
+}
+
+// KafkaListeners configures listeners of Kafka brokers.
+type KafkaListeners struct {
+	Plain    *KafkaListenerPlain    `json:"plain,omitempty"`
+	TLS      *KafkaListenerTLS      `json:"tls,omitempty"`
+	External *KafkaListenerExternal `json:"external,omitempty"`
+}
+
+// KafkaClusterSpec configuration of the Kafka cluster.
+type KafkaClusterSpec struct {
+	Replicas  int               `json:"replicas"`
+	Version   string            `json:"version,omitempty"`
+	Config    map[string]string `json:"config,omitempty"`
+	Storage   Storage           `json:"storage"`
+	Listeners KafkaListeners    `json:"listeners"`
+}
+
+// ZookeeperClusterSpec configuration of the ZooKeeper cluster.
+type ZookeeperClusterSpec struct {
+	Replicas int     `json:"replicas"`
+	Storage  Storage `json:"storage"`
+}
+
+// EntityTopicOperatorSpec configuration of the Topic Operator.
+type EntityTopicOperatorSpec struct {
+}
+
+// EntityUserOperatorSpec configuration of the User Operator.
+type EntityUserOperatorSpec struct {
+}
+
+// EntityOperatorSpec configuration of the Entity Operator.
+type EntityOperatorSpec struct {
+	TopicOperator EntityTopicOperatorSpec `json:"topicOperator,omitempty"`
+	UserOperator  EntityUserOperatorSpec  `json:"userOperator,omitempty"`
+}
+
+// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
+// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+
+// KafkaSpec defines the desired state of Kafka
+type KafkaSpec struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+
+	Kafka          KafkaClusterSpec     `json:"kafka"`
+	Zookeeper      ZookeeperClusterSpec `json:"zookeeper"`
+	EntityOperator EntityOperatorSpec   `json:"entityOperator,omitempty"`
+}
+
+// KafkaStatus defines the observed state of Kafka
+type KafkaStatus struct {
+	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+}
+
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+
+// Kafka is the Schema for the kafkas API
+type Kafka struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   KafkaSpec   `json:"spec,omitempty"`
+	Status KafkaStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// KafkaList contains a list of Kafka
+type KafkaList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Kafka `json:"items"`
+}

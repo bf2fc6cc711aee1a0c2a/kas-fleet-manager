@@ -7,7 +7,7 @@ import (
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/rs/xid"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1alpha1"
+	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -52,8 +52,8 @@ func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, c
 }
 
 // syncset builder for a kafka/strimzi custom resource
-func newKafkaSyncsetBuilder(kafka *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
-	kafkaName := fmt.Sprintf("%s-%s", kafka.Name, xid.New().String())
+func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
+	kafkaName := fmt.Sprintf("%s-%s", kafkaRequest.Name, xid.New().String())
 
 	// build array of objects to be created by the syncset
 	resources := []interface{}{
@@ -63,22 +63,29 @@ func newKafkaSyncsetBuilder(kafka *api.KafkaRequest) (*cmv1.SyncsetBuilder, stri
 				Kind:       "Kafka",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      kafka.Name,
+				Name:      kafkaRequest.Name,
 				Namespace: kafkaName,
 			},
 			Spec: strimzi.KafkaSpec{
-				Kafka: strimzi.KafkaSpecKafka{
-					Replicas: 1,
-				},
-				Zookeeper: strimzi.KafkaSpecZookeeper{
+				Kafka: strimzi.KafkaClusterSpec{
 					Replicas: 3,
-					Storage: strimzi.KafkaStorage{
-						Type: "ephemeral",
+					Storage: strimzi.Storage{
+						Type: strimzi.Ephemeral,
+					},
+					Listeners: strimzi.KafkaListeners{
+						Plain: &strimzi.KafkaListenerPlain{},
+						TLS:   &strimzi.KafkaListenerTLS{},
 					},
 				},
-				EntityOperator: strimzi.KafkaSpecEntityOperator{
-					TopicOperator: strimzi.KafkaTopicOperator{},
-					UserOperator:  strimzi.KafkaUserOperator{},
+				Zookeeper: strimzi.ZookeeperClusterSpec{
+					Replicas: 3,
+					Storage: strimzi.Storage{
+						Type: strimzi.Ephemeral,
+					},
+				},
+				EntityOperator: strimzi.EntityOperatorSpec{
+					TopicOperator: strimzi.EntityTopicOperatorSpec{},
+					UserOperator:  strimzi.EntityUserOperatorSpec{},
 				},
 			},
 		},
