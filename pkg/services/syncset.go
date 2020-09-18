@@ -5,6 +5,7 @@ import (
 
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	projectv1 "github.com/openshift/api/project/v1"
 	"github.com/rs/xid"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
@@ -58,6 +59,15 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 
 	// build array of objects to be created by the syncset
 	resources := []interface{}{
+		&projectv1.Project{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "project.openshift.io/v1",
+				Kind:       "Project",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: kafkaName,
+			},
+		},
 		&strimzi.Kafka{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "kafka.strimzi.io/v1beta1",
