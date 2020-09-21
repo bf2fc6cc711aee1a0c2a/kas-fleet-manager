@@ -8,7 +8,10 @@ import (
 )
 
 // ClusterNamePrefix a prefix used for new OCM cluster names
-const ClusterNamePrefix = "ms-"
+const (
+	ClusterNamePrefix = "ms-"
+	OpenShift_4_5_10 = "openshift-v4.5.10"
+)
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
 // moving the type into a ocmtest package.
@@ -65,7 +68,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	clusterBuilder.AWS(awsBuilder)
 
 	//TEMPORARILY pin the openshift cluster version to 4.5.10 for the first 30 days
-	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID("openshift-v4.5.10"))
+	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(OpenShift_4_5_10))
 
 	return clusterBuilder.Build()
 }

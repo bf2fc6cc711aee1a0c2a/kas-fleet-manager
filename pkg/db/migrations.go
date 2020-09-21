@@ -27,6 +27,7 @@ import (
 var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addKafkaRequest(),
 	addClusters(),
+	updateKafkaMultiAZTypeToBoolean(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

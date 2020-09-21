@@ -3,10 +3,10 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"sync"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
+	mocket "github.com/selvatico/go-mocket"
+	"sync"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 )
@@ -39,6 +39,23 @@ func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
 		singleton = &ConnectionFactory{config: config, db: db}
 	})
 	return singleton
+}
+
+// NewMockConnectionFactory should only be used for defining mock database drivers
+// This uses mocket under the hood, use the global mocket.Catcher to change how the database should respond to SQL
+// queries
+func NewMockConnectionFactory(dbConfig *config.DatabaseConfig) *ConnectionFactory {
+	if dbConfig == nil {
+		dbConfig = &config.DatabaseConfig{}
+	}
+	mocket.Catcher.Register()
+	mocket.Catcher.Logging = true
+	mocketDB, err := gorm.Open(mocket.DriverName, "")
+	if err != nil {
+		panic(err)
+	}
+	connectionFactory := &ConnectionFactory{dbConfig, mocketDB}
+	return connectionFactory
 }
 
 // New returns a new database connection

@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **ClusterID** | **string** |  | [optional] 
 **Status** | **string** |  | [optional] 
 **CloudProvider** | **string** |  | [optional] 
-**MultiAz** | **string** |  | [optional] 
+**MultiAz** | **bool** |  | [optional] 
 **Region** | **string** |  | [optional] 
 **Owner** | **string** |  | [optional] 
 **Name** | **string** |  | [optional] 
