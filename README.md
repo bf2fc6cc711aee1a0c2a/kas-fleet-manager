@@ -37,6 +37,10 @@ To run the service:
 make run 
 ```
 
+## Contributing
+
+See the [contributing guide](CONTRIBUTING.md) for general guidelines.
+
 ### Additional CLI commands
 
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly

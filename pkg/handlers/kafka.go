@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -42,4 +43,19 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// return 202 status accepted
 	handle(w, r, cfg, http.StatusAccepted)
+}
+
+func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			kafkaRequest, err := h.service.Get(id)
+			if err != nil {
+				return nil, err
+			}
+			return presenters.PresentKafkaRequest(kafkaRequest), nil
+		},
+		ErrorHandler: handleError,
+	}
+	handleGet(w, r, cfg)
 }

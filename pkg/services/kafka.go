@@ -10,8 +10,11 @@ import (
 
 type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	Get(id string) (*api.KafkaRequest, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
+
+var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
 	connectionFactory *db.ConnectionFactory
@@ -20,8 +23,12 @@ type kafkaService struct {
 
 type kafkaStatus string
 
+func (k kafkaStatus) String() string {
+	return string(k)
+}
+
 const (
-	statusAccepted kafkaStatus = "accepted"
+	KafkaRequestStatusAccepted kafkaStatus = "accepted"
 )
 
 func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService) *kafkaService {
@@ -35,7 +42,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.Owner = "dummy-owner"
-	kafkaRequest.Status = string(statusAccepted)
+	kafkaRequest.Status = string(KafkaRequestStatusAccepted)
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
@@ -78,4 +85,17 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 
 	return nil
+}
+
+func (k *kafkaService) Get(id string) (*api.KafkaRequest, *errors.ServiceError) {
+	if id == "" {
+		return nil, errors.Validation("id is undefined")
+	}
+
+	dbConn := k.connectionFactory.New()
+	var kafkaRequest api.KafkaRequest
+	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
+		return nil, handleGetError("KafkaResource", "id", id, err)
+	}
+	return &kafkaRequest, nil
 }

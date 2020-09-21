@@ -31,6 +31,7 @@ func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) openapi.KafkaRequest {
 		CloudProvider: kafkaRequest.CloudProvider,
 		MultiAz:       kafkaRequest.MultiAZ,
 		Owner:         kafkaRequest.Owner,
+		Status:        kafkaRequest.Status,
 		CreatedAt:     kafkaRequest.CreatedAt,
 		UpdatedAt:     kafkaRequest.UpdatedAt,
 	}
