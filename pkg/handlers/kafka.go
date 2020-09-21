@@ -1,7 +1,9 @@
 package handlers
 
 import (
+
 	"github.com/gorilla/mux"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"net/http"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -22,9 +24,11 @@ func NewKafkaHandler(service services.KafkaService) *kafkaHandler {
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var kafkaRequest openapi.KafkaRequest
+	kafkaRequest.Owner=auth.GetUsernameFromContext(r.Context())
 	cfg := &handlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []validate{
+			validateNotEmpty(&kafkaRequest.Owner, "owner"),
 			validateEmpty(&kafkaRequest.Id, "id"),
 			validateNotEmpty(&kafkaRequest.Region, "region"),
 			validateNotEmpty(&kafkaRequest.CloudProvider, "cloud_provider"),
