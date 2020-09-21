@@ -50,6 +50,10 @@ func runCreate(cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Unable to create cluster: %s", err.Error())
 	}
 
+	// as all fields on OCM structs are internal we cannot perform a standard json marshal as all fields will be empty,
+	// instead we need to use the OCM type-specific marshal functions when converting a struct to json
+	// declare a buffer to store the resulting json and invoke the OCM type-specific marshal function to populate the
+	// buffer with a json string containing the internal cluster values.
 	indentedCluster := new(bytes.Buffer)
 	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
 		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
