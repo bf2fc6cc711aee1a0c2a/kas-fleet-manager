@@ -176,6 +176,16 @@ components:
             updated_at:
               type: string
               format: date-time
+    KafkaRequestList:
+      allOf:
+        - $ref: '#/components/schemas/List'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/KafkaRequest'
   parameters:
     id:
       name: id
