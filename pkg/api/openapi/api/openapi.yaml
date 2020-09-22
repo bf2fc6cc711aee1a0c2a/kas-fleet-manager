@@ -155,6 +155,10 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/KafkaRequest_allOf'
+    KafkaRequestList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/KafkaRequestList_allOf'
     Error_allOf:
       properties:
         code:
@@ -191,6 +195,13 @@ components:
         updated_at:
           format: date-time
           type: string
+    KafkaRequestList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/KafkaRequest'
+          type: array
   securitySchemes:
     Bearer:
       bearerFormat: JWT
