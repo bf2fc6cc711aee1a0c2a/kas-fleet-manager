@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
@@ -80,4 +80,36 @@ func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		ErrorHandler: handleError,
 	}
 	handleDelete(w, r, cfg, http.StatusNoContent)
+}
+
+func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlerConfig{
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
+
+			listArgs := services.NewListArguments(r.URL.Query())
+			kafkaRequests, paging, err := h.service.List(ctx, listArgs)
+			if err != nil {
+				return nil, err
+			}
+
+			kafkaRequestList := openapi.KafkaRequestList{
+				Kind:  "KafkaRequestList",
+				Page:  int32(paging.Page),
+				Size:  int32(paging.Size),
+				Total: int32(paging.Total),
+				Items: []openapi.KafkaRequest{},
+			}
+
+			for _, kafkaRequest := range kafkaRequests {
+				converted := presenters.PresentKafkaRequest(kafkaRequest)
+				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
+			}
+
+			return kafkaRequestList, nil
+		},
+		ErrorHandler: handleError,
+	}
+
+	handleList(w, r, cfg)
 }

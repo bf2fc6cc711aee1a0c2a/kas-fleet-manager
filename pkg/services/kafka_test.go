@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -22,6 +24,8 @@ var (
 	testClusterID            = "test-cluster-id"
 	testSyncsetID            = "test-syncset-id"
 	testID                   = "test"
+	testUser                 = "test-user"
+	kafkaRequestTableName    = "kafka_requests"
 )
 
 // build a test kafka request
@@ -444,6 +448,262 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 
 			if err := k.RegisterKafkaJob(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaJob() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_kafkaService_List(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+	}
+	type args struct {
+		ctx      context.Context
+		listArgs *ListArguments
+	}
+
+	type want struct {
+		kafkaList  api.KafkaList
+		pagingMeta *api.PagingMeta
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    want
+		wantErr bool
+		setupFn func(api.KafkaList)
+	}{
+		{
+			name: "success: list with default values",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				listArgs: &ListArguments{
+					Page: 1,
+					Size: 100,
+				},
+			},
+			want: want{
+				kafkaList: api.KafkaList{
+					&api.KafkaRequest{
+						Region:        testKafkaRequestRegion,
+						ClusterID:     testClusterID,
+						CloudProvider: testKafkaRequestProvider,
+						MultiAZ:       false,
+						Name:          "dummy-cluster-name",
+						Status:        "accepted",
+						Owner:         testUser,
+					},
+					&api.KafkaRequest{
+						Region:        testKafkaRequestRegion,
+						ClusterID:     testClusterID,
+						CloudProvider: testKafkaRequestProvider,
+						MultiAZ:       false,
+						Name:          "dummy-cluster-name2",
+						Status:        "accepted",
+						Owner:         testUser,
+					},
+				},
+				pagingMeta: &api.PagingMeta{
+					Page:  1,
+					Size:  2,
+					Total: 2,
+				},
+			},
+			wantErr: false,
+			setupFn: func(kafkaList api.KafkaList) {
+				mocket.Catcher.Reset()
+
+				// total count query
+				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
+				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+
+				// actual query to return list of kafka requests based on filters
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
+				if err != nil {
+					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
+				}
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+			},
+		},
+		{
+			name: "success: list with specified size",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				listArgs: &ListArguments{
+					Page: 1,
+					Size: 1,
+				},
+			},
+			want: want{
+				kafkaList: api.KafkaList{
+					&api.KafkaRequest{
+						Region:        testKafkaRequestRegion,
+						ClusterID:     testClusterID,
+						CloudProvider: testKafkaRequestProvider,
+						MultiAZ:       false,
+						Name:          "dummy-cluster-name",
+						Status:        "accepted",
+						Owner:         testUser,
+					},
+				},
+				pagingMeta: &api.PagingMeta{
+					Page:  1,
+					Size:  1,
+					Total: 5,
+				},
+			},
+			wantErr: false,
+			setupFn: func(kafkaList api.KafkaList) {
+				mocket.Catcher.Reset()
+
+				// total count query
+				totalCountResponse := []map[string]interface{}{{"count": "5"}}
+				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+
+				// actual query to return list of kafka requests based on filters
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
+				if err != nil {
+					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
+				}
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+			},
+		},
+		{
+			name: "success: return empty list if no kafka requests available for user",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				listArgs: &ListArguments{
+					Page: 1,
+					Size: 100,
+				},
+			},
+			want: want{
+				kafkaList: api.KafkaList{},
+				pagingMeta: &api.PagingMeta{
+					Page:  1,
+					Size:  0,
+					Total: 0,
+				},
+			},
+			wantErr: false,
+			setupFn: func(kafkaList api.KafkaList) {
+				mocket.Catcher.Reset()
+
+				// total count query
+				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
+				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+
+				// actual query to return list of kafka requests based on filters
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
+				if err != nil {
+					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
+				}
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+			},
+		},
+		{
+			name: "fail: user credentials not available in context",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				listArgs: &ListArguments{
+					Page: 1,
+					Size: 100,
+				},
+			},
+			want: want{
+				kafkaList:  nil,
+				pagingMeta: nil,
+			},
+			wantErr: true,
+			setupFn: func(kafkaList api.KafkaList) {
+				mocket.Catcher.Reset()
+
+				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
+				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
+				if err != nil {
+					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
+				}
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+			},
+		},
+		{
+			name: "fail: database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+			},
+			args: args{
+				ctx: context.TODO(),
+				listArgs: &ListArguments{
+					Page: 1,
+					Size: 100,
+				},
+			},
+			want: want{
+				kafkaList:  nil,
+				pagingMeta: nil,
+			},
+			wantErr: true,
+			setupFn: func(kafkaList api.KafkaList) {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn(tt.want.kafkaList)
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+			}
+
+			result, pagingMeta, err := k.List(tt.args.ctx, tt.args.listArgs)
+
+			// check errors
+			if (err != nil) != tt.wantErr {
+				t.Errorf("kafkaService.List() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			// compare wanted vs actual pagingMeta result
+			if !reflect.DeepEqual(pagingMeta, tt.want.pagingMeta) {
+				t.Errorf("kafka.Service.List(): Paging meta returned is not correct:\n\tgot: %+v\n\twant: %+v", pagingMeta, tt.want.pagingMeta)
+			}
+
+			// compare wanted vs actual results
+			if len(result) != len(tt.want.kafkaList) {
+				t.Errorf("kafka.Service.List(): total number of results: got = %d want = %d", len(result), len(tt.want.kafkaList))
+			}
+
+			for i, got := range result {
+				if !reflect.DeepEqual(got, tt.want.kafkaList[i]) {
+					t.Errorf("kafkaService.List():\ngot = %+v\nwant = %+v", got, tt.want.kafkaList[i])
+				}
 			}
 		})
 	}
