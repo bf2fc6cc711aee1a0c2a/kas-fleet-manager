@@ -29,6 +29,8 @@ func (k kafkaStatus) String() string {
 
 const (
 	KafkaRequestStatusAccepted kafkaStatus = "accepted"
+	clusterID                              = "dummy-cluster-id"
+	kafkaRequestOwner                      = "dummy-owner"
 )
 
 func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService) *kafkaService {
@@ -41,8 +43,8 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	kafkaRequest.Owner = "dummy-owner"
 	kafkaRequest.Status = string(KafkaRequestStatusAccepted)
+	kafkaRequest.Owner = kafkaRequestOwner
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
@@ -61,7 +63,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	//  we want to choose the cluster based on current capacity, region
 	//  and provider
 	cluster := &api.Cluster{
-		ClusterID: "000",
+		ClusterID: clusterID,
 	}
 
 	// update the kafka object to point to the cluster id
