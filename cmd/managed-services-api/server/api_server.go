@@ -110,8 +110,9 @@ func NewAPIServer() Server {
 	//  /api/managed-services-api/v1/kafkas
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
-	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
+	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
+	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers

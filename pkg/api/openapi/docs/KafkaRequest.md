@@ -7,7 +7,7 @@ Name | Type | Description | Notes
 **Id** | **string** |  | [optional] 
 **Kind** | **string** |  | [optional] 
 **Href** | **string** |  | [optional] 
-**ClusterID** | **string** |  | [optional] 
+**ClusterId** | **string** |  | [optional] 
 **Status** | **string** |  | [optional] 
 **CloudProvider** | **string** |  | [optional] 
 **MultiAz** | **bool** |  | [optional] 
