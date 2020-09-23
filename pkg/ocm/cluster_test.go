@@ -1,12 +1,13 @@
 package ocm
 
 import (
+	"reflect"
+	"testing"
+
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"reflect"
-	"testing"
 )
 
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
@@ -88,7 +89,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Managed(true)
 					builder.Name("")
 					builder.AWS(clusterAWS)
-					builder.Version(clustersmgmtv1.NewVersion().ID(OpenShift_4_5_10))
+					builder.Version(clustersmgmtv1.NewVersion().ID(OpenShift_4_5_9))
 				})
 				if err != nil {
 					panic(err)
