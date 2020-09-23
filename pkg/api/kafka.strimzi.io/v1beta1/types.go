@@ -41,7 +41,6 @@ const (
 
 // EphemeralStorage storage of ephemeral type.
 type EphemeralStorage struct {
-	ID        int    `json:"id,omitempty"`
 	SizeLimit string `json:"sizeLimit,omitempty"`
 }
 
@@ -53,7 +52,6 @@ type PersistentClaimStorageOverride struct {
 
 // PersistentClaimStorage storage of persistent-claim type.
 type PersistentClaimStorage struct {
-	ID          int                              `json:"id,omitempty"`
 	Size        string                           `json:"size,omitempty"`
 	Selector    map[string]string                `json:"selector,omitempty"`
 	DeleteClaim bool                             `json:"deleteClaim,omitempty"`
@@ -64,11 +62,14 @@ type PersistentClaimStorage struct {
 // JbodVolume volume in a jbod storage.
 // Just one of the storage fields has to be not nil.
 type JbodVolume struct {
+	Type StorageType `json:"type"`
+	ID   int         `json:"id,omitempty"`
 	EphemeralStorage
 	PersistentClaimStorage
 }
 
 // JbodStorage storage of jbod type.
+// See https://strimzi.io/docs/operators/latest/using.html#jbod_configuration for more details.
 type JbodStorage struct {
 	Volumes []JbodVolume `json:"volumes,omitempty"`
 }
@@ -78,6 +79,7 @@ type JbodStorage struct {
 // Just one of the storage fields has to be not nil.
 type Storage struct {
 	Type StorageType `json:"type"`
+	ID   int         `json:"id,omitempty"`
 	EphemeralStorage
 	PersistentClaimStorage
 	JbodStorage
