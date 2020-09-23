@@ -19,6 +19,7 @@ const (
 	TestingEnv     string = "testing"
 	DevelopmentEnv string = "development"
 	ProductionEnv  string = "production"
+	StageEnv       string = "stage"
 
 	EnvironmentStringKey string = "OCM_ENV"
 	EnvironmentDefault   string = DevelopmentEnv
@@ -86,6 +87,8 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 		defaults = testingConfigDefaults
 	case ProductionEnv:
 		defaults = productionConfigDefaults
+	case StageEnv:
+		defaults = stageConfigDefaults
 	default:
 		return fmt.Errorf("Unsupported environment %q", e.Name)
 	}
@@ -115,6 +118,8 @@ func (e *Env) Initialize() error {
 		err = loadTesting(environment)
 	case ProductionEnv:
 		err = loadProduction(environment)
+	case StageEnv:
+		err = loadStage(environment)
 	default:
 		err = fmt.Errorf("Unsupported environment %q", e.Name)
 	}
