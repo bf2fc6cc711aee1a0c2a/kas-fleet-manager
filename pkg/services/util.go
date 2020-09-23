@@ -9,6 +9,10 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
+const (
+	truncatedNameLen = 10
+)
+
 // Field names suspected to contain personally identifiable information
 var piiFields []string = []string{
 	"username",
@@ -64,4 +68,12 @@ func fields(obj interface{}) map[string]interface{} {
 	}
 
 	return m
+}
+
+func truncateString(str string, num int) string {
+	truncatedString := str
+	if len(str) > num {
+		truncatedString = str[0:num]
+	}
+	return truncatedString
 }

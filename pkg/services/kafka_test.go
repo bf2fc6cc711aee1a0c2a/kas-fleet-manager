@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -8,7 +9,6 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -20,15 +20,20 @@ var (
 	testKafkaRequestName     = "test-cluster"
 	testClusterID            = "test-cluster-id"
 	testSyncsetID            = "test-syncset-id"
+	testID                   = "test"
 )
 
 // build a test kafka request
 func buildKafkaRequest(modifyFn func(kafkaRequest *api.KafkaRequest)) *api.KafkaRequest {
 	kafkaRequest := &api.KafkaRequest{
+		Meta: api.Meta{
+			ID: testID,
+		},
 		Region:        testKafkaRequestRegion,
 		ClusterID:     testClusterID,
 		CloudProvider: testKafkaRequestProvider,
 		Name:          testKafkaRequestName,
+		MultiAZ:       false,
 	}
 	if modifyFn != nil {
 		modifyFn(kafkaRequest)
@@ -49,6 +54,7 @@ func Test_kafkaService_Get(t *testing.T) {
 	type args struct {
 		id string
 	}
+
 	// we define tests as list of structs that contain inputs and expected outputs
 	// this means we can execute the same logic on each test struct, and makes adding new tests simple as we only need
 	// to provide a new struct to the list instead of defining an entirely new test
@@ -84,7 +90,7 @@ func Test_kafkaService_Get(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id: "test",
+				id: testID,
 			},
 			wantErr: true,
 			setupFn: func() {
@@ -97,23 +103,11 @@ func Test_kafkaService_Get(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id: "test",
+				id: testID,
 			},
-			want: &api.KafkaRequest{
-				Meta: api.Meta{
-					ID: "test",
-				},
-			},
+			want: buildKafkaRequest(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
-					Meta: api.Meta{
-						ID: "test",
-					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       false,
-				}))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}
@@ -153,16 +147,21 @@ func Test_kafkaService_Create(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
+		clusterService    ClusterService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
 	}
+
+	longKafkaName := "Long-Kafka-Name-Which-Will-Be-Truncated-Since-Route-Host-Names-Are-Limited-To-63-Characters"
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		setupFn func()
-		wantErr bool
+		name                    string
+		fields                  fields
+		args                    args
+		setupFn                 func()
+		wantErr                 bool
+		wantBootstrapServerHost string
 	}{
 		{
 			name: "successful syncset creation",
@@ -172,6 +171,11 @@ func Test_kafkaService_Create(t *testing.T) {
 					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
 						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
 						return syncset, nil
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "clusterDNS", nil
 					},
 				},
 			},
@@ -192,6 +196,11 @@ func Test_kafkaService_Create(t *testing.T) {
 						return nil, errors.New(errors.ErrorBadRequest, "")
 					},
 				},
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "clusterDNS", nil
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -200,6 +209,57 @@ func Test_kafkaService_Create(t *testing.T) {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr: true,
+		},
+		{
+			name: "failed clusterDNS retrieval",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
+						return syncset, nil
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "", errors.New(errors.ErrorBadRequest, "")
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: true,
+		},
+		{
+			name: "validate BootstrapServerHost truncate",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
+						return syncset, nil
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "clusterDNS", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.Name = longKafkaName
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr:                 false,
+			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
 		},
 	}
 	for _, tt := range tests {
@@ -211,10 +271,15 @@ func Test_kafkaService_Create(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
+				clusterService:    tt.fields.clusterService,
 			}
 
 			if err := k.Create(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
 				t.Errorf("Create() error = %v, wantErr = %v", err, tt.wantErr)
+			}
+
+			if tt.wantBootstrapServerHost != "" && tt.args.kafkaRequest.BootstrapServerHost != tt.wantBootstrapServerHost {
+				t.Errorf("BootstrapServerHost error. Actual = %v, wantBootstrapServerHost = %v", tt.args.kafkaRequest.BootstrapServerHost, tt.wantBootstrapServerHost)
 			}
 		})
 	}
@@ -224,6 +289,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
+		clusterService    ClusterService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -240,6 +306,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService:    nil,
+				clusterService:    nil,
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -254,6 +321,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService:    nil,
+				clusterService:    nil,
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -273,6 +341,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
+				clusterService:    tt.fields.clusterService,
 			}
 
 			if err := k.RegisterKafkaJob(tt.args.kafkaRequest); (err != nil) != tt.wantErr {

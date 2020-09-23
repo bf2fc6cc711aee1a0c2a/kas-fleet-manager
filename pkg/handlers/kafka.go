@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"net/http"
 
 	"github.com/gorilla/mux"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
-	"net/http"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
@@ -24,7 +24,7 @@ func NewKafkaHandler(service services.KafkaService) *kafkaHandler {
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var kafkaRequest openapi.KafkaRequest
-	kafkaRequest.Owner=auth.GetUsernameFromContext(r.Context())
+	kafkaRequest.Owner = auth.GetUsernameFromContext(r.Context())
 	cfg := &handlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []validate{
@@ -32,11 +32,16 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			validateEmpty(&kafkaRequest.Id, "id"),
 			validateNotEmpty(&kafkaRequest.Region, "region"),
 			validateNotEmpty(&kafkaRequest.CloudProvider, "cloud_provider"),
-			validateNotEmpty(&kafkaRequest.Name, "cluster_name"),
+			validateNotEmpty(&kafkaRequest.Name, "name"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
+
 			err := h.service.RegisterKafkaJob(convKafka)
+			if err != nil {
+				return nil, err
+			}
+			err = h.service.Create(convKafka)
 			if err != nil {
 				return nil, err
 			}

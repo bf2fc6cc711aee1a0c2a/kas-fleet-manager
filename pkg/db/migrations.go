@@ -28,6 +28,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addKafkaRequest(),
 	addClusters(),
 	updateKafkaMultiAZTypeToBoolean(),
+	addKafkabootstrapServerHostType(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

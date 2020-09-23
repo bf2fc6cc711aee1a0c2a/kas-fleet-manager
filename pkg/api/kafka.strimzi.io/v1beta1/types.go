@@ -308,7 +308,7 @@ type KafkaSpec struct {
 
 	Kafka          KafkaClusterSpec     `json:"kafka"`
 	Zookeeper      ZookeeperClusterSpec `json:"zookeeper"`
-	EntityOperator EntityOperatorSpec   `json:"entityOperator,omitempty"`
+	EntityOperator *EntityOperatorSpec  `json:"entityOperator,omitempty"`
 }
 
 // KafkaStatus defines the observed state of Kafka
