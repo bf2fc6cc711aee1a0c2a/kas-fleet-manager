@@ -29,6 +29,18 @@ type CertAndKeySecretSource struct {
 	SecretName  string `json:"secretName"`
 }
 
+// GenericSecretSource reference to the Secret which holds a secret.
+type GenericSecretSource struct {
+	Key        string `json:"key"`
+	SecretName string `json:"secretName"`
+}
+
+// CertSecretSource reference to the Secret which holds a certificate.
+type CertSecretSource struct {
+	Certificate string `json:"certificate"`
+	SecretName  string `json:"secretName"`
+}
+
 // StorageType type of possible storages.
 type StorageType string
 
@@ -62,7 +74,6 @@ type PersistentClaimStorage struct {
 }
 
 // JbodVolume volume in a jbod storage.
-// Just one of the storage fields has to be not nil.
 type JbodVolume struct {
 	EphemeralStorage
 	PersistentClaimStorage
@@ -75,12 +86,46 @@ type JbodStorage struct {
 
 // Storage configuration (disk). Cannot be updated.
 // The type depends on the value of the Type property within the given object, which must be one of [ephemeral, persistent-claim, jbod].
-// Just one of the storage fields has to be not nil.
 type Storage struct {
 	Type StorageType `json:"type"`
 	EphemeralStorage
 	PersistentClaimStorage
 	JbodStorage
+}
+
+// KafkaAuthorizationType type of possible authorization mechanisms.
+type KafkaAuthorizationType string
+
+// KafkaAuthorizationType constants.
+const (
+	Simple   KafkaAuthorizationType = "simple"
+	OPA      KafkaAuthorizationType = "opa"
+	Keycloak KafkaAuthorizationType = "keycloak"
+)
+
+// KafkaAuthorization authorization configuration for Kafka brokers.
+// The type depends on the value of the Type property within the given object, which must be one of [simple, opa, keycloak].
+type KafkaAuthorization struct {
+	Type KafkaAuthorizationType `json:"type"`
+	KafkaAuthorizationSimple
+	KafkaAuthorizationOPA
+	KafkaAuthorizationKeycloak
+}
+
+// KafkaAuthorizationSimple authorization configuration for Simple
+type KafkaAuthorizationSimple struct{}
+
+// KafkaAuthorizationOPA authorization configuration for OPA
+type KafkaAuthorizationOPA struct{}
+
+// KafkaAuthorizationKeycloak authorization configuration for Keycloak
+type KafkaAuthorizationKeycloak struct {
+	ClientID                       string             `json:"clientId,omitempty"`
+	TokenEndpointURI               string             `json:"tokenEndpointUri,omitempty"`
+	TLSTrustedCertificates         []CertSecretSource `json:"tlsTrustedCertificates,omitempty"`
+	DisableTLSHostnameVerification bool               `json:"disableTlsHostnameVerification,omitempty"`
+	DelegateToKafkaAcls            bool               `json:"delegateToKafkaAcls,omitempty"`
+	SuperUsers                     []string           `json:"superUsers,omitempty"`
 }
 
 // KafkaListenerAuthenticationType type of possible authentication mechanisms.
@@ -95,10 +140,39 @@ const (
 
 // KafkaListenerAuthentication authentication configuration for Kafka brokers.
 // The type depends on the value of the Type property within the given object, which must be one of [tls, scram-sha-512, oauth].
-// Just one of the authentication fields has to be not nil.
 type KafkaListenerAuthentication struct {
 	Type KafkaListenerAuthenticationType `json:"type"`
-	// TODO: additional fields for different types/structs of authentication
+	KafkaListenerAuthenticationTLS
+	KafkaListenerAuthenticationScramSha512
+	KafkaListenerAuthenticationOAuth
+}
+
+// KafkaListenerAuthenticationTLS authentication configuration for TLS
+type KafkaListenerAuthenticationTLS struct{}
+
+// KafkaListenerAuthenticationScramSha512 authentication configuration for SCRAM-SHA-512
+type KafkaListenerAuthenticationScramSha512 struct{}
+
+// KafkaListenerAuthenticationOAuth authentication configuration for OAuth
+type KafkaListenerAuthenticationOAuth struct {
+	AccessTokenIsJwt               bool                `json:"accessTokenIsJwt,omitempty"`
+	CheckAccessTokenType           bool                `json:"checkAccessTokenType,omitempty"`
+	CheckIssuer                    bool                `json:"checkIssuer,omitempty"`
+	ClientID                       string              `json:"clientId,omitempty"`
+	ClientSecret                   GenericSecretSource `json:"clientSecret,omitempty"`
+	DisableTLSHostnameVerification bool                `json:"disableTlsHostnameVerification,omitempty"`
+	EnableECDSA                    bool                `json:"enableECDSA,omitempty"`
+	FallbackUserNameClaim          string              `json:"fallbackUserNameClaim,omitempty"`
+	FallbackUserNamePrefix         string              `json:"fallbackUserNamePrefix,omitempty"`
+	IntrospectionEndpointURI       string              `json:"introspectionEndpointUri,omitempty"`
+	JwksEndpointURI                string              `json:"jwksEndpointUri,omitempty"`
+	JwksExpirySeconds              int                 `json:"jwksExpirySeconds,omitempty"`
+	JwksRefreshSeconds             int                 `json:"jwksRefreshSeconds,omitempty"`
+	TLSTrustedCertificates         []CertSecretSource  `json:"tlsTrustedCertificates,omitempty"`
+	UserInfoEndpointURI            string              `json:"userInfoEndpointUri,omitempty"`
+	UserNameClaim                  string              `json:"userNameClaim,omitempty"`
+	ValidIssuerURI                 string              `json:"validIssuerUri,omitempty"`
+	ValidTokenType                 string              `json:"validTokenType,omitempty"`
 }
 
 // KafkaListenerPlain configures plain listener on port 9092.
@@ -157,7 +231,6 @@ type KafkaListenerExternalConfiguration struct {
 
 // KafkaListenerExternalRoute external listener of type route
 type KafkaListenerExternalRoute struct {
-	Authentication     *KafkaListenerAuthentication        `json:"authentication,omitempty"`
 	Overrides          *RouteListenerOverride              `json:"overrides,omitempty"`
 	Configuration      *KafkaListenerExternalConfiguration `json:"configuration,omitempty"`
 	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer    `json:"networkPolicyPeers,omitempty"`
@@ -177,9 +250,9 @@ type KafkaListenerExternalIngress struct {
 
 // KafkaListenerExternal configures external listener on port 9094.
 // The type depends on the value of the Type property within the given object, which must be one of [route, loadbalancer, nodeport, ingress].
-// Just one of the external listener fields has to be not nil.
 type KafkaListenerExternal struct {
-	Type KafkaListenerExternalType `json:"type,omitempty"`
+	Type           KafkaListenerExternalType    `json:"type"`
+	Authentication *KafkaListenerAuthentication `json:"authentication,omitempty"`
 	KafkaListenerExternalRoute
 	KafkaListenerExternalLoadBalancer
 	KafkaListenerExternalNodePort
@@ -195,11 +268,12 @@ type KafkaListeners struct {
 
 // KafkaClusterSpec configuration of the Kafka cluster.
 type KafkaClusterSpec struct {
-	Replicas  int               `json:"replicas"`
-	Version   string            `json:"version,omitempty"`
-	Config    map[string]string `json:"config,omitempty"`
-	Storage   Storage           `json:"storage"`
-	Listeners KafkaListeners    `json:"listeners"`
+	Replicas      int                 `json:"replicas"`
+	Version       string              `json:"version,omitempty"`
+	Config        map[string]string   `json:"config,omitempty"`
+	Storage       Storage             `json:"storage"`
+	Listeners     KafkaListeners      `json:"listeners"`
+	Authorization *KafkaAuthorization `json:"authorization,omitempty"`
 }
 
 // ZookeeperClusterSpec configuration of the ZooKeeper cluster.
