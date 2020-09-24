@@ -40,3 +40,38 @@ loop one by one. For an example of writing a table driven test, see:
 
 - [The table driven test documentation](https://github.com/golang/go/wiki/TableDrivenTests) which has examples
 - [The Test_kafkaService_Get test in this repository](pkg/services/kafka_test.go)
+
+
+## Integration Tests
+
+Integration tests in this service can take advantage of running in an "emulated OCM API". This
+essentially means a configurable mock OCM API server can be used in place of a "real" OCM API for
+testing how the system responds to different failure scenarios in OCM.
+
+The emulated OCM API will be used if the `OCM_ENV` environment variable is set to `integration`.
+
+The emulated OCM API can also be set manually in non-`integration` environments by setting the
+`ocm-mock-mode` flag to `emulate-server`.
+
+When handling OCM error scenarios in integration tests, decide which ServiceError you'd like an
+endpoint to return, for a full list of ServiceError types, see [this file](./pkg/errors/errors.go).
+Ensure when mocking an endpoint the correct ServiceError type is returned via the mock function e.g.
+
+```go
+ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+ocmServerBuilder.SetClustersPostResponse(nil, errors.Validation("test failed validation"))
+ocmServer := ocmServerBuilder.Build()
+defer ocmServer.Close()
+```
+
+In the integration test itself you can then test the expected HTTP response/error from this
+service based on the OCM failure e.g.
+
+```go
+_, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
+Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
+```
+
+When adding new integration tests, use the following files as guidelines:
+- [TestKafkaPost integration test](./test/integration/kafkas_test.go)
+- [Mock OCM API server](./test/mocks/api_server.go)
