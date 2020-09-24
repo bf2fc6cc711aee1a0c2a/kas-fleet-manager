@@ -38,6 +38,22 @@ To run the service:
 make run 
 ```
 
+## Environments
+
+The service can be run in a number of different environments. Environments are essentially bespoke
+sets of configuration that the service uses to make it function differently. Environments can be
+set using the `OCM_ENV` environment variable. Below are the list of known environments and their
+details.
+
+- `development` - The `staging` OCM environment is used. Sentry is disabled. Debugging utilities
+   are enabled. This should be used in local development.
+- `testing` - The OCM API is mocked/stubbed out, meaning network calls to OCM will fail. The auth
+   service is mocked. This should be used for unit testing.
+- `integration` - Identical to `testing` but using an emulated OCM API server to respond to OCM API
+   calls, instead of a basic mock. This can be used for integration testing to mock OCM behaviour.
+- `production` - Debugging utilities are disabled, Sentry is enabled. environment can be ignored in
+   most development and is only used when the service is deployed.
+
 ## Contributing
 
 See the [contributing guide](CONTRIBUTING.md) for general guidelines.

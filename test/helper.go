@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,6 +40,7 @@ const (
 	jwkKID     = "uhctestkey"
 )
 
+var originalServerURL string
 var helper *Helper
 var once sync.Once
 
@@ -63,7 +65,7 @@ type Helper struct {
 	teardowns         []func()
 }
 
-func NewHelper(t *testing.T) *Helper {
+func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 	once.Do(func() {
 		jwtKey, jwtCA, err := parseJWTKeys()
 		if err != nil {
@@ -71,8 +73,26 @@ func NewHelper(t *testing.T) *Helper {
 		}
 
 		env := environments.Environment()
+
+		// Set server if provided
+		if server != nil {
+			fmt.Printf("Setting OCM base URL to %s\n", server.URL)
+			env.Config.OCM.BaseURL = server.URL
+		}
+		originalServerURL = env.Config.OCM.BaseURL
+
 		// Manually set environment name, ignoring environment variables
-		env.Name = environments.TestingEnv
+		validTestEnv := false
+		for _, testEnv := range []string{environments.TestingEnv, environments.IntegrationEnv, environments.DevelopmentEnv} {
+			if env.Name == testEnv {
+				validTestEnv = true
+				break
+			}
+		}
+		if !validTestEnv {
+			fmt.Println("OCM_ENV environment variable not set to a valid test environment, using default testing environment")
+			env.Name = environments.TestingEnv
+		}
 		err = env.AddFlags(pflag.CommandLine)
 		if err != nil {
 			glog.Fatalf("Unable to add environment flags: %s", err.Error())
@@ -102,12 +122,17 @@ func NewHelper(t *testing.T) *Helper {
 			jwkMockTeardown,
 			helper.stopAPIServer,
 		}
-		helper.startAPIServer()
 		helper.startMetricsServer()
 		helper.startHealthCheckServer()
 	})
 	helper.T = t
 	return helper
+}
+
+func (helper *Helper) SetServer(server *httptest.Server) {
+	helper.Env().Config.OCM.BaseURL = server.URL
+	helper.Env().LoadClients()
+	helper.Env().LoadServices()
 }
 
 func (helper *Helper) Env() *environments.Env {
@@ -163,6 +188,16 @@ func (helper *Helper) startHealthCheckServer() {
 		helper.HealthCheckServer.Start()
 		glog.V(10).Info("Test health check server stopped")
 	}()
+}
+
+func (helper *Helper) StartServer() {
+	helper.startAPIServer()
+	glog.V(10).Info("Test API server started")
+}
+
+func (helper *Helper) StopServer() {
+	helper.stopAPIServer()
+	glog.V(10).Info("Test API server stopped")
 }
 
 func (helper *Helper) RestartServer() {
@@ -320,6 +355,7 @@ func (helper *Helper) CleanDB() {
 	gorm := helper.DBFactory.New()
 
 	for _, table := range []string{
+		"clusters",
 		"kafka_requests",
 		"migrations",
 	} {
