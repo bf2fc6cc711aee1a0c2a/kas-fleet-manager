@@ -1,8 +1,11 @@
 package services
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 
 	"github.com/jinzhu/gorm"
 
@@ -76,4 +79,22 @@ func truncateString(str string, num int) string {
 		truncatedString = str[0:num]
 	}
 	return truncatedString
+}
+
+// buildKafkaIdentifier creates a unique identifier for a kafka cluster given
+// the kafka request object
+func buildKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
+	return fmt.Sprintf("%s-%s", kafkaRequest.Name, strings.ToLower(kafkaRequest.ID))
+}
+
+// buildTruncateKafkaIdentifier creates a unique identifier for a kafka cluster given
+// the kafka request object
+func buildTruncateKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
+	return fmt.Sprintf("%s-%s", truncateString(kafkaRequest.Name, truncatedNameLen), strings.ToLower(kafkaRequest.ID))
+}
+
+// buildSyncsetIdentifier creates a unique identifier for the syncset given
+// the unique kafka identifier
+func buildSyncsetIdentifier(kafkaRequest *api.KafkaRequest) string {
+	return fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
 }
