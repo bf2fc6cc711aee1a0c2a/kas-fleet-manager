@@ -294,9 +294,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 		id string
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name    string
+		fields  fields
+		args    args
 		wantErr bool
 		setupFn func()
 	}{
@@ -328,7 +328,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					DeleteFunc:  func(syncsetId string, clusterId string) *errors.ServiceError {
+					DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
 						return errors.GeneralError("error deleting syncset")
 					},
 				},
@@ -343,7 +343,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					DeleteFunc:  func(syncsetId string, clusterId string) *errors.ServiceError {
+					DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
 						return nil
 					},
 				},

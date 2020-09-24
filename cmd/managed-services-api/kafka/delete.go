@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
+	customOcm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -36,8 +37,10 @@ func runDelete(cmd *cobra.Command, _ []string) {
 	env := environments.Environment()
 
 	// setup required services
+	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 
 	err := kafkaService.Delete(id)
 	if err != nil {

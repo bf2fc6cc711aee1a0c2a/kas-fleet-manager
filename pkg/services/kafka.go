@@ -125,8 +125,8 @@ func (k *kafkaService) Delete(id string) *errors.ServiceError {
 		return errors.GeneralError("error deleting syncset: %v", err)
 	}
 
-	// update the deletion timestamp
-	if err := dbConn.Model(&kafkaRequest).Update("deleted_at", time.Now()).Error; err != nil {
+	// soft delete the kafka request
+	if err := dbConn.Delete(&kafkaRequest).Error; err != nil {
 		return errors.GeneralError("unable to update kafka request with id %s: %s", kafkaRequest.ID, err)
 	}
 
