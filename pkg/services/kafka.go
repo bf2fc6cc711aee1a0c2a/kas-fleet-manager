@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -13,6 +12,7 @@ import (
 type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	Get(id string) (*api.KafkaRequest, *errors.ServiceError)
+	Delete(id string) *errors.ServiceError
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
 
@@ -65,7 +65,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		return errors.GeneralError("error retreiving cluster DNS: %v", err)
 	}
 
-	truncatedKafkaIdentifier := fmt.Sprintf("%s-%s", truncateString(kafkaRequest.Name, truncatedNameLen), strings.ToLower(kafkaRequest.ID))
+	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	// create the syncset builder
@@ -100,4 +100,35 @@ func (k *kafkaService) Get(id string) (*api.KafkaRequest, *errors.ServiceError) 
 		return nil, handleGetError("KafkaResource", "id", id, err)
 	}
 	return &kafkaRequest, nil
+}
+
+// Delete deletes a kafka request and its corresponding syncset from
+// the associated cluster it was deployed on. Deleting the syncset will
+// delete all resources (Kafka CR, Project) associated with the syncset.
+// The kafka object in the database will be updated with a deleted_at
+// timestamp.
+func (k *kafkaService) Delete(id string) *errors.ServiceError {
+	if id == "" {
+		return errors.Validation("id is undefined")
+	}
+
+	dbConn := k.connectionFactory.New()
+	var kafkaRequest api.KafkaRequest
+	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
+		return handleGetError("KafkaResource", "id", id, err)
+	}
+
+	// delete the syncset
+	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
+	err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
+	if err != nil {
+		return errors.GeneralError("error deleting syncset: %v", err)
+	}
+
+	// update the deletion timestamp
+	if err := dbConn.Model(&kafkaRequest).Update("deleted_at", time.Now()).Error; err != nil {
+		return errors.GeneralError("unable to update kafka request with id %s: %s", kafkaRequest.ID, err)
+	}
+
+	return nil
 }

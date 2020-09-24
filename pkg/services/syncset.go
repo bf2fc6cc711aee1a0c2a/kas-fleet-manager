@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"strings"
 
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -21,6 +20,7 @@ const (
 //go:generate moq -out syncset_mock.go . SyncsetService
 type SyncsetService interface {
 	Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, clusterId string) (*cmv1.Syncset, *errors.ServiceError)
+	Delete(syncsetId, clusterId string) *errors.ServiceError
 }
 
 func NewSyncsetService(ocmClient *sdkClient.Connection) SyncsetService {
@@ -58,9 +58,24 @@ func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, c
 	return response.Body(), nil
 }
 
+func (s syncsetService) Delete(syncsetId, clusterId string) *errors.ServiceError {
+	// create the syncset on the cluster
+	clustersResource := s.ocmClient.ClustersMgmt().V1().Clusters()
+	_, syncsetErr := clustersResource.Cluster(clusterId).
+		ExternalConfiguration().
+		Syncsets().
+		Syncset(syncsetId).
+		Delete().
+		Send()
+	if syncsetErr != nil {
+		return errors.GeneralError(fmt.Sprintf("failed to delete syncset: %s for cluster id: %s", syncsetId, clusterId), syncsetErr)
+	}
+	return nil
+}
+
 // syncset builder for a kafka/strimzi custom resource
 func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
-	kafkaIdentifier := fmt.Sprintf("%s-%s", kafkaRequest.Name, strings.ToLower(kafkaRequest.ID))
+	kafkaIdentifier := buildKafkaIdentifier(kafkaRequest)
 
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.RouteListenerBrokerOverride{}
@@ -128,7 +143,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 
 	syncsetBuilder := cmv1.NewSyncset()
 	syncsetBuilder = syncsetBuilder.Resources(resources...)
-
-	// build the syncset - "ext-" prefix is required
-	return syncsetBuilder, fmt.Sprintf("ext-%s", kafkaIdentifier), nil
+	syncsetId := buildSyncsetIdentifier(kafkaRequest)
+	return syncsetBuilder, syncsetId, nil
 }
