@@ -86,6 +86,11 @@ ifndef SERVER_URL
 	SERVER_URL:=http://localhost:8000
 endif
 
+# Set git hook path to .githooks/
+.PHONY: setup/git/hooks
+setup/git/hooks:
+	git config core.hooksPath .githooks
+
 # Checks if a GOPATH is set, or emits an error message
 check-gopath:
 ifndef GOPATH
