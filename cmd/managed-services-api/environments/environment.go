@@ -12,6 +12,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
+	customOcm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -127,7 +128,9 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() {
-	clusterService := services.NewClusterService(env.DBFactory, env.Clients.OCM.Connection, env.Config.AWS)
+	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
+
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
 

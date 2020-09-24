@@ -2,12 +2,14 @@ package cluster
 
 import (
 	"bytes"
+
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	customOcm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -40,7 +42,9 @@ func runCreate(cmd *cobra.Command, _ []string) {
 
 	env := environments.Environment()
 
-	clusterService := services.NewClusterService(env.DBFactory, env.Clients.OCM.Connection, env.Config.AWS)
+	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
+
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: provider,
