@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+
+	"github.com/gorilla/mux"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 const (
@@ -23,7 +24,7 @@ const (
 	// EndpointPathClusters ocm clusters management service clusters endpoint
 	EndpointPathClusters = "/api/clusters_mgmt/v1/clusters"
 	// EndpointPathSyncsets ocm clusters management service syncset endpoint
-	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets"
+	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/external_configuration/syncsets"
 )
 
 var (
