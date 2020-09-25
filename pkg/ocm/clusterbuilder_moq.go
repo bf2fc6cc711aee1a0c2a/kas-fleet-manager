@@ -4,10 +4,13 @@
 package ocm
 
 import (
-	"sync"
-
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"sync"
+)
+
+var (
+	lockClusterBuilderMockNewOCMClusterFromCluster sync.RWMutex
 )
 
 // Ensure, that ClusterBuilderMock does implement ClusterBuilder.
@@ -41,7 +44,6 @@ type ClusterBuilderMock struct {
 			Cluster *api.Cluster
 		}
 	}
-	lockNewOCMClusterFromCluster sync.RWMutex
 }
 
 // NewOCMClusterFromCluster calls NewOCMClusterFromClusterFunc.
@@ -54,9 +56,9 @@ func (mock *ClusterBuilderMock) NewOCMClusterFromCluster(cluster *api.Cluster) (
 	}{
 		Cluster: cluster,
 	}
-	mock.lockNewOCMClusterFromCluster.Lock()
+	lockClusterBuilderMockNewOCMClusterFromCluster.Lock()
 	mock.calls.NewOCMClusterFromCluster = append(mock.calls.NewOCMClusterFromCluster, callInfo)
-	mock.lockNewOCMClusterFromCluster.Unlock()
+	lockClusterBuilderMockNewOCMClusterFromCluster.Unlock()
 	return mock.NewOCMClusterFromClusterFunc(cluster)
 }
 
@@ -69,8 +71,8 @@ func (mock *ClusterBuilderMock) NewOCMClusterFromClusterCalls() []struct {
 	var calls []struct {
 		Cluster *api.Cluster
 	}
-	mock.lockNewOCMClusterFromCluster.RLock()
+	lockClusterBuilderMockNewOCMClusterFromCluster.RLock()
 	calls = mock.calls.NewOCMClusterFromCluster
-	mock.lockNewOCMClusterFromCluster.RUnlock()
+	lockClusterBuilderMockNewOCMClusterFromCluster.RUnlock()
 	return calls
 }
