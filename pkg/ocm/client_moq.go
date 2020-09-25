@@ -4,9 +4,13 @@
 package ocm
 
 import (
+	"github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"sync"
+)
 
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+var (
+	lockClientMockCreateCluster       sync.RWMutex
+	lockClientMockGetClusterIngresses sync.RWMutex
 )
 
 // Ensure, that ClientMock does implement Client.
@@ -22,6 +26,9 @@ var _ Client = &ClientMock{}
 //             CreateClusterFunc: func(cluster *v1.Cluster) (*v1.Cluster, error) {
 // 	               panic("mock out the CreateCluster method")
 //             },
+//             GetClusterIngressesFunc: func(clusterID string) (*v1.IngressesListResponse, error) {
+// 	               panic("mock out the GetClusterIngresses method")
+//             },
 //         }
 //
 //         // use mockedClient in code that requires Client
@@ -32,6 +39,9 @@ type ClientMock struct {
 	// CreateClusterFunc mocks the CreateCluster method.
 	CreateClusterFunc func(cluster *v1.Cluster) (*v1.Cluster, error)
 
+	// GetClusterIngressesFunc mocks the GetClusterIngresses method.
+	GetClusterIngressesFunc func(clusterID string) (*v1.IngressesListResponse, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// CreateCluster holds details about calls to the CreateCluster method.
@@ -39,8 +49,12 @@ type ClientMock struct {
 			// Cluster is the cluster argument value.
 			Cluster *v1.Cluster
 		}
+		// GetClusterIngresses holds details about calls to the GetClusterIngresses method.
+		GetClusterIngresses []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 	}
-	lockCreateCluster sync.RWMutex
 }
 
 // CreateCluster calls CreateClusterFunc.
@@ -53,9 +67,9 @@ func (mock *ClientMock) CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error) 
 	}{
 		Cluster: cluster,
 	}
-	mock.lockCreateCluster.Lock()
+	lockClientMockCreateCluster.Lock()
 	mock.calls.CreateCluster = append(mock.calls.CreateCluster, callInfo)
-	mock.lockCreateCluster.Unlock()
+	lockClientMockCreateCluster.Unlock()
 	return mock.CreateClusterFunc(cluster)
 }
 
@@ -68,8 +82,39 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	var calls []struct {
 		Cluster *v1.Cluster
 	}
-	mock.lockCreateCluster.RLock()
+	lockClientMockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
-	mock.lockCreateCluster.RUnlock()
+	lockClientMockCreateCluster.RUnlock()
+	return calls
+}
+
+// GetClusterIngresses calls GetClusterIngressesFunc.
+func (mock *ClientMock) GetClusterIngresses(clusterID string) (*v1.IngressesListResponse, error) {
+	if mock.GetClusterIngressesFunc == nil {
+		panic("ClientMock.GetClusterIngressesFunc: method is nil but Client.GetClusterIngresses was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	lockClientMockGetClusterIngresses.Lock()
+	mock.calls.GetClusterIngresses = append(mock.calls.GetClusterIngresses, callInfo)
+	lockClientMockGetClusterIngresses.Unlock()
+	return mock.GetClusterIngressesFunc(clusterID)
+}
+
+// GetClusterIngressesCalls gets all the calls that were made to GetClusterIngresses.
+// Check the length with:
+//     len(mockedClient.GetClusterIngressesCalls())
+func (mock *ClientMock) GetClusterIngressesCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	lockClientMockGetClusterIngresses.RLock()
+	calls = mock.calls.GetClusterIngresses
+	lockClientMockGetClusterIngresses.RUnlock()
 	return calls
 }
