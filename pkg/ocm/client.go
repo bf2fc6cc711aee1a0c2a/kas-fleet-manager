@@ -10,6 +10,7 @@ import (
 //go:generate moq -out client_moq.go . Client
 type Client interface {
 	CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error)
+	GetClusterIngresses(clusterID string) (*v1.IngressesListResponse, error)
 }
 
 var _ Client = &client{}
@@ -33,4 +34,15 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*v1.Cluster, er
 	createdCluster := response.Body()
 
 	return createdCluster, nil
+}
+
+// GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
+func (c *client) GetClusterIngresses(clusterID string) (*v1.IngressesListResponse, error) {
+	clusterIngresses := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID).Ingresses()
+	ingressList, err := clusterIngresses.List().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return ingressList, nil
 }
