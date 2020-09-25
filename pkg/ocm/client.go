@@ -11,6 +11,7 @@ import (
 type Client interface {
 	CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error)
 	GetClusterIngresses(clusterID string) (*v1.IngressesListResponse, error)
+	GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error)
 }
 
 var _ Client = &client{}
@@ -45,4 +46,12 @@ func (c *client) GetClusterIngresses(clusterID string) (*v1.IngressesListRespons
 	}
 
 	return ingressList, nil
+}
+
+func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error) {
+	resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(id).Status().Get().Send()
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body(), nil
 }
