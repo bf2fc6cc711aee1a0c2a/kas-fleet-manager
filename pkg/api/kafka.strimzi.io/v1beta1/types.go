@@ -214,10 +214,10 @@ type RouteListenerBootstrapOverride struct {
 
 // RouteListenerBrokerOverride external broker services configuration.
 type RouteListenerBrokerOverride struct {
-	Broker         int    `java:"broker"`
-	AdvertisedHost string `java:"advertisedHost,omitempty"`
-	AdvertisedPort string `java:"advertisedPort,omitempty"`
-	Host           string `java:"host"`
+	Broker         int    `json:"broker"`
+	AdvertisedHost string `json:"advertisedHost,omitempty"`
+	AdvertisedPort string `json:"advertisedPort,omitempty"`
+	Host           string `json:"host"`
 }
 
 // RouteListenerOverride overrides for external bootstrap and broker services and externally advertised addresses.
@@ -308,7 +308,7 @@ type KafkaSpec struct {
 
 	Kafka          KafkaClusterSpec     `json:"kafka"`
 	Zookeeper      ZookeeperClusterSpec `json:"zookeeper"`
-	EntityOperator EntityOperatorSpec   `json:"entityOperator,omitempty"`
+	EntityOperator *EntityOperatorSpec  `json:"entityOperator,omitempty"`
 }
 
 // KafkaStatus defines the observed state of Kafka

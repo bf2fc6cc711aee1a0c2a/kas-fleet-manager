@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"encoding/json"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
@@ -37,8 +38,9 @@ func runGet(cmd *cobra.Command, _ []string) {
 	env := environments.Environment()
 
 	// setup required services
+	clusterService := services.NewClusterService(env.DBFactory, env.Clients.OCM.Connection, env.Config.AWS)
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 
 	kafkaRequest, err := kafkaService.Get(id)
 	if err != nil {

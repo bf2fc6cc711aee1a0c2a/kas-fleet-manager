@@ -134,7 +134,7 @@ func (e *Env) Initialize() error {
 func (env *Env) LoadServices() {
 	clusterService := services.NewClusterService(env.DBFactory, env.Clients.OCM.Connection, env.Config.AWS)
 	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService

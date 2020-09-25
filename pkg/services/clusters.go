@@ -16,6 +16,7 @@ import (
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *errors.ServiceError)
+	GetClusterDNS(clusterID string) (string, *errors.ServiceError)
 }
 
 type clusterService struct {
@@ -63,4 +64,28 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	}
 
 	return createdCluster, nil
+}
+
+// GetClusterDNS gets an OSD clusters DNS from OCM cluster service by ID
+//
+// Returns the DNS name
+func (c clusterService) GetClusterDNS(clusterID string) (string, *errors.ServiceError) {
+	// Send GET request to /api/clusters_mgmt/v1/clusters/{clusterID} to retrieve an OSD cluster
+	clusterIngresses := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID).Ingresses()
+	response, err := clusterIngresses.List().Send()
+	if err != nil {
+		return "", errors.New(errors.ErrorGeneral, err.Error())
+	}
+
+	var clusterDNS string
+
+	response.Items().Each(func(ingress *clustersmgmtv1.Ingress) bool {
+		if ingress.Default() == true {
+			clusterDNS = ingress.DNSName()
+			return false
+		}
+		return true
+	})
+
+	return clusterDNS, nil
 }
