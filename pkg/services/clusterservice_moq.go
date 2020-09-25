@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	lockClusterServiceMockCreate sync.RWMutex
+	lockClusterServiceMockCreate        sync.RWMutex
+	lockClusterServiceMockGetClusterDNS sync.RWMutex
 )
 
 // Ensure, that ClusterServiceMock does implement ClusterService.
@@ -27,6 +28,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //             CreateFunc: func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the Create method")
 //             },
+//             GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
+// 	               panic("mock out the GetClusterDNS method")
+//             },
 //         }
 //
 //         // use mockedClusterService in code that requires ClusterService
@@ -37,12 +41,20 @@ type ClusterServiceMock struct {
 	// CreateFunc mocks the Create method.
 	CreateFunc func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError)
 
+	// GetClusterDNSFunc mocks the GetClusterDNS method.
+	GetClusterDNSFunc func(clusterID string) (string, *errors.ServiceError)
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Create holds details about calls to the Create method.
 		Create []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
+		}
+		// GetClusterDNS holds details about calls to the GetClusterDNS method.
+		GetClusterDNS []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 	}
 }
@@ -75,5 +87,36 @@ func (mock *ClusterServiceMock) CreateCalls() []struct {
 	lockClusterServiceMockCreate.RLock()
 	calls = mock.calls.Create
 	lockClusterServiceMockCreate.RUnlock()
+	return calls
+}
+
+// GetClusterDNS calls GetClusterDNSFunc.
+func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *errors.ServiceError) {
+	if mock.GetClusterDNSFunc == nil {
+		panic("ClusterServiceMock.GetClusterDNSFunc: method is nil but ClusterService.GetClusterDNS was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	lockClusterServiceMockGetClusterDNS.Lock()
+	mock.calls.GetClusterDNS = append(mock.calls.GetClusterDNS, callInfo)
+	lockClusterServiceMockGetClusterDNS.Unlock()
+	return mock.GetClusterDNSFunc(clusterID)
+}
+
+// GetClusterDNSCalls gets all the calls that were made to GetClusterDNS.
+// Check the length with:
+//     len(mockedClusterService.GetClusterDNSCalls())
+func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	lockClusterServiceMockGetClusterDNS.RLock()
+	calls = mock.calls.GetClusterDNS
+	lockClusterServiceMockGetClusterDNS.RUnlock()
 	return calls
 }

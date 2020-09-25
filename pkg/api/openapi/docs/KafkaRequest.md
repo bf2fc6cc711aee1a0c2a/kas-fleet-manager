@@ -14,6 +14,7 @@ Name | Type | Description | Notes
 **Region** | **string** |  | [optional] 
 **Owner** | **string** |  | [optional] 
 **Name** | **string** |  | [optional] 
+**BootstrapServerHost** | **string** |  | [optional] 
 **CreatedAt** | [**time.Time**](time.Time.md) |  | [optional] 
 **UpdatedAt** | [**time.Time**](time.Time.md) |  | [optional] 
 
