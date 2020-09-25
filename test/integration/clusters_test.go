@@ -1,12 +1,14 @@
 package integration
 
 import (
+	"testing"
+
 	"github.com/golang/glog"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	customOcm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
-	"testing"
 )
 
 func TestClusterCreate(t *testing.T) {
@@ -16,7 +18,8 @@ func TestClusterCreate(t *testing.T) {
 	h, _ := test.RegisterIntegration(t, ocmServer)
 	defer h.StopServer()
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, h.Env().Clients.OCM.Connection, h.Env().Config.AWS)
+	ocmClient := customOcm.NewClient(h.Env().Clients.OCM.Connection)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS)
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",
