@@ -89,7 +89,6 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Managed(true)
 					builder.Name("")
 					builder.AWS(clusterAWS)
-					builder.Version(clustersmgmtv1.NewVersion().ID(OpenShift_4_5_9))
 				})
 				if err != nil {
 					panic(err)
