@@ -3,6 +3,7 @@ package servecmd
 import (
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server"
@@ -49,7 +50,8 @@ func runServe(cmd *cobra.Command, args []string) {
 	// Run the cluster manager
 	go func() {
 		clusterService := environments.Environment().Services.Cluster
-		clusterManager := workers.NewClusterManager(clusterService)
+		ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+		clusterManager := workers.NewClusterManager(clusterService, ocmClient)
 		clusterManager.Start()
 	}()
 
