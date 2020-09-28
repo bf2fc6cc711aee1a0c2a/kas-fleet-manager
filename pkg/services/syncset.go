@@ -270,7 +270,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	kafkaOwnerID := buildKafkaNamespaceIdentifier(kafkaRequest)
 	kafkaIdentifier := validateClusterNameAndReplaceSpecialChar(kafkaOwnerID)
 
-
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.RouteListenerBrokerOverride{}
 	for i := 0; i < numOfBrokers; i++ {
