@@ -41,10 +41,6 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			err = h.service.Create(convKafka)
-			if err != nil {
-				return nil, err
-			}
 			return presenters.PresentKafkaRequest(convKafka), nil
 		},
 		ErrorHandler: handleError,
