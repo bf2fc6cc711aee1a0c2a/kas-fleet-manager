@@ -16,6 +16,198 @@ const (
 	numOfZookeepers = 3
 )
 
+var zookeeperMetrics = &strimzi.Metrics{
+	LowercaseOutputName: true,
+	Rules: []strimzi.Rule{
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+)><>(\\w+)",
+			Name:    "zookeeper_$2",
+			Type:    "GAUGE",
+		},
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+)><>(\\w+)",
+			Name:    "zookeeper_$3",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"replicaId": "$2",
+			},
+		},
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+)><>(Packets\\w+)",
+			Name:    "zookeeper_$4",
+			Type:    "COUNTER",
+			Labels: map[string]string{
+				"replicaId":  "$2",
+				"memberType": "$3",
+			},
+		},
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+)><>(\\w+)",
+			Name:    "zookeeper_$4",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"replicaId":  "$2",
+				"memberType": "$3",
+			},
+		},
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=ReplicatedServer_id(\\d+), name1=replica.(\\d+), name2=(\\w+), name3=(\\w+)><>(\\w+)",
+			Name:    "zookeeper_$4_$5",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"replicaId":  "$2",
+				"memberType": "$3",
+			},
+		},
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=StandaloneServer_port(\\d+)><>(\\w+)",
+			Name:    "zookeeper_$2",
+			Type:    "GAUGE",
+		},
+		{
+			Pattern: "org.apache.ZooKeeperService<name0=StandaloneServer_port(\\d+), name1=InMemoryDataTree><>(\\w+)",
+			Name:    "zookeeper_$2",
+			Type:    "GAUGE",
+		},
+	},
+}
+
+var kafkaMetrics = &strimzi.Metrics{
+	LowercaseOutputName: true,
+	Rules: []strimzi.Rule{
+		{
+			Pattern: "kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value",
+			Name:    "kafka_server_$1_$2",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"clientId":  "$3",
+				"topic":     "$4",
+				"partition": "$5",
+			},
+		},
+		{
+			Pattern: "kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value",
+			Name:    "kafka_server_$1_$2",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"clientId": "$3",
+				"broker":   "$4:$5",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)Percent\\w*><>MeanRate",
+			Name:    "kafka_$1_$2_$3_percent",
+			Type:    "GAUGE",
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)Percent\\w*><>Value",
+			Name:    "kafka_$1_$2_$3_percent",
+			Type:    "GAUGE",
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)Percent\\w*, (.+)=(.+)><>Value",
+			Name:    "kafka_$1_$2_$3_percent",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"$4": "$5",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)PerSec\\w*, (.+)=(.+), (.+)=(.+)><>Count",
+			Name:    "kafka_$1_$2_$3_total",
+			Type:    "COUNTER",
+			Labels: map[string]string{
+				"$4": "$5",
+				"$6": "$7",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)PerSec\\w*, (.+)=(.+)><>Count",
+			Name:    "kafka_$1_$2_$3_total",
+			Type:    "COUNTER",
+			Labels: map[string]string{
+				"$4": "$5",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)PerSec\\w*><>Count",
+			Name:    "kafka_$1_$2_$3_total",
+			Type:    "COUNTER",
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Value",
+			Name:    "kafka_$1_$2_$3",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"$4": "$5",
+				"$6": "$7",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+)><>Value",
+			Name:    "kafka_$1_$2_$3",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"$4": "$5",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)><>Value",
+			Name:    "kafka_$1_$2_$3",
+			Type:    "GAUGE",
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Count",
+			Name:    "kafka_$1_$2_$3_count",
+			Type:    "COUNTER",
+			Labels: map[string]string{
+				"$4": "$5",
+				"$6": "$7",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.*), (.+)=(.+)><>(\\d+)thPercentile",
+			Name:    "kafka_$1_$2_$3",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"$4":       "$5",
+				"$6":       "$7",
+				"quantile": "0.$8",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.+)><>Count",
+			Name:    "kafka_$1_$2_$3_count",
+			Type:    "COUNTER",
+			Labels: map[string]string{
+				"$4": "$5",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+), (.+)=(.*)><>(\\d+)thPercentile",
+			Name:    "kafka_$1_$2_$3",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"$4":       "$5",
+				"quantile": "0.$6",
+			},
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)><>Count",
+			Name:    "kafka_$1_$2_$3_count",
+			Type:    "COUNTER",
+		},
+		{
+			Pattern: "kafka.(\\w+)<type=(.+), name=(.+)><>(\\d+)thPercentile",
+			Name:    "kafka_$1_$2_$3",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"quantile": "0.$4",
+			},
+		},
+	},
+}
+
 //go:generate moq -out syncset_mock.go . SyncsetService
 type SyncsetService interface {
 	Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, clusterId string) (*cmv1.Syncset, *errors.ServiceError)
@@ -120,12 +312,14 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 						},
 					},
 				},
+				Metrics: kafkaMetrics,
 			},
 			Zookeeper: strimzi.ZookeeperClusterSpec{
 				Replicas: numOfZookeepers,
 				Storage: strimzi.Storage{
 					Type: strimzi.Ephemeral,
 				},
+				Metrics: zookeeperMetrics,
 			},
 		},
 	}
