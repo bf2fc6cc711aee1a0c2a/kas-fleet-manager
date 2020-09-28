@@ -2,6 +2,9 @@ package integration
 
 import (
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/go-resty/resty"
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -10,8 +13,6 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
-	"net/http"
-	"testing"
 )
 
 const (
@@ -39,6 +40,7 @@ func TestKafkaPost(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
+		ClusterID:     clusterservicetest.MockClusterID,
 		Name:          mockKafkaName,
 	}
 
@@ -74,6 +76,7 @@ func TestKafkaGet(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
+		ClusterID:     clusterservicetest.MockClusterID,
 		Name:          mockKafkaName,
 	}
 

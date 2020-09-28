@@ -68,3 +68,16 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	handleGet(w, r, cfg)
 }
+
+// Delete is the handler for deleting a kafka request
+func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			err := h.service.Delete(id)
+			return nil, err
+		},
+		ErrorHandler: handleError,
+	}
+	handleDelete(w, r, cfg, http.StatusNoContent)
+}

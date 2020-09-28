@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   title: Managed Service API
-  description: Managed Service API
   version: 0.0.1
+  description: Managed Service API
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -13,97 +13,125 @@ servers:
 paths:
   /api/managed-services-api/v1/kafkas/{id}:
     get:
-      summary: Get a kafka request by id
-      security:
-        - Bearer: []
       responses:
         "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KafkaRequest'
           description: Kafka request found by id
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/KafkaRequest"
         "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: Unauthorized to perform operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: No kafka request with specified id exists
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "500":
-          description: Unexpected error occurred
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+        - Bearer: []
+      summary: Get a kafka request by id
+    delete:
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unauthorized to perform operation
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No kafka request with specified id exists
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Delete a kafka request by id
     parameters:
       - $ref: "#/components/parameters/id"
   /api/managed-services-api/v1/kafkas:
     post:
-      summary: Create a new kafka Request
-      security:
-        - Bearer: []
       requestBody:
         description: Kafka data
-        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/KafkaRequest"
+              $ref: '#/components/schemas/KafkaRequest'
+        required: true
       responses:
         "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KafkaRequest'
           description: Accepted
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/KafkaRequest"
         "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: Validation errors occurred
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: Unauthorized to perform operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
           description: Kafka already exists
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "500":
-          description: An unexpected error occurred creating the Kafka Request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
+          description: An unexpected error occurred creating the Kafka Request
+      security:
+        - Bearer: []
+      summary: Create a new kafka Request
 components:
-  securitySchemes:
-    Bearer:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
     ObjectReference:
       type: object
@@ -115,6 +143,12 @@ components:
         href:
           type: string
     List:
+      required:
+        - kind
+        - page
+        - size
+        - total
+        - items
       type: object
       properties:
         kind:
@@ -125,12 +159,6 @@ components:
           type: integer
         total:
           type: integer
-      required:
-        - kind
-        - page
-        - size
-        - total
-        - items
     Error:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -173,11 +201,11 @@ components:
             bootstrapServerHost:
               type: string
             created_at:
-              type: string
               format: date-time
+              type: string
             updated_at:
-              type: string
               format: date-time
+              type: string
     KafkaRequestList:
       allOf:
         - $ref: "#/components/schemas/List"
@@ -191,8 +219,13 @@ components:
   parameters:
     id:
       name: id
-      in: path
       description: The id of record
-      required: true
       schema:
         type: string
+      in: path
+      required: true
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
