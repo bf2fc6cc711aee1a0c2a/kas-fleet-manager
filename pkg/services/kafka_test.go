@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"reflect"
 	"testing"
 
@@ -316,7 +317,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id: "test",
+				id: testID,
 			},
 			wantErr: true,
 			setupFn: func() {
@@ -334,7 +335,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				id: "test",
+				id: testID,
 			},
 			wantErr: true,
 		},
@@ -349,12 +350,12 @@ func Test_kafkaService_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				id: "test",
+				id: testID,
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
 					Meta: api.Meta{
-						ID: "test",
+						ID: testID,
 					},
 					Region:        clusterservicetest.MockClusterRegion,
 					ClusterID:     clusterservicetest.MockClusterID,

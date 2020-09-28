@@ -75,12 +75,9 @@ func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			err := h.service.Delete(id)
-			if err != nil {
-				return nil, err
-			}
-			return nil, nil
+			return nil, err
 		},
 		ErrorHandler: handleError,
 	}
-	handleGet(w, r, cfg)
+	handleDelete(w, r, cfg, http.StatusNoContent)
 }

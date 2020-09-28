@@ -40,8 +40,8 @@ func TestKafkaPost(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
+		ClusterID:     clusterservicetest.MockClusterID,
 		Name:          mockKafkaName,
-		ClusterID:     "000",
 	}
 
 	// 202 Accepted
@@ -76,8 +76,8 @@ func TestKafkaGet(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
+		ClusterID:     clusterservicetest.MockClusterID,
 		Name:          mockKafkaName,
-		ClusterID:     "000",
 	}
 
 	seedKafka, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
@@ -99,40 +99,5 @@ func TestKafkaGet(t *testing.T) {
 
 	// 404 Not Found
 	kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
-	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
-}
-
-func TestKafkaDelete(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client := test.RegisterIntegration(t, ocmServer)
-	defer h.StopServer()
-
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
-
-	k := openapi.KafkaRequest{
-		Region:        clusterservicetest.MockClusterRegion,
-		CloudProvider: clusterservicetest.MockClusterCloudProvider,
-		Name:          mockKafkaName,
-		ClusterID:     "000",
-	}
-
-	seedKafka, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
-	if err != nil {
-		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
-	}
-
-	// 200 OK
-	kafka, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasIdDelete(ctx, seedKafka.Id)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
-
-	// 404 Not Found
-	kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdDelete(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 }
