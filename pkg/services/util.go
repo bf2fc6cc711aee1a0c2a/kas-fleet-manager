@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
@@ -17,6 +16,7 @@ import (
 const (
 	truncatedNameLen = 10
 	maxClusterNameLength = 63
+	replacementForSpecialChar="k"
 )
 
 
@@ -118,15 +118,6 @@ func buildSyncsetIdentifier(kafkaRequest *api.KafkaRequest) string {
 	return fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
 }
 
-func randomString(length int) string {
-	letters := []rune("abcdefghijklmnopqrstuvwxyz")
-	str := make([]rune, length)
-	for i := range str {
-		str[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(str)
-}
-
 func isValidClusterNameLength(name string) bool {
 	return len(name) < maxClusterNameLength
 }
@@ -142,7 +133,7 @@ func validateClusterNameAndReplaceSpecialChar(name string) string {
 	}
 
 	if !isValidClusterName(name) {
-		name = clusterInvalidCharRE.ReplaceAllString(name, randomString(1))
+		name = clusterInvalidCharRE.ReplaceAllString(name, replacementForSpecialChar)
 	}
 	return name
 }
