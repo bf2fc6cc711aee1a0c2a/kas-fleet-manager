@@ -8,12 +8,6 @@ import (
 	"sync"
 )
 
-var (
-	lockClientMockCreateCluster       sync.RWMutex
-	lockClientMockGetClusterIngresses sync.RWMutex
-	lockClientMockGetClusterStatus    sync.RWMutex
-)
-
 // Ensure, that ClientMock does implement Client.
 // If this is not the case, regenerate this file with moq.
 var _ Client = &ClientMock{}
@@ -27,11 +21,17 @@ var _ Client = &ClientMock{}
 //             CreateClusterFunc: func(cluster *v1.Cluster) (*v1.Cluster, error) {
 // 	               panic("mock out the CreateCluster method")
 //             },
+//             CreateManagedKafkaAddonFunc: func(id string) (*v1.AddOnInstallation, error) {
+// 	               panic("mock out the CreateManagedKafkaAddon method")
+//             },
 //             GetClusterIngressesFunc: func(clusterID string) (*v1.IngressesListResponse, error) {
 // 	               panic("mock out the GetClusterIngresses method")
 //             },
 //             GetClusterStatusFunc: func(id string) (*v1.ClusterStatus, error) {
 // 	               panic("mock out the GetClusterStatus method")
+//             },
+//             GetManagedKafkaAddonFunc: func(id string) (*v1.AddOnInstallation, error) {
+// 	               panic("mock out the GetManagedKafkaAddon method")
 //             },
 //         }
 //
@@ -43,11 +43,17 @@ type ClientMock struct {
 	// CreateClusterFunc mocks the CreateCluster method.
 	CreateClusterFunc func(cluster *v1.Cluster) (*v1.Cluster, error)
 
+	// CreateManagedKafkaAddonFunc mocks the CreateManagedKafkaAddon method.
+	CreateManagedKafkaAddonFunc func(id string) (*v1.AddOnInstallation, error)
+
 	// GetClusterIngressesFunc mocks the GetClusterIngresses method.
 	GetClusterIngressesFunc func(clusterID string) (*v1.IngressesListResponse, error)
 
 	// GetClusterStatusFunc mocks the GetClusterStatus method.
 	GetClusterStatusFunc func(id string) (*v1.ClusterStatus, error)
+
+	// GetManagedKafkaAddonFunc mocks the GetManagedKafkaAddon method.
+	GetManagedKafkaAddonFunc func(id string) (*v1.AddOnInstallation, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -55,6 +61,11 @@ type ClientMock struct {
 		CreateCluster []struct {
 			// Cluster is the cluster argument value.
 			Cluster *v1.Cluster
+		}
+		// CreateManagedKafkaAddon holds details about calls to the CreateManagedKafkaAddon method.
+		CreateManagedKafkaAddon []struct {
+			// ID is the id argument value.
+			ID string
 		}
 		// GetClusterIngresses holds details about calls to the GetClusterIngresses method.
 		GetClusterIngresses []struct {
@@ -66,7 +77,17 @@ type ClientMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetManagedKafkaAddon holds details about calls to the GetManagedKafkaAddon method.
+		GetManagedKafkaAddon []struct {
+			// ID is the id argument value.
+			ID string
+		}
 	}
+	lockCreateCluster           sync.RWMutex
+	lockCreateManagedKafkaAddon sync.RWMutex
+	lockGetClusterIngresses     sync.RWMutex
+	lockGetClusterStatus        sync.RWMutex
+	lockGetManagedKafkaAddon    sync.RWMutex
 }
 
 // CreateCluster calls CreateClusterFunc.
@@ -79,9 +100,9 @@ func (mock *ClientMock) CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error) 
 	}{
 		Cluster: cluster,
 	}
-	lockClientMockCreateCluster.Lock()
+	mock.lockCreateCluster.Lock()
 	mock.calls.CreateCluster = append(mock.calls.CreateCluster, callInfo)
-	lockClientMockCreateCluster.Unlock()
+	mock.lockCreateCluster.Unlock()
 	return mock.CreateClusterFunc(cluster)
 }
 
@@ -94,9 +115,40 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	var calls []struct {
 		Cluster *v1.Cluster
 	}
-	lockClientMockCreateCluster.RLock()
+	mock.lockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
-	lockClientMockCreateCluster.RUnlock()
+	mock.lockCreateCluster.RUnlock()
+	return calls
+}
+
+// CreateManagedKafkaAddon calls CreateManagedKafkaAddonFunc.
+func (mock *ClientMock) CreateManagedKafkaAddon(id string) (*v1.AddOnInstallation, error) {
+	if mock.CreateManagedKafkaAddonFunc == nil {
+		panic("ClientMock.CreateManagedKafkaAddonFunc: method is nil but Client.CreateManagedKafkaAddon was just called")
+	}
+	callInfo := struct {
+		ID string
+	}{
+		ID: id,
+	}
+	mock.lockCreateManagedKafkaAddon.Lock()
+	mock.calls.CreateManagedKafkaAddon = append(mock.calls.CreateManagedKafkaAddon, callInfo)
+	mock.lockCreateManagedKafkaAddon.Unlock()
+	return mock.CreateManagedKafkaAddonFunc(id)
+}
+
+// CreateManagedKafkaAddonCalls gets all the calls that were made to CreateManagedKafkaAddon.
+// Check the length with:
+//     len(mockedClient.CreateManagedKafkaAddonCalls())
+func (mock *ClientMock) CreateManagedKafkaAddonCalls() []struct {
+	ID string
+} {
+	var calls []struct {
+		ID string
+	}
+	mock.lockCreateManagedKafkaAddon.RLock()
+	calls = mock.calls.CreateManagedKafkaAddon
+	mock.lockCreateManagedKafkaAddon.RUnlock()
 	return calls
 }
 
@@ -110,9 +162,9 @@ func (mock *ClientMock) GetClusterIngresses(clusterID string) (*v1.IngressesList
 	}{
 		ClusterID: clusterID,
 	}
-	lockClientMockGetClusterIngresses.Lock()
+	mock.lockGetClusterIngresses.Lock()
 	mock.calls.GetClusterIngresses = append(mock.calls.GetClusterIngresses, callInfo)
-	lockClientMockGetClusterIngresses.Unlock()
+	mock.lockGetClusterIngresses.Unlock()
 	return mock.GetClusterIngressesFunc(clusterID)
 }
 
@@ -125,9 +177,9 @@ func (mock *ClientMock) GetClusterIngressesCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	lockClientMockGetClusterIngresses.RLock()
+	mock.lockGetClusterIngresses.RLock()
 	calls = mock.calls.GetClusterIngresses
-	lockClientMockGetClusterIngresses.RUnlock()
+	mock.lockGetClusterIngresses.RUnlock()
 	return calls
 }
 
@@ -141,9 +193,9 @@ func (mock *ClientMock) GetClusterStatus(id string) (*v1.ClusterStatus, error) {
 	}{
 		ID: id,
 	}
-	lockClientMockGetClusterStatus.Lock()
+	mock.lockGetClusterStatus.Lock()
 	mock.calls.GetClusterStatus = append(mock.calls.GetClusterStatus, callInfo)
-	lockClientMockGetClusterStatus.Unlock()
+	mock.lockGetClusterStatus.Unlock()
 	return mock.GetClusterStatusFunc(id)
 }
 
@@ -156,8 +208,39 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	lockClientMockGetClusterStatus.RLock()
+	mock.lockGetClusterStatus.RLock()
 	calls = mock.calls.GetClusterStatus
-	lockClientMockGetClusterStatus.RUnlock()
+	mock.lockGetClusterStatus.RUnlock()
+	return calls
+}
+
+// GetManagedKafkaAddon calls GetManagedKafkaAddonFunc.
+func (mock *ClientMock) GetManagedKafkaAddon(id string) (*v1.AddOnInstallation, error) {
+	if mock.GetManagedKafkaAddonFunc == nil {
+		panic("ClientMock.GetManagedKafkaAddonFunc: method is nil but Client.GetManagedKafkaAddon was just called")
+	}
+	callInfo := struct {
+		ID string
+	}{
+		ID: id,
+	}
+	mock.lockGetManagedKafkaAddon.Lock()
+	mock.calls.GetManagedKafkaAddon = append(mock.calls.GetManagedKafkaAddon, callInfo)
+	mock.lockGetManagedKafkaAddon.Unlock()
+	return mock.GetManagedKafkaAddonFunc(id)
+}
+
+// GetManagedKafkaAddonCalls gets all the calls that were made to GetManagedKafkaAddon.
+// Check the length with:
+//     len(mockedClient.GetManagedKafkaAddonCalls())
+func (mock *ClientMock) GetManagedKafkaAddonCalls() []struct {
+	ID string
+} {
+	var calls []struct {
+		ID string
+	}
+	mock.lockGetManagedKafkaAddon.RLock()
+	calls = mock.calls.GetManagedKafkaAddon
+	mock.lockGetManagedKafkaAddon.RUnlock()
 	return calls
 }
