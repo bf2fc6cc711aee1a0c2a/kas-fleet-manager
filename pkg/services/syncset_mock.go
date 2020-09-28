@@ -11,6 +11,7 @@ import (
 
 var (
 	lockSyncsetServiceMockCreate sync.RWMutex
+	lockSyncsetServiceMockDelete sync.RWMutex
 )
 
 // Ensure, that SyncsetServiceMock does implement SyncsetService.
@@ -26,6 +27,9 @@ var _ SyncsetService = &SyncsetServiceMock{}
 //             CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
 // 	               panic("mock out the Create method")
 //             },
+//             DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
+// 	               panic("mock out the Delete method")
+//             },
 //         }
 //
 //         // use mockedSyncsetService in code that requires SyncsetService
@@ -36,12 +40,22 @@ type SyncsetServiceMock struct {
 	// CreateFunc mocks the Create method.
 	CreateFunc func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError)
 
+	// DeleteFunc mocks the Delete method.
+	DeleteFunc func(syncsetId string, clusterId string) *errors.ServiceError
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Create holds details about calls to the Create method.
 		Create []struct {
 			// SyncsetBuilder is the syncsetBuilder argument value.
 			SyncsetBuilder *v1.SyncsetBuilder
+			// SyncsetId is the syncsetId argument value.
+			SyncsetId string
+			// ClusterId is the clusterId argument value.
+			ClusterId string
+		}
+		// Delete holds details about calls to the Delete method.
+		Delete []struct {
 			// SyncsetId is the syncsetId argument value.
 			SyncsetId string
 			// ClusterId is the clusterId argument value.
@@ -86,5 +100,40 @@ func (mock *SyncsetServiceMock) CreateCalls() []struct {
 	lockSyncsetServiceMockCreate.RLock()
 	calls = mock.calls.Create
 	lockSyncsetServiceMockCreate.RUnlock()
+	return calls
+}
+
+// Delete calls DeleteFunc.
+func (mock *SyncsetServiceMock) Delete(syncsetId string, clusterId string) *errors.ServiceError {
+	if mock.DeleteFunc == nil {
+		panic("SyncsetServiceMock.DeleteFunc: method is nil but SyncsetService.Delete was just called")
+	}
+	callInfo := struct {
+		SyncsetId string
+		ClusterId string
+	}{
+		SyncsetId: syncsetId,
+		ClusterId: clusterId,
+	}
+	lockSyncsetServiceMockDelete.Lock()
+	mock.calls.Delete = append(mock.calls.Delete, callInfo)
+	lockSyncsetServiceMockDelete.Unlock()
+	return mock.DeleteFunc(syncsetId, clusterId)
+}
+
+// DeleteCalls gets all the calls that were made to Delete.
+// Check the length with:
+//     len(mockedSyncsetService.DeleteCalls())
+func (mock *SyncsetServiceMock) DeleteCalls() []struct {
+	SyncsetId string
+	ClusterId string
+} {
+	var calls []struct {
+		SyncsetId string
+		ClusterId string
+	}
+	lockSyncsetServiceMockDelete.RLock()
+	calls = mock.calls.Delete
+	lockSyncsetServiceMockDelete.RUnlock()
 	return calls
 }

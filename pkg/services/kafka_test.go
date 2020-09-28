@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"reflect"
 	"testing"
 
@@ -131,7 +132,7 @@ func Test_kafkaService_Get(t *testing.T) {
 			// in our test case we used 'wantErr' to define if we expect and error to be returned from the function or
 			// not, now we test that expectation
 			if (err != nil) != tt.wantErr {
-				t.Errorf("NewOCMClusterFromCluster() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			// in our test case we used 'want' to define the output api.KafkaRequest that we expect to be returned, we
@@ -280,6 +281,103 @@ func Test_kafkaService_Create(t *testing.T) {
 
 			if tt.wantBootstrapServerHost != "" && tt.args.kafkaRequest.BootstrapServerHost != tt.wantBootstrapServerHost {
 				t.Errorf("BootstrapServerHost error. Actual = %v, wantBootstrapServerHost = %v", tt.args.kafkaRequest.BootstrapServerHost, tt.wantBootstrapServerHost)
+			}
+		})
+	}
+}
+
+func Test_kafkaService_Delete(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+	}
+	type args struct {
+		id string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "error when id is undefined",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when sql where query fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id: testID,
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+		{
+			name: "error when syncset deletion fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
+						return errors.GeneralError("error deleting syncset")
+					},
+				},
+			},
+			args: args{
+				id: testID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "successful output",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
+						return nil
+					},
+				},
+			},
+			args: args{
+				id: testID,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					MultiAZ:       false,
+				}))
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+			}
+			err := k.Delete(tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 		})
 	}
