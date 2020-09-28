@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	projectv1 "github.com/openshift/api/project/v1"
@@ -76,7 +75,9 @@ func (s syncsetService) Delete(syncsetId, clusterId string) *errors.ServiceError
 
 // syncset builder for a kafka/strimzi custom resource
 func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
-	kafkaIdentifier := buildKafkaIdentifier(kafkaRequest)
+	kafkaOwnerID := buildKafkaNamespaceIdentifier(kafkaRequest)
+	kafkaIdentifier := validateClusterNameAndReplaceSpecialChar(kafkaOwnerID)
+
 
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.RouteListenerBrokerOverride{}
