@@ -4,6 +4,17 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
+type ClusterStatus string
+
+const (
+	// ClusterProvisioning the underlying ocm cluster is provisioning
+	ClusterProvisioning ClusterStatus = "cluster_provisioning"
+	// ClusterProvisioned the underlying ocm cluster is provisioned
+	ClusterProvisioned ClusterStatus = "cluster_provisioned"
+	// ClusterFailed the cluster failed to become ready
+	ClusterFailed ClusterStatus = "failed"
+)
+
 type Cluster struct {
 	Meta
 	CloudProvider string `json:"cloud_provider"`
@@ -13,6 +24,7 @@ type Cluster struct {
 	Region        string `json:"region"`
 	BYOC          bool
 	Managed       bool
+	Status        ClusterStatus `json:"status"`
 }
 
 type ClusterList []*Cluster
@@ -27,5 +39,10 @@ func (c ClusterList) Index() ClusterIndex {
 }
 
 func (org *Cluster) BeforeCreate(scope *gorm.Scope) error {
+	if org.Status == "" {
+		if err := scope.SetColumn("status", ClusterProvisioning); err != nil {
+			return err
+		}
+	}
 	return scope.SetColumn("ID", org.ClusterID)
 }

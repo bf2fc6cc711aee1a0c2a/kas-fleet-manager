@@ -16,6 +16,8 @@ import (
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *errors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *errors.ServiceError)
+	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *errors.ServiceError)
+	UpdateStatus(id string, status api.ClusterStatus) error
 }
 
 type clusterService struct {
@@ -80,4 +82,26 @@ func (c clusterService) GetClusterDNS(clusterID string) (string, *errors.Service
 	})
 
 	return clusterDNS, nil
+}
+
+func (c clusterService) ListByStatus(state api.ClusterStatus) ([]api.Cluster, *errors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var clusters []api.Cluster
+
+	if err := dbConn.Model(&api.Cluster{}).Where("status = ?", state).Scan(&clusters).Error; err != nil {
+		return nil, errors.GeneralError(err.Error())
+	}
+
+	return clusters, nil
+}
+
+func (c clusterService) UpdateStatus(id string, status api.ClusterStatus) error {
+	dbConn := c.connectionFactory.New()
+
+	if err := dbConn.Table("clusters").Where("id = ?", id).Update("status", status).Error; err != nil {
+		return errors.GeneralError(err.Error())
+	}
+
+	return nil
 }
