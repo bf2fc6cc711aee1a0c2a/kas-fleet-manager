@@ -12,6 +12,8 @@ type Client interface {
 	CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)
 	GetClusterIngresses(clusterID string) (*clustersmgmtv1.IngressesListResponse, error)
 	GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error)
+	GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error)
+	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
 	GetManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
 	CreateManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
 }
@@ -56,6 +58,27 @@ func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, erro
 		return nil, err
 	}
 	return resp.Body(), nil
+}
+
+func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) {
+	providersCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders()
+	providersResponse, err := providersCollection.List().Send()
+	if err != nil {
+		return nil, err
+	}
+	cloudProviderList := providersResponse.Items()
+	return cloudProviderList, nil
+}
+
+func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
+	regionsCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders().CloudProvider(provider.ID()).Regions()
+	regionsResponse, err := regionsCollection.List().Send()
+	if err != nil {
+		return nil, err
+	}
+
+	regionList := regionsResponse.Items()
+	return regionList, nil
 }
 
 func (c client) CreateManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error) {
