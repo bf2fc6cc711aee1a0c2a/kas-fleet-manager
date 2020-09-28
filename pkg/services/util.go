@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -14,7 +15,18 @@ import (
 
 const (
 	truncatedNameLen = 10
+	maxClusterNameLength = 63
+	replacementForSpecialChar="k"
 )
+
+
+// Cluster names must be valid DNS-1035 labels, so they must consist of lower case alphanumeric
+// characters or '-', start with an alphabetic character, and end with an alphanumeric character
+// (e.g. 'my-name',  or 'abc-123').
+var clusterNameRE = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+
+// Match with all invalid characters in the cluster name
+var clusterInvalidCharRE = regexp.MustCompile(`[_$&+,:;=?@#|'<>.^*()%!-]`)
 
 // Field names suspected to contain personally identifiable information
 var piiFields []string = []string{
@@ -81,6 +93,13 @@ func truncateString(str string, num int) string {
 	return truncatedString
 }
 
+
+// buildKafkaIdentifier creates a unique identifier for a kafka cluster given
+// the kafka request object
+func buildKafkaNamespaceIdentifier(kafkaRequest *api.KafkaRequest) string {
+	return fmt.Sprintf("%s-%s", kafkaRequest.Owner, strings.ToLower(kafkaRequest.ID))
+}
+
 // buildKafkaIdentifier creates a unique identifier for a kafka cluster given
 // the kafka request object
 func buildKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
@@ -97,4 +116,24 @@ func buildTruncateKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
 // the unique kafka identifier
 func buildSyncsetIdentifier(kafkaRequest *api.KafkaRequest) string {
 	return fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
+}
+
+func isValidClusterNameLength(name string) bool {
+	return len(name) < maxClusterNameLength
+}
+
+func isValidClusterName(name string) bool {
+	return clusterNameRE.MatchString(name)
+}
+
+// validate cluster name and replace invalid characters with random char
+func validateClusterNameAndReplaceSpecialChar(name string) string {
+	if !isValidClusterNameLength(name) {
+		name = truncateString(name, maxClusterNameLength)
+	}
+
+	if !isValidClusterName(name) {
+		name = clusterInvalidCharRE.ReplaceAllString(name, replacementForSpecialChar)
+	}
+	return name
 }
