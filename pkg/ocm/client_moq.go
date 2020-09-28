@@ -11,6 +11,7 @@ import (
 var (
 	lockClientMockCreateCluster       sync.RWMutex
 	lockClientMockGetClusterIngresses sync.RWMutex
+	lockClientMockGetClusterStatus    sync.RWMutex
 )
 
 // Ensure, that ClientMock does implement Client.
@@ -29,6 +30,9 @@ var _ Client = &ClientMock{}
 //             GetClusterIngressesFunc: func(clusterID string) (*v1.IngressesListResponse, error) {
 // 	               panic("mock out the GetClusterIngresses method")
 //             },
+//             GetClusterStatusFunc: func(id string) (*v1.ClusterStatus, error) {
+// 	               panic("mock out the GetClusterStatus method")
+//             },
 //         }
 //
 //         // use mockedClient in code that requires Client
@@ -42,6 +46,9 @@ type ClientMock struct {
 	// GetClusterIngressesFunc mocks the GetClusterIngresses method.
 	GetClusterIngressesFunc func(clusterID string) (*v1.IngressesListResponse, error)
 
+	// GetClusterStatusFunc mocks the GetClusterStatus method.
+	GetClusterStatusFunc func(id string) (*v1.ClusterStatus, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// CreateCluster holds details about calls to the CreateCluster method.
@@ -53,6 +60,11 @@ type ClientMock struct {
 		GetClusterIngresses []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
+		}
+		// GetClusterStatus holds details about calls to the GetClusterStatus method.
+		GetClusterStatus []struct {
+			// ID is the id argument value.
+			ID string
 		}
 	}
 }
@@ -116,5 +128,36 @@ func (mock *ClientMock) GetClusterIngressesCalls() []struct {
 	lockClientMockGetClusterIngresses.RLock()
 	calls = mock.calls.GetClusterIngresses
 	lockClientMockGetClusterIngresses.RUnlock()
+	return calls
+}
+
+// GetClusterStatus calls GetClusterStatusFunc.
+func (mock *ClientMock) GetClusterStatus(id string) (*v1.ClusterStatus, error) {
+	if mock.GetClusterStatusFunc == nil {
+		panic("ClientMock.GetClusterStatusFunc: method is nil but Client.GetClusterStatus was just called")
+	}
+	callInfo := struct {
+		ID string
+	}{
+		ID: id,
+	}
+	lockClientMockGetClusterStatus.Lock()
+	mock.calls.GetClusterStatus = append(mock.calls.GetClusterStatus, callInfo)
+	lockClientMockGetClusterStatus.Unlock()
+	return mock.GetClusterStatusFunc(id)
+}
+
+// GetClusterStatusCalls gets all the calls that were made to GetClusterStatus.
+// Check the length with:
+//     len(mockedClient.GetClusterStatusCalls())
+func (mock *ClientMock) GetClusterStatusCalls() []struct {
+	ID string
+} {
+	var calls []struct {
+		ID string
+	}
+	lockClientMockGetClusterStatus.RLock()
+	calls = mock.calls.GetClusterStatus
+	lockClientMockGetClusterStatus.RUnlock()
 	return calls
 }
