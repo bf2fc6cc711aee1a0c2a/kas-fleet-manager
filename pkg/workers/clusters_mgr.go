@@ -2,12 +2,13 @@ package workers
 
 import (
 	"fmt"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"time"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+
 	"github.com/golang/glog"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -74,7 +75,31 @@ func (c *ClusterManager) reconcile() {
 		glog.Infof("reconciled cluster %s state", reconciledCluster.ID)
 	}
 
-	// continue processing clusters
+	/*
+	 * Terraforming Provisioned Clusters
+	 */
+	provisionedClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioned)
+	if listErr != nil {
+		glog.Errorf("failed to list provisioned clusters: %s", listErr.Error())
+	}
+
+	// process each local provisioned cluster and apply nessecary terraforming
+	for _, provisionedCluster := range provisionedClusters {
+		addonInstallation, err := c.reconcileStrimziOperator(provisionedCluster.ID)
+		if err != nil {
+			glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, err.Error())
+			continue
+		}
+
+		// The cluster is ready when the state reports ready
+		if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
+			if err = c.clusterService.UpdateStatus(provisionedCluster.ID, api.ClusterReady); err != nil {
+				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ID, err.Error())
+				continue
+			}
+		}
+		glog.Infof("reconciled cluster %s terraforming", provisionedCluster.ID)
+	}
 }
 
 // reconcileClusterStatus updates the provided clusters stored status to reflect it's current state
@@ -90,12 +115,12 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 		needsUpdate = true
 	}
 	// if cluster state is ready, update the local cluster state
-	if clusterStatus.State() == v1.ClusterStateReady {
+	if clusterStatus.State() == clustersmgmtv1.ClusterStateReady {
 		cluster.Status = api.ClusterProvisioned
 		needsUpdate = true
 	}
 	// if cluster state is error, update the local cluster state
-	if clusterStatus.State() == v1.ClusterStateError {
+	if clusterStatus.State() == clustersmgmtv1.ClusterStateError {
 		cluster.Status = api.ClusterFailed
 		needsUpdate = true
 	}
@@ -106,4 +131,24 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 		}
 	}
 	return cluster, nil
+}
+
+// reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
+func (c *ClusterManager) reconcileStrimziOperator(clusterID string) (*clustersmgmtv1.AddOnInstallation, error) {
+
+	addonInstallation, err := c.ocmClient.GetManagedKafkaAddon(clusterID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cluster %s addon: %w", clusterID, err)
+	}
+
+	// Addon needs to be installed if addonInstallation doesn't exist
+	if addonInstallation.ID() == "" {
+		// Install the Stimzi operator
+		addonInstallation, err = c.ocmClient.CreateManagedKafkaAddon(clusterID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create cluster %s addon: %w", clusterID, err)
+		}
+	}
+
+	return addonInstallation, nil
 }
