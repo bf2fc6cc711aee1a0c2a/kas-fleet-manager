@@ -75,7 +75,7 @@ version:=$(shell date +%s)
 #   export OCM_ENV=testing; make run
 # Set the environment to development by default
 ifndef OCM_ENV
-	OCM_ENV:=development
+	OCM_ENV:=integration
 endif
 
 ifndef TEST_SUMMARY_FORMAT
@@ -139,7 +139,7 @@ test: install
 
 # Precompile everything required for development/test.
 test-prepare: install
-	OCM_ENV=integration go test -i ./test/integration/...
+	go test -i ./test/integration/...
 .PHONY: test-prepare
 
 # Runs the integration tests.
@@ -153,7 +153,7 @@ test-prepare: install
 #   make test-integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test-integration TESTFLAGS="-short"                skips long-run tests
 test-integration: test-prepare
-	OCM_ENV=integration gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 1h $(TESTFLAGS) \
+	gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 1h -count=1 $(TESTFLAGS) \
 			./test/integration
 .PHONY: test-integration
 
