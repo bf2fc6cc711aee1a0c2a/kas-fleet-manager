@@ -1,6 +1,10 @@
 package converters
 
-import "gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+import (
+	"encoding/json"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+)
 
 func ConvertKafkaRequest(request *api.KafkaRequest) []map[string]interface{} {
 	return []map[string]interface{}{
@@ -19,4 +23,24 @@ func ConvertKafkaRequest(request *api.KafkaRequest) []map[string]interface{} {
 			"deleted_at":            request.Meta.DeletedAt,
 		},
 	}
+}
+
+// Converts a KafkaRequestList to the response type expected by mocket
+func ConvertKafkaRequestList(kafkaList api.KafkaList) ([]map[string]interface{}, error) {
+	var kafkaRequestList []map[string]interface{}
+
+	for _, kafkaRequest := range kafkaList {
+		data, err := json.Marshal(kafkaRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		var converted map[string]interface{}
+		if err = json.Unmarshal(data, &converted); err != nil {
+			return nil, err
+		}
+		kafkaRequestList = append(kafkaRequestList, converted)
+	}
+
+	return kafkaRequestList, nil
 }

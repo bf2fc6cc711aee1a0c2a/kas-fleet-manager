@@ -131,6 +131,38 @@ paths:
       security:
         - Bearer: []
       summary: Create a new kafka Request
+    get:
+      summary: Returns a list of Kafka requests
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: A list of Kafka requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KafkaRequestList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Unauthorized to perform operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
 components:
   schemas:
     ObjectReference:
@@ -184,7 +216,7 @@ components:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
-            clusterID:
+            cluster_id:
               type: string
             status:
               type: string
@@ -224,8 +256,29 @@ components:
         type: string
       in: path
       required: true
+    page:
+      name: page
+      in: query
+      description: Page index 
+      required: false
+      schema:
+        type: string
+      examples:
+        page:
+          value: "1"
+    size:
+      name: size
+      in: query
+      description: Number of items in each page
+      required: false
+      schema:
+        type: string
+      examples:
+        size:
+          value: "100"
   securitySchemes:
     Bearer:
       scheme: bearer
       bearerFormat: JWT
       type: http
+    
