@@ -21,6 +21,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Rule definition of a Prometheus JMX Exporter rule for filtering metrics
+type Rule struct {
+	Pattern string            `json:"pattern,omitempty"`
+	Name    string            `json:"name,omitempty"`
+	Type    string            `json:"type,omitempty"`
+	Labels  map[string]string `json:"labels,omitempty"`
+}
+
+// Metrics definition of the Prometheus JMX Exporter configuration
+type Metrics struct {
+	LowercaseOutputName bool   `json:"lowercaseOutputName,omitempty"`
+	Rules               []Rule `json:"rules,omitempty"`
+}
+
 // CertAndKeySecretSource reference to the Secret which holds the certificate and private key pair.
 // The certificate can optionally contain the whole chain.
 type CertAndKeySecretSource struct {
@@ -276,12 +290,14 @@ type KafkaClusterSpec struct {
 	Storage       Storage             `json:"storage"`
 	Listeners     KafkaListeners      `json:"listeners"`
 	Authorization *KafkaAuthorization `json:"authorization,omitempty"`
+	Metrics       *Metrics            `json:"metrics,omitempty"`
 }
 
 // ZookeeperClusterSpec configuration of the ZooKeeper cluster.
 type ZookeeperClusterSpec struct {
-	Replicas int     `json:"replicas"`
-	Storage  Storage `json:"storage"`
+	Replicas int      `json:"replicas"`
+	Storage  Storage  `json:"storage"`
+	Metrics  *Metrics `json:"metrics,omitempty"`
 }
 
 // EntityTopicOperatorSpec configuration of the Topic Operator.
