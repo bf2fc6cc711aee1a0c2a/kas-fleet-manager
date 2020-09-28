@@ -37,7 +37,8 @@ type syncsetService struct {
 
 // Create builds the syncset and syncs it to the desired cluster
 func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-	syncsetBuilder.ID(syncsetId)
+	//max syncset Id Length is 50
+	syncsetBuilder.ID(truncateString(syncsetId, 50))
 	syncset, buildErr := syncsetBuilder.Build()
 	if buildErr != nil {
 		return nil, errors.GeneralError("failed to build syncset: %s", buildErr)
