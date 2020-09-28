@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	projectv1 "github.com/openshift/api/project/v1"
@@ -15,6 +16,9 @@ const (
 	numOfBrokers    = 3
 	numOfZookeepers = 3
 )
+
+var deleteClaim = false
+var jbodVolumeId = 0
 
 var zookeeperMetrics = &strimzi.Metrics{
 	LowercaseOutputName: true,
@@ -270,7 +274,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	kafkaOwnerID := buildKafkaNamespaceIdentifier(kafkaRequest)
 	kafkaIdentifier := validateClusterNameAndReplaceSpecialChar(kafkaOwnerID)
 
-
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.RouteListenerBrokerOverride{}
 	for i := 0; i < numOfBrokers; i++ {
@@ -295,7 +298,19 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 			Kafka: strimzi.KafkaClusterSpec{
 				Replicas: numOfBrokers,
 				Storage: strimzi.Storage{
-					Type: strimzi.Ephemeral,
+					Type: strimzi.Jbod,
+					JbodStorage: strimzi.JbodStorage{
+						Volumes: []strimzi.JbodVolume{
+							{
+								ID:   &jbodVolumeId,
+								Type: strimzi.PersistentClaim,
+								PersistentClaimStorage: strimzi.PersistentClaimStorage{
+									Size:        "5Gi",
+									DeleteClaim: &deleteClaim,
+								},
+							},
+						},
+					},
 				},
 				Listeners: strimzi.KafkaListeners{
 					Plain: &strimzi.KafkaListenerPlain{},
@@ -317,7 +332,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 			Zookeeper: strimzi.ZookeeperClusterSpec{
 				Replicas: numOfZookeepers,
 				Storage: strimzi.Storage{
-					Type: strimzi.Ephemeral,
+					Type: strimzi.PersistentClaim,
+					PersistentClaimStorage: strimzi.PersistentClaimStorage{
+						Size:        "5Gi",
+						DeleteClaim: &deleteClaim,
+					},
 				},
 				Metrics: zookeeperMetrics,
 			},
