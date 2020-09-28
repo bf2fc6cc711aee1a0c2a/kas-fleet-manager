@@ -49,7 +49,7 @@ paths:
       summary: Get a kafka request by id
     delete:
       responses:
-        "202":
+        "204":
           content:
             application/json:
               schema:
