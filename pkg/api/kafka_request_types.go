@@ -5,7 +5,7 @@ import "github.com/jinzhu/gorm"
 type KafkaRequest struct {
 	Meta
 	Region              string `json:"region"`
-	ClusterID           string `json:"clusterID"`
+	ClusterID           string `json:"cluster_id"`
 	CloudProvider       string `json:"cloud_provider"`
 	MultiAZ             bool   `json:"multi_az"`
 	Name                string `json:"name"`

@@ -1,10 +1,12 @@
 package services
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
@@ -13,6 +15,7 @@ type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	Get(id string) (*api.KafkaRequest, *errors.ServiceError)
 	Delete(id string) *errors.ServiceError
+	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
 
@@ -131,4 +134,38 @@ func (k *kafkaService) Delete(id string) *errors.ServiceError {
 	}
 
 	return nil
+}
+
+// List returns all Kafka requests belonging to a user.
+func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+	var kafkaRequestList api.KafkaList
+	dbConn := k.connectionFactory.New()
+	pagingMeta := &api.PagingMeta{
+		Page: listArgs.Page,
+		Size: listArgs.Size,
+	}
+
+	// filter kafka requests by owner
+	user := auth.GetUsernameFromContext(ctx)
+	if user == "" {
+		return nil, nil, errors.Unauthenticated("user not authenticated")
+	}
+	dbConn = dbConn.Where("owner = ?", user)
+
+	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
+	dbConn.Model(&kafkaRequestList).Count(&pagingMeta.Total)
+	if pagingMeta.Size > pagingMeta.Total {
+		pagingMeta.Size = pagingMeta.Total
+	}
+	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
+
+	// default the order by name
+	dbConn = dbConn.Order("name")
+
+	// execute query
+	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
+		return kafkaRequestList, pagingMeta, errors.GeneralError("Unable to list kafka requests for %s: %s", user, err)
+	}
+
+	return kafkaRequestList, pagingMeta, nil
 }
