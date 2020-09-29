@@ -80,7 +80,7 @@ type PersistentClaimStorageOverride struct {
 type PersistentClaimStorage struct {
 	Size        string                           `json:"size,omitempty"`
 	Selector    map[string]string                `json:"selector,omitempty"`
-	DeleteClaim bool                             `json:"deleteClaim,omitempty"`
+	DeleteClaim *bool                            `json:"deleteClaim,omitempty"`
 	Class       string                           `json:"class,omitempty"`
 	Overrides   []PersistentClaimStorageOverride `json:"overrides,omitempty"`
 }
@@ -88,7 +88,7 @@ type PersistentClaimStorage struct {
 // JbodVolume volume in a jbod storage.
 type JbodVolume struct {
 	Type StorageType `json:"type"`
-	ID   int         `json:"id,omitempty"`
+	ID   *int        `json:"id,omitempty"`
 	EphemeralStorage
 	PersistentClaimStorage
 }
@@ -103,7 +103,7 @@ type JbodStorage struct {
 // The type depends on the value of the Type property within the given object, which must be one of [ephemeral, persistent-claim, jbod].
 type Storage struct {
 	Type StorageType `json:"type"`
-	ID   int         `json:"id,omitempty"`
+	ID   *int        `json:"id,omitempty"`
 	EphemeralStorage
 	PersistentClaimStorage
 	JbodStorage
