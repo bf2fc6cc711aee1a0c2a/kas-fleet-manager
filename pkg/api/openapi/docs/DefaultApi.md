@@ -119,7 +119,7 @@ Name | Type | Description  | Notes
 
 ## ApiManagedServicesApiV1KafkasPost
 
-> KafkaRequest ApiManagedServicesApiV1KafkasPost(ctx, kafkaRequest)
+> KafkaRequest ApiManagedServicesApiV1KafkasPost(ctx, async, kafkaRequest)
 
 Create a new kafka Request
 
@@ -129,6 +129,7 @@ Create a new kafka Request
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**async** | **bool**| Perform the action in an asynchronous manner | 
 **kafkaRequest** | [**KafkaRequest**](KafkaRequest.md)| Kafka data | 
 
 ### Return type

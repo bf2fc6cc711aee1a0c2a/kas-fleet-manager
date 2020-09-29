@@ -379,10 +379,11 @@ func (a *DefaultApiService) ApiManagedServicesApiV1KafkasIdGet(ctx _context.Cont
 /*
 ApiManagedServicesApiV1KafkasPost Create a new kafka Request
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param async Perform the action in an asynchronous manner
  * @param kafkaRequest Kafka data
 @return KafkaRequest
 */
-func (a *DefaultApiService) ApiManagedServicesApiV1KafkasPost(ctx _context.Context, kafkaRequest KafkaRequest) (KafkaRequest, *_nethttp.Response, error) {
+func (a *DefaultApiService) ApiManagedServicesApiV1KafkasPost(ctx _context.Context, async bool, kafkaRequest KafkaRequest) (KafkaRequest, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -398,6 +399,7 @@ func (a *DefaultApiService) ApiManagedServicesApiV1KafkasPost(ctx _context.Conte
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	localVarQueryParams.Add("async", parameterToString(async, ""))
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
 
