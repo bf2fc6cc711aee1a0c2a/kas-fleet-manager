@@ -18,17 +18,17 @@ const (
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
-	ocmClient      ocm.Client
-	clusterService services.ClusterService
+	ocmClient             ocm.Client
+	clusterService        services.ClusterService
 	cloudProvidersService services.CloudProvidersService
-	timer          *time.Timer
+	timer                 *time.Timer
 }
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(clusterService services.ClusterService,  cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client) *ClusterManager {
+func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client) *ClusterManager {
 	return &ClusterManager{
-		ocmClient:      ocmClient,
-		clusterService: clusterService,
+		ocmClient:             ocmClient,
+		clusterService:        clusterService,
 		cloudProvidersService: cloudProvidersService,
 	}
 }

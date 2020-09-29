@@ -11,12 +11,12 @@ const (
 	ClusterProvisioning ClusterStatus = "cluster_provisioning"
 	// ClusterProvisioned the underlying ocm cluster is provisioned
 	ClusterProvisioned ClusterStatus = "cluster_provisioned"
-	// ClusterReady the cluster is ready for Kafka installations (cluster provisioned and terraforming complete)
-	ClusterReady ClusterStatus = "ready"
 	// ClusterFailed the cluster failed to become ready
 	ClusterFailed ClusterStatus = "failed"
 	// ManagedKafkaAddonID the ID of the managed Kafka addon
 	ManagedKafkaAddonID = "managed-kafka"
+	// ClusterReady the cluster is terraformed and ready for kafka instances
+	ClusterReady ClusterStatus = "ready"
 )
 
 type Cluster struct {

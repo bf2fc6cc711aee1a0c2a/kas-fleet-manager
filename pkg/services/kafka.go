@@ -11,12 +11,16 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
+//go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	Get(id string) (*api.KafkaRequest, *errors.ServiceError)
 	Delete(id string) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	ListByStatus(status KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+	UpdateStatus(id string, status KafkaStatus) *errors.ServiceError
+	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
 
 var _ KafkaService = &kafkaService{}
@@ -27,14 +31,16 @@ type kafkaService struct {
 	clusterService    ClusterService
 }
 
-type kafkaStatus string
+type KafkaStatus string
 
-func (k kafkaStatus) String() string {
+func (k KafkaStatus) String() string {
 	return string(k)
 }
 
 const (
-	KafkaRequestStatusAccepted kafkaStatus = "accepted"
+	KafkaRequestStatusAccepted     KafkaStatus = "accepted"
+	KafkaRequestStatusProvisioning KafkaStatus = "provisioning"
+	KafkaRequestStatusComplete     KafkaStatus = "complete"
 )
 
 func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService) *kafkaService {
@@ -92,6 +98,18 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	return nil
 }
 
+func (k *kafkaService) ListByStatus(status KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+
+	var kafkas []*api.KafkaRequest
+
+	if err := dbConn.Model(&api.KafkaRequest{}).Where("status = ?", status).Scan(&kafkas).Error; err != nil {
+		return nil, errors.GeneralError(err.Error())
+	}
+
+	return kafkas, nil
+}
+
 func (k *kafkaService) Get(id string) (*api.KafkaRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
@@ -130,7 +148,7 @@ func (k *kafkaService) Delete(id string) *errors.ServiceError {
 
 	// soft delete the kafka request
 	if err := dbConn.Delete(&kafkaRequest).Error; err != nil {
-		return errors.GeneralError("unable to update kafka request with id %s: %s", kafkaRequest.ID, err)
+		return errors.GeneralError("unable to delete kafka request with id %s: %s", kafkaRequest.ID, err)
 	}
 
 	return nil
@@ -168,4 +186,23 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	}
 
 	return kafkaRequestList, pagingMeta, nil
+}
+
+func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+
+	if err := dbConn.Model(kafkaRequest).Update(kafkaRequest).Error; err != nil {
+		return errors.GeneralError("failed to update: %s", err.Error())
+	}
+	return nil
+}
+
+func (k kafkaService) UpdateStatus(id string, status KafkaStatus) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+
+	if err := dbConn.Table("kafka_requests").Where("id = ?", id).Update("status", status).Error; err != nil {
+		return errors.GeneralError("failed to update status: %s", err.Error())
+	}
+
+	return nil
 }
