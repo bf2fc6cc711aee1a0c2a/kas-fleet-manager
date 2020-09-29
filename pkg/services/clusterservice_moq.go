@@ -12,6 +12,7 @@ import (
 
 var (
 	lockClusterServiceMockCreate        sync.RWMutex
+	lockClusterServiceMockFindCluster   sync.RWMutex
 	lockClusterServiceMockGetClusterDNS sync.RWMutex
 	lockClusterServiceMockListByStatus  sync.RWMutex
 	lockClusterServiceMockUpdateStatus  sync.RWMutex
@@ -29,6 +30,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //         mockedClusterService := &ClusterServiceMock{
 //             CreateFunc: func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the Create method")
+//             },
+//             FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError) {
+// 	               panic("mock out the FindCluster method")
 //             },
 //             GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
 // 	               panic("mock out the GetClusterDNS method")
@@ -49,6 +53,9 @@ type ClusterServiceMock struct {
 	// CreateFunc mocks the Create method.
 	CreateFunc func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError)
 
+	// FindClusterFunc mocks the FindCluster method.
+	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError)
+
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterID string) (string, *errors.ServiceError)
 
@@ -64,6 +71,11 @@ type ClusterServiceMock struct {
 		Create []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
+		}
+		// FindCluster holds details about calls to the FindCluster method.
+		FindCluster []struct {
+			// Criteria is the criteria argument value.
+			Criteria FindClusterCriteria
 		}
 		// GetClusterDNS holds details about calls to the GetClusterDNS method.
 		GetClusterDNS []struct {
@@ -113,6 +125,37 @@ func (mock *ClusterServiceMock) CreateCalls() []struct {
 	lockClusterServiceMockCreate.RLock()
 	calls = mock.calls.Create
 	lockClusterServiceMockCreate.RUnlock()
+	return calls
+}
+
+// FindCluster calls FindClusterFunc.
+func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError) {
+	if mock.FindClusterFunc == nil {
+		panic("ClusterServiceMock.FindClusterFunc: method is nil but ClusterService.FindCluster was just called")
+	}
+	callInfo := struct {
+		Criteria FindClusterCriteria
+	}{
+		Criteria: criteria,
+	}
+	lockClusterServiceMockFindCluster.Lock()
+	mock.calls.FindCluster = append(mock.calls.FindCluster, callInfo)
+	lockClusterServiceMockFindCluster.Unlock()
+	return mock.FindClusterFunc(criteria)
+}
+
+// FindClusterCalls gets all the calls that were made to FindCluster.
+// Check the length with:
+//     len(mockedClusterService.FindClusterCalls())
+func (mock *ClusterServiceMock) FindClusterCalls() []struct {
+	Criteria FindClusterCriteria
+} {
+	var calls []struct {
+		Criteria FindClusterCriteria
+	}
+	lockClusterServiceMockFindCluster.RLock()
+	calls = mock.calls.FindCluster
+	lockClusterServiceMockFindCluster.RUnlock()
 	return calls
 }
 

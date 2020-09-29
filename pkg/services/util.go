@@ -14,11 +14,10 @@ import (
 )
 
 const (
-	truncatedNameLen = 10
-	maxClusterNameLength = 63
-	replacementForSpecialChar="k"
+	truncatedNameLen          = 10
+	maxClusterNameLength      = 63
+	replacementForSpecialChar = "k"
 )
-
 
 // Cluster names must be valid DNS-1035 labels, so they must consist of lower case alphanumeric
 // characters or '-', start with an alphabetic character, and end with an alphanumeric character
@@ -92,7 +91,6 @@ func truncateString(str string, num int) string {
 	}
 	return truncatedString
 }
-
 
 // buildKafkaIdentifier creates a unique identifier for a kafka cluster given
 // the kafka request object

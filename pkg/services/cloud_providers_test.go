@@ -19,7 +19,7 @@ func Test_CloudProvider_List(t *testing.T) {
 		name    string
 		fields  fields
 		wantErr bool
-		want   []CloudProviderWithRegions
+		want    []CloudProviderWithRegions
 	}{
 		{
 			name: "fail to get cloud provider regions",
@@ -48,7 +48,7 @@ func Test_CloudProvider_List(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want:[]CloudProviderWithRegions{},
+			want:    []CloudProviderWithRegions{},
 		},
 	}
 	for _, tt := range tests {

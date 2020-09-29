@@ -49,11 +49,23 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// Run the cluster manager
 	go func() {
-		clusterService := environments.Environment().Services.Cluster
 		ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+
+		// start cluster worker
 		cloudProviderService := environments.Environment().Services.CloudProviders
-		clusterManager := workers.NewClusterManager(clusterService,cloudProviderService,ocmClient)
+		clusterService := environments.Environment().Services.Cluster
+		clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient)
 		clusterManager.Start()
+	}()
+
+	go func() {
+		ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+
+		// start kafka worker
+		clusterService := environments.Environment().Services.Cluster
+		kafkaService := environments.Environment().Services.Kafka
+		kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient)
+		kafkaManager.Start()
 	}()
 
 	select {}

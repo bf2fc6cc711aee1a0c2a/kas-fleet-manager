@@ -8,6 +8,16 @@ import (
 	"sync"
 )
 
+var (
+	lockClientMockCreateCluster           sync.RWMutex
+	lockClientMockCreateManagedKafkaAddon sync.RWMutex
+	lockClientMockGetCloudProviders       sync.RWMutex
+	lockClientMockGetClusterIngresses     sync.RWMutex
+	lockClientMockGetClusterStatus        sync.RWMutex
+	lockClientMockGetManagedKafkaAddon    sync.RWMutex
+	lockClientMockGetRegions              sync.RWMutex
+)
+
 // Ensure, that ClientMock does implement Client.
 // If this is not the case, regenerate this file with moq.
 var _ Client = &ClientMock{}
@@ -103,13 +113,6 @@ type ClientMock struct {
 			Provider *v1.CloudProvider
 		}
 	}
-	lockCreateCluster           sync.RWMutex
-	lockCreateManagedKafkaAddon sync.RWMutex
-	lockGetCloudProviders       sync.RWMutex
-	lockGetClusterIngresses     sync.RWMutex
-	lockGetClusterStatus        sync.RWMutex
-	lockGetManagedKafkaAddon    sync.RWMutex
-	lockGetRegions              sync.RWMutex
 }
 
 // CreateCluster calls CreateClusterFunc.
@@ -122,9 +125,9 @@ func (mock *ClientMock) CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error) 
 	}{
 		Cluster: cluster,
 	}
-	mock.lockCreateCluster.Lock()
+	lockClientMockCreateCluster.Lock()
 	mock.calls.CreateCluster = append(mock.calls.CreateCluster, callInfo)
-	mock.lockCreateCluster.Unlock()
+	lockClientMockCreateCluster.Unlock()
 	return mock.CreateClusterFunc(cluster)
 }
 
@@ -137,9 +140,9 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	var calls []struct {
 		Cluster *v1.Cluster
 	}
-	mock.lockCreateCluster.RLock()
+	lockClientMockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
-	mock.lockCreateCluster.RUnlock()
+	lockClientMockCreateCluster.RUnlock()
 	return calls
 }
 
@@ -153,9 +156,9 @@ func (mock *ClientMock) CreateManagedKafkaAddon(id string) (*v1.AddOnInstallatio
 	}{
 		ID: id,
 	}
-	mock.lockCreateManagedKafkaAddon.Lock()
+	lockClientMockCreateManagedKafkaAddon.Lock()
 	mock.calls.CreateManagedKafkaAddon = append(mock.calls.CreateManagedKafkaAddon, callInfo)
-	mock.lockCreateManagedKafkaAddon.Unlock()
+	lockClientMockCreateManagedKafkaAddon.Unlock()
 	return mock.CreateManagedKafkaAddonFunc(id)
 }
 
@@ -168,9 +171,9 @@ func (mock *ClientMock) CreateManagedKafkaAddonCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	mock.lockCreateManagedKafkaAddon.RLock()
+	lockClientMockCreateManagedKafkaAddon.RLock()
 	calls = mock.calls.CreateManagedKafkaAddon
-	mock.lockCreateManagedKafkaAddon.RUnlock()
+	lockClientMockCreateManagedKafkaAddon.RUnlock()
 	return calls
 }
 
@@ -181,9 +184,9 @@ func (mock *ClientMock) GetCloudProviders() (*v1.CloudProviderList, error) {
 	}
 	callInfo := struct {
 	}{}
-	mock.lockGetCloudProviders.Lock()
+	lockClientMockGetCloudProviders.Lock()
 	mock.calls.GetCloudProviders = append(mock.calls.GetCloudProviders, callInfo)
-	mock.lockGetCloudProviders.Unlock()
+	lockClientMockGetCloudProviders.Unlock()
 	return mock.GetCloudProvidersFunc()
 }
 
@@ -194,9 +197,9 @@ func (mock *ClientMock) GetCloudProvidersCalls() []struct {
 } {
 	var calls []struct {
 	}
-	mock.lockGetCloudProviders.RLock()
+	lockClientMockGetCloudProviders.RLock()
 	calls = mock.calls.GetCloudProviders
-	mock.lockGetCloudProviders.RUnlock()
+	lockClientMockGetCloudProviders.RUnlock()
 	return calls
 }
 
@@ -210,9 +213,9 @@ func (mock *ClientMock) GetClusterIngresses(clusterID string) (*v1.IngressesList
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockGetClusterIngresses.Lock()
+	lockClientMockGetClusterIngresses.Lock()
 	mock.calls.GetClusterIngresses = append(mock.calls.GetClusterIngresses, callInfo)
-	mock.lockGetClusterIngresses.Unlock()
+	lockClientMockGetClusterIngresses.Unlock()
 	return mock.GetClusterIngressesFunc(clusterID)
 }
 
@@ -225,9 +228,9 @@ func (mock *ClientMock) GetClusterIngressesCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockGetClusterIngresses.RLock()
+	lockClientMockGetClusterIngresses.RLock()
 	calls = mock.calls.GetClusterIngresses
-	mock.lockGetClusterIngresses.RUnlock()
+	lockClientMockGetClusterIngresses.RUnlock()
 	return calls
 }
 
@@ -241,9 +244,9 @@ func (mock *ClientMock) GetClusterStatus(id string) (*v1.ClusterStatus, error) {
 	}{
 		ID: id,
 	}
-	mock.lockGetClusterStatus.Lock()
+	lockClientMockGetClusterStatus.Lock()
 	mock.calls.GetClusterStatus = append(mock.calls.GetClusterStatus, callInfo)
-	mock.lockGetClusterStatus.Unlock()
+	lockClientMockGetClusterStatus.Unlock()
 	return mock.GetClusterStatusFunc(id)
 }
 
@@ -256,9 +259,9 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGetClusterStatus.RLock()
+	lockClientMockGetClusterStatus.RLock()
 	calls = mock.calls.GetClusterStatus
-	mock.lockGetClusterStatus.RUnlock()
+	lockClientMockGetClusterStatus.RUnlock()
 	return calls
 }
 
@@ -272,9 +275,9 @@ func (mock *ClientMock) GetManagedKafkaAddon(id string) (*v1.AddOnInstallation, 
 	}{
 		ID: id,
 	}
-	mock.lockGetManagedKafkaAddon.Lock()
+	lockClientMockGetManagedKafkaAddon.Lock()
 	mock.calls.GetManagedKafkaAddon = append(mock.calls.GetManagedKafkaAddon, callInfo)
-	mock.lockGetManagedKafkaAddon.Unlock()
+	lockClientMockGetManagedKafkaAddon.Unlock()
 	return mock.GetManagedKafkaAddonFunc(id)
 }
 
@@ -287,9 +290,9 @@ func (mock *ClientMock) GetManagedKafkaAddonCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGetManagedKafkaAddon.RLock()
+	lockClientMockGetManagedKafkaAddon.RLock()
 	calls = mock.calls.GetManagedKafkaAddon
-	mock.lockGetManagedKafkaAddon.RUnlock()
+	lockClientMockGetManagedKafkaAddon.RUnlock()
 	return calls
 }
 
@@ -303,9 +306,9 @@ func (mock *ClientMock) GetRegions(provider *v1.CloudProvider) (*v1.CloudRegionL
 	}{
 		Provider: provider,
 	}
-	mock.lockGetRegions.Lock()
+	lockClientMockGetRegions.Lock()
 	mock.calls.GetRegions = append(mock.calls.GetRegions, callInfo)
-	mock.lockGetRegions.Unlock()
+	lockClientMockGetRegions.Unlock()
 	return mock.GetRegionsFunc(provider)
 }
 
@@ -318,8 +321,8 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 	var calls []struct {
 		Provider *v1.CloudProvider
 	}
-	mock.lockGetRegions.RLock()
+	lockClientMockGetRegions.RLock()
 	calls = mock.calls.GetRegions
-	mock.lockGetRegions.RUnlock()
+	lockClientMockGetRegions.RUnlock()
 	return calls
 }
