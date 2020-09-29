@@ -340,6 +340,10 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				},
 				Metrics: zookeeperMetrics,
 			},
+			KafkaExporter: &strimzi.KafkaExporterSpec{
+				TopicRegex: ".*",
+				GroupRegex: ".*",
+			},
 		},
 	}
 
