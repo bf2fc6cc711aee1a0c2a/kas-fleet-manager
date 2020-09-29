@@ -314,6 +314,12 @@ type EntityOperatorSpec struct {
 	UserOperator  EntityUserOperatorSpec  `json:"userOperator,omitempty"`
 }
 
+// KafkaExporterSpec configuration of the Kafka Exporter
+type KafkaExporterSpec struct {
+	TopicRegex string `json:"topicRegex,omitempty"`
+	GroupRegex string `json:"groupRegex,omitempty"`
+}
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -325,6 +331,7 @@ type KafkaSpec struct {
 	Kafka          KafkaClusterSpec     `json:"kafka"`
 	Zookeeper      ZookeeperClusterSpec `json:"zookeeper"`
 	EntityOperator *EntityOperatorSpec  `json:"entityOperator,omitempty"`
+	KafkaExporter  *KafkaExporterSpec   `json:"kafkaExporter,omitempty"`
 }
 
 // KafkaStatus defines the observed state of Kafka
