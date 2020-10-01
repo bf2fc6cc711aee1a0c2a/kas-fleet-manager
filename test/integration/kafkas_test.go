@@ -40,8 +40,9 @@ func TestKafkaPost(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
-		ClusterID:     clusterservicetest.MockClusterID,
-		Name:          mockKafkaName,
+		// get ID from a helper function when using real OCM services
+		ClusterId: clusterservicetest.MockClusterID,
+		Name:      mockKafkaName,
 	}
 
 	// 202 Accepted
@@ -76,8 +77,9 @@ func TestKafkaGet(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
-		ClusterID:     clusterservicetest.MockClusterID,
-		Name:          mockKafkaName,
+		// get ID from a helper function when using real OCM services
+		ClusterId: clusterservicetest.MockClusterID,
+		Name:      mockKafkaName,
 	}
 
 	seedKafka, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
