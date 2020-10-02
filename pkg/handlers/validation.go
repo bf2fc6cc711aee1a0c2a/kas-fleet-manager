@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"net/http"
 	"strings"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -39,6 +40,17 @@ func validateNonNegative(value *int32, field string) validate {
 	return func() *errors.ServiceError {
 		if (*value) < 0 {
 			return errors.Validation("%s must be non-negative", field)
+		}
+		return nil
+	}
+}
+
+// validateAsyncEnabled returns a validator that returns an error if the async query param is not true
+func validateAsyncEnabled(r *http.Request, action string) validate {
+	return func() *errors.ServiceError {
+		asyncParam := r.URL.Query().Get("async")
+		if asyncParam != "true" {
+			return errors.SyncActionNotSupported(action)
 		}
 		return nil
 	}

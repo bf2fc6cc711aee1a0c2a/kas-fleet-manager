@@ -28,6 +28,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []validate{
+			validateAsyncEnabled(r, "creating kafka requests"),
 			validateNotEmpty(&kafkaRequest.Owner, "owner"),
 			validateEmpty(&kafkaRequest.Id, "id"),
 			validateNotEmpty(&kafkaRequest.Region, "region"),

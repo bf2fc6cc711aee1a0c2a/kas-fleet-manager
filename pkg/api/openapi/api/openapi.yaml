@@ -152,6 +152,15 @@ paths:
       - Bearer: []
       summary: Returns a list of Kafka requests
     post:
+      parameters:
+      - description: Perform the action in an asynchronous manner
+        explode: true
+        in: query
+        name: async
+        required: true
+        schema:
+          type: boolean
+        style: form
       requestBody:
         content:
           application/json:
@@ -293,8 +302,6 @@ components:
           type: array
     KafkaRequest_allOf:
       properties:
-        cluster_id:
-          type: string
         status:
           type: string
         cloud_provider:

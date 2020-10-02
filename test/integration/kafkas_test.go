@@ -40,13 +40,11 @@ func TestKafkaPost(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
-		// get ID from a helper function when using real OCM services
-		ClusterId: clusterservicetest.MockClusterID,
-		Name:      mockKafkaName,
+		Name:          mockKafkaName,
 	}
 
 	// 202 Accepted
-	kafka, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
+	kafka, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -77,12 +75,10 @@ func TestKafkaGet(t *testing.T) {
 	k := openapi.KafkaRequest{
 		Region:        clusterservicetest.MockClusterRegion,
 		CloudProvider: clusterservicetest.MockClusterCloudProvider,
-		// get ID from a helper function when using real OCM services
-		ClusterId: clusterservicetest.MockClusterID,
-		Name:      mockKafkaName,
+		Name:          mockKafkaName,
 	}
 
-	seedKafka, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
+	seedKafka, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
