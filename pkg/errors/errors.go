@@ -52,6 +52,9 @@ const (
 
 	// Invalid Search Query
 	ErrorFailedToParseSearch ServiceErrorCode = 23
+
+	// Synchronous request not supported
+	ErrorSyncActionNotSupported ServiceErrorCode = 103
 )
 
 type ServiceErrorCode int
@@ -80,6 +83,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMalformedRequest, "Unable to read request body", http.StatusBadRequest},
 		ServiceError{ErrorBadRequest, "Bad request", http.StatusBadRequest},
 		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
+		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
 	}
 }
 
@@ -192,4 +196,9 @@ func BadRequest(reason string, values ...interface{}) *ServiceError {
 func FailedToParseSearch(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("Failed to parse search query: %s", reason)
 	return New(ErrorFailedToParseSearch, message, values...)
+}
+
+func SyncActionNotSupported(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("Synchronous action (%s) is unsupported, use async=true parameter", reason)
+	return New(ErrorSyncActionNotSupported, message)
 }
