@@ -47,5 +47,5 @@ func runDelete(cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Unable to delete kafka request: %s", err.Error())
 	}
 
-	glog.Infof("Deleted kafka request with id %s", id)
+	glog.V(10).Infof("Deleted kafka request with id %s", id)
 }
