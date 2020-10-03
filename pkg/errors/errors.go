@@ -11,11 +11,7 @@ import (
 )
 
 const (
-	// Prefix used for error code strings
-	// Example:
-	//   ERROR_CODE_PREFIX = "OCM-EX"
-	//   results in: OCM-EX-1
-	ERROR_CODE_PREFIX = "OCM-EX"
+	ERROR_CODE_PREFIX = "MGD-SERV-API"
 
 	// HREF for API errors
 	ERROR_HREF = "/api/managed-services-api/v1/errors/"
