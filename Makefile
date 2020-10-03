@@ -193,11 +193,11 @@ run/docs:
 .PHONY: run/docs
 
 db/setup:
-	./local_db_setup.sh
+	./scripts/local_db_setup.sh
 .PHONY: db/setup
 
 db/teardown:
-	./local_db_teardown.sh
+	./scripts/local_db_teardown.sh
 .PHONY: db/teardown
 
 db/login:
