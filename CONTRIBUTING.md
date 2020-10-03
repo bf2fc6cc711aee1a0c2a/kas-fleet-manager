@@ -1,10 +1,122 @@
 # Contributing
 
+## Install Go
+
+### On OSX
+
+```sh
+brew install go@1.13
+
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin  # our binaries compile here
+```
+
+### On Other Linux Platforms
+
+```sh
+wget https://golang.org/dl/go1.13.15.linux-amd64.tar.gz # for latest versions check https://golang.org/dl/
+tar -xzf go1.13.15.linux-amd64.tar.gz
+mv go /usr/local
+
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
+```
+
+## Project source
+
+Project source is to be found under `$GOPATH/src` by a distinct directory path.
+
+Fork managed-services-api to your own gitlab repository: https://gitlab.cee.redhat.com/service/managed-services-api/forks/new
+
+```sh
+cd $GOPATH
+git clone git@gitlab.cee.redhat.com:{username}/managed-services-api.git src/gitlab.cee.redhat.com/service/managed-services-api
+
+cd $GOPATH/src/gitlab.cee.redhat.com/service/managed-services-api
+git remote add upstream git@gitlab.cee.redhat.com:service/managed-services-api.git
+```
+
+Resulting workspace:
+
+```plain
+$GOPATH
+  /bin
+  /pkg
+  /src
+    /gitlab.cee.rh.com/service/
+       /uhc-cluster-service
+         /cmd
+         /pkg
+       /managed-services-api  -- our git root
+         /cmd
+           /managed-services-api  -- Main CLI entrypoint
+         /pkg
+           /api      -- type definitions and models
+           /config   -- configuration handling
+					 /db  		 -- database schema and migrations
+           /handlers -- web handlers/controllers
+           /services -- interfaces for CRUD and business logic
+					 /workers  -- background workers for async reconciliation logic
+
+```
+
+## Generate OpenAPI code
+
+For more information: https://github.com/openapitools/openapi-generator
+
+### On OSX
+
+```sh
+# swagger-codegen 3.0 does not support Go w/ OpenAPI spec 3.0.
+# This tool supports Go:
+brew install openapi-generator
+# on other platforms, see https://github.com/openapitools/openapi-generator
+
+# The version of openapi-generator we used last is recorded here:
+cat pkg/api/openapi/.openapi-generator/VERSION
+
+# regenerate the API implementation from our swagger file
+# (rerun this on on any spec change e.g, you add a new field)
+make generate
+```
+
+### On Other Linux Platforms
+
+```sh
+cat pkg/api/openapi/.openapi-generator/VERSION
+
+# install openapi-generator with the same version ^^, e.g. 3.3.4
+npm install @openapitools/openapi-generator-cli@cli-3.3.4 -g
+
+make generate
+```
+
+## Managing dependencies
+
+[Go Modules](https://github.com/golang/go/wiki/Modules) are used to manage dependencies.
+
+### Add a dependency
+
+To add a dependency, simply add a new import to any go file in the project and either build or install the application:
+```
+import (
+  "github.com/something/new"
+)
+
+...
+
+$ make install
+```
+
+The `go.mod` file we automatically be updated with the new required project, the `go.sum` file will be generated.
+
 ## Modifying the API definition
 
 All OpenAPI spec modifications must be done through [Apicurio Studo](https://studio.apicur.io/apis/35337) first and manually copied into the repo.
 
-## Mocking
+## Testing
+
+### Mocking
 
 We use the [moq](https://github.com/matryer/moq) tool to automate the generation of interface mocks.
 
@@ -35,7 +147,7 @@ For more information on using `moq`, see:
 - [The moq repository](https://github.com/matryer/moq)
 - The IDGenerator [interface](pkg/ocm/id.go) and [mock](pkg/ocm/idgenerator_moq_test.go) in this repository 
 
-## Unit Tests
+### Unit Tests
 
 We follow the Go [table driven test](https://github.com/golang/go/wiki/TableDrivenTests) approach.
 
@@ -46,7 +158,7 @@ loop one by one. For an example of writing a table driven test, see:
 - [The Test_kafkaService_Get test in this repository](pkg/services/kafka_test.go)
 
 
-## Integration Tests
+### Integration Tests
 
 Integration tests in this service can take advantage of running in an "emulated OCM API". This
 essentially means a configurable mock OCM API server can be used in place of a "real" OCM API for
