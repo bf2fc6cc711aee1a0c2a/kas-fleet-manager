@@ -13,7 +13,7 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	glog.Infof("Starting integration test using go version %s", runtime.Version())
+	glog.V(10).Infof("Starting integration test using go version %s", runtime.Version())
 	helper := test.NewHelper(&testing.T{}, nil)
 	helper.ResetDB()
 	exitCode := m.Run()

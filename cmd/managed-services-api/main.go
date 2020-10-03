@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/kafka"
 

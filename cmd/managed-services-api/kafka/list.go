@@ -92,5 +92,5 @@ func runList(cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Failed to format kafka request list: %s", err.Error())
 	}
 
-	glog.Infof("%s", output)
+	glog.V(10).Infof("%s", output)
 }

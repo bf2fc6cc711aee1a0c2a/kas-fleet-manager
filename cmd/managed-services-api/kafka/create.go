@@ -72,5 +72,5 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	if err != nil {
 		glog.Fatalf("Failed to format kafka request: %s", err.Error())
 	}
-	glog.Infof("%s", indentedKafkaRequest)
+	glog.V(10).Infof("%s", indentedKafkaRequest)
 }
