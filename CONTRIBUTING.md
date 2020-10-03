@@ -1,5 +1,9 @@
 # Contributing
 
+## Modifying the API definition
+
+All OpenAPI spec modifications must be done through [Apicurio Studo](https://studio.apicur.io/apis/35337) first and manually copied into the repo.
+
 ## Mocking
 
 We use the [moq](https://github.com/matryer/moq) tool to automate the generation of interface mocks.
