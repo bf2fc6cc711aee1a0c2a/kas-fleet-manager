@@ -2,9 +2,10 @@ package workers
 
 import (
 	"fmt"
+	"time"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"time"
 
 	"github.com/golang/glog"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
@@ -29,7 +30,7 @@ func NewKafkaManager(kafkaService services.KafkaService, clusterService services
 
 // Start initializes the kafka manager to reconcile kafka requests
 func (k *KafkaManager) Start() {
-	glog.Infoln("Starting kafka manager")
+	glog.V(1).Infoln("Starting kafka manager")
 
 	// start reconcile immediately and then on every repeat interval
 	k.reconcile()
@@ -52,7 +53,7 @@ func (k *KafkaManager) reset() {
 }
 
 func (k *KafkaManager) reconcile() {
-	glog.Infoln("reconciling kafkas")
+	glog.V(5).Infoln("reconciling kafkas")
 
 	// handle accepted kafkas
 	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(services.KafkaRequestStatusAccepted)
