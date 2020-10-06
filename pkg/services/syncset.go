@@ -271,8 +271,13 @@ func (s syncsetService) Delete(syncsetId, clusterId string) *errors.ServiceError
 
 // syncset builder for a kafka/strimzi custom resource
 func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
-	kafkaOwnerID := buildKafkaNamespaceIdentifier(kafkaRequest)
-	kafkaIdentifier := validateClusterNameAndReplaceSpecialChar(kafkaOwnerID)
+	syncsetBuilder := cmv1.NewSyncset()
+
+	namespaceName := buildKafkaNamespaceIdentifier(kafkaRequest)
+	namespaceName, err := replaceNamespaceSpecialChar(namespaceName)
+	if err != nil {
+		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
+	}
 
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.RouteListenerBrokerOverride{}
@@ -292,7 +297,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
-			Namespace: kafkaIdentifier,
+			Namespace: namespaceName,
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
@@ -354,13 +359,12 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				Kind:       "Project",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: kafkaIdentifier,
+				Name: namespaceName,
 			},
 		},
 		kafkaCR,
 	}
 
-	syncsetBuilder := cmv1.NewSyncset()
 	syncsetBuilder = syncsetBuilder.Resources(resources...)
 	syncsetId := buildSyncsetIdentifier(kafkaRequest)
 	return syncsetBuilder, syncsetId, nil

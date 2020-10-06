@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"reflect"
 	"testing"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -158,7 +159,7 @@ func Test_kafkaService_Create(t *testing.T) {
 		kafkaRequest *api.KafkaRequest
 	}
 
-	longKafkaName := "Long-Kafka-Name-Which-Will-Be-Truncated-Since-Route-Host-Names-Are-Limited-To-63-Characters"
+	longKafkaName := "long-kafka-name-which-will-be-truncated-since-route-host-names-are-limited-to-63-characters"
 
 	tests := []struct {
 		name                    string
