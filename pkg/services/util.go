@@ -11,21 +11,22 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
 	truncatedNameLen          = 10
-	maxClusterNameLength      = 63
-	replacementForSpecialChar = "k"
+	truncatedNamespaceLen     = 40
+	replacementForSpecialChar = "-"
+	appendChar                = "a"
 )
 
-// Cluster names must be valid DNS-1035 labels, so they must consist of lower case alphanumeric
-// characters or '-', start with an alphabetic character, and end with an alphanumeric character
-// (e.g. 'my-name',  or 'abc-123').
-var clusterNameRE = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+// All namespace names must conform to DNS1123. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L177)
+var dns1123ReplacementRE = regexp.MustCompile(`[^a-z0-9]([^-a-z0-9]*[^a-z0-9])?`)
 
-// Match with all invalid characters in the cluster name
-var clusterInvalidCharRE = regexp.MustCompile(`[_$&+,:;=?@#|'<>.^*()%!-]`)
+// All OpenShift route hosts must confirm to DNS1035. This will inverse the validation RE from k8s (https://github.com/kubernetes/apimachinery/blob/master/pkg/util/validation/validation.go#L219)
+var dns1035ReplacementRE = regexp.MustCompile(`[^a-z]([^-a-z0-9]*[^a-z0-9])?`)
 
 // Field names suspected to contain personally identifiable information
 var piiFields []string = []string{
@@ -95,7 +96,7 @@ func truncateString(str string, num int) string {
 // buildKafkaIdentifier creates a unique identifier for a kafka cluster given
 // the kafka request object
 func buildKafkaNamespaceIdentifier(kafkaRequest *api.KafkaRequest) string {
-	return fmt.Sprintf("%s-%s", kafkaRequest.Owner, strings.ToLower(kafkaRequest.ID))
+	return fmt.Sprintf("%s-%s", truncateString(kafkaRequest.Owner, truncatedNamespaceLen), strings.ToLower(kafkaRequest.ID))
 }
 
 // buildKafkaIdentifier creates a unique identifier for a kafka cluster given
@@ -116,22 +117,45 @@ func buildSyncsetIdentifier(kafkaRequest *api.KafkaRequest) string {
 	return fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
 }
 
-func isValidClusterNameLength(name string) bool {
-	return len(name) < maxClusterNameLength
-}
-
-func isValidClusterName(name string) bool {
-	return clusterNameRE.MatchString(name)
-}
-
-// validate cluster name and replace invalid characters with random char
-func validateClusterNameAndReplaceSpecialChar(name string) string {
-	if !isValidClusterNameLength(name) {
-		name = truncateString(name, maxClusterNameLength)
+// maskProceedingandTrailingDash replaces the first and final character of a string with a subdomain safe
+// value if is a dash.
+func maskProceedingandTrailingDash(name string) string {
+	if strings.HasSuffix(name, "-") {
+		name = name[:len(name)-1] + appendChar
 	}
 
-	if !isValidClusterName(name) {
-		name = clusterInvalidCharRE.ReplaceAllString(name, replacementForSpecialChar)
+	if strings.HasPrefix(name, "-") {
+		name = strings.Replace(name, "-", appendChar, 1)
 	}
 	return name
+}
+
+// replaceNamespaceSpecialChar replaces invalid characters with random char in the namespace name
+func replaceNamespaceSpecialChar(name string) (string, error) {
+	replacedName := dns1123ReplacementRE.ReplaceAllString(strings.ToLower(name), replacementForSpecialChar)
+
+	replacedName = maskProceedingandTrailingDash(replacedName)
+
+	// This should never fail based on above replacement of invalid characters.
+	validationErrors := validation.IsDNS1123Label(replacedName)
+	if len(validationErrors) > 0 {
+		return replacedName, fmt.Errorf("Namespace name is invalid: %s. A DNS-1123 label must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name', or '123-abc', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?')", strings.Join(validationErrors[:], ","))
+	}
+
+	return replacedName, nil
+}
+
+// replaceHostSpecialChar replaces invalid characters with random char in the namespace name
+func replaceHostSpecialChar(name string) (string, error) {
+	replacedName := dns1035ReplacementRE.ReplaceAllString(strings.ToLower(name), replacementForSpecialChar)
+
+	replacedName = maskProceedingandTrailingDash(replacedName)
+
+	// This should never fail based on above replacement of invalid characters.
+	validationErrors := validation.IsDNS1035Label(replacedName)
+	if len(validationErrors) > 0 {
+		return replacedName, fmt.Errorf("Host name is not valid: %s. A DNS-1035 label must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character, regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?'", strings.Join(validationErrors[:], ","))
+	}
+
+	return replacedName, nil
 }
