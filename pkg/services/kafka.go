@@ -75,6 +75,11 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 
 	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
+	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
+	if replaceErr != nil {
+		return errors.GeneralError("generated host is not valid: %v", replaceErr)
+	}
+
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	// create the syncset builder
