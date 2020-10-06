@@ -32,7 +32,7 @@ func TestSuccessfulClusterCreate(t *testing.T) {
 		t.Fatalf("Unable to create cluster: %s", err.Error())
 	}
 
-	glog.Infof("Cluster %s created", cluster.ID())
+	glog.V(10).Infof("Cluster %s created", cluster.ID())
 }
 
 func TestClusterCreateInvalidAwsCredentials(t *testing.T) {

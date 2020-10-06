@@ -35,7 +35,7 @@ func NewClusterManager(clusterService services.ClusterService, cloudProvidersSer
 
 // Start initializes the cluster manager to reconcile osd clusters
 func (c *ClusterManager) Start() {
-	glog.Infoln("Starting cluster manager")
+	glog.V(1).Infoln("Starting cluster manager")
 
 	// start reconcile immediately and then on every repeat interval
 	c.reconcile()
@@ -58,7 +58,7 @@ func (c *ClusterManager) reset() {
 }
 
 func (c *ClusterManager) reconcile() {
-	glog.Infoln("reconciling clusters")
+	glog.V(5).Infoln("reconciling clusters")
 
 	// reconcile the status of existing clusters in a non-ready state
 
@@ -70,7 +70,7 @@ func (c *ClusterManager) reconcile() {
 	for _, cloudProvider := range cloudProviders {
 		cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
 			regionName := region.ID()
-			glog.Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
+			glog.V(10).Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
 			return true
 		})
 
@@ -88,7 +88,7 @@ func (c *ClusterManager) reconcile() {
 			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ID, err.Error())
 			continue
 		}
-		glog.Infof("reconciled cluster %s state", reconciledCluster.ID)
+		glog.V(5).Infof("reconciled cluster %s state", reconciledCluster.ID)
 	}
 
 	/*
@@ -114,7 +114,7 @@ func (c *ClusterManager) reconcile() {
 				continue
 			}
 		}
-		glog.Infof("reconciled cluster %s terraforming", provisionedCluster.ID)
+		glog.V(5).Infof("reconciled cluster %s terraforming", provisionedCluster.ID)
 	}
 }
 

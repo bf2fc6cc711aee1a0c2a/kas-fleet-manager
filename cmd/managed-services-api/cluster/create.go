@@ -62,5 +62,5 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
 		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
 	}
-	glog.Infof("%s", indentedCluster.String())
+	glog.V(10).Infof("%s", indentedCluster.String())
 }
