@@ -60,16 +60,16 @@ var (
 // to override these values, do not set them directly e.g. mocks.MockSyncset = ...
 // instead use the Set*Response functions provided by MockConfigurableServerBuilder e.g. SetClusterGetResponse(...)
 var (
-	MockSyncset                           *clustersmgmtv1.Syncset
-	MockIngressList                       *clustersmgmtv1.IngressList
-	MockCloudProvider                     *clustersmgmtv1.CloudProvider
-	MockCloudProviderList                 *clustersmgmtv1.CloudProviderList
-	MockCloudProviderRegion               *clustersmgmtv1.CloudRegion
-	MockCloudProviderRegionList           *clustersmgmtv1.CloudRegionList
-	MockClusterStatus                     *clustersmgmtv1.ClusterStatus
-	MockClusterAddonInstallation          *clustersmgmtv1.AddOnInstallation
-	MockEmptyClusterAddonInstallationList *clustersmgmtv1.AddOnInstallationList
-	MockCluster                           *clustersmgmtv1.Cluster
+	MockSyncset                      *clustersmgmtv1.Syncset
+	MockIngressList                  *clustersmgmtv1.IngressList
+	MockCloudProvider                *clustersmgmtv1.CloudProvider
+	MockCloudProviderList            *clustersmgmtv1.CloudProviderList
+	MockCloudProviderRegion          *clustersmgmtv1.CloudRegion
+	MockCloudProviderRegionList      *clustersmgmtv1.CloudRegionList
+	MockClusterStatus                *clustersmgmtv1.ClusterStatus
+	MockClusterAddonInstallation     *clustersmgmtv1.AddOnInstallation
+	MockClusterAddonInstallationList *clustersmgmtv1.AddOnInstallationList
+	MockCluster                      *clustersmgmtv1.Cluster
 )
 
 // Endpoint is a wrapper around an endpoint and the method used to interact with that endpoint e.g. GET /clusters
@@ -181,7 +181,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointCloudProviderRegionsGet: buildMockRequestHandler(MockCloudProviderRegionList, nil),
 		EndpointCloudProviderRegionGet:  buildMockRequestHandler(MockCloudProviderRegion, nil),
 		EndpointClusterStatusGet:        buildMockRequestHandler(MockClusterStatus, nil),
-		EndpointClusterAddonsGet:        buildMockRequestHandler(MockEmptyClusterAddonInstallationList, nil),
+		EndpointClusterAddonsGet:        buildMockRequestHandler(MockClusterAddonInstallationList, nil),
 		EndpointClusterAddonPost:        buildMockRequestHandler(MockClusterAddonInstallation, nil),
 	}, nil
 }
@@ -427,7 +427,7 @@ func init() {
 		panic(err)
 	}
 
-	MockEmptyClusterAddonInstallationList, err = clustersmgmtv1.NewAddOnInstallationList().Build()
+	MockClusterAddonInstallationList, err = clustersmgmtv1.NewAddOnInstallationList().Items(mockClusterAddonInstallationBuilder).Build()
 	if err != nil {
 		panic(err)
 	}
