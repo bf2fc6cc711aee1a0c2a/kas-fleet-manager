@@ -6,6 +6,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
+	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
@@ -37,26 +38,10 @@ func TestKafkaCreate_Success(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	// setup cluster if one doesn't already exist for the tested region
-	foundCluster, svcErr := h.Env().Services.Cluster.FindCluster(services.FindClusterCriteria{
-		Region:   mocks.MockCluster.Region().Name(),
-		Provider: mocks.MockCluster.CloudProvider().Name(),
-	})
-	if svcErr != nil {
-		t.Fatal(svcErr)
+	clusterID, _ :=  getOsdClusterID(h)
+	if clusterID == "" {
+		panic("No cluster found")
 	}
-	if foundCluster == nil {
-		_, svcErr = h.Env().Services.Cluster.Create(&api.Cluster{
-			CloudProvider: mocks.MockCloudProvider.ID(),
-			ClusterID:     mocks.MockCluster.ID(),
-			ExternalID:    mocks.MockCluster.ExternalID(),
-			Region:        mocks.MockCluster.Region().ID(),
-		})
-		if svcErr != nil {
-			t.Fatal(svcErr)
-		}
-	}
-
 	// setup pre-requisites to performing requests
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
@@ -68,8 +53,17 @@ func TestKafkaCreate_Success(t *testing.T) {
 		Name:          mockKafkaName,
 	}
 
+	var kafka openapi.KafkaRequest
+	var resp *http.Response
+	err := wait.PollImmediate(time.Second*30, time.Minute*120, func() (done bool, err error) {
+			kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
+			if err != nil {
+				return true, err
+			}
+		return resp.StatusCode == http.StatusAccepted, err
+	})
+
 	// kafka successfully registered with database
-	kafka, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -200,4 +194,44 @@ func TestKafkaGet(t *testing.T) {
 	// 404 Not Found
 	kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+}
+
+func getOsdClusterID(h *test.Helper) (string, *ocmErrors.ServiceError) {
+	var clusterID string
+	var status string
+	foundCluster, svcErr := h.Env().Services.Cluster.FindCluster(services.FindClusterCriteria{
+		Region:   mocks.MockCluster.Region().Name(),
+		Provider: mocks.MockCluster.CloudProvider().Name(),
+	})
+	if svcErr != nil {
+		return "", svcErr
+	}
+	if foundCluster == nil {
+		newCluster, svcErr := h.Env().Services.Cluster.Create(&api.Cluster{
+			CloudProvider: mocks.MockCloudProvider.ID(),
+			ClusterID:     mocks.MockCluster.ID(),
+			ExternalID:    mocks.MockCluster.ExternalID(),
+			Region:        mocks.MockCluster.Region().ID(),
+		})
+		if svcErr != nil {
+			return "", svcErr
+		}
+		if newCluster == nil {
+			return "", ocmErrors.GeneralError("Unable to get OSD cluster")
+		}
+		clusterID = newCluster.ID()
+	} else {
+		clusterID = foundCluster.ClusterID
+	}
+	if err := wait.PollImmediate(30*time.Second, 120*time.Minute, func() (bool, error) {
+		foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
+		if err != nil {
+			return true, err
+		}
+		status = foundCluster.Status.String()
+		return status == api.ClusterReady.String(), nil
+	}); err != nil {
+		return "", ocmErrors.GeneralError("Unable to get OSD cluster")
+	}
+	return clusterID, nil
 }
