@@ -13,33 +13,112 @@ For more information on how the service works, see [the implementation documenta
 * [go-bindata (3.1.2+)](https://github.com/go-bindata/go-bindata) - for code generation
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
-## Running the service locally
-An instance of Postgres is required to run this service locally, the following steps will install and setup a postgres locally for you with Docker. 
+## User Account setup
+
+- Setup your account in stage OCM: 
+[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/users/akeating_kafka_service.yaml)
+- Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
+
+## Compile from master branch
 ```
-make db/setup
+# Change current directory to your source code folder (ie: cd <any_your_source_code_folder>)
+$ git clone https://gitlab.cee.redhat.com/service/managed-services-api.git
+$ cd managed-services-api
+$ git checkout master
+$ make binary
+$ ./managed-services-api -h
+```
+## Running the Service locally
+```
+# Clean up and Creating a database 
+$ make db/teardown
+$ make db/setup
+# Creating tables
+$ ./managed-services-api migrate
+# Verify tables and records are created 
+# Login to the database
+$ make db/login
+# List all the tables
+serviceapitests# \dt
+                   List of relations
+ Schema |      Name      | Type  |        Owner         
+--------+----------------+-------+----------------------
+ public | clusters       | table | managed_services_api
+ public | kafka_requests | table | managed_services_api
+ public | migrations     | table | managed_services_api
+
+# Setup AWS credentials (Optional: Only required if you wish to create OSD clusters via the managed service api)
+$ make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
+
+# Generate a temporary ocm token and set it in the secrets/ocm-service.token file
+# Note: This will need to be re-generated as this temporary token will expire within a few minutes.
+$ make ocm/token/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
+
+# Running the service locally
+$ ./managed-services-api serve  (default: http://localhost:8000)
+```
+## Using the Service
+#### Creating an OSD Cluster
+```
+# Create a new cluster (OSD)
+$ ./managed-services-api cluster create
+
+# Verify cluster record is created 
+# Login to the database
+$ make db/login
+# Ensure the cluster exists in clusters table and monitor the status. It should change to 'ready' after provisioned.
+serviceapitests# select * from clusters;
+
+# Alternatively, verify from ocm-cli
+$ ocm login --url=https://api.stage.openshift.com/ --token=<OCM_OFFLINE_TOKEN>
+# verify the cluster is in OCM
+$ ocm cluster list
+
+# Retrieve the OSD cluster login credentials
+$ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
+
+# Login to the OSD cluster with the credentials you retrieved above
+# Verify the OSD cluster was created successfully and have strimzi-operator installed in namespace 'redhat-managed-kafka-operator'
+```
+#### Creating a Kafka Cluster
+```
+# Submit a new Kafka cluster creation request
+$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas?async=true -d '{ "region": "eu-west-1", "cloud_provider": "aws",  "name": "serviceapi"}'
+
+# Login to the database
+$ make db/login
+# Ensure the bootstrap_url column exists and is populated
+serviceapitests# select * from kafka_requests;
+
+# Login to the OSD cluster with the credentials you retrieved earlier
+# Verify the Kafka cluster was created successfully in the generated namespace with 4 routes (bootstrap + 3 broker routes) which is the same as the bootstrap server host
+
+# List a kafka request
+$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/<kafka_request_id> | jq
+
+# List all kafka request
+$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas | jq
+
+# Delete a kafka request
+$ curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/<kafka_request_id>
 ```
 
-To log in to the database: 
+#### Clean up
 ```
-make db/login
+# Delete the OSD Cluster from the OCM Console manually
+# Purge the database
+$ make db/teardown
 ```
+## Running Swagger UI
+```
+# Start Swagger UI container
+$ make run/docs
 
-Set up the AWS credential files (only needed if creating new OSD clusters):
-```
-make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
-```
+# Launch Swagger UI and Verify from a browser: http:localhost
 
-Set up the `ocm-service.token` file in the `secrets` directory to point to your temporary ocm token.
-ocm-offline-token can be retrieved from https://qaprodauth.cloud.redhat.com/openshift/token
+# Remove Swagger UI conainer
+$ make run/docs/teardown
 ```
-make ocm/token/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
-```
-
-To run the service: 
-```
-make run 
-```
-
 ## Environments
 
 The service can be run in a number of different environments. Environments are essentially bespoke
