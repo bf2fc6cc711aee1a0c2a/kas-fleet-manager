@@ -1,15 +1,18 @@
 package integration
 
 import (
-	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	api "gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
+
 	"testing"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func TestSuccessfulClusterCreate(t *testing.T) {
@@ -21,17 +24,26 @@ func TestSuccessfulClusterCreate(t *testing.T) {
 	defer teardown()
 
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS)
-	cluster, err := clusterService.Create(&api.Cluster{
+	newCluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Region:        mocks.MockCluster.Region().ID(),
 	})
-	Expect(err).NotTo(HaveOccurred(), "Error occured when creating OSD cluster:  %v", err)
-	Expect(cluster.ID()).NotTo(BeEmpty(), "Expected ID assigned on cluster creation")
-	if err != nil {
-		t.Fatalf("Unable to create cluster: %s", err.Error())
-	}
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when creating OSD cluster:  %v", err)
+	Expect(newCluster.ID()).NotTo(BeEmpty(), "Expected ID assigned on cluster creation")
 
-	glog.V(10).Infof("Cluster %s created", cluster.ID())
+	var status string
+
+	if err := wait.PollImmediate(30*time.Second, 120*time.Minute, func() (bool, error) {
+		foundCluster, err := clusterService.FindClusterByID(newCluster.ID())
+		if err != nil {
+			return true, err
+		}
+		status = foundCluster.Status.String()
+		return status == api.ClusterReady.String(), nil
+	}); err != nil {
+		t.Fatalf("Timed our waiting for cluster to become ready")
+	}
+	Expect(status).To(Equal(api.ClusterReady.String()))
 }
 
 func TestClusterCreateInvalidAwsCredentials(t *testing.T) {

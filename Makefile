@@ -153,7 +153,7 @@ test-prepare: install
 #   make test-integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test-integration TESTFLAGS="-short"                skips long-run tests
 test-integration: test-prepare
-	gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 1h -count=1 $(TESTFLAGS) \
+	gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 3h -count=1 $(TESTFLAGS) \
 			./test/integration
 .PHONY: test-integration
 
