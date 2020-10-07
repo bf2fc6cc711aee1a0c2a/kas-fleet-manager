@@ -9,11 +9,6 @@ import (
 	"sync"
 )
 
-var (
-	lockSyncsetServiceMockCreate sync.RWMutex
-	lockSyncsetServiceMockDelete sync.RWMutex
-)
-
 // Ensure, that SyncsetServiceMock does implement SyncsetService.
 // If this is not the case, regenerate this file with moq.
 var _ SyncsetService = &SyncsetServiceMock{}
@@ -62,6 +57,8 @@ type SyncsetServiceMock struct {
 			ClusterId string
 		}
 	}
+	lockCreate sync.RWMutex
+	lockDelete sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -78,9 +75,9 @@ func (mock *SyncsetServiceMock) Create(syncsetBuilder *v1.SyncsetBuilder, syncse
 		SyncsetId:      syncsetId,
 		ClusterId:      clusterId,
 	}
-	lockSyncsetServiceMockCreate.Lock()
+	mock.lockCreate.Lock()
 	mock.calls.Create = append(mock.calls.Create, callInfo)
-	lockSyncsetServiceMockCreate.Unlock()
+	mock.lockCreate.Unlock()
 	return mock.CreateFunc(syncsetBuilder, syncsetId, clusterId)
 }
 
@@ -97,9 +94,9 @@ func (mock *SyncsetServiceMock) CreateCalls() []struct {
 		SyncsetId      string
 		ClusterId      string
 	}
-	lockSyncsetServiceMockCreate.RLock()
+	mock.lockCreate.RLock()
 	calls = mock.calls.Create
-	lockSyncsetServiceMockCreate.RUnlock()
+	mock.lockCreate.RUnlock()
 	return calls
 }
 
@@ -115,9 +112,9 @@ func (mock *SyncsetServiceMock) Delete(syncsetId string, clusterId string) *erro
 		SyncsetId: syncsetId,
 		ClusterId: clusterId,
 	}
-	lockSyncsetServiceMockDelete.Lock()
+	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
-	lockSyncsetServiceMockDelete.Unlock()
+	mock.lockDelete.Unlock()
 	return mock.DeleteFunc(syncsetId, clusterId)
 }
 
@@ -132,8 +129,8 @@ func (mock *SyncsetServiceMock) DeleteCalls() []struct {
 		SyncsetId string
 		ClusterId string
 	}
-	lockSyncsetServiceMockDelete.RLock()
+	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
-	lockSyncsetServiceMockDelete.RUnlock()
+	mock.lockDelete.RUnlock()
 	return calls
 }

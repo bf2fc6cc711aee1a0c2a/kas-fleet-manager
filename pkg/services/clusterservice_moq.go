@@ -10,14 +10,6 @@ import (
 	"sync"
 )
 
-var (
-	lockClusterServiceMockCreate        sync.RWMutex
-	lockClusterServiceMockFindCluster   sync.RWMutex
-	lockClusterServiceMockGetClusterDNS sync.RWMutex
-	lockClusterServiceMockListByStatus  sync.RWMutex
-	lockClusterServiceMockUpdateStatus  sync.RWMutex
-)
-
 // Ensure, that ClusterServiceMock does implement ClusterService.
 // If this is not the case, regenerate this file with moq.
 var _ ClusterService = &ClusterServiceMock{}
@@ -33,6 +25,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //             },
 //             FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the FindCluster method")
+//             },
+//             FindClusterByIDFunc: func(clusterID string) (api.Cluster, *errors.ServiceError) {
+// 	               panic("mock out the FindClusterByID method")
 //             },
 //             GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
 // 	               panic("mock out the GetClusterDNS method")
@@ -56,6 +51,9 @@ type ClusterServiceMock struct {
 	// FindClusterFunc mocks the FindCluster method.
 	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError)
 
+	// FindClusterByIDFunc mocks the FindClusterByID method.
+	FindClusterByIDFunc func(clusterID string) (api.Cluster, *errors.ServiceError)
+
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
 	GetClusterDNSFunc func(clusterID string) (string, *errors.ServiceError)
 
@@ -77,6 +75,11 @@ type ClusterServiceMock struct {
 			// Criteria is the criteria argument value.
 			Criteria FindClusterCriteria
 		}
+		// FindClusterByID holds details about calls to the FindClusterByID method.
+		FindClusterByID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// GetClusterDNS holds details about calls to the GetClusterDNS method.
 		GetClusterDNS []struct {
 			// ClusterID is the clusterID argument value.
@@ -95,6 +98,12 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
+	lockCreate          sync.RWMutex
+	lockFindCluster     sync.RWMutex
+	lockFindClusterByID sync.RWMutex
+	lockGetClusterDNS   sync.RWMutex
+	lockListByStatus    sync.RWMutex
+	lockUpdateStatus    sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -107,9 +116,9 @@ func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*v1.Cluster, *erro
 	}{
 		Cluster: cluster,
 	}
-	lockClusterServiceMockCreate.Lock()
+	mock.lockCreate.Lock()
 	mock.calls.Create = append(mock.calls.Create, callInfo)
-	lockClusterServiceMockCreate.Unlock()
+	mock.lockCreate.Unlock()
 	return mock.CreateFunc(cluster)
 }
 
@@ -122,9 +131,9 @@ func (mock *ClusterServiceMock) CreateCalls() []struct {
 	var calls []struct {
 		Cluster *api.Cluster
 	}
-	lockClusterServiceMockCreate.RLock()
+	mock.lockCreate.RLock()
 	calls = mock.calls.Create
-	lockClusterServiceMockCreate.RUnlock()
+	mock.lockCreate.RUnlock()
 	return calls
 }
 
@@ -138,9 +147,9 @@ func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.
 	}{
 		Criteria: criteria,
 	}
-	lockClusterServiceMockFindCluster.Lock()
+	mock.lockFindCluster.Lock()
 	mock.calls.FindCluster = append(mock.calls.FindCluster, callInfo)
-	lockClusterServiceMockFindCluster.Unlock()
+	mock.lockFindCluster.Unlock()
 	return mock.FindClusterFunc(criteria)
 }
 
@@ -153,9 +162,40 @@ func (mock *ClusterServiceMock) FindClusterCalls() []struct {
 	var calls []struct {
 		Criteria FindClusterCriteria
 	}
-	lockClusterServiceMockFindCluster.RLock()
+	mock.lockFindCluster.RLock()
 	calls = mock.calls.FindCluster
-	lockClusterServiceMockFindCluster.RUnlock()
+	mock.lockFindCluster.RUnlock()
+	return calls
+}
+
+// FindClusterByID calls FindClusterByIDFunc.
+func (mock *ClusterServiceMock) FindClusterByID(clusterID string) (api.Cluster, *errors.ServiceError) {
+	if mock.FindClusterByIDFunc == nil {
+		panic("ClusterServiceMock.FindClusterByIDFunc: method is nil but ClusterService.FindClusterByID was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockFindClusterByID.Lock()
+	mock.calls.FindClusterByID = append(mock.calls.FindClusterByID, callInfo)
+	mock.lockFindClusterByID.Unlock()
+	return mock.FindClusterByIDFunc(clusterID)
+}
+
+// FindClusterByIDCalls gets all the calls that were made to FindClusterByID.
+// Check the length with:
+//     len(mockedClusterService.FindClusterByIDCalls())
+func (mock *ClusterServiceMock) FindClusterByIDCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockFindClusterByID.RLock()
+	calls = mock.calls.FindClusterByID
+	mock.lockFindClusterByID.RUnlock()
 	return calls
 }
 
@@ -169,9 +209,9 @@ func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *errors
 	}{
 		ClusterID: clusterID,
 	}
-	lockClusterServiceMockGetClusterDNS.Lock()
+	mock.lockGetClusterDNS.Lock()
 	mock.calls.GetClusterDNS = append(mock.calls.GetClusterDNS, callInfo)
-	lockClusterServiceMockGetClusterDNS.Unlock()
+	mock.lockGetClusterDNS.Unlock()
 	return mock.GetClusterDNSFunc(clusterID)
 }
 
@@ -184,9 +224,9 @@ func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	lockClusterServiceMockGetClusterDNS.RLock()
+	mock.lockGetClusterDNS.RLock()
 	calls = mock.calls.GetClusterDNS
-	lockClusterServiceMockGetClusterDNS.RUnlock()
+	mock.lockGetClusterDNS.RUnlock()
 	return calls
 }
 
@@ -200,9 +240,9 @@ func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Clu
 	}{
 		State: state,
 	}
-	lockClusterServiceMockListByStatus.Lock()
+	mock.lockListByStatus.Lock()
 	mock.calls.ListByStatus = append(mock.calls.ListByStatus, callInfo)
-	lockClusterServiceMockListByStatus.Unlock()
+	mock.lockListByStatus.Unlock()
 	return mock.ListByStatusFunc(state)
 }
 
@@ -215,9 +255,9 @@ func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 	var calls []struct {
 		State api.ClusterStatus
 	}
-	lockClusterServiceMockListByStatus.RLock()
+	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
-	lockClusterServiceMockListByStatus.RUnlock()
+	mock.lockListByStatus.RUnlock()
 	return calls
 }
 
@@ -233,9 +273,9 @@ func (mock *ClusterServiceMock) UpdateStatus(id string, status api.ClusterStatus
 		ID:     id,
 		Status: status,
 	}
-	lockClusterServiceMockUpdateStatus.Lock()
+	mock.lockUpdateStatus.Lock()
 	mock.calls.UpdateStatus = append(mock.calls.UpdateStatus, callInfo)
-	lockClusterServiceMockUpdateStatus.Unlock()
+	mock.lockUpdateStatus.Unlock()
 	return mock.UpdateStatusFunc(id, status)
 }
 
@@ -250,8 +290,8 @@ func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 		ID     string
 		Status api.ClusterStatus
 	}
-	lockClusterServiceMockUpdateStatus.RLock()
+	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
-	lockClusterServiceMockUpdateStatus.RUnlock()
+	mock.lockUpdateStatus.RUnlock()
 	return calls
 }

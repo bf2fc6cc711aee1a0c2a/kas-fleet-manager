@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+
 	"github.com/jinzhu/gorm"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
@@ -22,6 +23,7 @@ type ClusterService interface {
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *ocmErrors.ServiceError)
 	UpdateStatus(id string, status api.ClusterStatus) error
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *ocmErrors.ServiceError)
+	FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError)
 }
 
 type clusterService struct {
@@ -137,4 +139,26 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 	}
 
 	return &cluster, nil
+}
+
+func (c clusterService) FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError) {
+	if clusterID == "" {
+		return api.Cluster{}, ocmErrors.Validation("clusterID is undefined")
+	}
+	dbConn := c.connectionFactory.New()
+
+	var cluster api.Cluster
+
+	clusterDetails := &api.Cluster{
+		ClusterID: clusterID,
+	}
+
+	if err := dbConn.Where(clusterDetails).First(&cluster).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return api.Cluster{}, nil
+		}
+		return api.Cluster{}, ocmErrors.GeneralError("failed to find cluster with id: %s %s", clusterID, err.Error())
+	}
+
+	return cluster, nil
 }
