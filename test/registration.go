@@ -12,7 +12,7 @@ import (
 
 // Register a test
 // This should be run before every integration test
-func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *openapi.APIClient) {
+func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *openapi.APIClient, func()) {
 	// Register the test with gomega
 	gm.RegisterTestingT(t)
 	// Create a new helper
@@ -23,7 +23,22 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 	helper.StartServer()
 	// Reset the database to a seeded blank state
 	helper.ResetDB()
+	// Start workers
+	helper.StartClusterWorker()
+	helper.StartKafkaWorker()
 	// Create an api client
 	client := helper.NewApiClient()
-	return helper, client
+	return helper, client, buildTeardownHelperFn(helper)
+}
+
+func buildTeardownHelperFn(h *Helper) func() {
+	return func() {
+		h.StopServer()
+		h.StopKafkaWorker()
+		h.StopClusterWorker()
+	}
+}
+
+func RegisterTestingT(t *testing.T) {
+	gm.RegisterTestingT(t)
 }
