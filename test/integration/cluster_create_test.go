@@ -1,8 +1,6 @@
 package integration
 
 import (
-	"testing"
-
 	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -11,6 +9,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
+	"testing"
 )
 
 func TestSuccessfulClusterCreate(t *testing.T) {
@@ -18,13 +17,13 @@ func TestSuccessfulClusterCreate(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _ := test.RegisterIntegration(t, ocmServer)
-	defer h.StopServer()
+	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
 
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS)
 	cluster, err := clusterService.Create(&api.Cluster{
-		CloudProvider: "aws",
-		Region:        "eu-west-1",
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Region:        mocks.MockCluster.Region().ID(),
 	})
 	Expect(err).NotTo(HaveOccurred(), "Error occured when creating OSD cluster:  %v", err)
 	Expect(cluster.ID()).NotTo(BeEmpty(), "Expected ID assigned on cluster creation")
@@ -41,13 +40,17 @@ func TestClusterCreateInvalidAwsCredentials(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _ := test.RegisterIntegration(t, ocmServer)
-	defer h.StopServer()
-
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS)
+	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
 
 	// setting AWS.AccountID to invalid value
+	currentAWSAccountID := h.Env().Config.AWS.AccountID
+	defer func(helper *test.Helper) {
+		helper.Env().Config.AWS.AccountID = currentAWSAccountID
+	}(h)
 	h.Env().Config.AWS.AccountID = "123456789012"
+
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS)
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",
@@ -63,8 +66,8 @@ func TestClusterCreateInvalidToken(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _ := test.RegisterIntegration(t, ocmServer)
-	defer h.StopServer()
+	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
 
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS)
 	// temporarily setting token to invalid value

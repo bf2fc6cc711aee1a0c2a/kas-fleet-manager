@@ -16,40 +16,60 @@ import (
 )
 
 const (
-	// MockConfigurableServerClusterID default mock cluster id used in the mock ocm server
-	MockConfigurableServerClusterID = "2aad9fc1-c40e-471f-8d57-fdaecc7d3686"
-
-	// MockConfigurableServerSyncsetID default mock syncset id used in the mock ocm server
-	MockConfigurableServerSyncsetID = "ext-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9"
-
-	// MockConfigurableServerIngressID default mock ingress id used in the mock ocm server
-	MockConfigurableServerIngressID = "s1h5"
-
-	// MockConfigurableServerIngressDNS default mock ingress dns used in the mock ocm server
-	MockConfigurableServerIngressDNS = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
-
-	// MockConfigurableServerIngressHref default mock ingress HREF used in the mock ocm server
-	MockConfigurableServerIngressHref = "/api/clusters_mgmt/v1/clusters/000/ingresses/i8y1"
-
-	// MockConfigurableServerIngressListening default mock ingress listening used in the mock ocm server
-	MockConfigurableServerIngressListening = "external"
-
 	// EndpointPathClusters ocm clusters management service clusters endpoint
 	EndpointPathClusters = "/api/clusters_mgmt/v1/clusters"
 	// EndpointPathClusters ocm clusters management service clusters endpoint
-	EndpointPathCluster = "/api/clusters_mgmt/v1/clusters/000"
+	EndpointPathCluster = "/api/clusters_mgmt/v1/clusters/{id}"
 	// EndpointPathSyncsets ocm clusters management service syncset endpoint
-	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/000/external_configuration/syncsets"
+	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets"
 	// EndpointPathIngresses ocm cluster management ingress endpoint
-	EndpointPathIngresses = "/api/clusters_mgmt/v1/clusters/000/ingresses"
+	EndpointPathIngresses = "/api/clusters_mgmt/v1/clusters/{id}/ingresses"
+	// EndpointPathCloudProviders ocm cluster management cloud providers endpoint
+	EndpointPathCloudProviders = "/api/clusters_mgmt/v1/cloud_providers"
+	// EndpointPathCloudProvider ocm cluster management cloud provider endpoint
+	EndpointPathCloudProvider = "/api/clusters_mgmt/v1/cloud_providers/{id}"
+	// EndpointPathCloudProviderRegions ocm cluster management cloud provider regions endpoint
+	EndpointPathCloudProviderRegions = "/api/clusters_mgmt/v1/cloud_providers/{id}/regions"
+	// EndpointPathCloudProviderRegion ocm cluster management cloud provider region endpoint
+	EndpointPathCloudProviderRegion = "/api/clusters_mgmt/v1/cloud_providers/{providerID}/regions/{regionID}"
+	// EndpointPathClusterStatus ocm cluster management cluster status endpoint
+	EndpointPathClusterStatus = "/api/clusters_mgmt/v1/clusters/{id}/status"
+	// EndpointPathClusterAddons ocm cluster management cluster addons endpoint
+	EndpointPathClusterAddons = "/api/clusters_mgmt/v1/clusters/{id}/addons"
 )
 
+// variables for endpoints
 var (
-	EndpointClusterGet         = Endpoint{EndpointPathCluster, http.MethodGet}
-	EndpointClustersGet        = Endpoint{EndpointPathClusters, http.MethodGet}
-	EndpointClustersPost       = Endpoint{EndpointPathClusters, http.MethodPost}
-	EndpointClusterSyncsetPost = Endpoint{EndpointPathSyncsets, http.MethodPost}
-	EndpointClusterIngressGet  = Endpoint{EndpointPathIngresses, http.MethodGet}
+	EndpointClusterGet              = Endpoint{EndpointPathCluster, http.MethodGet}
+	EndpointClustersGet             = Endpoint{EndpointPathClusters, http.MethodGet}
+	EndpointClustersPost            = Endpoint{EndpointPathClusters, http.MethodPost}
+	EndpointClusterSyncsetPost      = Endpoint{EndpointPathSyncsets, http.MethodPost}
+	EndpointClusterIngressGet       = Endpoint{EndpointPathIngresses, http.MethodGet}
+	EndpointCloudProvidersGet       = Endpoint{EndpointPathCloudProviders, http.MethodGet}
+	EndpointCloudProviderGet        = Endpoint{EndpointPathCloudProvider, http.MethodGet}
+	EndpointCloudProviderRegionsGet = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
+	EndpointCloudProviderRegionGet  = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
+	EndpointClusterStatusGet        = Endpoint{EndpointPathClusterStatus, http.MethodGet}
+	EndpointClusterAddonsGet        = Endpoint{EndpointPathClusterAddons, http.MethodGet}
+	EndpointClusterAddonPost        = Endpoint{EndpointPathClusterAddons, http.MethodPost}
+)
+
+// variables for mocked ocm types
+//
+// these are the default types that will be returned by the emulated ocm api
+// to override these values, do not set them directly e.g. mocks.MockSyncset = ...
+// instead use the Set*Response functions provided by MockConfigurableServerBuilder e.g. SetClusterGetResponse(...)
+var (
+	MockSyncset                           *clustersmgmtv1.Syncset
+	MockIngressList                       *clustersmgmtv1.IngressList
+	MockCloudProvider                     *clustersmgmtv1.CloudProvider
+	MockCloudProviderList                 *clustersmgmtv1.CloudProviderList
+	MockCloudProviderRegion               *clustersmgmtv1.CloudRegion
+	MockCloudProviderRegionList           *clustersmgmtv1.CloudRegionList
+	MockClusterStatus                     *clustersmgmtv1.ClusterStatus
+	MockClusterAddonInstallation          *clustersmgmtv1.AddOnInstallation
+	MockEmptyClusterAddonInstallationList *clustersmgmtv1.AddOnInstallationList
+	MockCluster                           *clustersmgmtv1.Cluster
 )
 
 // Endpoint is a wrapper around an endpoint and the method used to interact with that endpoint e.g. GET /clusters
@@ -104,6 +124,36 @@ func (b *MockConfigurableServerBuilder) SetClusterIngressGetResponse(ingress *cl
 	b.handlerRegister[EndpointClusterIngressGet] = buildMockRequestHandler(ingress, err)
 }
 
+// SetCloudProvidersGetResponse set a mock response provider list or error for GET /api/clusters_mgmt/v1/cloud_providers
+func (b *MockConfigurableServerBuilder) SetCloudProvidersGetResponse(providers *clustersmgmtv1.CloudProviderList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointCloudProvidersGet] = buildMockRequestHandler(providers, err)
+}
+
+// SetCloudRegionsGetResponse set a mock response region list or error for GET /api/clusters_mgmt/v1/cloud_providers/{id}/regions
+func (b *MockConfigurableServerBuilder) SetCloudRegionsGetResponse(regions *clustersmgmtv1.CloudRegionList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointCloudProviderRegionsGet] = buildMockRequestHandler(regions, err)
+}
+
+// SetCloudRegionGetResponse set a mock response region or error for GET /api/clusters_mgmt/v1/cloud_providers/{id}/regions/{regionId}
+func (b *MockConfigurableServerBuilder) SetCloudRegionGetResponse(region *clustersmgmtv1.CloudRegion, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointCloudProviderRegionGet] = buildMockRequestHandler(region, err)
+}
+
+// SetClusterStatusGetResponse set a mock response cluster status or error for GET /api/clusters_mgmt/v1/clusters/{id}/status
+func (b *MockConfigurableServerBuilder) SetClusterStatusGetResponse(status *clustersmgmtv1.ClusterStatus, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterStatusGet] = buildMockRequestHandler(status, err)
+}
+
+// SetClusterAddonsGetResponse set a mock response addon list or error for GET /api/clusters_mgmt/v1/clusters/{id}/addons
+func (b *MockConfigurableServerBuilder) SetClusterAddonsGetResponse(addons *clustersmgmtv1.AddOnInstallationList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterAddonsGet] = buildMockRequestHandler(addons, err)
+}
+
+// SetClusterAddonGetResponse set a mock response addon or error for POST /api/clusters_mgmt/v1/clusters/{id}/addons
+func (b *MockConfigurableServerBuilder) SetClusterAddonPostResponse(addon *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterAddonPost] = buildMockRequestHandler(addon, err)
+}
+
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
 func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	router := mux.NewRouter()
@@ -118,27 +168,21 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 
 // getDefaultHandlerRegister returns a set of default endpoints and handlers used in the mock ocm api server
 func getDefaultHandlerRegister() (HandlerRegister, error) {
-	mockCluster, err := clustersmgmtv1.NewCluster().ID(MockConfigurableServerClusterID).Build()
-	if err != nil {
-		return nil, err
-	}
-	mockSyncset, err := clustersmgmtv1.NewSyncset().ID(MockConfigurableServerSyncsetID).Build()
-	if err != nil {
-		return nil, err
-	}
-	mockIngressList, err := clustersmgmtv1.NewIngressList().Items(
-		clustersmgmtv1.NewIngress().ID(MockConfigurableServerIngressID).DNSName(MockConfigurableServerIngressDNS).Default(true).Listening(MockConfigurableServerIngressListening).HREF(MockConfigurableServerIngressHref)).Build()
-	if err != nil {
-		return nil, err
-	}
 	// define a list of default endpoints and handlers in the mock ocm api server, when new endpoints are used in the
 	// managed-services-api service, a default ocm response should also be added here
 	return HandlerRegister{
-		EndpointClusterGet:         buildMockRequestHandler(mockCluster, nil),
-		EndpointClustersGet:        buildMockRequestHandler(mockCluster, nil),
-		EndpointClustersPost:       buildMockRequestHandler(mockCluster, nil),
-		EndpointClusterSyncsetPost: buildMockRequestHandler(mockSyncset, nil),
-		EndpointClusterIngressGet:  buildMockRequestHandler(mockIngressList, nil),
+		EndpointClusterGet:              buildMockRequestHandler(MockCluster, nil),
+		EndpointClustersGet:             buildMockRequestHandler(MockCluster, nil),
+		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterSyncsetPost:      buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterIngressGet:       buildMockRequestHandler(MockIngressList, nil),
+		EndpointCloudProvidersGet:       buildMockRequestHandler(MockCloudProviderList, nil),
+		EndpointCloudProviderGet:        buildMockRequestHandler(MockCloudProvider, nil),
+		EndpointCloudProviderRegionsGet: buildMockRequestHandler(MockCloudProviderRegionList, nil),
+		EndpointCloudProviderRegionGet:  buildMockRequestHandler(MockCloudProviderRegion, nil),
+		EndpointClusterStatusGet:        buildMockRequestHandler(MockClusterStatus, nil),
+		EndpointClusterAddonsGet:        buildMockRequestHandler(MockEmptyClusterAddonInstallationList, nil),
+		EndpointClusterAddonPost:        buildMockRequestHandler(MockClusterAddonInstallation, nil),
 	}, nil
 }
 
@@ -167,10 +211,16 @@ func buildMockRequestHandler(successType interface{}, serviceErr *ocmErrors.Serv
 // marshalOCMType marshals known ocm types to a provided io.Writer using the ocm sdk marshallers
 func marshalOCMType(t interface{}, w io.Writer) error {
 	switch t.(type) {
+	// handle cluster types
 	case *clustersmgmtv1.Cluster:
 		return clustersmgmtv1.MarshalCluster(t.(*clustersmgmtv1.Cluster), w)
+	// handle cluster status types
+	case *clustersmgmtv1.ClusterStatus:
+		return clustersmgmtv1.MarshalClusterStatus(t.(*clustersmgmtv1.ClusterStatus), w)
+	// handle syncset types
 	case *clustersmgmtv1.Syncset:
 		return clustersmgmtv1.MarshalSyncset(t.(*clustersmgmtv1.Syncset), w)
+	// handle ingress types
 	case *clustersmgmtv1.Ingress:
 		return clustersmgmtv1.MarshalIngress(t.(*clustersmgmtv1.Ingress), w)
 	case []*clustersmgmtv1.Ingress:
@@ -183,8 +233,43 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 			return err
 		}
 		return json.NewEncoder(w).Encode(ocmList)
+	// handle cloud provider types
+	case *clustersmgmtv1.CloudProvider:
+		return clustersmgmtv1.MarshalCloudProvider(t.(*clustersmgmtv1.CloudProvider), w)
+	case []*clustersmgmtv1.CloudProvider:
+		return clustersmgmtv1.MarshalCloudProviderList(t.([]*clustersmgmtv1.CloudProvider), w)
+	case *clustersmgmtv1.CloudProviderList:
+		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.CloudProviderList).Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(ocmList)
+	// handle cloud region types
+	case *clustersmgmtv1.CloudRegion:
+		return clustersmgmtv1.MarshalCloudRegion(t.(*clustersmgmtv1.CloudRegion), w)
+	case []*clustersmgmtv1.CloudRegion:
+		return clustersmgmtv1.MarshalCloudRegionList(t.([]*clustersmgmtv1.CloudRegion), w)
+	case *clustersmgmtv1.CloudRegionList:
+		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.CloudRegionList).Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(ocmList)
+	// handle cluster addon installations
+	case *clustersmgmtv1.AddOnInstallation:
+		return clustersmgmtv1.MarshalAddOnInstallation(t.(*clustersmgmtv1.AddOnInstallation), w)
+	case []*clustersmgmtv1.AddOnInstallation:
+		return clustersmgmtv1.MarshalAddOnInstallationList(t.([]*clustersmgmtv1.AddOnInstallation), w)
+	case *clustersmgmtv1.AddOnInstallationList:
+		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.AddOnInstallationList).Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(ocmList)
+	// handle the generic ocm list type
 	case *ocmList:
 		return json.NewEncoder(w).Encode(t)
+	// handle ocm error type
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError(""))
 	}
@@ -223,4 +308,140 @@ func (l *ocmList) WithItems(items interface{}) (*ocmList, error) {
 	}
 	l.Items = b.Bytes()
 	return l, nil
+}
+
+// init the shared mock types, panic if we fail, this should never fail
+func init() {
+	// mockClusterID default mock cluster id used in the mock ocm server
+	mockClusterID := "2aad9fc1-c40e-471f-8d57-fdaecc7d3686"
+	// mockCloudProviderID default mock provider ID
+	mockCloudProviderID := "aws"
+	// mockClusterExternalID default mock cluster external ID
+	mockClusterExternalID := "2aad9fc1-c40e-471f-8d57-fdaecc7d3686"
+	// mockClusterState default mock cluster state
+	mockClusterState := clustersmgmtv1.ClusterStateReady
+	// mockCloudProviderDisplayName default mock provider display name
+	mockCloudProviderDisplayName := "AWS"
+	// mockCloudRegionID default mock cluster region
+	mockCloudRegionID := "eu-west-1"
+	// mockCloudRegionDisplayName default mock cloud region display name
+	mockCloudRegionDisplayName := "EU, Ireland"
+	// mockSyncsetID default mock syncset id used in the mock ocm server
+	mockSyncsetID := "ext-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9"
+	// mockIngressID default mock ingress id used in the mock ocm server
+	mockIngressID := "s1h5"
+	// mockIngressDNS default mock ingress dns used in the mock ocm server
+	mockIngressDNS := "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
+	// mockIngressHref default mock ingress HREF used in the mock ocm server
+	mockIngressHref := "/api/clusters_mgmt/v1/clusters/000/ingresses/i8y1"
+	// mockIngressListening default mock ingress listening used in the mock ocm server
+	mockIngressListening := clustersmgmtv1.ListeningMethodExternal
+	// mockClusterAddonID default mock cluster addon ID
+	mockClusterAddonID := "managed-kafka"
+	// mockClusterAddonState default mock cluster addon state
+	mockClusterAddonState := clustersmgmtv1.AddOnInstallationStateReady
+	// mockClusterAddonDescription default mock cluster addon description
+	mockClusterAddonDescription := "InstallWaiting"
+
+	// mock syncsets
+	var err error
+	MockSyncset, err = clustersmgmtv1.NewSyncset().ID(mockSyncsetID).Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// mock ingresses
+
+	MockIngressList, err = clustersmgmtv1.NewIngressList().Items(
+		clustersmgmtv1.NewIngress().ID(mockIngressID).DNSName(mockIngressDNS).Default(true).Listening(mockIngressListening).HREF(mockIngressHref)).Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// mock cloud providers
+
+	mockCloudProviderBuilder := clustersmgmtv1.NewCloudProvider().
+		ID(mockCloudProviderID).
+		Name(mockCloudProviderID).
+		DisplayName(mockCloudProviderDisplayName).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/cloud_providers/%s", mockCloudProviderID))
+
+	MockCloudProvider, err = mockCloudProviderBuilder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	MockCloudProviderList, err = clustersmgmtv1.NewCloudProviderList().
+		Items(mockCloudProviderBuilder).
+		Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// mock cloud provider regions/cloud regions
+
+	mockCloudProviderRegionBuilder := clustersmgmtv1.NewCloudRegion().
+		ID(mockCloudRegionID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/cloud_providers/%s/regions/%s", mockCloudProviderID, mockCloudRegionID)).
+		DisplayName(mockCloudRegionDisplayName).
+		CloudProvider(mockCloudProviderBuilder).
+		Enabled(true).
+		SupportsMultiAZ(true)
+
+	MockCloudProviderRegion, err = mockCloudProviderRegionBuilder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	MockCloudProviderRegionList, err = clustersmgmtv1.NewCloudRegionList().Items(mockCloudProviderRegionBuilder).Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// mock cluster status
+
+	MockClusterStatus, err = clustersmgmtv1.NewClusterStatus().
+		ID(mockClusterID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/status", mockClusterID)).
+		State(mockClusterState).
+		Description("").
+		Build()
+
+	// mock cluster addons
+
+	mockClusterAddonBuilder := clustersmgmtv1.NewAddOn().
+		ID(mockClusterAddonID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/addons/%s", mockClusterAddonID))
+
+	// mock cluster addon installations
+
+	mockClusterAddonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation().
+		ID(mockClusterAddonID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/addons/managed-kafka", mockClusterID)).
+		Addon(mockClusterAddonBuilder).
+		State(mockClusterAddonState).
+		StateDescription(mockClusterAddonDescription)
+
+	MockClusterAddonInstallation, err = mockClusterAddonInstallationBuilder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	MockEmptyClusterAddonInstallationList, err = clustersmgmtv1.NewAddOnInstallationList().Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// mock cluster
+
+	MockCluster, err = clustersmgmtv1.NewCluster().
+		ID(mockClusterID).
+		ExternalID(mockClusterExternalID).
+		State(mockClusterState).
+		CloudProvider(mockCloudProviderBuilder).
+		Region(mockCloudProviderRegionBuilder).
+		Build()
+	if err != nil {
+		panic(err)
+	}
 }
