@@ -270,3 +270,16 @@ glog.V(10).Info("biz")
 * `--v=10`
   * This is local / debug level logging. Useful information for tracing through transactions on a local machine during development.
   * This means that given the verbosity setting and the above code, we would see `foo`, `bar`, and `biz` logged.
+
+
+## Definition of Done
+* All acceptance criteria specified in JIRA are met
+  * Acceptance criteria to include:
+    * Required feature functionality
+    * Required tests - unit, integration, manual testcases (if relevant)
+    * Required documentation
+* CI and all relevant tests are passing
+* Changes have been verified by one additional reviewer against: 
+  * each required environment 
+  * each supported upgrade path
+* MR has been merged
