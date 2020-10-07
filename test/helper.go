@@ -5,6 +5,8 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/workers"
 	"io/ioutil"
 	"log"
 	"net/http/httptest"
@@ -58,6 +60,8 @@ type Helper struct {
 	APIServer         server.Server
 	MetricsServer     server.Server
 	HealthCheckServer server.Server
+	KafkaWorker       *workers.KafkaManager
+	ClusterWorker     *workers.ClusterManager
 	TimeFunc          TimeFunc
 	JWTPrivateKey     *rsa.PrivateKey
 	JWTCA             *rsa.PublicKey
@@ -190,6 +194,43 @@ func (helper *Helper) startHealthCheckServer() {
 	}()
 }
 
+func (helper *Helper) startKafkaWorker() {
+	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient)
+	go func() {
+		glog.V(10).Info("Test Metrics server started")
+		helper.KafkaWorker.Start()
+		glog.V(10).Info("Test Metrics server stopped")
+	}()
+}
+
+func (helper *Helper) stopKafkaWorker() {
+	if helper.KafkaWorker == nil {
+		return
+	}
+	helper.KafkaWorker.Stop()
+}
+
+func (helper *Helper) startClusterWorker() {
+	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+
+	// start cluster worker
+	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders, ocmClient)
+	go func() {
+		glog.V(10).Info("Test Metrics server started")
+		helper.ClusterWorker.Start()
+		glog.V(10).Info("Test Metrics server stopped")
+	}()
+}
+
+func (helper *Helper) stopClusterWorker() {
+	if helper.ClusterWorker == nil {
+		return
+	}
+	helper.ClusterWorker.Stop()
+}
+
 func (helper *Helper) StartServer() {
 	helper.startAPIServer()
 	glog.V(10).Info("Test API server started")
@@ -204,6 +245,24 @@ func (helper *Helper) RestartServer() {
 	helper.stopAPIServer()
 	helper.startAPIServer()
 	glog.V(10).Info("Test API server restarted")
+}
+
+func (helper *Helper) StartKafkaWorker() {
+	helper.stopKafkaWorker()
+	helper.startKafkaWorker()
+}
+
+func (helper *Helper) StopKafkaWorker() {
+	helper.stopKafkaWorker()
+}
+
+func (helper *Helper) StartClusterWorker() {
+	helper.stopClusterWorker()
+	helper.startClusterWorker()
+}
+
+func (helper *Helper) StopClusterWorker() {
+	helper.stopClusterWorker()
 }
 
 func (helper *Helper) RestartMetricsServer() {

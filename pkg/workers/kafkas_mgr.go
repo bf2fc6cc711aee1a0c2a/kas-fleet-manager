@@ -44,6 +44,9 @@ func (k *KafkaManager) Start() {
 
 // Stop causes the process for reconciling kafka requests to stop.
 func (k *KafkaManager) Stop() {
+	if k.timer == nil {
+		return
+	}
 	k.timer.Stop()
 }
 
