@@ -38,7 +38,7 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 		return nil, err
 	}
 	providerList.Each(func(provider *clustersmgmtv1.CloudProvider) bool {
-		// TODO add "|| provider.ID() == GcpCloudProviderID" to suport GCP in the future
+		// TODO add "|| provider.ID() == GcpCloudProviderID" to support GCP in the future
 		if provider.ID() == AWSCloudProviderID {
 			var regions *clustersmgmtv1.CloudRegionList
 			regions, regionErr = p.ocmClient.GetRegions(provider)

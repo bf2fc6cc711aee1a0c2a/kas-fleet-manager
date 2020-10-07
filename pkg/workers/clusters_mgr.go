@@ -49,6 +49,10 @@ func (c *ClusterManager) Start() {
 
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
+	// if timer is nil, we never started
+	if c.timer == nil {
+		return
+	}
 	c.timer.Stop()
 }
 
