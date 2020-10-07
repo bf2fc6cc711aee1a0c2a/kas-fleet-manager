@@ -6,6 +6,10 @@ import (
 
 type ClusterStatus string
 
+func (k ClusterStatus) String() string {
+	return string(k)
+}
+
 const (
 	// ClusterProvisioning the underlying ocm cluster is provisioning
 	ClusterProvisioning ClusterStatus = "cluster_provisioning"
