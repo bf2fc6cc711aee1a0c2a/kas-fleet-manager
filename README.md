@@ -1,7 +1,9 @@
 OCM Managed Service API
 ---
 
-This project is based on OCM microservice.
+A service for provisioning and managing fleets of Kafka instances.
+
+For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
 ## Prerequisites
 * [OpenAPI Generator](https://openapi-generator.tech/docs/installation/)
@@ -73,6 +75,26 @@ make test
 ```
 
 ### Run the integration tests
+
+Integration tests can be executed against a real or "emulated" OCM environment. Executing against
+an emulated environment can be useful to get fast feedback as OpenShift clusters will not actually
+be provisioned, reducing testing time greatly.
+
+Both scenarios require a database and OCM token to be setup before running integration tests, run:
+
+```
+make db/setup
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
+```
+
+To run integration tests with an "emulated" OCM environment, run:
+
+```
+OCM_ENV=integration make test-integration
+```
+
+To run integration tests with a real OCM environment, run:
+
 ```
 make test-integration
 ```
