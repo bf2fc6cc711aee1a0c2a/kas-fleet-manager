@@ -102,7 +102,8 @@ endif
 verify: check-gopath
 	go vet \
 		./cmd/... \
-		./pkg/...
+		./pkg/... \
+		./test/...
 .PHONY: verify
 
 # Runs our linter to verify that everything is following best practices
@@ -110,7 +111,8 @@ verify: check-gopath
 lint:
 	$(GOLANGCI_LINT_BIN) run \
 		./cmd/... \
-		./pkg/...
+		./pkg/... \
+		./test/...
 .PHONY: lint
 
 # Build binaries
