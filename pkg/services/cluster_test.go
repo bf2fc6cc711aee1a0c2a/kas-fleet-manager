@@ -16,6 +16,7 @@ import (
 var (
 	testRegion   = "us-west-1"
 	testProvider = "aws"
+	testDNS      = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
 )
 
 // build a test cluster
@@ -145,7 +146,6 @@ func Test_Cluster_Create(t *testing.T) {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
 			},
 			wantErr: true,
-			// want:    wantedCluster,
 		},
 	}
 	for _, tt := range tests {
@@ -168,6 +168,89 @@ func Test_Cluster_Create(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Create() got = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_GetClusterDNS(t *testing.T) {
+	mockClusterDNS := testDNS
+
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		ocmClient         ocm.Client
+		awsConfig         *config.AWSConfig
+		clusterBuilder    ocm.ClusterBuilder
+	}
+	type args struct {
+		clusterID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    string
+	}{
+		{
+			name: "successful retrieval of clusterDNS",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				ocmClient: &ocm.ClientMock{
+					GetClusterDNSFunc: func(clusterID string) (string, error) {
+						return mockClusterDNS, nil
+					},
+				},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: false,
+			want:    mockClusterDNS,
+		},
+		{
+			name: "error when passing empty clusterID",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				ocmClient: &ocm.ClientMock{
+					GetClusterDNSFunc: func(clusterID string) (string, error) {
+						return "", errors.New("ClusterID cannot be empty")
+					},
+				},
+			},
+			args: args{
+				clusterID: "",
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				ocmClient:         tt.fields.ocmClient,
+				awsConfig:         tt.fields.awsConfig,
+				clusterBuilder:    tt.fields.clusterBuilder,
+			}
+
+			got, err := c.GetClusterDNS(tt.args.clusterID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetClusterDNS() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if got == "" && !tt.wantErr {
+				t.Errorf("GetClusterDNS() error - expecting non-empty cluster DNS here, got '%v'", got)
 			}
 		})
 	}

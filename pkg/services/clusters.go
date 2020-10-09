@@ -73,20 +73,10 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 //
 // Returns the DNS name
 func (c clusterService) GetClusterDNS(clusterID string) (string, *ocmErrors.ServiceError) {
-	ingresses, err := c.ocmClient.GetClusterIngresses(clusterID)
+	clusterDNS, err := c.ocmClient.GetClusterDNS(clusterID)
 	if err != nil {
 		return "", ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
-
-	var clusterDNS string
-	ingresses.Items().Each(func(ingress *clustersmgmtv1.Ingress) bool {
-		if ingress.Default() == true {
-			clusterDNS = ingress.DNSName()
-			return false
-		}
-		return true
-	})
-
 	return clusterDNS, nil
 }
 
