@@ -1,19 +1,23 @@
 package integration
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"net/http"
-	"testing"
-	"time"
 )
 
 const (
@@ -38,7 +42,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	clusterID, _ :=  getOsdClusterID(h)
+	clusterID, _ := getOsdClusterID(h)
 	if clusterID == "" {
 		panic("No cluster found")
 	}
@@ -56,10 +60,10 @@ func TestKafkaCreate_Success(t *testing.T) {
 	var kafka openapi.KafkaRequest
 	var resp *http.Response
 	err := wait.PollImmediate(time.Second*30, time.Minute*120, func() (done bool, err error) {
-			kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
-			if err != nil {
-				return true, err
-			}
+		kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
+		if err != nil {
+			return true, err
+		}
 		return resp.StatusCode == http.StatusAccepted, err
 	})
 
@@ -196,6 +200,116 @@ func TestKafkaGet(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 }
 
+// TestKafkaList_Success tests getting kafka requests list
+func TestKafkaList_Success(t *testing.T) {
+	// create a mock ocm api server, keep all endpoints as defaults
+	// see the mocks package for more information on the configurable mock server
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// setup pre-requisites to performing requests
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+
+	// get initial list (should be empty)
+	initList, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasGet(ctx, nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(initList.Items).To(BeEmpty(), "Expected empty kafka requests list")
+	Expect(initList.Size).To(Equal(int32(0)), "Expected Size == 0")
+	Expect(initList.Total).To(Equal(int32(0)), "Expected Total == 0")
+
+	// setup cluster if one doesn't already exist for the tested region
+	foundClusterID, svcErr := getOsdClusterID(h)
+	Expect(svcErr).NotTo(HaveOccurred(), "Error getting OSD cluster  %v", svcErr)
+	Expect(foundClusterID).NotTo(Equal(""), "Unable to get clusterID")
+
+	k := openapi.KafkaRequest{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+	}
+
+	// POST kafka request to populate the list
+	seedKafka, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
+	if err != nil {
+		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
+	}
+
+	var foundKafka openapi.KafkaRequest
+	err = wait.PollImmediate(time.Second*30, time.Minute*5, func() (done bool, err error) {
+		foundKafka, _, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, seedKafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return foundKafka.Status == services.KafkaRequestStatusComplete.String(), nil
+	})
+
+	// get populated list of kafka requests
+	afterPostList, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasGet(ctx, nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
+	Expect(afterPostList.Size).To(Equal(int32(1)), "Expected Size == 1")
+	Expect(afterPostList.Total).To(Equal(int32(1)), "Expected Total == 1")
+
+	// get kafka request item from the list
+	listItem := afterPostList.Items[0]
+
+	// check whether the seedKafka properties are the same as those from the kafka request list item
+	Expect(seedKafka.Id).To(Equal(listItem.Id))
+	Expect(seedKafka.Kind).To(Equal(listItem.Kind))
+	Expect(listItem.Kind).To(Equal(presenters.KindKafka))
+	Expect(seedKafka.Href).To(Equal(listItem.Href))
+	Expect(seedKafka.Region).To(Equal(listItem.Region))
+	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
+	Expect(seedKafka.CloudProvider).To(Equal(listItem.CloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
+	Expect(seedKafka.Name).To(Equal(listItem.Name))
+	Expect(listItem.Name).To(Equal(mockKafkaName))
+	Expect(listItem.Status).To(Equal(services.KafkaRequestStatusComplete.String()))
+
+	// new account setup to prove that users can only list their own kafka instances
+	account = h.NewRandAccount()
+	ctx = h.NewAuthenticatedContext(account)
+
+	// expecting empty list for user that hasn't created any kafkas yet
+	newUserList, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasGet(ctx, nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(newUserList.Items)).To(Equal(0), "Expected kafka requests list length to be 0")
+	Expect(newUserList.Size).To(Equal(int32(0)), "Expected Size == 0")
+	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
+}
+
+// TestKafkaList_InvalidToken - tests listing kafkas with invalid token
+func TestKafkaList_UnauthUser(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	_, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// create empty context
+	ctx := context.Background()
+
+	kafkaRequests, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasGet(ctx, nil)
+	Expect(err).To(HaveOccurred()) // expecting an error here due unauthenticated user
+	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	Expect(kafkaRequests.Items).To(BeNil())
+	Expect(kafkaRequests.Size).To(Equal(int32(0)), "Expected Size == 0")
+	Expect(kafkaRequests.Total).To(Equal(int32(0)), "Expected Total == 0")
+}
+
+// returns clusterID of a cluster already present in the database
+// if no such cluster is present - an attempt is made to create a cluster
+// and wait till it is in the "ready" state
 func getOsdClusterID(h *test.Helper) (string, *ocmErrors.ServiceError) {
 	var clusterID string
 	var status string

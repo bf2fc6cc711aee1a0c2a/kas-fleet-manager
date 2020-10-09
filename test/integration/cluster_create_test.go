@@ -12,7 +12,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
-func TestClusterCreateInvalidAwsCredentials(t *testing.T) {
+func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServerBuilder.SetClustersPostResponse(nil, errors.Validation("The provided AWS credentials are not valid"))
 	ocmServer := ocmServerBuilder.Build()
@@ -38,7 +38,7 @@ func TestClusterCreateInvalidAwsCredentials(t *testing.T) {
 	Expect(cluster.ID()).To(Equal(""))
 }
 
-func TestClusterCreateInvalidToken(t *testing.T) {
+func TestClusterCreate_InvalidToken(t *testing.T) {
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServerBuilder.SetClustersPostResponse(nil, errors.GeneralError("can't get access token: invalid_grant: Invalid refresh token"))
 	ocmServer := ocmServerBuilder.Build()
