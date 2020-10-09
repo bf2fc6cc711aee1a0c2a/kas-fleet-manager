@@ -255,3 +255,75 @@ func Test_GetClusterDNS(t *testing.T) {
 		})
 	}
 }
+
+func Test_Cluster_FindClusterByID(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		id string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    api.Cluster
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "error when id is undefined",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when sql where query fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id: testClusterID,
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+		{
+			name: "successful output",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id: testClusterID,
+			},
+			want: api.Cluster{},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			got, err := k.FindClusterByID(tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FindClusterByID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FindClusterByID() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
