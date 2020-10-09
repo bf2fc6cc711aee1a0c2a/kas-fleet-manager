@@ -60,6 +60,9 @@ details.
 
 See the [contributing guide](CONTRIBUTING.md) for general guidelines.
 
+### Setup Git Hooks
+See the [setup git hooks](CONTRIBUTING.md#set-up-git-hooks) section in the contributing guide for more information.
+
 ### Additional CLI commands
 
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
@@ -103,3 +106,18 @@ To stop and remove the database container when finished, run:
 ```
 make db/teardown
 ```
+
+### Additional Checks
+
+In addition to the unit and integration tests, we should ensure that our code passes standard go checks.
+
+To verify that the code passes standard go checks, run:
+```
+make verify
+```
+
+To verify that the code passes lint checks, run:
+```
+make lint
+```
+**NOTE**: This uses golangci-lint which needs to be installed in your GOPATH/bin
