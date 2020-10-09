@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -16,8 +15,11 @@ import (
 )
 
 const (
-	truncatedNameLen          = 10
-	truncatedNamespaceLen     = 40
+	truncatedNameLen = 10
+	// Maximum namespace name length is 63
+	// Namespace name is built using the kafka request id (always generated with 27 length) and the owner (truncated with this var).
+	// Set the truncate index to 35 to ensure that the namespace name does not go over the maximum limit.
+	truncatedNamespaceLen     = 35
 	replacementForSpecialChar = "-"
 	appendChar                = "a"
 )
@@ -69,22 +71,6 @@ func handleDeleteError(resourceType string, err error) *errors.ServiceError {
 	return errors.GeneralError("Unable to delete %s: %s", resourceType, err.Error())
 }
 
-func fields(obj interface{}) map[string]interface{} {
-	m := make(map[string]interface{})
-
-	val := reflect.Indirect(reflect.ValueOf(obj))
-	t := val.Type()
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		fieldByName := val.FieldByName(field.Name)
-		if !fieldByName.IsNil() {
-			m[field.Name] = fieldByName.Interface()
-		}
-	}
-
-	return m
-}
-
 func truncateString(str string, num int) string {
 	truncatedString := str
 	if len(str) > num {
@@ -93,8 +79,8 @@ func truncateString(str string, num int) string {
 	return truncatedString
 }
 
-// buildKafkaIdentifier creates a unique identifier for a kafka cluster given
-// the kafka request object
+// buildKafkaNamespaceIdentifier creates a unique identifier for a namespace to be used for
+// the kafka request
 func buildKafkaNamespaceIdentifier(kafkaRequest *api.KafkaRequest) string {
 	return fmt.Sprintf("%s-%s", truncateString(kafkaRequest.Owner, truncatedNamespaceLen), strings.ToLower(kafkaRequest.ID))
 }
