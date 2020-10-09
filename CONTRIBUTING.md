@@ -147,6 +147,10 @@ For more information on using `moq`, see:
 - [The moq repository](https://github.com/matryer/moq)
 - The IDGenerator [interface](pkg/ocm/id.go) and [mock](pkg/ocm/idgenerator_moq_test.go) in this repository 
 
+For mocking the OCM client, [this wrapper interface](pkg/ocm/client.go). If using the OCM SDK in
+any component of the system, please ensure the OCM SDK logic is placed inside this mock-able
+wrapper.
+
 ### Unit Tests
 
 We follow the Go [table driven test](https://github.com/golang/go/wiki/TableDrivenTests) approach.
@@ -160,6 +164,18 @@ loop one by one. For an example of writing a table driven test, see:
 
 ### Integration Tests
 
+Before every integration test, `RegisterIntegration()` must be invoked. This will ensure that the
+API server and background workers are running and that the database has been reset to a clean
+state. `RegisterIntegration()` also returns a teardown function that should be invoked at the end
+of the test. This will stop the API server and background workers. For example:
+
+```
+helper, httpClient, teardown := test.RegisterIntegration(t, mockOCMServer)
+defer teardown()
+```
+
+See [TestKafkaPost integration test](test/integration/kafkas_test.go) as an example of this.
+
 Integration tests in this service can take advantage of running in an "emulated OCM API". This
 essentially means a configurable mock OCM API server can be used in place of a "real" OCM API for
 testing how the system responds to different failure scenarios in OCM.
@@ -170,7 +186,7 @@ The emulated OCM API can also be set manually in non-`integration` environments 
 `ocm-mock-mode` flag to `emulate-server`.
 
 When handling OCM error scenarios in integration tests, decide which ServiceError you'd like an
-endpoint to return, for a full list of ServiceError types, see [this file](./pkg/errors/errors.go).
+endpoint to return, for a full list of ServiceError types, see [this file](pkg/errors/errors.go).
 Ensure when mocking an endpoint the correct ServiceError type is returned via the mock function e.g.
 
 ```go
@@ -189,10 +205,28 @@ Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
 ```
 
 When adding new integration tests, use the following files as guidelines:
-- [TestKafkaPost integration test](./test/integration/kafkas_test.go)
-- [Mock OCM API server](./test/mocks/api_server.go)
+- [TestKafkaPost integration test](test/integration/kafkas_test.go)
+- [Mock OCM API server](test/mocks/api_server.go)
 
-## Logging Stanards & Best Practices
+When adding new features to the service that interact with OCM endpoints that have not currently
+been emulated, you must add them. If you do not add them you begin seeing errors in integration
+tests around `text/plain` responses being provided by OCM.
+
+Adding a new endpoint involves modifying [the mock OCM API server](test/mocks/api_server.go) and
+adding the new endpoint. Using the OCM `GET /api/clusters_mgmt/v1/clusters` endpoint as an example:
+
+- Add a new path variable, `EndpointPathClusters`
+- Add a new endpoint variable, including the HTTP method, `EndpointClusterGet`
+- Add a new default return value, `MockCluster`, and initialise it in `init()`
+- If the data type the endpoint returns (e.g. `*clustersmgmtv1.Cluster`) is new, ensure the mock
+  API server knows how to marshal it to JSON in `marshalOCMType()`. If the new type is a `*List`
+  type (e.g. `*clustersmgmtv1.IngressList`) then follow the pattern used by `IngressList` where
+  `*clustersmgmtv1.IngressList`, `[]*clustersmgmtv1.Ingress`, and `*clustersmgmtv1.Ingress` are all
+  handled.
+- Register the default return handler in `getDefaultHandlerRegister()`
+- Allow overrides to be provided by adding an override function, `SetClusterGetResponse()`
+
+## Logging Standards & Best Practices
   * Log only actionable information, which will be read by a human or a machine for auditing or debugging purposes
     * Logs shall have context and meaning - a single log statement should be useful on its own
     * Logs shall be easily aggregatable
