@@ -16,6 +16,7 @@ type Client interface {
 	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
 	GetManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
 	CreateManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
+	GetClusterDNS(clusterID string) (string, error)
 }
 
 var _ Client = &client{}
@@ -111,4 +112,24 @@ func (c client) GetManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallati
 	})
 
 	return managedKafkaAddon, nil
+}
+
+func (c *client) GetClusterDNS(clusterID string) (string, error) {
+	if clusterID == "" {
+		return "", errors.New(errors.ErrorGeneral, "ClusterID cannot be empty")
+	}
+	ingresses, err := c.GetClusterIngresses(clusterID)
+	if err != nil {
+		return "", errors.New(errors.ErrorGeneral, err.Error())
+	}
+
+	var clusterDNS string
+	ingresses.Items().Each(func(ingress *clustersmgmtv1.Ingress) bool {
+		if ingress.Default() == true {
+			clusterDNS = ingress.DNSName()
+			return false
+		}
+		return true
+	})
+	return clusterDNS, nil
 }
