@@ -106,3 +106,18 @@ To stop and remove the database container when finished, run:
 ```
 make db/teardown
 ```
+
+### Additional Checks
+
+In addition to the unit and integration tests, we should ensure that our code passes standard go checks.
+
+To verify that the code passes standard go checks, run:
+```
+make verify
+```
+
+To verify that the code passes lint checks, run:
+```
+make lint
+```
+**NOTE**: This uses golangci-lint which needs to be installed in your GOPATH/bin
