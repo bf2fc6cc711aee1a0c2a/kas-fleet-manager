@@ -25,7 +25,7 @@ func ConvertKafkaRequest(request *api.KafkaRequest) []map[string]interface{} {
 	}
 }
 
-// Converts a KafkaRequestList to the response type expected by mocket
+// ConvertKafkaRequestList converts a KafkaRequestList to the response type expected by mocket
 func ConvertKafkaRequestList(kafkaList api.KafkaList) ([]map[string]interface{}, error) {
 	var kafkaRequestList []map[string]interface{}
 
