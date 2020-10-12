@@ -10,13 +10,17 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
+	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
 	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 )
 
 var (
-	testRegion   = "us-west-1"
-	testProvider = "aws"
-	testDNS      = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
+	testRegion        = "us-west-1"
+	testProvider      = "aws"
+	testDNS           = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
+	testCloudProvider = "aws"
+	testMultiAZ       = true
+	testStatus        = api.ClusterProvisioned
 )
 
 // build a test cluster
@@ -323,6 +327,104 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("FindClusterByID() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_FindCluster(t *testing.T) {
+	clusterDetails := FindClusterCriteria{
+		Provider: testProvider,
+		Region:   testRegion,
+		MultiAZ:  testMultiAZ,
+		Status:   testStatus,
+	}
+
+	nonExistentClusterDetails := FindClusterCriteria{
+		Provider: "nonExistentProvider",
+		Region:   testRegion,
+		MultiAZ:  testMultiAZ,
+		Status:   testStatus,
+	}
+
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		ocmClient         ocm.Client
+		awsConfig         *config.AWSConfig
+		clusterBuilder    ocm.ClusterBuilder
+	}
+	type args struct {
+		criteria FindClusterCriteria
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    *api.Cluster
+	}{
+		{
+			name: "return nil if no cluster is found",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				criteria: nonExistentClusterDetails,
+			},
+			want:    nil,
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+			},
+		},
+		{
+			name: "error when sql where query fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				criteria: clusterDetails,
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+		{
+			name: "successful retrieval of a cluster",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				criteria: clusterDetails,
+			},
+			want: buildCluster(nil),
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertCluster(buildCluster(nil)))
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				ocmClient:         tt.fields.ocmClient,
+				awsConfig:         tt.fields.awsConfig,
+				clusterBuilder:    tt.fields.clusterBuilder,
+			}
+
+			got, err := c.FindCluster(tt.args.criteria)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("FindCluster() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FindCluster() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}
