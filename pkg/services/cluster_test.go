@@ -21,6 +21,7 @@ var (
 	testCloudProvider = "aws"
 	testMultiAZ       = true
 	testStatus        = api.ClusterProvisioned
+	clustersTableName = "clusters"
 )
 
 // build a test cluster
@@ -425,6 +426,111 @@ func Test_FindCluster(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("FindCluster() got = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_ListByStatus(t *testing.T) {
+	var nonEmptyClusterList = []api.Cluster{
+		api.Cluster{
+			CloudProvider: testProvider,
+			MultiAZ:       testMultiAZ,
+			Region:        testRegion,
+			Status:        testStatus,
+		},
+	}
+	emptyClusterList := []api.Cluster{}
+
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		ocmClient         ocm.Client
+		awsConfig         *config.AWSConfig
+		clusterBuilder    ocm.ClusterBuilder
+	}
+	type args struct {
+		status api.ClusterStatus
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []api.Cluster
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "error when status is undefined",
+			args: args{
+				status: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "fail: database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				status: testStatus,
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+		{
+			name: "success: return empty list of clusters with specified status",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				status: testStatus,
+			},
+			want:    emptyClusterList,
+			wantErr: false,
+			setupFn: func() {
+				response, err := dbConverters.ConvertClusterList(emptyClusterList)
+				if err != nil {
+					t.Errorf("Test_ListByStatus() failed to convert ClusterList: %s", err.Error())
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
+			},
+		},
+		{
+			name: "success: return non-empty list of clusters with specified status",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				status: testStatus,
+			},
+			want:    nonEmptyClusterList,
+			wantErr: false,
+			setupFn: func() {
+				response, err := dbConverters.ConvertClusterList(nonEmptyClusterList)
+				if err != nil {
+					t.Errorf("Test_ListByStatus() failed to convert ClusterList: %s", err.Error())
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			got, err := k.ListByStatus(tt.args.status)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListByStatus() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
