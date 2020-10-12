@@ -81,6 +81,9 @@ func (c clusterService) GetClusterDNS(clusterID string) (string, *ocmErrors.Serv
 }
 
 func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *ocmErrors.ServiceError) {
+	if status.String() == "" {
+		return nil, ocmErrors.Validation("status is undefined")
+	}
 	dbConn := c.connectionFactory.New()
 
 	var clusters []api.Cluster
