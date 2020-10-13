@@ -17,6 +17,8 @@ type Client interface {
 	GetManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
 	CreateManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
+	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
+	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
 }
 
 var _ Client = &client{}
@@ -132,4 +134,27 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 		return true
 	})
 	return clusterDNS, nil
+}
+
+func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, syncsetErr := clustersResource.Cluster(clusterID).
+		ExternalConfiguration().
+		Syncsets().
+		Add().
+		Body(syncset).
+		Send()
+	return response.Body(), syncsetErr
+}
+
+// Status returns the response status code.
+func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
+	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, syncsetErr := clustersResource.Cluster(clusterID).
+		ExternalConfiguration().
+		Syncsets().
+		Syncset(syncsetID).
+		Delete().
+		Send()
+	return response.Status(), syncsetErr
 }

@@ -2,8 +2,8 @@ package services
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
-	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	projectv1 "github.com/openshift/api/project/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -218,7 +218,7 @@ type SyncsetService interface {
 	Delete(syncsetId, clusterId string) *errors.ServiceError
 }
 
-func NewSyncsetService(ocmClient *sdkClient.Connection) SyncsetService {
+func NewSyncsetService(ocmClient ocm.Client) SyncsetService {
 	return &syncsetService{
 		ocmClient: ocmClient,
 	}
@@ -227,7 +227,7 @@ func NewSyncsetService(ocmClient *sdkClient.Connection) SyncsetService {
 var _ SyncsetService = &syncsetService{}
 
 type syncsetService struct {
-	ocmClient *sdkClient.Connection
+	ocmClient ocm.Client
 }
 
 // Create builds the syncset and syncs it to the desired cluster
@@ -238,33 +238,21 @@ func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, c
 	if buildErr != nil {
 		return nil, errors.GeneralError("failed to build syncset: %s", buildErr)
 	}
-
 	// create the syncset on the cluster
-	clustersResource := s.ocmClient.ClustersMgmt().V1().Clusters()
-	response, syncsetErr := clustersResource.Cluster(clusterId).
-		ExternalConfiguration().
-		Syncsets().
-		Add().
-		Body(syncset).
-		Send()
+	response, syncsetErr := s.ocmClient.CreateSyncSet(clusterId, syncset)
+
 	if syncsetErr != nil {
 		fmt.Println(syncsetErr)
 		return nil, errors.GeneralError(fmt.Sprintf("failed to create syncset: %s for cluster id: %s", syncset.ID(), clusterId), syncsetErr)
 	}
-	return response.Body(), nil
+	return response, nil
 }
 
 func (s syncsetService) Delete(syncsetId, clusterId string) *errors.ServiceError {
 	// create the syncset on the cluster
-	clustersResource := s.ocmClient.ClustersMgmt().V1().Clusters()
-	_, syncsetErr := clustersResource.Cluster(clusterId).
-		ExternalConfiguration().
-		Syncsets().
-		Syncset(syncsetId).
-		Delete().
-		Send()
+	statusCode, syncsetErr := s.ocmClient.DeleteSyncSet(clusterId, syncsetId)
 	if syncsetErr != nil {
-		return errors.GeneralError(fmt.Sprintf("failed to delete syncset: %s for cluster id: %s", syncsetId, clusterId), syncsetErr)
+		return errors.GeneralError(fmt.Sprintf("failed to delete syncset: %s for cluster id: %s returned status code: %d", syncsetId, clusterId, statusCode), syncsetErr)
 	}
 	return nil
 }
