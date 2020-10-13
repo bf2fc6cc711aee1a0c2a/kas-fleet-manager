@@ -96,6 +96,12 @@ func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *
 }
 
 func (c clusterService) UpdateStatus(id string, status api.ClusterStatus) error {
+	if status.String() == "" {
+		return ocmErrors.Validation("status is undefined")
+	}
+	if id == "" {
+		return ocmErrors.Validation("id is undefined")
+	}
 	dbConn := c.connectionFactory.New()
 
 	if err := dbConn.Table("clusters").Where("id = ?", id).Update("status", status).Error; err != nil {
