@@ -33,6 +33,9 @@ internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 # Test image name that will be used for PR checks
 test_image:=test/managed-services-api
 
+DOCKER_CONFIG="${PWD}/.docker"
+
+
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
 else
