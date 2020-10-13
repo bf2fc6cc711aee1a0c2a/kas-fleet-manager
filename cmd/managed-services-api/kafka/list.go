@@ -56,7 +56,7 @@ func runList(cmd *cobra.Command, _ []string) {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
-	syncsetService := services.NewSyncsetService(env.Clients.OCM.Connection)
+	syncsetService := services.NewSyncsetService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 
 	ctx := auth.SetUsernameContext(context.TODO(), owner)
