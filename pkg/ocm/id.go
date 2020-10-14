@@ -2,7 +2,13 @@ package ocm
 
 import (
 	"fmt"
+
 	"github.com/rs/xid"
+)
+
+const (
+	// MaxClusterNameLength - defines maximum length of an OSD cluster name
+	MaxClusterNameLength = 15
 )
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
@@ -29,6 +35,8 @@ func NewIDGenerator(prefix string) IDGenerator {
 	}
 }
 
+// It is not allowed for the cluster name to be longer than 15 characters, hence
+// the truncation
 func (i idGenerator) Generate() string {
-	return fmt.Sprintf("%s%s", i.prefix, xid.New().String())
+	return fmt.Sprintf("%s%s", i.prefix, xid.New().String())[0:MaxClusterNameLength]
 }
