@@ -38,6 +38,9 @@ func Test_idGenerator_Generate(t *testing.T) {
 			if err := tt.validateFn(got); err != nil {
 				t.Errorf("Generate() = %v", err.Error())
 			}
+			if len(got) > MaxClusterNameLength {
+				t.Errorf("Generated ID length should not exceed 15 chars: %v", got)
+			}
 		})
 	}
 }
