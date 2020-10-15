@@ -28,6 +28,8 @@ Project source is to be found under `$GOPATH/src` by a distinct directory path.
 
 Fork managed-services-api to your own gitlab repository: https://gitlab.cee.redhat.com/service/managed-services-api/forks/new
 
+**IMPORTANT**: The [devtools-bot](https://gitlab.cee.redhat.com/devtools-bot) user needs to be added as a `Maintainer` to your fork in order for your merge requests (MRs) to pass CI checks.
+
 ```sh
 cd $GOPATH
 git clone git@gitlab.cee.redhat.com:{username}/managed-services-api.git src/gitlab.cee.redhat.com/service/managed-services-api
