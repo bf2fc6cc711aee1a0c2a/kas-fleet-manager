@@ -1,4 +1,4 @@
-FROM postgres
+FROM quay.io/app-sre/postgres
 
 ENV POSTGRES_PASSWORD foobar-bizz-buzz
 ENV POSTGRES_USER managed_services_api
