@@ -12,6 +12,7 @@ ENV GORM_USERNAME managed_services_api
 ENV GORM_PASSWORD foobar-bizz-buzz
 ENV GORM_SSLMODE disable
 ENV GORM_DEBUG false
+ENV OCM_ENV integration
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
@@ -22,7 +23,7 @@ RUN update-ca-certificates
 
 # copy the setup scripts and the pr check script
 COPY db_setup_docker.sql /docker-entrypoint-initdb.d/
-COPY scripts/pr_check_docker.sh /docker-entrypoint-initdb.d/
+COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
 
 # install go 1.13.6
 RUN curl -O -J https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz
