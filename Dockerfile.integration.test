@@ -37,6 +37,12 @@ ENV CGO_ENABLED=0
 RUN mkdir -p /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
 COPY . /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
 
+# create credential files
+WORKDIR /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
+RUN make aws/setup
+RUN make ocm/setup
+RUN touch secrets/ocm-service.token
+
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /uhc /usr/local/go
 WORKDIR /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
