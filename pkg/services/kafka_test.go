@@ -709,3 +709,175 @@ func Test_kafkaService_List(t *testing.T) {
 		})
 	}
 }
+
+func Test_kafkaService_ListByStatus(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+		clusterService    ClusterService
+	}
+	type args struct {
+		status KafkaStatus
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    []*api.KafkaRequest
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail when database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+		{
+			name: "success",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			want: []*api.KafkaRequest{},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+				clusterService:    tt.fields.clusterService,
+			}
+			got, err := k.ListByStatus(tt.args.status)
+			// check errors
+			if (err != nil) != tt.wantErr {
+				t.Errorf("kafkaService.ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListByStatus() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_kafkaService_UpdateStatus(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+		clusterService    ClusterService
+	}
+	type args struct {
+		id     string
+		status KafkaStatus
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail when database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+			},
+		},
+		{
+			name: "success",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			k := kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+				clusterService:    tt.fields.clusterService,
+			}
+			err := k.UpdateStatus(tt.args.id, tt.args.status)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("kafkaService.UpdateStatus() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func Test_kafkaService_Update(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+		clusterService    ClusterService
+	}
+	type args struct {
+		kafkaRequest *api.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail when database returns an error",
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+			},
+		},
+		{
+			name: "success",
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			k := kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				syncsetService:    tt.fields.syncsetService,
+				clusterService:    tt.fields.clusterService,
+			}
+			err := k.Update(tt.args.kafkaRequest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("kafkaService.Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
