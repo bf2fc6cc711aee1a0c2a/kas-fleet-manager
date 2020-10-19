@@ -32,7 +32,7 @@ make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_S
 Set up the `ocm-service.token` file in the `secrets` directory to point to your temporary ocm token.
 ocm-offline-token can be retrieved from https://qaprodauth.cloud.redhat.com/openshift/token
 ```
-make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
+make ocm/token/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
 ```
 
 To run the service: 
@@ -87,7 +87,7 @@ Both scenarios require a database and OCM token to be setup before running integ
 
 ```
 make db/setup
-make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
+make ocm/token/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
 ```
 
 To run integration tests with an "emulated" OCM environment, run:

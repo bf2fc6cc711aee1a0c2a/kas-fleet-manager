@@ -35,6 +35,9 @@ test_image:=test/managed-services-api
 
 DOCKER_CONFIG="${PWD}/.docker"
 
+# Default Variables
+OCM_CLIENT_ID := ocm-ams-testing
+OCM_CLIENT_SECRET := 8f0c06c5-a558-4a78-a406-02deb1fd3f17
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
@@ -242,9 +245,15 @@ aws/setup:
 .PHONY: aws/setup
 
 # Setup OCM token
-ocm/setup:
+ocm/token/setup:
 	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
 	@echo -n "$(shell ocm token)" > secrets/ocm-service.token
+.PHONY: ocm/token/setup
+
+# Setup OCM Client ID and Secret
+ocm/setup:
+	@echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId
+	@echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret
 .PHONY: ocm/setup
 
 # TODO CRC Deployment stuff
