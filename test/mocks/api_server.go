@@ -5,16 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/gorilla/mux"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-
-	"github.com/gorilla/mux"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"time"
 )
 
 const (
@@ -179,6 +179,14 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	}
 	server.Listener = l
 	server.Start()
+	for i := 0; i < 5; i++ {
+		res, err := http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
+		fmt.Println("Response: " + res.Status)
+		if err != nil {
+			fmt.Println("Error" + err.Error())
+		}
+		time.Sleep(time.Second)
+	}
 	return server
 }
 
