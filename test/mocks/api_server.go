@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -170,7 +172,13 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	for endpoint, handleFn := range b.handlerRegister {
 		router.HandleFunc(endpoint.Path, handleFn).Methods(endpoint.Method)
 	}
-	server := httptest.NewServer(router)
+	server := httptest.NewUnstartedServer(router)
+	l, err := net.Listen("tcp", "127.0.0.1:9876")
+	if err != nil {
+		log.Fatal(err)
+	}
+	server.Listener = l
+	server.Start()
 	return server
 }
 
