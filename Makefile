@@ -181,6 +181,7 @@ openapi/generate:
 	rm -rf pkg/api/openapi
 	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	openapi-generator validate -i openapi/managed-services-api.yaml
+	gofmt -w pkg/api/openapi
 .PHONY: openapi/generate
 
 # clean up code and dependencies
@@ -197,8 +198,14 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run -d -p 80:8080 -e SWAGGER_JSON=/managed-services-api.yaml -v $(PWD)/openapi/managed-services-api.yaml:/managed-services-api.yaml swaggerapi/swagger-ui
+	docker run --name swagger_ui_docs -d -p 80:8080 -e SWAGGER_JSON=/managed-services-api.yaml -v $(PWD)/openapi/managed-services-api.yaml:/managed-services-api.yaml swaggerapi/swagger-ui
 .PHONY: run/docs
+
+# Remove Swagger container
+run/docs/teardown:
+	docker container stop swagger_ui_docs
+	docker container rm swagger_ui_docs
+.PHONY: run/docs/teardown
 
 db/setup:
 	./scripts/local_db_setup.sh
