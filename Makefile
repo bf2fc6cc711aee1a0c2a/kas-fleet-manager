@@ -270,7 +270,7 @@ image/build/test: binary
 
 # Run the test container
 test/run: image/build/test
-	docker run -i "$(test_image)"
+	docker run --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
 # Setup for AWS credentials
