@@ -94,6 +94,10 @@ func NewConfiguration() *Configuration {
 				Description: "Staging server",
 			},
 			{
+				Url:         "http://localhost:8000",
+				Description: "localhost",
+			},
+			{
 				Url:         "/",
 				Description: "current domain",
 			},
