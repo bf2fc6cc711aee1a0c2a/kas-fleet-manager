@@ -37,23 +37,3 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 	Expect(cluster.ID()).To(Equal(""))
 }
-
-func TestClusterCreate_InvalidToken(t *testing.T) {
-	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	ocmServerBuilder.SetClustersPostResponse(nil, errors.GeneralError("can't get access token: invalid_grant: Invalid refresh token"))
-	ocmServer := ocmServerBuilder.Build()
-	defer ocmServer.Close()
-
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
-	defer teardown()
-
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS)
-	// temporarily setting token to invalid value
-	h.Env().Config.OCM.SelfTokenFile = "secrets/ocm-service.clientId"
-	cluster, err := clusterService.Create(&api.Cluster{
-		CloudProvider: "aws",
-		Region:        "eu-west-1",
-	})
-	Expect(err).To(HaveOccurred())
-	Expect(cluster.ID()).To(Equal(""))
-}

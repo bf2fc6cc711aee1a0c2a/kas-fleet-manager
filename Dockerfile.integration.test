@@ -17,6 +17,14 @@ ENV OCM_ENV integration
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
 
+# install jq to parse json within bash scripts
+RUN curl -o /usr/local/bin/jq http://stedolan.github.io/jq/download/linux64/jq && \
+  chmod +x /usr/local/bin/jq
+
+# install OCM CLI
+RUN curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.42/ocm-linux-amd64 && \
+  chmod +x ocm && sudo mv ocm /usr/local/bin/
+
 COPY test/support/jwt_ca.pem /usr/local/share/ca-certificates/jwt_ca.pem
 COPY test/support/gitlab-ca.crt /usr/local/share/ca-certificates/gitlab-ca.crt
 RUN update-ca-certificates
@@ -41,7 +49,6 @@ COPY . /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
 WORKDIR /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
 RUN make aws/setup
 RUN make ocm/setup
-RUN touch secrets/ocm-service.token
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /uhc /usr/local/go

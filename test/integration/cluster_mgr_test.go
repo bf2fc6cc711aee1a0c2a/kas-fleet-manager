@@ -11,6 +11,7 @@ import (
 	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -58,7 +59,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// ensure cluster is provisioned and terraformed successfully
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %v", cluster.ID, err)
 	Expect(cluster.ID).To(Equal(cluster.ClusterID))
-	Expect(cluster.ExternalID).NotTo(BeEmpty(), "Expected cluster external ID to be assigned on creation")
 	Expect(cluster.DeletedAt).To(BeNil(), fmt.Sprintf("Expected deleted_at property to be empty, instead got %s", cluster.DeletedAt))
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
@@ -74,4 +74,10 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("failed to get addonInstallation for cluster %s", newCluster.ID())
 	}
 	Expect(addonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
+
+	// save cluster struct to be reused in subsequent tests
+	err = utils.PersistClusterStruct(cluster)
+	if err != nil {
+		t.Log(err)
+	}
 }

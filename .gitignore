@@ -45,3 +45,6 @@ cmd/managed-services-api/managed-services-api
 # Ignore AWS secret files
 /secrets/aws.*
 /secrets/ocm-service.token
+
+# cluster details (used for testing)
+/test/integration/test_cluster.json
