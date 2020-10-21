@@ -25,13 +25,13 @@ const (
 
 type Cluster struct {
 	Meta
-	CloudProvider string `json:"cloud_provider"`
-	ClusterID     string
-	ExternalID    string
-	MultiAZ       bool   `json:"multi_az"`
-	Region        string `json:"region"`
-	BYOC          bool
-	Managed       bool
+	CloudProvider string        `json:"cloud_provider"`
+	ClusterID     string        `json:"cluster_id"`
+	ExternalID    string        `json:"external_id"`
+	MultiAZ       bool          `json:"multi_az"`
+	Region        string        `json:"region"`
+	BYOC          bool          `json:"byoc"`
+	Managed       bool          `json:"managed"`
 	Status        ClusterStatus `json:"status"`
 }
 

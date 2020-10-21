@@ -8,20 +8,21 @@ import (
 	"time"
 
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
-	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
-	mockKafkaName  = "test"
-	mockKafkaOwner = "owner"
+	mockKafkaName      = "test"
+	mockKafkaOwner     = "owner"
+	kafkaReadyTimeout  = time.Minute * 10
+	kafkaCheckInterval = time.Second * 10
 )
 
 // TestKafkaCreate_Success validates the happy path of the kafka post endpoint:
@@ -41,7 +42,10 @@ func TestKafkaCreate_Success(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	clusterID, _ := getOsdClusterID(h)
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
 	if clusterID == "" {
 		panic("No cluster found")
 	}
@@ -58,7 +62,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	var kafka openapi.KafkaRequest
 	var resp *http.Response
-	err := wait.PollImmediate(time.Second*30, time.Minute*120, func() (done bool, err error) {
+	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
 		if err != nil {
 			return true, err
@@ -76,7 +80,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
 	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(time.Second*30, time.Minute*5, func() (done bool, err error) {
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, kafka.Id)
 		if err != nil {
 			return true, err
@@ -201,14 +205,16 @@ func TestKafkaGet(t *testing.T) {
 
 // TestKafkaDelete - tests Success kafka delete
 func TestKafkaDelete_Success(t *testing.T) {
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	clusterID, _ := getOsdClusterID(h)
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
 	if clusterID == "" {
 		panic("No cluster found")
 	}
@@ -222,7 +228,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 
 	var kafka openapi.KafkaRequest
 	var resp *http.Response
-	err := wait.PollImmediate(time.Second*10, time.Minute*5, func() (done bool, err error) {
+	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
 		if err != nil {
 			return true, err
@@ -237,7 +243,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
 
 	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(time.Second*30, time.Minute*5, func() (done bool, err error) {
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, kafka.Id)
 		if err != nil {
 			return true, err
@@ -254,12 +260,10 @@ func TestKafkaDelete_Success(t *testing.T) {
 
 	foundKafka, _, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, kafka.Id)
 	Expect(foundKafka.Id).Should(BeEmpty(), " Kafka ID should be deleted")
-
 }
 
 // TestKafkaDelete - tests fail kafka delete
 func TestKafkaDelete_Fail(t *testing.T) {
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -277,7 +281,6 @@ func TestKafkaDelete_Fail(t *testing.T) {
 
 	_, _, err := client.DefaultApi.ApiManagedServicesApiV1KafkasIdDelete(ctx, kafka.Id)
 	Expect(err).To(HaveOccurred())
-
 }
 
 // TestKafkaDelete_NonOwnerDelete
@@ -289,7 +292,10 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	clusterID, _ := getOsdClusterID(h)
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
 	if clusterID == "" {
 		panic("No cluster found")
 	}
@@ -303,7 +309,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 
 	var kafka openapi.KafkaRequest
 	var resp *http.Response
-	err := wait.PollImmediate(time.Second*10, time.Minute*5, func() (done bool, err error) {
+	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		kafka, resp, err = client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, true, k)
 		if err != nil {
 			return true, err
@@ -346,10 +352,13 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(initList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(initList.Total).To(Equal(int32(0)), "Expected Total == 0")
 
-	// setup cluster if one doesn't already exist for the tested region
-	foundClusterID, svcErr := getOsdClusterID(h)
-	Expect(svcErr).NotTo(HaveOccurred(), "Error getting OSD cluster  %v", svcErr)
-	Expect(foundClusterID).NotTo(Equal(""), "Unable to get clusterID")
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	k := openapi.KafkaRequest{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -364,7 +373,7 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 
 	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(time.Second*30, time.Minute*5, func() (done bool, err error) {
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.ApiManagedServicesApiV1KafkasIdGet(ctx, seedKafka.Id)
 		if err != nil {
 			return true, err
@@ -427,47 +436,4 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	Expect(kafkaRequests.Items).To(BeNil())
 	Expect(kafkaRequests.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(kafkaRequests.Total).To(Equal(int32(0)), "Expected Total == 0")
-}
-
-// returns clusterID of a cluster already present in the database
-// if no such cluster is present - an attempt is made to create a cluster
-// and wait till it is in the "ready" state
-func getOsdClusterID(h *test.Helper) (string, *ocmErrors.ServiceError) {
-	var clusterID string
-	var status string
-	foundCluster, svcErr := h.Env().Services.Cluster.FindCluster(services.FindClusterCriteria{
-		Region:   mocks.MockCluster.Region().Name(),
-		Provider: mocks.MockCluster.CloudProvider().Name(),
-	})
-	if svcErr != nil {
-		return "", svcErr
-	}
-	if foundCluster == nil {
-		newCluster, svcErr := h.Env().Services.Cluster.Create(&api.Cluster{
-			CloudProvider: mocks.MockCloudProvider.ID(),
-			ClusterID:     mocks.MockCluster.ID(),
-			ExternalID:    mocks.MockCluster.ExternalID(),
-			Region:        mocks.MockCluster.Region().ID(),
-		})
-		if svcErr != nil {
-			return "", svcErr
-		}
-		if newCluster == nil {
-			return "", ocmErrors.GeneralError("Unable to get OSD cluster")
-		}
-		clusterID = newCluster.ID()
-	} else {
-		clusterID = foundCluster.ClusterID
-	}
-	if err := wait.PollImmediate(30*time.Second, 120*time.Minute, func() (bool, error) {
-		foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
-		if err != nil {
-			return true, err
-		}
-		status = foundCluster.Status.String()
-		return status == api.ClusterReady.String(), nil
-	}); err != nil {
-		return "", ocmErrors.GeneralError("Unable to get OSD cluster")
-	}
-	return clusterID, nil
 }
