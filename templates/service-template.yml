@@ -2,21 +2,21 @@
 kind: Template
 apiVersion: v1
 metadata:
-  name: ocm-ex-service-service
+  name: managed-services-api-service
   annotations:
-    openshift.io/display-name: OCM Example Service
-    description: Example Service API for the Unified Hybrid Cloud deployment
+    openshift.io/display-name: Managed Services API
+    description: Managed Services API for managed Kafka deployment
     tags: golang,uhc,service-delivery
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
     template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
 labels:
-  template: ocm-ex-service
+  template: managed-services-api
 parameters:
 
 - name: ENVIRONMENT
   displayName: Environment
-  description: Which Account Manager environment to use for this deployment
+  description: Which Managed Service API environment to use for this deployment
   value: production
 
 - name: IMAGE_REGISTRY
@@ -135,6 +135,11 @@ parameters:
   description: Enable mock uhc client
   value: "false"
 
+- name: OCM_MOCK_MODE
+  displayName: OCM mock mode
+  description: OCM mock mode
+  value: "emulate-server"
+
 - name: HTTP_READ_TIMEOUT
   displayName: HTTP Read Timeout
   description: HTTP server read timeout
@@ -176,13 +181,13 @@ objects:
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: ocm-ex-service
+      name: managed-services-api
       labels:
-        app: ocm-ex-service
+        app: managed-services-api
     spec:
       selector:
         matchLabels:
-          app: ocm-ex-service
+          app: managed-services-api
       replicas: ${{REPLICAS}}
       strategy:
         rollingUpdate:
@@ -192,18 +197,18 @@ objects:
       template:
         metadata:
           labels:
-            app: ocm-ex-service
+            app: managed-services-api
         spec:
           volumes:
           - name: tls
             secret:
-              secretName: ocm-ex-service-tls
+              secretName: managed-services-api-tls
           - name: service
             secret:
-              secretName: ocm-ex-service
+              secretName: managed-services-api
           - name: rds
             secret:
-              secretName: ocm-ex-service-rds
+              secretName: managed-services-api-rds
           initContainers:
           - name: id
             image: quay.io/app-sre/centos:8
@@ -245,6 +250,9 @@ objects:
             command:
             - /usr/local/bin/managed-services-api
             - serve
+            - --aws-access-key-file=/secrets/service/aws.accesskey
+            - --aws-account-id-file=/secrets/service/aws.accountid
+            - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user
@@ -252,6 +260,7 @@ objects:
             - --db-name-file=/secrets/rds/db.name
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
+            - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_BASE_URL}
             - --ocm-debug=${OCM_DEBUG}
             - --https-cert-file=/secrets/tls/tls.crt
@@ -270,6 +279,7 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --enable-metrics-https=${ENABLE_METRICS_HTTPS}
             - --enable-ocm-mock=${ENABLE_OCM_MOCK}
+            - --ocm-mock-mode=${OCM_MOCK_MODE}
             - --enable-sentry=${ENABLE_SENTRY}
             - --enable-sentry-debug=${ENABLE_SENTRY_DEBUG}
             - --sentry-url=${SENTRY_URL}
@@ -309,16 +319,16 @@ objects:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: ocm-ex-service
+      name: managed-services-api
       labels:
-        app: ocm-ex-service
+        app: managed-services-api
         port: api
       annotations:
-        description: Exposes and load balances the account manager pods
-        service.alpha.openshift.io/serving-cert-secret-name: ocm-ex-service-tls
+        description: Exposes and load balances the managed-services-api pods
+        service.alpha.openshift.io/serving-cert-secret-name: managed-services-api-tls
     spec:
       selector:
-        app: ocm-ex-service
+        app: managed-services-api
       ports:
         - port: 8000
           targetPort: 8000
@@ -329,16 +339,16 @@ objects:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: ocm-ex-service-metrics
+      name: managed-services-api-metrics
       labels:
-        app: ocm-ex-service
+        app: managed-services-api
         port: metrics
       annotations:
         description: Exposes and load balances the ocm example service pods metrics endpoint
-        service.alpha.openshift.io/serving-cert-secret-name: ocm-ex-service-metrics-tls
+        service.alpha.openshift.io/serving-cert-secret-name: managed-services-api-metrics-tls
     spec:
       selector:
-        app: ocm-ex-service
+        app: managed-services-api
       ports:
       - port: 8080
         targetPort: 8080
@@ -347,13 +357,13 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: ocm-ex-service-healthcheck
+      name: managed-services-api-healthcheck
       labels:
-        app: ocm-ex-service
+        app: managed-services-api
         port: healthcheck
     spec:
       selector:
-        app: ocm-ex-service
+        app: managed-services-api
       ports:
       - port: 8083
         targetPort: 8083
