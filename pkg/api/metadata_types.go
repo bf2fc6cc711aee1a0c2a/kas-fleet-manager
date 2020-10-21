@@ -45,7 +45,7 @@ type Metadata struct {
 
 // Meta is base model definition, embedded in all kinds
 type Meta struct {
-	ID        string
+	ID        string `json:"id"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt *time.Time

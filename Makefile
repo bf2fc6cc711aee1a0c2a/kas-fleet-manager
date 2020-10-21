@@ -161,8 +161,9 @@ test-prepare: install
 #   make test-integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test-integration TESTFLAGS="-short"                skips long-run tests
 test-integration: test-prepare
-	gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 3h -count=1 $(TESTFLAGS) \
+	gotestsum --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
 			./test/integration
+	./scripts/cleanup_test_cluster.sh
 .PHONY: test-integration
 
 # generate files
@@ -251,16 +252,18 @@ aws/setup:
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
 .PHONY: aws/setup
 
-# Setup OCM token
-ocm/token/setup:
+# OCM login
+ocm/login:
 	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
-	@echo -n "$(shell ocm token)" > secrets/ocm-service.token
-.PHONY: ocm/token/setup
+.PHONY: ocm/login
 
-# Setup OCM Client ID and Secret
+# Setup OCM Client token, ID and Secret
 ocm/setup:
+	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-service.token
+ifeq ($(OCM_ENV), integration)
 	@echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId
 	@echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret
+endif
 .PHONY: ocm/setup
 
 # TODO CRC Deployment stuff
