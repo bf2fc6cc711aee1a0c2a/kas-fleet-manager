@@ -1,11 +1,10 @@
 package test
 
 import (
+	gm "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"net/http/httptest"
 	"testing"
-
-	gm "github.com/onsi/gomega"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 )
@@ -33,9 +32,9 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 
 func buildTeardownHelperFn(h *Helper) func() {
 	return func() {
-		h.StopServer()
 		h.StopKafkaWorker()
 		h.StopClusterWorker()
+		h.StopServer()
 	}
 }
 
