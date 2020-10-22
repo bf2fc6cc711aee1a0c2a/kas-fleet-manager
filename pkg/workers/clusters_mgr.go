@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -22,6 +23,8 @@ type ClusterManager struct {
 	clusterService        services.ClusterService
 	cloudProvidersService services.CloudProvidersService
 	timer                 *time.Timer
+	imStop				  chan struct{}
+	syncTeardown		  sync.WaitGroup
 }
 
 // NewClusterManager creates a new cluster manager
@@ -35,25 +38,38 @@ func NewClusterManager(clusterService services.ClusterService, cloudProvidersSer
 
 // Start initializes the cluster manager to reconcile osd clusters
 func (c *ClusterManager) Start() {
+	c.imStop = make(chan struct{})
+	c.syncTeardown.Add(1)
 	glog.V(1).Infoln("Starting cluster manager")
-
 	// start reconcile immediately and then on every repeat interval
 	c.reconcile()
-
-	c.timer = time.NewTimer(repeatInterval)
-	for range c.timer.C {
-		c.reconcile()
-		c.reset() // timer reset, should always be the last task
-	}
+	fmt.Println("Starting")
+	ticker := time.NewTicker(repeatInterval)
+	go func() {
+		for {
+			select {
+			case <- ticker.C:
+				fmt.Println("REC")
+				c.reconcile()
+			case <- c.imStop:
+				ticker.Stop()
+				defer c.syncTeardown.Done()
+				fmt.Println("STOP")
+				return
+			}
+		}
+	}()
 }
 
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
-	// if timer is nil, we never started
-	if c.timer == nil {
+	select {
+	case <-c.imStop:
 		return
+	default:
+		close(c.imStop)
+		c.syncTeardown.Wait()
 	}
-	c.timer.Stop()
 }
 
 // reset resets the timer to ensure that its invoked only after the new interval period elapses.
@@ -65,7 +81,6 @@ func (c *ClusterManager) reconcile() {
 	glog.V(5).Infoln("reconciling clusters")
 
 	// reconcile the status of existing clusters in a non-ready state
-
 	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
 	if err != nil {
 		glog.Error("Error retrieving cloud providers and regions", err)

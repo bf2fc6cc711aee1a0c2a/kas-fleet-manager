@@ -179,12 +179,13 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	}
 	server.Listener = l
 	server.Start()
-	for i := 0; i < 5; i++ {
-		res, err := http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
-		fmt.Println("Response: " + res.Status)
-		if err != nil {
-			fmt.Println("Error" + err.Error())
+	err = nil
+	for i := 0; i< 10; i++  {
+		_, err := http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
+		if err == nil {
+			break
 		}
+		fmt.Println("Err: " + err.Error())
 		time.Sleep(time.Second)
 	}
 	return server
