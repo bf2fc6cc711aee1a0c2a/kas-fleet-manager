@@ -32,9 +32,9 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 
 func buildTeardownHelperFn(h *Helper) func() {
 	return func() {
+		h.StopServer()
 		h.StopKafkaWorker()
 		h.StopClusterWorker()
-		h.StopServer()
 	}
 }
 
