@@ -38,6 +38,10 @@ DOCKER_CONFIG="${PWD}/.docker"
 export GOPATH="${PWD}/.gopath"
 export PATH="${PATH}:${GOPATH}/bin"
 LINK="${GOPATH}/src/gitlab.cee.redhat.com/service/managed-services-api"
+
+# print go version
+go version  
+
 mkdir -p "$(dirname "${LINK}")"
 ln -sf "${PWD}" "${LINK}"
 cd "${LINK}"
