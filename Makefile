@@ -88,6 +88,11 @@ ifndef TEST_SUMMARY_FORMAT
 	TEST_SUMMARY_FORMAT=short-verbose
 endif
 
+# Enable Go modules:
+export GO111MODULE=on
+export GOPROXY=https://proxy.golang.org,direct
+export GOPRIVATE=gitlab.cee.redhat.com
+
 ifndef SERVER_URL
 	SERVER_URL:=http://localhost:8000
 endif
@@ -223,7 +228,7 @@ db/login:
 # Login to docker 
 docker/login: 
 	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
-.PHONE: docker/login
+.PHONY: docker/login
 
 # Build the binary and image
 image/build: binary
