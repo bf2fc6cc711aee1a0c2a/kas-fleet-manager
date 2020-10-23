@@ -10,6 +10,17 @@ import (
 	"sync"
 )
 
+var (
+	lockClusterServiceMockCreate               sync.RWMutex
+	lockClusterServiceMockFindCluster          sync.RWMutex
+	lockClusterServiceMockFindClusterByID      sync.RWMutex
+	lockClusterServiceMockGetClusterDNS        sync.RWMutex
+	lockClusterServiceMockListByStatus         sync.RWMutex
+	lockClusterServiceMockScaleDownMachinePool sync.RWMutex
+	lockClusterServiceMockScaleUpMachinePool   sync.RWMutex
+	lockClusterServiceMockUpdateStatus         sync.RWMutex
+)
+
 // Ensure, that ClusterServiceMock does implement ClusterService.
 // If this is not the case, regenerate this file with moq.
 var _ ClusterService = &ClusterServiceMock{}
@@ -35,6 +46,12 @@ var _ ClusterService = &ClusterServiceMock{}
 //             ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ListByStatus method")
 //             },
+//             ScaleDownMachinePoolFunc: func(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
+// 	               panic("mock out the ScaleDownMachinePool method")
+//             },
+//             ScaleUpMachinePoolFunc: func(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
+// 	               panic("mock out the ScaleUpMachinePool method")
+//             },
 //             UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
 // 	               panic("mock out the UpdateStatus method")
 //             },
@@ -59,6 +76,12 @@ type ClusterServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *errors.ServiceError)
+
+	// ScaleDownMachinePoolFunc mocks the ScaleDownMachinePool method.
+	ScaleDownMachinePoolFunc func(clusterID string) (*v1.MachinePool, *errors.ServiceError)
+
+	// ScaleUpMachinePoolFunc mocks the ScaleUpMachinePool method.
+	ScaleUpMachinePoolFunc func(clusterID string) (*v1.MachinePool, *errors.ServiceError)
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status api.ClusterStatus) error
@@ -90,6 +113,16 @@ type ClusterServiceMock struct {
 			// State is the state argument value.
 			State api.ClusterStatus
 		}
+		// ScaleDownMachinePool holds details about calls to the ScaleDownMachinePool method.
+		ScaleDownMachinePool []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
+		// ScaleUpMachinePool holds details about calls to the ScaleUpMachinePool method.
+		ScaleUpMachinePool []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// UpdateStatus holds details about calls to the UpdateStatus method.
 		UpdateStatus []struct {
 			// ID is the id argument value.
@@ -98,12 +131,6 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
-	lockCreate          sync.RWMutex
-	lockFindCluster     sync.RWMutex
-	lockFindClusterByID sync.RWMutex
-	lockGetClusterDNS   sync.RWMutex
-	lockListByStatus    sync.RWMutex
-	lockUpdateStatus    sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -116,9 +143,9 @@ func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*v1.Cluster, *erro
 	}{
 		Cluster: cluster,
 	}
-	mock.lockCreate.Lock()
+	lockClusterServiceMockCreate.Lock()
 	mock.calls.Create = append(mock.calls.Create, callInfo)
-	mock.lockCreate.Unlock()
+	lockClusterServiceMockCreate.Unlock()
 	return mock.CreateFunc(cluster)
 }
 
@@ -131,9 +158,9 @@ func (mock *ClusterServiceMock) CreateCalls() []struct {
 	var calls []struct {
 		Cluster *api.Cluster
 	}
-	mock.lockCreate.RLock()
+	lockClusterServiceMockCreate.RLock()
 	calls = mock.calls.Create
-	mock.lockCreate.RUnlock()
+	lockClusterServiceMockCreate.RUnlock()
 	return calls
 }
 
@@ -147,9 +174,9 @@ func (mock *ClusterServiceMock) FindCluster(criteria FindClusterCriteria) (*api.
 	}{
 		Criteria: criteria,
 	}
-	mock.lockFindCluster.Lock()
+	lockClusterServiceMockFindCluster.Lock()
 	mock.calls.FindCluster = append(mock.calls.FindCluster, callInfo)
-	mock.lockFindCluster.Unlock()
+	lockClusterServiceMockFindCluster.Unlock()
 	return mock.FindClusterFunc(criteria)
 }
 
@@ -162,9 +189,9 @@ func (mock *ClusterServiceMock) FindClusterCalls() []struct {
 	var calls []struct {
 		Criteria FindClusterCriteria
 	}
-	mock.lockFindCluster.RLock()
+	lockClusterServiceMockFindCluster.RLock()
 	calls = mock.calls.FindCluster
-	mock.lockFindCluster.RUnlock()
+	lockClusterServiceMockFindCluster.RUnlock()
 	return calls
 }
 
@@ -178,9 +205,9 @@ func (mock *ClusterServiceMock) FindClusterByID(clusterID string) (api.Cluster, 
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockFindClusterByID.Lock()
+	lockClusterServiceMockFindClusterByID.Lock()
 	mock.calls.FindClusterByID = append(mock.calls.FindClusterByID, callInfo)
-	mock.lockFindClusterByID.Unlock()
+	lockClusterServiceMockFindClusterByID.Unlock()
 	return mock.FindClusterByIDFunc(clusterID)
 }
 
@@ -193,9 +220,9 @@ func (mock *ClusterServiceMock) FindClusterByIDCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockFindClusterByID.RLock()
+	lockClusterServiceMockFindClusterByID.RLock()
 	calls = mock.calls.FindClusterByID
-	mock.lockFindClusterByID.RUnlock()
+	lockClusterServiceMockFindClusterByID.RUnlock()
 	return calls
 }
 
@@ -209,9 +236,9 @@ func (mock *ClusterServiceMock) GetClusterDNS(clusterID string) (string, *errors
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockGetClusterDNS.Lock()
+	lockClusterServiceMockGetClusterDNS.Lock()
 	mock.calls.GetClusterDNS = append(mock.calls.GetClusterDNS, callInfo)
-	mock.lockGetClusterDNS.Unlock()
+	lockClusterServiceMockGetClusterDNS.Unlock()
 	return mock.GetClusterDNSFunc(clusterID)
 }
 
@@ -224,9 +251,9 @@ func (mock *ClusterServiceMock) GetClusterDNSCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockGetClusterDNS.RLock()
+	lockClusterServiceMockGetClusterDNS.RLock()
 	calls = mock.calls.GetClusterDNS
-	mock.lockGetClusterDNS.RUnlock()
+	lockClusterServiceMockGetClusterDNS.RUnlock()
 	return calls
 }
 
@@ -240,9 +267,9 @@ func (mock *ClusterServiceMock) ListByStatus(state api.ClusterStatus) ([]api.Clu
 	}{
 		State: state,
 	}
-	mock.lockListByStatus.Lock()
+	lockClusterServiceMockListByStatus.Lock()
 	mock.calls.ListByStatus = append(mock.calls.ListByStatus, callInfo)
-	mock.lockListByStatus.Unlock()
+	lockClusterServiceMockListByStatus.Unlock()
 	return mock.ListByStatusFunc(state)
 }
 
@@ -255,9 +282,71 @@ func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 	var calls []struct {
 		State api.ClusterStatus
 	}
-	mock.lockListByStatus.RLock()
+	lockClusterServiceMockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
-	mock.lockListByStatus.RUnlock()
+	lockClusterServiceMockListByStatus.RUnlock()
+	return calls
+}
+
+// ScaleDownMachinePool calls ScaleDownMachinePoolFunc.
+func (mock *ClusterServiceMock) ScaleDownMachinePool(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
+	if mock.ScaleDownMachinePoolFunc == nil {
+		panic("ClusterServiceMock.ScaleDownMachinePoolFunc: method is nil but ClusterService.ScaleDownMachinePool was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	lockClusterServiceMockScaleDownMachinePool.Lock()
+	mock.calls.ScaleDownMachinePool = append(mock.calls.ScaleDownMachinePool, callInfo)
+	lockClusterServiceMockScaleDownMachinePool.Unlock()
+	return mock.ScaleDownMachinePoolFunc(clusterID)
+}
+
+// ScaleDownMachinePoolCalls gets all the calls that were made to ScaleDownMachinePool.
+// Check the length with:
+//     len(mockedClusterService.ScaleDownMachinePoolCalls())
+func (mock *ClusterServiceMock) ScaleDownMachinePoolCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	lockClusterServiceMockScaleDownMachinePool.RLock()
+	calls = mock.calls.ScaleDownMachinePool
+	lockClusterServiceMockScaleDownMachinePool.RUnlock()
+	return calls
+}
+
+// ScaleUpMachinePool calls ScaleUpMachinePoolFunc.
+func (mock *ClusterServiceMock) ScaleUpMachinePool(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
+	if mock.ScaleUpMachinePoolFunc == nil {
+		panic("ClusterServiceMock.ScaleUpMachinePoolFunc: method is nil but ClusterService.ScaleUpMachinePool was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	lockClusterServiceMockScaleUpMachinePool.Lock()
+	mock.calls.ScaleUpMachinePool = append(mock.calls.ScaleUpMachinePool, callInfo)
+	lockClusterServiceMockScaleUpMachinePool.Unlock()
+	return mock.ScaleUpMachinePoolFunc(clusterID)
+}
+
+// ScaleUpMachinePoolCalls gets all the calls that were made to ScaleUpMachinePool.
+// Check the length with:
+//     len(mockedClusterService.ScaleUpMachinePoolCalls())
+func (mock *ClusterServiceMock) ScaleUpMachinePoolCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	lockClusterServiceMockScaleUpMachinePool.RLock()
+	calls = mock.calls.ScaleUpMachinePool
+	lockClusterServiceMockScaleUpMachinePool.RUnlock()
 	return calls
 }
 
@@ -273,9 +362,9 @@ func (mock *ClusterServiceMock) UpdateStatus(id string, status api.ClusterStatus
 		ID:     id,
 		Status: status,
 	}
-	mock.lockUpdateStatus.Lock()
+	lockClusterServiceMockUpdateStatus.Lock()
 	mock.calls.UpdateStatus = append(mock.calls.UpdateStatus, callInfo)
-	mock.lockUpdateStatus.Unlock()
+	lockClusterServiceMockUpdateStatus.Unlock()
 	return mock.UpdateStatusFunc(id, status)
 }
 
@@ -290,8 +379,8 @@ func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 		ID     string
 		Status api.ClusterStatus
 	}
-	mock.lockUpdateStatus.RLock()
+	lockClusterServiceMockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
-	mock.lockUpdateStatus.RUnlock()
+	lockClusterServiceMockUpdateStatus.RUnlock()
 	return calls
 }

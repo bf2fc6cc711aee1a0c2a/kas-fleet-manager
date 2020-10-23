@@ -5,13 +5,14 @@ import (
 	"reflect"
 	"testing"
 
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
-	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 )
 
 var (
@@ -34,6 +35,19 @@ func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 		modifyFn(cluster)
 	}
 	return cluster
+}
+
+// build a test machine pool
+func buildTestMachinePool(replicas int) *clustersmgmtv1.MachinePool {
+	pool, err := clustersmgmtv1.NewMachinePool().
+		ID(DefaultMachinePoolID).
+		Replicas(replicas).
+		InstanceType(DefaultInstanceType).
+		Build()
+	if err != nil {
+		return nil
+	}
+	return pool
 }
 
 func Test_Cluster_Create(t *testing.T) {
@@ -604,6 +618,132 @@ func Test_UpdateStatus(t *testing.T) {
 			err := k.UpdateStatus(tt.args.id, tt.args.status)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateStatus() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func Test_ScaleUpMachinePool(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+	type args struct {
+		clusterID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "error when status is undefined",
+			args: args{
+				clusterID: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when scale up machine pool ocm function fails",
+			args: args{
+				clusterID: "test",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ScaleUpMachinePoolFunc: func(clusterID string, poolID string) (*v1.MachinePool, error) {
+						return nil, errors.New("test ScaleUpMachinePool failure")
+					},
+					MachinePoolExistsFunc: func(clusterID string, poolID string) bool {
+						return true
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when create machine pool ocm function fails",
+			args: args{
+				clusterID: "test",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					MachinePoolExistsFunc: func(clusterID string, poolID string) bool {
+						return false
+					},
+					CreateMachinePoolFunc: func(clusterID string, poolID string, instanceType string, replicas int) (*v1.MachinePool, error) {
+						return nil, errors.New("test CreateMachinePool failure")
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				ocmClient: tt.fields.ocmClient,
+			}
+			_, err := k.ScaleUpMachinePool(tt.args.clusterID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ScaleUpMachinePool() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func Test_ScaleDownMachinePool(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+	type args struct {
+		clusterID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "error when status is undefined",
+			args: args{
+				clusterID: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when ocm function fails",
+			args: args{
+				clusterID: "test",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ScaleDownMachinePoolFunc: func(clusterID string, poolID string) (*v1.MachinePool, error) {
+						return nil, errors.New("test ScaleDownMachinePool failure")
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				ocmClient: tt.fields.ocmClient,
+			}
+			_, err := k.ScaleDownMachinePool(tt.args.clusterID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ScaleDownMachinePool() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
