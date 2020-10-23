@@ -1,6 +1,7 @@
 package ocm
 
 import (
+	"fmt"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -19,6 +20,10 @@ type Client interface {
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
+	MachinePoolExists(clusterID, poolID string) bool
+	CreateMachinePool(clusterID, poolID, instanceType string, replicas int) (*clustersmgmtv1.MachinePool, error)
+	ScaleUpMachinePool(clusterID, poolID string) (*clustersmgmtv1.MachinePool, error)
+	ScaleDownMachinePool(clusterID, poolID string) (*clustersmgmtv1.MachinePool, error)
 }
 
 var _ Client = &client{}
@@ -157,4 +162,77 @@ func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
 		Delete().
 		Send()
 	return response.Status(), syncsetErr
+}
+
+// MachinePoolExists checks if a machine pool with a given ID exists in the cluster
+func (c client) MachinePoolExists(clusterID, poolID string) bool {
+	cluster := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+	resp, err := cluster.MachinePools().List().Send()
+	if err != nil {
+		fmt.Println(err)
+	}
+	machinePools := resp.Items().Slice()
+	for _, pool := range machinePools {
+		if pool.ID() == poolID {
+			return true
+		}
+	}
+	return false
+}
+
+// CreateMachinePool creates a new machine pool for a given cluster
+func (c client) CreateMachinePool(clusterID, poolID, instanceType string, replicas int) (*clustersmgmtv1.MachinePool, error) {
+	cluster := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+	machinePool, err := clustersmgmtv1.NewMachinePool().
+		ID(poolID).
+		Replicas(replicas).
+		InstanceType(instanceType).
+		Build()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := cluster.MachinePools().Add().Body(machinePool).Send()
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body(), err
+}
+
+// ScaleUpMachinePool scales up a machine pool by a single node
+func (c client) ScaleUpMachinePool(clusterID, poolID string) (*clustersmgmtv1.MachinePool, error) {
+	return c.scaleMachinePool(clusterID, poolID, 1)
+}
+
+// ScaleDownMachinePool scales down a machine pool by a single node
+func (c client) ScaleDownMachinePool(clusterID, poolID string) (*clustersmgmtv1.MachinePool, error) {
+	return c.scaleMachinePool(clusterID, poolID, -1)
+}
+
+// scaleMachinePool scales the machine pool nodes up or down by the value of `numNodes`
+func (c client) scaleMachinePool(clusterID, poolID string, numNodes int) (*clustersmgmtv1.MachinePool, error) {
+	cluster := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+	machinePool := cluster.MachinePools().MachinePool(poolID)
+
+	// get current number of cluster nodes
+	poolResp, err := machinePool.Get().Send()
+	if err != nil {
+		return nil, err
+	}
+	nodes := poolResp.Body().Replicas()
+
+	// increase or decrease the number of nodes
+	patch, err := clustersmgmtv1.NewMachinePool().Replicas(nodes + numNodes).
+		Build()
+	if err != nil {
+		return nil, err
+	}
+
+	// update the machine pool
+	resp, err := machinePool.Update().
+		Body(patch).
+		Send()
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body(), nil
 }
