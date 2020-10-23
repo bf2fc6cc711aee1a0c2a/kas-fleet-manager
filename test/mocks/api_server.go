@@ -9,6 +9,7 @@ import (
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"io"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
 	"net"
 	"net/http"
@@ -179,14 +180,13 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	}
 	server.Listener = l
 	server.Start()
-	err = nil
-	for i := 0; i< 10; i++  {
-		_, err := http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
-		if err == nil {
-			break
-		}
-		fmt.Println("Err: " + err.Error())
-		time.Sleep(time.Second)
+	err = wait.PollImmediate(time.Second, 10*time.Second, func() (done bool, err error) {
+		_, err = http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
+		fmt.Println("Trying API SERVER " + err.Error())
+		return err == nil, nil
+	})
+	if err != nil{
+		panic(err)
 	}
 	return server
 }
