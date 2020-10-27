@@ -52,11 +52,74 @@ $ make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS
 
 # Generate a temporary ocm token and set it in the secrets/ocm-service.token file
 # Note: This will need to be re-generated as this temporary token will expire within a few minutes.
-$ make ocm/token/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
+$ make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
 
 # Running the service locally
 $ ./managed-services-api serve  (default: http://localhost:8000)
 ```
+
+## Running the Service on an OpenShift cluster
+### Build and Push the Image to the OpenShift Image Registry
+Login to the OpenShift internal image registry
+
+**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
+```
+# Login to the OpenShift cluster
+$ oc login <api-url> -u <username> -p <password>
+
+# Login to the OpenShift image registry
+$ make docker/login/internal
+```
+
+Build and push the image
+```
+# Create a namespace where the image will be pushed to.
+$ make deploy/project
+
+# Build and push the image to the OpenShift image registry. 
+$ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
+```
+
+**Optional parameters**:
+- `NAMESPACE`: The namespace where the image will be pushed to. Defaults to 'managed-services-$USER.'
+- `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
+
+### Deploy the Service using Templates
+This will deploy a postgres database and the managed-services-api to a namespace in an OpenShift cluster.
+
+```
+# Deploy the service
+make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
+```
+**Optional parameters**:
+- `NAMESPACE`: The namespace where the service will be deployed to. Defaults to managed-services-$USER.
+- `IMAGE_REGISTRY`: Registry used by the image. Defaults to the OpenShift internal registry.
+- `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/managed-services-api'.
+- `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
+- `OCM_SERVICE_CLIENT_ID`: Client id used to interact with other UHC services.
+- `OCM_SERVICE_CLIENT_SECRET`: Client secret used to interact with other UHC services.
+- `OCM_SERVICE_TOKEN`: Offline token used to interact with other UHC services. If client id and secret is not defined, this parameter must be specified. See [user account setup](#user-account-setup) section on how to get this offline token.
+- `AWS_ACCESS_KEY`: AWS access key. This is only required if you wish to create CCS clusters using the service.
+- `AWS_ACCOUNT_ID`: AWS account ID. This is only required if you wish to create CCS clusters using the service.
+- `AWS_SECRET_ACCESS_KEY`: AWS secret access key. This is only required if you wish to create CCS clusters using the service.
+- `ENABLE_OCM_MOCK`: Enables mock ocm client. Defaults to false.
+- `OCM_MOCK_MODE`: The type of mock to use when ocm mock is enabled. Defaults to 'emulate-server'.
+- `JWKS_URL`: JWK Token Certificate URL. Defaults to https://api.openshift.com/.well-known/jwks.json.
+
+The service can be accessed by via the host of the route created by the service deployment.
+```
+oc get route managed-services-api
+```
+
+### Removing the Service Deployment from the OpenShift
+```
+# Removes all resources created on service deployment
+$ make undeploy
+```
+
+**Optional parameters**:
+- `NAMESPACE`: The namespace where the service deployment will be removed from. Defaults to managed-services-$USER.
+
 ## Using the Service
 #### Creating an OSD Cluster
 ```
@@ -166,7 +229,7 @@ Both scenarios require a database and OCM token to be setup before running integ
 
 ```
 make db/setup
-make ocm/token/setup OCM_OFFLINE_TOKEN=<ocm-offline-token>
+make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
 ```
 
 To run integration tests with an "emulated" OCM environment, run:
