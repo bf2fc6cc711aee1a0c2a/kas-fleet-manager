@@ -90,7 +90,7 @@ endif
 
 # Enable Go modules:
 export GO111MODULE=on
-export GOPROXY=https://proxy.golang.org,direct
+export GOPROXY=https://proxy.golang.org
 export GOPRIVATE=gitlab.cee.redhat.com
 
 ifndef SERVER_URL
