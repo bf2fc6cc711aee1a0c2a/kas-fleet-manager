@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -212,7 +213,7 @@ var kafkaMetrics = &strimzi.Metrics{
 	},
 }
 
-//go:generate moq -out syncset_mock.go . SyncsetService
+//go:generate moq -out syncset_moq.go . SyncsetService
 type SyncsetService interface {
 	Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, clusterId string) (*cmv1.Syncset, *errors.ServiceError)
 	Delete(syncsetId, clusterId string) *errors.ServiceError
