@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi7/ubi
+FROM quay.io/app-sre/centos:8
 
 RUN \
     yum install -y \
