@@ -46,7 +46,7 @@ else
         PGHOST:="172.18.0.22"
 endif
 
-### Envrionment-sourced variables with defaults
+### Environment-sourced variables with defaults
 # Can be overriden by setting environment var before running
 # Example:
 #   OCM_ENV=testing make run
@@ -92,7 +92,7 @@ help:
 	@echo "make clean                	delete temporary generated files"
 	@echo "make setup/git/hooks      	setup git hooks"
 	@echo "make docker/login/internal	login to an openshift cluster image registry"
-	@echo "make image/build/push/internal  build and push image to an openshift cluster image registry"
+	@echo "make image/build/push/internal  build and push image to an openshift cluster image registry."
 	@echo "make deploy               	deploy the service via templates to an openshift cluster"
 	@echo "make undeploy             	remove the service deployments from an openshift cluster"
 	@echo "$(fake)"

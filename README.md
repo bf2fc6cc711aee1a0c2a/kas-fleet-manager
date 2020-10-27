@@ -76,8 +76,8 @@ Build and push the image
 # Create a namespace where the image will be pushed to.
 $ make deploy/project
 
-# Build and push the image to the OpenShift image registry
-$ make image/build/push/internal
+# Build and push the image to the OpenShift image registry. 
+$ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 ```
 
 **Optional parameters**:
