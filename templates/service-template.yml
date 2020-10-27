@@ -206,7 +206,7 @@ objects:
               secretName: ocm-ex-service-rds
           initContainers:
           - name: id
-            image: centos:7
+            image: quay.io/app-sre/centos:8
             command:
             - echo
             - ${VERSION}-${BUILD_ID}-${BUILD_TS}
