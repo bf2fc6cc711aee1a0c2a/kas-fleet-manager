@@ -68,7 +68,7 @@ var _ Client = &ClientMock{}
 //             GetRegionsFunc: func(provider *v1.CloudProvider) (*v1.CloudRegionList, error) {
 // 	               panic("mock out the GetRegions method")
 //             },
-//             MachinePoolExistsFunc: func(clusterID string, poolID string) bool {
+//             MachinePoolExistsFunc: func(clusterID string, poolID string) (bool, error) {
 // 	               panic("mock out the MachinePoolExists method")
 //             },
 //             ScaleDownMachinePoolFunc: func(clusterID string, poolID string) (*v1.MachinePool, error) {
@@ -118,7 +118,7 @@ type ClientMock struct {
 	GetRegionsFunc func(provider *v1.CloudProvider) (*v1.CloudRegionList, error)
 
 	// MachinePoolExistsFunc mocks the MachinePoolExists method.
-	MachinePoolExistsFunc func(clusterID string, poolID string) bool
+	MachinePoolExistsFunc func(clusterID string, poolID string) (bool, error)
 
 	// ScaleDownMachinePoolFunc mocks the ScaleDownMachinePool method.
 	ScaleDownMachinePoolFunc func(clusterID string, poolID string) (*v1.MachinePool, error)
@@ -572,7 +572,7 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 }
 
 // MachinePoolExists calls MachinePoolExistsFunc.
-func (mock *ClientMock) MachinePoolExists(clusterID string, poolID string) bool {
+func (mock *ClientMock) MachinePoolExists(clusterID string, poolID string) (bool, error) {
 	if mock.MachinePoolExistsFunc == nil {
 		panic("ClientMock.MachinePoolExistsFunc: method is nil but Client.MachinePoolExists was just called")
 	}

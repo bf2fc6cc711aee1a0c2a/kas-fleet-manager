@@ -1,7 +1,6 @@
 package ocm
 
 import (
-	"fmt"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -20,7 +19,7 @@ type Client interface {
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
-	MachinePoolExists(clusterID, poolID string) bool
+	MachinePoolExists(clusterID, poolID string) (bool, error)
 	CreateMachinePool(clusterID, poolID, instanceType string, replicas int) (*clustersmgmtv1.MachinePool, error)
 	ScaleUpMachinePool(clusterID, poolID string) (*clustersmgmtv1.MachinePool, error)
 	ScaleDownMachinePool(clusterID, poolID string) (*clustersmgmtv1.MachinePool, error)
@@ -165,19 +164,19 @@ func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
 }
 
 // MachinePoolExists checks if a machine pool with a given ID exists in the cluster
-func (c client) MachinePoolExists(clusterID, poolID string) bool {
+func (c client) MachinePoolExists(clusterID, poolID string) (bool, error) {
 	cluster := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID)
 	resp, err := cluster.MachinePools().List().Send()
 	if err != nil {
-		fmt.Println(err)
+		return false, err
 	}
 	machinePools := resp.Items().Slice()
 	for _, pool := range machinePools {
 		if pool.ID() == poolID {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 // CreateMachinePool creates a new machine pool for a given cluster
