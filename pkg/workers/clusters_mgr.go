@@ -53,7 +53,7 @@ func (c *ClusterManager) Start() {
 			case <- c.imStop:
 				ticker.Stop()
 				defer c.syncTeardown.Done()
-				fmt.Println("Stopping reconcile loop")
+				glog.V(1).Infoln("Stopping reconcile loop")
 				return
 			}
 		}
