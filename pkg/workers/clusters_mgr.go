@@ -43,18 +43,17 @@ func (c *ClusterManager) Start() {
 	glog.V(1).Infoln("Starting cluster manager")
 	// start reconcile immediately and then on every repeat interval
 	c.reconcile()
-	fmt.Println("Starting")
 	ticker := time.NewTicker(repeatInterval)
 	go func() {
 		for {
 			select {
 			case <- ticker.C:
-				fmt.Println("REC")
+				glog.V(1).Infoln("Reconciling OCM")
 				c.reconcile()
 			case <- c.imStop:
 				ticker.Stop()
 				defer c.syncTeardown.Done()
-				fmt.Println("STOP")
+				fmt.Println("Stopping reconcile loop")
 				return
 			}
 		}

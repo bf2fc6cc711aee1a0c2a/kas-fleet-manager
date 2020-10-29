@@ -182,10 +182,10 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	server.Start()
 	err = wait.PollImmediate(time.Second, 10*time.Second, func() (done bool, err error) {
 		_, err = http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
-		fmt.Println("Trying API SERVER " + err.Error())
 		return err == nil, nil
 	})
 	if err != nil{
+		log.Fatal("Timed out waiting for mock server to start.")
 		panic(err)
 	}
 	return server
