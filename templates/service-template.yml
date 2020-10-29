@@ -178,6 +178,12 @@ parameters:
   value: "5s"
 
 objects:
+  - kind: ServiceAccount
+    apiVersion: v1
+    metadata:
+      name: managed-services-api
+      labels:
+        app: managed-services-api
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -199,6 +205,8 @@ objects:
           labels:
             app: managed-services-api
         spec:
+          serviceAccount: managed-services-api
+          serviceAccountName: managed-services-api
           volumes:
           - name: tls
             secret:
