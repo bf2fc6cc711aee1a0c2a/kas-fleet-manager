@@ -180,7 +180,10 @@ func (c clusterService) ScaleUpMachinePool(clusterID string) (*clustersmgmtv1.Ma
 	}
 
 	// check if the machine pool exists
-	machinePoolExists := c.ocmClient.MachinePoolExists(clusterID, DefaultMachinePoolID)
+	machinePoolExists, err := c.ocmClient.MachinePoolExists(clusterID, DefaultMachinePoolID)
+	if err != nil {
+		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
+	}
 
 	// create a new machine pool if one doesn't exist
 	// and return early, since we won't need to scale up an existing pool

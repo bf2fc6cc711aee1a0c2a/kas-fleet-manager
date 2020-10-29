@@ -639,7 +639,7 @@ func Test_ScaleUpMachinePool(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "error when status is undefined",
+			name: "error when cluster id is undefined",
 			args: args{
 				clusterID: "",
 			},
@@ -655,8 +655,8 @@ func Test_ScaleUpMachinePool(t *testing.T) {
 					ScaleUpMachinePoolFunc: func(clusterID string, poolID string) (*v1.MachinePool, error) {
 						return nil, errors.New("test ScaleUpMachinePool failure")
 					},
-					MachinePoolExistsFunc: func(clusterID string, poolID string) bool {
-						return true
+					MachinePoolExistsFunc: func(clusterID string, poolID string) (bool, error) {
+						return true, nil
 					},
 				},
 			},
@@ -669,11 +669,25 @@ func Test_ScaleUpMachinePool(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					MachinePoolExistsFunc: func(clusterID string, poolID string) bool {
-						return false
+					MachinePoolExistsFunc: func(clusterID string, poolID string) (bool, error) {
+						return false, nil
 					},
 					CreateMachinePoolFunc: func(clusterID string, poolID string, instanceType string, replicas int) (*v1.MachinePool, error) {
 						return nil, errors.New("test CreateMachinePool failure")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when machine pool exists ocm function fails",
+			args: args{
+				clusterID: "test",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					MachinePoolExistsFunc: func(clusterID string, poolID string) (bool, error) {
+						return false, errors.New("test MachinePoolExists failure")
 					},
 				},
 			},
@@ -712,14 +726,14 @@ func Test_ScaleDownMachinePool(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "error when status is undefined",
+			name: "error when cluster id is undefined",
 			args: args{
 				clusterID: "",
 			},
 			wantErr: true,
 		},
 		{
-			name: "error when ocm function fails",
+			name: "error when scale down ocm function fails",
 			args: args{
 				clusterID: "test",
 			},
