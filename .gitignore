@@ -48,3 +48,6 @@ cmd/managed-services-api/managed-services-api
 
 # cluster details (used for testing)
 /test/integration/test_cluster.json
+
+# test reports
+/reports/*.xml
