@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -13,6 +16,7 @@ import (
 	"github.com/gorilla/mux"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"time"
 )
 
 const (
@@ -170,7 +174,21 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	for endpoint, handleFn := range b.handlerRegister {
 		router.HandleFunc(endpoint.Path, handleFn).Methods(endpoint.Method)
 	}
-	server := httptest.NewServer(router)
+	server := httptest.NewUnstartedServer(router)
+	l, err := net.Listen("tcp", "127.0.0.1:9876")
+	if err != nil {
+		log.Fatal(err)
+	}
+	server.Listener = l
+	server.Start()
+	err = wait.PollImmediate(time.Second, 10*time.Second, func() (done bool, err error) {
+		_, err = http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
+		return err == nil, nil
+	})
+	if err != nil{
+		log.Fatal("Timed out waiting for mock server to start.")
+		panic(err)
+	}
 	return server
 }
 
