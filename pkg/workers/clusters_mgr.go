@@ -23,8 +23,8 @@ type ClusterManager struct {
 	clusterService        services.ClusterService
 	cloudProvidersService services.CloudProvidersService
 	timer                 *time.Timer
-	imStop				  chan struct{}
-	syncTeardown		  sync.WaitGroup
+	imStop                chan struct{}
+	syncTeardown          sync.WaitGroup
 }
 
 // NewClusterManager creates a new cluster manager
@@ -47,10 +47,10 @@ func (c *ClusterManager) Start() {
 	go func() {
 		for {
 			select {
-			case <- ticker.C:
-				glog.V(1).Infoln("Reconciling OCM")
+			case <-ticker.C:
+				glog.V(1).Infoln("Reconciling OCM clusters")
 				c.reconcile()
-			case <- c.imStop:
+			case <-c.imStop:
 				ticker.Stop()
 				defer c.syncTeardown.Done()
 				glog.V(1).Infoln("Stopping reconcile loop")
