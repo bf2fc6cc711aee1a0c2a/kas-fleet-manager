@@ -1,10 +1,11 @@
 package test
 
 import (
-	gm "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"net/http/httptest"
 	"testing"
+
+	gm "github.com/onsi/gomega"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 )

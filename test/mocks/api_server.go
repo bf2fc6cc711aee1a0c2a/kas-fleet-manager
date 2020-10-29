@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gorilla/mux"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"io"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
@@ -15,6 +12,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+
+	"github.com/gorilla/mux"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"time"
 )
 
