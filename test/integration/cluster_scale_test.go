@@ -43,6 +43,14 @@ func TestClusterScaleUp(t *testing.T) {
 
 	// we need to override the response for local testing
 	//Expect(machinePool.Replicas()).To(Equal(3))
+
+	// scale down the nodes
+	for i := 0; i < services.DefaultMachinePoolReplicas; i++ {
+		_, err = h.Env().Services.Cluster.ScaleDownMachinePool(clusterID)
+		if err != nil {
+			t.Fatalf("Failed to scale down nodes for test: TestClusterScaleUp: %v", err)
+		}
+	}
 }
 
 func TestClusterScaleDown(t *testing.T) {
