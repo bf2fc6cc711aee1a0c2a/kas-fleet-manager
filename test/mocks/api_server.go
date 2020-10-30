@@ -63,9 +63,10 @@ var (
 	EndpointClusterStatusGet        = Endpoint{EndpointPathClusterStatus, http.MethodGet}
 	EndpointClusterAddonsGet        = Endpoint{EndpointPathClusterAddons, http.MethodGet}
 	EndpointClusterAddonPost        = Endpoint{EndpointPathClusterAddons, http.MethodPost}
-	EndpointMachinePoolGet          = Endpoint{EndpointPathMachinePools, http.MethodGet}
+	EndpointMachinePoolsGet         = Endpoint{EndpointPathMachinePools, http.MethodGet}
 	EndpointMachinePoolPost         = Endpoint{EndpointPathMachinePools, http.MethodPost}
 	EndpointMachinePoolPatch        = Endpoint{EndpointPathMachinePool, http.MethodPatch}
+	EndpointMachinePoolGet          = Endpoint{EndpointPathMachinePool, http.MethodGet}
 )
 
 // variables for mocked ocm types
@@ -175,7 +176,12 @@ func (b *MockConfigurableServerBuilder) SetClusterAddonPostResponse(addon *clust
 	b.handlerRegister[EndpointClusterAddonPost] = buildMockRequestHandler(addon, err)
 }
 
-// SetMachinePoolsGetResponse set a mock response machine pool list or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools
+// SetMachinePoolsGetResponse set a mock response machine pool or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools
+func (b *MockConfigurableServerBuilder) SetMachinePoolsGetResponse(mp *clustersmgmtv1.MachinePoolList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointMachinePoolsGet] = buildMockRequestHandler(mp, err)
+}
+
+// SetMachinePoolGetResponse set a mock response machine pool list or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}
 func (b *MockConfigurableServerBuilder) SetMachinePoolGetResponse(mp *clustersmgmtv1.MachinePoolList, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointMachinePoolGet] = buildMockRequestHandler(mp, err)
 }
@@ -234,7 +240,8 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointClusterStatusGet:        buildMockRequestHandler(MockClusterStatus, nil),
 		EndpointClusterAddonsGet:        buildMockRequestHandler(MockClusterAddonInstallationList, nil),
 		EndpointClusterAddonPost:        buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointMachinePoolGet:          buildMockRequestHandler(MockMachinePoolList, nil),
+		EndpointMachinePoolsGet:         buildMockRequestHandler(MockMachinePoolList, nil),
+		EndpointMachinePoolGet:          buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPatch:        buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPost:         buildMockRequestHandler(MockMachinePool, nil),
 	}, nil
