@@ -25,12 +25,12 @@ func (r *Reconciler) Start(worker Worker) {
 		for {
 			select {
 			case <-ticker.C:
-				glog.V(1).Infoln("Reconciling OCM clusters")
+				glog.V(1).Infoln(fmt.Sprintf("Starting %T", worker))
 				worker.reconcile()
 			case <-*worker.GetStopChan():
 				ticker.Stop()
 				defer worker.GetSyncGroup().Done()
-				glog.V(1).Infoln("Stopping reconcile loop")
+				glog.V(1).Infoln(fmt.Sprintf("Stopping reconcile loop for %T", worker))
 				return
 			}
 		}
