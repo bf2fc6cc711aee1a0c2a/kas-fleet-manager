@@ -47,7 +47,7 @@ func NewAPIServer() Server {
 		check(err, "Can't load OpenAPI specification")
 	}
 
-	kafkaHandler := handlers.NewKafkaHandler(services.Kafka)
+	kafkaHandler := handlers.NewKafkaHandler(services.Kafka, services.Config)
 	errorsHandler := handlers.NewErrorsHandler()
 
 	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
