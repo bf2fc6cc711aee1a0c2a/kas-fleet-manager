@@ -114,22 +114,24 @@ func TestKafkaPost_Validations(t *testing.T) {
 		wantCode int
 	}{
 		{
-			name: "HTTP 400 when region not provided",
+			name: "HTTP 400 when region not supported",
 			body: openapi.KafkaRequest{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
+				Region:        "us-east-3",
 				Owner:         mockKafkaOwner,
 				Name:          mockKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
 		{
-			name: "HTTP 400 when provider not provided",
+			name: "HTTP 400 when provider not supported",
 			body: openapi.KafkaRequest{
-				MultiAz: mocks.MockCluster.MultiAZ(),
-				Region:  mocks.MockCluster.Region().ID(),
-				Owner:   mockKafkaOwner,
-				Name:    mockKafkaName,
+				MultiAz:       mocks.MockCluster.MultiAZ(),
+				CloudProvider: "azure",
+				Region:        mocks.MockCluster.Region().ID(),
+				Owner:         mockKafkaOwner,
+				Name:          mockKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},

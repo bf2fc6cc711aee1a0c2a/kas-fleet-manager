@@ -39,6 +39,7 @@ type Services struct {
 	Kafka          services.KafkaService
 	Cluster        services.ClusterService
 	CloudProviders services.CloudProvidersService
+	Config         services.ConfigService
 }
 
 type Clients struct {
@@ -133,17 +134,26 @@ func (e *Env) Initialize() error {
 	return err
 }
 
-func (env *Env) LoadServices() {
+func (env *Env) LoadServices() error {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 
 	syncsetService := services.NewSyncsetService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
-	cloudproviderservice := services.NewCloudProvidersService(ocmClient)
+	cloudProviderService := services.NewCloudProvidersService(ocmClient)
+	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
-	env.Services.CloudProviders = cloudproviderservice
+	env.Services.CloudProviders = cloudProviderService
+
+	// load the new config service and ensure it's valid (pre-req checks are performed)
+	env.Services.Config = configService
+	if err := env.Services.Config.Validate(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (env *Env) LoadClients() error {

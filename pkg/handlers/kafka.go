@@ -14,11 +14,13 @@ import (
 
 type kafkaHandler struct {
 	service services.KafkaService
+	config  services.ConfigService
 }
 
-func NewKafkaHandler(service services.KafkaService) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, configService services.ConfigService) *kafkaHandler {
 	return &kafkaHandler{
 		service: service,
+		config:  configService,
 	}
 }
 
@@ -31,13 +33,11 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			validateAsyncEnabled(r, "creating kafka requests"),
 			validateNotEmpty(&kafkaRequest.Owner, "owner"),
 			validateEmpty(&kafkaRequest.Id, "id"),
-			validateNotEmpty(&kafkaRequest.Region, "region"),
-			validateNotEmpty(&kafkaRequest.CloudProvider, "cloud_provider"),
 			validateNotEmpty(&kafkaRequest.Name, "name"),
+			validateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
-
 			err := h.service.RegisterKafkaJob(convKafka)
 			if err != nil {
 				return nil, err

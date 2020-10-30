@@ -13,24 +13,26 @@ import (
 )
 
 type ApplicationConfig struct {
-	Server      *ServerConfig      `json:"server"`
-	Metrics     *MetricsConfig     `json:"metrics"`
-	HealthCheck *HealthCheckConfig `json:"health_check"`
-	Database    *DatabaseConfig    `json:"database"`
-	OCM         *OCMConfig         `json:"ocm"`
-	Sentry      *SentryConfig      `json:"sentry"`
-	AWS         *AWSConfig         `json:"aws"`
+	Server             *ServerConfig      `json:"server"`
+	Metrics            *MetricsConfig     `json:"metrics"`
+	HealthCheck        *HealthCheckConfig `json:"health_check"`
+	Database           *DatabaseConfig    `json:"database"`
+	OCM                *OCMConfig         `json:"ocm"`
+	Sentry             *SentryConfig      `json:"sentry"`
+	AWS                *AWSConfig         `json:"aws"`
+	SupportedProviders *ProviderConfig    `json:"providers"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
-		Server:      NewServerConfig(),
-		Metrics:     NewMetricsConfig(),
-		HealthCheck: NewHealthCheckConfig(),
-		Database:    NewDatabaseConfig(),
-		OCM:         NewOCMConfig(),
-		Sentry:      NewSentryConfig(),
-		AWS:         NewAWSConfig(),
+		Server:             NewServerConfig(),
+		Metrics:            NewMetricsConfig(),
+		HealthCheck:        NewHealthCheckConfig(),
+		Database:           NewDatabaseConfig(),
+		OCM:                NewOCMConfig(),
+		Sentry:             NewSentryConfig(),
+		AWS:                NewAWSConfig(),
+		SupportedProviders: NewSupportedProvidersConfig(),
 	}
 }
 
@@ -71,6 +73,10 @@ func (c *ApplicationConfig) ReadFiles() error {
 		return err
 	}
 	err = c.AWS.ReadFiles()
+	if err != nil {
+		return err
+	}
+	err = c.SupportedProviders.ReadFiles()
 	return err
 }
 

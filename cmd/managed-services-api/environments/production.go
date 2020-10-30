@@ -18,7 +18,10 @@ func loadProduction(env *Env) error {
 	if err != nil {
 		return err
 	}
-	env.LoadServices()
+	err = env.LoadServices()
+	if err != nil {
+		return err
+	}
 
 	return env.InitializeSentry()
 }
