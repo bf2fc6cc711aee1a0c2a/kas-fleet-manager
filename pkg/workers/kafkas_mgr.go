@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -17,6 +18,9 @@ type KafkaManager struct {
 	clusterService services.ClusterService
 	kafkaService   services.KafkaService
 	timer          *time.Timer
+	imStop         chan struct{}
+	syncTeardown   sync.WaitGroup
+	reconciler     Reconciler
 }
 
 // NewKafkaManager creates a new kafka manager
@@ -28,31 +32,22 @@ func NewKafkaManager(kafkaService services.KafkaService, clusterService services
 	}
 }
 
+func (k *KafkaManager) GetStopChan() *chan struct{} {
+	return &k.imStop
+}
+
+func (k *KafkaManager) GetSyncGroup() *sync.WaitGroup {
+	return &k.syncTeardown
+}
+
 // Start initializes the kafka manager to reconcile kafka requests
 func (k *KafkaManager) Start() {
-	glog.V(1).Infoln("Starting kafka manager")
-
-	// start reconcile immediately and then on every repeat interval
-	k.reconcile()
-
-	k.timer = time.NewTimer(repeatInterval)
-	for range k.timer.C {
-		k.reconcile()
-		k.reset() // timer reset, should always be the last task
-	}
+	k.reconciler.Start(k)
 }
 
 // Stop causes the process for reconciling kafka requests to stop.
 func (k *KafkaManager) Stop() {
-	if k.timer == nil {
-		return
-	}
-	k.timer.Stop()
-}
-
-// reset resets the timer to ensure that its invoked only after the new interval period elapses.
-func (k *KafkaManager) reset() {
-	k.timer.Reset(repeatInterval)
+	k.reconciler.Stop(k)
 }
 
 func (k *KafkaManager) reconcile() {

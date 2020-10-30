@@ -13,10 +13,6 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
-const (
-	repeatInterval = 30 * time.Second
-)
-
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
 	ocmClient             ocm.Client
@@ -25,6 +21,7 @@ type ClusterManager struct {
 	timer                 *time.Timer
 	imStop                chan struct{}
 	syncTeardown          sync.WaitGroup
+	reconciler            Reconciler
 }
 
 // NewClusterManager creates a new cluster manager
@@ -36,44 +33,22 @@ func NewClusterManager(clusterService services.ClusterService, cloudProvidersSer
 	}
 }
 
+func (c *ClusterManager) GetStopChan() *chan struct{} {
+	return &c.imStop
+}
+
+func (c *ClusterManager) GetSyncGroup() *sync.WaitGroup {
+	return &c.syncTeardown
+}
+
 // Start initializes the cluster manager to reconcile osd clusters
 func (c *ClusterManager) Start() {
-	c.imStop = make(chan struct{})
-	c.syncTeardown.Add(1)
-	glog.V(1).Infoln("Starting cluster manager")
-	// start reconcile immediately and then on every repeat interval
-	c.reconcile()
-	ticker := time.NewTicker(repeatInterval)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				glog.V(1).Infoln("Reconciling OCM clusters")
-				c.reconcile()
-			case <-c.imStop:
-				ticker.Stop()
-				defer c.syncTeardown.Done()
-				glog.V(1).Infoln("Stopping reconcile loop")
-				return
-			}
-		}
-	}()
+	c.reconciler.Start(c)
 }
 
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
-	select {
-	case <-c.imStop:
-		return
-	default:
-		close(c.imStop)
-		c.syncTeardown.Wait()
-	}
-}
-
-// reset resets the timer to ensure that its invoked only after the new interval period elapses.
-func (c *ClusterManager) reset() {
-	c.timer.Reset(repeatInterval)
+	c.reconciler.Stop(c)
 }
 
 func (c *ClusterManager) reconcile() {
