@@ -20,7 +20,7 @@ func NewClusterCommand() *cobra.Command {
 	}
 
 	// add sub-commands
-	cmd.AddCommand(NewCreateCommand())
+	cmd.AddCommand(NewCreateCommand(), NewScaleCommand())
 
 	return cmd
 }
