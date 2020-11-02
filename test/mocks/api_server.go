@@ -42,6 +42,10 @@ const (
 	EndpointPathClusterStatus = "/api/clusters_mgmt/v1/clusters/{id}/status"
 	// EndpointPathClusterAddons ocm cluster management cluster addons endpoint
 	EndpointPathClusterAddons = "/api/clusters_mgmt/v1/clusters/{id}/addons"
+	// EndpointPathMachinePools ocm cluster management machine pools endpoint
+	EndpointPathMachinePools = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools"
+	// EndpointPathMachinePool ocm cluster management machine pool endpoint
+	EndpointPathMachinePool = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}"
 )
 
 // variables for endpoints
@@ -59,6 +63,10 @@ var (
 	EndpointClusterStatusGet        = Endpoint{EndpointPathClusterStatus, http.MethodGet}
 	EndpointClusterAddonsGet        = Endpoint{EndpointPathClusterAddons, http.MethodGet}
 	EndpointClusterAddonPost        = Endpoint{EndpointPathClusterAddons, http.MethodPost}
+	EndpointMachinePoolsGet         = Endpoint{EndpointPathMachinePools, http.MethodGet}
+	EndpointMachinePoolPost         = Endpoint{EndpointPathMachinePools, http.MethodPost}
+	EndpointMachinePoolPatch        = Endpoint{EndpointPathMachinePool, http.MethodPatch}
+	EndpointMachinePoolGet          = Endpoint{EndpointPathMachinePool, http.MethodGet}
 )
 
 // variables for mocked ocm types
@@ -76,6 +84,8 @@ var (
 	MockClusterStatus                *clustersmgmtv1.ClusterStatus
 	MockClusterAddonInstallation     *clustersmgmtv1.AddOnInstallation
 	MockClusterAddonInstallationList *clustersmgmtv1.AddOnInstallationList
+	MockMachinePoolList              *clustersmgmtv1.MachinePoolList
+	MockMachinePool                  *clustersmgmtv1.MachinePool
 	MockCluster                      *clustersmgmtv1.Cluster
 )
 
@@ -166,6 +176,26 @@ func (b *MockConfigurableServerBuilder) SetClusterAddonPostResponse(addon *clust
 	b.handlerRegister[EndpointClusterAddonPost] = buildMockRequestHandler(addon, err)
 }
 
+// SetMachinePoolsGetResponse set a mock response machine pool or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools
+func (b *MockConfigurableServerBuilder) SetMachinePoolsGetResponse(mp *clustersmgmtv1.MachinePoolList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointMachinePoolsGet] = buildMockRequestHandler(mp, err)
+}
+
+// SetMachinePoolGetResponse set a mock response machine pool list or error for Get /api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}
+func (b *MockConfigurableServerBuilder) SetMachinePoolGetResponse(mp *clustersmgmtv1.MachinePoolList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointMachinePoolGet] = buildMockRequestHandler(mp, err)
+}
+
+// SetMachinePoolPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/machine_pools
+func (b *MockConfigurableServerBuilder) SetMachinePoolPostResponse(mp *clustersmgmtv1.MachinePool, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointMachinePoolPost] = buildMockRequestHandler(mp, err)
+}
+
+// SetMachinePoolPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}
+func (b *MockConfigurableServerBuilder) SetMachinePoolPatchResponse(mp *clustersmgmtv1.MachinePool, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointMachinePoolPatch] = buildMockRequestHandler(mp, err)
+}
+
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
 func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	router := mux.NewRouter()
@@ -210,6 +240,10 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointClusterStatusGet:        buildMockRequestHandler(MockClusterStatus, nil),
 		EndpointClusterAddonsGet:        buildMockRequestHandler(MockClusterAddonInstallationList, nil),
 		EndpointClusterAddonPost:        buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointMachinePoolsGet:         buildMockRequestHandler(MockMachinePoolList, nil),
+		EndpointMachinePoolGet:          buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPatch:        buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPost:         buildMockRequestHandler(MockMachinePool, nil),
 	}, nil
 }
 
@@ -293,6 +327,16 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 			return err
 		}
 		return json.NewEncoder(w).Encode(ocmList)
+	case *clustersmgmtv1.MachinePool:
+		return clustersmgmtv1.MarshalMachinePool(t.(*clustersmgmtv1.MachinePool), w)
+	case []*clustersmgmtv1.MachinePool:
+		return clustersmgmtv1.MarshalMachinePoolList(t.([]*clustersmgmtv1.MachinePool), w)
+	case *clustersmgmtv1.MachinePoolList:
+		ocmList, err := NewOCMList().WithItems(t.(*clustersmgmtv1.MachinePoolList).Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(ocmList)
 	// handle the generic ocm list type
 	case *ocmList:
 		return json.NewEncoder(w).Encode(t)
@@ -369,6 +413,10 @@ func init() {
 	mockClusterAddonState := clustersmgmtv1.AddOnInstallationStateReady
 	// mockClusterAddonDescription default mock cluster addon description
 	mockClusterAddonDescription := "InstallWaiting"
+	// mockMachinePoolID default machine pool ID
+	mockMachinePoolID := "managed"
+	// mockMachinePoolReplicas default number of machine pool replicas
+	mockMachinePoolReplicas := 2
 
 	// mock syncsets
 	var err error
@@ -464,14 +512,28 @@ func init() {
 	}
 
 	// mock cluster
-
-	MockCluster, err = clustersmgmtv1.NewCluster().
+	mockClusterBuilder := clustersmgmtv1.NewCluster().
 		ID(mockClusterID).
 		ExternalID(mockClusterExternalID).
 		State(mockClusterState).
 		CloudProvider(mockCloudProviderBuilder).
-		Region(mockCloudProviderRegionBuilder).
-		Build()
+		Region(mockCloudProviderRegionBuilder)
+	MockCluster, err = mockClusterBuilder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	// Mock machine pools
+	mockMachinePoolBuilder := clustersmgmtv1.NewMachinePool().
+		ID(mockMachinePoolID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/machine_pools/%s", mockClusterID, mockMachinePoolID)).
+		Replicas(mockMachinePoolReplicas).
+		Cluster(mockClusterBuilder)
+	MockMachinePoolList, err = clustersmgmtv1.NewMachinePoolList().Items(mockMachinePoolBuilder).Build()
+	if err != nil {
+		panic(err)
+	}
+	MockMachinePool, err = mockMachinePoolBuilder.Build()
 	if err != nil {
 		panic(err)
 	}
