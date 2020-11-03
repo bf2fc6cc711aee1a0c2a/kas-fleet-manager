@@ -90,10 +90,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	// registering client in sso
-	clientName, replaceErr := buildKeycloakClientNameIdentifier(kafkaRequest)
-	if replaceErr != nil {
-		return errors.GeneralError("generated client name is not valid: %v", replaceErr)
-	}
+	clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
 	keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName)
 	if err != nil || keycloakSecret == "" {
 		return errors.GeneralError("failed to create sso client: %v", err)
@@ -175,6 +172,7 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 	if replaceErr != nil {
 		return errors.GeneralError("generated client name is not valid: %v", replaceErr)
 	}
+	clientName := buildKeycloakClientNameIdentifier(&kafkaRequest)
 	k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
 	// delete the syncset
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)

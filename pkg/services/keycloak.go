@@ -28,11 +28,11 @@ type keycloakService struct {
 }
 
 type ClientRepresentation struct {
-	Name                   string
-	ClientID               string
-	ServiceAccountsEnabled bool
-	Secret                 string
-	StandardFlowEnabled    bool
+	Name                         string
+	ClientID                     string
+	ServiceAccountsEnabled       bool
+	Secret                       string
+	StandardFlowEnabled          bool
 }
 
 var _ KeycloakService = &keycloakService{}
@@ -93,7 +93,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string) (st
 	c := ClientRepresentation{
 		ClientID:               kafkaClusterName,
 		Name:                   kafkaClusterName,
-		ServiceAccountsEnabled: true,
+		ServiceAccountsEnabled: false,
 		StandardFlowEnabled:    false,
 	}
 	clientConfig := kc.ClientConfig(c)
@@ -123,10 +123,10 @@ func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *
 
 func (kc *keycloakService) ClientConfig(client ClientRepresentation) gocloak.Client {
 	return gocloak.Client{
-		Name:                   &client.Name,
-		ClientID:               &client.ClientID,
-		ServiceAccountsEnabled: &client.ServiceAccountsEnabled,
-		StandardFlowEnabled:    &client.StandardFlowEnabled,
+		Name:                         &client.Name,
+		ClientID:                     &client.ClientID,
+		ServiceAccountsEnabled:       &client.ServiceAccountsEnabled,
+		StandardFlowEnabled:          &client.StandardFlowEnabled,
 	}
 }
 
