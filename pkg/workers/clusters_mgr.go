@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-
+	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -57,6 +57,7 @@ func (c *ClusterManager) reconcile() {
 	// reconcile the status of existing clusters in a non-ready state
 	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
 	if err != nil {
+		sentry.CaptureException(err)
 		glog.Error("Error retrieving cloud providers and regions", err)
 	}
 
@@ -71,6 +72,7 @@ func (c *ClusterManager) reconcile() {
 
 	provisioningClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioning)
 	if listErr != nil {
+		sentry.CaptureException(listErr)
 		glog.Errorf("failed to list pending clusters: %s", listErr.Error())
 	}
 
@@ -78,6 +80,7 @@ func (c *ClusterManager) reconcile() {
 	for _, provisioningCluster := range provisioningClusters {
 		reconciledCluster, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
+			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ID, err.Error())
 			continue
 		}
@@ -89,6 +92,7 @@ func (c *ClusterManager) reconcile() {
 	 */
 	provisionedClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioned)
 	if listErr != nil {
+		sentry.CaptureException(listErr)
 		glog.Errorf("failed to list provisioned clusters: %s", listErr.Error())
 	}
 
@@ -96,6 +100,7 @@ func (c *ClusterManager) reconcile() {
 	for _, provisionedCluster := range provisionedClusters {
 		addonInstallation, err := c.reconcileStrimziOperator(provisionedCluster.ID)
 		if err != nil {
+			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, err.Error())
 			continue
 		}
@@ -103,6 +108,7 @@ func (c *ClusterManager) reconcile() {
 		// The cluster is ready when the state reports ready
 		if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
 			if err = c.clusterService.UpdateStatus(provisionedCluster.ID, api.ClusterReady); err != nil {
+				sentry.CaptureException(err)
 				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ID, err.Error())
 				continue
 			}
