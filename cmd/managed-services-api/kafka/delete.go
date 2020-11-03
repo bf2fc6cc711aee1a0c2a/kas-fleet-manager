@@ -43,7 +43,8 @@ func runDelete(cmd *cobra.Command, _ []string) {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 	syncsetService := services.NewSyncsetService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
+	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService)
 
 	ctx := auth.SetUsernameContext(context.TODO(), owner)
 

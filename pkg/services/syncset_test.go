@@ -12,6 +12,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	appsv1 "k8s.io/api/apps/v1"
@@ -240,11 +241,11 @@ func TestSyncsetService_Create(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
-
+	config := config.NewKeycloakConfig()
 	kafkaSyncBuilder, _, _ := newKafkaSyncsetBuilder(&api.KafkaRequest{
 		Name:      testKafkaRequestName,
 		ClusterID: testClusterID,
-	})
+	}, config)
 
 	type args struct {
 		syncsetBuilder *v1.SyncsetBuilder
@@ -312,11 +313,11 @@ func TestSyncsetService_Delete(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
-
+	config := config.NewKeycloakConfig()
 	kafkaSyncBuilder, _, _ := newKafkaSyncsetBuilder(&api.KafkaRequest{
 		Name:      testKafkaRequestName,
 		ClusterID: testClusterID,
-	})
+	}, config)
 
 	type args struct {
 		syncsetBuilder *v1.SyncsetBuilder
@@ -477,7 +478,8 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest)
+			config := config.KeycloakConfig{}
+			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest,&config)
 			syncset, err := got.Build()
 			if err != nil {
 				t.Errorf("newKafkaSyncsetBuilder() failed to build syncset")

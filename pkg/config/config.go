@@ -23,6 +23,7 @@ type ApplicationConfig struct {
 	SupportedProviders         *ProviderConfig             `json:"providers"`
 	AllowList                  *AllowListConfig            `json:"allow_list"`
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
+	Keycloak                   *KeycloakConfig             `json:keycloak`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
@@ -37,6 +38,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		SupportedProviders:         NewSupportedProvidersConfig(),
 		AllowList:                  NewAllowListConfig(),
 		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
+		Keycloak:                   NewKeycloakConfig(),
 	}
 }
 
@@ -91,11 +93,13 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-
+	err = c.Keycloak.ReadFiles()
+	if err != nil {
+		return err
+	}
 	if c.AllowList.EnableAllowList {
 		return c.AllowList.ReadFiles()
 	}
-
 	return nil
 }
 
