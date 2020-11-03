@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
+	github.com/Nerzal/gocloak/v7 v7.5.0
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/bxcodec/faker/v3 v3.2.0
@@ -28,7 +29,7 @@ require (
 	github.com/prometheus/client_golang v1.8.0
 	github.com/prometheus/common v0.14.0
 	github.com/rs/xid v1.2.1
-	github.com/segmentio/ksuid v1.0.2
+	github.com/segmentio/ksuid v1.0.3
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5

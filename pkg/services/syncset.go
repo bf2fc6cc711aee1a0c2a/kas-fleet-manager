@@ -3,6 +3,9 @@ package services
 import (
 	"fmt"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	v1 "k8s.io/api/core/v1"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
@@ -333,7 +336,7 @@ func (s syncsetService) Delete(syncsetId, clusterId string) (int, *errors.Servic
 }
 
 // syncset builder for a kafka/strimzi custom resource
-func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
+func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *config.KeycloakConfig) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
 	syncsetBuilder := cmv1.NewSyncset()
 
 	namespaceName := buildKafkaNamespaceIdentifier(kafkaRequest)
@@ -515,6 +518,35 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 					TopologyKey: "topology.kubernetes.io/zone",
 				})
 	}
+	clientSecret := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaRequest.Name + "-sso-secret",
+			Namespace: namespaceName,
+		},
+		Type: v1.SecretType("Opaque"),
+		Data: map[string][]byte{
+			keycloakConfig.MASClientSecretKey: []byte(keycloakConfig.MASClientSecretValue),
+		},
+	}
+
+	caSecret := &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaRequest.Name + "-sso-cert",
+			Namespace: namespaceName,
+		},
+		Type: v1.SecretType("Opaque"),
+		Data: map[string][]byte{
+			keycloakConfig.TLSTrustedCertificatesKey: []byte(keycloakConfig.TLSTrustedCertificatesValue),
+		},
+	}
 
 	canaryName := sanitizedKafkaName + "-canary"
 	// build the canary deployment
@@ -678,6 +710,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		adminServer,
 		adminServerService,
 		adminServerRoute,
+		clientSecret,
+		caSecret,
 	}
 
 	syncsetBuilder = syncsetBuilder.Resources(resources...)

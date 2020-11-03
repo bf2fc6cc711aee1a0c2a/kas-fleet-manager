@@ -141,3 +141,12 @@ func replaceHostSpecialChar(name string) (string, error) {
 
 	return replacedName, nil
 }
+
+func buildKeycloakClientNameIdentifier(kafkaRequest *api.KafkaRequest) (string, error) {
+	ssoClientId := buildKafkaNamespaceIdentifier(kafkaRequest)
+	ssoClientId, err := replaceNamespaceSpecialChar(ssoClientId)
+	if err != nil {
+		return ssoClientId, err
+	}
+	return ssoClientId, nil
+}

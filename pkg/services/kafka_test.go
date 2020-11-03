@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"testing"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -157,6 +159,7 @@ func Test_kafkaService_Create(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
 		clusterService    ClusterService
+		keycloakService   KeycloakService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -187,6 +190,16 @@ func Test_kafkaService_Create(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
+				keycloakService: &KeycloakServiceMock{
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+						return "secret", nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							ClientID: "test",
+						}
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -208,6 +221,16 @@ func Test_kafkaService_Create(t *testing.T) {
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+						return "secret", nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							ClientID: "test",
+						}
 					},
 				},
 			},
@@ -234,6 +257,16 @@ func Test_kafkaService_Create(t *testing.T) {
 						return "", errors.New(errors.ErrorBadRequest, "")
 					},
 				},
+				keycloakService: &KeycloakServiceMock{
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+						return "secret", nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							ClientID: "test",
+						}
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -256,6 +289,16 @@ func Test_kafkaService_Create(t *testing.T) {
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+						return "secret", nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							ClientID: "test",
+						}
 					},
 				},
 			},
@@ -281,6 +324,7 @@ func Test_kafkaService_Create(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
+				keycloakService:   tt.fields.keycloakService,
 			}
 
 			if err := k.Create(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
@@ -298,6 +342,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
+		keycloakService   KeycloakService
 	}
 	type args struct {
 		id  string
@@ -344,6 +389,11 @@ func Test_kafkaService_Delete(t *testing.T) {
 						return http.StatusInternalServerError, errors.GeneralError("error deleting syncset")
 					},
 				},
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
+					},
+				},
 			},
 			args: args{
 				id:  testID,
@@ -358,6 +408,11 @@ func Test_kafkaService_Delete(t *testing.T) {
 				syncsetService: &SyncsetServiceMock{
 					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
 						return http.StatusNoContent, nil
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
 					},
 				},
 			},
@@ -410,6 +465,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
+				keycloakService:   tt.fields.keycloakService,
 			}
 			err := k.Delete(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
