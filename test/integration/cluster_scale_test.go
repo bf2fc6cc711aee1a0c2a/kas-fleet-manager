@@ -13,10 +13,6 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
-var (
-	expectedReplicas int
-)
-
 func TestClusterScaleUp(t *testing.T) {
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
@@ -37,7 +33,7 @@ func TestClusterScaleUp(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	expectedReplicas = 2
+	expectedReplicas := 2
 
 	// create machine pool
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
@@ -79,7 +75,7 @@ func TestClusterScaleDown(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	expectedReplicas = 2
+	expectedReplicas := 2
 
 	// create machine pool
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
