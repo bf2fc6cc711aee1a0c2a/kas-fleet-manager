@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	. "github.com/onsi/gomega"
@@ -34,21 +35,29 @@ func TestClusterScaleUp(t *testing.T) {
 	}
 
 	expectedReplicas := 2
+	// scaleUp will result in one extra node if machinePool exists already (otherwise 2)
+	if machinePoolExists(h, clusterID, t) {
+		expectedReplicas = 1
+	}
+
+	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
+	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
 
 	// create machine pool
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
-	expectedReplicas = 3
+	expectedReplicas++
 
-	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
+	mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
 	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
 
 	// scale up by one node
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
+	expectedReplicas--
+
 	// scale down the nodes
-	for i := 0; i < services.DefaultMachinePoolReplicas; i++ {
-		expectedReplicas--
+	for ; 0 <= expectedReplicas; expectedReplicas-- {
 		mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
 		ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
 		scaleDownMachinePool(h, expectedReplicas, clusterID)
@@ -76,23 +85,24 @@ func TestClusterScaleDown(t *testing.T) {
 	}
 
 	expectedReplicas := 2
-
-	// create machine pool
-	scaleUpMachinePool(h, expectedReplicas, clusterID)
-
-	expectedReplicas = 1
+	// scaleUp will result in one extra node if machinePool exists already (otherwise 2)
+	if machinePoolExists(h, clusterID, t) {
+		expectedReplicas = 1
+	}
 
 	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
 	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
 
-	scaleDownMachinePool(h, expectedReplicas, clusterID)
+	// create/ scale up machine pool
+	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
-	expectedReplicas = 0
+	expectedReplicas--
 
-	mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
-	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
-
-	scaleDownMachinePool(h, expectedReplicas, clusterID)
+	for ; 0 <= expectedReplicas; expectedReplicas-- {
+		mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
+		ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
+		scaleDownMachinePool(h, expectedReplicas, clusterID)
+	}
 }
 
 // get mock MachinePool with specified replicas number
@@ -125,8 +135,18 @@ func scaleUpMachinePool(h *test.Helper, expectedReplicas int, clusterID string) 
 
 // scaleDownMachinePool and confirm that it is scaled without error
 func scaleDownMachinePool(h *test.Helper, expectedReplicas int, clusterID string) {
-	machinePool, err := h.Env().Services.Cluster.ScaleUpMachinePool(clusterID)
+	machinePool, err := h.Env().Services.Cluster.ScaleDownMachinePool(clusterID)
 	Expect(err).To(BeNil())
 	Expect(machinePool.ID()).To(Equal(services.DefaultMachinePoolID))
 	Expect(machinePool.Replicas()).To(Equal(expectedReplicas))
+}
+
+// machinePoolExists returns true if MachinePool already exists for a cluster with specified clusterID
+func machinePoolExists(h *test.Helper, clusterID string, t *testing.T) bool {
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	machinePoolExists, err := ocmClient.MachinePoolExists(clusterID, services.DefaultMachinePoolID)
+	if err != nil {
+		t.Fatalf("Failed to get MachinePool details from cluster: %s", clusterID)
+	}
+	return machinePoolExists
 }
