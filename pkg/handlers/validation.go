@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"net/http"
 	"strings"
 
@@ -52,6 +55,41 @@ func validateAsyncEnabled(r *http.Request, action string) validate {
 		if asyncParam != "true" {
 			return errors.SyncActionNotSupported(action)
 		}
+		return nil
+	}
+}
+
+// validateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
+// provider and region
+func validateCloudProvider(kr *openapi.KafkaRequest, configService services.ConfigService, action string) validate {
+	return func() *errors.ServiceError {
+		defaultProvider, err := configService.GetDefaultProvider()
+		if err != nil {
+			return errors.GeneralError("failed to get default provider configuration")
+		}
+
+		if kr.CloudProvider == "" {
+			kr.CloudProvider = defaultProvider.Name
+		}
+		if kr.Region == "" {
+			defaultRegion, err := configService.GetDefaultRegionForProvider(defaultProvider)
+			if err != nil {
+				return errors.GeneralError(fmt.Sprintf("failed to get default region for provider %s", defaultProvider.Name))
+			}
+			kr.Region = defaultRegion.Name
+		}
+
+		providerSupported := configService.IsProviderSupported(kr.CloudProvider)
+		if !providerSupported {
+			return errors.Validation("provider %s is not supported, supported providers are: %s", kr.CloudProvider, configService.GetSupportedProviders())
+		}
+
+		regionSupported := configService.IsRegionSupportedForProvider(kr.CloudProvider, kr.Region)
+		if !regionSupported {
+			provider, _ := configService.GetSupportedProviders().GetByName(kr.CloudProvider)
+			return errors.Validation("region %s is not supported for %s, supported regions are: %s", kr.Region, kr.CloudProvider, provider.Regions)
+		}
+
 		return nil
 	}
 }
