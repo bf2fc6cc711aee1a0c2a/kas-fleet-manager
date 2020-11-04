@@ -40,28 +40,21 @@ func TestClusterScaleUp(t *testing.T) {
 		expectedReplicas = 1
 	}
 
-	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
-	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
+	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
 
 	// create machine pool
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
 	expectedReplicas++
 
-	mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
-	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
+	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
 
 	// scale up by one node
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
 	expectedReplicas--
 
-	// scale down the nodes
-	for ; 0 <= expectedReplicas; expectedReplicas-- {
-		mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
-		ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
-		scaleDownMachinePool(h, expectedReplicas, clusterID)
-	}
+	scaleDownAfterTest(ocmServerBuilder, h, expectedReplicas, clusterID)
 }
 
 func TestClusterScaleDown(t *testing.T) {
@@ -90,19 +83,14 @@ func TestClusterScaleDown(t *testing.T) {
 		expectedReplicas = 1
 	}
 
-	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
-	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
+	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
 
 	// create/ scale up machine pool
 	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
 	expectedReplicas--
 
-	for ; 0 <= expectedReplicas; expectedReplicas-- {
-		mockMachinePool = getMachinePoolForScaleTest(expectedReplicas)
-		ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
-		scaleDownMachinePool(h, expectedReplicas, clusterID)
-	}
+	scaleDownAfterTest(ocmServerBuilder, h, expectedReplicas, clusterID)
 }
 
 // get mock MachinePool with specified replicas number
@@ -149,4 +137,19 @@ func machinePoolExists(h *test.Helper, clusterID string, t *testing.T) bool {
 		t.Fatalf("Failed to get MachinePool details from cluster: %s", clusterID)
 	}
 	return machinePoolExists
+}
+
+// scaleDownAfterTest to have 0 extra nodes
+func scaleDownAfterTest(ocmServerBuilder *mocks.MockConfigurableServerBuilder, h *test.Helper, expectedReplicas int, clusterID string) {
+	// scale down the nodes to 0
+	for ; 0 <= expectedReplicas; expectedReplicas-- {
+		overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
+		scaleDownMachinePool(h, expectedReplicas, clusterID)
+	}
+}
+
+// overrideMachinePoolMockResponse - override mock response for MachinePool patch
+func overrideMachinePoolMockResponse(ocmServerBuilder *mocks.MockConfigurableServerBuilder, expectedReplicas int) {
+	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
+	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
 }
