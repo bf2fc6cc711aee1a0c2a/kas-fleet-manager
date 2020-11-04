@@ -45,6 +45,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to create a new cluster: %s", provisionErr.Error())
 	}
 
+	Expect(newCluster.Version().ID()).To(Equal(ocm.OpenshiftVersion))
+
 	// Wait until cluster status has been updated to ready
 	var cluster api.Cluster
 	err := wait.PollImmediate(interval, timeout, func() (done bool, err error) {
