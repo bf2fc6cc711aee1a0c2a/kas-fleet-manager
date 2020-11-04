@@ -1,10 +1,14 @@
 package integration
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+	"net/http"
 	"testing"
 
+	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+
 	. "github.com/onsi/gomega"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
@@ -30,27 +34,27 @@ func TestClusterScaleUp(t *testing.T) {
 		panic("No cluster found")
 	}
 
+	expectedReplicas := 2
+	// scaleUp will result in one extra node if machinePool exists already (otherwise 2)
+	if machinePoolExists(h, clusterID, t) {
+		expectedReplicas = 1
+	}
+
+	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
+
 	// create machine pool
-	machinePool, err := h.Env().Services.Cluster.ScaleUpMachinePool(clusterID)
-	Expect(err).To(BeNil())
-	Expect(machinePool.ID()).To(Equal(services.DefaultMachinePoolID))
-	Expect(machinePool.Replicas()).To(Equal(2))
+	scaleUpMachinePool(h, expectedReplicas, clusterID)
+
+	expectedReplicas++
+
+	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
 
 	// scale up by one node
-	machinePool, err = h.Env().Services.Cluster.ScaleUpMachinePool(clusterID)
-	Expect(err).To(BeNil())
-	Expect(machinePool.ID()).To(Equal(services.DefaultMachinePoolID))
+	scaleUpMachinePool(h, expectedReplicas, clusterID)
 
-	// we need to override the response for local testing
-	//Expect(machinePool.Replicas()).To(Equal(3))
+	expectedReplicas--
 
-	// scale down the nodes
-	for i := 0; i < services.DefaultMachinePoolReplicas; i++ {
-		_, err = h.Env().Services.Cluster.ScaleDownMachinePool(clusterID)
-		if err != nil {
-			t.Fatalf("Failed to scale down nodes for test: TestClusterScaleUp: %v", err)
-		}
-	}
+	scaleDownAfterTest(ocmServerBuilder, h, expectedReplicas, clusterID)
 }
 
 func TestClusterScaleDown(t *testing.T) {
@@ -73,17 +77,79 @@ func TestClusterScaleDown(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	// create machine pool
+	expectedReplicas := 2
+	// scaleUp will result in one extra node if machinePool exists already (otherwise 2)
+	if machinePoolExists(h, clusterID, t) {
+		expectedReplicas = 1
+	}
+
+	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
+
+	// create/ scale up machine pool
+	scaleUpMachinePool(h, expectedReplicas, clusterID)
+
+	expectedReplicas--
+
+	scaleDownAfterTest(ocmServerBuilder, h, expectedReplicas, clusterID)
+}
+
+// get mock MachinePool with specified replicas number
+func getMachinePoolForScaleTest(replicas int) *clustersmgmtv1.MachinePool {
+	mockClusterID := mocks.MockCluster.ID()
+	mockCloudProviderID := mocks.MockCluster.CloudProvider().ID()
+	mockClusterExternalID := mocks.MockCluster.ExternalID()
+	mockClusterState := clustersmgmtv1.ClusterStateReady
+	mockCloudProviderDisplayName := mocks.MockCluster.CloudProvider().DisplayName()
+	mockCloudRegionID := mocks.MockCluster.CloudProvider().ID()
+	mockMachinePoolID := "managed"
+	mockCloudProviderBuilder := mocks.GetMockCloudProviderBuilder(mockCloudProviderID, mockCloudProviderDisplayName)
+	mockCloudProviderRegionBuilder := mocks.GetMockCloudProviderRegionBuilder(mockCloudRegionID, mockCloudProviderID, mockCloudProviderDisplayName, mockCloudProviderBuilder, true, true)
+	mockClusterBuilder := mocks.GetMockClusterBuilder(mockClusterID, mockClusterExternalID, mockClusterState, mockCloudProviderBuilder, mockCloudProviderRegionBuilder)
+	mockMachinePoolBuilder := mocks.GetMockMachineBuilder(mockMachinePoolID, mockClusterID, replicas, mockClusterBuilder)
+	mockMachinePool, e := mocks.GetMockMachinePool(mockMachinePoolBuilder)
+	if e != nil {
+		panic(e)
+	}
+	return mockMachinePool
+}
+
+// scaleUpMachinePool and confirm that it is scaled without error
+func scaleUpMachinePool(h *test.Helper, expectedReplicas int, clusterID string) {
 	machinePool, err := h.Env().Services.Cluster.ScaleUpMachinePool(clusterID)
 	Expect(err).To(BeNil())
 	Expect(machinePool.ID()).To(Equal(services.DefaultMachinePoolID))
-	Expect(machinePool.Replicas()).To(Equal(2))
+	Expect(machinePool.Replicas()).To(Equal(expectedReplicas))
+}
 
-	// scale down machine pool
-	machinePool, err = h.Env().Services.Cluster.ScaleDownMachinePool(clusterID)
+// scaleDownMachinePool and confirm that it is scaled without error
+func scaleDownMachinePool(h *test.Helper, expectedReplicas int, clusterID string) {
+	machinePool, err := h.Env().Services.Cluster.ScaleDownMachinePool(clusterID)
 	Expect(err).To(BeNil())
 	Expect(machinePool.ID()).To(Equal(services.DefaultMachinePoolID))
+	Expect(machinePool.Replicas()).To(Equal(expectedReplicas))
+}
 
-	// we need to override the response for local testing
-	//Expect(machinePool.Replicas()).To(Equal(1))
+// machinePoolExists returns true if MachinePool already exists for a cluster with specified clusterID
+func machinePoolExists(h *test.Helper, clusterID string, t *testing.T) bool {
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	machinePoolExists, err := ocmClient.MachinePoolExists(clusterID, services.DefaultMachinePoolID)
+	if err != nil {
+		t.Fatalf("Failed to get MachinePool details from cluster: %s", clusterID)
+	}
+	return machinePoolExists
+}
+
+// scaleDownAfterTest to have 0 extra nodes
+func scaleDownAfterTest(ocmServerBuilder *mocks.MockConfigurableServerBuilder, h *test.Helper, expectedReplicas int, clusterID string) {
+	// scale down the nodes to 0
+	for ; 0 <= expectedReplicas; expectedReplicas-- {
+		overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
+		scaleDownMachinePool(h, expectedReplicas, clusterID)
+	}
+}
+
+// overrideMachinePoolMockResponse - override mock response for MachinePool patch
+func overrideMachinePoolMockResponse(ocmServerBuilder *mocks.MockConfigurableServerBuilder, expectedReplicas int) {
+	mockMachinePool := getMachinePoolForScaleTest(expectedReplicas)
+	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathMachinePool, http.MethodPatch, mockMachinePool, nil)
 }

@@ -6,17 +6,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sync"
+
+	"k8s.io/apimachinery/pkg/util/wait"
+
+	"time"
 
 	"github.com/gorilla/mux"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"time"
 )
 
 const (
@@ -89,6 +93,24 @@ var (
 	MockCluster                      *clustersmgmtv1.Cluster
 )
 
+// routerSwapper is an http.Handler that allows you to swap mux routers.
+type routerSwapper struct {
+	mu     sync.Mutex
+	router *mux.Router
+}
+
+// Swap changes the old router with the new one.
+func (rs *routerSwapper) Swap(newRouter *mux.Router) {
+	rs.mu.Lock()
+	rs.router = newRouter
+	rs.mu.Unlock()
+}
+
+var router *mux.Router
+
+// rSwapper is required if any change to the Router for mocked OCM server is needed
+var rSwapper *routerSwapper
+
 // Endpoint is a wrapper around an endpoint and the method used to interact with that endpoint e.g. GET /clusters
 type Endpoint struct {
 	Path   string
@@ -116,7 +138,7 @@ func NewMockConfigurableServerBuilder() *MockConfigurableServerBuilder {
 	}
 }
 
-// SetClustersPostResponse set a mock response cluster or error for the POST /api/clusters_mgmt/v1/clusters endpoint
+// SetClusterGetResponse set a mock response cluster or error for the POST /api/clusters_mgmt/v1/clusters endpoint
 func (b *MockConfigurableServerBuilder) SetClusterGetResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterGet] = buildMockRequestHandler(cluster, err)
 }
@@ -141,7 +163,7 @@ func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostResponse(syncset *c
 	b.handlerRegister[EndpointClusterSyncsetPost] = buildMockRequestHandler(syncset, err)
 }
 
-// SetIngressGetResponse set a mock response ingress or error for the GET /api/clusters_mgmt/v1/clusters/{id}/ingresses endpoint
+// SetClusterIngressGetResponse set a mock response ingress or error for the GET /api/clusters_mgmt/v1/clusters/{id}/ingresses endpoint
 func (b *MockConfigurableServerBuilder) SetClusterIngressGetResponse(ingress *clustersmgmtv1.Ingress, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterIngressGet] = buildMockRequestHandler(ingress, err)
 }
@@ -171,7 +193,7 @@ func (b *MockConfigurableServerBuilder) SetClusterAddonsGetResponse(addons *clus
 	b.handlerRegister[EndpointClusterAddonsGet] = buildMockRequestHandler(addons, err)
 }
 
-// SetClusterAddonGetResponse set a mock response addon or error for POST /api/clusters_mgmt/v1/clusters/{id}/addons
+// SetClusterAddonPostResponse set a mock response addon or error for POST /api/clusters_mgmt/v1/clusters/{id}/addons
 func (b *MockConfigurableServerBuilder) SetClusterAddonPostResponse(addon *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterAddonPost] = buildMockRequestHandler(addon, err)
 }
@@ -198,13 +220,14 @@ func (b *MockConfigurableServerBuilder) SetMachinePoolPatchResponse(mp *clusters
 
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
 func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
-	router := mux.NewRouter()
+	router = mux.NewRouter()
+	rSwapper = &routerSwapper{sync.Mutex{}, router}
 
 	// set up handlers from the builder
 	for endpoint, handleFn := range b.handlerRegister {
 		router.HandleFunc(endpoint.Path, handleFn).Methods(endpoint.Method)
 	}
-	server := httptest.NewUnstartedServer(router)
+	server := httptest.NewUnstartedServer(rSwapper)
 	l, err := net.Listen("tcp", "127.0.0.1:9876")
 	if err != nil {
 		log.Fatal(err)
@@ -215,11 +238,35 @@ func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 		_, err = http.Get("http://127.0.0.1:9876/api/clusters_mgmt/v1/cloud_providers/aws/regions")
 		return err == nil, nil
 	})
-	if err != nil{
+	if err != nil {
 		log.Fatal("Timed out waiting for mock server to start.")
 		panic(err)
 	}
 	return server
+}
+
+// SwapRouterResponse and update the router to handle this response
+func (b *MockConfigurableServerBuilder) SwapRouterResponse(path string, method string, successType interface{}, serviceErr *ocmErrors.ServiceError) {
+	b.handlerRegister[Endpoint{
+		Path:   path,
+		Method: method,
+	}] = buildMockRequestHandler(successType, serviceErr)
+
+	router = mux.NewRouter()
+	for endpoint, handleFn := range b.handlerRegister {
+		router.HandleFunc(endpoint.Path, handleFn).Methods(endpoint.Method)
+	}
+
+	rSwapper.Swap(router)
+}
+
+// ServeHTTP makes the routerSwapper to implement the http.Handler interface
+// so that routerSwapper can be used by httptest.NewServer()
+func (rs *routerSwapper) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	rs.mu.Lock()
+	router := rs.router
+	rs.mu.Unlock()
+	router.ServeHTTP(w, r)
 }
 
 // getDefaultHandlerRegister returns a set of default endpoints and handlers used in the mock ocm api server
@@ -418,123 +465,216 @@ func init() {
 	// mockMachinePoolReplicas default number of machine pool replicas
 	mockMachinePoolReplicas := 2
 
-	// mock syncsets
 	var err error
-	mockMockSyncsetBuilder := clustersmgmtv1.NewSyncset().
-		ID(mockSyncsetID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/external_configuration/syncsets/%s", mockClusterID, mockSyncsetID))
 
-	MockSyncset, err = mockMockSyncsetBuilder.Build()
+	// mock syncsets
+	mockMockSyncsetBuilder := GetMockSyncsetBuilder(mockSyncsetID, mockClusterID)
+
+	MockSyncset, err = GetMockSyncset(mockMockSyncsetBuilder)
 	if err != nil {
 		panic(err)
 	}
 
 	// mock ingresses
-
-	MockIngressList, err = clustersmgmtv1.NewIngressList().Items(
-		clustersmgmtv1.NewIngress().ID(mockIngressID).DNSName(mockIngressDNS).Default(true).Listening(mockIngressListening).HREF(mockIngressHref)).Build()
+	MockIngressList, err = GetMockIngressList(mockIngressID, mockIngressDNS, true, mockIngressListening, mockIngressHref)
 	if err != nil {
 		panic(err)
 	}
 
 	// mock cloud providers
+	mockCloudProviderBuilder := GetMockCloudProviderBuilder(mockCloudProviderID, mockCloudProviderDisplayName)
 
-	mockCloudProviderBuilder := clustersmgmtv1.NewCloudProvider().
-		ID(mockCloudProviderID).
-		Name(mockCloudProviderID).
-		DisplayName(mockCloudProviderDisplayName).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/cloud_providers/%s", mockCloudProviderID))
-
-	MockCloudProvider, err = mockCloudProviderBuilder.Build()
+	MockCloudProvider, err = GetMockCloudProvider(mockCloudProviderBuilder)
 	if err != nil {
 		panic(err)
 	}
 
-	MockCloudProviderList, err = clustersmgmtv1.NewCloudProviderList().
-		Items(mockCloudProviderBuilder).
-		Build()
+	MockCloudProviderList, err = GetMockCloudProviderList(mockCloudProviderBuilder)
 	if err != nil {
 		panic(err)
 	}
 
 	// mock cloud provider regions/cloud regions
+	mockCloudProviderRegionBuilder := GetMockCloudProviderRegionBuilder(mockCloudRegionID, mockCloudProviderID, mockCloudRegionDisplayName, mockCloudProviderBuilder, true, true)
 
-	mockCloudProviderRegionBuilder := clustersmgmtv1.NewCloudRegion().
-		ID(mockCloudRegionID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/cloud_providers/%s/regions/%s", mockCloudProviderID, mockCloudRegionID)).
-		DisplayName(mockCloudRegionDisplayName).
-		CloudProvider(mockCloudProviderBuilder).
-		Enabled(true).
-		SupportsMultiAZ(true)
-
-	MockCloudProviderRegion, err = mockCloudProviderRegionBuilder.Build()
+	MockCloudProviderRegion, err = GetMockCloudProviderRegion(mockCloudProviderRegionBuilder)
 	if err != nil {
 		panic(err)
 	}
 
-	MockCloudProviderRegionList, err = clustersmgmtv1.NewCloudRegionList().Items(mockCloudProviderRegionBuilder).Build()
+	MockCloudProviderRegionList, err = GetMockCloudProviderRegionList(mockCloudProviderRegionBuilder)
 	if err != nil {
 		panic(err)
 	}
 
 	// mock cluster status
-
-	MockClusterStatus, err = clustersmgmtv1.NewClusterStatus().
-		ID(mockClusterID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/status", mockClusterID)).
-		State(mockClusterState).
-		Description("").
-		Build()
+	MockClusterStatus, err = GetMockClusterStatus(mockClusterID, mockClusterState)
 
 	// mock cluster addons
-
-	mockClusterAddonBuilder := clustersmgmtv1.NewAddOn().
-		ID(mockClusterAddonID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/addons/%s", mockClusterAddonID))
+	mockClusterAddonBuilder := GetMockClusterAddonBuilder(mockClusterAddonID)
 
 	// mock cluster addon installations
+	mockClusterAddonInstallationBuilder := GetMockClusterAddonInstallationBuilder(mockClusterAddonID, mockClusterID, mockClusterAddonBuilder, mockClusterAddonState, mockClusterAddonDescription)
 
-	mockClusterAddonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation().
-		ID(mockClusterAddonID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/addons/managed-kafka", mockClusterID)).
-		Addon(mockClusterAddonBuilder).
-		State(mockClusterAddonState).
-		StateDescription(mockClusterAddonDescription)
-
-	MockClusterAddonInstallation, err = mockClusterAddonInstallationBuilder.Build()
+	MockClusterAddonInstallation, err = GetMockClusterAddonInstallation(mockClusterAddonInstallationBuilder)
 	if err != nil {
 		panic(err)
 	}
 
-	MockClusterAddonInstallationList, err = clustersmgmtv1.NewAddOnInstallationList().Items(mockClusterAddonInstallationBuilder).Build()
+	MockClusterAddonInstallationList, err = GetMockClusterAddonInstallationList(mockClusterAddonInstallationBuilder)
 	if err != nil {
 		panic(err)
 	}
 
 	// mock cluster
-	mockClusterBuilder := clustersmgmtv1.NewCluster().
-		ID(mockClusterID).
-		ExternalID(mockClusterExternalID).
-		State(mockClusterState).
-		CloudProvider(mockCloudProviderBuilder).
-		Region(mockCloudProviderRegionBuilder)
-	MockCluster, err = mockClusterBuilder.Build()
+	mockClusterBuilder := GetMockClusterBuilder(mockClusterID, mockClusterExternalID, mockClusterState, mockCloudProviderBuilder, mockCloudProviderRegionBuilder)
+
+	MockCluster, err = GetMockCluster(mockClusterBuilder)
+
 	if err != nil {
 		panic(err)
 	}
 
 	// Mock machine pools
-	mockMachinePoolBuilder := clustersmgmtv1.NewMachinePool().
-		ID(mockMachinePoolID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/machine_pools/%s", mockClusterID, mockMachinePoolID)).
-		Replicas(mockMachinePoolReplicas).
-		Cluster(mockClusterBuilder)
-	MockMachinePoolList, err = clustersmgmtv1.NewMachinePoolList().Items(mockMachinePoolBuilder).Build()
+	mockMachinePoolBuilder := GetMockMachineBuilder(mockMachinePoolID, mockClusterID, mockMachinePoolReplicas, mockClusterBuilder)
+	MockMachinePoolList, err = GetMachinePoolList(mockMachinePoolBuilder)
 	if err != nil {
 		panic(err)
 	}
-	MockMachinePool, err = mockMachinePoolBuilder.Build()
+
+	MockMachinePool, err = GetMockMachinePool(mockMachinePoolBuilder)
 	if err != nil {
 		panic(err)
 	}
+}
+
+// GetMockSyncsetBuilder for emulated OCM server
+func GetMockSyncsetBuilder(syncsetID string, clusterID string) *clustersmgmtv1.SyncsetBuilder {
+	return clustersmgmtv1.NewSyncset().
+		ID(syncsetID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/external_configuration/syncsets/%s", clusterID, syncsetID))
+}
+
+// GetMockSyncset for emulated OCM server
+func GetMockSyncset(syncsetBuilder *clustersmgmtv1.SyncsetBuilder) (*clustersmgmtv1.Syncset, error) {
+	return syncsetBuilder.Build()
+}
+
+// GetMockIngressList for emulated OCM server
+func GetMockIngressList(ingressID string, ingressDNS string, isDefault bool, listening v1.ListeningMethod, href string) (*clustersmgmtv1.IngressList, error) {
+	return clustersmgmtv1.NewIngressList().Items(
+		clustersmgmtv1.NewIngress().ID(ingressID).DNSName(ingressDNS).Default(isDefault).Listening(listening).HREF(href)).Build()
+}
+
+// GetMockCloudProviderBuilder for emulated OCM server
+func GetMockCloudProviderBuilder(cloudProviderID string, cloudProviderDisplayName string) *clustersmgmtv1.CloudProviderBuilder {
+	return clustersmgmtv1.NewCloudProvider().
+		ID(cloudProviderID).
+		Name(cloudProviderID).
+		DisplayName(cloudProviderDisplayName).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/cloud_providers/%s", cloudProviderID))
+}
+
+// GetMockCloudProvider for emulated OCM server
+func GetMockCloudProvider(cloudProviderBuilder *clustersmgmtv1.CloudProviderBuilder) (*clustersmgmtv1.CloudProvider, error) {
+	return cloudProviderBuilder.Build()
+}
+
+// GetMockCloudProviderList for emulated OCM server
+func GetMockCloudProviderList(cloudProviderBuilder *clustersmgmtv1.CloudProviderBuilder) (*clustersmgmtv1.CloudProviderList, error) {
+	return clustersmgmtv1.NewCloudProviderList().
+		Items(cloudProviderBuilder).
+		Build()
+}
+
+// GetMockCloudProviderRegionBuilder for emulated OCM server
+func GetMockCloudProviderRegionBuilder(cloudRegionID string, cloudProviderID string, cloudRegionDisplayName string, cloudProviderBuilder *clustersmgmtv1.CloudProviderBuilder, enabled bool, multiAZ bool) *clustersmgmtv1.CloudRegionBuilder {
+	return clustersmgmtv1.NewCloudRegion().
+		ID(cloudRegionID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/cloud_providers/%s/regions/%s", cloudProviderID, cloudRegionID)).
+		DisplayName(cloudRegionDisplayName).
+		CloudProvider(cloudProviderBuilder).
+		Enabled(enabled).
+		SupportsMultiAZ(multiAZ)
+}
+
+// GetMockCloudProviderRegion for emulated OCM server
+func GetMockCloudProviderRegion(cloudProviderRegionBuilder *clustersmgmtv1.CloudRegionBuilder) (*clustersmgmtv1.CloudRegion, error) {
+	return cloudProviderRegionBuilder.Build()
+}
+
+// GetMockCloudProviderRegionList for emulated OCM server
+func GetMockCloudProviderRegionList(cloudProviderRegionBuilder *clustersmgmtv1.CloudRegionBuilder) (*clustersmgmtv1.CloudRegionList, error) {
+	return clustersmgmtv1.NewCloudRegionList().Items(cloudProviderRegionBuilder).Build()
+}
+
+// GetMockClusterStatus for emulated OCM server
+func GetMockClusterStatus(clusterID string, clusterState clustersmgmtv1.ClusterState) (*clustersmgmtv1.ClusterStatus, error) {
+	return clustersmgmtv1.NewClusterStatus().
+		ID(clusterID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/status", clusterID)).
+		State(clusterState).
+		Description("").
+		Build()
+}
+
+// GetMockClusterAddonBuilder for emulated OCM server
+func GetMockClusterAddonBuilder(clusterAddonID string) *clustersmgmtv1.AddOnBuilder {
+	return clustersmgmtv1.NewAddOn().
+		ID(clusterAddonID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/addons/%s", clusterAddonID))
+}
+
+// GetMockClusterAddonInstallationBuilder for emulated OCM server
+func GetMockClusterAddonInstallationBuilder(clusterAddonID string, clusterID string, clusterAddonBuilder *clustersmgmtv1.AddOnBuilder, addonInstallatonState clustersmgmtv1.AddOnInstallationState, clusterAddonDescription string) *clustersmgmtv1.AddOnInstallationBuilder {
+	return clustersmgmtv1.NewAddOnInstallation().
+		ID(clusterAddonID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/addons/managed-kafka", clusterID)).
+		Addon(clusterAddonBuilder).
+		State(addonInstallatonState).
+		StateDescription(clusterAddonDescription)
+}
+
+// GetMockClusterAddonInstallation for emulated OCM server
+func GetMockClusterAddonInstallation(clusterAddonInstallationBuilder *clustersmgmtv1.AddOnInstallationBuilder) (*clustersmgmtv1.AddOnInstallation, error) {
+	return clusterAddonInstallationBuilder.Build()
+}
+
+// GetMockClusterAddonInstallationList for emulated OCM server
+func GetMockClusterAddonInstallationList(clusterAddonInstallationBuilder *clustersmgmtv1.AddOnInstallationBuilder) (*clustersmgmtv1.AddOnInstallationList, error) {
+	return clustersmgmtv1.NewAddOnInstallationList().Items(clusterAddonInstallationBuilder).Build()
+}
+
+// GetMockClusterBuilder for emulated OCM server
+func GetMockClusterBuilder(clusterID string, clusterExternalID string, clusterState clustersmgmtv1.ClusterState, clusterProviderBuilder *clustersmgmtv1.CloudProviderBuilder, cloudProviderRegionBuilder *clustersmgmtv1.CloudRegionBuilder) *clustersmgmtv1.ClusterBuilder {
+	return clustersmgmtv1.NewCluster().
+		ID(clusterID).
+		ExternalID(clusterExternalID).
+		State(clusterState).
+		CloudProvider(clusterProviderBuilder).
+		Region(cloudProviderRegionBuilder)
+}
+
+// GetMockCluster for emulated OCM server
+func GetMockCluster(clusterBuilder *clustersmgmtv1.ClusterBuilder) (*clustersmgmtv1.Cluster, error) {
+	return clusterBuilder.Build()
+}
+
+// GetMockMachineBuilder for emulated OCM server
+func GetMockMachineBuilder(machinePoolID string, clusterID string, replicas int, clusterBuilder *clustersmgmtv1.ClusterBuilder) *clustersmgmtv1.MachinePoolBuilder {
+	return clustersmgmtv1.NewMachinePool().
+		ID(machinePoolID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/machine_pools/%s", clusterID, machinePoolID)).
+		Replicas(replicas).
+		Cluster(clusterBuilder)
+}
+
+// GetMachinePoolList for emulated OCM server
+func GetMachinePoolList(machinePoolBuilder *clustersmgmtv1.MachinePoolBuilder) (*clustersmgmtv1.MachinePoolList, error) {
+	return clustersmgmtv1.NewMachinePoolList().Items(machinePoolBuilder).Build()
+}
+
+// GetMockMachinePool for emulated OCM server
+func GetMockMachinePool(machinePoolBuilder *clustersmgmtv1.MachinePoolBuilder) (*clustersmgmtv1.MachinePool, error) {
+	return machinePoolBuilder.Build()
 }
