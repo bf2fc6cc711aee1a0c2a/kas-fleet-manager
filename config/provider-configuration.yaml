@@ -1,0 +1,7 @@
+---
+supported_providers:
+  - name: aws
+    default: true
+    regions:
+      - name: eu-west-1
+        default: true
