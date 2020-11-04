@@ -114,7 +114,6 @@ func getMachinePoolForScaleTest(replicas int) *clustersmgmtv1.MachinePool {
 	return mockMachinePool
 }
 
-
 // scaleUpMachinePool and confirm that it is scaled without error
 func scaleUpMachinePool(h *test.Helper, expectedReplicas int, clusterID string) {
 	machinePool, err := h.Env().Services.Cluster.ScaleUpMachinePool(clusterID)
