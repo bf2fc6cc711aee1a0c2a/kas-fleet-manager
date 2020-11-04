@@ -45,6 +45,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.OCM.AddFlags(flagset)
 	c.Sentry.AddFlags(flagset)
 	c.AWS.AddFlags(flagset)
+	c.SupportedProviders.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
