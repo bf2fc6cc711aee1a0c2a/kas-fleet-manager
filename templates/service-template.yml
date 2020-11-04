@@ -217,6 +217,9 @@ objects:
           - name: rds
             secret:
               secretName: managed-services-api-rds
+          - name: ocm-managed-services-providers-config
+            configMap:
+              name: ocm-managed-services-providers-config
           initContainers:
           - name: id
             image: quay.io/app-sre/centos:8
@@ -252,12 +255,15 @@ objects:
               mountPath: /secrets/service
             - name: rds
               mountPath: /secrets/rds
+            - name: ocm-managed-services-providers-config
+              mountPath: /config
             env:
               - name: "AMS_ENV"
                 value: "${ENVIRONMENT}"
             command:
             - /usr/local/bin/managed-services-api
             - serve
+            - --providers-config-file=/config/provider-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
