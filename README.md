@@ -1,4 +1,4 @@
-OCM Managed Service API
+Managed Service API for Kafka
 ---
 
 A service for provisioning and managing fleets of Kafka instances.
