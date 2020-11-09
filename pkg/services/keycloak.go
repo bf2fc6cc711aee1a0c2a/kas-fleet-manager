@@ -17,7 +17,7 @@ type KeycloakService interface {
 	DeleteClient(id string, accessToken string) *errors.ServiceError
 	RegisterKafkaClientInSSO(kafkaNamespace string) (string, *errors.ServiceError)
 	DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError
-	GetClients(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
+	GetClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
 	GetConfig() *config.KeycloakConfig
 }
 
@@ -28,11 +28,11 @@ type keycloakService struct {
 }
 
 type ClientRepresentation struct {
-	Name                         string
-	ClientID                     string
-	ServiceAccountsEnabled       bool
-	Secret                       string
-	StandardFlowEnabled          bool
+	Name                   string
+	ClientID               string
+	ServiceAccountsEnabled bool
+	Secret                 string
+	StandardFlowEnabled    bool
 }
 
 var _ KeycloakService = &keycloakService{}
@@ -123,10 +123,10 @@ func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *
 
 func (kc *keycloakService) ClientConfig(client ClientRepresentation) gocloak.Client {
 	return gocloak.Client{
-		Name:                         &client.Name,
-		ClientID:                     &client.ClientID,
-		ServiceAccountsEnabled:       &client.ServiceAccountsEnabled,
-		StandardFlowEnabled:          &client.StandardFlowEnabled,
+		Name:                   &client.Name,
+		ClientID:               &client.ClientID,
+		ServiceAccountsEnabled: &client.ServiceAccountsEnabled,
+		StandardFlowEnabled:    &client.StandardFlowEnabled,
 	}
 }
 
@@ -138,7 +138,7 @@ func (kc *keycloakService) DeleteClient(internalClientID string, accessToken str
 	return nil
 }
 
-func (kc *keycloakService) GetClients(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
+func (kc *keycloakService) GetClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
 	params := gocloak.GetClientsParams{
 		ClientID: &clientId,
 	}
@@ -154,16 +154,15 @@ func (kc *keycloakService) GetConfig() *config.KeycloakConfig {
 }
 
 func (kc *keycloakService) isClientExist(clientId string, accessToken string) (string, *errors.ServiceError) {
-	clients, err := kc.GetClients(clientId, accessToken)
+	client, err := kc.GetClient(clientId, accessToken)
 	var id string
 	if err != nil {
-		return id, errors.GeneralError("failed to get client:%v", err)
+		return id, errors.GeneralError("failed to get client: %v", err)
 	}
-	if len(clients) > 0 {
-		for _, client := range clients {
-			id = *client.ID
-			return id, nil
-		}
+	if len(client) > 0 {
+		id = *client[0].ID
+		return id, nil
+
 	}
 	return id, nil
 }

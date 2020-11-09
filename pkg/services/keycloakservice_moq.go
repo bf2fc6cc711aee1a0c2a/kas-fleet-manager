@@ -15,8 +15,8 @@ var (
 	lockKeycloakServiceMockCreateClient               sync.RWMutex
 	lockKeycloakServiceMockDeRegisterKafkaClientInSSO sync.RWMutex
 	lockKeycloakServiceMockDeleteClient               sync.RWMutex
+	lockKeycloakServiceMockGetClient                  sync.RWMutex
 	lockKeycloakServiceMockGetClientSecret            sync.RWMutex
-	lockKeycloakServiceMockGetClients                 sync.RWMutex
 	lockKeycloakServiceMockGetConfig                  sync.RWMutex
 	lockKeycloakServiceMockGetToken                   sync.RWMutex
 	lockKeycloakServiceMockRegisterKafkaClientInSSO   sync.RWMutex
@@ -44,11 +44,11 @@ var _ KeycloakService = &KeycloakServiceMock{}
 //             DeleteClientFunc: func(id string, accessToken string) *errors.ServiceError {
 // 	               panic("mock out the DeleteClient method")
 //             },
+//             GetClientFunc: func(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
+// 	               panic("mock out the GetClient method")
+//             },
 //             GetClientSecretFunc: func(id string, accessToken string) (string, *errors.ServiceError) {
 // 	               panic("mock out the GetClientSecret method")
-//             },
-//             GetClientsFunc: func(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
-// 	               panic("mock out the GetClients method")
 //             },
 //             GetConfigFunc: func() *config.KeycloakConfig {
 // 	               panic("mock out the GetConfig method")
@@ -78,11 +78,11 @@ type KeycloakServiceMock struct {
 	// DeleteClientFunc mocks the DeleteClient method.
 	DeleteClientFunc func(id string, accessToken string) *errors.ServiceError
 
+	// GetClientFunc mocks the GetClient method.
+	GetClientFunc func(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
+
 	// GetClientSecretFunc mocks the GetClientSecret method.
 	GetClientSecretFunc func(id string, accessToken string) (string, *errors.ServiceError)
-
-	// GetClientsFunc mocks the GetClients method.
-	GetClientsFunc func(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *config.KeycloakConfig
@@ -119,17 +119,17 @@ type KeycloakServiceMock struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
+		// GetClient holds details about calls to the GetClient method.
+		GetClient []struct {
+			// ClientId is the clientId argument value.
+			ClientId string
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+		}
 		// GetClientSecret holds details about calls to the GetClientSecret method.
 		GetClientSecret []struct {
 			// ID is the id argument value.
 			ID string
-			// AccessToken is the accessToken argument value.
-			AccessToken string
-		}
-		// GetClients holds details about calls to the GetClients method.
-		GetClients []struct {
-			// ClientId is the clientId argument value.
-			ClientId string
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
@@ -279,6 +279,41 @@ func (mock *KeycloakServiceMock) DeleteClientCalls() []struct {
 	return calls
 }
 
+// GetClient calls GetClientFunc.
+func (mock *KeycloakServiceMock) GetClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
+	if mock.GetClientFunc == nil {
+		panic("KeycloakServiceMock.GetClientFunc: method is nil but KeycloakService.GetClient was just called")
+	}
+	callInfo := struct {
+		ClientId    string
+		AccessToken string
+	}{
+		ClientId:    clientId,
+		AccessToken: accessToken,
+	}
+	lockKeycloakServiceMockGetClient.Lock()
+	mock.calls.GetClient = append(mock.calls.GetClient, callInfo)
+	lockKeycloakServiceMockGetClient.Unlock()
+	return mock.GetClientFunc(clientId, accessToken)
+}
+
+// GetClientCalls gets all the calls that were made to GetClient.
+// Check the length with:
+//     len(mockedKeycloakService.GetClientCalls())
+func (mock *KeycloakServiceMock) GetClientCalls() []struct {
+	ClientId    string
+	AccessToken string
+} {
+	var calls []struct {
+		ClientId    string
+		AccessToken string
+	}
+	lockKeycloakServiceMockGetClient.RLock()
+	calls = mock.calls.GetClient
+	lockKeycloakServiceMockGetClient.RUnlock()
+	return calls
+}
+
 // GetClientSecret calls GetClientSecretFunc.
 func (mock *KeycloakServiceMock) GetClientSecret(id string, accessToken string) (string, *errors.ServiceError) {
 	if mock.GetClientSecretFunc == nil {
@@ -311,41 +346,6 @@ func (mock *KeycloakServiceMock) GetClientSecretCalls() []struct {
 	lockKeycloakServiceMockGetClientSecret.RLock()
 	calls = mock.calls.GetClientSecret
 	lockKeycloakServiceMockGetClientSecret.RUnlock()
-	return calls
-}
-
-// GetClients calls GetClientsFunc.
-func (mock *KeycloakServiceMock) GetClients(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
-	if mock.GetClientsFunc == nil {
-		panic("KeycloakServiceMock.GetClientsFunc: method is nil but KeycloakService.GetClients was just called")
-	}
-	callInfo := struct {
-		ClientId    string
-		AccessToken string
-	}{
-		ClientId:    clientId,
-		AccessToken: accessToken,
-	}
-	lockKeycloakServiceMockGetClients.Lock()
-	mock.calls.GetClients = append(mock.calls.GetClients, callInfo)
-	lockKeycloakServiceMockGetClients.Unlock()
-	return mock.GetClientsFunc(clientId, accessToken)
-}
-
-// GetClientsCalls gets all the calls that were made to GetClients.
-// Check the length with:
-//     len(mockedKeycloakService.GetClientsCalls())
-func (mock *KeycloakServiceMock) GetClientsCalls() []struct {
-	ClientId    string
-	AccessToken string
-} {
-	var calls []struct {
-		ClientId    string
-		AccessToken string
-	}
-	lockKeycloakServiceMockGetClients.RLock()
-	calls = mock.calls.GetClients
-	lockKeycloakServiceMockGetClients.RUnlock()
 	return calls
 }
 
