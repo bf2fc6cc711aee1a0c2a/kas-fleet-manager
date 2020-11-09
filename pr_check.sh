@@ -34,9 +34,28 @@ mkdir -p "${XDG_RUNTIME_DIR}"
 export GOBIN="${PWD}/.gobin"
 export PATH="${GOBIN}:${PATH}"
 
-test -f go1.13.6.linux-amd64.tar.gz || curl -O -J https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz
+test -f go1.15.2.linux-amd64.tar.gz || curl -O -J https://dl.google.com/go/go1.15.2.linux-amd64.tar.gz
 
 export IMAGE_NAME="test/managed-services-api"
 
-docker build -t "$IMAGE_NAME" -f Dockerfile.integration.test .
+INTEGRATION_ENV="integration"
+ENV=$(echo "$OCM_ENV")
+
+if [[ $ENV == "$INTEGRATION_ENV" ]] ;
+then
+  cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
+else
+  if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]] ; then
+    echo "Required env var not provided. Exiting...".
+    exit 1
+  fi
+  cp docker/Dockerfile_template Dockerfile_integration_tests
+  sed -i "s/<ocm_env>/${OCM_ENV}/g" Dockerfile_integration_tests
+  sed -i "s/<aws_access_key>/${AWS_ACCESS_KEY}/g" Dockerfile_integration_tests
+  sed -i "s/<aws_account_id>/${AWS_ACCOUNT_ID}/g" Dockerfile_integration_tests
+  sed -i "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" Dockerfile_integration_tests
+  sed -i "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" Dockerfile_integration_tests
+fi
+
+docker build -t "$IMAGE_NAME" -f Dockerfile_integration_tests .
 docker run -i "$IMAGE_NAME"

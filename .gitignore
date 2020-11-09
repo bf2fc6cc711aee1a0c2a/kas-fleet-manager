@@ -51,3 +51,6 @@ cmd/managed-services-api/managed-services-api
 
 # test reports
 /reports/*.xml
+
+# Docker template
+Dockerfile_integration_tests
