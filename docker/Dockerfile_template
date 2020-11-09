@@ -1,0 +1,63 @@
+FROM quay.io/app-sre/postgres
+
+ENV POSTGRES_PASSWORD foobar-bizz-buzz
+ENV POSTGRES_USER managed_services_api
+ENV POSTGRES_DB serviceapitests
+
+ENV GORM_DIALECT postgres
+ENV GORM_HOST 127.0.0.1
+ENV GORM_PORT 5432
+ENV GORM_NAME serviceapitests
+ENV GORM_USERNAME managed_services_api
+ENV GORM_PASSWORD foobar-bizz-buzz
+ENV GORM_SSLMODE disable
+ENV GORM_DEBUG false
+ENV OCM_ENV <ocm_env>
+ENV AWS_ACCESS_KEY <aws_access_key>
+ENV AWS_ACCOUNT_ID <aws_account_id>
+ENV AWS_SECRET_ACCESS_KEY <aws_secret_access_key>
+ENV OCM_OFFLINE_TOKEN <ocm_offline_token>
+
+RUN apt-get update
+RUN apt-get install -y make sudo git wget curl ca-certificates
+
+# install jq to parse json within bash scripts
+RUN curl -o /usr/local/bin/jq http://stedolan.github.io/jq/download/linux64/jq && \
+  chmod +x /usr/local/bin/jq
+
+# install OCM CLI
+RUN curl -Lo ocm https://github.com/openshift-online/ocm-cli/releases/download/v0.1.42/ocm-linux-amd64 && \
+  chmod +x ocm && sudo mv ocm /usr/local/bin/
+
+COPY test/support/jwt_ca.pem /usr/local/share/ca-certificates/jwt_ca.pem
+COPY test/support/gitlab-ca.crt /usr/local/share/ca-certificates/gitlab-ca.crt
+RUN update-ca-certificates
+
+# copy the setup scripts and the pr check script
+COPY db_setup_docker.sql /docker-entrypoint-initdb.d/
+COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
+
+# install go 1.13.6
+RUN curl -O -J https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz
+RUN tar -C /usr/local -xzf go1.13.6.linux-amd64.tar.gz
+
+ENV PATH="/uhc/bin:/usr/local/go/bin:${PATH}"
+ENV GOPATH="/uhc"
+ENV CGO_ENABLED=0
+
+# copy over the managed-services-api
+RUN mkdir -p /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
+COPY . /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
+
+# create credential files
+WORKDIR /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
+RUN make aws/setup
+RUN make ocm/setup
+
+# Docker built / owned  as 'root' but the 'postgres' user runs the image
+RUN chown -R postgres:postgres /uhc /usr/local/go
+WORKDIR /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
+
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+CMD ["postgres"]
