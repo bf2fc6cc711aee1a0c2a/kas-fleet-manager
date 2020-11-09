@@ -86,6 +86,8 @@ const (
 	MockMachinePoolID = "managed"
 	// mockMachinePoolReplicas default number of machine pool replicas
 	MockMachinePoolReplicas = 2
+	// mockOpenshiftVersion default cluster openshift version
+	MockOpenshiftVersion = "openshift-v4.6.1"
 )
 
 // variables for endpoints
@@ -686,7 +688,8 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 		ExternalID(MockClusterExternalID).
 		State(MockClusterState).
 		CloudProvider(GetMockCloudProviderBuilder(nil)).
-		Region(GetMockCloudProviderRegionBuilder(nil))
+		Region(GetMockCloudProviderRegionBuilder(nil)).
+		Version(GetMockOpenshiftVersionBuilder(nil))
 	if modifyFn != nil {
 		modifyFn(builder)
 	}
@@ -732,4 +735,13 @@ func GetMockMachinePool(modifyFn func(*clustersmgmtv1.MachinePool, error)) (*clu
 		modifyFn(machinePool, err)
 	}
 	return machinePool, err
+}
+
+// GetMockOpenshiftVersionBuilder for emulated OCM server
+func GetMockOpenshiftVersionBuilder(modifyFn func(*clustersmgmtv1.VersionBuilder)) *clustersmgmtv1.VersionBuilder {
+	builder := clustersmgmtv1.NewVersion().ID(MockOpenshiftVersion)
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
 }

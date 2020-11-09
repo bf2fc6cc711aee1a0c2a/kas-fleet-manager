@@ -10,6 +10,7 @@ import (
 // ClusterNamePrefix a prefix used for new OCM cluster names
 const (
 	ClusterNamePrefix = "ms-"
+	OpenshiftVersion  = "openshift-v4.6.1"
 )
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
@@ -54,6 +55,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	clusterBuilder.Name(r.idGenerator.Generate())
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cluster.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(cluster.Region))
+	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(OpenshiftVersion))
 
 	// currently disabled as we do not have quota for this type of cluster.
 	// clusterBuilder.MultiAZ(cluster.MultiAZ)
