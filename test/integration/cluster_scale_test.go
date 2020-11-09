@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -82,7 +83,6 @@ func TestClusterScaleDown(t *testing.T) {
 	if machinePoolExists(h, clusterID, t) {
 		expectedReplicas = 1
 	}
-
 	overrideMachinePoolMockResponse(ocmServerBuilder, expectedReplicas)
 
 	// create/ scale up machine pool
@@ -95,23 +95,25 @@ func TestClusterScaleDown(t *testing.T) {
 
 // get mock MachinePool with specified replicas number
 func getMachinePoolForScaleTest(replicas int) *clustersmgmtv1.MachinePool {
-	mockClusterID := mocks.MockCluster.ID()
-	mockCloudProviderID := mocks.MockCluster.CloudProvider().ID()
-	mockClusterExternalID := mocks.MockCluster.ExternalID()
-	mockClusterState := clustersmgmtv1.ClusterStateReady
-	mockCloudProviderDisplayName := mocks.MockCluster.CloudProvider().DisplayName()
-	mockCloudRegionID := mocks.MockCluster.CloudProvider().ID()
 	mockMachinePoolID := "managed"
-	mockCloudProviderBuilder := mocks.GetMockCloudProviderBuilder(mockCloudProviderID, mockCloudProviderDisplayName)
-	mockCloudProviderRegionBuilder := mocks.GetMockCloudProviderRegionBuilder(mockCloudRegionID, mockCloudProviderID, mockCloudProviderDisplayName, mockCloudProviderBuilder, true, true)
-	mockClusterBuilder := mocks.GetMockClusterBuilder(mockClusterID, mockClusterExternalID, mockClusterState, mockCloudProviderBuilder, mockCloudProviderRegionBuilder)
-	mockMachinePoolBuilder := mocks.GetMockMachineBuilder(mockMachinePoolID, mockClusterID, replicas, mockClusterBuilder)
-	mockMachinePool, e := mocks.GetMockMachinePool(mockMachinePoolBuilder)
+	mockClusterBuilder := mocks.GetMockClusterBuilder(nil)
+	mockMachinePoolBuilder := mocks.GetMockMachineBuilder(func(builder *clustersmgmtv1.MachinePoolBuilder) {
+		(*builder).ID(mockMachinePoolID).Replicas(replicas).Cluster(mockClusterBuilder).
+			HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/machine_pools/%s", mockMachinePoolID, mockMachinePoolID))
+	})
+	mockMachinePool, e := mocks.GetMockMachinePool(func(pool *clustersmgmtv1.MachinePool, err error) {
+		p, err := mockMachinePoolBuilder.Build()
+		if p == nil {
+			panic(err)
+		}
+		*pool = *p
+	})
 	if e != nil {
 		panic(e)
 	}
 	return mockMachinePool
 }
+
 
 // scaleUpMachinePool and confirm that it is scaled without error
 func scaleUpMachinePool(h *test.Helper, expectedReplicas int, clusterID string) {
