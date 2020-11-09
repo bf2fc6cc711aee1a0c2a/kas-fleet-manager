@@ -41,7 +41,7 @@ export IMAGE_NAME="test/managed-services-api"
 INTEGRATION_ENV="integration"
 ENV=$(echo "$OCM_ENV")
 
-if [[ $ENV == "$INTEGRATION_ENV" ]] ;
+if [[ -z "${OCM_ENV}" ]] || [[ $ENV == "$INTEGRATION_ENV" ]] ;
 then
   cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
 else
