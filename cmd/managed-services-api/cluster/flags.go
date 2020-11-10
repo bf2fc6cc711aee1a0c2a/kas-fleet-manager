@@ -7,4 +7,6 @@ const (
 	FlagRegion = "region"
 	// FlagClusterID indicates the Cluster ID
 	FlagClusterID = "cluster-id"
+	// FlagMultiAZ is a flag representing a whether a cluster is multi AZ
+	FlagMultiAZ = "multi-az"
 )
