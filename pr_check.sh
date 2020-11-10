@@ -38,9 +38,6 @@ export IMAGE_NAME="test/managed-services-api"
 
 INTEGRATION_ENV="integration"
 
-## remove previous dockerfile (if present)
-rm -rf Dockerfile_integration_tests
-
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
 if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]] ;
 then
