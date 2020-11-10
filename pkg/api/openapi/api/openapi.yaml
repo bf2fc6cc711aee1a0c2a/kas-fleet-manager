@@ -112,7 +112,7 @@ paths:
       summary: Get a kafka request by id
   /api/managed-services-api/v1/kafkas:
     get:
-      operationId: createKafka
+      operationId: listKafkas
       parameters:
       - description: Page index
         examples:
@@ -165,7 +165,7 @@ paths:
       - Bearer: []
       summary: Returns a list of Kafka requests
     post:
-      operationId: listKafkas
+      operationId: createKafka
       parameters:
       - description: Perform the action in an asynchronous manner
         explode: true
