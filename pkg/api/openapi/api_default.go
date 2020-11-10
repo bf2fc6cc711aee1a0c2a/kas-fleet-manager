@@ -26,28 +26,21 @@ var (
 // DefaultApiService DefaultApi service
 type DefaultApiService service
 
-// CreateKafkaOpts Optional parameters for the method 'CreateKafka'
-type CreateKafkaOpts struct {
-	Page optional.String
-	Size optional.String
-}
-
 /*
-CreateKafka Returns a list of Kafka requests
+CreateKafka Create a new kafka Request
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param optional nil or *CreateKafkaOpts - Optional Parameters:
- * @param "Page" (optional.String) -  Page index
- * @param "Size" (optional.String) -  Number of items in each page
-@return KafkaRequestList
+ * @param async Perform the action in an asynchronous manner
+ * @param kafkaRequest Kafka data
+@return KafkaRequest
 */
-func (a *DefaultApiService) CreateKafka(ctx _context.Context, localVarOptionals *CreateKafkaOpts) (KafkaRequestList, *_nethttp.Response, error) {
+func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaRequest KafkaRequest) (KafkaRequest, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  KafkaRequestList
+		localVarReturnValue  KafkaRequest
 	)
 
 	// create path and map variables
@@ -56,14 +49,9 @@ func (a *DefaultApiService) CreateKafka(ctx _context.Context, localVarOptionals 
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
-		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
-	}
-	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
-		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
-	}
+	localVarQueryParams.Add("async", parameterToString(async, ""))
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -79,6 +67,8 @@ func (a *DefaultApiService) CreateKafka(ctx _context.Context, localVarOptionals 
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// body params
+	localVarPostBody = &kafkaRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -100,7 +90,27 @@ func (a *DefaultApiService) CreateKafka(ctx _context.Context, localVarOptionals 
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
 		if localVarHTTPResponse.StatusCode == 401 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
 			var v Error
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
@@ -346,21 +356,28 @@ func (a *DefaultApiService) GetKafkaById(ctx _context.Context, id string) (Kafka
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// ListKafkasOpts Optional parameters for the method 'ListKafkas'
+type ListKafkasOpts struct {
+	Page optional.String
+	Size optional.String
+}
+
 /*
-ListKafkas Create a new kafka Request
+ListKafkas Returns a list of Kafka requests
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param async Perform the action in an asynchronous manner
- * @param kafkaRequest Kafka data
-@return KafkaRequest
+ * @param optional nil or *ListKafkasOpts - Optional Parameters:
+ * @param "Page" (optional.String) -  Page index
+ * @param "Size" (optional.String) -  Number of items in each page
+@return KafkaRequestList
 */
-func (a *DefaultApiService) ListKafkas(ctx _context.Context, async bool, kafkaRequest KafkaRequest) (KafkaRequest, *_nethttp.Response, error) {
+func (a *DefaultApiService) ListKafkas(ctx _context.Context, localVarOptionals *ListKafkasOpts) (KafkaRequestList, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  KafkaRequest
+		localVarReturnValue  KafkaRequestList
 	)
 
 	// create path and map variables
@@ -369,9 +386,14 @@ func (a *DefaultApiService) ListKafkas(ctx _context.Context, async bool, kafkaRe
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	localVarQueryParams.Add("async", parameterToString(async, ""))
+	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
+		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
+		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
+	}
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -387,8 +409,6 @@ func (a *DefaultApiService) ListKafkas(ctx _context.Context, async bool, kafkaRe
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// body params
-	localVarPostBody = &kafkaRequest
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -410,27 +430,7 @@ func (a *DefaultApiService) ListKafkas(ctx _context.Context, async bool, kafkaRe
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
 		if localVarHTTPResponse.StatusCode == 401 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
 			var v Error
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
