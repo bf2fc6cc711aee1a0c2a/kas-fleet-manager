@@ -28,6 +28,7 @@ func NewCreateCommand() *cobra.Command {
 
 	cmd.Flags().String(FlagRegion, "eu-west-1", "Cluster region ID")
 	cmd.Flags().String(FlagProvider, "aws", "Cluster provider")
+	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Cluster request should be Multi AZ or not")
 
 	return cmd
 }
@@ -35,7 +36,7 @@ func NewCreateCommand() *cobra.Command {
 func runCreate(cmd *cobra.Command, _ []string) {
 	region := flags.MustGetDefinedString(FlagRegion, cmd.Flags())
 	provider := flags.MustGetDefinedString(FlagProvider, cmd.Flags())
-
+	multiAZ := flags.MustGetBool(FlagMultiAZ, cmd.Flags())
 	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
@@ -49,6 +50,7 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: provider,
 		Region:        region,
+		MultiAZ:       multiAZ,
 	})
 	if err != nil {
 		glog.Fatalf("Unable to create cluster: %s", err.Error())

@@ -88,6 +88,8 @@ const (
 	MockMachinePoolReplicas = 2
 	// mockOpenshiftVersion default cluster openshift version
 	MockOpenshiftVersion = "openshift-v4.6.1"
+	//MockMultiAZ default value
+	MockMultiAZ = true
 )
 
 // variables for endpoints
@@ -687,6 +689,7 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 		ID(MockClusterID).
 		ExternalID(MockClusterExternalID).
 		State(MockClusterState).
+		MultiAZ(MockMultiAZ).
 		CloudProvider(GetMockCloudProviderBuilder(nil)).
 		Region(GetMockCloudProviderRegionBuilder(nil)).
 		Version(GetMockOpenshiftVersionBuilder(nil))
@@ -695,7 +698,6 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 	}
 	return builder
 }
-
 // GetMockCluster for emulated OCM server
 func GetMockCluster(modifyFn func(*clustersmgmtv1.Cluster, error)) (*clustersmgmtv1.Cluster, error) {
 	cluster, err := GetMockClusterBuilder(nil).Build()

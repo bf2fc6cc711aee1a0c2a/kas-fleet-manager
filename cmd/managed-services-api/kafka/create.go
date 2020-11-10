@@ -30,7 +30,7 @@ func NewCreateCommand() *cobra.Command {
 	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID")
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
 	cmd.Flags().String(FlagClusterID, "000", "Kafka  request cluster ID")
-	cmd.Flags().Bool(FlagMultiAZ, false, "Whether Kafka request should be Multi AZ or not")
+	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Kafka request should be Multi AZ or not")
 
 	return cmd
 }
