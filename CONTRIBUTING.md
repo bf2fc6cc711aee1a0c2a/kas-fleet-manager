@@ -213,7 +213,7 @@ In the integration test itself you can then test the expected HTTP response/erro
 service based on the OCM failure e.g.
 
 ```go
-_, resp, err := client.DefaultApi.ApiManagedServicesApiV1KafkasPost(ctx, k)
+_, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
 Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
 ```
 
