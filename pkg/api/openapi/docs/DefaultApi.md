@@ -4,16 +4,16 @@ All URIs are relative to *https://api.openshift.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ApiManagedServicesApiV1KafkasGet**](DefaultApi.md#ApiManagedServicesApiV1KafkasGet) | **Get** /api/managed-services-api/v1/kafkas | Returns a list of Kafka requests
-[**ApiManagedServicesApiV1KafkasIdDelete**](DefaultApi.md#ApiManagedServicesApiV1KafkasIdDelete) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
-[**ApiManagedServicesApiV1KafkasIdGet**](DefaultApi.md#ApiManagedServicesApiV1KafkasIdGet) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
-[**ApiManagedServicesApiV1KafkasPost**](DefaultApi.md#ApiManagedServicesApiV1KafkasPost) | **Post** /api/managed-services-api/v1/kafkas | Create a new kafka Request
+[**CreateKafka**](DefaultApi.md#CreateKafka) | **Get** /api/managed-services-api/v1/kafkas | Returns a list of Kafka requests
+[**DeleteKafkaById**](DefaultApi.md#DeleteKafkaById) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
+[**GetKafkaById**](DefaultApi.md#GetKafkaById) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
+[**ListKafkas**](DefaultApi.md#ListKafkas) | **Post** /api/managed-services-api/v1/kafkas | Create a new kafka Request
 
 
 
-## ApiManagedServicesApiV1KafkasGet
+## CreateKafka
 
-> KafkaRequestList ApiManagedServicesApiV1KafkasGet(ctx, optional)
+> KafkaRequestList CreateKafka(ctx, optional)
 
 Returns a list of Kafka requests
 
@@ -23,11 +23,11 @@ Returns a list of Kafka requests
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
- **optional** | ***ApiManagedServicesApiV1KafkasGetOpts** | optional parameters | nil if no parameters
+ **optional** | ***CreateKafkaOpts** | optional parameters | nil if no parameters
 
 ### Optional Parameters
 
-Optional parameters are passed through a pointer to a ApiManagedServicesApiV1KafkasGetOpts struct
+Optional parameters are passed through a pointer to a CreateKafkaOpts struct
 
 
 Name | Type | Description  | Notes
@@ -53,9 +53,9 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## ApiManagedServicesApiV1KafkasIdDelete
+## DeleteKafkaById
 
-> Error ApiManagedServicesApiV1KafkasIdDelete(ctx, id)
+> Error DeleteKafkaById(ctx, id)
 
 Delete a kafka request by id
 
@@ -73,7 +73,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[Bearer](../README.md#Bearer)
 
 ### HTTP request headers
 
@@ -85,9 +85,9 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-## ApiManagedServicesApiV1KafkasIdGet
+## GetKafkaById
 
-> KafkaRequest ApiManagedServicesApiV1KafkasIdGet(ctx, id)
+> KafkaRequest GetKafkaById(ctx, id)
 
 Get a kafka request by id
 
@@ -117,9 +117,9 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## ApiManagedServicesApiV1KafkasPost
+## ListKafkas
 
-> KafkaRequest ApiManagedServicesApiV1KafkasPost(ctx, async, kafkaRequest)
+> KafkaRequest ListKafkas(ctx, async, kafkaRequest)
 
 Create a new kafka Request
 
