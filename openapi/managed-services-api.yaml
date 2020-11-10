@@ -92,6 +92,8 @@ paths:
                   $ref: '#/components/examples/500DeleteExample'
           description: Unexpected error occurred
       summary: Delete a kafka request by id
+      security:
+        - Bearer: []
     parameters:
       - $ref: "#/components/parameters/id"
   /api/managed-services-api/v1/kafkas:
