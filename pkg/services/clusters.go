@@ -13,6 +13,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 
+	"github.com/getsentry/sentry-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -66,6 +67,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	// Send POST request to /api/clusters_mgmt/v1/clusters to create a new OSD cluster
 	createdCluster, err := c.ocmClient.CreateCluster(newCluster)
 	if err != nil {
+		sentry.CaptureException(err)
 		return createdCluster, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
 
