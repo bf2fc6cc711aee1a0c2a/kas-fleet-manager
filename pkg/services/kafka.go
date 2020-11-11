@@ -9,6 +9,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"github.com/getsentry/sentry-go"
 )
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
@@ -71,12 +72,14 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 
 	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 	if err != nil || clusterDNS == "" {
+		sentry.CaptureException(err)
 		return errors.GeneralError("error retreiving cluster DNS: %v", err)
 	}
 
 	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
 	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
 	if replaceErr != nil {
+		sentry.CaptureException(err)
 		return errors.GeneralError("generated host is not valid: %v", replaceErr)
 	}
 
@@ -85,12 +88,14 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	// create the syncset builder
 	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest)
 	if err != nil {
+		sentry.CaptureException(err)
 		return errors.GeneralError("error creating kafka syncset builder: %v", err)
 	}
 
 	// create the syncset
 	_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
 	if err != nil {
+		sentry.CaptureException(err)
 		return errors.GeneralError("error creating syncset: %v", err)
 	}
 
@@ -148,6 +153,7 @@ func (k *kafkaService) Delete(id string) *errors.ServiceError {
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
 	err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 	if err != nil {
+		sentry.CaptureException(err)
 		return errors.GeneralError("error deleting syncset: %v", err)
 	}
 

@@ -10,6 +10,8 @@ import (
 
 	"github.com/golang/glog"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+	"github.com/getsentry/sentry-go"
+
 )
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
@@ -56,11 +58,13 @@ func (k *KafkaManager) reconcile() {
 	// handle accepted kafkas
 	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(services.KafkaRequestStatusAccepted)
 	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 	}
 
 	for _, kafka := range acceptedKafkas {
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
+			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			continue
 		}
@@ -69,11 +73,13 @@ func (k *KafkaManager) reconcile() {
 	// handle provisioning kafkas
 	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(services.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 	}
 
 	for _, kafka := range provisioningKafkas {
 		if err := k.reconcileProvisionedKafka(kafka); err != nil {
+			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			continue
 		}
