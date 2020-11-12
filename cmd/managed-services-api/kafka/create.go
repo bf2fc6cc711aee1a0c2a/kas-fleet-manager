@@ -26,7 +26,7 @@ func NewCreateCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagName, "", "Kafka request name")
-	cmd.Flags().String(FlagRegion, "eu-west-1", "OCM region ID")
+	cmd.Flags().String(FlagRegion, "us-east-1", "OCM region ID")
 	cmd.Flags().String(FlagProvider, "aws", "OCM provider ID")
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
 	cmd.Flags().String(FlagClusterID, "000", "Kafka  request cluster ID")

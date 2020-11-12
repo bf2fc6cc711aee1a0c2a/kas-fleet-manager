@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	testKafkaRequestRegion   = "eu-west-1"
+	testKafkaRequestRegion   = "us-east-1"
 	testKafkaRequestProvider = "aws"
 	testKafkaRequestName     = "test-cluster"
 	testClusterID            = "test-cluster-id"

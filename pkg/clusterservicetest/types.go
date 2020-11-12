@@ -11,7 +11,7 @@ const (
 	MockClusterExternalID    = "000"
 	MockClusterMultiAZ       = true
 	MockClusterCloudProvider = "aws"
-	MockClusterRegion        = "eu-west-1"
+	MockClusterRegion        = "us-east-1"
 	MockClusterState         = "pending"
 	MockClusterBYOC          = false
 	MockClusterManaged       = true
