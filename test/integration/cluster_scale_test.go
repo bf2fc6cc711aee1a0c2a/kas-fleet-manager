@@ -35,7 +35,7 @@ func TestClusterScaleUp(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	expectedReplicas := 2
+	expectedReplicas := 3
 	// scaleUp will result in one extra node if machinePool exists already (otherwise 2)
 	if machinePoolExists(h, clusterID, t) {
 		expectedReplicas = 1
@@ -78,7 +78,7 @@ func TestClusterScaleDown(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	expectedReplicas := 2
+	expectedReplicas := 3
 	// scaleUp will result in one extra node if machinePool exists already (otherwise 2)
 	if machinePoolExists(h, clusterID, t) {
 		expectedReplicas = 1

@@ -49,7 +49,7 @@ func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Cl
 const (
 	DefaultInstanceType        string = "m5.xlarge"
 	DefaultMachinePoolID       string = "managed"
-	DefaultMachinePoolReplicas int    = 2
+	DefaultMachinePoolReplicas int    = 3
 )
 
 // Create creates a new OSD cluster

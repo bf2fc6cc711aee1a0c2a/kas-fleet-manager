@@ -26,7 +26,7 @@ func NewCreateCommand() *cobra.Command {
 		glog.Fatalf("Unable to add environment flags to serve command: %s", err.Error())
 	}
 
-	cmd.Flags().String(FlagRegion, "eu-west-1", "Cluster region ID")
+	cmd.Flags().String(FlagRegion, "us-east-1", "Cluster region ID")
 	cmd.Flags().String(FlagProvider, "aws", "Cluster provider")
 	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Cluster request should be Multi AZ or not")
 

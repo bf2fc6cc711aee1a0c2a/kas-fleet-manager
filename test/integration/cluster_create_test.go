@@ -32,7 +32,7 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",
-		Region:        "eu-west-1",
+		Region:        "us-east-1",
 		MultiAZ:       true,
 	})
 	Expect(err).To(HaveOccurred())
