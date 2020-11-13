@@ -17,9 +17,20 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+// Rack definition for configuring rack awareness for Kafka brokers.
+type Rack struct {
+	TopologyKey string `json:"topologyKey"`
+}
+
+// Pod template for the Zookeeper or Kafka pods.
+type PodTemplate struct {
+	Affinity corev1.Affinity `json:"affinity,omitempty"`
+}
 
 // Rule definition of a Prometheus JMX Exporter rule for filtering metrics
 type Rule struct {
@@ -291,13 +302,21 @@ type KafkaClusterSpec struct {
 	Listeners     KafkaListeners      `json:"listeners"`
 	Authorization *KafkaAuthorization `json:"authorization,omitempty"`
 	Metrics       *Metrics            `json:"metrics,omitempty"`
+	Rack          *Rack               `json:"rack,omitempty"`
+}
+
+// ZookeeperTemplate definition for the template of ZooKeeper cluster resources.
+// The template allows users to specify how the Zookeeper cluster resources are generated.
+type ZookeeperTemplate struct {
+	Pod *PodTemplate `json:"pod,omitempty"`
 }
 
 // ZookeeperClusterSpec configuration of the ZooKeeper cluster.
 type ZookeeperClusterSpec struct {
-	Replicas int      `json:"replicas"`
-	Storage  Storage  `json:"storage"`
-	Metrics  *Metrics `json:"metrics,omitempty"`
+	Replicas int                `json:"replicas"`
+	Storage  Storage            `json:"storage"`
+	Metrics  *Metrics           `json:"metrics,omitempty"`
+	Template *ZookeeperTemplate `json:"template,omitempty"`
 }
 
 // EntityTopicOperatorSpec configuration of the Topic Operator.
