@@ -300,7 +300,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 								ID:   &jbodVolumeId,
 								Type: strimzi.PersistentClaim,
 								PersistentClaimStorage: strimzi.PersistentClaimStorage{
-									Size:        "5Gi",
+									Size:        "100Gi",
 									DeleteClaim: &deleteClaim,
 								},
 							},
@@ -330,7 +330,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				Storage: strimzi.Storage{
 					Type: strimzi.PersistentClaim,
 					PersistentClaimStorage: strimzi.PersistentClaimStorage{
-						Size:        "5Gi",
+						Size:        "10Gi",
 						DeleteClaim: &deleteClaim,
 					},
 				},
