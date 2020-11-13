@@ -272,7 +272,7 @@ objects:
             - name: ocm-managed-services-providers-config
               mountPath: /config
             env:
-              - name: "AMS_ENV"
+              - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
             command:
             - /usr/local/bin/managed-services-api
@@ -299,6 +299,7 @@ objects:
             - --enable-https=${ENABLE_HTTPS}
             - --api-server-hostname=${API_SERVER_HOSTNAME}
             - --api-server-bindaddress=${API_SERVER_BINDADDRESS}
+            - --metrics-server-bindaddress=${METRICS_SERVER_BINDADDRESS}
             - --health-check-server-bindaddress=${HEALTH_CHECK_SERVER_BINDADDRESS}
             - --enable-health-check-https=${ENABLE_HTTPS}
             - --db-sslmode=${DB_SSLMODE}
