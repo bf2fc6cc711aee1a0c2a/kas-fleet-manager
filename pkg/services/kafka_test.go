@@ -41,6 +41,7 @@ func buildKafkaRequest(modifyFn func(kafkaRequest *api.KafkaRequest)) *api.Kafka
 		CloudProvider: testKafkaRequestProvider,
 		Name:          testKafkaRequestName,
 		MultiAZ:       false,
+		Owner:         testUser,
 	}
 	if modifyFn != nil {
 		modifyFn(kafkaRequest)

@@ -10,6 +10,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -322,6 +323,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 					},
 				},
 				Metrics: kafkaMetrics,
+				Rack:    nil,
 			},
 			Zookeeper: strimzi.ZookeeperClusterSpec{
 				Replicas: numOfZookeepers,
@@ -332,13 +334,34 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 						DeleteClaim: &deleteClaim,
 					},
 				},
-				Metrics: zookeeperMetrics,
+				Metrics:  zookeeperMetrics,
+				Template: nil,
 			},
 			KafkaExporter: &strimzi.KafkaExporterSpec{
 				TopicRegex: ".*",
 				GroupRegex: ".*",
 			},
 		},
+	}
+
+	// Set rack awareness configuration if requested Kafka is multiAZ
+	if kafkaRequest.MultiAZ {
+		kafkaCR.Spec.Kafka.Rack = &strimzi.Rack{
+			TopologyKey: "topology.kubernetes.io/zone",
+		}
+		kafkaCR.Spec.Zookeeper.Template = &strimzi.ZookeeperTemplate{
+			Pod: &strimzi.PodTemplate{
+				Affinity: corev1.Affinity{
+					PodAntiAffinity: &corev1.PodAntiAffinity{
+						RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+							{
+								TopologyKey: "kubernetes.io/hostname",
+							},
+						},
+					},
+				},
+			},
+		}
 	}
 
 	resources := []interface{}{
