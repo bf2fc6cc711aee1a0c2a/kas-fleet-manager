@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -96,7 +98,7 @@ func (c *ClusterManager) reconcile() {
 		glog.Errorf("failed to list provisioned clusters: %s", listErr.Error())
 	}
 
-	// process each local provisioned cluster and apply nessecary terraforming
+	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
 		addonInstallation, err := c.reconcileStrimziOperator(provisionedCluster.ID)
 		if err != nil {
@@ -112,6 +114,8 @@ func (c *ClusterManager) reconcile() {
 				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ID, err.Error())
 				continue
 			}
+			// add entry for cluster creation metric
+			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
 		}
 		glog.V(5).Infof("reconciled cluster %s terraforming", provisionedCluster.ID)
 	}
