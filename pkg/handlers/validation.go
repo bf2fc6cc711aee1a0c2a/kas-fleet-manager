@@ -59,6 +59,16 @@ func validateAsyncEnabled(r *http.Request, action string) validate {
 	}
 }
 
+// validateMultiAZEnabled returns a validator that returns an error if the multiAZ is not true
+func validateMultiAZEnabled(value *bool, action string) validate {
+	return func() *errors.ServiceError {
+		if !*value {
+			return errors.NotMultiAzActionNotSupported(action)
+		}
+		return nil
+	}
+}
+
 // validateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
 func validateCloudProvider(kr *openapi.KafkaRequest, configService services.ConfigService, action string) validate {

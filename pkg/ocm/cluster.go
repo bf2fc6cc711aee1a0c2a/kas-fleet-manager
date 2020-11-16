@@ -56,9 +56,8 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cluster.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(cluster.Region))
 	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(OpenshiftVersion))
-
-	// currently disabled as we do not have quota for this type of cluster.
-	// clusterBuilder.MultiAZ(cluster.MultiAZ)
+	// currently only enabled for MultiAZ.
+	clusterBuilder.MultiAZ(true)
 
 	// setting BYOC to always be true for now as this is the only available cluster type within our quota.
 	clusterBuilder.BYOC(true)

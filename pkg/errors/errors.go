@@ -198,3 +198,7 @@ func SyncActionNotSupported(reason string, values ...interface{}) *ServiceError 
 	message := fmt.Sprintf("Synchronous action (%s) is unsupported, use async=true parameter", reason)
 	return New(ErrorSyncActionNotSupported, message)
 }
+func NotMultiAzActionNotSupported(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("only multi_az is supported, use multi_az=true in Kafka requests")
+	return New(ErrorBadRequest, message)
+}
