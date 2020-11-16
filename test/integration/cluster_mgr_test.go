@@ -40,6 +40,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	newCluster, provisionErr := clusterService.Create(&api.Cluster{
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Region:        mocks.MockCluster.Region().ID(),
+		MultiAZ:       testMultiAZ,
 	})
 	if provisionErr != nil {
 		t.Fatalf("Failed to create a new cluster: %s", provisionErr.Error())

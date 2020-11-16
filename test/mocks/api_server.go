@@ -63,9 +63,9 @@ const (
 	// mockCloudProviderDisplayName default mock provider display name
 	MockCloudProviderDisplayName = "AWS"
 	// mockCloudRegionID default mock cluster region
-	MockCloudRegionID = "eu-west-1"
+	MockCloudRegionID = "us-east-1"
 	// mockCloudRegionDisplayName default mock cloud region display name
-	MockCloudRegionDisplayName = "EU, Ireland"
+	MockCloudRegionDisplayName = "US East, N. Virginia"
 	// mockSyncsetID default mock syncset id used in the mock ocm server
 	MockSyncsetID = "ext-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9"
 	// mockIngressID default mock ingress id used in the mock ocm server
@@ -85,9 +85,11 @@ const (
 	// mockMachinePoolID default machine pool ID
 	MockMachinePoolID = "managed"
 	// mockMachinePoolReplicas default number of machine pool replicas
-	MockMachinePoolReplicas = 2
+	MockMachinePoolReplicas = 3
 	// mockOpenshiftVersion default cluster openshift version
 	MockOpenshiftVersion = "openshift-v4.6.1"
+	//MockMultiAZ default value
+	MockMultiAZ = true
 )
 
 // variables for endpoints
@@ -687,6 +689,7 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 		ID(MockClusterID).
 		ExternalID(MockClusterExternalID).
 		State(MockClusterState).
+		MultiAZ(MockMultiAZ).
 		CloudProvider(GetMockCloudProviderBuilder(nil)).
 		Region(GetMockCloudProviderRegionBuilder(nil)).
 		Version(GetMockOpenshiftVersionBuilder(nil))
@@ -695,7 +698,6 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 	}
 	return builder
 }
-
 // GetMockCluster for emulated OCM server
 func GetMockCluster(modifyFn func(*clustersmgmtv1.Cluster, error)) (*clustersmgmtv1.Cluster, error) {
 	cluster, err := GetMockClusterBuilder(nil).Build()

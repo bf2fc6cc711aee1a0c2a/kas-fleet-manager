@@ -23,6 +23,7 @@ const (
 	mockKafkaOwner     = "owner"
 	kafkaReadyTimeout  = time.Minute * 10
 	kafkaCheckInterval = time.Second * 10
+	testMultiAZ        = true
 )
 
 // TestKafkaCreate_Success validates the happy path of the kafka post endpoint:
@@ -58,6 +59,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
 	}
 
 	var kafka openapi.KafkaRequest
@@ -136,6 +138,17 @@ func TestKafkaPost_Validations(t *testing.T) {
 			wantCode: http.StatusBadRequest,
 		},
 		{
+			name: "HTTP 400 when MultiAZ false provided",
+			body: openapi.KafkaRequest{
+				MultiAz:       false,
+				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+				Region:        mocks.MockCluster.Region().ID(),
+				Owner:         mockKafkaOwner,
+				Name:          mockKafkaName,
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		{
 			name: "HTTP 400 when name not provided",
 			body: openapi.KafkaRequest{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -181,6 +194,7 @@ func TestKafkaGet(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
 	}
 
 	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
@@ -226,6 +240,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
 	}
 
 	var kafka openapi.KafkaRequest
@@ -278,6 +293,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
 		Id:            "invalid-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9",
 	}
 
@@ -307,6 +323,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
 	}
 
 	var kafka openapi.KafkaRequest
@@ -366,6 +383,7 @@ func TestKafkaList_Success(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
 	}
 
 	// POST kafka request to populate the list

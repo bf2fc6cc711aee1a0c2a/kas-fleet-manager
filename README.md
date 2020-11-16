@@ -160,7 +160,7 @@ $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
-$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas?async=true -d '{ "region": "eu-west-1", "cloud_provider": "aws",  "name": "serviceapi"}'
+$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi"}'
 
 # Login to the database
 $ make db/login
