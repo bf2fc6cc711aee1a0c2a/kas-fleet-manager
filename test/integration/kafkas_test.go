@@ -11,8 +11,10 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	"gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -95,6 +97,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
+	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
