@@ -73,6 +73,28 @@ The following git hooks are currently available:
 - **pre-commit**:
   - This runs checks to ensure that the staged `.go` files passes formatting and standard checks using gofmt and go vet.
 
+## Debugging
+### VS Code
+Set the following configuration in your **Launch.json** file.
+```
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Managed Service API",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/managed-services-api/main.go",
+            "env": {
+                "OCM_ENV": "development"
+            },
+            "args": ["serve"]
+        }
+    ]
+}
+```
+
 ## Generate OpenAPI code
 
 For more information: https://github.com/openapitools/openapi-generator
