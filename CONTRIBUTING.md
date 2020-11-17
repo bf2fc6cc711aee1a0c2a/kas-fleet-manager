@@ -96,10 +96,10 @@ make generate
 ### On Other Linux Platforms
 
 ```sh
-cat pkg/api/openapi/.openapi-generator/VERSION
+VERSION=$(cat pkg/api/openapi/.openapi-generator/VERSION)
 
-# install openapi-generator with the same version ^^, e.g. 3.3.4
-npm install @openapitools/openapi-generator-cli@cli-3.3.4 -g
+# install openapi-generator with the same version
+npm install @openapitools/openapi-generator-cli@cli-$VERSION -g
 
 make generate
 ```
