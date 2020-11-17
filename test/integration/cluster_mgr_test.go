@@ -5,12 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	"gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -83,4 +86,5 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	if err != nil {
 		t.Log(err)
 	}
+	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 }
