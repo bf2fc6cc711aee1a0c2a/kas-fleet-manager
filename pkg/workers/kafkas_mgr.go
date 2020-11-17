@@ -5,13 +5,14 @@ import (
 	"sync"
 	"time"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
+	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"github.com/getsentry/sentry-go"
-
 )
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
@@ -114,5 +115,8 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 	if err := k.kafkaService.UpdateStatus(kafka.ID, services.KafkaRequestStatusComplete); err != nil {
 		return fmt.Errorf("failed to update kafka %s to status complete: %w", kafka.ID, err)
 	}
+	// line below (responsible for adding metrics) will need to be moved to a place
+	// where successful kafka cluster creation check takes place (once this check is implemented)
+	metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
 	return nil
 }
