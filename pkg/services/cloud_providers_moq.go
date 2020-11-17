@@ -4,6 +4,8 @@
 package services
 
 import (
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"sync"
 )
 
@@ -20,6 +22,12 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 //             GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, error) {
 // 	               panic("mock out the GetCloudProvidersWithRegions method")
 //             },
+//             ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *errors.ServiceError) {
+// 	               panic("mock out the ListCloudProviderRegions method")
+//             },
+//             ListCloudProvidersFunc: func() ([]api.CloudProvider, *errors.ServiceError) {
+// 	               panic("mock out the ListCloudProviders method")
+//             },
 //         }
 //
 //         // use mockedCloudProvidersService in code that requires CloudProvidersService
@@ -30,13 +38,29 @@ type CloudProvidersServiceMock struct {
 	// GetCloudProvidersWithRegionsFunc mocks the GetCloudProvidersWithRegions method.
 	GetCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, error)
 
+	// ListCloudProviderRegionsFunc mocks the ListCloudProviderRegions method.
+	ListCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *errors.ServiceError)
+
+	// ListCloudProvidersFunc mocks the ListCloudProviders method.
+	ListCloudProvidersFunc func() ([]api.CloudProvider, *errors.ServiceError)
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// GetCloudProvidersWithRegions holds details about calls to the GetCloudProvidersWithRegions method.
 		GetCloudProvidersWithRegions []struct {
 		}
+		// ListCloudProviderRegions holds details about calls to the ListCloudProviderRegions method.
+		ListCloudProviderRegions []struct {
+			// ID is the id argument value.
+			ID string
+		}
+		// ListCloudProviders holds details about calls to the ListCloudProviders method.
+		ListCloudProviders []struct {
+		}
 	}
 	lockGetCloudProvidersWithRegions sync.RWMutex
+	lockListCloudProviderRegions     sync.RWMutex
+	lockListCloudProviders           sync.RWMutex
 }
 
 // GetCloudProvidersWithRegions calls GetCloudProvidersWithRegionsFunc.
@@ -62,5 +86,62 @@ func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegionsCalls() []str
 	mock.lockGetCloudProvidersWithRegions.RLock()
 	calls = mock.calls.GetCloudProvidersWithRegions
 	mock.lockGetCloudProvidersWithRegions.RUnlock()
+	return calls
+}
+
+// ListCloudProviderRegions calls ListCloudProviderRegionsFunc.
+func (mock *CloudProvidersServiceMock) ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError) {
+	if mock.ListCloudProviderRegionsFunc == nil {
+		panic("CloudProvidersServiceMock.ListCloudProviderRegionsFunc: method is nil but CloudProvidersService.ListCloudProviderRegions was just called")
+	}
+	callInfo := struct {
+		ID string
+	}{
+		ID: id,
+	}
+	mock.lockListCloudProviderRegions.Lock()
+	mock.calls.ListCloudProviderRegions = append(mock.calls.ListCloudProviderRegions, callInfo)
+	mock.lockListCloudProviderRegions.Unlock()
+	return mock.ListCloudProviderRegionsFunc(id)
+}
+
+// ListCloudProviderRegionsCalls gets all the calls that were made to ListCloudProviderRegions.
+// Check the length with:
+//     len(mockedCloudProvidersService.ListCloudProviderRegionsCalls())
+func (mock *CloudProvidersServiceMock) ListCloudProviderRegionsCalls() []struct {
+	ID string
+} {
+	var calls []struct {
+		ID string
+	}
+	mock.lockListCloudProviderRegions.RLock()
+	calls = mock.calls.ListCloudProviderRegions
+	mock.lockListCloudProviderRegions.RUnlock()
+	return calls
+}
+
+// ListCloudProviders calls ListCloudProvidersFunc.
+func (mock *CloudProvidersServiceMock) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
+	if mock.ListCloudProvidersFunc == nil {
+		panic("CloudProvidersServiceMock.ListCloudProvidersFunc: method is nil but CloudProvidersService.ListCloudProviders was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListCloudProviders.Lock()
+	mock.calls.ListCloudProviders = append(mock.calls.ListCloudProviders, callInfo)
+	mock.lockListCloudProviders.Unlock()
+	return mock.ListCloudProvidersFunc()
+}
+
+// ListCloudProvidersCalls gets all the calls that were made to ListCloudProviders.
+// Check the length with:
+//     len(mockedCloudProvidersService.ListCloudProvidersCalls())
+func (mock *CloudProvidersServiceMock) ListCloudProvidersCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListCloudProviders.RLock()
+	calls = mock.calls.ListCloudProviders
+	mock.lockListCloudProviders.RUnlock()
 	return calls
 }

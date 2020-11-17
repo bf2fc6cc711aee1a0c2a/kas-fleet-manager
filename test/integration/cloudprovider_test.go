@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"net/http"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -40,5 +41,44 @@ func TestCloudProviderRegions(t *testing.T) {
 		})
 
 	}
+
+}
+
+func TestListCloudProviders(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+
+	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviders(ctx, nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud providers list")
+
+}
+func TestListCloudProviderRegions(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+
+	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud provider regions list")
+
+	//test with wrong provider id
+	cloudProviderList, resp, err = client.DefaultApi.ListCloudProviderRegions(ctx, "wrong_provider_id", nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(cloudProviderList.Items).To(BeEmpty(), "Expected cloud providers regions list empty")
 
 }
