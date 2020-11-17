@@ -4,9 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
+
+	. "github.com/onsi/gomega"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
@@ -119,4 +123,29 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 		return cluster.ClusterID, nil
 	}
 	return "", nil
+}
+
+// CheckMetricExposed - checks whether metric is exposed in the metrics URL
+func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
+	metricsConfig := config.NewMetricsConfig()
+	metricsAddress := metricsConfig.BindAddress
+	var metricsURL string
+	if metricsConfig.EnableHTTPS {
+		metricsURL = fmt.Sprintf("https://%s/metrics", metricsAddress)
+	} else {
+		metricsURL = fmt.Sprintf("http://%s/metrics", metricsAddress)
+	}
+	response, err := http.Get(metricsURL)
+	if err != nil {
+		t.Fatalf("failed to get response from %s: %s", metricsURL, err.Error())
+	}
+	defer response.Body.Close()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		t.Fatalf("failed to read response data: %s", err.Error())
+	}
+
+	responseString := string(responseData)
+	Expect(strings.Contains(responseString, metric)).To(Equal(true))
 }
