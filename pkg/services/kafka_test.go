@@ -13,6 +13,7 @@ import (
 	mocket "github.com/selvatico/go-mocket"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
+	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -717,7 +718,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 		clusterService    ClusterService
 	}
 	type args struct {
-		status KafkaStatus
+		status constants.KafkaStatus
 	}
 	tests := []struct {
 		name    string
@@ -777,7 +778,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 	}
 	type args struct {
 		id     string
-		status KafkaStatus
+		status constants.KafkaStatus
 	}
 	tests := []struct {
 		name    string

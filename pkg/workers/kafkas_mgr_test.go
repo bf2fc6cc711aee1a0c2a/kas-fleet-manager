@@ -1,12 +1,14 @@
 package workers
 
 import (
+	"testing"
+	"time"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"testing"
-	"time"
 )
 
 func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
@@ -46,7 +48,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status services.KafkaStatus) *errors.ServiceError {
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
 				},
@@ -63,7 +65,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status services.KafkaStatus) *errors.ServiceError {
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return nil
 					},
 				},

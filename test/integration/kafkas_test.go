@@ -11,8 +11,8 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
+	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
@@ -89,15 +89,18 @@ func TestKafkaCreate_Success(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == services.KafkaRequestStatusComplete.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusComplete.String(), nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become complete: %v", err)
 	// final check on the status
-	Expect(foundKafka.Status).To(Equal(services.KafkaRequestStatusComplete.String()))
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{status=\"%s\"} 1", constants.KafkaRequestStatusAccepted.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{status=\"%s\"} 1", constants.KafkaRequestStatusComplete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{status=\"%s\"} 1", constants.KafkaRequestStatusProvisioning.String()))
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -215,7 +218,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(services.KafkaRequestStatusAccepted.String()))
+	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusAccepted.String()))
 
 	// 404 Not Found
 	kafka, resp, err = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
@@ -268,10 +271,10 @@ func TestKafkaDelete_Success(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == services.KafkaRequestStatusComplete.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusComplete.String(), nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become complete: %v", err)
-	Expect(foundKafka.Status).To(Equal(services.KafkaRequestStatusComplete.String()))
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 
@@ -401,7 +404,7 @@ func TestKafkaList_Success(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == services.KafkaRequestStatusComplete.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusComplete.String(), nil
 	})
 
 	// get populated list of kafka requests
@@ -426,7 +429,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(services.KafkaRequestStatusComplete.String()))
+	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
 
 	// new account setup to prove that users can only list their own kafka instances
 	account = h.NewRandAccount()
