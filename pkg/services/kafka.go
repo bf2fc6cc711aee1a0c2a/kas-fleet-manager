@@ -45,7 +45,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	kafkaRequest.Status = string(constants.KafkaRequestStatusAccepted)
+	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
