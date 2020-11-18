@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
+	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"github.com/getsentry/sentry-go"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 )
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
@@ -19,8 +21,8 @@ type KafkaService interface {
 	Delete(id string) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
-	ListByStatus(status KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
-	UpdateStatus(id string, status KafkaStatus) *errors.ServiceError
+	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+	UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
 
@@ -31,18 +33,6 @@ type kafkaService struct {
 	syncsetService    SyncsetService
 	clusterService    ClusterService
 }
-
-type KafkaStatus string
-
-func (k KafkaStatus) String() string {
-	return string(k)
-}
-
-const (
-	KafkaRequestStatusAccepted     KafkaStatus = "accepted"
-	KafkaRequestStatusProvisioning KafkaStatus = "provisioning"
-	KafkaRequestStatusComplete     KafkaStatus = "complete"
-)
 
 func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService) *kafkaService {
 	return &kafkaService{
@@ -55,10 +45,11 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	kafkaRequest.Status = string(KafkaRequestStatusAccepted)
+	kafkaRequest.Status = string(constants.KafkaRequestStatusAccepted)
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
+	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
 }
 
@@ -108,7 +99,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	return nil
 }
 
-func (k *kafkaService) ListByStatus(status KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
 	var kafkas []*api.KafkaRequest
@@ -208,7 +199,7 @@ func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErro
 	return nil
 }
 
-func (k kafkaService) UpdateStatus(id string, status KafkaStatus) *errors.ServiceError {
+func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	if err := dbConn.Table("kafka_requests").Where("id = ?", id).Update("status", status).Error; err != nil {
