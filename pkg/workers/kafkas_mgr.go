@@ -12,6 +12,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
+	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -57,7 +58,7 @@ func (k *KafkaManager) reconcile() {
 	glog.V(5).Infoln("reconciling kafkas")
 
 	// handle accepted kafkas
-	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(services.KafkaRequestStatusAccepted)
+	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusAccepted)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
@@ -72,7 +73,7 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	// handle provisioning kafkas
-	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(services.KafkaRequestStatusProvisioning)
+	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
@@ -99,10 +100,11 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	if cluster != nil {
 		kafka.ClusterID = cluster.ClusterID
-		kafka.Status = services.KafkaRequestStatusProvisioning.String()
+		kafka.Status = constants.KafkaRequestStatusProvisioning.String()
 		if err = k.kafkaService.Update(kafka); err != nil {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
 		}
+		metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusProvisioning.String())
 	}
 	return nil
 }
@@ -112,11 +114,12 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 		return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 	}
 	// consider the kafka in a complete state
-	if err := k.kafkaService.UpdateStatus(kafka.ID, services.KafkaRequestStatusComplete); err != nil {
+	if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusComplete); err != nil {
 		return fmt.Errorf("failed to update kafka %s to status complete: %w", kafka.ID, err)
 	}
-	// line below (responsible for adding metrics) will need to be moved to a place
+	// lines below (responsible for adding metrics) will need to be moved to a place
 	// where successful kafka cluster creation check takes place (once this check is implemented)
 	metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
+	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusComplete.String())
 	return nil
 }

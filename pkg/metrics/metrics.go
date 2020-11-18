@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 )
 
 const (
@@ -16,7 +17,16 @@ const (
 	// KafkaCreateRequestDuration - name of kafka creation duration metric
 	KafkaCreateRequestDuration = "worker_kafka_duration_bucket"
 
-	labelJobType = "jobType"
+	// KafkaAcceptedStatus - name of counter metric of accepted kafkas
+	KafkaAcceptedStatus = constants.KafkaRequestStatusAccepted
+	// KafkaCompleteStatus - name of counter metric of completed kafkas
+	KafkaCompleteStatus = constants.KafkaRequestStatusComplete
+	// KafkaProvisioningStatus - name of counter metric of provisioning kafkas
+	KafkaProvisioningStatus = constants.KafkaRequestStatusProvisioning
+
+	labelJobType               = "jobType"
+	kafkaStatus                = "status"
+	kafkaStatusOccurrenceCount = "kafka_status_count"
 )
 
 // JobType metric to capture
@@ -32,6 +42,11 @@ var (
 // JobsMetricsLabels is the slice of labels to add to job metrics
 var JobsMetricsLabels = []string{
 	labelJobType,
+}
+
+// KafkaStatusCountMetricsLabels - is the slice of labels to add to kafka status count metrics
+var KafkaStatusCountMetricsLabels = []string{
+	kafkaStatus,
 }
 
 // create a new histogramVec for cluster creation duration
@@ -101,8 +116,27 @@ func UpdateKafkaCreationDurationMetric(jobType JobType, elapsed time.Duration) {
 	requestKafkaCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
 }
 
+// create a new counterVec for transaction counts
+var requestTransactionCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: transactionsSubsystem,
+		Name:      kafkaStatusOccurrenceCount,
+		Help:      "Number of kafka requests in given status",
+	},
+	KafkaStatusCountMetricsLabels,
+)
+
+// IncreaseStatusCountMetric - increase counter for kafka request status
+func IncreaseStatusCountMetric(status string) {
+	labels := prometheus.Labels{
+		kafkaStatus: string(status),
+	}
+	requestTransactionCountMetric.With(labels).Inc()
+}
+
 // register the metric(s)
 func init() {
 	prometheus.MustRegister(requestClusterCreationDurationMetric)
 	prometheus.MustRegister(requestKafkaCreationDurationMetric)
+	prometheus.MustRegister(requestTransactionCountMetric)
 }
