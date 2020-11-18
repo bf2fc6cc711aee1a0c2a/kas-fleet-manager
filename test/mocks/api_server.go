@@ -26,7 +26,7 @@ import (
 const (
 	// EndpointPathClusters ocm clusters management service clusters endpoint
 	EndpointPathClusters = "/api/clusters_mgmt/v1/clusters"
-	// EndpointPathClusters ocm clusters management service clusters endpoint
+	// EndpointPathCluster ocm clusters management service clusters endpoint
 	EndpointPathCluster = "/api/clusters_mgmt/v1/clusters/{id}"
 	// EndpointPathSyncsets ocm clusters management service syncset endpoint
 	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets"
@@ -52,41 +52,42 @@ const (
 	EndpointPathMachinePool = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}"
 
 	// Default values for getX functions
-	// mockClusterID default mock cluster id used in the mock ocm server
+
+	// MockClusterID default mock cluster id used in the mock ocm server
 	MockClusterID = "2aad9fc1-c40e-471f-8d57-fdaecc7d3686"
-	// mockCloudProviderID default mock provider ID
+	// MockCloudProviderID default mock provider ID
 	MockCloudProviderID = "aws"
-	// mockClusterExternalID default mock cluster external ID
+	// MockClusterExternalID default mock cluster external ID
 	MockClusterExternalID = "2aad9fc1-c40e-471f-8d57-fdaecc7d3686"
-	// mockClusterState default mock cluster state
+	// MockClusterState default mock cluster state
 	MockClusterState = clustersmgmtv1.ClusterStateReady
-	// mockCloudProviderDisplayName default mock provider display name
+	// MockCloudProviderDisplayName default mock provider display name
 	MockCloudProviderDisplayName = "AWS"
-	// mockCloudRegionID default mock cluster region
+	// MockCloudRegionID default mock cluster region
 	MockCloudRegionID = "us-east-1"
-	// mockCloudRegionDisplayName default mock cloud region display name
+	// MockCloudRegionDisplayName default mock cloud region display name
 	MockCloudRegionDisplayName = "US East, N. Virginia"
-	// mockSyncsetID default mock syncset id used in the mock ocm server
+	// MockSyncsetID default mock syncset id used in the mock ocm server
 	MockSyncsetID = "ext-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9"
-	// mockIngressID default mock ingress id used in the mock ocm server
+	// MockIngressID default mock ingress id used in the mock ocm server
 	MockIngressID = "s1h5"
-	// mockIngressDNS default mock ingress dns used in the mock ocm server
+	// MockIngressDNS default mock ingress dns used in the mock ocm server
 	MockIngressDNS = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
-	// mockIngressHref default mock ingress HREF used in the mock ocm server
+	// MockIngressHref default mock ingress HREF used in the mock ocm server
 	MockIngressHref = "/api/clusters_mgmt/v1/clusters/000/ingresses/i8y1"
-	// mockIngressListening default mock ingress listening used in the mock ocm server
+	// MockIngressListening default mock ingress listening used in the mock ocm server
 	MockIngressListening = clustersmgmtv1.ListeningMethodExternal
-	// mockClusterAddonID default mock cluster addon ID
+	// MockClusterAddonID default mock cluster addon ID
 	MockClusterAddonID = "managed-kafka"
-	// mockClusterAddonState default mock cluster addon state
+	// MockClusterAddonState default mock cluster addon state
 	MockClusterAddonState = clustersmgmtv1.AddOnInstallationStateReady
-	// mockClusterAddonDescription default mock cluster addon description
+	// MockClusterAddonDescription default mock cluster addon description
 	MockClusterAddonDescription = "InstallWaiting"
-	// mockMachinePoolID default machine pool ID
+	// MockMachinePoolID default machine pool ID
 	MockMachinePoolID = "managed"
-	// mockMachinePoolReplicas default number of machine pool replicas
+	// MockMachinePoolReplicas default number of machine pool replicas
 	MockMachinePoolReplicas = 3
-	// mockOpenshiftVersion default cluster openshift version
+	// MockOpenshiftVersion default cluster openshift version
 	MockOpenshiftVersion = "openshift-v4.6.1"
 	//MockMultiAZ default value
 	MockMultiAZ = true
@@ -698,6 +699,7 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 	}
 	return builder
 }
+
 // GetMockCluster for emulated OCM server
 func GetMockCluster(modifyFn func(*clustersmgmtv1.Cluster, error)) (*clustersmgmtv1.Cluster, error) {
 	cluster, err := GetMockClusterBuilder(nil).Build()
