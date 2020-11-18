@@ -1,12 +1,12 @@
 package integration
 
 import (
+	"testing"
+
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
-	"testing"
 )
 
 func TestCloudProviderRegions(t *testing.T) {
@@ -22,19 +22,13 @@ func TestCloudProviderRegions(t *testing.T) {
 	cloudProviderRegions, err := h.Env().Services.CloudProviders.GetCloudProvidersWithRegions()
 	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
 
-	var regions services.CloudProviderWithRegions
-	var href string
-	var id string
-	var name string
-	var multiAz bool
-	for i := range cloudProviderRegions {
-		regions = cloudProviderRegions[i]
+	for _, regions := range cloudProviderRegions {
 		Expect(regions.RegionList.Len()).NotTo(Equal(0))
 		regions.RegionList.Each(func(item *clustersmgmtv1.CloudRegion) bool {
-			href = item.HREF()
-			id = item.ID()
-			name = item.DisplayName()
-			multiAz = item.SupportsMultiAZ()
+			href := item.HREF()
+			id := item.ID()
+			name := item.DisplayName()
+			multiAz := item.SupportsMultiAZ()
 
 			Expect(regions.ID).NotTo(Equal(nil))
 			Expect(href).NotTo(Equal(nil))
