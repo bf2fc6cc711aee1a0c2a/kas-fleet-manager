@@ -147,7 +147,19 @@ The `go.mod` file we automatically be updated with the new required project, the
 
 ## Modifying the API definition
 
-All OpenAPI spec modifications must be done through [Apicurio Studo](https://studio.apicur.io/apis/35337) first and manually copied into the repo.
+All OpenAPI spec modifications must be done through [Apicurio Studio](https://studio.apicur.io/apis/35337) first and manually copied into the repo.
+
+Once you've made your changes, the second step is to validate it:
+
+```sh
+make openapi/validate
+```
+
+Once the schema is valid, the remaining step is to generate the openapi modules by using the command:
+
+```sh
+make openapi/generate
+```
 
 ## Testing
 
