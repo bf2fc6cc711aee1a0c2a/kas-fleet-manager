@@ -32,6 +32,15 @@ paths:
                 401Example:
                   $ref: '#/components/examples/401Example'
           description: Auth token is invalid
+        "403":
+          content:
+              application/json:
+                  schema:
+                      $ref: '#/components/schemas/Error'
+                  examples:
+                      403Example:
+                          $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service.    
         "404":
           content:
             application/json:
@@ -73,6 +82,15 @@ paths:
                 401Example:
                   $ref: '#/components/examples/401Example'
           description: Auth token is invalid
+        "403":
+          content:
+              application/json:
+                  schema:
+                      $ref: '#/components/schemas/Error'
+                  examples:
+                      403Example:
+                          $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service.    
         "404":
           content:
             application/json:
@@ -146,6 +164,15 @@ paths:
                 401Example:
                   $ref: '#/components/examples/401Example'
           description: Auth token is invalid
+        "403":
+          content:
+              application/json:
+                  schema:
+                      $ref: '#/components/schemas/Error'
+                  examples:
+                      403Example:
+                          $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service. 
         "404":
           content:
             application/json:
@@ -173,13 +200,13 @@ paths:
       security:
         - Bearer: []
       responses:
-        '200':
+        "200":
           description: A list of Kafka requests
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/KafkaRequestList'
-        '401':
+        "401":
           description: Auth token is invalid
           content:
             application/json:
@@ -188,7 +215,16 @@ paths:
               examples:
                 401Example:
                   $ref: '#/components/examples/401Example'
-        '500':
+        "403":
+          content:
+              application/json:
+                  schema:
+                      $ref: '#/components/schemas/Error'
+                  examples:
+                      403Example:
+                          $ref: '#/components/examples/403Example'
+          description: User not authorized to access the service.             
+        "500":
           description: Unexpected error occurred
           content:
             application/json:
@@ -553,6 +589,14 @@ components:
         code: "OCM-EX-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
+    403Example:
+      value:
+         id: '4'
+         kind: Error
+         href: /api/managed-services-api/v1/errors/4
+         code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
+         reason: User foo-bar is not authorized to access the service.
+         operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
     500Example:
       value:
         id: '9'

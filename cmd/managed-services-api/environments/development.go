@@ -16,6 +16,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"api-server-hostname":    "localhost",
 	"api-server-bindaddress": "localhost:8000",
 	"enable-sentry":          "false",
+	"enable-allow-list":      "true",
 }
 
 func loadDevelopment(env *Env) error {
