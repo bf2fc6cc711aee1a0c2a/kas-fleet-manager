@@ -24,12 +24,13 @@ const (
 // AuthPayload defines the structure of the JWT payload we expect from
 // RHD JWT tokens
 type AuthPayload struct {
-	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Issuer    string `json:"iss"`
-	ClientID  string `json:"clientId"`
+	Username       string `json:"username"`
+	FirstName      string `json:"first_name"`
+	LastName       string `json:"last_name"`
+	Email          string `json:"email"`
+	Issuer         string `json:"iss"`
+	ClientID       string `json:"clientId"`
+	OrganisationId string `json:"org_id"`
 }
 
 func SetUsernameContext(ctx context.Context, username string) context.Context {
@@ -62,6 +63,7 @@ func GetAuthPayloadFromContext(ctx context.Context) (*AuthPayload, error) {
 
 	// Username is stored in token claim with key 'sub'
 	claims, ok := userToken.Claims.(jwt.MapClaims)
+
 	if !ok {
 		err := fmt.Errorf("Unable to parse JWT token claims")
 		return nil, err
@@ -84,6 +86,7 @@ func GetAuthPayloadFromContext(ctx context.Context) (*AuthPayload, error) {
 	payload.LastName, _ = claims["last_name"].(string)
 	payload.Email, _ = claims["email"].(string)
 	payload.ClientID, _ = claims["clientId"].(string)
+	payload.OrganisationId, _ = claims["org_id"].(string)
 
 	// Check values, if empty, use alternative claims from RHD
 	if payload.Username == "" {

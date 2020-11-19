@@ -5,10 +5,11 @@ import (
 )
 
 var productionConfigDefaults map[string]string = map[string]string{
-	"v":               "1",
-	"ocm-debug":       "false",
-	"enable-ocm-mock": "false",
-	"enable-sentry":   "true",
+	"v":                 "1",
+	"ocm-debug":         "false",
+	"enable-ocm-mock":   "false",
+	"enable-sentry":     "true",
+	"enable-allow-list": "true",
 }
 
 func loadProduction(env *Env) error {

@@ -18,6 +18,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server/logging"
 	"gitlab.cee.redhat.com/service/managed-services-api/data/generated/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/acl"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
@@ -115,6 +116,10 @@ func NewAPIServer() Server {
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+	if env().Services.Config.IsAllowListEnabled() {
+		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
+	}
 
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
