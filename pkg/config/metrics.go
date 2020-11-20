@@ -23,7 +23,7 @@ func NewMetricsConfig() *MetricsConfig {
 func (s *MetricsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.BindAddress, "metrics-server-bindaddress", s.BindAddress, "Metrics server bind adddress")
 	fs.BoolVar(&s.EnableHTTPS, "enable-metrics-https", s.EnableHTTPS, "Enable HTTPS for metrics server")
-	fs.DurationVar(&s.LabelMetricsInclusionDuration, "label-metrics-inclusion-duration", 7*24*time.Hour, "A cluster's last telemetry date needs be within in this duration in order to have labels collected")
+	fs.DurationVar(&s.LabelMetricsInclusionDuration, "label-metrics-inclusion-duration", s.LabelMetricsInclusionDuration, "A cluster's last telemetry date needs be within in this duration in order to have labels collected")
 }
 
 func (s *MetricsConfig) ReadFiles() error {
