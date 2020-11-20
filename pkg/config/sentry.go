@@ -34,7 +34,7 @@ func (c *SentryConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.URL, "sentry-url", c.URL, "Base URL of Sentry isntance")
 	fs.StringVar(&c.Project, "sentry-project", c.Project, "Sentry project to report to")
 	fs.BoolVar(&c.Debug, "enable-sentry-debug", c.Debug, "Enable sentry error monitoring")
-	fs.DurationVar(&c.Timeout, "sentry-timeout", 5*time.Second, "Timeout for all requests made to Sentry")
+	fs.DurationVar(&c.Timeout, "sentry-timeout", c.Timeout, "Timeout for all requests made to Sentry")
 }
 
 func (c *SentryConfig) ReadFiles() error {
