@@ -55,57 +55,6 @@ func Test_Validation_Provider(t *testing.T) {
 			},
 		},
 		{
-			name: "throws an error when default provider not found",
-			arg: args{
-				kafkaRequest: openapi.KafkaRequest{
-					Region: "us-east-1",
-				},
-				configService: services.NewConfigService(config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "us-east-1",
-									Default: true,
-								},
-							},
-						},
-					},
-				}),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "failed to get default provider configuration",
-			},
-		},
-		{
-			name: "throws an error when default region not found",
-			arg: args{
-				kafkaRequest: openapi.KafkaRequest{
-					CloudProvider: "aws",
-				},
-				configService: services.NewConfigService(config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "aws",
-							Default: true,
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "us-east-1",
-									Default: false,
-								},
-							},
-						},
-					},
-				}),
-			},
-			want: result{
-				wantErr: true,
-				reason:  "failed to get default region for provider aws",
-			},
-		},
-		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
 				kafkaRequest: openapi.KafkaRequest{
