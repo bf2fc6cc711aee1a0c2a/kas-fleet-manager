@@ -1,32 +1,26 @@
 package metrics
 
 import (
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 )
 
 const (
-	jobsSubsystem            = "managed_services_jobs"
-	transactionsSubsystem    = "managed_services_transactions"
-	managedServicesSubsystem = "managed_services_api"
+	jobsSubsystem         = "managed_services_jobs"
+	transactionsSubsystem = "managed_services_transactions"
 
 	// ClusterCreateRequestDuration - name of cluster creation duration metric
-	ClusterCreateRequestDuration = "worker_cluster_duration_bucket"
+	ClusterCreateRequestDuration = "worker_cluster_duration"
 	// KafkaCreateRequestDuration - name of kafka creation duration metric
-	KafkaCreateRequestDuration = "worker_kafka_duration_bucket"
-
-	// KafkaAcceptedStatus - name of counter metric of accepted kafkas
-	KafkaAcceptedStatus = constants.KafkaRequestStatusAccepted
-	// KafkaCompleteStatus - name of counter metric of completed kafkas
-	KafkaCompleteStatus = constants.KafkaRequestStatusComplete
-	// KafkaProvisioningStatus - name of counter metric of provisioning kafkas
-	KafkaProvisioningStatus = constants.KafkaRequestStatusProvisioning
+	KafkaCreateRequestDuration = "worker_kafka_duration"
 
 	labelJobType               = "jobType"
 	kafkaStatus                = "status"
 	kafkaStatusOccurrenceCount = "kafka_status_count"
+
+	labelOperation = "operation"
 )
 
 // JobType metric to capture
@@ -47,6 +41,7 @@ var JobsMetricsLabels = []string{
 // KafkaStatusCountMetricsLabels - is the slice of labels to add to kafka status count metrics
 var KafkaStatusCountMetricsLabels = []string{
 	kafkaStatus,
+	labelOperation,
 }
 
 // create a new histogramVec for cluster creation duration
@@ -127,9 +122,10 @@ var requestTransactionCountMetric = prometheus.NewCounterVec(
 )
 
 // IncreaseStatusCountMetric - increase counter for kafka request status
-func IncreaseStatusCountMetric(status string) {
+func IncreaseStatusCountMetric(status constants.KafkaStatus, operation constants.KafkaOperation) {
 	labels := prometheus.Labels{
-		kafkaStatus: string(status),
+		kafkaStatus:    status.String(),
+		labelOperation: operation.String(),
 	}
 	requestTransactionCountMetric.With(labels).Inc()
 }
