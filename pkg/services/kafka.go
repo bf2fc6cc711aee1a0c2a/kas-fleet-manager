@@ -49,7 +49,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
-	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted, constants.KafkaOperationCreate)
 	return nil
 }
 
@@ -140,6 +140,8 @@ func (k *kafkaService) Delete(id string) *errors.ServiceError {
 		return handleGetError("KafkaResource", "id", id, err)
 	}
 
+	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted, constants.KafkaOperationDelete)
+
 	// delete the syncset
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
 	err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
@@ -152,6 +154,8 @@ func (k *kafkaService) Delete(id string) *errors.ServiceError {
 	if err := dbConn.Delete(&kafkaRequest).Error; err != nil {
 		return errors.GeneralError("unable to delete kafka request with id %s: %s", kafkaRequest.ID, err)
 	}
+
+	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusComplete, constants.KafkaOperationDelete)
 
 	return nil
 }
