@@ -41,7 +41,7 @@ $ ./managed-services-api -h
     $ make db/teardown
     # Create database tables
     $ make db/setup
-    $ ./managed-services-api migrate
+    $ make db/migrate
     # Verify tables and records are created 
     # Login to the database
     $ make db/login
@@ -55,17 +55,25 @@ $ ./managed-services-api -h
      public | migrations     | table | managed_services_api
     ```
 
-3.  (Only for development) Setup AWS credentials 
-    Optional: Only required if you wish to create OSD clusters via the managed service api)
+3.  Setup AWS credentials 
+    
+    #### Option A)
+    Needed when ENV != (testing|integration)
     ```
     $ make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
     ```
+    
+    #### Option B)
+    Works when ENV == (testing|integration)
+    ```
+    $ make aws/setup
+    ```
 
-4. (Only for development) Generate a temporary ocm token 
+4. Generate a temporary ocm token
     Generate a temporary ocm token and set it in the secrets/ocm-service.token file
     > Note: This will need to be re-generated as this temporary token will expire within a few minutes.
     ```
-    $ make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
+    $ make ocm/setup OCM_OFFLINE_TOKEN="$(ocm token)" OCM_ENV=development
     ```
    
 5. Running the service locally
