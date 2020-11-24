@@ -41,7 +41,7 @@ $ ./managed-services-api -h
     $ make db/teardown
     # Create database tables
     $ make db/setup
-    $ ./managed-services-api migrate
+    $ make db/migrate
     # Verify tables and records are created 
     # Login to the database
     $ make db/login
