@@ -184,7 +184,7 @@ paths:
               EURegion:
                 $ref: '#/components/examples/EURegionExample'
             schema:
-              $ref: '#/components/schemas/KafkaRequest'
+              $ref: '#/components/schemas/KafkaRequestPayload'
         description: Kafka data
         required: true
       responses:
@@ -192,8 +192,8 @@ paths:
           content:
             application/json:
               examples:
-                KafkaRequestPostExample:
-                  $ref: '#/components/examples/KafkaRequestPostExample'
+                KafkaRequestPostResponseExample:
+                  $ref: '#/components/examples/KafkaRequestExample'
               schema:
                 $ref: '#/components/schemas/KafkaRequest'
           description: Accepted
@@ -256,18 +256,6 @@ components:
         total: "1"
         items:
           $ref: '#/components/examples/KafkaRequestExample'
-    KafkaRequestPostExample:
-      value:
-        id: 1iX03lndlmQ0qfC7siTa5sLjV8E
-        kind: Kafka
-        href: /api/managed-services-api/v1/kafkas/1iX03lndlmQ0qfC7siTa5sLjV8E
-        status: accepted
-        cloud_provider: aws
-        region: us-east-1
-        owner: api_kafka_service
-        name: serviceapi
-        created_at: 2020-10-06T22:40:32.667743942-04:00
-        updated_at: 2020-10-06T22:40:32.667743942-04:00
     KafkaRequestExample:
       value:
         id: 1iSY6RQ3JKI8Q0OTmjQFd3ocFRg
@@ -412,6 +400,30 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/KafkaRequestList_allOf'
+    KafkaRequestPayload:
+      description: Schema for the request body sent to /kafkas POST
+      example:
+        multi_az: true
+        name: name
+        cloud_provider: cloud_provider
+        region: region
+      properties:
+        cloud_provider:
+          description: The cloud provider where the Kafka cluster will be created
+            in
+          type: string
+        multi_az:
+          description: Set this to true to configure the Kafka cluster to be multiAZ
+          type: boolean
+        name:
+          description: The name of the Kafka cluster
+          type: string
+        region:
+          description: The region where the Kafka cluster will be created in
+          type: string
+      required:
+      - name
+      type: object
     Error_allOf:
       properties:
         code:
