@@ -37,7 +37,7 @@ var (
 		Xms: "512Mb",
 		Xmx: "512Mb",
 	}
-	kafkaImageUrl = string("quay.io/k_wall/kafka:latest-kafka-2.6.0")
+	kafkaImageUrl = string("quay.io/lulf/kafka:latest-kafka-2.6.0")
 )
 
 var deleteClaim = false
