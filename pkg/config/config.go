@@ -26,6 +26,7 @@ type ApplicationConfig struct {
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
 	ClusterCreationConfig      *ClusterCreationConfig      `json:"cluster_creation"`
+	ConnectorsConfig           *ConnectorsConfig           `json:"connectors"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
@@ -43,6 +44,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
 		ClusterCreationConfig:      NewClusterCreationConfig(),
+		ConnectorsConfig:           NewConnectorsConfig(),
 	}
 }
 
@@ -61,6 +63,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
 	c.ClusterCreationConfig.AddFlags(flagset)
+	c.ConnectorsConfig.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
@@ -111,7 +114,16 @@ func (c *ApplicationConfig) ReadFiles() error {
 		}
 	}
 	err = c.Kafka.ReadFiles()
-	return err
+	if err != nil {
+		return err
+	}
+	if c.ConnectorsConfig.Enabled {
+		err = c.ConnectorsConfig.ReadFiles()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Read the contents of file into integer value
