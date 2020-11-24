@@ -172,7 +172,7 @@ func TestSyncsetService_Delete(t *testing.T) {
 			k := &syncsetService{
 				ocmClient: tt.fields.ocmClient,
 			}
-			err := k.Delete(testSyncsetID, testClusterID)
+			_, err := k.Delete(testSyncsetID, testClusterID)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)

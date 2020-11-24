@@ -1,10 +1,13 @@
 package kafka
 
 import (
+	"context"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	customOcm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
@@ -23,13 +26,13 @@ func NewDeleteCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagID, "", "Kafka id")
-
+	cmd.Flags().String(FlagOwner, "test-user", "Username")
 	return cmd
 }
 
 func runDelete(cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
-
+	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
@@ -42,7 +45,9 @@ func runDelete(cmd *cobra.Command, _ []string) {
 	syncsetService := services.NewSyncsetService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 
-	err := kafkaService.Delete(id)
+	ctx := auth.SetUsernameContext(context.TODO(), owner)
+
+	err := kafkaService.Delete(ctx, id)
 	if err != nil {
 		glog.Fatalf("Unable to delete kafka request: %s", err.Error())
 	}
