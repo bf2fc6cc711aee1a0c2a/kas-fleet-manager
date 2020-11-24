@@ -22,7 +22,7 @@ var _ SyncsetService = &SyncsetServiceMock{}
 //             CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
 // 	               panic("mock out the Create method")
 //             },
-//             DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
+//             DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
 // 	               panic("mock out the Delete method")
 //             },
 //         }
@@ -36,7 +36,7 @@ type SyncsetServiceMock struct {
 	CreateFunc func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError)
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(syncsetId string, clusterId string) *errors.ServiceError
+	DeleteFunc func(syncsetId string, clusterId string) (int, *errors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -101,7 +101,7 @@ func (mock *SyncsetServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *SyncsetServiceMock) Delete(syncsetId string, clusterId string) *errors.ServiceError {
+func (mock *SyncsetServiceMock) Delete(syncsetId string, clusterId string) (int, *errors.ServiceError) {
 	if mock.DeleteFunc == nil {
 		panic("SyncsetServiceMock.DeleteFunc: method is nil but SyncsetService.Delete was just called")
 	}

@@ -217,7 +217,7 @@ var kafkaMetrics = &strimzi.Metrics{
 //go:generate moq -out syncset_moq.go . SyncsetService
 type SyncsetService interface {
 	Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, clusterId string) (*cmv1.Syncset, *errors.ServiceError)
-	Delete(syncsetId, clusterId string) *errors.ServiceError
+	Delete(syncsetId, clusterId string) (int, *errors.ServiceError)
 }
 
 func NewSyncsetService(ocmClient ocm.Client) SyncsetService {
@@ -250,13 +250,13 @@ func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, c
 	return response, nil
 }
 
-func (s syncsetService) Delete(syncsetId, clusterId string) *errors.ServiceError {
+func (s syncsetService) Delete(syncsetId, clusterId string) (int, *errors.ServiceError) {
 	// create the syncset on the cluster
 	statusCode, syncsetErr := s.ocmClient.DeleteSyncSet(clusterId, syncsetId)
 	if syncsetErr != nil {
-		return errors.GeneralError(fmt.Sprintf("failed to delete syncset: %s for cluster id: %s returned status code: %d", syncsetId, clusterId, statusCode), syncsetErr)
+		return statusCode, errors.GeneralError(fmt.Sprintf("failed to delete syncset: %s for cluster id: %s returned status code: %d", syncsetId, clusterId, statusCode), syncsetErr)
 	}
-	return nil
+	return statusCode, nil
 }
 
 // syncset builder for a kafka/strimzi custom resource
