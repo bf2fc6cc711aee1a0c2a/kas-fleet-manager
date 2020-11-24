@@ -11,12 +11,33 @@ import (
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
 	numOfBrokers    = 3
 	numOfZookeepers = 3
+	produceQuota    = 4000000
+	consumeQuota    = 4000000
+)
+
+var (
+	zkVolumeSize         = resource.NewScaledQuantity(10, resource.Giga)
+	kafkaVolumeSize      = resource.NewScaledQuantity(100, resource.Giga)
+	kafkaContainerMemory = resource.NewScaledQuantity(1, resource.Giga)
+	kafkaContainerCpu    = resource.NewMilliQuantity(1000, resource.DecimalSI)
+	kafkaJvmOptions      = &strimzi.JvmOptionsSpec{
+		Xms: "512Mb",
+		Xmx: "512Mb",
+	}
+	zkContainerMemory = resource.NewScaledQuantity(1, resource.Giga)
+	zkContainerCpu    = resource.NewMilliQuantity(500, resource.DecimalSI)
+	zkJvmOptions      = &strimzi.JvmOptionsSpec{
+		Xms: "512Mb",
+		Xmx: "512Mb",
+	}
+	kafkaImageUrl = string("quay.io/k_wall/kafka:latest-kafka-2.6.0")
 )
 
 var deleteClaim = false
@@ -279,6 +300,27 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		brokerOverrides = append(brokerOverrides, brokerOverride)
 	}
 
+	// Derive Kafka config based on global constants
+	kafkaConfig := map[string]string{
+		"offsets.topic.replication.factor": "3",
+		// Retention and segment size is set to disk capacity
+		"retention.ms":                             string(int64(1000 * kafkaVolumeSize.Value() / produceQuota)),
+		"segment.bytes":                            string(kafkaVolumeSize.Value()),
+		"transaction.state.log.min.isr":            "2",
+		"transaction.state.log.replication.factor": "3",
+		"client.quota.callback.class":              "org.apache.kafka.server.quota.StaticQuotaCallback",
+		// Throttle at 4 MB/sec
+		"client.quota.callback.static.produce": string(produceQuota),
+		"client.quota.callback.static.consume": string(consumeQuota),
+		// Start throttling when disk is above 90%. Full stop at 95%.
+		"client.quota.callback.static.storage.soft": string(int64(0.9 * float64(kafkaVolumeSize.Value()))),
+		"client.quota.callback.static.storage.hard": string(int64(0.95 * float64(kafkaVolumeSize.Value()))),
+		// Check storage every 30 seconds
+		"client.quota.callback.static.storage.check-interval": "30",
+		"quota.window.num":          "30",
+		"quota.window.size.seconds": "2",
+	}
+
 	// build array of objects to be created by the syncset
 	kafkaCR := &strimzi.Kafka{
 		TypeMeta: metav1.TypeMeta{
@@ -291,7 +333,21 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
+				Image:    &kafkaImageUrl,
+				Config:   kafkaConfig,
 				Replicas: numOfBrokers,
+				Resources: &corev1.ResourceRequirements{
+					Requests: map[corev1.ResourceName]resource.Quantity{
+						"memory": *kafkaContainerMemory,
+						"cpu":    *kafkaContainerCpu,
+					},
+					Limits: map[corev1.ResourceName]resource.Quantity{
+						"memory": *kafkaContainerMemory,
+						"cpu":    *kafkaContainerCpu,
+					},
+				},
+
+				JvmOptions: kafkaJvmOptions,
 				Storage: strimzi.Storage{
 					Type: strimzi.Jbod,
 					JbodStorage: strimzi.JbodStorage{
@@ -300,7 +356,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 								ID:   &jbodVolumeId,
 								Type: strimzi.PersistentClaim,
 								PersistentClaimStorage: strimzi.PersistentClaimStorage{
-									Size:        "100Gi",
+									Size:        kafkaVolumeSize.String(),
 									DeleteClaim: &deleteClaim,
 								},
 							},
@@ -330,12 +386,22 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				Storage: strimzi.Storage{
 					Type: strimzi.PersistentClaim,
 					PersistentClaimStorage: strimzi.PersistentClaimStorage{
-						Size:        "10Gi",
+						Size:        zkVolumeSize.String(),
 						DeleteClaim: &deleteClaim,
 					},
 				},
-				Metrics:  zookeeperMetrics,
-				Template: nil,
+				Resources: &corev1.ResourceRequirements{
+					Requests: map[corev1.ResourceName]resource.Quantity{
+						"memory": *zkContainerMemory,
+						"cpu":    *zkContainerCpu,
+					},
+					Limits: map[corev1.ResourceName]resource.Quantity{
+						"memory": *zkContainerMemory,
+						"cpu":    *zkContainerCpu,
+					},
+				},
+				JvmOptions: zkJvmOptions,
+				Metrics:    zookeeperMetrics,
 			},
 			KafkaExporter: &strimzi.KafkaExporterSpec{
 				TopicRegex: ".*",

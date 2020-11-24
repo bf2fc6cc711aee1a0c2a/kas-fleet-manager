@@ -295,28 +295,31 @@ type KafkaListeners struct {
 
 // KafkaClusterSpec configuration of the Kafka cluster.
 type KafkaClusterSpec struct {
-	Replicas      int                 `json:"replicas"`
-	Version       string              `json:"version,omitempty"`
-	Config        map[string]string   `json:"config,omitempty"`
-	Storage       Storage             `json:"storage"`
-	Listeners     KafkaListeners      `json:"listeners"`
-	Authorization *KafkaAuthorization `json:"authorization,omitempty"`
-	Metrics       *Metrics            `json:"metrics,omitempty"`
-	Rack          *Rack               `json:"rack,omitempty"`
+	Replicas      int                          `json:"replicas"`
+	Version       string                       `json:"version,omitempty"`
+	Config        map[string]string            `json:"config,omitempty"`
+	Storage       Storage                      `json:"storage"`
+	Listeners     KafkaListeners               `json:"listeners"`
+	Authorization *KafkaAuthorization          `json:"authorization,omitempty"`
+	Metrics       *Metrics                     `json:"metrics,omitempty"`
+	Image         *string                      `json:"image,omitempty"`
+	Resources     *corev1.ResourceRequirements `json:"resources,omitempty"`
+	JvmOptions    *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 }
 
-// ZookeeperTemplate definition for the template of ZooKeeper cluster resources.
-// The template allows users to specify how the Zookeeper cluster resources are generated.
-type ZookeeperTemplate struct {
-	Pod *PodTemplate `json:"pod,omitempty"`
+// JVM options passed to containers
+type JvmOptionsSpec struct {
+	Xms string `json:"-xms"`
+	Xmx string `json:"-xmx"`
 }
 
 // ZookeeperClusterSpec configuration of the ZooKeeper cluster.
 type ZookeeperClusterSpec struct {
-	Replicas int                `json:"replicas"`
-	Storage  Storage            `json:"storage"`
-	Metrics  *Metrics           `json:"metrics,omitempty"`
-	Template *ZookeeperTemplate `json:"template,omitempty"`
+	Replicas   int                          `json:"replicas"`
+	Storage    Storage                      `json:"storage"`
+	Metrics    *Metrics                     `json:"metrics,omitempty"`
+	Resources  *corev1.ResourceRequirements `json:"resources,omitempty"`
+	JvmOptions *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 }
 
 // EntityTopicOperatorSpec configuration of the Topic Operator.
