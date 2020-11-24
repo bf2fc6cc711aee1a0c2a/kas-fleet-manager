@@ -3,11 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	sdk "github.com/openshift-online/ocm-sdk-go"
 	"net"
 	"net/http"
 	"time"
-	"github.com/openshift-online/ocm-sdk-go/authentication"
+
 	_ "github.com/auth0/go-jwt-middleware"
 	_ "github.com/dgrijalva/jwt-go"
 	sentryhttp "github.com/getsentry/sentry-go/http"
@@ -132,23 +131,6 @@ func NewAPIServer() Server {
 		}),
 		gorillahandlers.MaxAge(int((10 * time.Minute).Seconds())),
 	)(mainHandler)
-
-	authnLogger, err := sdk.NewGlogLoggerBuilder().
-		InfoV(glog.Level(1)).
-		DebugV(glog.Level(5)).
-		Build()
-	check(err, "Unable to create authentication logger")
-
-	mainHandler, err = authentication.NewHandler().
-		Logger(authnLogger).
-		KeysFile(env().Config.Server.JwkCertCAFile).
-		KeysURL(env().Config.Server.JwkCertURL).
-		Public(fmt.Sprintf("^%s/%s/?$","/api", "managed-services-api")).
-		Public(fmt.Sprintf("^%s/%s/%s/?$", "/api", "managed-services-api", "v1")).
-		Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", "/api", "managed-services-api", "v1")).
-		Next(mainHandler).
-		Build()
-	check(err, "Unable to create authentication handler")
 
 	mainHandler = removeTrailingSlash(mainHandler)
 
