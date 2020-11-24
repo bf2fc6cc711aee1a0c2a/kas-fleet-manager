@@ -98,9 +98,9 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{status=\"%s\"} 1", constants.KafkaRequestStatusAccepted.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{status=\"%s\"} 1", constants.KafkaRequestStatusComplete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{status=\"%s\"} 1", constants.KafkaRequestStatusProvisioning.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationCreate.String(), constants.KafkaRequestStatusAccepted.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationCreate.String(), constants.KafkaRequestStatusComplete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationCreate.String(), constants.KafkaRequestStatusProvisioning.String()))
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -283,6 +283,8 @@ func TestKafkaDelete_Success(t *testing.T) {
 
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
 	Expect(foundKafka.Id).Should(BeEmpty(), " Kafka ID should be deleted")
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationDelete.String(), constants.KafkaRequestStatusAccepted.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationDelete.String(), constants.KafkaRequestStatusComplete.String()))
 }
 
 // TestKafkaDelete - tests fail kafka delete
