@@ -16,9 +16,15 @@ func ObjectPath(id string, obj interface{}) string {
 }
 
 func path(i interface{}) string {
-	switch i.(type) {
+	switch i := i.(type) {
 	case api.KafkaRequest, *api.KafkaRequest:
 		return "kafkas"
+	case api.Connector:
+		return fmt.Sprintf("kafkas/%s/connector-deployments", i.KafkaID)
+	case *api.Connector:
+		return fmt.Sprintf("kafkas/%s/connector-deployments", i.KafkaID)
+	case api.ConnectorType, *api.ConnectorType:
+		return "connector-types"
 	case errors.ServiceError, *errors.ServiceError:
 		return "errors"
 	case api.ServiceAccount, *api.ServiceAccount:
