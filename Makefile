@@ -218,6 +218,10 @@ db/setup:
 	./scripts/local_db_setup.sh
 .PHONY: db/setup
 
+db/migrate: install
+	OCM_ENV=integration managed-services-api migrate
+.PHONY: db/migrate
+
 db/teardown:
 	./scripts/local_db_teardown.sh
 .PHONY: db/teardown
