@@ -48,6 +48,7 @@ Class | Method | HTTP request | Description
  - [KafkaRequestAllOf](docs/KafkaRequestAllOf.md)
  - [KafkaRequestList](docs/KafkaRequestList.md)
  - [KafkaRequestListAllOf](docs/KafkaRequestListAllOf.md)
+ - [KafkaRequestPayload](docs/KafkaRequestPayload.md)
  - [List](docs/List.md)
  - [ObjectReference](docs/ObjectReference.md)
 

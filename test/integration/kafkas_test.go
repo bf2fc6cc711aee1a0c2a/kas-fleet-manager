@@ -57,7 +57,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account)
 
 	// POST responses per openapi spec: 201, 409, 500
-	k := openapi.KafkaRequest{
+	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -118,61 +118,45 @@ func TestKafkaPost_Validations(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		body     openapi.KafkaRequest
+		body     openapi.KafkaRequestPayload
 		wantCode int
 	}{
 		{
 			name: "HTTP 400 when region not supported",
-			body: openapi.KafkaRequest{
+			body: openapi.KafkaRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        "us-east-3",
-				Owner:         mockKafkaOwner,
 				Name:          mockKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
 		{
 			name: "HTTP 400 when provider not supported",
-			body: openapi.KafkaRequest{
+			body: openapi.KafkaRequestPayload{
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				CloudProvider: "azure",
 				Region:        mocks.MockCluster.Region().ID(),
-				Owner:         mockKafkaOwner,
 				Name:          mockKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
 		{
 			name: "HTTP 400 when MultiAZ false provided",
-			body: openapi.KafkaRequest{
+			body: openapi.KafkaRequestPayload{
 				MultiAz:       false,
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				Region:        mocks.MockCluster.Region().ID(),
-				Owner:         mockKafkaOwner,
 				Name:          mockKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
 		{
 			name: "HTTP 400 when name not provided",
-			body: openapi.KafkaRequest{
+			body: openapi.KafkaRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
-				Owner:         mockKafkaOwner,
-			},
-			wantCode: http.StatusBadRequest,
-		},
-		{
-			name: "HTTP 400 when id is provided",
-			body: openapi.KafkaRequest{
-				Id:            mocks.MockCluster.ID(),
-				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-				MultiAz:       mocks.MockCluster.MultiAZ(),
-				Region:        mocks.MockCluster.Region().ID(),
-				Owner:         mockKafkaOwner,
-				Name:          mockKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},
@@ -196,7 +180,7 @@ func TestKafkaGet(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
-	k := openapi.KafkaRequest{
+	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -242,7 +226,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	}
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
-	k := openapi.KafkaRequest{
+	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -327,7 +311,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	}
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
-	k := openapi.KafkaRequest{
+	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -387,7 +371,7 @@ func TestKafkaList_Success(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	k := openapi.KafkaRequest{
+	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,

@@ -12,7 +12,7 @@ import (
 
 func Test_Validation_Provider(t *testing.T) {
 	type args struct {
-		kafkaRequest  openapi.KafkaRequest
+		kafkaRequest  openapi.KafkaRequestPayload
 		configService services.ConfigService
 	}
 
@@ -30,7 +30,7 @@ func Test_Validation_Provider(t *testing.T) {
 		{
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
-				kafkaRequest: openapi.KafkaRequest{},
+				kafkaRequest: openapi.KafkaRequestPayload{},
 				configService: services.NewConfigService(config.ProviderConfiguration{
 					SupportedProviders: config.ProviderList{
 						config.Provider{
@@ -57,7 +57,7 @@ func Test_Validation_Provider(t *testing.T) {
 		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
-				kafkaRequest: openapi.KafkaRequest{
+				kafkaRequest: openapi.KafkaRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -93,7 +93,7 @@ func Test_Validation_Provider(t *testing.T) {
 		{
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
-				kafkaRequest: openapi.KafkaRequest{
+				kafkaRequest: openapi.KafkaRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
