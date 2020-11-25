@@ -71,7 +71,7 @@ func validateMultiAZEnabled(value *bool, action string) validate {
 
 // validateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
-func validateCloudProvider(kafkaRequest *openapi.KafkaRequest, configService services.ConfigService, action string) validate {
+func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configService services.ConfigService, action string) validate {
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
 		if kafkaRequest.CloudProvider == "" {

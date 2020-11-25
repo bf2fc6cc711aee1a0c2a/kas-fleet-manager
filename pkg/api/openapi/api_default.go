@@ -30,10 +30,10 @@ type DefaultApiService service
 CreateKafka Create a new kafka Request
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param async Perform the action in an asynchronous manner
- * @param kafkaRequest Kafka data
+ * @param kafkaRequestPayload Kafka data
 @return KafkaRequest
 */
-func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaRequest KafkaRequest) (KafkaRequest, *_nethttp.Response, error) {
+func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaRequestPayload KafkaRequestPayload) (KafkaRequest, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -68,7 +68,7 @@ func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaR
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &kafkaRequest
+	localVarPostBody = &kafkaRequestPayload
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err
