@@ -173,9 +173,9 @@ test-integration: test-prepare
 
 # remove OSD cluster after running tests against real OCM
 # requires OCM_OFFLINE_TOKEN env var exporteds
-cluster/cleanup:
+test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
-.PHONY: cluster/cleanup
+.PHONY: test/cluster/cleanup
 
 # generate files
 generate: openapi/generate
