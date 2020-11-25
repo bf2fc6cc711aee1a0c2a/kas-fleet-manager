@@ -168,9 +168,14 @@ test-prepare: install
 #   make test-integration TESTFLAGS="-short"                skips long-run tests
 test-integration: test-prepare
 	gotestsum --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
-			./test/integration || true
-	./scripts/cleanup_test_cluster.sh
+			./test/integration
 .PHONY: test-integration
+
+# remove OSD cluster after running tests against real OCM
+# requires OCM_OFFLINE_TOKEN env var exporteds
+cluster/cleanup:
+	./scripts/cleanup_test_cluster.sh
+.PHONY: cluster/cleanup
 
 # generate files
 generate: openapi/generate
