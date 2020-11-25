@@ -214,7 +214,7 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run --name swagger_ui_docs -d -p 80:8080 -e SWAGGER_JSON=/managed-services-api.yaml -v $(PWD)/openapi/managed-services-api.yaml:/managed-services-api.yaml swaggerapi/swagger-ui
+	docker run --name swagger_ui_docs -d -p 80:8080 -e SWAGGER_JSON=/managed-services-api.yaml -v $(PWD)/openapi/managed-services-api.yaml:/managed-services-api.yaml:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
