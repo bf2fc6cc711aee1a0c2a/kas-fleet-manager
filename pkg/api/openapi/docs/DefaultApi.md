@@ -13,7 +13,7 @@ Method | HTTP request | Description
 
 ## CreateKafka
 
-> KafkaRequest CreateKafka(ctx, async, kafkaRequest)
+> KafkaRequest CreateKafka(ctx, async, kafkaRequestPayload)
 
 Create a new kafka Request
 
@@ -24,7 +24,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
 **async** | **bool**| Perform the action in an asynchronous manner | 
-**kafkaRequest** | [**KafkaRequest**](KafkaRequest.md)| Kafka data | 
+**kafkaRequestPayload** | [**KafkaRequestPayload**](KafkaRequestPayload.md)| Kafka data | 
 
 ### Return type
 

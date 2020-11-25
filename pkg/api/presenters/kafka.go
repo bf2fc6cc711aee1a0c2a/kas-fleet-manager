@@ -5,17 +5,12 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 )
 
-func ConvertKafkaRequest(kafkaRequest openapi.KafkaRequest) *api.KafkaRequest {
+func ConvertKafkaRequest(kafkaRequest openapi.KafkaRequestPayload) *api.KafkaRequest {
 	return &api.KafkaRequest{
-		Meta: api.Meta{
-			ID: kafkaRequest.Id,
-		},
-		Region:              kafkaRequest.Region,
-		Name:                kafkaRequest.Name,
-		CloudProvider:       kafkaRequest.CloudProvider,
-		MultiAZ:             kafkaRequest.MultiAz,
-		Owner:               kafkaRequest.Owner,
-		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
+		Region:        kafkaRequest.Region,
+		Name:          kafkaRequest.Name,
+		CloudProvider: kafkaRequest.CloudProvider,
+		MultiAZ:       kafkaRequest.MultiAz,
 	}
 }
 
