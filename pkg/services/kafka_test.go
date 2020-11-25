@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
 
@@ -299,7 +300,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 		syncsetService    SyncsetService
 	}
 	type args struct {
-		id string
+		id  string
+		ctx context.Context
 	}
 	tests := []struct {
 		name    string
@@ -314,7 +316,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id: "",
+				id:  "",
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
 			},
 			wantErr: true,
 		},
@@ -324,7 +327,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id: testID,
+				id:  testID,
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
 			},
 			wantErr: true,
 			setupFn: func() {
@@ -336,28 +340,53 @@ func Test_kafkaService_Delete(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
-						return errors.GeneralError("error deleting syncset")
+					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
+						return http.StatusInternalServerError, errors.GeneralError("error deleting syncset")
 					},
 				},
 			},
 			args: args{
-				id: testID,
+				id:  testID,
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
 			},
 			wantErr: true,
 		},
 		{
-			name: "successful output",
+			name: "successful delete the kafka instance when synset delete successful",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) *errors.ServiceError {
-						return nil
+					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
+						return http.StatusNoContent, nil
 					},
 				},
 			},
 			args: args{
-				id: testID,
+				id:  testID,
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Status: constants.KafkaRequestStatusAccepted.String(),
+				}))
+			},
+		},
+		{
+			name: "successful delete the kafka instance when synset not found",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
+						return http.StatusNotFound, errors.GeneralError("syncset not found")
+					},
+				},
+			},
+			args: args{
+				id:  testID,
+				ctx: auth.SetUsernameContext(context.TODO(), testUser),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
@@ -368,6 +397,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					ClusterID:     clusterservicetest.MockClusterID,
 					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       false,
+					Status:        constants.KafkaRequestStatusProvisioning.String(),
 				}))
 			},
 		},
@@ -381,7 +411,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 			}
-			err := k.Delete(tt.args.id)
+			err := k.Delete(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return

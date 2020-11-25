@@ -258,13 +258,13 @@ make ocm/setup OCM_OFFLINE_TOKEN=<ocm-offline-token> OCM_ENV=development
 To run integration tests with an "emulated" OCM environment, run:
 
 ```
-OCM_ENV=integration make test-integration
+OCM_ENV=integration make test/integration
 ```
 
 To run integration tests with a real OCM environment, run:
 
 ```
-make test-integration
+make test/integration
 ```
 
 To stop and remove the database container when finished, run:
