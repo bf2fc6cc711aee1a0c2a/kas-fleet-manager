@@ -15,6 +15,10 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
+const (
+	AWSCloudProviderID = "aws"
+)
+
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
 	ocmClient             ocm.Client
@@ -64,12 +68,14 @@ func (c *ClusterManager) reconcile() {
 	}
 
 	for _, cloudProvider := range cloudProviders {
-		cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
-			regionName := region.ID()
-			glog.V(10).Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
-			return true
-		})
-
+		// TODO add "|| provider.ID() == GcpCloudProviderID" to support GCP in the future
+		if cloudProvider.ID == AWSCloudProviderID {
+			cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
+				regionName := region.ID()
+				glog.V(10).Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
+				return true
+			})
+		}
 	}
 
 	provisioningClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioning)

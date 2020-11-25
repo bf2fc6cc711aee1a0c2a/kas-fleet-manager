@@ -200,6 +200,75 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
+  /api/managed-services-api/v1/cloud_providers:
+    get:
+      summary: Retrieves the list of supported cloud providers.
+      operationId: listCloudProviders
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Retrieved list of supported cloud providers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudProviderList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
+  /api/managed-services-api/v1/cloud_providers/{id}/regions:
+    get:
+      summary: Retrieves the list of supported regions of the supported cloud provider.
+      operationId: listCloudProviderRegions
+      security:
+        - Bearer: []
+      responses:
+        '200':
+          description: Retrieved list of supported cloud providers regions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudRegionList'
+        '401':
+          description: Auth token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+        '500':
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+      parameters:
+        - $ref: "#/components/parameters/id"
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/size'
 components:
   schemas:
     ObjectReference:
@@ -228,8 +297,6 @@ components:
           type: integer
         total:
           type: integer
-      example:
-        $ref: '#/components/examples/KafkaRequestListExample'
     Error:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -281,6 +348,13 @@ components:
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
+          example:
+            kind: "KafkaRequestList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/KafkaRequestExample'
           properties:
             items:
               type: array
@@ -305,6 +379,78 @@ components:
         region:
           description: The region where the Kafka cluster will be created in
           type: string
+    CloudProviderList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          example:
+            kind: "CloudProviderList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/CloudProviderExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/CloudProvider"
+    CloudRegionList:
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          example:
+            kind: "CloudRegionList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/CloudRegionExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/CloudRegion"
+    CloudProvider:
+      description: 'Cloud provider.'
+      properties:
+        kind:
+          description: 'Indicates the type of this object. Will be ''CloudProvider'' link.'
+          type: string
+        id:
+          description: 'Unique identifier of the object.'
+          type: string
+        display_name:
+          description: 'Name of the cloud provider for display purposes.'
+          type: string
+        name:
+          description: 'Human friendly identifier of the cloud provider, for example `aws`.'
+          type: string
+        enabled:
+          description: 'Whether the cloud provider is enabled for deploying an OSD cluster.'
+          type: boolean
+      required:
+        - enabled
+    CloudRegion:
+      description: 'Description of a region of a cloud provider.'
+      properties:
+        kind:
+          description: 'Indicates the type of this object. Will be ''CloudRegion''.'
+          type: string
+        id:
+          description: 'Unique identifier of the object.'
+          type: string
+        display_name:
+          description: 'Name of the region for display purposes, for example `N. Virginia`.'
+          type: string
+        enabled:
+          description: 'Whether the region is enabled for deploying an OSD cluster.'
+          type: boolean
+          default: false
+      required:
+        - enabled
   parameters:
     id:
       name: id
@@ -349,14 +495,6 @@ components:
         region: "eu-west-1"
         cloud_provider: "aws"
         name: "serviceapitest"
-    KafkaRequestListExample:
-      value:
-        kind: "KafkaRequestList"
-        page: "1"
-        size: "1"
-        total: "1"
-        items:
-          $ref: '#/components/examples/KafkaRequestExample'
     KafkaRequestExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
@@ -364,13 +502,26 @@ components:
         href: "/api/managed-services-api/v1/kafkas/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
         status: "complete"
         cloud_provider: "aws"
-        multi_az: false
+        multi_az: true
         region: "us-east-1"
         owner:  "api_kafka_service"
         name: "serviceapi"
         bootstrapServerHost: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.apps.ms-bttg0jn170hp.x5u8.s1.devshift.org"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
+    CloudProviderExample:
+      value:
+        kind: "CloudProvider"
+        id: "aws"
+        name: "aws"
+        display_name: "Amazon Web Services"
+        enabled: true
+    CloudRegionExample:
+      value:
+        kind: "CloudRegion"
+        id: "us-east-1"
+        display_name: "US East, N. Virginia"
+        enabled: true
     400CreationExample:
       value:
         id: "103"
