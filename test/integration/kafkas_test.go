@@ -98,9 +98,8 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationCreate.String(), constants.KafkaRequestStatusAccepted.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationCreate.String(), constants.KafkaRequestStatusComplete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationCreate.String(), constants.KafkaRequestStatusProvisioning.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -267,8 +266,8 @@ func TestKafkaDelete_Success(t *testing.T) {
 
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
 	Expect(foundKafka.Id).Should(BeEmpty(), " Kafka ID should be deleted")
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationDelete.String(), constants.KafkaRequestStatusAccepted.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("managed_services_transactions_kafka_status_count{operation=\"%s\",status=\"%s\"} 1", constants.KafkaOperationDelete.String(), constants.KafkaRequestStatusComplete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
 }
 
 // TestKafkaDelete - tests fail kafka delete
@@ -291,6 +290,9 @@ func TestKafkaDelete_Fail(t *testing.T) {
 
 	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
 	Expect(err).To(HaveOccurred())
+	// The id is invalid, so the metric is not expected to exist
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount), false)
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount), false)
 }
 
 // TestKafkaDelete_NonOwnerDelete
@@ -337,6 +339,9 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(account)
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
 	Expect(err).To(HaveOccurred())
+	// user auth is failed, so the metric is not expected to exist
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount), false)
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount), false)
 }
 
 // TestKafkaList_Success tests getting kafka requests list
