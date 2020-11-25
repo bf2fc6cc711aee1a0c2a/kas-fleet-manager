@@ -2,6 +2,8 @@ package services
 
 import (
 	"errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
 	"github.com/jinzhu/gorm"
 
@@ -112,10 +114,19 @@ func (c clusterService) UpdateStatus(id string, status api.ClusterStatus) error 
 	if id == "" {
 		return ocmErrors.Validation("id is undefined")
 	}
+
+	if status == api.ClusterReady || status == api.ClusterFailed {
+		metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+	}
+
 	dbConn := c.connectionFactory.New()
 
 	if err := dbConn.Table("clusters").Where("id = ?", id).Update("status", status).Error; err != nil {
 		return ocmErrors.GeneralError("failed to update status: %s", err.Error())
+	}
+
+	if status == api.ClusterReady {
+		metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
 	}
 
 	return nil

@@ -125,8 +125,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 	return "", nil
 }
 
-// CheckMetricExposed - checks whether metric is exposed in the metrics URL
-func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
+func getMetrics(t *testing.T) string {
 	metricsConfig := config.NewMetricsConfig()
 	metricsAddress := metricsConfig.BindAddress
 	var metricsURL string
@@ -147,5 +146,17 @@ func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
 	}
 
 	responseString := string(responseData)
-	Expect(strings.Contains(responseString, metric)).To(Equal(true))
+	return responseString
+}
+
+// CheckMetricExposed - checks whether metric is exposed in the metrics URL
+func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
+	resp := getMetrics(t)
+	Expect(strings.Contains(resp, metric)).To(Equal(true))
+}
+
+// CheckMetric - check if the given metric exists in the metrics data
+func CheckMetric(h *test.Helper, t *testing.T, metric string, exist bool) {
+	resp := getMetrics(t)
+	Expect(strings.Contains(resp, metric)).To(Equal(exist))
 }

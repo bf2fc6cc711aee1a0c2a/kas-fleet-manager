@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"testing"
 	"time"
 
@@ -87,4 +88,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Log(err)
 	}
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.ClusterOperationsSuccessCount, constants.ClusterOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.ClusterOperationsTotalCount, constants.ClusterOperationCreate.String()))
 }
