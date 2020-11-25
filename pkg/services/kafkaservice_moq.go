@@ -5,11 +5,10 @@ package services
 
 import (
 	"context"
-	"sync"
-
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"sync"
 )
 
 // Ensure, that KafkaServiceMock does implement KafkaService.
@@ -25,7 +24,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //             CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the Create method")
 //             },
-//             DeleteFunc: func(id string) *errors.ServiceError {
+//             DeleteFunc: func(ctx context.Context, id string) *errors.ServiceError {
 // 	               panic("mock out the Delete method")
 //             },
 //             GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
@@ -57,7 +56,7 @@ type KafkaServiceMock struct {
 	CreateFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(id string) *errors.ServiceError
+	DeleteFunc func(ctx context.Context, id string) *errors.ServiceError
 
 	// GetFunc mocks the Get method.
 	GetFunc func(id string) (*api.KafkaRequest, *errors.ServiceError)
@@ -86,6 +85,8 @@ type KafkaServiceMock struct {
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
 			// ID is the id argument value.
 			ID string
 		}
@@ -166,29 +167,33 @@ func (mock *KafkaServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *KafkaServiceMock) Delete(id string) *errors.ServiceError {
+func (mock *KafkaServiceMock) Delete(ctx context.Context, id string) *errors.ServiceError {
 	if mock.DeleteFunc == nil {
 		panic("KafkaServiceMock.DeleteFunc: method is nil but KafkaService.Delete was just called")
 	}
 	callInfo := struct {
-		ID string
+		Ctx context.Context
+		ID  string
 	}{
-		ID: id,
+		Ctx: ctx,
+		ID:  id,
 	}
 	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
 	mock.lockDelete.Unlock()
-	return mock.DeleteFunc(id)
+	return mock.DeleteFunc(ctx, id)
 }
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
 //     len(mockedKafkaService.DeleteCalls())
 func (mock *KafkaServiceMock) DeleteCalls() []struct {
-	ID string
+	Ctx context.Context
+	ID  string
 } {
 	var calls []struct {
-		ID string
+		Ctx context.Context
+		ID  string
 	}
 	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
