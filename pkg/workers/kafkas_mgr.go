@@ -104,12 +104,12 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 		if err = k.kafkaService.Update(kafka); err != nil {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
 		}
-		metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusProvisioning, constants.KafkaOperationCreate)
 	}
 	return nil
 }
 
 func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error {
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
 		return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 	}
@@ -120,6 +120,6 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 	// lines below (responsible for adding metrics) will need to be moved to a place
 	// where successful kafka cluster creation check takes place (once this check is implemented)
 	metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
-	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusComplete, constants.KafkaOperationCreate)
+	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
 	return nil
 }
