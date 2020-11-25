@@ -25,20 +25,20 @@ func NewKafkaHandler(service services.KafkaService, configService services.Confi
 }
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var kafkaRequest openapi.KafkaRequest
-	kafkaRequest.Owner = auth.GetUsernameFromContext(r.Context())
+	var kafkaRequest openapi.KafkaRequestPayload
+	owner := auth.GetUsernameFromContext(r.Context())
 	cfg := &handlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []validate{
 			validateAsyncEnabled(r, "creating kafka requests"),
-			validateNotEmpty(&kafkaRequest.Owner, "owner"),
-			validateEmpty(&kafkaRequest.Id, "id"),
+			validateNotEmpty(&owner, "owner"),
 			validateNotEmpty(&kafkaRequest.Name, "name"),
 			validateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
 			validateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
+			convKafka.Owner = owner
 			err := h.service.RegisterKafkaJob(convKafka)
 			if err != nil {
 				return nil, err
