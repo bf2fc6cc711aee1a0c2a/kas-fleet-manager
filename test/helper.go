@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/workers"
 	"io/ioutil"
@@ -269,6 +270,11 @@ func (helper *Helper) RestartMetricsServer() {
 	helper.stopMetricsServer()
 	helper.startMetricsServer()
 	glog.V(10).Info("Test metrics server restarted")
+}
+
+// Reset metrics. Note this will only reset metrics defined in pkg/metrics
+func (helper *Helper) ResetMetrics() {
+	metrics.Reset()
 }
 
 func (helper *Helper) Reset() {

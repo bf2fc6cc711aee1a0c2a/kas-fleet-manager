@@ -26,6 +26,7 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 	// Start workers
 	helper.StartClusterWorker()
 	helper.StartKafkaWorker()
+	helper.ResetMetrics()
 	// Create an api client
 	client := helper.NewApiClient()
 	return helper, client, buildTeardownHelperFn(helper)

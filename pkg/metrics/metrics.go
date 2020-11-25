@@ -8,19 +8,26 @@ import (
 )
 
 const (
-	jobsSubsystem         = "managed_services_jobs"
-	transactionsSubsystem = "managed_services_transactions"
+	// ManagedServicesSystem - metrics prefix
+	ManagedServicesSystem = "managed_services_api"
 
 	// ClusterCreateRequestDuration - name of cluster creation duration metric
 	ClusterCreateRequestDuration = "worker_cluster_duration"
 	// KafkaCreateRequestDuration - name of kafka creation duration metric
 	KafkaCreateRequestDuration = "worker_kafka_duration"
 
-	labelJobType               = "jobType"
-	kafkaStatus                = "status"
-	kafkaStatusOccurrenceCount = "kafka_status_count"
+	labelJobType = "jobType"
 
-	labelOperation = "operation"
+	// KafkaOperationsSuccessCount - name of the metric for Kafka-related successful operations
+	KafkaOperationsSuccessCount = "kafka_operations_success_count"
+	// KafkaOperationsTotalCount - name of the metric for all Kafka-related operations
+	KafkaOperationsTotalCount = "kafka_operations_total_count"
+
+	// ClusterOperationsSuccessCount - name of the metric for cluster-related successful operations
+	ClusterOperationsSuccessCount = "cluster_operations_success_count"
+	// ClusterOperationsTotalCount - name of the metric for all cluster-related operations
+	ClusterOperationsTotalCount = "cluster_operations_total_count"
+	labelOperation              = "operation"
 )
 
 // JobType metric to capture
@@ -38,16 +45,20 @@ var JobsMetricsLabels = []string{
 	labelJobType,
 }
 
-// KafkaStatusCountMetricsLabels - is the slice of labels to add to kafka status count metrics
-var KafkaStatusCountMetricsLabels = []string{
-	kafkaStatus,
+// KafkaOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
+var KafkaOperationsCountMetricsLabels = []string{
+	labelOperation,
+}
+
+// ClusterOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
+var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
 
 // create a new histogramVec for cluster creation duration
 var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Subsystem: jobsSubsystem,
+		Subsystem: ManagedServicesSystem,
 		Name:      ClusterCreateRequestDuration,
 		Help:      "Cluster creation duration in seconds.",
 		Buckets: []float64{
@@ -73,7 +84,7 @@ func UpdateClusterCreationDurationMetric(jobType JobType, elapsed time.Duration)
 // create a new histogramVec for kafka creation duration
 var requestKafkaCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Subsystem: jobsSubsystem,
+		Subsystem: ManagedServicesSystem,
 		Name:      KafkaCreateRequestDuration,
 		Help:      "Kafka creation duration in seconds.",
 		Buckets: []float64{
@@ -111,28 +122,94 @@ func UpdateKafkaCreationDurationMetric(jobType JobType, elapsed time.Duration) {
 	requestKafkaCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
 }
 
-// create a new counterVec for transaction counts
-var requestTransactionCountMetric = prometheus.NewCounterVec(
+// create a new counterVec for Kafka operations counts
+var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: transactionsSubsystem,
-		Name:      kafkaStatusOccurrenceCount,
-		Help:      "Number of kafka requests in given status",
+		Subsystem: ManagedServicesSystem,
+		Name:      KafkaOperationsSuccessCount,
+		Help:      "number of successful kafka operations",
 	},
-	KafkaStatusCountMetricsLabels,
+	KafkaOperationsCountMetricsLabels,
 )
 
-// IncreaseStatusCountMetric - increase counter for kafka request status
-func IncreaseStatusCountMetric(status constants.KafkaStatus, operation constants.KafkaOperation) {
+// IncreaseKafkaSuccessOperationsCountMetric - increase counter for the kafkaOperationsSuccessCountMetric
+func IncreaseKafkaSuccessOperationsCountMetric(operation constants.KafkaOperation) {
 	labels := prometheus.Labels{
-		kafkaStatus:    status.String(),
 		labelOperation: operation.String(),
 	}
-	requestTransactionCountMetric.With(labels).Inc()
+	kafkaOperationsSuccessCountMetric.With(labels).Inc()
+}
+
+// create a new counterVec for total Kafka operations counts
+var kafkaOperationsTotalCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: ManagedServicesSystem,
+		Name:      KafkaOperationsTotalCount,
+		Help:      "number of total kafka operations",
+	},
+	KafkaOperationsCountMetricsLabels,
+)
+
+// IncreaseKafkaTotalOperationsCountMetric - increase counter for the kafkaOperationsTotalCountMetric
+func IncreaseKafkaTotalOperationsCountMetric(operation constants.KafkaOperation) {
+	labels := prometheus.Labels{
+		labelOperation: operation.String(),
+	}
+	kafkaOperationsTotalCountMetric.With(labels).Inc()
+}
+
+// create a new counterVec for successful cluster operation counts
+var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: ManagedServicesSystem,
+		Name:      ClusterOperationsSuccessCount,
+		Help:      "number of successful cluster operations",
+	},
+	ClusterOperationsCountMetricsLabels,
+)
+
+// IncreaseClusterSuccessOperationsCountMetric - increase counter for clusterOperationsSuccessCountMetric
+func IncreaseClusterSuccessOperationsCountMetric(operation constants.ClusterOperation) {
+	labels := prometheus.Labels{
+		labelOperation: operation.String(),
+	}
+	clusterOperationsSuccessCountMetric.With(labels).Inc()
+}
+
+// reate a new counterVec for total cluster operation counts
+var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: ManagedServicesSystem,
+		Name:      ClusterOperationsTotalCount,
+		Help:      "number of total cluster operations",
+	},
+	ClusterOperationsCountMetricsLabels,
+)
+
+// IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
+func IncreaseClusterTotalOperationsCountMetric(operation constants.ClusterOperation) {
+	labels := prometheus.Labels{
+		labelOperation: operation.String(),
+	}
+	clusterOperationsTotalCountMetric.With(labels).Inc()
 }
 
 // register the metric(s)
 func init() {
 	prometheus.MustRegister(requestClusterCreationDurationMetric)
 	prometheus.MustRegister(requestKafkaCreationDurationMetric)
-	prometheus.MustRegister(requestTransactionCountMetric)
+	prometheus.MustRegister(kafkaOperationsSuccessCountMetric)
+	prometheus.MustRegister(kafkaOperationsTotalCountMetric)
+	prometheus.MustRegister(clusterOperationsSuccessCountMetric)
+	prometheus.MustRegister(clusterOperationsTotalCountMetric)
+}
+
+// Reset the metrics we have defined. It is mainly used for testing.
+func Reset() {
+	requestClusterCreationDurationMetric.Reset()
+	requestKafkaCreationDurationMetric.Reset()
+	kafkaOperationsSuccessCountMetric.Reset()
+	kafkaOperationsTotalCountMetric.Reset()
+	clusterOperationsSuccessCountMetric.Reset()
+	clusterOperationsTotalCountMetric.Reset()
 }
