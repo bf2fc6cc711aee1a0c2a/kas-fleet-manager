@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -18,7 +19,7 @@ import (
 type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	Get(id string) (*api.KafkaRequest, *errors.ServiceError)
-	Delete(id string) *errors.ServiceError
+	Delete(ctx context.Context, id string) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
@@ -129,23 +130,28 @@ func (k *kafkaService) Get(id string) (*api.KafkaRequest, *errors.ServiceError) 
 // delete all resources (Kafka CR, Project) associated with the syncset.
 // The kafka object in the database will be updated with a deleted_at
 // timestamp.
-func (k *kafkaService) Delete(id string) *errors.ServiceError {
+func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceError {
 	if id == "" {
 		return errors.Validation("id is undefined")
 	}
 
+	// filter kafka request by owner to only retrieve request of the current authenticated user
+	user := auth.GetUsernameFromContext(ctx)
 	dbConn := k.connectionFactory.New()
+	dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
+
 	var kafkaRequest api.KafkaRequest
-	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
+	if err := dbConn.First(&kafkaRequest).Error; err != nil {
 		return handleGetError("KafkaResource", "id", id, err)
 	}
 
 	metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted, constants.KafkaOperationDelete)
 
-	// delete the syncset
+	// attempt to delete the syncset
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
-	err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
-	if err != nil {
+	statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
+
+	if err != nil && statucCode != http.StatusNotFound {
 		sentry.CaptureException(err)
 		return errors.GeneralError("error deleting syncset: %v", err)
 	}

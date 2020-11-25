@@ -81,7 +81,7 @@ help:
 	@echo "make run                  	run the application"
 	@echo "make run/docs             	run swagger and host the api spec"
 	@echo "make test                 	run unit tests"
-	@echo "make test-integration     	run integration tests"
+	@echo "make test/integration     	run integration tests"
 	@echo "make code/fix             	format files"
 	@echo "make generate             	generate go and openapi modules"
 	@echo "make openapi/generate     	generate openapi modules"
@@ -152,9 +152,9 @@ test: install
 .PHONY: test
 
 # Precompile everything required for development/test.
-test-prepare: install
+test/prepare: install
 	go test -i ./test/integration/...
-.PHONY: test-prepare
+.PHONY: test/prepare
 
 # Runs the integration tests.
 #
@@ -162,14 +162,14 @@ test-prepare: install
 #   TESTFLAGS: Flags to pass to `go test`. The `-v` argument is always passed.
 #
 # Example:
-#   make test-integration
-#   make test-integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
-#   make test-integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
-#   make test-integration TESTFLAGS="-short"                skips long-run tests
-test-integration: test-prepare
+#   make test/integration
+#   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
+#   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
+#   make test/integration TESTFLAGS="-short"                skips long-run tests
+test/integration: test/prepare
 	gotestsum --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
 			./test/integration
-.PHONY: test-integration
+.PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
 # requires OCM_OFFLINE_TOKEN env var exporteds
