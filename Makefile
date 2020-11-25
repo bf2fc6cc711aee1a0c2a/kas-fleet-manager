@@ -40,6 +40,10 @@ ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulated-server
 JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
 
+ifndef GOLANGCI_LINT_BIN
+	GOLANGCI_LINT_BIN:=golangci-lint
+endif
+
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
 else
