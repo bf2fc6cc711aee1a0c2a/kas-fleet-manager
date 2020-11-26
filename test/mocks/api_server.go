@@ -13,6 +13,8 @@ import (
 	"reflect"
 	"sync"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"time"
@@ -99,6 +101,7 @@ var (
 	EndpointKafkaDelete             = Endpoint{EndpointPathSyncsetsDelete, http.MethodDelete}
 	EndpointClustersGet             = Endpoint{EndpointPathClusters, http.MethodGet}
 	EndpointClustersPost            = Endpoint{EndpointPathClusters, http.MethodPost}
+	EndpointClustersPatch           = Endpoint{EndpointPathCluster, http.MethodPatch}
 	EndpointClusterSyncsetPost      = Endpoint{EndpointPathSyncsets, http.MethodPost}
 	EndpointClusterIngressGet       = Endpoint{EndpointPathIngresses, http.MethodGet}
 	EndpointCloudProvidersGet       = Endpoint{EndpointPathCloudProviders, http.MethodGet}
@@ -197,6 +200,11 @@ func (b *MockConfigurableServerBuilder) SetClustersPostResponse(cluster *cluster
 // SetClustersGetResponse set a mock response cluster or error for the GET /api/clusters_mgmt/v1/clusters endpoint
 func (b *MockConfigurableServerBuilder) SetClustersGetResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClustersGet] = buildMockRequestHandler(cluster, err)
+}
+
+// SetClustersPatchResponse set a mock response cluster or error for the GET /api/clusters_mgmt/v1/clusters endpoint
+func (b *MockConfigurableServerBuilder) SetClustersPatchResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClustersPatch] = buildMockRequestHandler(cluster, err)
 }
 
 // SetClusterSyncsetPostResponse set a mock response syncset or error for the POST /api/clusters_mgmt/v1/clusters/{id}/syncsets endpoint
@@ -318,6 +326,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointClusterGet:              buildMockRequestHandler(MockCluster, nil),
 		EndpointKafkaDelete:             buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:             buildMockRequestHandler(MockCluster, nil),
+		EndpointClustersPatch:           buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterSyncsetPost:      buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterIngressGet:       buildMockRequestHandler(MockIngressList, nil),
@@ -684,6 +693,16 @@ func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInst
 	return list, err
 }
 
+// GetMockClusterNodesBuilder for emulated OCM server
+func GetMockClusterNodesBuilder(modifyFn func(*clustersmgmtv1.ClusterNodesBuilder)) *clustersmgmtv1.ClusterNodesBuilder {
+	builder := clustersmgmtv1.NewClusterNodes().
+		Compute(constants.ClusterNodeScaleIncrement)
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
+}
+
 // GetMockClusterBuilder for emulated OCM server
 func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clustersmgmtv1.ClusterBuilder {
 	builder := clustersmgmtv1.NewCluster().
@@ -691,6 +710,7 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 		ExternalID(MockClusterExternalID).
 		State(MockClusterState).
 		MultiAZ(MockMultiAZ).
+		Nodes(GetMockClusterNodesBuilder(nil)).
 		CloudProvider(GetMockCloudProviderBuilder(nil)).
 		Region(GetMockCloudProviderRegionBuilder(nil)).
 		Version(GetMockOpenshiftVersionBuilder(nil))
@@ -716,7 +736,6 @@ func GetMockMachineBuilder(modifyFn func(*clustersmgmtv1.MachinePoolBuilder)) *c
 		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/machine_pools/%s", MockClusterID, MockMachinePoolID)).
 		Replicas(MockMachinePoolReplicas).
 		Cluster(GetMockClusterBuilder(nil))
-
 	if modifyFn != nil {
 		modifyFn(builder)
 	}
