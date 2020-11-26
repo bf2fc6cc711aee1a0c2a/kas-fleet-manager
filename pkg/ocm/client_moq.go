@@ -21,9 +21,6 @@ var _ Client = &ClientMock{}
 //             CreateClusterFunc: func(cluster *v1.Cluster) (*v1.Cluster, error) {
 // 	               panic("mock out the CreateCluster method")
 //             },
-//             CreateMachinePoolFunc: func(clusterID string, poolID string, instanceType string, replicas int) (*v1.MachinePool, error) {
-// 	               panic("mock out the CreateMachinePool method")
-//             },
 //             CreateManagedKafkaAddonFunc: func(id string) (*v1.AddOnInstallation, error) {
 // 	               panic("mock out the CreateManagedKafkaAddon method")
 //             },
@@ -51,14 +48,11 @@ var _ Client = &ClientMock{}
 //             GetRegionsFunc: func(provider *v1.CloudProvider) (*v1.CloudRegionList, error) {
 // 	               panic("mock out the GetRegions method")
 //             },
-//             MachinePoolExistsFunc: func(clusterID string, poolID string) (bool, error) {
-// 	               panic("mock out the MachinePoolExists method")
+//             ScaleDownComputeNodesFunc: func(clusterID string) (*v1.Cluster, error) {
+// 	               panic("mock out the ScaleDownComputeNodes method")
 //             },
-//             ScaleDownMachinePoolFunc: func(clusterID string, poolID string) (*v1.MachinePool, error) {
-// 	               panic("mock out the ScaleDownMachinePool method")
-//             },
-//             ScaleUpMachinePoolFunc: func(clusterID string, poolID string) (*v1.MachinePool, error) {
-// 	               panic("mock out the ScaleUpMachinePool method")
+//             ScaleUpComputeNodesFunc: func(clusterID string) (*v1.Cluster, error) {
+// 	               panic("mock out the ScaleUpComputeNodes method")
 //             },
 //         }
 //
@@ -69,9 +63,6 @@ var _ Client = &ClientMock{}
 type ClientMock struct {
 	// CreateClusterFunc mocks the CreateCluster method.
 	CreateClusterFunc func(cluster *v1.Cluster) (*v1.Cluster, error)
-
-	// CreateMachinePoolFunc mocks the CreateMachinePool method.
-	CreateMachinePoolFunc func(clusterID string, poolID string, instanceType string, replicas int) (*v1.MachinePool, error)
 
 	// CreateManagedKafkaAddonFunc mocks the CreateManagedKafkaAddon method.
 	CreateManagedKafkaAddonFunc func(id string) (*v1.AddOnInstallation, error)
@@ -100,14 +91,11 @@ type ClientMock struct {
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *v1.CloudProvider) (*v1.CloudRegionList, error)
 
-	// MachinePoolExistsFunc mocks the MachinePoolExists method.
-	MachinePoolExistsFunc func(clusterID string, poolID string) (bool, error)
+	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
+	ScaleDownComputeNodesFunc func(clusterID string) (*v1.Cluster, error)
 
-	// ScaleDownMachinePoolFunc mocks the ScaleDownMachinePool method.
-	ScaleDownMachinePoolFunc func(clusterID string, poolID string) (*v1.MachinePool, error)
-
-	// ScaleUpMachinePoolFunc mocks the ScaleUpMachinePool method.
-	ScaleUpMachinePoolFunc func(clusterID string, poolID string) (*v1.MachinePool, error)
+	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
+	ScaleUpComputeNodesFunc func(clusterID string) (*v1.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -115,17 +103,6 @@ type ClientMock struct {
 		CreateCluster []struct {
 			// Cluster is the cluster argument value.
 			Cluster *v1.Cluster
-		}
-		// CreateMachinePool holds details about calls to the CreateMachinePool method.
-		CreateMachinePool []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// PoolID is the poolID argument value.
-			PoolID string
-			// InstanceType is the instanceType argument value.
-			InstanceType string
-			// Replicas is the replicas argument value.
-			Replicas int
 		}
 		// CreateManagedKafkaAddon holds details about calls to the CreateManagedKafkaAddon method.
 		CreateManagedKafkaAddon []struct {
@@ -174,30 +151,18 @@ type ClientMock struct {
 			// Provider is the provider argument value.
 			Provider *v1.CloudProvider
 		}
-		// MachinePoolExists holds details about calls to the MachinePoolExists method.
-		MachinePoolExists []struct {
+		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
+		ScaleDownComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
-			// PoolID is the poolID argument value.
-			PoolID string
 		}
-		// ScaleDownMachinePool holds details about calls to the ScaleDownMachinePool method.
-		ScaleDownMachinePool []struct {
+		// ScaleUpComputeNodes holds details about calls to the ScaleUpComputeNodes method.
+		ScaleUpComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
-			// PoolID is the poolID argument value.
-			PoolID string
-		}
-		// ScaleUpMachinePool holds details about calls to the ScaleUpMachinePool method.
-		ScaleUpMachinePool []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// PoolID is the poolID argument value.
-			PoolID string
 		}
 	}
 	lockCreateCluster           sync.RWMutex
-	lockCreateMachinePool       sync.RWMutex
 	lockCreateManagedKafkaAddon sync.RWMutex
 	lockCreateSyncSet           sync.RWMutex
 	lockDeleteSyncSet           sync.RWMutex
@@ -207,9 +172,8 @@ type ClientMock struct {
 	lockGetClusterStatus        sync.RWMutex
 	lockGetManagedKafkaAddon    sync.RWMutex
 	lockGetRegions              sync.RWMutex
-	lockMachinePoolExists       sync.RWMutex
-	lockScaleDownMachinePool    sync.RWMutex
-	lockScaleUpMachinePool      sync.RWMutex
+	lockScaleDownComputeNodes   sync.RWMutex
+	lockScaleUpComputeNodes     sync.RWMutex
 }
 
 // CreateCluster calls CreateClusterFunc.
@@ -240,49 +204,6 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	mock.lockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
 	mock.lockCreateCluster.RUnlock()
-	return calls
-}
-
-// CreateMachinePool calls CreateMachinePoolFunc.
-func (mock *ClientMock) CreateMachinePool(clusterID string, poolID string, instanceType string, replicas int) (*v1.MachinePool, error) {
-	if mock.CreateMachinePoolFunc == nil {
-		panic("ClientMock.CreateMachinePoolFunc: method is nil but Client.CreateMachinePool was just called")
-	}
-	callInfo := struct {
-		ClusterID    string
-		PoolID       string
-		InstanceType string
-		Replicas     int
-	}{
-		ClusterID:    clusterID,
-		PoolID:       poolID,
-		InstanceType: instanceType,
-		Replicas:     replicas,
-	}
-	mock.lockCreateMachinePool.Lock()
-	mock.calls.CreateMachinePool = append(mock.calls.CreateMachinePool, callInfo)
-	mock.lockCreateMachinePool.Unlock()
-	return mock.CreateMachinePoolFunc(clusterID, poolID, instanceType, replicas)
-}
-
-// CreateMachinePoolCalls gets all the calls that were made to CreateMachinePool.
-// Check the length with:
-//     len(mockedClient.CreateMachinePoolCalls())
-func (mock *ClientMock) CreateMachinePoolCalls() []struct {
-	ClusterID    string
-	PoolID       string
-	InstanceType string
-	Replicas     int
-} {
-	var calls []struct {
-		ClusterID    string
-		PoolID       string
-		InstanceType string
-		Replicas     int
-	}
-	mock.lockCreateMachinePool.RLock()
-	calls = mock.calls.CreateMachinePool
-	mock.lockCreateMachinePool.RUnlock()
 	return calls
 }
 
@@ -568,107 +489,64 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 	return calls
 }
 
-// MachinePoolExists calls MachinePoolExistsFunc.
-func (mock *ClientMock) MachinePoolExists(clusterID string, poolID string) (bool, error) {
-	if mock.MachinePoolExistsFunc == nil {
-		panic("ClientMock.MachinePoolExistsFunc: method is nil but Client.MachinePoolExists was just called")
+// ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
+func (mock *ClientMock) ScaleDownComputeNodes(clusterID string) (*v1.Cluster, error) {
+	if mock.ScaleDownComputeNodesFunc == nil {
+		panic("ClientMock.ScaleDownComputeNodesFunc: method is nil but Client.ScaleDownComputeNodes was just called")
 	}
 	callInfo := struct {
 		ClusterID string
-		PoolID    string
 	}{
 		ClusterID: clusterID,
-		PoolID:    poolID,
 	}
-	mock.lockMachinePoolExists.Lock()
-	mock.calls.MachinePoolExists = append(mock.calls.MachinePoolExists, callInfo)
-	mock.lockMachinePoolExists.Unlock()
-	return mock.MachinePoolExistsFunc(clusterID, poolID)
+	mock.lockScaleDownComputeNodes.Lock()
+	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
+	mock.lockScaleDownComputeNodes.Unlock()
+	return mock.ScaleDownComputeNodesFunc(clusterID)
 }
 
-// MachinePoolExistsCalls gets all the calls that were made to MachinePoolExists.
+// ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
 // Check the length with:
-//     len(mockedClient.MachinePoolExistsCalls())
-func (mock *ClientMock) MachinePoolExistsCalls() []struct {
+//     len(mockedClient.ScaleDownComputeNodesCalls())
+func (mock *ClientMock) ScaleDownComputeNodesCalls() []struct {
 	ClusterID string
-	PoolID    string
 } {
 	var calls []struct {
 		ClusterID string
-		PoolID    string
 	}
-	mock.lockMachinePoolExists.RLock()
-	calls = mock.calls.MachinePoolExists
-	mock.lockMachinePoolExists.RUnlock()
+	mock.lockScaleDownComputeNodes.RLock()
+	calls = mock.calls.ScaleDownComputeNodes
+	mock.lockScaleDownComputeNodes.RUnlock()
 	return calls
 }
 
-// ScaleDownMachinePool calls ScaleDownMachinePoolFunc.
-func (mock *ClientMock) ScaleDownMachinePool(clusterID string, poolID string) (*v1.MachinePool, error) {
-	if mock.ScaleDownMachinePoolFunc == nil {
-		panic("ClientMock.ScaleDownMachinePoolFunc: method is nil but Client.ScaleDownMachinePool was just called")
+// ScaleUpComputeNodes calls ScaleUpComputeNodesFunc.
+func (mock *ClientMock) ScaleUpComputeNodes(clusterID string) (*v1.Cluster, error) {
+	if mock.ScaleUpComputeNodesFunc == nil {
+		panic("ClientMock.ScaleUpComputeNodesFunc: method is nil but Client.ScaleUpComputeNodes was just called")
 	}
 	callInfo := struct {
 		ClusterID string
-		PoolID    string
 	}{
 		ClusterID: clusterID,
-		PoolID:    poolID,
 	}
-	mock.lockScaleDownMachinePool.Lock()
-	mock.calls.ScaleDownMachinePool = append(mock.calls.ScaleDownMachinePool, callInfo)
-	mock.lockScaleDownMachinePool.Unlock()
-	return mock.ScaleDownMachinePoolFunc(clusterID, poolID)
+	mock.lockScaleUpComputeNodes.Lock()
+	mock.calls.ScaleUpComputeNodes = append(mock.calls.ScaleUpComputeNodes, callInfo)
+	mock.lockScaleUpComputeNodes.Unlock()
+	return mock.ScaleUpComputeNodesFunc(clusterID)
 }
 
-// ScaleDownMachinePoolCalls gets all the calls that were made to ScaleDownMachinePool.
+// ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
 // Check the length with:
-//     len(mockedClient.ScaleDownMachinePoolCalls())
-func (mock *ClientMock) ScaleDownMachinePoolCalls() []struct {
+//     len(mockedClient.ScaleUpComputeNodesCalls())
+func (mock *ClientMock) ScaleUpComputeNodesCalls() []struct {
 	ClusterID string
-	PoolID    string
 } {
 	var calls []struct {
 		ClusterID string
-		PoolID    string
 	}
-	mock.lockScaleDownMachinePool.RLock()
-	calls = mock.calls.ScaleDownMachinePool
-	mock.lockScaleDownMachinePool.RUnlock()
-	return calls
-}
-
-// ScaleUpMachinePool calls ScaleUpMachinePoolFunc.
-func (mock *ClientMock) ScaleUpMachinePool(clusterID string, poolID string) (*v1.MachinePool, error) {
-	if mock.ScaleUpMachinePoolFunc == nil {
-		panic("ClientMock.ScaleUpMachinePoolFunc: method is nil but Client.ScaleUpMachinePool was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-		PoolID    string
-	}{
-		ClusterID: clusterID,
-		PoolID:    poolID,
-	}
-	mock.lockScaleUpMachinePool.Lock()
-	mock.calls.ScaleUpMachinePool = append(mock.calls.ScaleUpMachinePool, callInfo)
-	mock.lockScaleUpMachinePool.Unlock()
-	return mock.ScaleUpMachinePoolFunc(clusterID, poolID)
-}
-
-// ScaleUpMachinePoolCalls gets all the calls that were made to ScaleUpMachinePool.
-// Check the length with:
-//     len(mockedClient.ScaleUpMachinePoolCalls())
-func (mock *ClientMock) ScaleUpMachinePoolCalls() []struct {
-	ClusterID string
-	PoolID    string
-} {
-	var calls []struct {
-		ClusterID string
-		PoolID    string
-	}
-	mock.lockScaleUpMachinePool.RLock()
-	calls = mock.calls.ScaleUpMachinePool
-	mock.lockScaleUpMachinePool.RUnlock()
+	mock.lockScaleUpComputeNodes.RLock()
+	calls = mock.calls.ScaleUpComputeNodes
+	mock.lockScaleUpComputeNodes.RUnlock()
 	return calls
 }
