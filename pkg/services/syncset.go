@@ -305,8 +305,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	kafkaConfig := map[string]string{
 		"offsets.topic.replication.factor": "3",
 		// Retention and segment size is set to disk capacity
-		"retention.ms":                             fmt.Sprintf("%d", 1000 * kafkaVolumeSize.Value() / produceQuota),
-		"log.segment.bytes":                        fmt.Sprintf("%d", kafkaVolumeSize.Value() / kafkaMaxPartitions),
+		"retention.ms":                             fmt.Sprintf("%d", 1000*kafkaVolumeSize.Value()/produceQuota),
+		"log.segment.bytes":                        fmt.Sprintf("%d", kafkaVolumeSize.Value()/kafkaMaxPartitions),
 		"transaction.state.log.min.isr":            "2",
 		"transaction.state.log.replication.factor": "3",
 		"client.quota.callback.class":              "org.apache.kafka.server.quota.StaticQuotaCallback",
@@ -314,8 +314,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		"client.quota.callback.static.produce": fmt.Sprintf("%d", produceQuota),
 		"client.quota.callback.static.consume": fmt.Sprintf("%d", consumeQuota),
 		// Start throttling when disk is above 90%. Full stop at 95%.
-		"client.quota.callback.static.storage.soft": fmt.Sprintf("%d", int64(0.9 * float64(kafkaVolumeSize.Value()))),
-		"client.quota.callback.static.storage.hard": fmt.Sprintf("%d", int64(0.95 * float64(kafkaVolumeSize.Value()))),
+		"client.quota.callback.static.storage.soft": fmt.Sprintf("%d", int64(0.9*float64(kafkaVolumeSize.Value()))),
+		"client.quota.callback.static.storage.hard": fmt.Sprintf("%d", int64(0.95*float64(kafkaVolumeSize.Value()))),
 		// Check storage every 30 seconds
 		"client.quota.callback.static.storage.check-interval": "30",
 		"quota.window.num":          "30",
@@ -381,7 +381,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				},
 				Metrics: kafkaMetrics,
 				Template: &strimzi.TemplateSpec{
-					Pod: &strimzi.PodTemplateSpec{
+					Pod: &strimzi.PodTemplate{
 						Affinity: &corev1.Affinity{
 							PodAntiAffinity: &corev1.PodAntiAffinity{
 								RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
@@ -416,7 +416,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				JvmOptions: zkJvmOptions,
 				Metrics:    zookeeperMetrics,
 				Template: &strimzi.TemplateSpec{
-					Pod: &strimzi.PodTemplateSpec{
+					Pod: &strimzi.PodTemplate{
 						Affinity: &corev1.Affinity{
 							PodAntiAffinity: &corev1.PodAntiAffinity{
 								RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{

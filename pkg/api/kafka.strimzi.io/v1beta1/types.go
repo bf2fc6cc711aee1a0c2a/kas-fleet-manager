@@ -29,7 +29,7 @@ type Rack struct {
 
 // Pod template for the Zookeeper or Kafka pods.
 type PodTemplate struct {
-	Affinity corev1.Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // Rule definition of a Prometheus JMX Exporter rule for filtering metrics
@@ -238,13 +238,7 @@ type RouteListenerBootstrapOverride struct {
 }
 
 type TemplateSpec struct {
-	Pod *PodTemplateSpec `json:"pod,omitempty"`
-}
-
-type PodTemplateSpec struct {
-	Metadata    *metav1.ObjectMeta  `json:"metadata,omitempty"`
-	Affinity    *corev1.Affinity    `json:"affinity,omitempty"`
-	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+	Pod *PodTemplate `json:"pod,omitempty"`
 }
 
 // RouteListenerBrokerOverride external broker services configuration.
