@@ -206,7 +206,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 			want: []interface{}{
 				buildProject(nil),
 				buildKafka(func(kafka *strimzi.Kafka) {
-					kafka.Spec.Kafka.Template = &strimzi.TemplateSpec{
+					kafka.Spec.Kafka.Template = &strimzi.KafkaTemplate{
 						Pod: &strimzi.PodTemplate{
 							Affinity: &corev1.Affinity{
 								PodAntiAffinity: &corev1.PodAntiAffinity{
@@ -219,7 +219,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 							},
 						},
 					}
-					kafka.Spec.Zookeeper.Template = &strimzi.TemplateSpec{
+					kafka.Spec.Zookeeper.Template = &strimzi.ZookeeperTemplate{
 						Pod: &strimzi.PodTemplate{
 							Affinity: &corev1.Affinity{
 								PodAntiAffinity: &corev1.PodAntiAffinity{
@@ -249,7 +249,20 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 					kafka.Spec.Kafka.Rack = &strimzi.Rack{
 						TopologyKey: "topology.kubernetes.io/zone",
 					}
-					kafka.Spec.Zookeeper.Template = &strimzi.TemplateSpec{
+					kafka.Spec.Kafka.Template = &strimzi.KafkaTemplate{
+						Pod: &strimzi.PodTemplate{
+							Affinity: &corev1.Affinity{
+								PodAntiAffinity: &corev1.PodAntiAffinity{
+									RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+										{
+											TopologyKey: "kubernetes.io/hostname",
+										},
+									},
+								},
+							},
+						},
+					}
+					kafka.Spec.Zookeeper.Template = &strimzi.ZookeeperTemplate{
 						Pod: &strimzi.PodTemplate{
 							Affinity: &corev1.Affinity{
 								PodAntiAffinity: &corev1.PodAntiAffinity{

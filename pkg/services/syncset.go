@@ -380,7 +380,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 					},
 				},
 				Metrics: kafkaMetrics,
-				Template: &strimzi.TemplateSpec{
+				Template: &strimzi.KafkaTemplate{
 					Pod: &strimzi.PodTemplate{
 						Affinity: &corev1.Affinity{
 							PodAntiAffinity: &corev1.PodAntiAffinity{
@@ -415,7 +415,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				},
 				JvmOptions: zkJvmOptions,
 				Metrics:    zookeeperMetrics,
-				Template: &strimzi.TemplateSpec{
+				Template: &strimzi.ZookeeperTemplate{
 					Pod: &strimzi.PodTemplate{
 						Affinity: &corev1.Affinity{
 							PodAntiAffinity: &corev1.PodAntiAffinity{

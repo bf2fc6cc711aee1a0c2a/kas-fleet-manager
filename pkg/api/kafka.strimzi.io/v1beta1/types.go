@@ -237,7 +237,13 @@ type RouteListenerBootstrapOverride struct {
 	Host    string `json:"host"`
 }
 
-type TemplateSpec struct {
+// ZookeeperTemplate definition for the template of ZooKeeper cluster resources.
+type ZookeeperTemplate struct {
+	Pod *PodTemplate `json:"pod,omitempty"`
+}
+
+// KafkaTemplate definition for the template of Kafka cluster resources.
+type KafkaTemplate struct {
 	Pod *PodTemplate `json:"pod,omitempty"`
 }
 
@@ -308,7 +314,7 @@ type KafkaClusterSpec struct {
 	Metrics       *Metrics                     `json:"metrics,omitempty"`
 	Image         *string                      `json:"image,omitempty"`
 	Resources     *corev1.ResourceRequirements `json:"resources,omitempty"`
-	Template      *TemplateSpec                `json:"template,omitempty"`
+	Template      *KafkaTemplate               `json:"template,omitempty"`
 	JvmOptions    *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 	Rack          *Rack                        `json:"rack,omitempty"`
 }
@@ -325,7 +331,7 @@ type ZookeeperClusterSpec struct {
 	Storage    Storage                      `json:"storage"`
 	Metrics    *Metrics                     `json:"metrics,omitempty"`
 	Resources  *corev1.ResourceRequirements `json:"resources,omitempty"`
-	Template   *TemplateSpec                `json:"template,omitempty"`
+	Template   *ZookeeperTemplate           `json:"template,omitempty"`
 	JvmOptions *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 }
 
