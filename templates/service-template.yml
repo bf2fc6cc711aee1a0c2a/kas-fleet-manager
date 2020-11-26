@@ -182,6 +182,23 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
+
+- name: ENABLE_ALLOW_LIST
+  displayName: Enable the Allow List
+  description: Enable the allow list access control feature
+  value: "false"
+
+- name: ALLOWED_USERS
+  displayName: A list of allowed users
+  description: A list of allowed users that are allowed to access the service irrespective of their organisation in a yaml format.
+  value: "[]"
+
+- name: ALLOWED_USERS_PER_ORGANISATION
+  displayName: A list of allowed users per organisation
+  description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
+  value: "[{id: 13640203, allow_all: true, allowed_users: []}, {id: 6340056, allow_all: true, allowed_users: []}, {id: 12147054, allow_all: true, allowed_users: []}]"
+
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -190,8 +207,18 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      provider-configuration.yaml: |
+      provider-configuration.yaml: |-
         supported_providers: ${SUPPORTED_CLOUD_PROVIDERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-allowed-users-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      allow-list-configuration.yaml: |-
+        allowed_users: ${ALLOWED_USERS}
+        allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}       
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
@@ -234,6 +261,9 @@ objects:
           - name: ocm-managed-services-providers-config
             configMap:
               name: ocm-managed-services-providers-config
+          - name: ocm-managed-services-allowed-users-config
+            configMap:
+              name: ocm-managed-services-allowed-users-config     
           initContainers:
           - name: id
             image: quay.io/app-sre/centos:8
@@ -270,7 +300,11 @@ objects:
             - name: rds
               mountPath: /secrets/rds
             - name: ocm-managed-services-providers-config
-              mountPath: /config
+              mountPath: /config/provider-configuration.yaml
+              subPath: provider-configuration.yaml
+            - name: ocm-managed-services-allowed-users-config
+              mountPath: /config/allow-list-configuration.yaml
+              subPath: allow-list-configuration.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -278,6 +312,7 @@ objects:
             - /usr/local/bin/managed-services-api
             - serve
             - --providers-config-file=/config/provider-configuration.yaml
+            - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
@@ -317,6 +352,7 @@ objects:
             - --sentry-key-file=/secrets/service/sentry.key
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
+            - --enable-allow-list=${ENABLE_ALLOW_LIST}
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --alsologtostderr
             - -v=${GLOG_V}

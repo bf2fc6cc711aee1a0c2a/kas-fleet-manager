@@ -1,9 +1,12 @@
 package services
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"reflect"
 	"testing"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+
+	. "github.com/onsi/gomega"
 )
 
 func Test_configService_GetDefaultProvider(t *testing.T) {
@@ -255,6 +258,223 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 	}
 }
 
+func Test_configService_IsAllowListEnabled(t *testing.T) {
+	tests := []struct {
+		name    string
+		service configService
+		want    bool
+	}{
+		{
+			name: "return 'false' when allow list feature disabled",
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					EnableAllowList: false,
+				},
+			},
+			want: false,
+		},
+		{
+			name: "return 'true' when allow list feature enabled",
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					EnableAllowList: true,
+				},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			enabled := tt.service.IsAllowListEnabled()
+			Expect(enabled).To(Equal(tt.want))
+		})
+	}
+}
+func Test_configService_GetOrganisationById(t *testing.T) {
+	type result struct {
+		found        bool
+		organisation config.Organisation
+	}
+
+	tests := []struct {
+		name    string
+		service configService
+		arg     string
+		want    result
+	}{
+		{
+			name: "return 'false' when organisation does not exist in the allowed list",
+			arg:  "some-id",
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							config.Organisation{
+								Id: "different-id",
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				found:        false,
+				organisation: config.Organisation{},
+			},
+		},
+		{
+			name: "return 'true' when organisation exists in the allowed list",
+			arg:  "some-id",
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							config.Organisation{
+								Id: "some-id",
+							},
+						},
+					},
+				},
+			},
+			want: result{
+				found: true,
+				organisation: config.Organisation{
+					Id: "some-id",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			org, found := tt.service.GetOrganisationById(tt.arg)
+			Expect(org).To(Equal(tt.want.organisation))
+			Expect(found).To(Equal(tt.want.found))
+		})
+	}
+}
+
+func Test_configService_IsUserAllowed(t *testing.T) {
+	type args struct {
+		organisation config.Organisation
+		username     string
+	}
+
+	organisation := config.Organisation{
+		Id:           "some-id",
+		AllowedUsers: []string{"username-0", "username-1"},
+	}
+
+	tests := []struct {
+		name    string
+		service configService
+		arg     args
+		want    bool
+	}{
+		{
+			name: "return 'false' when organisation has not list of allowed users and AllowAll is set to false",
+			arg: args{
+				username: "username-0",
+				organisation: config.Organisation{
+					AllowAll: false,
+				},
+			},
+			service: configService{},
+			want:    false,
+		},
+		{
+			name: "return 'true' when organisation has not list of allowed users and AllowAll is set to true",
+			arg: args{
+				username: "username-0",
+				organisation: config.Organisation{
+					AllowAll: true,
+				},
+			},
+			service: configService{},
+			want:    true,
+		},
+		{
+			name: "return 'true' when organisation contains the user",
+			arg: args{
+				username:     "username-0",
+				organisation: organisation,
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "return 'false' when user is not allowed within the organisation",
+			arg: args{
+				username:     "username-10",
+				organisation: organisation,
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+					},
+				},
+			},
+			want: false,
+		},
+		{
+			name: "return 'true' when user is not among the listed organisation but is contained in list of allowed users",
+			arg: args{
+				username:     "username-10",
+				organisation: organisation,
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+						AllowedUsers: []string{"username-0", "username-10", "username-3"},
+					},
+				},
+			},
+			want: true,
+		},
+
+		{
+			name: "return 'false' when user is not among the listed organisation and in list of allowed users",
+			arg: args{
+				username:     "username-10",
+				organisation: organisation,
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+						AllowedUsers: []string{"username-0", "username-3"},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			allowed := tt.service.IsUserAllowed(tt.arg.username, tt.arg.organisation)
+			Expect(allowed).To(Equal(tt.want))
+		})
+	}
+}
+
 func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 	type fields struct {
 		providersConfig config.ProviderConfiguration
@@ -333,7 +553,6 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		})
 	}
 }
-
 func Test_configService_Validate(t *testing.T) {
 	type fields struct {
 		providersConfig config.ProviderConfiguration

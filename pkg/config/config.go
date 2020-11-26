@@ -21,6 +21,7 @@ type ApplicationConfig struct {
 	Sentry             *SentryConfig      `json:"sentry"`
 	AWS                *AWSConfig         `json:"aws"`
 	SupportedProviders *ProviderConfig    `json:"providers"`
+	AllowList          *AllowListConfig   `json:"allow_list"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
@@ -33,6 +34,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		Sentry:             NewSentryConfig(),
 		AWS:                NewAWSConfig(),
 		SupportedProviders: NewSupportedProvidersConfig(),
+		AllowList:          NewAllowListConfig(),
 	}
 }
 
@@ -46,6 +48,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Sentry.AddFlags(flagset)
 	c.AWS.AddFlags(flagset)
 	c.SupportedProviders.AddFlags(flagset)
+	c.AllowList.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
@@ -78,6 +81,13 @@ func (c *ApplicationConfig) ReadFiles() error {
 		return err
 	}
 	err = c.SupportedProviders.ReadFiles()
+	if err != nil {
+		return err
+	}
+	if !c.AllowList.EnableAllowList {
+		return nil
+	}
+	err = c.AllowList.ReadFiles()
 	return err
 }
 

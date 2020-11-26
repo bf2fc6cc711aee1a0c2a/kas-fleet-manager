@@ -2,7 +2,6 @@ package auth
 
 import (
 	"bytes"
-	"context"
 	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
@@ -16,9 +15,6 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
-
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
 )
 
 // jwtCert on jwt key
@@ -34,29 +30,6 @@ type jwtCert struct {
 // jwtKeys a list of JwtCerts
 type jwtKeys struct {
 	Keys []jwtCert `json:"keys"`
-}
-
-func handleError(ctx context.Context, w http.ResponseWriter, code errors.ServiceErrorCode, reason string) {
-	ulog := logger.NewUHCLogger(ctx)
-	operationID := logger.GetOperationID(ctx)
-	err := errors.New(code, reason)
-	if err.HttpCode >= 400 && err.HttpCode <= 499 {
-		ulog.Infof(err.Error())
-	} else {
-		ulog.Errorf(err.Error())
-	}
-
-	writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
-}
-
-func writeJSONResponse(w http.ResponseWriter, code int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	if payload != nil {
-		response, _ := json.Marshal(payload)
-		_, _ = w.Write(response)
-	}
 }
 
 // downloadPublicKeys download public keys from URL.

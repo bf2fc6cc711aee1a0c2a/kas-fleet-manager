@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 )
 
@@ -20,6 +21,12 @@ type ConfigService interface {
 	IsProviderSupported(providerName string) bool
 	// IsRegionSupportedForProvider returns true if the provided region is supported in the given provider
 	IsRegionSupportedForProvider(providerName, regionName string) bool
+	// IsAllowListEnabled returns true if the allow access list is feature is enable for access control
+	IsAllowListEnabled() bool
+	// GetOrganisationById returns the organisaion by the given id
+	GetOrganisationById(orgId string) (config.Organisation, bool)
+	// IsUserAllowed returns true if the provided username is allowed to access the service
+	IsUserAllowed(username string, org config.Organisation) bool
 	// Validate ensures all configuration managed by the service contains correct and valid values
 	Validate() error
 }
@@ -30,12 +37,16 @@ var _ ConfigService = &configService{}
 type configService struct {
 	// providersConfig is the supported providers managed by the service
 	providersConfig config.ProviderConfiguration
+
+	// allowListConfig is the list of users allowed to access the service
+	allowListConfig config.AllowListConfig
 }
 
 // NewConfigService returns a new default implementation of ConfigService
-func NewConfigService(providersConfig config.ProviderConfiguration) ConfigService {
+func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig) ConfigService {
 	return &configService{
 		providersConfig: providersConfig,
+		allowListConfig: allowListConfig,
 	}
 }
 
@@ -73,6 +84,39 @@ func (c configService) IsRegionSupportedForProvider(providerName, regionName str
 	}
 	_, ok = provider.Regions.GetByName(regionName)
 	return ok
+}
+
+func (c configService) IsAllowListEnabled() bool {
+	return c.allowListConfig.EnableAllowList
+}
+
+func (c configService) GetOrganisationById(orgId string) (config.Organisation, bool) {
+	return c.allowListConfig.AllowList.Organisations.GetById(orgId)
+}
+
+// A user is allowed to access the service if:
+//
+// - Within the organisation:
+//
+//     - The list of allowed users is empty and that "allow-all" is set to true
+// 	- The user is among the list of allowed users for the organisation
+//
+// OR
+//
+// - The user is among the list of allowed users not represented by any organisation
+func (c configService) IsUserAllowed(username string, org config.Organisation) bool {
+	allowed := org.IsUserAllowed(username)
+	if allowed {
+		return true
+	}
+
+	for _, user := range c.allowListConfig.AllowList.AllowedUsers {
+		if user == username {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c configService) Validate() error {
