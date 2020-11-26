@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"bytes"
+
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
@@ -11,12 +12,12 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
-// NewScaleCommand creates a new command for scaling machine pools
+// NewScaleCommand creates a new command for scaling Compute nodes in a OSD cluster
 func NewScaleCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "scale",
-		Short: "Scale the managed services machine pool",
-		Long:  "Scale nodes up or down in the cluster machine pool.",
+		Short: "Scale the managed services Compute nodes in a OSD cluster",
+		Long:  "Scale Compute nodes (up or down) in a OSD cluster.",
 	}
 	err := environments.Environment().AddFlags(cmd.PersistentFlags())
 	if err != nil {
@@ -26,24 +27,24 @@ func NewScaleCommand() *cobra.Command {
 	return cmd
 }
 
-// NewScaleUpCommand creates a new command for scaling up the machine pool
+// NewScaleUpCommand creates a new command for scaling up Compute nodes in a OSD cluster
 func NewScaleUpCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "up",
 		Short: "Scale up a node",
-		Long:  "Scale up a node in the managed services machine pool.",
+		Long:  "Scale up Compute nodes in a OSD cluster.",
 		Run:   runScaleUp,
 	}
 	cmd.Flags().String(FlagClusterID, "", "Cluster ID")
 	return cmd
 }
 
-// NewScaleDownCommand creates a new command for scaling down the machine pool
+// NewScaleDownCommand creates a new command for scaling down Compute nodes in a OSD cluster
 func NewScaleDownCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "down",
 		Short: "Scale down a node",
-		Long:  "Scale down a node in the managed services machine pool.",
+		Long:  "Scale down Compute nodes in a OSD cluster.",
 		Run:   runScaleDown,
 	}
 	cmd.Flags().String(FlagClusterID, "", "Cluster ID")
@@ -59,18 +60,18 @@ func runScaleUp(cmd *cobra.Command, _ []string) {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 
-	// scale up the machine pool
-	machinePool, err := clusterService.ScaleUpMachinePool(clusterID)
+	// scale up compute nodes
+	cluster, err := clusterService.ScaleUpComputeNodes(clusterID)
 	if err != nil {
-		glog.Fatalf("Unable to scale up machine pool: %s", err.Error())
+		glog.Fatalf("Unable to scale up compute nodes: %s", err.Error())
 	}
 
 	// print the output
-	indentedPool := new(bytes.Buffer)
-	if err := clustersmgmtv1.MarshalMachinePool(machinePool, indentedPool); err != nil {
-		glog.Fatalf("Unable to marshal machine pool: %s", err.Error())
+	indentedCluster := new(bytes.Buffer)
+	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
+		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
 	}
-	glog.V(10).Infof("%s", indentedPool.String())
+	glog.V(10).Infof("%s", indentedCluster.String())
 }
 
 func runScaleDown(cmd *cobra.Command, _ []string) {
@@ -82,16 +83,16 @@ func runScaleDown(cmd *cobra.Command, _ []string) {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 
-	// scale down the machine pool
-	machinePool, err := clusterService.ScaleDownMachinePool(clusterID)
+	// scale down compute nodes
+	cluster, err := clusterService.ScaleDownComputeNodes(clusterID)
 	if err != nil {
-		glog.Fatalf("Unable to scale down machine pool: %s", err.Error())
+		glog.Fatalf("Unable to scale down compute nodes: %s", err.Error())
 	}
 
-	// print the output
-	indentedPool := new(bytes.Buffer)
-	if err := clustersmgmtv1.MarshalMachinePool(machinePool, indentedPool); err != nil {
-		glog.Fatalf("Unable to marshal machine pool: %s", err.Error())
+	// print the outputs
+	indentedCluster := new(bytes.Buffer)
+	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
+		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
 	}
-	glog.V(10).Infof("%s", indentedPool.String())
+	glog.V(10).Infof("%s", indentedCluster.String())
 }
