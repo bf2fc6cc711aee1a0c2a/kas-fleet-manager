@@ -11,6 +11,7 @@ import (
 	"github.com/getsentry/sentry-go"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
 )
 
 type JWTMiddleware interface {
@@ -55,14 +56,14 @@ func (a *AuthMiddleware) AuthenticateAccountJWT(next http.Handler) http.Handler 
 		ctx := r.Context()
 		err := a.jwtmw.CheckJWT(w, r)
 		if err != nil {
-			handleError(ctx, w, errors.ErrorUnauthorized, fmt.Sprintf("Unable to verify JWT token: %s", err))
+			shared.HandleError(ctx, w, errors.ErrorUnauthorized, fmt.Sprintf("Unable to verify JWT token: %s", err))
 			return
 		}
 		// Update the context, as the jwt middleware will update it
 		ctx = r.Context()
 		payload, err := GetAuthPayload(r)
 		if err != nil {
-			handleError(ctx, w, errors.ErrorUnauthorized, fmt.Sprintf("Unable to get payload details from JWT token: %s", err))
+			shared.HandleError(ctx, w, errors.ErrorUnauthorized, fmt.Sprintf("Unable to get payload details from JWT token: %s", err))
 			return
 		}
 

@@ -41,6 +41,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service.
         "404":
           content:
             application/json:
@@ -89,6 +98,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service.
         "404":
           content:
             application/json:
@@ -152,6 +170,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service.
         "500":
           content:
             application/json:
@@ -215,6 +242,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service.
         "404":
           content:
             application/json:
@@ -422,6 +458,14 @@ components:
         href: /api/managed-services-api/v1/errors/11
         code: OCM-EX-11
         reason: 'Unable to verify JWT token: Required authorization token not found'
+        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+    "403Example":
+      value:
+        id: "4"
+        kind: Error
+        href: /api/managed-services-api/v1/errors/4
+        code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
+        reason: User foo-bar is not authorized to access the service.
         operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
     "500Example":
       value:

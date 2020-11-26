@@ -1,9 +1,10 @@
 package environments
 
 import (
+	"os"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
-	"os"
 )
 
 var integrationConfigDefaults map[string]string = map[string]string{
@@ -17,6 +18,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"enable-ocm-mock":      "true",
 	"ocm-mock-mode":        config.MockModeEmulateServer,
 	"enable-sentry":        "false",
+	"enable-allow-list":    "false",
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server

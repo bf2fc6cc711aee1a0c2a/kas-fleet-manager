@@ -16,6 +16,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"ocm-debug":            "false",
 	"enable-ocm-mock":      "true",
 	"enable-sentry":        "false",
+	"enable-allow-list":    "false",
 }
 
 // The testing environment is specifically for automated testing

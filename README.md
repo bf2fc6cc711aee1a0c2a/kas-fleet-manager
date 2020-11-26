@@ -21,6 +21,18 @@ For more information on how the service works, see [the implementation documenta
 [Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/users/akeating_kafka_service.yaml)
 - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
 
+## Allow List Configurations
+
+The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). To configure this list, you'll need to have username and or the organisation. 
+
+The username is the account in question. 
+
+To get the org id: 
+- Login to `cloud.redhat.com/openshift/token` with the account in question. 
+- Use the supplied command to login to `ocm`, 
+- Then run `ocm whoami` and get the organisations id from `external_id` field. 
+
+
 ## Compile from master branch
 ```
 # Change current directory to your source code folder (ie: cd <any_your_source_code_folder>)

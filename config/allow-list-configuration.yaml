@@ -1,0 +1,23 @@
+---
+# A list of allowed users given by their usernames irrespective whether they are under an organisation or not.
+# For now, this only supports RH username or service account at the moment. 
+# In the future it may support users outside RH.  
+allowed_users:
+
+# A list of allowed users per organisation
+# - "id": is the organisation id
+# - "allow_all": Controls whether to allow all users to access the service for this organisation if "allowed_users" list is empty.
+# - "allowed_users": A list of allowed users for this organisation. If empty, no one is allowed unless "allow_all" is set to true    
+allowed_users_per_organisation:
+    # The Control Plane team
+  - id: 13640203
+    allow_all: true
+    allowed_users:
+    # The Red Hat organisation
+  - id: 6340056
+    allow_all: true
+    allowed_users:
+    # The App SRE team
+  - id: 12147054
+    allow_all: true
+    allowed_users:     

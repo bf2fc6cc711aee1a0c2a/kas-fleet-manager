@@ -9,6 +9,7 @@ import (
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
 )
 
 // handlerConfig defines the common things each REST controller must do.
@@ -39,7 +40,7 @@ func handleError(ctx context.Context, w http.ResponseWriter, err *errors.Service
 	} else {
 		ulog.Errorf(err.Error())
 	}
-	writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
+	shared.WriteJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
 }
 
 func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStatus int) {
@@ -74,7 +75,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 	case serviceErr != nil:
 		cfg.ErrorHandler(r.Context(), w, serviceErr)
 	default:
-		writeJSONResponse(w, httpStatus, result)
+		shared.WriteJSONResponse(w, httpStatus, result)
 	}
 
 }
@@ -97,7 +98,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, ht
 	case serviceErr != nil:
 		cfg.ErrorHandler(r.Context(), w, serviceErr)
 	default:
-		writeJSONResponse(w, httpStatus, result)
+		shared.WriteJSONResponse(w, httpStatus, result)
 	}
 
 }
@@ -110,7 +111,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	result, serviceErr := cfg.Action()
 	switch {
 	case serviceErr == nil:
-		writeJSONResponse(w, http.StatusOK, result)
+		shared.WriteJSONResponse(w, http.StatusOK, result)
 	default:
 		cfg.ErrorHandler(r.Context(), w, serviceErr)
 	}
@@ -126,5 +127,5 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 		cfg.ErrorHandler(r.Context(), w, serviceError)
 		return
 	}
-	writeJSONResponse(w, http.StatusOK, results)
+	shared.WriteJSONResponse(w, http.StatusOK, results)
 }

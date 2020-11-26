@@ -44,7 +44,7 @@ func Test_Validation_Provider(t *testing.T) {
 							},
 						},
 					},
-				}),
+				}, config.AllowListConfig{}),
 			},
 			want: result{
 				wantErr: false,
@@ -80,7 +80,7 @@ func Test_Validation_Provider(t *testing.T) {
 							},
 						},
 					},
-				}),
+				}, config.AllowListConfig{}),
 			},
 			want: result{
 				wantErr: false,
@@ -108,7 +108,7 @@ func Test_Validation_Provider(t *testing.T) {
 							},
 						},
 					},
-				}),
+				}, config.AllowListConfig{}),
 			},
 			want: result{
 				wantErr: true,
