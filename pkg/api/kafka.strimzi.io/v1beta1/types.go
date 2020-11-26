@@ -316,11 +316,7 @@ type KafkaClusterSpec struct {
 	Resources     *corev1.ResourceRequirements `json:"resources,omitempty"`
 	Template      *TemplateSpec                `json:"template,omitempty"`
 	JvmOptions    *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
-	Rack          *KafkaClusterRackSpec        `json:"rack,omitempty"`
-}
-
-type KafkaClusterRackSpec struct {
-	TopologyKey string `json:"topologyKey"`
+	Rack          *Rack                        `json:"rack,omitempty"`
 }
 
 // JVM options passed to containers

@@ -380,9 +380,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 					},
 				},
 				Metrics: kafkaMetrics,
-				Rack: &strimzi.KafkaClusterRackSpec{
-					TopologyKey: "topology.kubernetes.io/zone",
-				},
 				Template: &strimzi.TemplateSpec{
 					Pod: &strimzi.PodTemplateSpec{
 						Affinity: &corev1.Affinity{
@@ -426,9 +423,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 									corev1.PodAffinityTerm{
 										TopologyKey: "kubernetes.io/hostname",
 									},
-									corev1.PodAffinityTerm{
-										TopologyKey: "topology.kubernetes.io/zone",
-									},
 								},
 							},
 						},
@@ -447,19 +441,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		kafkaCR.Spec.Kafka.Rack = &strimzi.Rack{
 			TopologyKey: "topology.kubernetes.io/zone",
 		}
-		kafkaCR.Spec.Zookeeper.Template = &strimzi.ZookeeperTemplate{
-			Pod: &strimzi.PodTemplate{
-				Affinity: corev1.Affinity{
-					PodAntiAffinity: &corev1.PodAntiAffinity{
-						RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-							{
-								TopologyKey: "kubernetes.io/hostname",
-							},
-						},
-					},
-				},
-			},
-		}
+		kafkaCR.Spec.Zookeeper.Template.Pod.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution =
+			append(kafkaCR.Spec.Zookeeper.Template.Pod.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution,
+				corev1.PodAffinityTerm{
+					TopologyKey: "topology.kubernetes.io/zone",
+				})
 	}
 
 	resources := []interface{}{
