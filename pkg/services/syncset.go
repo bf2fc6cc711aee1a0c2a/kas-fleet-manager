@@ -305,7 +305,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	kafkaConfig := map[string]string{
 		"offsets.topic.replication.factor": "3",
 		// Retention and segment size is set to disk capacity
-		"retention.ms":                             fmt.Sprintf("%d", 1000*kafkaVolumeSize.Value()/produceQuota),
+		"log.retention.ms":                         fmt.Sprintf("%d", 1000*kafkaVolumeSize.Value()/produceQuota),
 		"log.segment.bytes":                        fmt.Sprintf("%d", kafkaVolumeSize.Value()/kafkaMaxPartitions),
 		"transaction.state.log.min.isr":            "2",
 		"transaction.state.log.replication.factor": "3",
