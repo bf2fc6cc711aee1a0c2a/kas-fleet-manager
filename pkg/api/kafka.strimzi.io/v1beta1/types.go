@@ -237,6 +237,16 @@ type RouteListenerBootstrapOverride struct {
 	Host    string `json:"host"`
 }
 
+type TemplateSpec struct {
+	Pod *PodTemplateSpec `json:"pod,omitempty"`
+}
+
+type PodTemplateSpec struct {
+	Metadata    *metav1.ObjectMeta  `json:"metadata,omitempty"`
+	Affinity    *corev1.Affinity    `json:"affinity,omitempty"`
+	Tolerations []corev1.Toleration `json:"tolerations,omitempty"`
+}
+
 // RouteListenerBrokerOverride external broker services configuration.
 type RouteListenerBrokerOverride struct {
 	Broker         int    `json:"broker"`
@@ -304,7 +314,13 @@ type KafkaClusterSpec struct {
 	Metrics       *Metrics                     `json:"metrics,omitempty"`
 	Image         *string                      `json:"image,omitempty"`
 	Resources     *corev1.ResourceRequirements `json:"resources,omitempty"`
+	Template      *TemplateSpec                `json:"template,omitempty"`
 	JvmOptions    *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
+	Rack          *KafkaClusterRackSpec        `json:"rack,omitempty"`
+}
+
+type KafkaClusterRackSpec struct {
+	TopologyKey string `json:"topologyKey"`
 }
 
 // JVM options passed to containers
@@ -319,6 +335,7 @@ type ZookeeperClusterSpec struct {
 	Storage    Storage                      `json:"storage"`
 	Metrics    *Metrics                     `json:"metrics,omitempty"`
 	Resources  *corev1.ResourceRequirements `json:"resources,omitempty"`
+	Template   *TemplateSpec                `json:"template,omitempty"`
 	JvmOptions *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 }
 

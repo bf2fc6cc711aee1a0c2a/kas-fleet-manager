@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	numOfBrokers    = 3
-	numOfZookeepers = 3
-	produceQuota    = 4000000
-	consumeQuota    = 4000000
+	numOfBrokers       = 3
+	numOfZookeepers    = 3
+	produceQuota       = 4000000
+	consumeQuota       = 4000000
+	kafkaMaxPartitions = 50
 )
 
 var (
@@ -305,7 +306,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		"offsets.topic.replication.factor": "3",
 		// Retention and segment size is set to disk capacity
 		"retention.ms":                             string(int64(1000 * kafkaVolumeSize.Value() / produceQuota)),
-		"segment.bytes":                            string(kafkaVolumeSize.Value()),
+		"log.segment.bytes":                        string(kafkaVolumeSize.Value() / kafkaMaxPartitions),
 		"transaction.state.log.min.isr":            "2",
 		"transaction.state.log.replication.factor": "3",
 		"client.quota.callback.class":              "org.apache.kafka.server.quota.StaticQuotaCallback",
@@ -379,7 +380,22 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 					},
 				},
 				Metrics: kafkaMetrics,
-				Rack:    nil,
+				Rack: &strimzi.KafkaClusterRackSpec{
+					TopologyKey: "topology.kubernetes.io/zone",
+				},
+				Template: &strimzi.TemplateSpec{
+					Pod: &strimzi.PodTemplateSpec{
+						Affinity: &corev1.Affinity{
+							PodAntiAffinity: &corev1.PodAntiAffinity{
+								RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+									corev1.PodAffinityTerm{
+										TopologyKey: "kubernetes.io/hostname",
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			Zookeeper: strimzi.ZookeeperClusterSpec{
 				Replicas: numOfZookeepers,
@@ -402,6 +418,22 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				},
 				JvmOptions: zkJvmOptions,
 				Metrics:    zookeeperMetrics,
+				Template: &strimzi.TemplateSpec{
+					Pod: &strimzi.PodTemplateSpec{
+						Affinity: &corev1.Affinity{
+							PodAntiAffinity: &corev1.PodAntiAffinity{
+								RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+									corev1.PodAffinityTerm{
+										TopologyKey: "kubernetes.io/hostname",
+									},
+									corev1.PodAffinityTerm{
+										TopologyKey: "topology.kubernetes.io/zone",
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			KafkaExporter: &strimzi.KafkaExporterSpec{
 				TopicRegex: ".*",
