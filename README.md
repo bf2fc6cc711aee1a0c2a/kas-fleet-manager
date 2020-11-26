@@ -160,7 +160,7 @@ serviceapitests# select * from clusters;
 # Alternatively, verify from ocm-cli
 $ ocm login --url=https://api.stage.openshift.com/ --token=<OCM_OFFLINE_TOKEN>
 # verify the cluster is in OCM
-$ ocm cluster list
+$ ocm list clusters
 
 # Retrieve the OSD cluster login credentials
 $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
