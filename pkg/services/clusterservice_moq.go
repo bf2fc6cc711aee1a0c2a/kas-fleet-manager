@@ -4,10 +4,11 @@
 package services
 
 import (
-	"github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"sync"
+
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"sync"
 )
 
 // Ensure, that ClusterServiceMock does implement ClusterService.
@@ -35,11 +36,11 @@ var _ ClusterService = &ClusterServiceMock{}
 //             ListByStatusFunc: func(state api.ClusterStatus) ([]api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ListByStatus method")
 //             },
-//             ScaleDownMachinePoolFunc: func(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
-// 	               panic("mock out the ScaleDownMachinePool method")
+//             ScaleDownComputeNodesFunc: func(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+// 	               panic("mock out the ScaleDownComputeNodes method")
 //             },
-//             ScaleUpMachinePoolFunc: func(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
-// 	               panic("mock out the ScaleUpMachinePool method")
+//             ScaleUpComputeNodesFunc: func(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+// 	               panic("mock out the ScaleUpComputeNodes method")
 //             },
 //             UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
 // 	               panic("mock out the UpdateStatus method")
@@ -66,11 +67,11 @@ type ClusterServiceMock struct {
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(state api.ClusterStatus) ([]api.Cluster, *errors.ServiceError)
 
-	// ScaleDownMachinePoolFunc mocks the ScaleDownMachinePool method.
-	ScaleDownMachinePoolFunc func(clusterID string) (*v1.MachinePool, *errors.ServiceError)
+	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
+	ScaleDownComputeNodesFunc func(clusterID string) (*v1.Cluster, *errors.ServiceError)
 
-	// ScaleUpMachinePoolFunc mocks the ScaleUpMachinePool method.
-	ScaleUpMachinePoolFunc func(clusterID string) (*v1.MachinePool, *errors.ServiceError)
+	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
+	ScaleUpComputeNodesFunc func(clusterID string) (*v1.Cluster, *errors.ServiceError)
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status api.ClusterStatus) error
@@ -102,13 +103,13 @@ type ClusterServiceMock struct {
 			// State is the state argument value.
 			State api.ClusterStatus
 		}
-		// ScaleDownMachinePool holds details about calls to the ScaleDownMachinePool method.
-		ScaleDownMachinePool []struct {
+		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
+		ScaleDownComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// ScaleUpMachinePool holds details about calls to the ScaleUpMachinePool method.
-		ScaleUpMachinePool []struct {
+		// ScaleUpComputeNodes holds details about calls to the ScaleUpComputeNodes method.
+		ScaleUpComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
@@ -120,14 +121,14 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
-	lockCreate               sync.RWMutex
-	lockFindCluster          sync.RWMutex
-	lockFindClusterByID      sync.RWMutex
-	lockGetClusterDNS        sync.RWMutex
-	lockListByStatus         sync.RWMutex
-	lockScaleDownMachinePool sync.RWMutex
-	lockScaleUpMachinePool   sync.RWMutex
-	lockUpdateStatus         sync.RWMutex
+	lockCreate                sync.RWMutex
+	lockFindCluster           sync.RWMutex
+	lockFindClusterByID       sync.RWMutex
+	lockGetClusterDNS         sync.RWMutex
+	lockListByStatus          sync.RWMutex
+	lockScaleDownComputeNodes sync.RWMutex
+	lockScaleUpComputeNodes   sync.RWMutex
+	lockUpdateStatus          sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -285,65 +286,65 @@ func (mock *ClusterServiceMock) ListByStatusCalls() []struct {
 	return calls
 }
 
-// ScaleDownMachinePool calls ScaleDownMachinePoolFunc.
-func (mock *ClusterServiceMock) ScaleDownMachinePool(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
-	if mock.ScaleDownMachinePoolFunc == nil {
-		panic("ClusterServiceMock.ScaleDownMachinePoolFunc: method is nil but ClusterService.ScaleDownMachinePool was just called")
+// ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
+func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+	if mock.ScaleDownComputeNodesFunc == nil {
+		panic("ClusterServiceMock.ScaleDownComputeNodesFunc: method is nil but ClusterService.ScaleDownComputeNodes was just called")
 	}
 	callInfo := struct {
 		ClusterID string
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockScaleDownMachinePool.Lock()
-	mock.calls.ScaleDownMachinePool = append(mock.calls.ScaleDownMachinePool, callInfo)
-	mock.lockScaleDownMachinePool.Unlock()
-	return mock.ScaleDownMachinePoolFunc(clusterID)
+	mock.lockScaleDownComputeNodes.Lock()
+	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
+	mock.lockScaleDownComputeNodes.Unlock()
+	return mock.ScaleDownComputeNodesFunc(clusterID)
 }
 
-// ScaleDownMachinePoolCalls gets all the calls that were made to ScaleDownMachinePool.
+// ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
 // Check the length with:
-//     len(mockedClusterService.ScaleDownMachinePoolCalls())
-func (mock *ClusterServiceMock) ScaleDownMachinePoolCalls() []struct {
+//     len(mockedClusterService.ScaleDownComputeNodesCalls())
+func (mock *ClusterServiceMock) ScaleDownComputeNodesCalls() []struct {
 	ClusterID string
 } {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockScaleDownMachinePool.RLock()
-	calls = mock.calls.ScaleDownMachinePool
-	mock.lockScaleDownMachinePool.RUnlock()
+	mock.lockScaleDownComputeNodes.RLock()
+	calls = mock.calls.ScaleDownComputeNodes
+	mock.lockScaleDownComputeNodes.RUnlock()
 	return calls
 }
 
-// ScaleUpMachinePool calls ScaleUpMachinePoolFunc.
-func (mock *ClusterServiceMock) ScaleUpMachinePool(clusterID string) (*v1.MachinePool, *errors.ServiceError) {
-	if mock.ScaleUpMachinePoolFunc == nil {
-		panic("ClusterServiceMock.ScaleUpMachinePoolFunc: method is nil but ClusterService.ScaleUpMachinePool was just called")
+// ScaleUpComputeNodes calls ScaleUpComputeNodesFunc.
+func (mock *ClusterServiceMock) ScaleUpComputeNodes(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+	if mock.ScaleUpComputeNodesFunc == nil {
+		panic("ClusterServiceMock.ScaleUpComputeNodesFunc: method is nil but ClusterService.ScaleUpComputeNodes was just called")
 	}
 	callInfo := struct {
 		ClusterID string
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockScaleUpMachinePool.Lock()
-	mock.calls.ScaleUpMachinePool = append(mock.calls.ScaleUpMachinePool, callInfo)
-	mock.lockScaleUpMachinePool.Unlock()
-	return mock.ScaleUpMachinePoolFunc(clusterID)
+	mock.lockScaleUpComputeNodes.Lock()
+	mock.calls.ScaleUpComputeNodes = append(mock.calls.ScaleUpComputeNodes, callInfo)
+	mock.lockScaleUpComputeNodes.Unlock()
+	return mock.ScaleUpComputeNodesFunc(clusterID)
 }
 
-// ScaleUpMachinePoolCalls gets all the calls that were made to ScaleUpMachinePool.
+// ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
 // Check the length with:
-//     len(mockedClusterService.ScaleUpMachinePoolCalls())
-func (mock *ClusterServiceMock) ScaleUpMachinePoolCalls() []struct {
+//     len(mockedClusterService.ScaleUpComputeNodesCalls())
+func (mock *ClusterServiceMock) ScaleUpComputeNodesCalls() []struct {
 	ClusterID string
 } {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockScaleUpMachinePool.RLock()
-	calls = mock.calls.ScaleUpMachinePool
-	mock.lockScaleUpMachinePool.RUnlock()
+	mock.lockScaleUpComputeNodes.RLock()
+	calls = mock.calls.ScaleUpComputeNodes
+	mock.lockScaleUpComputeNodes.RUnlock()
 	return calls
 }
 

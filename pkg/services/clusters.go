@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
@@ -27,8 +28,8 @@ type ClusterService interface {
 	UpdateStatus(id string, status api.ClusterStatus) error
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *ocmErrors.ServiceError)
 	FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError)
-	ScaleUpMachinePool(clusterID string) (*clustersmgmtv1.MachinePool, *ocmErrors.ServiceError)
-	ScaleDownMachinePool(clusterID string) (*clustersmgmtv1.MachinePool, *ocmErrors.ServiceError)
+	ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
+	ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 }
 
 type clusterService struct {
@@ -47,12 +48,6 @@ func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Cl
 		clusterBuilder:    ocm.NewClusterBuilder(awsConfig),
 	}
 }
-
-const (
-	DefaultInstanceType        string = "m5.xlarge"
-	DefaultMachinePoolID       string = "managed"
-	DefaultMachinePoolReplicas int    = 3
-)
 
 // Create creates a new OSD cluster
 //
@@ -183,47 +178,30 @@ func (c clusterService) FindClusterByID(clusterID string) (api.Cluster, *ocmErro
 	return cluster, nil
 }
 
-// ScaleUpMachinePool adds a new node to the cluster.
-// We cannot modify the default machine pool, so we create a new managed services machine
-// pool to add and remove nodes from. By default when creating a new pool we have to start
-// with a higher capacity of 2 initial nodes.
-func (c clusterService) ScaleUpMachinePool(clusterID string) (*clustersmgmtv1.MachinePool, *ocmErrors.ServiceError) {
+// ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID
+func (c clusterService) ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, ocmErrors.Validation("clusterID is undefined")
 	}
 
-	// check if the machine pool exists
-	machinePoolExists, err := c.ocmClient.MachinePoolExists(clusterID, DefaultMachinePoolID)
+	// scale up compute nodes
+	cluster, err := c.ocmClient.ScaleUpComputeNodes(clusterID)
 	if err != nil {
 		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
-
-	// create a new machine pool if one doesn't exist
-	// and return early, since we won't need to scale up an existing pool
-	if !machinePoolExists {
-		machinePool, err := c.ocmClient.CreateMachinePool(clusterID, DefaultMachinePoolID, DefaultInstanceType, DefaultMachinePoolReplicas)
-		if err != nil {
-			return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
-		}
-		return machinePool, nil
-	}
-
-	// otherwise scale up the existing pool
-	machinePool, err := c.ocmClient.ScaleUpMachinePool(clusterID, DefaultMachinePoolID)
-	if err != nil {
-		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
-	}
-	return machinePool, nil
+	return cluster, nil
 }
 
-// ScaleDownMachinePool removes a node from the managed services machine pool
-func (c clusterService) ScaleDownMachinePool(clusterID string) (*clustersmgmtv1.MachinePool, *ocmErrors.ServiceError) {
+// ScaleDownComputeNodes removes three compute nodes to cluster specified by clusterID
+func (c clusterService) ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, ocmErrors.Validation("clusterID is undefined")
 	}
-	machinePool, err := c.ocmClient.ScaleDownMachinePool(clusterID, DefaultMachinePoolID)
+
+	// scale up compute nodes
+	cluster, err := c.ocmClient.ScaleDownComputeNodes(clusterID)
 	if err != nil {
 		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
-	return machinePool, nil
+	return cluster, nil
 }
