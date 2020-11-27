@@ -23,7 +23,7 @@ For more information on how the service works, see [the implementation documenta
 
 ## Allow List Configurations
 
-The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). To configure this list, you'll need to have username and or the organisation. 
+The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). To configure this list, you'll need to have username and or the organisation id. 
 
 The username is the account in question. 
 

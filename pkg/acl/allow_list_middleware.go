@@ -26,11 +26,12 @@ func NewAllowListMiddleware(configService services.ConfigService) *AllowListMidd
 func (middleware *AllowListMiddleware) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if middleware.configService.IsAllowListEnabled() {
-			payload, _ := auth.GetAuthPayload(r)
-			org, _ := middleware.configService.GetOrganisationById(payload.OrganisationId)
-			userIsAllowed := middleware.configService.IsUserAllowed(payload.Username, org)
+			context := r.Context()
+			username, orgId := auth.GetUsernameFromContext(context), auth.GetOrgIdFromContext(context)
+			org, _ := middleware.configService.GetOrganisationById(orgId)
+			userIsAllowed := middleware.configService.IsUserAllowed(username, org)
 			if !userIsAllowed {
-				shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User %s is not authorized to access the service.", payload.Username))
+				shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User '%s' is not authorized to access the service.", username))
 				return
 			}
 		}

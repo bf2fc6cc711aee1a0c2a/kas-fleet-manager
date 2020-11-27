@@ -258,6 +258,84 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 	}
 }
 
+func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
+	type fields struct {
+		providersConfig config.ProviderConfiguration
+	}
+	type args struct {
+		providerName string
+		regionName   string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "false when provider is not supported",
+			fields: fields{
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{},
+				},
+			},
+			args: args{
+				providerName: "testProvider",
+				regionName:   "testRegion",
+			},
+			want: false,
+		},
+		{
+			name: "false when region is not supported",
+			fields: fields{
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{
+						config.Provider{
+							Name: "testProvider",
+						},
+					},
+				},
+			},
+			args: args{
+				providerName: "testProvider",
+				regionName:   "testRegion",
+			},
+			want: false,
+		},
+		{
+			name: "true when region is supported",
+			fields: fields{
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{
+						config.Provider{
+							Name: "testProvider",
+							Regions: config.RegionList{
+								config.Region{
+									Name: "testRegion",
+								},
+							},
+						},
+					},
+				},
+			},
+			args: args{
+				providerName: "testProvider",
+				regionName:   "testRegion",
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := configService{
+				providersConfig: tt.fields.providersConfig,
+			}
+			if got := c.IsRegionSupportedForProvider(tt.args.providerName, tt.args.regionName); got != tt.want {
+				t.Errorf("IsRegionSupportedForProvider() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 func Test_configService_IsAllowListEnabled(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -361,8 +439,11 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 	}
 
 	organisation := config.Organisation{
-		Id:           "some-id",
-		AllowedUsers: []string{"username-0", "username-1"},
+		Id: "some-id",
+		AllowedUsers: config.AllowedUsers{
+			config.AllowedUser{Username: "username-0"},
+			config.AllowedUser{Username: "username-1"},
+		},
 	}
 
 	tests := []struct {
@@ -439,7 +520,11 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 						Organisations: config.OrganisationList{
 							organisation,
 						},
-						AllowedUsers: []string{"username-0", "username-10", "username-3"},
+						AllowedUsers: config.AllowedUsers{
+							config.AllowedUser{Username: "username-0"},
+							config.AllowedUser{Username: "username-10"},
+							config.AllowedUser{Username: "username-3"},
+						},
 					},
 				},
 			},
@@ -458,7 +543,10 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 						Organisations: config.OrganisationList{
 							organisation,
 						},
-						AllowedUsers: []string{"username-0", "username-3"},
+						AllowedUsers: config.AllowedUsers{
+							config.AllowedUser{Username: "username-0"},
+							config.AllowedUser{Username: "username-3"},
+						},
 					},
 				},
 			},
@@ -475,84 +563,111 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 	}
 }
 
-func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
-	type fields struct {
-		providersConfig config.ProviderConfiguration
-	}
+func Test_configService_GetAllowedUserByUsernameAndOrgId(t *testing.T) {
 	type args struct {
-		providerName string
-		regionName   string
+		username string
+		orgId    string
 	}
+
+	type result struct {
+		allowedUser config.AllowedUser
+		found       bool
+	}
+
+	organisation := config.Organisation{
+		Id: "some-id",
+		AllowedUsers: config.AllowedUsers{
+			config.AllowedUser{Username: "username-0"},
+			config.AllowedUser{Username: "username-1"},
+		},
+	}
+
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   bool
+		name    string
+		service configService
+		arg     args
+		want    result
 	}{
 		{
-			name: "false when provider is not supported",
-			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{},
-				},
+			name: "return 'true' and the found user when organisation contains the user",
+			arg: args{
+				username: "username-1",
+				orgId:    organisation.Id,
 			},
-			args: args{
-				providerName: "testProvider",
-				regionName:   "testRegion",
-			},
-			want: false,
-		},
-		{
-			name: "false when region is not supported",
-			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "testProvider",
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
 						},
 					},
 				},
 			},
-			args: args{
-				providerName: "testProvider",
-				regionName:   "testRegion",
+			want: result{
+				found:       true,
+				allowedUser: config.AllowedUser{Username: "username-1"},
 			},
-			want: false,
 		},
 		{
-			name: "true when region is supported",
-			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "testProvider",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "testRegion",
-								},
-							},
+			name: "return 'true' and the user when user is not among the listed organisation but is contained in list of allowed users",
+			arg: args{
+				username: "username-10",
+				orgId:    organisation.Id,
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+						AllowedUsers: config.AllowedUsers{
+							config.AllowedUser{Username: "username-0"},
+							config.AllowedUser{Username: "username-10"},
+							config.AllowedUser{Username: "username-3"},
 						},
 					},
 				},
 			},
-			args: args{
-				providerName: "testProvider",
-				regionName:   "testRegion",
+			want: result{
+				found:       true,
+				allowedUser: config.AllowedUser{Username: "username-10"},
 			},
-			want: true,
+		},
+		{
+			name: "return 'false' when user is not among the listed organisation and in list of allowed users",
+			arg: args{
+				username: "username-10",
+				orgId:    "some-org-id",
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+						AllowedUsers: config.AllowedUsers{
+							config.AllowedUser{Username: "username-0"},
+							config.AllowedUser{Username: "username-3"},
+						},
+					},
+				},
+			},
+			want: result{
+				found: false,
+			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				providersConfig: tt.fields.providersConfig,
-			}
-			if got := c.IsRegionSupportedForProvider(tt.args.providerName, tt.args.regionName); got != tt.want {
-				t.Errorf("IsRegionSupportedForProvider() = %v, want %v", got, tt.want)
-			}
+			RegisterTestingT(t)
+			user, ok := tt.service.GetAllowedUserByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
+			Expect(user).To(Equal(tt.want.allowedUser))
+			Expect(ok).To(Equal(tt.want.found))
 		})
 	}
 }
+
 func Test_configService_Validate(t *testing.T) {
 	type fields struct {
 		providersConfig config.ProviderConfiguration

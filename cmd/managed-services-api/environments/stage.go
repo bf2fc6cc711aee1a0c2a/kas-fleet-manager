@@ -5,9 +5,10 @@ import (
 )
 
 var stageConfigDefaults map[string]string = map[string]string{
-	"ocm-base-url":      "https://api.stage.openshift.com",
-	"enable-ocm-mock":   "false",
-	"enable-allow-list": "false",
+	"ocm-base-url":          "https://api.stage.openshift.com",
+	"enable-ocm-mock":       "false",
+	"enable-allow-list":     "true",
+	"max-allowed-instances": "1",
 }
 
 func loadStage(env *Env) error {
