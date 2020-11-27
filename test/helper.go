@@ -488,6 +488,35 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 	return signedToken
 }
 
+func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims jwt.MapClaims) string {
+	// Use an RH SSO JWT by default since we are phasing RHD out
+	claims := jwtClaims
+	if account.Email() != "" {
+		claims["email"] = account.Email()
+	}
+	/* TODO the ocm api model needs to be updated to expose this
+	if account.ServiceAccount {
+		claims["clientId"] = account.Username()
+	}
+	*/
+
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
+	// Set the token header kid to the same value we expect when validating the token
+	// The kid is an arbitrary identifier for the key
+	// See https://tools.ietf.org/html/rfc7517#section-4.5
+	token.Header["kid"] = jwkKID
+	token.Header["alg"] = jwt.SigningMethodRS256.Alg()
+
+	// private key and public key taken from http://kjur.github.io/jsjws/tool_jwt.html
+	// the go-jwt-middleware pkg we use does the same for their tests
+	signedToken, err := token.SignedString(helper.JWTPrivateKey)
+	if err != nil {
+		helper.T.Errorf("Unable to sign test jwt: %s", err)
+		return ""
+	}
+	return signedToken
+}
+
 func (helper *Helper) CreateJWTToken(account *amv1.Account) *jwt.Token {
 	tokenString := helper.CreateJWTString(account)
 
