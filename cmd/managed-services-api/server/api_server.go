@@ -3,6 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
+	sdk "github.com/openshift-online/ocm-sdk-go"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"net"
 	"net/http"
 	"time"
@@ -18,13 +21,19 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server/logging"
 	"gitlab.cee.redhat.com/service/managed-services-api/data/generated/openapi"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/acl"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/handlers"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
+)
+
+const (
+	managedServicesApi = "managed-services-api"
+	version            = "v1"
+	apiEndpoint        = "/api"
 )
 
 type apiServer struct {
@@ -129,6 +138,24 @@ func NewAPIServer() Server {
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
+
+	if env().Config.Server.EnableJWT {
+		authnLogger, err := sdk.NewGlogLoggerBuilder().
+			InfoV(glog.Level(1)).
+			DebugV(glog.Level(5)).
+			Build()
+		check(err, "Unable to create authentication logger")
+
+		mainHandler, err = authentication.NewHandler().
+			Logger(authnLogger).
+			KeysURL(env().Config.Server.JwkCertURL).
+			Public(fmt.Sprintf("^%s/%s/?$", apiEndpoint, managedServicesApi)).
+			Public(fmt.Sprintf("^%s/%s/%s/?$", apiEndpoint, managedServicesApi, version)).
+			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", apiEndpoint, managedServicesApi, version)).
+			Next(mainHandler).
+			Build()
+		check(err, "Unable to create authentication handler")
+	}
 
 	mainHandler = gorillahandlers.CORS(
 		gorillahandlers.AllowedMethods([]string{
