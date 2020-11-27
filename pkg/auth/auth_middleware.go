@@ -67,8 +67,10 @@ func (a *AuthMiddleware) AuthenticateAccountJWT(next http.Handler) http.Handler 
 			return
 		}
 
-		// Append the username to the request context
+		// Append the username and organisation Id to the request context
 		ctx = SetUsernameContext(ctx, payload.Username)
+		ctx = SetOrgIdContext(ctx, payload.OrganisationId)
+
 		*r = *r.WithContext(ctx)
 
 		// Add username to sentry context

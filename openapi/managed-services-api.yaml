@@ -172,7 +172,9 @@ paths:
                   examples:
                       403Example:
                           $ref: '#/components/examples/403Example'
-          description: User not authorized to access the service. 
+                      403MaxAllowedInstanceReachedExample:
+                          $ref: '#/components/examples/403MaxAllowedInstanceReachedExample'    
+          description: User forbidden either because the user is not authorized to access the service or because the maximum number of instances that can be created by this user has been reached. 
         "404":
           content:
             application/json:
@@ -594,9 +596,17 @@ components:
          id: '4'
          kind: Error
          href: /api/managed-services-api/v1/errors/4
-         code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
-         reason: User foo-bar is not authorized to access the service.
-         operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+         code: MGD-SERV-API-4
+         reason: User 'foo-bar' is not authorized to access the service.
+         operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
+    403MaxAllowedInstanceReachedExample:
+      value:
+         id: '4'
+         kind: Error
+         href: /api/managed-services-api/v1/errors/4
+         code: MGD-SERV-API-4
+         reason: User 'foo-bar' has reached a maximum number of 6 allowed instances.
+         operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB      
     500Example:
       value:
         id: '9'

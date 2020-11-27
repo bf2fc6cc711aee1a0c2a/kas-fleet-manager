@@ -5,24 +5,20 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var MaxAllowedInstances int = 1
+
 type Organisation struct {
-	Id           string   `yaml:"id"`
-	AllowAll     bool     `yaml:"allow_all"`
-	AllowedUsers []string `yaml:"allowed_users"`
+	Id           string       `yaml:"id"`
+	AllowAll     bool         `yaml:"allow_all"`
+	AllowedUsers AllowedUsers `yaml:"allowed_users"`
 }
 
 func (org Organisation) IsUserAllowed(username string) bool {
 	if !org.HasAllowedUsers() {
 		return org.AllowAll
 	}
-
-	for _, user := range org.AllowedUsers {
-		if user == username {
-			return true
-		}
-	}
-
-	return false
+	_, found := org.AllowedUsers.GetByUsername(username)
+	return found
 }
 
 func (org Organisation) HasAllowedUsers() bool {
@@ -41,7 +37,34 @@ func (orgList OrganisationList) GetById(Id string) (Organisation, bool) {
 	return Organisation{}, false
 }
 
-type AllowedUsers []string
+type AllowedUser struct {
+	Username            string `yaml:"username"`
+	MaxAllowedInstances int    `yaml:"max_allowed_instances"`
+}
+
+func (allowedUser AllowedUser) IsInstanceCountWithinLimit(count int) bool {
+	return count < allowedUser.GetMaxAllowedInstances()
+}
+
+func (allowedUser AllowedUser) GetMaxAllowedInstances() int {
+	if allowedUser.MaxAllowedInstances <= 0 {
+		return MaxAllowedInstances
+	}
+
+	return allowedUser.MaxAllowedInstances
+}
+
+type AllowedUsers []AllowedUser
+
+func (allowedUsers AllowedUsers) GetByUsername(username string) (AllowedUser, bool) {
+	for _, user := range allowedUsers {
+		if username == user.Username {
+			return user, true
+		}
+	}
+
+	return AllowedUser{}, false
+}
 
 type AllowListConfiguration struct {
 	Organisations OrganisationList `yaml:"allowed_users_per_organisation"`
@@ -64,6 +87,7 @@ func NewAllowListConfig() *AllowListConfig {
 func (c *AllowListConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.AllowListConfigFile, "allow-list-config-file", c.AllowListConfigFile, "AllowList configuration file")
 	fs.BoolVar(&c.EnableAllowList, "enable-allow-list", c.EnableAllowList, "Enable allow list of users")
+	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Maximumm number of allowed instances that can be created by the user")
 }
 
 func (c *AllowListConfig) ReadFiles() error {

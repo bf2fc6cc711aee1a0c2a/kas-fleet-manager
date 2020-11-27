@@ -1,23 +1,31 @@
 ---
 # A list of allowed users given by their usernames irrespective whether they are under an organisation or not.
 # For now, this only supports RH username or service account at the moment. 
-# In the future it may support users outside RH.  
-allowed_users:
+# In the future it may support users outside RH. For example, when testing, you can add your account
+# via `allowed_users_per_organisation` entry, if the account isn't already inside any of the organisations in the organisations list
+# The structure of allowed users is:
+#       - username: is the account of the user. The username must be unique
+#       - max_allowed_instances: is the maximum number of instances this user can create. 
+#         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments. 
+allowed_users: []
 
-# A list of allowed users per organisation
+# A list of allowed users per organisation (see structure below). The list current contains three organisations - add yours if it is missing.  
 # - "id": is the organisation id
 # - "allow_all": Controls whether to allow all users to access the service for this organisation if "allowed_users" list is empty.
-# - "allowed_users": A list of allowed users for this organisation. If empty, no one is allowed unless "allow_all" is set to true    
+# - "allowed_users": A list of allowed users (see structure below) for this organisation. If empty, no one is allowed unless "allow_all" is set to true. 
+#       - username: is the account of the user. The username must be unique within the organisation and across organisations.
+#       - max_allowed_instances: is the maximum number of instances this user can create. 
+#         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
 allowed_users_per_organisation:
     # The Control Plane team
   - id: 13640203
     allow_all: true
-    allowed_users:
+    allowed_users: []
     # The Red Hat organisation
   - id: 6340056
     allow_all: true
-    allowed_users:
+    allowed_users: []
     # The App SRE team
   - id: 12147054
     allow_all: true
-    allowed_users:     
+    allowed_users: []

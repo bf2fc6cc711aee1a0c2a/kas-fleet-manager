@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
@@ -167,6 +168,101 @@ func TestKafkaPost_Validations(t *testing.T) {
 			Expect(resp.StatusCode).To(Equal(tt.wantCode))
 		})
 	}
+}
+
+// TestKafkaAllowList_UnauthorizedValidation tests the allow list API access validations is performed when enabled
+func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// create an account with a random organisation id. This is different than the control plance team organisation id which is used by default
+	account := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), h.NewUUID())
+	ctx := h.NewAuthenticatedContext(account)
+
+	tests := []struct {
+		name      string
+		operation func() *http.Response
+	}{
+		{
+			name: "HTTP 403 when listing kafkas",
+			operation: func() *http.Response {
+				_, resp, _ := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+				return resp
+			},
+		},
+		{
+			name: "HTTP 403 when creating a new kafka request",
+			operation: func() *http.Response {
+				body := openapi.KafkaRequestPayload{
+					CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+					MultiAz:       mocks.MockCluster.MultiAZ(),
+					Region:        "us-east-3",
+					Name:          mockKafkaName,
+				}
+
+				_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, body)
+				return resp
+			},
+		},
+		{
+			name: "HTTP 403 when deleting new kafka request",
+			operation: func() *http.Response {
+				_, resp, _ := client.DefaultApi.DeleteKafkaById(ctx, "kafka-id")
+				return resp
+			},
+		},
+		{
+			name: "HTTP 403 when getting a new kafka request",
+			operation: func() *http.Response {
+				_, resp, _ := client.DefaultApi.GetKafkaById(ctx, "kafka-id")
+				return resp
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			resp := tt.operation()
+			Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+			Expect(resp.Header.Get("Content-Type")).To(Equal("application/json"))
+		})
+	}
+}
+
+// TestKafkaAllowList_MaxAllowedInstances tests the allow list max allowed instances creation validations is performed when enabled
+// The default max allowed instances limit is set to "1", we should verify that this is not depassed
+func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+
+	k := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+	}
+
+	// create the first kafka
+	_, resp1, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// create the second kafka
+	_, resp2, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// verify that the first request was accepted
+	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
+
+	// verify that the second request errored with 403 forbidden
+	Expect(resp2.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(resp2.Header.Get("Content-Type")).To(Equal("application/json"))
 }
 
 // TestKafkaGet tests getting kafkas via the API endpoint
