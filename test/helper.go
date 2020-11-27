@@ -38,10 +38,12 @@ import (
 )
 
 const (
-	apiPort    = ":8777"
-	jwtKeyFile = "test/support/jwt_private_key.pem"
-	jwtCAFile  = "test/support/jwt_ca.pem"
-	jwkKID     = "uhctestkey"
+	apiPort        = ":8777"
+	jwtKeyFile     = "test/support/jwt_private_key.pem"
+	jwtCAFile      = "test/support/jwt_ca.pem"
+	jwkKID         = "uhctestkey"
+	tokenClaimType = "Bearer"
+	tokenExpMin    = 15
 )
 
 var originalServerURL string
@@ -450,6 +452,9 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 		"username":   account.Username(),
 		"first_name": account.FirstName(),
 		"last_name":  account.LastName(),
+		"typ":        tokenClaimType,
+		"iat":        time.Now().Unix(),
+		"exp":        time.Now().Add(time.Minute * time.Duration(tokenExpMin)).Unix(),
 	}
 
 	org, ok := account.GetOrganization()
@@ -471,6 +476,7 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 	// The kid is an arbitrary identifier for the key
 	// See https://tools.ietf.org/html/rfc7517#section-4.5
 	token.Header["kid"] = jwkKID
+	token.Header["alg"] = jwt.SigningMethodRS256.Alg()
 
 	// private key and public key taken from http://kjur.github.io/jsjws/tool_jwt.html
 	// the go-jwt-middleware pkg we use does the same for their tests
