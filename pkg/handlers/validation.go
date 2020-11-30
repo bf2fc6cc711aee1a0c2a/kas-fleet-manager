@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -96,6 +99,30 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 		if !regionSupported {
 			provider, _ := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
 			return errors.Validation("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
+		}
+
+		return nil
+	}
+}
+
+// validateMaxAllowedInstances returns a validator that validate that the current connected user has not
+// reached the max number of allowed instances that can be created for this user if any or the global max allowed defaults
+func validateMaxAllowedInstances(kafkaService services.KafkaService, configService services.ConfigService, context context.Context) validate {
+	return func() *errors.ServiceError {
+		if !configService.IsAllowListEnabled() {
+			return nil
+		}
+
+		username, orgId := auth.GetUsernameFromContext(context), auth.GetOrgIdFromContext(context)
+		user, _ := configService.GetAllowedUserByUsernameAndOrgId(username, orgId)
+
+		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
+		if err != nil {
+			return err
+		}
+
+		if !user.IsInstanceCountWithinLimit(pageMeta.Total) {
+			return errors.Forbidden(fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances()))
 		}
 
 		return nil

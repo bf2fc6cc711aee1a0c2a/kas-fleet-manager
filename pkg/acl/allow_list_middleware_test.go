@@ -1,7 +1,6 @@
 package acl
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -13,7 +12,6 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
-	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 )
 
@@ -37,18 +35,6 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 }
 
 func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
-	claims := jwt.MapClaims{
-		"iss":        "https://token-url.com/token",
-		"username":   "username",
-		"first_name": "first-name",
-		"last_name":  "last-name",
-		"email":      "username@email.com",
-		"org_id":     "org-id-0",
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Valid = true
-
 	tests := []struct {
 		name string
 		arg  services.ConfigService
@@ -61,7 +47,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 					Organisations: config.OrganisationList{
 						config.Organisation{
 							Id:           "org-id-0",
-							AllowedUsers: []string{"another-username"},
+							AllowedUsers: config.AllowedUsers{config.AllowedUser{Username: "another-username"}},
 						},
 					},
 				},
@@ -76,7 +62,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 						config.Organisation{
 							Id:           "org-id-0",
 							AllowAll:     false,
-							AllowedUsers: []string{},
+							AllowedUsers: config.AllowedUsers{},
 						},
 					},
 				},
@@ -89,12 +75,14 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 				AllowList: config.AllowListConfiguration{
 					Organisations: config.OrganisationList{
 						config.Organisation{
-							Id:           "org-id-3",
-							AllowAll:     false,
-							AllowedUsers: []string{},
+							Id:       "org-id-3",
+							AllowAll: false,
 						},
 					},
-					AllowedUsers: []string{"allowed-user-1", "allowed-user-2"},
+					AllowedUsers: config.AllowedUsers{
+						config.AllowedUser{Username: "allowed-user-1"},
+						config.AllowedUser{Username: "allowed-user-2"},
+					},
 				},
 			}),
 		},
@@ -107,10 +95,13 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 						config.Organisation{
 							Id:           "org-id-0",
 							AllowAll:     false,
-							AllowedUsers: []string{},
+							AllowedUsers: config.AllowedUsers{},
 						},
 					},
-					AllowedUsers: []string{"allowed-user-1", "allowed-user-2"},
+					AllowedUsers: config.AllowedUsers{
+						config.AllowedUser{Username: "allowed-user-1"},
+						config.AllowedUser{Username: "allowed-user-2"},
+					},
 				},
 			}),
 		},
@@ -129,8 +120,11 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 
 			middleware := NewAllowListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
+
+			// set username and organisation id within the current context
 			ctx := req.Context()
-			ctx = context.WithValue(ctx, auth.ContextAuthKey, token)
+			ctx = auth.SetUsernameContext(ctx, "username")
+			ctx = auth.SetOrgIdContext(ctx, "org-id-0")
 
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(rr, req)
@@ -141,25 +135,13 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			Expect(rr.Code).To(Equal(http.StatusForbidden))
 			Expect(rr.HeaderMap["Content-Type"][0]).To(Equal("application/json"))
 			Expect(data["kind"]).To(Equal("Error"))
-			Expect(data["reason"]).To(Equal("User username is not authorized to access the service."))
+			Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
 		})
 	}
 
 }
 
 func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
-	claims := jwt.MapClaims{
-		"iss":        "https://token-url.com/token",
-		"username":   "username",
-		"first_name": "first-name",
-		"last_name":  "last-name",
-		"email":      "username@email.com",
-		"org_id":     "org-id-0",
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Valid = true
-
 	tests := []struct {
 		name string
 		arg  services.ConfigService
@@ -172,7 +154,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 					Organisations: config.OrganisationList{
 						config.Organisation{
 							Id:           "org-id-0",
-							AllowedUsers: []string{"username"},
+							AllowedUsers: config.AllowedUsers{config.AllowedUser{Username: "username"}},
 						},
 					},
 				},
@@ -187,7 +169,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 						config.Organisation{
 							Id:           "org-id-0",
 							AllowAll:     true,
-							AllowedUsers: []string{},
+							AllowedUsers: config.AllowedUsers{},
 						},
 					},
 				},
@@ -202,10 +184,13 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 						config.Organisation{
 							Id:           "org-id-0",
 							AllowAll:     false,
-							AllowedUsers: []string{},
+							AllowedUsers: config.AllowedUsers{},
 						},
 					},
-					AllowedUsers: []string{"allowed-user-1", "username"},
+					AllowedUsers: config.AllowedUsers{
+						config.AllowedUser{Username: "allowed-user-1"},
+						config.AllowedUser{Username: "username"},
+					},
 				},
 			}),
 		},
@@ -224,8 +209,11 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 
 			middleware := NewAllowListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
+
+			// set username and organisation id within the current context
 			ctx := req.Context()
-			ctx = context.WithValue(ctx, auth.ContextAuthKey, token)
+			ctx = auth.SetUsernameContext(ctx, "username")
+			ctx = auth.SetOrgIdContext(ctx, "org-id-0")
 
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(rr, req)

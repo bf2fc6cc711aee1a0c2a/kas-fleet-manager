@@ -5,9 +5,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/workers"
 	"io/ioutil"
 	"log"
 	"net/http/httptest"
@@ -17,6 +14,10 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/workers"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -332,11 +333,12 @@ func (helper *Helper) NewApiClient() *openapi.APIClient {
 	return client
 }
 
+// NewRandAccount returns a random account that has the control plane team org id as its organisation id
 func (helper *Helper) NewRandAccount() *amv1.Account {
-	return helper.NewAccount(helper.NewID(), faker.Name(), faker.Email())
+	return helper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), "13640203")
 }
 
-func (helper *Helper) NewAccount(username, name, email string) *amv1.Account {
+func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
 	var firstName string
 	var lastName string
 	names := strings.SplitN(name, " ", 2)
@@ -352,7 +354,8 @@ func (helper *Helper) NewAccount(username, name, email string) *amv1.Account {
 		Username(username).
 		FirstName(firstName).
 		LastName(lastName).
-		Email(email)
+		Email(email).
+		Organization(amv1.NewOrganization().ExternalID(orgId))
 
 	acct, err := builder.Build()
 	if err != nil {
@@ -448,6 +451,13 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 		"first_name": account.FirstName(),
 		"last_name":  account.LastName(),
 	}
+
+	org, ok := account.GetOrganization()
+
+	if ok {
+		claims["org_id"] = org.ExternalID()
+	}
+
 	if account.Email() != "" {
 		claims["email"] = account.Email()
 	}
@@ -456,7 +466,6 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 		claims["clientId"] = account.Username()
 	}
 	*/
-
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	// Set the token header kid to the same value we expect when validating the token
 	// The kid is an arbitrary identifier for the key

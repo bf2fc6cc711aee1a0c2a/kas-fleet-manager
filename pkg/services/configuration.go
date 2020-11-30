@@ -25,6 +25,8 @@ type ConfigService interface {
 	IsAllowListEnabled() bool
 	// GetOrganisationById returns the organisaion by the given id
 	GetOrganisationById(orgId string) (config.Organisation, bool)
+	// GetAllowedUserByUsernameAndOrgId returns the allowed user in a given organisation (if found organisation is found), else return user by from the global list
+	GetAllowedUserByUsernameAndOrgId(username string, orgId string) (config.AllowedUser, bool)
 	// IsUserAllowed returns true if the provided username is allowed to access the service
 	IsUserAllowed(username string, org config.Organisation) bool
 	// Validate ensures all configuration managed by the service contains correct and valid values
@@ -94,6 +96,20 @@ func (c configService) GetOrganisationById(orgId string) (config.Organisation, b
 	return c.allowListConfig.AllowList.Organisations.GetById(orgId)
 }
 
+// GetAllowedUserByUsernameAndOrgId returns the allowed user in a given organisation (if found organisation is found),
+// else return user by from the global list
+func (c configService) GetAllowedUserByUsernameAndOrgId(username string, orgId string) (config.AllowedUser, bool) {
+	var user config.AllowedUser
+	var found bool
+	org, _ := c.GetOrganisationById(orgId)
+	user, found = org.AllowedUsers.GetByUsername(username)
+	if found {
+		return user, found
+	}
+
+	return c.allowListConfig.AllowList.AllowedUsers.GetByUsername(username)
+}
+
 // A user is allowed to access the service if:
 //
 // - Within the organisation:
@@ -110,13 +126,8 @@ func (c configService) IsUserAllowed(username string, org config.Organisation) b
 		return true
 	}
 
-	for _, user := range c.allowListConfig.AllowList.AllowedUsers {
-		if user == username {
-			return true
-		}
-	}
-
-	return false
+	_, found := c.allowListConfig.AllowList.AllowedUsers.GetByUsername(username)
+	return found
 }
 
 func (c configService) Validate() error {

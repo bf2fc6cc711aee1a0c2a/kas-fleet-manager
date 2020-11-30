@@ -8,17 +8,18 @@ import (
 )
 
 var integrationConfigDefaults map[string]string = map[string]string{
-	"v":                    "0",
-	"logtostderr":          "true",
-	"ocm-base-url":         "https://api-integration.6943.hive-integration.openshiftapps.com",
-	"enable-https":         "false",
-	"enable-metrics-https": "false",
-	"enable-authz":         "true",
-	"ocm-debug":            "false",
-	"enable-ocm-mock":      "true",
-	"ocm-mock-mode":        config.MockModeEmulateServer,
-	"enable-sentry":        "false",
-	"enable-allow-list":    "false",
+	"v":                     "0",
+	"logtostderr":           "true",
+	"ocm-base-url":          "https://api-integration.6943.hive-integration.openshiftapps.com",
+	"enable-https":          "false",
+	"enable-metrics-https":  "false",
+	"enable-authz":          "true",
+	"ocm-debug":             "false",
+	"enable-ocm-mock":       "true",
+	"ocm-mock-mode":         config.MockModeEmulateServer,
+	"enable-sentry":         "false",
+	"enable-allow-list":     "true",
+	"max-allowed-instances": "1",
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server
