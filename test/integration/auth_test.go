@@ -111,7 +111,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		"last_name":  serviceAccount.LastName(),
 		"typ":        "Bearer",
 		"iat":        time.Now().Unix(),
-		"exp":        time.Now().Unix(),
+		"exp":        time.Now().Add(time.Duration(-15) * time.Minute).Unix(),
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
@@ -120,9 +120,11 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
+	fmt.Println(restyResp.String())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MGD-SERV-API-4"))
-	Expect(re.Reason).To(Equal("User test is not authorized to access the service."))
+	fmt.Println(re)
+	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Reason).To(Equal("Bearer token is expired"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusForbidden))
 }
 
@@ -182,8 +184,6 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	re := parseResponse(restyResp)
-	fmt.Println(re.Code)
-	fmt.Println(re.Reason)
 	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
 	Expect(re.Reason).To(Equal("Bearer token can't be verified"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
