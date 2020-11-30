@@ -125,7 +125,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	fmt.Println(re)
 	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
 	Expect(re.Reason).To(Equal("Bearer token is expired"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusForbidden))
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
