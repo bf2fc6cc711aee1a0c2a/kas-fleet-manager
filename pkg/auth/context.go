@@ -16,6 +16,8 @@ type contextKey string
 const (
 	ContextUsernameKey contextKey = "username"
 
+	ContextOrgIdKey contextKey = "organisation_id"
+
 	// Does not use contextKey type because the jwt middleware improperly updates context with string key type
 	// See https://github.com/auth0/go-jwt-middleware/blob/master/jwtmiddleware.go#L232
 	ContextAuthKey string = "user"
@@ -43,6 +45,18 @@ func GetUsernameFromContext(ctx context.Context) string {
 		return ""
 	}
 	return fmt.Sprintf("%v", username)
+}
+
+func SetOrgIdContext(ctx context.Context, orgId string) context.Context {
+	return context.WithValue(ctx, ContextOrgIdKey, orgId)
+}
+
+func GetOrgIdFromContext(ctx context.Context) string {
+	orgId := ctx.Value(ContextOrgIdKey)
+	if orgId == nil {
+		return ""
+	}
+	return fmt.Sprintf("%v", orgId)
 }
 
 // Get authorization payload api object from context

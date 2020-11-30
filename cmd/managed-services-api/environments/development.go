@@ -17,6 +17,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"api-server-bindaddress": "localhost:8000",
 	"enable-sentry":          "false",
 	"enable-allow-list":      "true",
+	"max-allowed-instances":  "1",
 }
 
 func loadDevelopment(env *Env) error {
