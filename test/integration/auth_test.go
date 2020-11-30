@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -120,8 +121,8 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MGD-SERV-API-11"))
-	Expect(re.Reason).To(Equal("Unable to get payload details from JWT token: Unable to retreive JWT token from request context"))
+	Expect(re.Code).To(Equal("MGD-SERV-API-4"))
+	Expect(re.Reason).To(Equal("User test is not authorized to access the service."))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusForbidden))
 }
 
@@ -171,6 +172,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "uhctestkey"
+	token.Header["alg"] =""
 	strToken, _ := token.SignedString(h.JWTPrivateKey)
 
 	restyResp, err := resty.R().
@@ -178,10 +180,13 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 		SetAuthToken(strToken).
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
+
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MGD-SERV-API-11"))
-	Expect(re.Reason).To(Equal("Unable to get payload details from JWT token: Unable to retreive JWT token from request context"))
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusForbidden))
+	fmt.Println(re.Code)
+	fmt.Println(re.Reason)
+	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Reason).To(Equal("Bearer token can't be verified"))
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
 func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
