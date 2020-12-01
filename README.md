@@ -15,11 +15,15 @@ For more information on how the service works, see [the implementation documenta
 * [moq](https://github.com/matryer/moq) - for mock generation
 * [golangci-lint](https://github.com/golangci/golangci-lint) - for code linting
 
-## User Account setup
+## User Account & Organization Setup
 
 - Setup your account in stage OCM: 
-[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812)
-- Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
+[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812) (Skip this step if you have a service account)
+    - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
+    - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
+
+- Ensure the organization your personal OCM account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
+    - Find your organization in [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs). To find your organization id, follow the guide in [Allow List Configurations](#allow-list-configurations).
 
 ## Allow List Configurations
 
