@@ -15,11 +15,15 @@ For more information on how the service works, see [the implementation documenta
 * [moq](https://github.com/matryer/moq) - for mock generation
 * [golangci-lint](https://github.com/golangci/golangci-lint) - for code linting
 
-## User Account setup
+## User Account & Organization Setup
 
 - Setup your account in stage OCM: 
-[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/users/akeating_kafka_service.yaml)
-- Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
+[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812) (Skip this step if you have a service account)
+    - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
+    - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
+
+- Ensure the organization your personal OCM account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
+    - Find your organization in [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs). To find your organization id, follow the guide in [Allow List Configurations](#allow-list-configurations).
 
 ## Allow List Configurations
 
@@ -46,7 +50,7 @@ $ ./managed-services-api -h
 
 1. Set one of the OCM Env (See `Environments` section for list of environments)
     ```
-    OCM_ENV=integration
+    OCM_ENV=development
     ```
 2. Clean up and Creating a database 
 
@@ -85,7 +89,7 @@ $ ./managed-services-api -h
 
 4. Generate a temporary ocm token
     Generate a temporary ocm token and set it in the secrets/ocm-service.token file
-    > Note: This will need to be re-generated as this temporary token will expire within a few minutes.
+    > **Note**: This will need to be re-generated as this temporary token will expire within a few minutes.
     ```
     $ make ocm/setup OCM_OFFLINE_TOKEN="$(ocm token)" OCM_ENV=development
     ```
@@ -99,7 +103,7 @@ $ ./managed-services-api -h
 ### Build and Push the Image to the OpenShift Image Registry
 Login to the OpenShift internal image registry
 
-**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
+>**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
 ```
 # Login to the OpenShift cluster
 $ oc login <api-url> -u <username> -p <password>
@@ -180,6 +184,37 @@ $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
 # Login to the OSD cluster with the credentials you retrieved above
 # Verify the OSD cluster was created successfully and have strimzi-operator installed in namespace 'redhat-managed-kafka-operator'
 ```
+#### Using an existing OSD Cluster
+Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
+cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.
+
+1. Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`). There are two ways of getting this:
+   - From the cluster overview URL. 
+        - Go to the `OpenShift Cluster Management Dashboard` > `Clusters`. 
+        - Select your cluster from the cluster list to go to the overview page.
+        - The ID should be located in the URL:
+          `https://cloud.redhat.com/openshift/details/<cluster-id>#overview`
+   - From the CLI
+        - Run `ocm list clusters`
+        - The ID should be displayed under the ID column
+
+2. Register the cluster to the service
+    - Run the following command to generate an **INSERT** command:
+      ```
+      make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id> 
+      ```
+    - Run the command generated above in your local database.
+        - Login to the local database using `make db/login`
+        - Ensure that the **clusters** table is available.
+            - Create the binary by running `make binary`
+            - Run `./managed-services-api migrate`
+        - Once the table is available, the generated **INSERT** command can now be run.
+
+3. Ensure the cluster is ready to be used for incoming Kafka requests.
+    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Strimzi operator installation).
+    - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Kafka requests.
+    - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Kafka requests so that the service can process them.
+
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
@@ -299,4 +334,4 @@ To verify that the code passes lint checks, run:
 ```
 make lint
 ```
-**NOTE**: This uses golangci-lint which needs to be installed in your GOPATH/bin
+>**NOTE**: This uses golangci-lint which needs to be installed in your `GOPATH/bin`
