@@ -202,40 +202,23 @@ type KafkaListenerAuthenticationOAuth struct {
 	ValidTokenType                 string              `json:"validTokenType,omitempty"`
 }
 
-// KafkaListenerPlain configures plain listener on port 9092.
-type KafkaListenerPlain struct {
-	Authentication     *KafkaListenerAuthentication     `json:"authentication,omitempty"`
-	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer `json:"networkPolicyPeers,omitempty"`
-}
-
-// TLSListenerConfiguration configuration of TLS listener.
-type TLSListenerConfiguration struct {
-	BrokerCertChainAndKey CertAndKeySecretSource `json:"brokerCertChainAndKey,omitempty"`
-}
-
-// KafkaListenerTLS configures TLS listener on port 9093.
-type KafkaListenerTLS struct {
-	Authentication     *KafkaListenerAuthentication     `json:"authentication,omitempty"`
-	Configuration      *TLSListenerConfiguration        `json:"configuration,omitempty"`
-	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer `json:"networkPolicyPeers,omitempty"`
-}
-
 // KafkaListenerExternalType type of possible external listeners.
 type KafkaListenerExternalType string
 
-// KafkaListenerExternalType constants.
+// KafkaListenerType type of possible listeners.
+type KafkaListenerType string
+
+// KafkaListenerType constants.
 const (
-	Route        KafkaListenerExternalType = "route"
-	LoadBalancer KafkaListenerExternalType = "loadbalancer"
-	NodePort     KafkaListenerExternalType = "nodeport"
-	Ingress      KafkaListenerExternalType = "ingress"
+	Internal     KafkaListenerType = "internal"
+	Route        KafkaListenerType = "route"
+	LoadBalancer KafkaListenerType = "loadbalancer"
+	NodePort     KafkaListenerType = "nodeport"
+	Ingress      KafkaListenerType = "ingress"
 )
 
-// RouteListenerBootstrapOverride external bootstrap service configuration.
-type RouteListenerBootstrapOverride struct {
-	Address string `json:"address,omitempty"`
-	Host    string `json:"host"`
-}
+// ExternalTrafficPolicy specifies whether the service routes external traffic to node-local or cluster-wide endpoints.
+type ExternalTrafficPolicy string
 
 // ZookeeperTemplate definition for the template of ZooKeeper cluster resources.
 type ZookeeperTemplate struct {
@@ -247,60 +230,65 @@ type KafkaTemplate struct {
 	Pod *PodTemplate `json:"pod,omitempty"`
 }
 
-// RouteListenerBrokerOverride external broker services configuration.
-type RouteListenerBrokerOverride struct {
-	Broker         int    `json:"broker"`
-	AdvertisedHost string `json:"advertisedHost,omitempty"`
-	AdvertisedPort string `json:"advertisedPort,omitempty"`
-	Host           string `json:"host"`
+// ExternalTrafficPolicy constants.
+const (
+	Local   ExternalTrafficPolicy = "local"
+	Cluster ExternalTrafficPolicy = "cluster"
+)
+
+// GenericKafkaListenerConfigurationBootstrap defines bootstrap configuration for Kafka listeners.
+type GenericKafkaListenerConfigurationBootstrap struct {
+	AlternativeNames []string          `json:"alternativeNames,omitempty"`
+	Host             string            `json:"host,omitempty"`
+	NodePort         int               `json:"nodePort,omitempty"`
+	LoadBalancerIP   string            `json:"loadBalancerIP,omitempty"`
+	Annotations      map[string]string `json:"annotations,omitempty"`
 }
 
-// RouteListenerOverride overrides for external bootstrap and broker services and externally advertised addresses.
-type RouteListenerOverride struct {
-	Bootstrap *RouteListenerBootstrapOverride `json:"bootstrap,omitempty"`
-	Brokers   []RouteListenerBrokerOverride   `json:"brokers,omitempty"`
+// GenericKafkaListenerConfigurationBroker defines per-broker configuration for Kafka listeners.
+type GenericKafkaListenerConfigurationBroker struct {
+	Broker         int               `json:"broker"`
+	AdvertisedHost string            `json:"advertisedHost,omitempty"`
+	AdvertisedPort int               `json:"advertisedPort,omitempty"`
+	Host           string            `json:"host,omitempty"`
+	NodePort       int               `json:"nodePort,omitempty"`
+	LoadBalancerIP string            `json:"loadBalancerIP,omitempty"`
+	Annotations    map[string]string `json:"annotations,omitempty"`
 }
 
-// KafkaListenerExternalConfiguration external listener configuration.
-type KafkaListenerExternalConfiguration struct {
-	BrokerCertChainAndKey CertAndKeySecretSource `json:"brokerCertChainAndKey"`
+// NodeAddressType defines which address type should be used as the node address.
+type NodeAddressType string
+
+// NodeAddressType constants.
+const (
+	ExternalDNS NodeAddressType = "ExternalDNS"
+	ExternalIP  NodeAddressType = "ExternalIP"
+	InternalDNS NodeAddressType = "InternalDNS"
+	InternalIP  NodeAddressType = "InternalIP"
+	Hostname    NodeAddressType = "Hostname"
+)
+
+// GenericKafkaListenerConfiguration defines some generic configuration for Kafka listeners
+type GenericKafkaListenerConfiguration struct {
+	BrokerCertChainAndKey        *CertAndKeySecretSource                     `json:"brokerCertChainAndKey,omitempty"`
+	ExternalTrafficPolicy        ExternalTrafficPolicy                       `json:"externalTrafficPolicy,omitempty"`
+	LoadBalancerSourceRanges     []string                                    `json:"loadBalancerSourceRanges,omitempty"`
+	Bootstrap                    *GenericKafkaListenerConfigurationBootstrap `json:"bootstrap,omitempty"`
+	Brokers                      []GenericKafkaListenerConfigurationBroker   `json:"brokers,omitempty"`
+	Class                        string                                      `json:"class,omitempty"`
+	PreferredNodePortAddressType NodeAddressType                             `json:"preferredNodePortAddressType,omitempty"`
+	UseServiceDNSDomain          bool                                        `json:"useServiceDnsDomain,omitempty"`
 }
 
-// KafkaListenerExternalRoute external listener of type route
-type KafkaListenerExternalRoute struct {
-	Overrides          *RouteListenerOverride              `json:"overrides,omitempty"`
-	Configuration      *KafkaListenerExternalConfiguration `json:"configuration,omitempty"`
-	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer    `json:"networkPolicyPeers,omitempty"`
-}
-
-// KafkaListenerExternalLoadBalancer external listener of type loadbalancer
-type KafkaListenerExternalLoadBalancer struct {
-}
-
-// KafkaListenerExternalNodePort external listener of type nodeport
-type KafkaListenerExternalNodePort struct {
-}
-
-// KafkaListenerExternalIngress external listener of type ingress
-type KafkaListenerExternalIngress struct {
-}
-
-// KafkaListenerExternal configures external listener on port 9094.
-// The type depends on the value of the Type property within the given object, which must be one of [route, loadbalancer, nodeport, ingress].
-type KafkaListenerExternal struct {
-	Type           KafkaListenerExternalType    `json:"type"`
-	Authentication *KafkaListenerAuthentication `json:"authentication,omitempty"`
-	KafkaListenerExternalRoute
-	KafkaListenerExternalLoadBalancer
-	KafkaListenerExternalNodePort
-	KafkaListenerExternalIngress
-}
-
-// KafkaListeners configures listeners of Kafka brokers.
-type KafkaListeners struct {
-	Plain    *KafkaListenerPlain    `json:"plain,omitempty"`
-	TLS      *KafkaListenerTLS      `json:"tls,omitempty"`
-	External *KafkaListenerExternal `json:"external,omitempty"`
+// GenericKafkaListener configures a generic listener of Kafka brokers.
+type GenericKafkaListener struct {
+	Name               string                             `json:"name"`
+	Port               int                                `json:"port"`
+	Type               KafkaListenerType                  `json:"type"`
+	TLS                bool                               `json:"tls"`
+	Authentication     *KafkaListenerAuthentication       `json:"authentication,omitempty"`
+	Configuration      *GenericKafkaListenerConfiguration `json:"configuration,omitempty"`
+	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer   `json:"networkPolicyPeers,omitempty"`
 }
 
 // KafkaClusterSpec configuration of the Kafka cluster.
@@ -309,7 +297,7 @@ type KafkaClusterSpec struct {
 	Version       string                       `json:"version,omitempty"`
 	Config        map[string]string            `json:"config,omitempty"`
 	Storage       Storage                      `json:"storage"`
-	Listeners     KafkaListeners               `json:"listeners"`
+	Listeners     []GenericKafkaListener       `json:"listeners"`
 	Authorization *KafkaAuthorization          `json:"authorization,omitempty"`
 	Metrics       *Metrics                     `json:"metrics,omitempty"`
 	Image         *string                      `json:"image,omitempty"`

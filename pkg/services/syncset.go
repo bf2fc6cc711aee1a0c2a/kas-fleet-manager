@@ -292,9 +292,9 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	}
 
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
-	brokerOverrides := []strimzi.RouteListenerBrokerOverride{}
+	brokerOverrides := []strimzi.GenericKafkaListenerConfigurationBroker{}
 	for i := 0; i < numOfBrokers; i++ {
-		brokerOverride := strimzi.RouteListenerBrokerOverride{
+		brokerOverride := strimzi.GenericKafkaListenerConfigurationBroker{
 			Host:   fmt.Sprintf("broker-%d-%s", i, kafkaRequest.BootstrapServerHost),
 			Broker: i,
 		}
@@ -364,18 +364,29 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 						},
 					},
 				},
-				Listeners: strimzi.KafkaListeners{
-					Plain: &strimzi.KafkaListenerPlain{},
-					TLS:   &strimzi.KafkaListenerTLS{},
-					External: &strimzi.KafkaListenerExternal{
+				Listeners: []strimzi.GenericKafkaListener{
+					{
+						Name: "plain",
+						Type: strimzi.Internal,
+						TLS:  false,
+						Port: 9092,
+					},
+					{
+						Name: "tls",
+						Type: strimzi.Internal,
+						TLS:  true,
+						Port: 9093,
+					},
+					{
+						Name: "external",
 						Type: strimzi.Route,
-						KafkaListenerExternalRoute: strimzi.KafkaListenerExternalRoute{
-							Overrides: &strimzi.RouteListenerOverride{
-								Bootstrap: &strimzi.RouteListenerBootstrapOverride{
-									Host: kafkaRequest.BootstrapServerHost,
-								},
-								Brokers: brokerOverrides,
+						TLS:  true,
+						Port: 9094,
+						Configuration: &strimzi.GenericKafkaListenerConfiguration{
+							Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
+								Host: kafkaRequest.BootstrapServerHost,
 							},
+							Brokers: brokerOverrides,
 						},
 					},
 				},
