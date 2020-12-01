@@ -29,7 +29,7 @@ type Rack struct {
 
 // Pod template for the Zookeeper or Kafka pods.
 type PodTemplate struct {
-	Affinity corev1.Affinity `json:"affinity,omitempty"`
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // Rule definition of a Prometheus JMX Exporter rule for filtering metrics
@@ -237,6 +237,16 @@ type RouteListenerBootstrapOverride struct {
 	Host    string `json:"host"`
 }
 
+// ZookeeperTemplate definition for the template of ZooKeeper cluster resources.
+type ZookeeperTemplate struct {
+	Pod *PodTemplate `json:"pod,omitempty"`
+}
+
+// KafkaTemplate definition for the template of Kafka cluster resources.
+type KafkaTemplate struct {
+	Pod *PodTemplate `json:"pod,omitempty"`
+}
+
 // RouteListenerBrokerOverride external broker services configuration.
 type RouteListenerBrokerOverride struct {
 	Broker         int    `json:"broker"`
@@ -295,28 +305,34 @@ type KafkaListeners struct {
 
 // KafkaClusterSpec configuration of the Kafka cluster.
 type KafkaClusterSpec struct {
-	Replicas      int                 `json:"replicas"`
-	Version       string              `json:"version,omitempty"`
-	Config        map[string]string   `json:"config,omitempty"`
-	Storage       Storage             `json:"storage"`
-	Listeners     KafkaListeners      `json:"listeners"`
-	Authorization *KafkaAuthorization `json:"authorization,omitempty"`
-	Metrics       *Metrics            `json:"metrics,omitempty"`
-	Rack          *Rack               `json:"rack,omitempty"`
+	Replicas      int                          `json:"replicas"`
+	Version       string                       `json:"version,omitempty"`
+	Config        map[string]string            `json:"config,omitempty"`
+	Storage       Storage                      `json:"storage"`
+	Listeners     KafkaListeners               `json:"listeners"`
+	Authorization *KafkaAuthorization          `json:"authorization,omitempty"`
+	Metrics       *Metrics                     `json:"metrics,omitempty"`
+	Image         *string                      `json:"image,omitempty"`
+	Resources     *corev1.ResourceRequirements `json:"resources,omitempty"`
+	Template      *KafkaTemplate               `json:"template,omitempty"`
+	JvmOptions    *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
+	Rack          *Rack                        `json:"rack,omitempty"`
 }
 
-// ZookeeperTemplate definition for the template of ZooKeeper cluster resources.
-// The template allows users to specify how the Zookeeper cluster resources are generated.
-type ZookeeperTemplate struct {
-	Pod *PodTemplate `json:"pod,omitempty"`
+// JVM options passed to containers
+type JvmOptionsSpec struct {
+	Xms string `json:"-xms"`
+	Xmx string `json:"-xmx"`
 }
 
 // ZookeeperClusterSpec configuration of the ZooKeeper cluster.
 type ZookeeperClusterSpec struct {
-	Replicas int                `json:"replicas"`
-	Storage  Storage            `json:"storage"`
-	Metrics  *Metrics           `json:"metrics,omitempty"`
-	Template *ZookeeperTemplate `json:"template,omitempty"`
+	Replicas   int                          `json:"replicas"`
+	Storage    Storage                      `json:"storage"`
+	Metrics    *Metrics                     `json:"metrics,omitempty"`
+	Resources  *corev1.ResourceRequirements `json:"resources,omitempty"`
+	Template   *ZookeeperTemplate           `json:"template,omitempty"`
+	JvmOptions *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 }
 
 // EntityTopicOperatorSpec configuration of the Topic Operator.
