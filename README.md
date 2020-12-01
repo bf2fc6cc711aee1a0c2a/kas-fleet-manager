@@ -18,7 +18,7 @@ For more information on how the service works, see [the implementation documenta
 ## User Account setup
 
 - Setup your account in stage OCM: 
-[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/users/akeating_kafka_service.yaml)
+[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812)
 - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
 
 ## Allow List Configurations
