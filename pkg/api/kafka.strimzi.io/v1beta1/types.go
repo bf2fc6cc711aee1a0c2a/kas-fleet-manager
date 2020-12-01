@@ -309,8 +309,8 @@ type KafkaClusterSpec struct {
 
 // JVM options passed to containers
 type JvmOptionsSpec struct {
-	Xms string `json:"-xms"`
-	Xmx string `json:"-xmx"`
+	Xms string `json:"-Xms"`
+	Xmx string `json:"-Xmx"`
 }
 
 // ZookeeperClusterSpec configuration of the ZooKeeper cluster.
