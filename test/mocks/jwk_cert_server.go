@@ -12,6 +12,7 @@ import (
 
 const (
 	certEndpoint = "/auth/realms/rhd/protocol/openid-connect/certs"
+	rhs256       = "RHS256"
 )
 
 func NewJWKCertServerMock(t *testing.T, pubKey crypto.PublicKey, jwkKID string) (url string, teardown func()) {
@@ -24,6 +25,7 @@ func NewJWKCertServerMock(t *testing.T, pubKey crypto.PublicKey, jwkKID string) 
 				return
 			}
 			pubjwk.Kid = jwkKID
+			pubjwk.Alg = rhs256
 			jwkBytes, err := gojwk.Marshal(pubjwk)
 			if err != nil {
 				t.Errorf("Unable to marshal public jwk: %s", err)

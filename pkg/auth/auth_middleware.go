@@ -59,6 +59,7 @@ func (a *AuthMiddleware) AuthenticateAccountJWT(next http.Handler) http.Handler 
 			shared.HandleError(ctx, w, errors.ErrorUnauthorized, fmt.Sprintf("Unable to verify JWT token: %s", err))
 			return
 		}
+
 		// Update the context, as the jwt middleware will update it
 		ctx = r.Context()
 		payload, err := GetAuthPayload(r)
