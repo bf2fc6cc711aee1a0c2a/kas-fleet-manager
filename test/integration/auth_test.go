@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -22,7 +23,7 @@ func TestAuth_success(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(h.CreateJWTString(serviceAccount)).
@@ -37,11 +38,8 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
-	// ocm
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
-	//serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
 		Get(h.RestURL("/"))
@@ -71,7 +69,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
-	serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
 		"iss":        h.Env().Config.OCM.TokenURL,
@@ -101,7 +99,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
-	serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
 		"iss":        h.Env().Config.OCM.TokenURL,
@@ -130,7 +128,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
-	serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
 		"iss":        h.Env().Config.OCM.TokenURL,
@@ -158,7 +156,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
-	serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
 		"iss":        h.Env().Config.OCM.TokenURL,
@@ -191,7 +189,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
-	serviceAccount := h.NewAccount("test", "abhishek", "akoserwa@redhat.com")
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
 		"iss":        h.Env().Config.OCM.TokenURL,
