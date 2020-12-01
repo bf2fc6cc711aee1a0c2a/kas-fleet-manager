@@ -2,7 +2,6 @@ package integration
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -120,9 +119,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		SetAuthToken(token).
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
-	fmt.Println(restyResp.String())
 	re := parseResponse(restyResp)
-	fmt.Println(re)
 	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
 	Expect(re.Reason).To(Equal("Bearer token is expired"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
