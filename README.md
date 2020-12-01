@@ -50,7 +50,7 @@ $ ./managed-services-api -h
 
 1. Set one of the OCM Env (See `Environments` section for list of environments)
     ```
-    OCM_ENV=integration
+    OCM_ENV=development
     ```
 2. Clean up and Creating a database 
 
@@ -89,7 +89,7 @@ $ ./managed-services-api -h
 
 4. Generate a temporary ocm token
     Generate a temporary ocm token and set it in the secrets/ocm-service.token file
-    > Note: This will need to be re-generated as this temporary token will expire within a few minutes.
+    > **Note**: This will need to be re-generated as this temporary token will expire within a few minutes.
     ```
     $ make ocm/setup OCM_OFFLINE_TOKEN="$(ocm token)" OCM_ENV=development
     ```
@@ -103,7 +103,7 @@ $ ./managed-services-api -h
 ### Build and Push the Image to the OpenShift Image Registry
 Login to the OpenShift internal image registry
 
-**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
+>**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
 ```
 # Login to the OpenShift cluster
 $ oc login <api-url> -u <username> -p <password>
@@ -334,4 +334,4 @@ To verify that the code passes lint checks, run:
 ```
 make lint
 ```
-**NOTE**: This uses golangci-lint which needs to be installed in your GOPATH/bin
+>**NOTE**: This uses golangci-lint which needs to be installed in your `GOPATH/bin`
