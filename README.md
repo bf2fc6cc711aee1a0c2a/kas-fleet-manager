@@ -180,6 +180,37 @@ $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
 # Login to the OSD cluster with the credentials you retrieved above
 # Verify the OSD cluster was created successfully and have strimzi-operator installed in namespace 'redhat-managed-kafka-operator'
 ```
+#### Using an existing OSD Cluster
+Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
+cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.
+
+1. Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`). There are two ways of getting this:
+   - From the cluster overview URL. 
+        - Go to the `OpenShift Cluster Management Dashboard` > `Clusters`. 
+        - Select your cluster from the cluster list to go to the overview page.
+        - The ID should be located in the URL:
+          `https://cloud.redhat.com/openshift/details/<cluster-id>#overview`
+   - From the CLI
+        - Run `ocm list clusters`
+        - The ID should be displayed under the ID column
+
+2. Register the cluster to the service
+    - Run the following command to generate an **INSERT** command:
+      ```
+      make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id> 
+      ```
+    - Run the command generated above in your local database.
+        - Login to the local database using `make db/login`
+        - Ensure that the **clusters** table is available.
+            - Create the binary by running `make binary`
+            - Run `./managed-services-api migrate`
+        - Once the table is available, the generated **INSERT** command can now be run.
+
+3. Ensure the cluster is ready to be used for incoming Kafka requests.
+    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Strimzi operator installation).
+    - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Kafka requests.
+    - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Kafka requests so that the service can process them.
+
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
