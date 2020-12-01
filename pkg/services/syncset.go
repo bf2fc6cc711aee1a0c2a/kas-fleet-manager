@@ -29,14 +29,14 @@ var (
 	kafkaContainerMemory = resource.NewScaledQuantity(1, resource.Giga)
 	kafkaContainerCpu    = resource.NewMilliQuantity(1000, resource.DecimalSI)
 	kafkaJvmOptions      = &strimzi.JvmOptionsSpec{
-		Xms: "512Mb",
-		Xmx: "512Mb",
+		Xms: "512m",
+		Xmx: "512m",
 	}
 	zkContainerMemory = resource.NewScaledQuantity(1, resource.Giga)
 	zkContainerCpu    = resource.NewMilliQuantity(500, resource.DecimalSI)
 	zkJvmOptions      = &strimzi.JvmOptionsSpec{
-		Xms: "512Mb",
-		Xmx: "512Mb",
+		Xms: "512m",
+		Xmx: "512m",
 	}
 	kafkaImageUrl = string("quay.io/lulf/kafka:latest-kafka-2.6.0")
 )
