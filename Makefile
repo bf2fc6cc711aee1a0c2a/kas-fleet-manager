@@ -77,6 +77,21 @@ else
 GOTESTSUM=$(shell which gotestsum)
 endif
 
+moq:
+ifeq (, $(shell which gotestsum 2> /dev/null))
+	@{ \
+	set -e ;\
+	MOQ_TMP_DIR=$$(mktemp -d) ;\
+	cd $$MOQ_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) get github.com/matryer/moq@v0.1.4 ;\
+	rm -rf $$MOQ_TMP_DIR ;\
+	}
+MOQ=$(GOBIN)/moq
+else
+MOQ=$(shell which moq)
+endif
+
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
 else
