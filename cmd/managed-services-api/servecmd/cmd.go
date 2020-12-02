@@ -53,7 +53,9 @@ func runServe(cmd *cobra.Command, args []string) {
 	// start cluster worker
 	cloudProviderService := environments.Environment().Services.CloudProviders
 	clusterService := environments.Environment().Services.Cluster
-	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient)
+	configService := environments.Environment().Services.Config
+	serverConfig := *environments.Environment().Config.Server
+	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, serverConfig)
 	clusterManager.Start()
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)

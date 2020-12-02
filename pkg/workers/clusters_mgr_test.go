@@ -2,14 +2,17 @@ package workers
 
 import (
 	"errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"reflect"
 	"testing"
 	"time"
 
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -341,6 +344,129 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("reconcileStrimziOperator() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
+	type fields struct {
+		providerLst     []string
+		clusterService  services.ClusterService
+		providersConfig config.ProviderConfiguration
+		serverConfig    *config.ServerConfig
+	}
+
+	tests := []struct {
+		name    string
+		wantErr bool
+		fields  fields
+	}{
+		{
+			name: "creates a missing OSD cluster automatically",
+			fields: fields{
+				providerLst: []string{"us-east-1"},
+				clusterService: &services.ClusterServiceMock{
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
+						var res []*services.ResGroupCPRegion
+						return res, nil
+					},
+					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
+						sample, _ := v1.NewCluster().Build()
+						return sample, nil
+					},
+				},
+				serverConfig: &config.ServerConfig{
+					AutoOSDCreation: true,
+				},
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{
+						config.Provider{
+							Name: "aws",
+							Regions: config.RegionList{
+								config.Region{
+									Name: "us-east-1",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to create OSD in OCM",
+			fields: fields{
+				providerLst: []string{"us-east-1"},
+				clusterService: &services.ClusterServiceMock{
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
+						var res []*services.ResGroupCPRegion
+						return res, nil
+					},
+					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
+						return nil, ocmErrors.New(ocmErrors.ErrorGeneral,"failed to create an OSD cluster in OCM")
+					},
+				},
+				serverConfig: &config.ServerConfig{
+					AutoOSDCreation: true,
+				},
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{
+						config.Provider{
+							Name: "aws",
+							Regions: config.RegionList{
+								config.Region{
+									Name: "us-east-1",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "failed to retrieve OSD cluster info from database",
+			fields: fields{
+				providerLst: []string{"us-east-1"},
+				clusterService: &services.ClusterServiceMock{
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
+						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "Database retrieval failed")
+					},
+					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
+						sample, _ := v1.NewCluster().Build()
+						return sample, nil
+					},
+				},
+				serverConfig: &config.ServerConfig{
+					AutoOSDCreation: true,
+				},
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{
+						config.Provider{
+							Name: "aws",
+							Regions: config.RegionList{
+								config.Region{
+									Name: "us-east-1",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := ClusterManager{
+				clusterService: tt.fields.clusterService,
+				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}),
+				serverConfig:   *tt.fields.serverConfig,
+			}
+			err := c.reconcileClustersForRegions()
+			if err != nil && !tt.wantErr {
+				t.Errorf("reconcileClustersForRegions() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
