@@ -11,6 +11,8 @@ func (k ClusterStatus) String() string {
 }
 
 const (
+	// The create cluster request has been recorder
+	ClusterAccepted ClusterStatus = "cluster_accepted"
 	// ClusterProvisioning the underlying ocm cluster is provisioning
 	ClusterProvisioning ClusterStatus = "cluster_provisioning"
 	// ClusterProvisioned the underlying ocm cluster is provisioned
@@ -51,9 +53,15 @@ func (c ClusterList) Index() ClusterIndex {
 
 func (org *Cluster) BeforeCreate(scope *gorm.Scope) error {
 	if org.Status == "" {
-		if err := scope.SetColumn("status", ClusterProvisioning); err != nil {
+		if err := scope.SetColumn("status", ClusterAccepted); err != nil {
 			return err
 		}
 	}
-	return scope.SetColumn("ID", org.ClusterID)
+
+	id := org.ID
+	if id == "" {
+		id = NewID()
+	}
+
+	return scope.SetColumn("ID", id)
 }

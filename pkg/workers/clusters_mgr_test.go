@@ -89,7 +89,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return errors.New("test")
 					},
 				},
@@ -115,7 +115,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						// this should never be invoked as the cluster state is already accurate
 						return errors.New("test")
 					},
@@ -145,7 +145,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
 				},
@@ -174,7 +174,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
 				},
@@ -203,7 +203,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(id string, status api.ClusterStatus) error {
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
 				},
