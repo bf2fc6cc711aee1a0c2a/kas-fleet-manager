@@ -3,8 +3,11 @@ package config
 import "github.com/spf13/pflag"
 
 type KeycloakConfig struct {
+	EnableAuth                  bool   `json:"enable_auth"`
 	Realm                       string `json:"realm"`
+	RealmFile                   string `json:"realm_file"`
 	BaseURL                     string `json:"base_url"`
+	BaseUrlFile                 string `json:"base_url_file"`
 	ClientID                    string `json:"client-id"`
 	ClientIDFile                string `json:"client-id_file"`
 	ClientSecret                string `json:"client-secret"`
@@ -24,29 +27,34 @@ type KeycloakConfig struct {
 }
 
 func NewKeycloakConfig() *KeycloakConfig {
-	return &KeycloakConfig{
-		Realm:                      "masdemo",
-		BaseURL:                    "https://keycloak-sso-mas.apps.sso-mas.a4v1.s1.devshift.org",
+	kc := &KeycloakConfig{
+		EnableAuth:                 true,
+		RealmFile:                  "secrets/keycloak-service.realm",
+		BaseUrlFile:                "secrets/keycloak-service.host",
 		ClientIDFile:               "secrets/keycloak-service.clientId",
 		ClientSecretFile:           "secrets/keycloak-service.clientSecret",
 		TLSTrustedCertificatesFile: "secrets/keycloak-service.crt",
-		Debug:                      true,
-		InsecureSkipVerify:         true,
+		Debug:                      false,
+		InsecureSkipVerify:         false,
 		GrantType:                  "client_credentials",
 		UserNameClaim:              "preferred_username",
-		JwksEndpointURI:            "https://keycloak-sso-mas.apps.sso-mas.a4v1.s1.devshift.org/auth/realms/masdemo/protocol/openid-connect/certs",
-		TokenEndpointURI:           "https://keycloak-sso-mas.apps.sso-mas.a4v1.s1.devshift.org/auth/realms/masdemo/protocol/openid-connect/certs",
-		ValidIssuerURI:             "https://keycloak-sso-mas.apps.sso-mas.a4v1.s1.devshift.org/auth/realms/masdemo",
 		TLSTrustedCertificatesKey:  "keycloak.crt",
 		MASClientSecretKey:         "ssoClientSecret",
 	}
+	return kc
 }
 
 func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&kc.ClientIDFile, "keycloak-client-id-file", kc.ClientIDFile, "File containing Keycloak privileged account client-id")
-	fs.StringVar(&kc.ClientSecretFile, "keycloak-client-secret-file", kc.ClientSecretFile, "File containing Keycloak privileged account client-secret")
-	fs.StringVar(&kc.BaseURL, "keycloak-base-url", kc.BaseURL, "The base URL of the MAS Keycloak, integration by default")
-	fs.BoolVar(&kc.Debug, "keycloak-debug", kc.Debug, "Debug flag for Keycloak API")
+	fs.BoolVar(&kc.EnableAuth, "mas-sso-enable-auth", kc.EnableAuth, "Enable authentication mas-sso integration, enabled by default")
+	fs.StringVar(&kc.ClientIDFile, "mas-sso-client-id-file", kc.ClientIDFile, "File containing Keycloak privileged account client-id")
+	fs.StringVar(&kc.ClientSecretFile, "mas-sso-client-secret-file", kc.ClientSecretFile, "File containing Keycloak privileged account client-secret")
+	fs.StringVar(&kc.BaseURL, "mas-sso-base-url", kc.BaseURL, "The base URL of the mas-sso, integration by default")
+	fs.StringVar(&kc.BaseUrlFile, "mas-sso-base-url-file", kc.BaseURL, "File contains base URL of the MAS Keycloak")
+	fs.StringVar(&kc.Realm, "mas-sso-realm", kc.Realm, "Realm for the mas-sso")
+	fs.StringVar(&kc.RealmFile, "mas-sso-realm-file", kc.RealmFile, "File contains Realm for the mas-sso")
+	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File contains tls cert for the mas-sso")
+	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
+	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "disable tls verification with mas-sso")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
@@ -59,6 +67,14 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		return err
 	}
 	err = readFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
+	if err != nil {
+		return err
+	}
+	err = readFileValueString(kc.BaseUrlFile, &kc.BaseURL)
+	if err != nil {
+		return err
+	}
+	err = readFileValueString(kc.RealmFile, &kc.Realm)
 	if err != nil {
 		return err
 	}

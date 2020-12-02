@@ -8,6 +8,10 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
+const (
+	rhOrgId = "rh-org-id"
+)
+
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
 type KeycloakService interface {
 	CreateClient(client gocloak.Client, accessToken string) (string, *errors.ServiceError)
@@ -15,8 +19,9 @@ type KeycloakService interface {
 	GetClientSecret(id string, accessToken string) (string, *errors.ServiceError)
 	ClientConfig(client ClientRepresentation) gocloak.Client
 	DeleteClient(id string, accessToken string) *errors.ServiceError
-	RegisterKafkaClientInSSO(kafkaNamespace string) (string, *errors.ServiceError)
+	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
 	DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError
+	GetSecretForRegisterKafkaClient(kafkaClusterName string) (string, *errors.ServiceError)
 	GetClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
 	GetConfig() *config.KeycloakConfig
 }
@@ -28,16 +33,19 @@ type keycloakService struct {
 }
 
 type ClientRepresentation struct {
-	Name                   string
-	ClientID               string
-	ServiceAccountsEnabled bool
-	Secret                 string
-	StandardFlowEnabled    bool
+	Name                         string
+	ClientID                     string
+	ServiceAccountsEnabled       bool
+	Secret                       string
+	StandardFlowEnabled          bool
+	Attributes                   map[string]string
+	AuthorizationServicesEnabled bool
 }
 
 var _ KeycloakService = &keycloakService{}
 
 func NewKeycloakService(config *config.KeycloakConfig) *keycloakService {
+	setTokenEndpoints(config)
 	client := gocloak.NewClient(config.BaseURL)
 	client.RestyClient().SetDebug(config.Debug)
 	client.RestyClient().SetTLSClientConfig(&tls.Config{InsecureSkipVerify: config.InsecureSkipVerify})
@@ -46,6 +54,12 @@ func NewKeycloakService(config *config.KeycloakConfig) *keycloakService {
 		ctx:      context.Background(),
 		config:   config,
 	}
+}
+
+func setTokenEndpoints(config *config.KeycloakConfig) {
+	config.JwksEndpointURI = config.BaseURL + "/auth/realms/" + config.Realm + "/protocol/openid-connect/certs"
+	config.TokenEndpointURI = config.BaseURL + "/auth/realms/" + config.Realm + "/protocol/openid-connect/certs"
+	config.ValidIssuerURI = config.BaseURL + "/auth/realms/" + config.Realm
 }
 
 //use a token from a Service Account with only the create-client role
@@ -80,7 +94,7 @@ func (kc *keycloakService) GetToken() (string, error) {
 	return tokenResp.AccessToken, nil
 }
 
-func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string) (string, *errors.ServiceError) {
+func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
 	accessToken, _ := kc.GetToken()
 	id, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
@@ -90,11 +104,18 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string) (st
 		secretValue, _ := kc.GetClientSecret(id, accessToken)
 		return secretValue, nil
 	}
+
+	rhOrgIdAttributes := map[string]string{
+		rhOrgId: orgId,
+	}
+
 	c := ClientRepresentation{
-		ClientID:               kafkaClusterName,
-		Name:                   kafkaClusterName,
-		ServiceAccountsEnabled: false,
-		StandardFlowEnabled:    false,
+		ClientID:                     kafkaClusterName,
+		Name:                         kafkaClusterName,
+		ServiceAccountsEnabled:       true,
+		AuthorizationServicesEnabled: true,
+		StandardFlowEnabled:          false,
+		Attributes:                   rhOrgIdAttributes,
 	}
 	clientConfig := kc.ClientConfig(c)
 	internalClient, err := kc.CreateClient(clientConfig, accessToken)
@@ -106,6 +127,19 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string) (st
 		return "", errors.GeneralError("failed to get the client secret:%v", err)
 	}
 	return secretValue, err
+}
+
+func (kc *keycloakService) GetSecretForRegisterKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
+	accessToken, _ := kc.GetToken()
+	id, err := kc.isClientExist(kafkaClusterName, accessToken)
+	if err != nil {
+		return "", errors.GeneralError("failed to check the sso client exists:%v", err)
+	}
+	if id != "" {
+		secretValue, _ := kc.GetClientSecret(id, accessToken)
+		return secretValue, nil
+	}
+	return "", nil
 }
 
 func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *errors.ServiceError {
@@ -123,10 +157,12 @@ func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *
 
 func (kc *keycloakService) ClientConfig(client ClientRepresentation) gocloak.Client {
 	return gocloak.Client{
-		Name:                   &client.Name,
-		ClientID:               &client.ClientID,
-		ServiceAccountsEnabled: &client.ServiceAccountsEnabled,
-		StandardFlowEnabled:    &client.StandardFlowEnabled,
+		Name:                         &client.Name,
+		ClientID:                     &client.ClientID,
+		ServiceAccountsEnabled:       &client.ServiceAccountsEnabled,
+		StandardFlowEnabled:          &client.StandardFlowEnabled,
+		Attributes:                   &client.Attributes,
+		AuthorizationServicesEnabled: &client.AuthorizationServicesEnabled,
 	}
 }
 

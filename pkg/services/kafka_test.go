@@ -191,7 +191,7 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -224,7 +224,7 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -258,7 +258,7 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -292,7 +292,7 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string) (string, *errors.ServiceError) {
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -436,6 +436,11 @@ func Test_kafkaService_Delete(t *testing.T) {
 				syncsetService: &SyncsetServiceMock{
 					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
 						return http.StatusNotFound, errors.GeneralError("syncset not found")
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
 					},
 				},
 			},

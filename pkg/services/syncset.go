@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	v1 "k8s.io/api/core/v1"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
@@ -383,6 +382,21 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		"quota.window.size.seconds": "2",
 	}
 
+	listeners := []strimzi.GenericKafkaListener{
+		{
+			Name: "plain",
+			Type: strimzi.Internal,
+			TLS:  false,
+			Port: 9092,
+		},
+		{
+			Name: "tls",
+			Type: strimzi.Internal,
+			TLS:  true,
+			Port: 9093,
+		},
+	}
+
 	// build array of objects to be created by the syncset
 	kafkaCR := &strimzi.Kafka{
 		TypeMeta: metav1.TypeMeta{
@@ -408,7 +422,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 						"cpu":    *kafkaContainerCpu,
 					},
 				},
-
 				JvmOptions: kafkaJvmOptions,
 				Storage: strimzi.Storage{
 					Type: strimzi.Jbod,
@@ -425,33 +438,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 						},
 					},
 				},
-				Listeners: []strimzi.GenericKafkaListener{
-					{
-						Name: "plain",
-						Type: strimzi.Internal,
-						TLS:  false,
-						Port: 9092,
-					},
-					{
-						Name: "tls",
-						Type: strimzi.Internal,
-						TLS:  true,
-						Port: 9093,
-					},
-					{
-						Name: "external",
-						Type: strimzi.Route,
-						TLS:  true,
-						Port: 9094,
-						Configuration: &strimzi.GenericKafkaListenerConfiguration{
-							Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
-								Host: kafkaRequest.BootstrapServerHost,
-							},
-							Brokers: brokerOverrides,
-						},
-					},
-				},
-				Metrics: kafkaMetrics,
+				Listeners: listeners,
+				Metrics:   kafkaMetrics,
 				Template: &strimzi.KafkaTemplate{
 					Pod: &strimzi.PodTemplate{
 						Affinity: &corev1.Affinity{
@@ -519,34 +507,55 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 					TopologyKey: "topology.kubernetes.io/zone",
 				})
 	}
-	clientSecret := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      kafkaRequest.Name + "-sso-secret",
-			Namespace: namespaceName,
-		},
-		Type: v1.SecretType("Opaque"),
-		Data: map[string][]byte{
-			keycloakConfig.MASClientSecretKey: []byte(keycloakConfig.MASClientSecretValue),
-		},
-	}
 
-	caSecret := &v1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      kafkaRequest.Name + "-sso-cert",
-			Namespace: namespaceName,
-		},
-		Type: v1.SecretType("Opaque"),
-		Data: map[string][]byte{
-			keycloakConfig.TLSTrustedCertificatesKey: []byte(keycloakConfig.TLSTrustedCertificatesValue),
-		},
+	if keycloakConfig.EnableAuth {
+		ssoClientID := buildKeycloakClientNameIdentifier(kafkaRequest)
+		authListener := strimzi.GenericKafkaListener{
+			Name: "external",
+			Type: strimzi.Route,
+			TLS:  true,
+			Port: 9094,
+			Authentication: &strimzi.KafkaListenerAuthentication{
+				KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
+					ClientID:        ssoClientID,
+					JwksEndpointURI: keycloakConfig.JwksEndpointURI,
+					UserNameClaim:   keycloakConfig.UserNameClaim,
+					TLSTrustedCertificates: []strimzi.CertSecretSource{
+						{
+							Certificate: config.NewKeycloakConfig().TLSTrustedCertificatesKey,
+							SecretName:  kafkaRequest.Name + "-sso-cert",
+						},
+					},
+					ClientSecret: strimzi.GenericSecretSource{
+						Key:        config.NewKeycloakConfig().MASClientSecretKey,
+						SecretName: kafkaRequest.Name + "-sso-secret",
+					},
+				},
+			},
+			Configuration: &strimzi.GenericKafkaListenerConfiguration{
+				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
+					Host: kafkaRequest.BootstrapServerHost,
+				},
+				Brokers: brokerOverrides,
+			},
+		}
+
+		kafkaCR.Spec.Kafka.Listeners = append(listeners, authListener)
+
+	} else {
+		externalListener := strimzi.GenericKafkaListener{
+			Name: "external",
+			Type: strimzi.Route,
+			TLS:  true,
+			Port: 9094,
+			Configuration: &strimzi.GenericKafkaListenerConfiguration{
+				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
+					Host: kafkaRequest.BootstrapServerHost,
+				},
+				Brokers: brokerOverrides,
+			},
+		}
+		kafkaCR.Spec.Kafka.Listeners = append(listeners, externalListener)
 	}
 
 	canaryName := sanitizedKafkaName + "-canary"
@@ -711,8 +720,39 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		adminServer,
 		adminServerService,
 		adminServerRoute,
-		clientSecret,
-		caSecret,
+	}
+
+	if keycloakConfig.EnableAuth {
+		clientSecret := &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      kafkaRequest.Name + "-sso-secret",
+				Namespace: namespaceName,
+			},
+			Type: corev1.SecretType("Opaque"),
+			Data: map[string][]byte{
+				keycloakConfig.MASClientSecretKey: []byte(keycloakConfig.MASClientSecretValue),
+			},
+		}
+		caSecret := &corev1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Secret",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      kafkaRequest.Name + "-sso-cert",
+				Namespace: namespaceName,
+			},
+			Type: corev1.SecretType("Opaque"),
+			Data: map[string][]byte{
+				keycloakConfig.TLSTrustedCertificatesKey: []byte(keycloakConfig.TLSTrustedCertificatesValue),
+			},
+		}
+
+		resources = append(resources, clientSecret, caSecret)
 	}
 
 	syncsetBuilder = syncsetBuilder.Resources(resources...)
