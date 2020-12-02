@@ -30,6 +30,7 @@ type ClusterService interface {
 	FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError)
 	ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
+	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError)
 }
 
 type clusterService struct {
@@ -125,6 +126,33 @@ func (c clusterService) UpdateStatus(id string, status api.ClusterStatus) error 
 	}
 
 	return nil
+}
+
+type ResGroupCPRegion struct {
+	Provider string
+	Region   string
+	Count    int
+}
+
+// ListGroupByProviderAndRegion retrieves existing OSD cluster with specified status in all providers and regions
+func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError) {
+	if len(providers) == 0 || len(regions) == 0 || len(status) == 0 {
+		return nil, ocmErrors.Validation("provider, region and status must not be empty")
+	}
+	dbConn := c.connectionFactory.New()
+	var grpResult []*ResGroupCPRegion
+
+	//only one record returns for each region if they exist
+	if err := dbConn.Table("clusters").
+		Select("cloud_provider as Provider, region as Region, count(1) as Count").
+		Where("cloud_provider in (?)", providers).
+		Where("region in (?)", regions).
+		Where("status in (?) ", status).
+		Group("cloud_provider, region").Scan(&grpResult).Error; err != nil {
+		return nil, ocmErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+	}
+
+	return grpResult, nil
 }
 
 type FindClusterCriteria struct {

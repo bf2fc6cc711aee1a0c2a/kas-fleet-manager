@@ -18,6 +18,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"enable-sentry":         "false",
 	"enable-allow-list":     "true",
 	"max-allowed-instances": "1",
+	"auto-osd-creation":     "true",
 }
 
 // The testing environment is specifically for automated testing

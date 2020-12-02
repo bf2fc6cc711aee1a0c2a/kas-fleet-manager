@@ -220,7 +220,8 @@ func (helper *Helper) startClusterWorker() {
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 
 	// start cluster worker
-	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders, ocmClient)
+	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
+		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
