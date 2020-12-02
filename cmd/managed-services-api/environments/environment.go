@@ -141,7 +141,7 @@ func (env *Env) LoadServices() error {
 	syncsetService := services.NewSyncsetService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
-	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList)
+	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.Server)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService

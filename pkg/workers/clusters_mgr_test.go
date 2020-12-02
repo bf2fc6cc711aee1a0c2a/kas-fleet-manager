@@ -2,10 +2,11 @@ package workers
 
 import (
 	"errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"reflect"
 	"testing"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
@@ -354,7 +355,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		providerLst     []string
 		clusterService  services.ClusterService
 		providersConfig config.ProviderConfiguration
-		serverConfig    *config.ServerConfig
+		serverConfig    config.ServerConfig
 	}
 
 	tests := []struct {
@@ -376,7 +377,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return sample, nil
 					},
 				},
-				serverConfig: &config.ServerConfig{
+				serverConfig: config.ServerConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -404,10 +405,10 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return res, nil
 					},
 					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
-						return nil, ocmErrors.New(ocmErrors.ErrorGeneral,"failed to create an OSD cluster in OCM")
+						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "failed to create an OSD cluster in OCM")
 					},
 				},
-				serverConfig: &config.ServerConfig{
+				serverConfig: config.ServerConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -438,7 +439,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return sample, nil
 					},
 				},
-				serverConfig: &config.ServerConfig{
+				serverConfig: config.ServerConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -461,8 +462,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}),
-				serverConfig:   *tt.fields.serverConfig,
+				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.serverConfig),
 			}
 			err := c.reconcileClustersForRegions()
 			if err != nil && !tt.wantErr {
