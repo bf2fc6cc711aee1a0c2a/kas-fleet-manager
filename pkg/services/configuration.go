@@ -31,6 +31,8 @@ type ConfigService interface {
 	IsUserAllowed(username string, org config.Organisation) bool
 	// Validate ensures all configuration managed by the service contains correct and valid values
 	Validate() error
+	// IsAutoCreateOSDEnabled returns true if the automatic creation of OSD cluster is enabled, false otherwise.
+	IsAutoCreateOSDEnabled() bool
 }
 
 var _ ConfigService = &configService{}
@@ -42,13 +44,17 @@ type configService struct {
 
 	// allowListConfig is the list of users allowed to access the service
 	allowListConfig config.AllowListConfig
+
+	// serverConfig is the server configuration
+	serverConfig config.ServerConfig
 }
 
 // NewConfigService returns a new default implementation of ConfigService
-func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig) ConfigService {
+func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig, serverConfig config.ServerConfig) ConfigService {
 	return &configService{
 		providersConfig: providersConfig,
 		allowListConfig: allowListConfig,
+		serverConfig:    serverConfig,
 	}
 }
 
@@ -158,4 +164,8 @@ func (c configService) validateProvider(provider config.Provider) error {
 		return errors.New(fmt.Sprintf("expected 1 default region in provider %s, got %d", provider.Name, defaultCount))
 	}
 	return nil
+}
+
+func (c configService) IsAutoCreateOSDEnabled() bool {
+	return c.serverConfig.AutoOSDCreation
 }

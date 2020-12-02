@@ -49,7 +49,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 							},
 						},
 					},
-				}, config.AllowListConfig{}),
+				}, config.AllowListConfig{}, config.ServerConfig{}),
 			},
 			want: result{
 				wantErr: false,
@@ -85,7 +85,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 							},
 						},
 					},
-				}, config.AllowListConfig{}),
+				}, config.AllowListConfig{}, config.ServerConfig{}),
 			},
 			want: result{
 				wantErr: false,
@@ -113,7 +113,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 							},
 						},
 					},
-				}, config.AllowListConfig{}),
+				}, config.AllowListConfig{}, config.ServerConfig{}),
 			},
 			want: result{
 				wantErr: true,
@@ -169,7 +169,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
 					EnableAllowList: false,
-				}),
+				}, config.ServerConfig{}),
 				context: context.TODO(),
 			},
 			want: nil,
@@ -192,7 +192,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 							},
 						},
 					},
-				}),
+				}, config.ServerConfig{}),
 				context: context.TODO(),
 			},
 			want: errors.GeneralError("count failed from database"),
@@ -215,7 +215,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 							},
 						},
 					},
-				}),
+				}, config.ServerConfig{}),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
@@ -241,7 +241,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 							},
 						},
 					},
-				}),
+				}, config.ServerConfig{}),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
@@ -260,7 +260,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
 					EnableAllowList: true,
-				}),
+				}, config.ServerConfig{}),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
