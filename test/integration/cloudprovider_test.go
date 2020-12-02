@@ -24,7 +24,10 @@ func TestCloudProviderRegions(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
-		Expect(regions.RegionList.Len()).NotTo(Equal(0))
+		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
+		if regions.ID == "aws" || regions.ID == "azure" || regions.ID == "gcp" {
+			Expect(regions.RegionList.Len()).NotTo(Equal(0))
+		}
 		regions.RegionList.Each(func(item *clustersmgmtv1.CloudRegion) bool {
 			href := item.HREF()
 			id := item.ID()
