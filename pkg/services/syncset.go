@@ -385,7 +385,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 						Affinity: &corev1.Affinity{
 							PodAntiAffinity: &corev1.PodAntiAffinity{
 								RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-									corev1.PodAffinityTerm{
+									{
 										TopologyKey: "kubernetes.io/hostname",
 									},
 								},
@@ -420,7 +420,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 						Affinity: &corev1.Affinity{
 							PodAntiAffinity: &corev1.PodAntiAffinity{
 								RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
-									corev1.PodAffinityTerm{
+									{
 										TopologyKey: "kubernetes.io/hostname",
 									},
 								},
