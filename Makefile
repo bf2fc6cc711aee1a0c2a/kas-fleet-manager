@@ -40,6 +40,16 @@ ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
 
+
+GO := go
+GOFMT := gofmt
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell $(GO) env GOBIN))
+GOBIN=$(shell $(GO) env GOPATH)/bin
+else
+GOBIN=$(shell $(GO) env GOBIN)
+endif
+
 ifndef GOLANGCI_LINT_BIN
 	GOLANGCI_LINT_BIN:=golangci-lint
 endif
@@ -116,7 +126,7 @@ endif
 
 # Verifies that source passes standard checks.
 verify: check-gopath
-	go vet \
+	$(GO) vet \
 		./cmd/... \
 		./pkg/... \
 		./test/...
@@ -134,12 +144,12 @@ lint:
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 binary: check-gopath
-	go build ./cmd/managed-services-api
+	$(GO) build ./cmd/managed-services-api
 .PHONY: binary
 
 # Install
 install: check-gopath
-	go install ./cmd/managed-services-api
+	$(GO) install ./cmd/managed-services-api
 .PHONY: install
 
 # Runs the unit tests.
@@ -157,7 +167,7 @@ test: install
 
 # Precompile everything required for development/test.
 test/prepare: install
-	go test -i ./test/integration/...
+	$(GO) test -i ./test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -183,8 +193,8 @@ test/cluster/cleanup:
 
 # generate files
 generate: openapi/generate
-	go generate ./...
-	gofmt -w pkg/api/openapi
+	$(GO) generate ./...
+	$(GOFMT) -w pkg/api/openapi
 .PHONY: generate
 
 # validate the openapi schema
@@ -197,13 +207,13 @@ openapi/generate:
 	rm -rf pkg/api/openapi
 	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	openapi-generator validate -i openapi/managed-services-api.yaml
-	gofmt -w pkg/api/openapi
+	$(GOFMT) -w pkg/api/openapi
 .PHONY: openapi/generate
 
 # clean up code and dependencies
 code/fix:
-	@go mod tidy
-	@gofmt -w `find . -type f -name '*.go' -not -path "./vendor/*"`
+	@$(GO) mod tidy
+	@$(GOFMT) -w `find . -type f -name '*.go' -not -path "./vendor/*"`
 .PHONY: code/fix
 
 run: install
