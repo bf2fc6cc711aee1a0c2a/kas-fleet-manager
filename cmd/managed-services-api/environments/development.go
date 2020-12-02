@@ -18,6 +18,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"enable-sentry":          "false",
 	"enable-allow-list":      "true",
 	"max-allowed-instances":  "1",
+	"auto-osd-creation":      "false",
 }
 
 func loadDevelopment(env *Env) error {

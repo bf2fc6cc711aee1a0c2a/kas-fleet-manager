@@ -9,6 +9,7 @@ var stageConfigDefaults map[string]string = map[string]string{
 	"enable-ocm-mock":       "false",
 	"enable-allow-list":     "true",
 	"max-allowed-instances": "1",
+	"auto-osd-creation":     "true",
 }
 
 func loadStage(env *Env) error {

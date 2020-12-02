@@ -37,7 +37,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 
 # Default Variables
 ENABLE_OCM_MOCK ?= false
-OCM_MOCK_MODE ?= emulated-server
+OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
 
 ifndef GOLANGCI_LINT_BIN
@@ -329,6 +329,7 @@ deploy/db:
 deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy: IMAGE_REPOSITORY ?= $(image_repository)
 deploy: IMAGE_TAG ?= $(image_tag)
+deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
 deploy: deploy/db
 	@oc process -f ./templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="$(OCM_SERVICE_CLIENT_ID)" \
@@ -340,11 +341,13 @@ deploy: deploy/db
 		-p DATABASE_HOST="$(shell oc get service/managed-services-api-db -o jsonpath="{.spec.clusterIP}")" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
+		-p ENVIRONMENT="$(OCM_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
+		-p OCM_BASE_URL="$(OCM_BASE_URL)" \
 		-p JWKS_URL="$(JWKS_URL)" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)

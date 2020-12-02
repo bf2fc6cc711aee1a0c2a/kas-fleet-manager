@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"sync"
 	"time"
 
@@ -28,14 +29,19 @@ type ClusterManager struct {
 	imStop                chan struct{}
 	syncTeardown          sync.WaitGroup
 	reconciler            Reconciler
+	configService         services.ConfigService
+	serverConfig          config.ServerConfig
 }
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client) *ClusterManager {
+func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client,
+			configService services.ConfigService, serverConfig config.ServerConfig) *ClusterManager {
 	return &ClusterManager{
 		ocmClient:             ocmClient,
 		clusterService:        clusterService,
 		cloudProvidersService: cloudProvidersService,
+		configService:         configService,
+		serverConfig:          serverConfig,
 	}
 }
 
@@ -76,6 +82,10 @@ func (c *ClusterManager) reconcile() {
 				return true
 			})
 		}
+	}
+
+	if err := c.reconcileClustersForRegions(); err != nil {
+		glog.Errorf("failed to reconcile clusters by Region: %s", err.Error())
 	}
 
 	provisioningClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioning)
@@ -176,4 +186,51 @@ func (c *ClusterManager) reconcileStrimziOperator(clusterID string) (*clustersmg
 	}
 
 	return addonInstallation, nil
+}
+
+// reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
+func (c *ClusterManager) reconcileClustersForRegions() error {
+	if !c.serverConfig.AutoOSDCreation {
+		return nil
+	}
+	var providers [] string
+	var regions [] string
+	status := api.StatusForValidCluster
+	//gather the supported providers and regions
+	providerList := c.configService.GetSupportedProviders()
+	for _, v := range providerList {
+		providers = append(providers, v.Name);
+		for _, r := range v.Regions {
+			regions = append(regions, r.Name)
+		}
+	}
+
+	//get a list of clusters in Map group by their provider and region
+	grpResult, err := c.clusterService.ListGroupByProviderAndRegion(providers, regions, status)
+	if err != nil {
+		return fmt.Errorf("failed to find cluster with criteria: %s", err.Error())
+	}
+
+	grpResultMap := make(map[string]*services.ResGroupCPRegion)
+	for _, v := range grpResult {
+		grpResultMap[v.Provider+"."+v.Region] = v
+	}
+
+	//create all the missing clusters in the supported provider and regions.
+	for _, p := range providerList {
+		for _, v := range p.Regions {
+			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
+				cluster, err := c.clusterService.Create(&api.Cluster{
+					CloudProvider: p.Name,
+					Region:        v.Name,
+				})
+				if err != nil {
+					glog.Errorf("Failed to auto-create cluster in %s, region: %s %s", p.Name, v.Name, err.Error())
+				} else {
+					glog.Infof("Auto-created cluster in %s, region: %s, Id: %s ", p.Name, v.Name, cluster.ID())
+				}
+			} //
+		} //region
+	} //provider
+	return nil
 }
