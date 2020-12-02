@@ -2,9 +2,10 @@ package workers
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"sync"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
@@ -30,18 +31,16 @@ type ClusterManager struct {
 	syncTeardown          sync.WaitGroup
 	reconciler            Reconciler
 	configService         services.ConfigService
-	serverConfig          config.ServerConfig
 }
 
 // NewClusterManager creates a new cluster manager
 func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client,
-			configService services.ConfigService, serverConfig config.ServerConfig) *ClusterManager {
+	configService services.ConfigService, serverConfig config.ServerConfig) *ClusterManager {
 	return &ClusterManager{
 		ocmClient:             ocmClient,
 		clusterService:        clusterService,
 		cloudProvidersService: cloudProvidersService,
 		configService:         configService,
-		serverConfig:          serverConfig,
 	}
 }
 
@@ -190,16 +189,16 @@ func (c *ClusterManager) reconcileStrimziOperator(clusterID string) (*clustersmg
 
 // reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
 func (c *ClusterManager) reconcileClustersForRegions() error {
-	if !c.serverConfig.AutoOSDCreation {
+	if !c.configService.IsAutoCreateOSDEnabled() {
 		return nil
 	}
-	var providers [] string
-	var regions [] string
+	var providers []string
+	var regions []string
 	status := api.StatusForValidCluster
 	//gather the supported providers and regions
 	providerList := c.configService.GetSupportedProviders()
 	for _, v := range providerList {
-		providers = append(providers, v.Name);
+		providers = append(providers, v.Name)
 		for _, r := range v.Regions {
 			regions = append(regions, r.Name)
 		}

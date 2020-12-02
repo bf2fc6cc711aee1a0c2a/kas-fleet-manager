@@ -26,7 +26,7 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 
 	middleware := NewAllowListMiddleware(services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
 		EnableAllowList: false,
-	}))
+	}, config.ServerConfig{}))
 	handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
 	handler.ServeHTTP(rr, req)
@@ -51,7 +51,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with empty allowed users and no users is allowed to access the service",
@@ -66,7 +66,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 		{
 			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allow list",
@@ -84,7 +84,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 						config.AllowedUser{Username: "allowed-user-2"},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 		{
 			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the global allow list",
@@ -103,7 +103,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 						config.AllowedUser{Username: "allowed-user-2"},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 	}
 
@@ -158,7 +158,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
@@ -173,7 +173,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 						},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the global allow list",
@@ -192,7 +192,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 						config.AllowedUser{Username: "username"},
 					},
 				},
-			}),
+			}, config.ServerConfig{}),
 		},
 	}
 

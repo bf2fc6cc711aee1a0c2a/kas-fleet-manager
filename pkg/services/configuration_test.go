@@ -788,9 +788,7 @@ func Test_configService_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				providersConfig: tt.fields.providersConfig,
-			}
+			c := configService{providersConfig: tt.fields.providersConfig}
 			if err := c.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -863,6 +861,39 @@ func Test_configService_validateProvider(t *testing.T) {
 			if err := c.validateProvider(tt.args.provider); (err != nil) != tt.wantErr {
 				t.Errorf("validateProvider() error = %v, wantErr %v", err, tt.wantErr)
 			}
+		})
+	}
+}
+
+func Test_configService_IsAutoCreateOSDEnabled(t *testing.T) {
+	type fields struct {
+	}
+
+	tests := []struct {
+		name         string
+		serverConfig config.ServerConfig
+		want         bool
+	}{
+		{
+			name:         "return true if auto osd creation is enabled",
+			serverConfig: config.ServerConfig{AutoOSDCreation: true},
+			want:         true,
+		},
+		{
+
+			name:         "return false if auto osd creation is disabled",
+			serverConfig: config.ServerConfig{AutoOSDCreation: false},
+			want:         false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			c := configService{
+				serverConfig: tt.serverConfig,
+			}
+			enabled := c.IsAutoCreateOSDEnabled()
+			Expect(enabled).To(Equal(tt.want))
 		})
 	}
 }
