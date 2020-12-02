@@ -92,6 +92,21 @@ else
 MOQ=$(shell which moq)
 endif
 
+go-bindata:
+ifeq (, $(shell which go-bindata 2> /dev/null))
+	@{ \
+	set -e ;\
+	GOBINDATA_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GOBINDATA_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) get github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
+	rm -rf $$GOBINDATA_TMP_DIR ;\
+	}
+GOBINDATA=$(GOBIN)/go-bindata
+else
+GOBINDATA=$(shell which go-bindata)
+endif
+
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
 else
