@@ -201,7 +201,7 @@ parameters:
 - name: ALLOWED_USERS_PER_ORGANISATION
   displayName: A list of allowed users per organisation
   description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
-  value: "[{id: 13640203, allow_all: true, allowed_users: []}, {id: 6340056, allow_all: true, allowed_users: []}, {id: 12147054, allow_all: true, allowed_users: []}]"
+  value: "[{id: 13640203, allow_all: true, allowed_users: []}, {id: 12147054, allow_all: true, allowed_users: []}]"
 
 
 objects:
