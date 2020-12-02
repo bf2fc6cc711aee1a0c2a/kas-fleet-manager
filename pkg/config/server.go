@@ -7,34 +7,36 @@ import (
 )
 
 type ServerConfig struct {
-	Hostname      string        `json:"hostname"`
-	BindAddress   string        `json:"bind_address"`
-	ReadTimeout   time.Duration `json:"read_timeout"`
-	WriteTimeout  time.Duration `json:"write_timeout"`
-	HTTPSCertFile string        `json:"https_cert_file"`
-	HTTPSKeyFile  string        `json:"https_key_file"`
-	EnableHTTPS   bool          `json:"enable_https"`
-	EnableJWT     bool          `json:"enable_jwt"`
-	EnableAuthz   bool          `json:"enable_authz"`
-	JwkCertURL    string        `json:"jwk_cert_url"`
-	JwkCertCA     string        `json:"jwk_cert_ca"`
-	JwkCertCAFile string        `json:"jwk_cert_ca_file"`
+	Hostname        string        `json:"hostname"`
+	BindAddress     string        `json:"bind_address"`
+	ReadTimeout     time.Duration `json:"read_timeout"`
+	WriteTimeout    time.Duration `json:"write_timeout"`
+	HTTPSCertFile   string        `json:"https_cert_file"`
+	HTTPSKeyFile    string        `json:"https_key_file"`
+	EnableHTTPS     bool          `json:"enable_https"`
+	EnableJWT       bool          `json:"enable_jwt"`
+	EnableAuthz     bool          `json:"enable_authz"`
+	JwkCertURL      string        `json:"jwk_cert_url"`
+	JwkCertCA       string        `json:"jwk_cert_ca"`
+	JwkCertCAFile   string        `json:"jwk_cert_ca_file"`
+	AutoOSDCreation bool          `json:"auto_osd_creation"`
 }
 
 func NewServerConfig() *ServerConfig {
 	return &ServerConfig{
-		Hostname:      "",
-		BindAddress:   "localhost:8000",
-		ReadTimeout:   5 * time.Second,
-		WriteTimeout:  30 * time.Second,
-		EnableHTTPS:   false,
-		EnableJWT:     true,
-		EnableAuthz:   true,
-		JwkCertURL:    "https://api.openshift.com/.well-known/jwks.json",
-		JwkCertCA:     "",
-		JwkCertCAFile: "secrets/rhsm.ca",
-		HTTPSCertFile: "",
-		HTTPSKeyFile:  "",
+		Hostname:        "",
+		BindAddress:     "localhost:8000",
+		ReadTimeout:     5 * time.Second,
+		WriteTimeout:    30 * time.Second,
+		EnableHTTPS:     false,
+		EnableJWT:       true,
+		EnableAuthz:     true,
+		JwkCertURL:      "https://api.openshift.com/.well-known/jwks.json",
+		JwkCertCA:       "",
+		JwkCertCAFile:   "secrets/rhsm.ca",
+		HTTPSCertFile:   "",
+		HTTPSKeyFile:    "",
+		AutoOSDCreation: false,
 	}
 }
 
@@ -50,6 +52,7 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&s.EnableAuthz, "enable-authz", s.EnableAuthz, "Enable Authorization on endpoints, should only be disabled for debug")
 	fs.StringVar(&s.JwkCertURL, "jwk-cert-url", s.JwkCertURL, "JWK Certificate URL")
 	fs.StringVar(&s.JwkCertCAFile, "jwk-cert-ca-file", s.JwkCertCAFile, "JWK Certificate CA file")
+	fs.BoolVar(&s.AutoOSDCreation, "auto-osd-creation", s.AutoOSDCreation, "Enable Auto Creation of supported OSD cluster")
 }
 
 func (s *ServerConfig) ReadFiles() error {

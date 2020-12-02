@@ -20,6 +20,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"enable-sentry":         "false",
 	"enable-allow-list":     "true",
 	"max-allowed-instances": "1",
+	"auto-osd-creation":     "false",
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server

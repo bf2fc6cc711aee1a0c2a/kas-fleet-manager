@@ -715,3 +715,64 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		providers         [] string
+		regions           [] string
+		status            [] string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+		want    []*ResGroupCPRegion
+		setupFn func()
+	}{
+		{
+			name: "ListGroupByProviderAndRegion success",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providers:         [] string{"aws"},
+				regions:           [] string{"us-east-1"},
+				status:            api.StatusForValidCluster,
+			},
+			want:    []*ResGroupCPRegion{},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+			},
+		},
+		{
+			name: "ListGroupByProviderAndRegion failure",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				providers:         [] string{"aws"},
+				regions:           [] string{"us-east-1"},
+				status:            api.StatusForValidCluster,
+			},
+			want:    nil,
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			got, err := k.ListGroupByProviderAndRegion(tt.fields.providers, tt.fields.regions, tt.fields.status)
+			if err != nil && !tt.wantErr {
+				t.Errorf("ListGroupByProviderAndRegion err = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ListGroupByProviderAndRegion got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
