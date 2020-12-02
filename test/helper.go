@@ -162,6 +162,7 @@ func (helper *Helper) Teardown() {
 func (helper *Helper) startAPIServer() {
 	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
 	helper.Env().Config.Server.JwkCertURL = jwkURL
+	helper.Env().Config.Keycloak.EnableAuth = false
 	helper.APIServer = server.NewAPIServer()
 	listener, err := helper.APIServer.Listen()
 	if err != nil {

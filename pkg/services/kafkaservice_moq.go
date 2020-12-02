@@ -12,14 +12,15 @@ import (
 )
 
 var (
-	lockKafkaServiceMockCreate           sync.RWMutex
-	lockKafkaServiceMockDelete           sync.RWMutex
-	lockKafkaServiceMockGet              sync.RWMutex
-	lockKafkaServiceMockList             sync.RWMutex
-	lockKafkaServiceMockListByStatus     sync.RWMutex
-	lockKafkaServiceMockRegisterKafkaJob sync.RWMutex
-	lockKafkaServiceMockUpdate           sync.RWMutex
-	lockKafkaServiceMockUpdateStatus     sync.RWMutex
+	lockKafkaServiceMockCreate             sync.RWMutex
+	lockKafkaServiceMockDelete             sync.RWMutex
+	lockKafkaServiceMockGet                sync.RWMutex
+	lockKafkaServiceMockList               sync.RWMutex
+	lockKafkaServiceMockListByStatus       sync.RWMutex
+	lockKafkaServiceMockRegisterKafkaInSSO sync.RWMutex
+	lockKafkaServiceMockRegisterKafkaJob   sync.RWMutex
+	lockKafkaServiceMockUpdate             sync.RWMutex
+	lockKafkaServiceMockUpdateStatus       sync.RWMutex
 )
 
 // Ensure, that KafkaServiceMock does implement KafkaService.
@@ -46,6 +47,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //             },
 //             ListByStatusFunc: func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
 // 	               panic("mock out the ListByStatus method")
+//             },
+//             RegisterKafkaInSSOFunc: func(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+// 	               panic("mock out the RegisterKafkaInSSO method")
 //             },
 //             RegisterKafkaJobFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the RegisterKafkaJob method")
@@ -77,6 +81,9 @@ type KafkaServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+
+	// RegisterKafkaInSSOFunc mocks the RegisterKafkaInSSO method.
+	RegisterKafkaInSSOFunc func(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError
 
 	// RegisterKafkaJobFunc mocks the RegisterKafkaJob method.
 	RegisterKafkaJobFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
@@ -117,6 +124,13 @@ type KafkaServiceMock struct {
 		ListByStatus []struct {
 			// Status is the status argument value.
 			Status constants.KafkaStatus
+		}
+		// RegisterKafkaInSSO holds details about calls to the RegisterKafkaInSSO method.
+		RegisterKafkaInSSO []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *api.KafkaRequest
 		}
 		// RegisterKafkaJob holds details about calls to the RegisterKafkaJob method.
 		RegisterKafkaJob []struct {
@@ -298,6 +312,41 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 	lockKafkaServiceMockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	lockKafkaServiceMockListByStatus.RUnlock()
+	return calls
+}
+
+// RegisterKafkaInSSO calls RegisterKafkaInSSOFunc.
+func (mock *KafkaServiceMock) RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	if mock.RegisterKafkaInSSOFunc == nil {
+		panic("KafkaServiceMock.RegisterKafkaInSSOFunc: method is nil but KafkaService.RegisterKafkaInSSO was just called")
+	}
+	callInfo := struct {
+		Ctx          context.Context
+		KafkaRequest *api.KafkaRequest
+	}{
+		Ctx:          ctx,
+		KafkaRequest: kafkaRequest,
+	}
+	lockKafkaServiceMockRegisterKafkaInSSO.Lock()
+	mock.calls.RegisterKafkaInSSO = append(mock.calls.RegisterKafkaInSSO, callInfo)
+	lockKafkaServiceMockRegisterKafkaInSSO.Unlock()
+	return mock.RegisterKafkaInSSOFunc(ctx, kafkaRequest)
+}
+
+// RegisterKafkaInSSOCalls gets all the calls that were made to RegisterKafkaInSSO.
+// Check the length with:
+//     len(mockedKafkaService.RegisterKafkaInSSOCalls())
+func (mock *KafkaServiceMock) RegisterKafkaInSSOCalls() []struct {
+	Ctx          context.Context
+	KafkaRequest *api.KafkaRequest
+} {
+	var calls []struct {
+		Ctx          context.Context
+		KafkaRequest *api.KafkaRequest
+	}
+	lockKafkaServiceMockRegisterKafkaInSSO.RLock()
+	calls = mock.calls.RegisterKafkaInSSO
+	lockKafkaServiceMockRegisterKafkaInSSO.RUnlock()
 	return calls
 }
 

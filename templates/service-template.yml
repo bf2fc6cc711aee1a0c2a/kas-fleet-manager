@@ -235,6 +235,16 @@ parameters:
   description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
   value: "[{id: 13640203, max_allowed_instances: 5, allow_all: true, allowed_users: []}, {id: 12147054, max_allowed_instances: 1, allow_all: true, allowed_users: []}, {id: 13639843, max_allowed_instances: 1, allow_all: true, allowed_users: []}]"
 
+- name: MAS_SSO_DEBUG
+  displayName: MAS SSO API Debug mode
+  description: Debug mode for MAS SSO API client
+  value: "false"
+
+- name: MAS_SSO_ENABLE_AUTH
+  displayName: Enable MAS SSO Auth
+  description: Enable MAS SSO Auth for the data plane
+  value: "true"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -369,6 +379,13 @@ objects:
             - --db-name-file=/secrets/rds/db.name
             - --ocm-client-id-file=/secrets/service/ocm-service.clientId
             - --ocm-client-secret-file=/secrets/service/ocm-service.clientSecret
+            - --mas-sso-enable-auth=${MAS_SSO_ENABLE_AUTH}
+            - --mas-sso-client-id-file=/secrets/service/keycloak-service.clientId
+            - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
+            - --mas-sso-base-url-file=/secrets/service/keycloak-service.host
+            - --mas-sso-realm-file=/secrets/service/keycloak-service.realm
+            - --mas-sso-cert-file=/secrets/service/keycloak-service.crt
+            - --mas-sso-debug=${MAS_SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
             - --ocm-base-url=${OCM_BASE_URL}
             - --ocm-debug=${OCM_DEBUG}

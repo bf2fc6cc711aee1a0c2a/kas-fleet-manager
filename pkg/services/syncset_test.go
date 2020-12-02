@@ -423,6 +423,34 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 				buildAdminServer(nil),
 				buildAdminServerService(nil),
 				buildAdminServerRoute(nil),
+				&corev1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Secret",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      testKafkaRequestName + "-sso-secret",
+						Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+					},
+					Type: corev1.SecretType("Opaque"),
+					Data: map[string][]byte{
+						"ssoClientSecret": []byte(nil),
+					},
+				},
+				&corev1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Secret",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      testKafkaRequestName + "-sso-cert",
+						Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+					},
+					Type: corev1.SecretType("Opaque"),
+					Data: map[string][]byte{
+						"keycloak.crt": []byte(nil),
+					},
+				},
 			},
 		},
 		{
@@ -473,6 +501,34 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 				buildAdminServer(nil),
 				buildAdminServerService(nil),
 				buildAdminServerRoute(nil),
+				&corev1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Secret",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      testKafkaRequestName + "-sso-secret",
+						Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+					},
+					Type: corev1.SecretType("Opaque"),
+					Data: map[string][]byte{
+						"ssoClientSecret": []byte(nil),
+					},
+				},
+				&corev1.Secret{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "Secret",
+						APIVersion: "v1",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      testKafkaRequestName + "-sso-cert",
+						Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+					},
+					Type: corev1.SecretType("Opaque"),
+					Data: map[string][]byte{
+						"keycloak.crt": []byte(nil),
+					},
+				},
 			},
 		},
 	}
@@ -504,6 +560,16 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 					}
 					if !reflect.DeepEqual(gotKafka.Spec.Zookeeper.Template, wantKafka.Spec.Zookeeper.Template) {
 						t.Errorf("newKafkaSyncsetBuilder() zookeeper template doesn't match. got = %v want = %v", gotKafka.Spec.Zookeeper.Template, wantKafka.Spec.Zookeeper.Template)
+					}
+				case *corev1.Secret:
+					gotSecret, ok := resource.(*corev1.Secret)
+					if !ok {
+						t.Errorf("newKafkaSyncsetBuilder() failed to convert secret resource")
+					}
+					wantKafka, _ := tt.want[i].(*corev1.Secret)
+					// compare AZ config
+					if !reflect.DeepEqual(gotSecret.ObjectMeta.Name, wantKafka.ObjectMeta.Name) {
+						t.Errorf("newKafkaSyncsetBuilder() kafka rack config doesn't match. got = %v want = %v", gotSecret.ObjectMeta.Name, wantKafka.ObjectMeta.Name)
 					}
 				default:
 					if !reflect.DeepEqual(resource, tt.want[i]) {
