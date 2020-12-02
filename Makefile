@@ -50,8 +50,31 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
-ifndef GOLANGCI_LINT_BIN
-	GOLANGCI_LINT_BIN:=golangci-lint
+golangci-lint:
+ifeq (, $(shell which golangci-lint 2> /dev/null))
+	@{ \
+	set -e ;\
+	VERSION="v1.33.0" ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${GOBIN} $${VERSION} ;\
+	}
+GOLANGCI_LINT=$(GOBIN)/golangci-lint
+else
+GOLANGCI_LINT=$(shell which golangci-lint)
+endif
+
+gotestsum:
+ifeq (, $(shell which gotestsum 2> /dev/null))
+	@{ \
+	set -e ;\
+	GOTESTSUM_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GOTESTSUM_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) get gotest.tools/gotestsum@v0.6.0 ;\
+	rm -rf $$GOTESTSUM_TMP_DIR ;\
+	}
+GOTESTSUM=$(GOBIN)/gotestsum
+else
+GOTESTSUM=$(shell which gotestsum)
 endif
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -134,8 +157,8 @@ verify: check-gopath
 
 # Runs our linter to verify that everything is following best practices
 # Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
-lint:
-	$(GOLANGCI_LINT_BIN) run \
+lint: golangci-lint
+	$(GOLANGCI_LINT) run \
 		./cmd/... \
 		./pkg/... \
 		./test/...
@@ -159,8 +182,8 @@ install: check-gopath
 #
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
-test: install
-	OCM_ENV=testing gotestsum --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
+test: install gotestsum
+	OCM_ENV=testing $(GOTESTSUM) --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		./pkg/... \
 		./cmd/...
 .PHONY: test
@@ -180,8 +203,8 @@ test/prepare: install
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration: test/prepare
-	gotestsum --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
+test/integration: test/prepare gotestsum
+	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
 			./test/integration
 .PHONY: test/integration
 
