@@ -18,6 +18,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	apiErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 //go:generate moq -out clusterservice_moq.go . ClusterService
@@ -25,12 +26,13 @@ type ClusterService interface {
 	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *ocmErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *ocmErrors.ServiceError)
-	UpdateStatus(id string, status api.ClusterStatus) error
+	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *ocmErrors.ServiceError)
 	FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError)
 	ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError)
+	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 }
 
 type clusterService struct {
@@ -48,6 +50,16 @@ func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Cl
 		awsConfig:         awsConfig,
 		clusterBuilder:    ocm.NewClusterBuilder(awsConfig),
 	}
+}
+
+// RegisterClusterJob registers a new job in the cluster table
+func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError {
+	dbConn := c.connectionFactory.New()
+	clusterRequest.Status = api.ClusterAccepted
+	if err := dbConn.Save(clusterRequest).Error; err != nil {
+		return apiErrors.GeneralError("failed to create cluster job: %v", err)
+	}
+	return nil
 }
 
 // Create creates a new OSD cluster
@@ -70,7 +82,15 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	}
 
 	// convert the cluster to the cluster type this service understands before saving
-	if err := dbConn.Save(converters.ConvertCluster(createdCluster)).Error; err != nil {
+	convertedCluster := converters.ConvertCluster(createdCluster)
+
+	// if the passed in cluster object has an ID, it means we need to overwrite it
+	// because it was a cluster provisioning request (cluster_accepted status)
+	if cluster.ID != "" {
+		convertedCluster.ID = cluster.ID
+	}
+
+	if err := dbConn.Save(convertedCluster).Error; err != nil {
 		return &clustersmgmtv1.Cluster{}, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
 
@@ -103,11 +123,12 @@ func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *
 	return clusters, nil
 }
 
-func (c clusterService) UpdateStatus(id string, status api.ClusterStatus) error {
+func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
+
 	if status.String() == "" {
 		return ocmErrors.Validation("status is undefined")
 	}
-	if id == "" {
+	if cluster.ID == "" && cluster.ClusterID == "" {
 		return ocmErrors.Validation("id is undefined")
 	}
 
@@ -117,8 +138,14 @@ func (c clusterService) UpdateStatus(id string, status api.ClusterStatus) error 
 
 	dbConn := c.connectionFactory.New()
 
-	if err := dbConn.Table("clusters").Where("id = ?", id).Update("status", status).Error; err != nil {
-		return ocmErrors.GeneralError("failed to update status: %s", err.Error())
+	if cluster.ID != "" {
+		if err := dbConn.Table("clusters").Where("id = ?", cluster.ID).Update("status", status).Error; err != nil {
+			return ocmErrors.GeneralError("failed to update status: %s", err.Error())
+		}
+	} else {
+		if err := dbConn.Table("clusters").Where("cluster_id = ?", cluster.ClusterID).Update("status", status).Error; err != nil {
+			return ocmErrors.GeneralError("failed to update status: %s", err.Error())
+		}
 	}
 
 	if status == api.ClusterReady {

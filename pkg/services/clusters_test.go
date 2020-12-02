@@ -596,7 +596,7 @@ func Test_UpdateStatus(t *testing.T) {
 			k := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			err := k.UpdateStatus(tt.args.id, tt.args.status)
+			err := k.UpdateStatus(api.Cluster{Meta: api.Meta{ID: tt.args.id}}, tt.args.status)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
