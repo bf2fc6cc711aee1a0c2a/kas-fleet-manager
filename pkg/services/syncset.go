@@ -462,6 +462,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				})
 	}
 
+	canaryName := kafkaRequest.Name + "-canary"
 	// build the canary deployment
 	canary := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -469,25 +470,25 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 			Kind:       "Deployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "strimzi-canary",
+			Name:      canaryName,
 			Namespace: namespaceName,
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": "strimzi-canary",
+					"app": canaryName,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": "strimzi-canary",
+						"app": canaryName,
 					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "strimzi-canary",
+							Name:  canaryName,
 							Image: canaryImageUrl,
 							Env: []corev1.EnvVar{
 								{
