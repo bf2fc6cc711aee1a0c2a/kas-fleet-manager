@@ -136,7 +136,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 		"first_name": serviceAccount.FirstName(),
 		"last_name":  serviceAccount.LastName(),
 		"typ":        "Bearer",
-		"exp":        time.Now().Unix(),
+		"exp":        time.Now().Add(time.Duration(15) * time.Minute).Unix(),
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
