@@ -359,7 +359,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		}
 		brokerOverrides = append(brokerOverrides, brokerOverride)
 	}
-	//ssoClientID := buildKeycloakClientNameIdentifier(kafkaRequest)
 
 	// Derive Kafka config based on global constants
 	kafkaConfig := map[string]string{
