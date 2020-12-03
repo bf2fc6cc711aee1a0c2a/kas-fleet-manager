@@ -10,6 +10,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,6 +40,8 @@ var (
 		Xmx: "512m",
 	}
 	kafkaImageUrl = string("quay.io/lulf/kafka:latest-kafka-2.6.0")
+
+	canaryImageUrl = "quay.io/ppatierno/strimzi-canary:0.0.1"
 )
 
 var deleteClaim = false
@@ -459,6 +462,57 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				})
 	}
 
+	canaryName := kafkaRequest.Name + "-canary"
+	// build the canary deployment
+	canary := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      canaryName,
+			Namespace: namespaceName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": canaryName,
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": canaryName,
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  canaryName,
+							Image: canaryImageUrl,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KAFKA_BOOTSTRAP_SERVERS",
+									Value: kafkaRequest.Name + "-kafka-bootstrap:9092",
+								},
+								{
+									Name:  "TOPIC_RECONCILE_MS",
+									Value: "5000",
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "metrics",
+									ContainerPort: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	resources := []interface{}{
 		&projectv1.Project{
 			TypeMeta: metav1.TypeMeta{
@@ -470,6 +524,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 			},
 		},
 		kafkaCR,
+		canary,
 	}
 
 	syncsetBuilder = syncsetBuilder.Resources(resources...)
