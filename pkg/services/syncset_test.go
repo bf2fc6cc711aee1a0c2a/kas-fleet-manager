@@ -567,10 +567,12 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 						t.Errorf("newKafkaSyncsetBuilder() failed to convert secret resource")
 					}
 					wantKafka, _ := tt.want[i].(*corev1.Secret)
-					// compare AZ config
-					if !reflect.DeepEqual(gotSecret.ObjectMeta.Name, wantKafka.ObjectMeta.Name) {
-						t.Errorf("newKafkaSyncsetBuilder() kafka rack config doesn't match. got = %v want = %v", gotSecret.ObjectMeta.Name, wantKafka.ObjectMeta.Name)
+					if gotSecret.ObjectMeta.Name == wantKafka.ObjectMeta.Name {
+						if !reflect.DeepEqual(gotSecret.ObjectMeta, wantKafka.ObjectMeta) {
+							t.Errorf("newKafkaSyncsetBuilder() secret meta doesn't match. got = %v want = %v", gotSecret.ObjectMeta, wantKafka.ObjectMeta)
+						}
 					}
+
 				default:
 					if !reflect.DeepEqual(resource, tt.want[i]) {
 						t.Errorf("newKafkaSyncsetBuilder() got = %v want = %v", resource, tt.want[i])
