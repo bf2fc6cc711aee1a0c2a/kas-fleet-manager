@@ -50,9 +50,52 @@ func buildKafka(modifyFn func(kafka *strimzi.Kafka)) *strimzi.Kafka {
 // build a test canary object
 func buildCanary(modifyFn func(canary *appsv1.Deployment)) *appsv1.Deployment {
 	canary := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testCanaryName,
 			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+		},
+
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": testCanaryName,
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": testCanaryName,
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  testCanaryName,
+							Image: canaryImageUrl,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KAFKA_BOOTSTRAP_SERVERS",
+									Value: testKafkaRequestName + "-kafka-bootstrap:9092",
+								},
+								{
+									Name:  "TOPIC_RECONCILE_MS",
+									Value: "5000",
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "metrics",
+									ContainerPort: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 	if modifyFn != nil {
