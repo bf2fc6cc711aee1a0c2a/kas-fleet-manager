@@ -109,6 +109,11 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 }
 
 func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error {
+	_, err := k.kafkaService.Get(kafka.ID)
+	if err != nil {
+		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
+	}
+
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
 		return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)

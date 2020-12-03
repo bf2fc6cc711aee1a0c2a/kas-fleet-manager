@@ -34,6 +34,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
+					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
 				},
 			},
 			args: args{
@@ -51,6 +54,29 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
+					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when kafka being provisioned does not exist in the DB before creation",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
+						return nil
+					},
+					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, errors.NotFound("Not Found")
+					},
 				},
 			},
 			args: args{
@@ -67,6 +93,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return nil
+					},
+					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
 					},
 				},
 			},
@@ -150,6 +179,9 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				kafkaService: &services.KafkaServiceMock{
 					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
+					},
+					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
 					},
 				},
 			},
