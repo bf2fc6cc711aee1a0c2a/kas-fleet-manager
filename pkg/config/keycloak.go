@@ -3,7 +3,7 @@ package config
 import "github.com/spf13/pflag"
 
 type KeycloakConfig struct {
-	EnableAuth                  bool   `json:"enable_auth"`
+	EnableAuthenticationOnKafka bool   `json:"enable_auth"`
 	Realm                       string `json:"realm"`
 	RealmFile                   string `json:"realm_file"`
 	BaseURL                     string `json:"base_url"`
@@ -28,24 +28,24 @@ type KeycloakConfig struct {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		EnableAuth:                 true,
-		RealmFile:                  "secrets/keycloak-service.realm",
-		BaseUrlFile:                "secrets/keycloak-service.host",
-		ClientIDFile:               "secrets/keycloak-service.clientId",
-		ClientSecretFile:           "secrets/keycloak-service.clientSecret",
-		TLSTrustedCertificatesFile: "secrets/keycloak-service.crt",
-		Debug:                      false,
-		InsecureSkipVerify:         false,
-		GrantType:                  "client_credentials",
-		UserNameClaim:              "preferred_username",
-		TLSTrustedCertificatesKey:  "keycloak.crt",
-		MASClientSecretKey:         "ssoClientSecret",
+		EnableAuthenticationOnKafka: true,
+		RealmFile:                   "secrets/keycloak-service.realm",
+		BaseUrlFile:                 "secrets/keycloak-service.host",
+		ClientIDFile:                "secrets/keycloak-service.clientId",
+		ClientSecretFile:            "secrets/keycloak-service.clientSecret",
+		TLSTrustedCertificatesFile:  "secrets/keycloak-service.crt",
+		Debug:                       false,
+		InsecureSkipVerify:          false,
+		GrantType:                   "client_credentials",
+		UserNameClaim:               "preferred_username",
+		TLSTrustedCertificatesKey:   "keycloak.crt",
+		MASClientSecretKey:          "ssoClientSecret",
 	}
 	return kc
 }
 
 func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&kc.EnableAuth, "mas-sso-enable-auth", kc.EnableAuth, "Enable authentication mas-sso integration, enabled by default")
+	fs.BoolVar(&kc.EnableAuthenticationOnKafka, "mas-sso-enable-auth", kc.EnableAuthenticationOnKafka, "Enable authentication mas-sso integration, enabled by default")
 	fs.StringVar(&kc.ClientIDFile, "mas-sso-client-id-file", kc.ClientIDFile, "File containing Keycloak privileged account client-id")
 	fs.StringVar(&kc.ClientSecretFile, "mas-sso-client-secret-file", kc.ClientSecretFile, "File containing Keycloak privileged account client-secret")
 	fs.StringVar(&kc.BaseURL, "mas-sso-base-url", kc.BaseURL, "The base URL of the mas-sso, integration by default")
