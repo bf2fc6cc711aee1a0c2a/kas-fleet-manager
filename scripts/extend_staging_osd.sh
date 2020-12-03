@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# This script is used to extend the lifetime of the OSD staging cluster (use for data plane) by 7 days.
-# It will be run automatically by a Jenkins jobs, you should not need to invoke this manually
+# This script is used to extend the lifetime of the OSD staging cluster (used for data plane) by 7 days.
+# It will be run automatically by a Jenkins job, you should not need to invoke this manually
 # Required env vars:
 # - OCM_CLIENT_ID: clientId used by OCM to login to staging environment
 # - OCM_CLIENT_SECRET: clientSecret used by OCM to login to staging environment
