@@ -37,18 +37,6 @@ type kafkaService struct {
 	keycloakService   KeycloakService
 }
 
-type KafkaStatus string
-
-func (k KafkaStatus) String() string {
-	return string(k)
-}
-
-const (
-	KafkaRequestStatusAccepted     KafkaStatus = "accepted"
-	KafkaRequestStatusProvisioning KafkaStatus = "provisioning"
-	KafkaRequestStatusComplete     KafkaStatus = "complete"
-)
-
 func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
@@ -92,7 +80,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
-		keycloakSecret, err := k.keycloakService.GetSecretForRegisterKafkaClient(clientName)
+		keycloakSecret, err := k.keycloakService.GetSecretForRegisteredKafkaClient(clientName)
 		if err != nil || keycloakSecret == "" {
 			return errors.GeneralError("failed to create sso client: %v", err)
 		}

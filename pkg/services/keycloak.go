@@ -14,15 +14,15 @@ const (
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
 type KeycloakService interface {
-	CreateClient(client gocloak.Client, accessToken string) (string, *errors.ServiceError)
-	GetToken() (string, error)
-	GetClientSecret(id string, accessToken string) (string, *errors.ServiceError)
-	ClientConfig(client ClientRepresentation) gocloak.Client
-	DeleteClient(id string, accessToken string) *errors.ServiceError
+	createClient(client gocloak.Client, accessToken string) (string, *errors.ServiceError)
+	getToken() (string, error)
+	getClientSecret(internalClientID string, accessToken string) (string, *errors.ServiceError)
+	clientConfig(client ClientRepresentation) gocloak.Client
+	deleteClient(internalClientId string, accessToken string) *errors.ServiceError
 	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
 	DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError
-	GetSecretForRegisterKafkaClient(kafkaClusterName string) (string, *errors.ServiceError)
-	GetClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
+	GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError)
+	getClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
 	GetConfig() *config.KeycloakConfig
 }
 
@@ -63,7 +63,7 @@ func setTokenEndpoints(config *config.KeycloakConfig) {
 }
 
 //use a token from a Service Account with only the create-client role
-func (kc *keycloakService) CreateClient(client gocloak.Client, accessToken string) (string, *errors.ServiceError) {
+func (kc *keycloakService) createClient(client gocloak.Client, accessToken string) (string, *errors.ServiceError) {
 	internalClientID, err := kc.kcClient.CreateClient(kc.ctx, accessToken, kc.config.Realm, client)
 	if err != nil {
 		return "", errors.GeneralError("Failed to create a client: %v", err)
@@ -72,8 +72,8 @@ func (kc *keycloakService) CreateClient(client gocloak.Client, accessToken strin
 }
 
 //internal client name is required to fetch the secrets
-func (kc *keycloakService) GetClientSecret(internalClientID string, accessToken string) (string, *errors.ServiceError) {
-	resp, err := kc.kcClient.GetClientSecret(kc.ctx, accessToken, kc.config.Realm, internalClientID)
+func (kc *keycloakService) getClientSecret(internalClientId string, accessToken string) (string, *errors.ServiceError) {
+	resp, err := kc.kcClient.GetClientSecret(kc.ctx, accessToken, kc.config.Realm, internalClientId)
 	if err != nil {
 		return "", errors.GeneralError("Failed to retrieve client secret:%v", err)
 	}
@@ -81,7 +81,7 @@ func (kc *keycloakService) GetClientSecret(internalClientID string, accessToken 
 	return value, nil
 }
 
-func (kc *keycloakService) GetToken() (string, error) {
+func (kc *keycloakService) getToken() (string, error) {
 	options := gocloak.TokenOptions{
 		ClientID:     &kc.config.ClientID,
 		GrantType:    &kc.config.GrantType,
@@ -95,13 +95,13 @@ func (kc *keycloakService) GetToken() (string, error) {
 }
 
 func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
-	accessToken, _ := kc.GetToken()
-	id, err := kc.isClientExist(kafkaClusterName, accessToken)
+	accessToken, _ := kc.getToken()
+	internalClientId, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
 		return "", errors.GeneralError("failed to check the sso client exists:%v", err)
 	}
-	if id != "" {
-		secretValue, _ := kc.GetClientSecret(id, accessToken)
+	if internalClientId != "" {
+		secretValue, _ := kc.getClientSecret(internalClientId, accessToken)
 		return secretValue, nil
 	}
 
@@ -117,12 +117,12 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 		StandardFlowEnabled:          false,
 		Attributes:                   rhOrgIdAttributes,
 	}
-	clientConfig := kc.ClientConfig(c)
-	internalClient, err := kc.CreateClient(clientConfig, accessToken)
+	clientConfig := kc.clientConfig(c)
+	internalClient, err := kc.createClient(clientConfig, accessToken)
 	if err != nil {
 		return "", errors.GeneralError("failed to create the sso client:%v", err)
 	}
-	secretValue, err := kc.GetClientSecret(internalClient, accessToken)
+	secretValue, err := kc.getClientSecret(internalClient, accessToken)
 	if err != nil {
 		return "", errors.GeneralError("failed to get the client secret:%v", err)
 	}
@@ -130,32 +130,32 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 }
 
 func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
-	accessToken, _ := kc.GetToken()
-	id, err := kc.isClientExist(kafkaClusterName, accessToken)
+	accessToken, _ := kc.getToken()
+	internalClientId, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
 		return "", errors.GeneralError("failed to check the sso client exists:%v", err)
 	}
-	if id != "" {
-		secretValue, _ := kc.GetClientSecret(id, accessToken)
+	if internalClientId != "" {
+		secretValue, _ := kc.getClientSecret(internalClientId, accessToken)
 		return secretValue, nil
 	}
 	return "", nil
 }
 
 func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *errors.ServiceError {
-	accessToken, _ := kc.GetToken()
-	id, err := kc.isClientExist(kafkaClusterName, accessToken)
+	accessToken, _ := kc.getToken()
+	internalClientID, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
 		return errors.GeneralError("failed to check the sso client exists:%v", err)
 	}
-	err = kc.DeleteClient(id, accessToken)
+	err = kc.deleteClient(internalClientID, accessToken)
 	if err != nil {
 		return errors.GeneralError("failed to delete the sso client:%v", err)
 	}
 	return nil
 }
 
-func (kc *keycloakService) ClientConfig(client ClientRepresentation) gocloak.Client {
+func (kc *keycloakService) clientConfig(client ClientRepresentation) gocloak.Client {
 	return gocloak.Client{
 		Name:                         &client.Name,
 		ClientID:                     &client.ClientID,
@@ -166,7 +166,7 @@ func (kc *keycloakService) ClientConfig(client ClientRepresentation) gocloak.Cli
 	}
 }
 
-func (kc *keycloakService) DeleteClient(internalClientID string, accessToken string) *errors.ServiceError {
+func (kc *keycloakService) deleteClient(internalClientID string, accessToken string) *errors.ServiceError {
 	err := kc.kcClient.DeleteClient(kc.ctx, accessToken, kc.config.Realm, internalClientID)
 	if err != nil {
 		return errors.GeneralError("Failed to delete client:%v", err)
@@ -174,7 +174,7 @@ func (kc *keycloakService) DeleteClient(internalClientID string, accessToken str
 	return nil
 }
 
-func (kc *keycloakService) GetClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
+func (kc *keycloakService) getClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError) {
 	params := gocloak.GetClientsParams{
 		ClientID: &clientId,
 	}
@@ -190,15 +190,14 @@ func (kc *keycloakService) GetConfig() *config.KeycloakConfig {
 }
 
 func (kc *keycloakService) isClientExist(clientId string, accessToken string) (string, *errors.ServiceError) {
-	client, err := kc.GetClient(clientId, accessToken)
-	var id string
+	client, err := kc.getClient(clientId, accessToken)
+	var internalClientID string
 	if err != nil {
-		return id, errors.GeneralError("failed to get client: %v", err)
+		return internalClientID, errors.GeneralError("failed to get client: %v", err)
 	}
 	if len(client) > 0 {
-		id = *client[0].ID
-		return id, nil
-
+		internalClientID = *client[0].ID
+		return internalClientID, nil
 	}
-	return id, nil
+	return internalClientID, err
 }
