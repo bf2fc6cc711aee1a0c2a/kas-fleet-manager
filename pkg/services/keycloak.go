@@ -129,7 +129,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	return secretValue, err
 }
 
-func (kc *keycloakService) GetSecretForRegisterKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
+func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
 	accessToken, _ := kc.GetToken()
 	id, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
