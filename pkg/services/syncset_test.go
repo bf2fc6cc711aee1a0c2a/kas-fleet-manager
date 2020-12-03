@@ -11,6 +11,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -44,6 +45,20 @@ func buildKafka(modifyFn func(kafka *strimzi.Kafka)) *strimzi.Kafka {
 		modifyFn(kafka)
 	}
 	return kafka
+}
+
+// build a test canary object
+func buildCanary(modifyFn func(canary *appsv1.Deployment)) *appsv1.Deployment {
+	canary := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testCanaryName,
+			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+		},
+	}
+	if modifyFn != nil {
+		modifyFn(canary)
+	}
+	return canary
 }
 
 func TestSyncsetService_Create(t *testing.T) {
@@ -233,6 +248,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 						},
 					}
 				}),
+				buildCanary(nil),
 			},
 		},
 		{
@@ -279,6 +295,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 						},
 					}
 				}),
+				buildCanary(nil),
 			},
 		},
 	}
