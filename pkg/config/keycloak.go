@@ -52,7 +52,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.BaseUrlFile, "mas-sso-base-url-file", kc.BaseURL, "File containing base URL of the MAS Keycloak")
 	fs.StringVar(&kc.Realm, "mas-sso-realm", kc.Realm, "Realm for the mas-sso")
 	fs.StringVar(&kc.RealmFile, "mas-sso-realm-file", kc.RealmFile, "File containing Realm for the mas-sso")
-	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File contains tls cert for the mas-sso")
+	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the mas-sso")
 	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
 	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with mas-sso")
 }
