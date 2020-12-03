@@ -382,6 +382,30 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		"quota.window.size.seconds": "2",
 	}
 
+	var authenticationListener *strimzi.KafkaListenerAuthentication
+	if keycloakConfig.EnableAuthenticationOnKafka {
+		ssoClientID := buildKeycloakClientNameIdentifier(kafkaRequest)
+		authenticationListener = &strimzi.KafkaListenerAuthentication{
+			Type: strimzi.OAuth,
+			KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
+				ClientID:        ssoClientID,
+				JwksEndpointURI: keycloakConfig.JwksEndpointURI,
+				UserNameClaim:   keycloakConfig.UserNameClaim,
+				ValidIssuerURI:  keycloakConfig.ValidIssuerURI,
+				TLSTrustedCertificates: []strimzi.CertSecretSource{
+					{
+						Certificate: config.NewKeycloakConfig().TLSTrustedCertificatesKey,
+						SecretName:  kafkaRequest.Name + "-sso-cert",
+					},
+				},
+				ClientSecret: strimzi.GenericSecretSource{
+					Key:        config.NewKeycloakConfig().MASClientSecretKey,
+					SecretName: kafkaRequest.Name + "-sso-secret",
+				},
+			},
+		}
+	}
+
 	listeners := []strimzi.GenericKafkaListener{
 		{
 			Name: "plain",
@@ -394,6 +418,19 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 			Type: strimzi.Internal,
 			TLS:  true,
 			Port: 9093,
+		},
+		{
+			Name:           "external",
+			Type:           strimzi.Route,
+			TLS:            true,
+			Port:           9094,
+			Authentication: authenticationListener,
+			Configuration: &strimzi.GenericKafkaListenerConfiguration{
+				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
+					Host: kafkaRequest.BootstrapServerHost,
+				},
+				Brokers: brokerOverrides,
+			},
 		},
 	}
 
@@ -508,7 +545,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 				})
 	}
 
-	if keycloakConfig.EnableAuth {
+	if keycloakConfig.EnableAuthenticationOnKafka {
 		ssoClientID := buildKeycloakClientNameIdentifier(kafkaRequest)
 		authListener := strimzi.GenericKafkaListener{
 			Name: "external",
@@ -722,7 +759,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		adminServerRoute,
 	}
 
-	if keycloakConfig.EnableAuth {
+	if keycloakConfig.EnableAuthenticationOnKafka {
 		clientSecret := &corev1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Secret",

@@ -90,7 +90,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
-	if k.keycloakService.GetConfig().EnableAuth {
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
 		keycloakSecret, err := k.keycloakService.GetSecretForRegisterKafkaClient(clientName)
 		if err != nil || keycloakSecret == "" {
@@ -122,7 +122,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 }
 
 func (k *kafkaService) RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	if k.keycloakService.GetConfig().EnableAuth {
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		orgId := auth.GetOrgIdFromContext(ctx)
 		// registering client in sso
 		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
