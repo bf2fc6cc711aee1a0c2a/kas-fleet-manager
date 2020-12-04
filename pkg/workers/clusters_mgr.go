@@ -15,10 +15,14 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+
+	projectv1 "github.com/openshift/api/project/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	AWSCloudProviderID = "aws"
+	AWSCloudProviderID     = "aws"
+	observabilityNamespace = "managed-application-services-observability"
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -115,10 +119,17 @@ func (c *ClusterManager) reconcile() {
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		addonInstallation, err := c.reconcileStrimziOperator(provisionedCluster.ID)
-		if err != nil {
-			sentry.CaptureException(err)
-			glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, err.Error())
+		addonInstallation, addOnErr := c.reconcileStrimziOperator(provisionedCluster.ClusterID)
+		if addOnErr != nil {
+			sentry.CaptureException(addOnErr)
+			glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, addOnErr.Error())
+			continue
+		}
+
+		_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID)
+		if syncsetErr != nil {
+			sentry.CaptureException(syncsetErr)
+			glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ID, syncsetErr.Error())
 			continue
 		}
 
@@ -232,4 +243,32 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 		} //region
 	} //provider
 	return nil
+}
+
+// createSyncSet creates the syncset during cluster terraforming
+func (c *ClusterManager) createSyncSet(clusterID string) (*clustersmgmtv1.Syncset, error) {
+	// observability operator terraforming phase
+	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().
+		ID(fmt.Sprintf("ext-%s", observabilityNamespace)).
+		Resources(
+			[]interface{}{c.buildObservabilityNamespaceResource()}...).
+		Build()
+
+	if sysnsetBuilderErr != nil {
+		return nil, fmt.Errorf("failed to create cluster terraforming sysncset: %s", sysnsetBuilderErr.Error())
+	}
+
+	return c.ocmClient.CreateSyncSet(clusterID, syncset)
+}
+
+func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Project {
+	return &projectv1.Project{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: fmt.Sprintf("%s/%s", projectv1.GroupName, projectv1.SchemeGroupVersion.Version),
+			Kind:       "Project",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: observabilityNamespace,
+		},
+	}
 }
