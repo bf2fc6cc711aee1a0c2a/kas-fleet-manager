@@ -40,8 +40,71 @@ ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
 
-ifndef GOLANGCI_LINT_BIN
-	GOLANGCI_LINT_BIN:=golangci-lint
+
+GO := go
+GOFMT := gofmt
+# Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
+ifeq (,$(shell $(GO) env GOBIN))
+GOBIN=$(shell $(GO) env GOPATH)/bin
+else
+GOBIN=$(shell $(GO) env GOBIN)
+endif
+
+golangci-lint:
+ifeq (, $(shell which golangci-lint 2> /dev/null))
+	@{ \
+	set -e ;\
+	VERSION="v1.33.0" ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${GOBIN} $${VERSION} ;\
+	}
+GOLANGCI_LINT=$(GOBIN)/golangci-lint
+else
+GOLANGCI_LINT=$(shell which golangci-lint)
+endif
+
+gotestsum:
+ifeq (, $(shell which gotestsum 2> /dev/null))
+	@{ \
+	set -e ;\
+	GOTESTSUM_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GOTESTSUM_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) get gotest.tools/gotestsum@v0.6.0 ;\
+	rm -rf $$GOTESTSUM_TMP_DIR ;\
+	}
+GOTESTSUM=$(GOBIN)/gotestsum
+else
+GOTESTSUM=$(shell which gotestsum)
+endif
+
+moq:
+ifeq (, $(shell which gotestsum 2> /dev/null))
+	@{ \
+	set -e ;\
+	MOQ_TMP_DIR=$$(mktemp -d) ;\
+	cd $$MOQ_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) get github.com/matryer/moq@v0.1.4 ;\
+	rm -rf $$MOQ_TMP_DIR ;\
+	}
+MOQ=$(GOBIN)/moq
+else
+MOQ=$(shell which moq)
+endif
+
+go-bindata:
+ifeq (, $(shell which go-bindata 2> /dev/null))
+	@{ \
+	set -e ;\
+	GOBINDATA_TMP_DIR=$$(mktemp -d) ;\
+	cd $$GOBINDATA_TMP_DIR ;\
+	$(GO) mod init tmp ;\
+	$(GO) get github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
+	rm -rf $$GOBINDATA_TMP_DIR ;\
+	}
+GOBINDATA=$(GOBIN)/go-bindata
+else
+GOBINDATA=$(shell which go-bindata)
 endif
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -116,7 +179,7 @@ endif
 
 # Verifies that source passes standard checks.
 verify: check-gopath
-	go vet \
+	$(GO) vet \
 		./cmd/... \
 		./pkg/... \
 		./test/...
@@ -124,8 +187,8 @@ verify: check-gopath
 
 # Runs our linter to verify that everything is following best practices
 # Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
-lint:
-	$(GOLANGCI_LINT_BIN) run \
+lint: golangci-lint
+	$(GOLANGCI_LINT) run \
 		./cmd/... \
 		./pkg/... \
 		./test/...
@@ -134,12 +197,12 @@ lint:
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 binary: check-gopath
-	go build ./cmd/managed-services-api
+	$(GO) build ./cmd/managed-services-api
 .PHONY: binary
 
 # Install
 install: check-gopath
-	go install ./cmd/managed-services-api
+	$(GO) install ./cmd/managed-services-api
 .PHONY: install
 
 # Runs the unit tests.
@@ -149,15 +212,15 @@ install: check-gopath
 #
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
-test: install
-	OCM_ENV=testing gotestsum --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
+test: install gotestsum
+	OCM_ENV=testing $(GOTESTSUM) --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		./pkg/... \
 		./cmd/...
 .PHONY: test
 
 # Precompile everything required for development/test.
 test/prepare: install
-	go test -i ./test/integration/...
+	$(GO) test -i ./test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -170,8 +233,8 @@ test/prepare: install
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration: test/prepare
-	gotestsum --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
+test/integration: test/prepare gotestsum
+	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
 			./test/integration
 .PHONY: test/integration
 
@@ -183,8 +246,8 @@ test/cluster/cleanup:
 
 # generate files
 generate: openapi/generate
-	go generate ./...
-	gofmt -w pkg/api/openapi
+	$(GO) generate ./...
+	$(GOFMT) -w pkg/api/openapi
 .PHONY: generate
 
 # validate the openapi schema
@@ -197,13 +260,13 @@ openapi/generate:
 	rm -rf pkg/api/openapi
 	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	openapi-generator validate -i openapi/managed-services-api.yaml
-	gofmt -w pkg/api/openapi
+	$(GOFMT) -w pkg/api/openapi
 .PHONY: openapi/generate
 
 # clean up code and dependencies
 code/fix:
-	@go mod tidy
-	@gofmt -w `find . -type f -name '*.go' -not -path "./vendor/*"`
+	@$(GO) mod tidy
+	@$(GOFMT) -w `find . -type f -name '*.go' -not -path "./vendor/*"`
 .PHONY: code/fix
 
 run: install
