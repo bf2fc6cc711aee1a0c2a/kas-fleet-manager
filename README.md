@@ -9,11 +9,9 @@ For more information on how the service works, see [the implementation documenta
 * [OpenAPI Generator](https://openapi-generator.tech/docs/installation/)
 * [Golang](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
-* [gotestsum](https://github.com/gotestyourself/gotestsum#install) - to run the tests
 * [go-bindata (3.1.2+)](https://github.com/go-bindata/go-bindata) - for code generation
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [moq](https://github.com/matryer/moq) - for mock generation
-* [golangci-lint](https://github.com/golangci/golangci-lint) - for code linting
 
 ## User Account & Organization Setup
 
