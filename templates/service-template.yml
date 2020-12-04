@@ -182,7 +182,6 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
-
 - name: ENABLE_ALLOW_LIST
   displayName: Enable the Allow List
   description: Enable the allow list access control feature
@@ -198,11 +197,35 @@ parameters:
   description: A list of allowed users that are allowed to access the service irrespective of their organisation in a yaml format.
   value: "[]"
 
+- name: DEX_URL
+  displayName: Dex url
+  description: A URL to dex that will be used by the observability stack for authentication.
+  value: "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
+
+- name: DEX_USERNAME
+  displayName: Dex username
+  description: Dex username that will be used by the observability stack for authentication.
+  value: "admin@example.com"
+
+- name: OBSERVATORIUM_GATEWAY
+  displayName: Observatorium gateway
+  description: A URL to an Observatorium instance where observability metrics will sent to. 
+  value: "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
+
+- name: OBSERVATORIUM_TENANT
+  displayName: Observatorium tenant
+  description: Observatorium tenant where observability metrics will sent to. 
+  value: "test"  
+
+- name: ALLOWED_USERS
+  displayName: A list of allowed users
+  description: A list of allowed users that are allowed to access the service irrespective of their organisation in a yaml format.
+  value: "[]"
+
 - name: ALLOWED_USERS_PER_ORGANISATION
   displayName: A list of allowed users per organisation
   description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
   value: "[{id: 13640203, allow_all: true, allowed_users: []}, {id: 12147054, allow_all: true, allowed_users: []}]"
-
 
 objects:
   - kind: ConfigMap
@@ -321,6 +344,12 @@ objects:
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
+            - --dex-password-file=/secrets/service/dex.password
+            - --dex-secret-file=/secrets/service/dex.secret 
+            - --dex-username=${DEX_USERNAME}
+            - --dex-url=${DEX_URL}
+            - --observatorium-gateway=${OBSERVATORIUM_GATEWAY}
+            - --observatorium-tenant=${OBSERVATORIUM_TENANT}
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user

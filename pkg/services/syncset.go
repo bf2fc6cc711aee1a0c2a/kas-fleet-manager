@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -474,6 +475,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 
 	canaryName := sanitizedKafkaName + "-canary"
 	// build the canary deployment
+	canaryLabels := map[string]string{
+		"app":                                    canaryName,
+		constants.ObservabilityCanaryPodLabelKey: constants.ObservabilityCanaryPodLabelValue,
+	}
+
 	canary := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
@@ -485,15 +491,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		},
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": canaryName,
-				},
+				MatchLabels: canaryLabels,
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
-					Labels: map[string]string{
-						"app": canaryName,
-					},
+					Labels: canaryLabels,
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
@@ -620,11 +622,12 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	resources := []interface{}{
 		&projectv1.Project{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: fmt.Sprintf("%s/%s", projectv1.GroupName, projectv1.SchemeGroupVersion.Version),
+				APIVersion: projectv1.SchemeGroupVersion.String(),
 				Kind:       "Project",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: namespaceName,
+				Name:   namespaceName,
+				Labels: constants.NamespaceLabels,
 			},
 		},
 		kafkaCR,

@@ -13,28 +13,30 @@ import (
 )
 
 type ApplicationConfig struct {
-	Server             *ServerConfig      `json:"server"`
-	Metrics            *MetricsConfig     `json:"metrics"`
-	HealthCheck        *HealthCheckConfig `json:"health_check"`
-	Database           *DatabaseConfig    `json:"database"`
-	OCM                *OCMConfig         `json:"ocm"`
-	Sentry             *SentryConfig      `json:"sentry"`
-	AWS                *AWSConfig         `json:"aws"`
-	SupportedProviders *ProviderConfig    `json:"providers"`
-	AllowList          *AllowListConfig   `json:"allow_list"`
+	Server                     *ServerConfig               `json:"server"`
+	Metrics                    *MetricsConfig              `json:"metrics"`
+	HealthCheck                *HealthCheckConfig          `json:"health_check"`
+	Database                   *DatabaseConfig             `json:"database"`
+	OCM                        *OCMConfig                  `json:"ocm"`
+	Sentry                     *SentryConfig               `json:"sentry"`
+	AWS                        *AWSConfig                  `json:"aws"`
+	SupportedProviders         *ProviderConfig             `json:"providers"`
+	AllowList                  *AllowListConfig            `json:"allow_list"`
+	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
-		Server:             NewServerConfig(),
-		Metrics:            NewMetricsConfig(),
-		HealthCheck:        NewHealthCheckConfig(),
-		Database:           NewDatabaseConfig(),
-		OCM:                NewOCMConfig(),
-		Sentry:             NewSentryConfig(),
-		AWS:                NewAWSConfig(),
-		SupportedProviders: NewSupportedProvidersConfig(),
-		AllowList:          NewAllowListConfig(),
+		Server:                     NewServerConfig(),
+		Metrics:                    NewMetricsConfig(),
+		HealthCheck:                NewHealthCheckConfig(),
+		Database:                   NewDatabaseConfig(),
+		OCM:                        NewOCMConfig(),
+		Sentry:                     NewSentryConfig(),
+		AWS:                        NewAWSConfig(),
+		SupportedProviders:         NewSupportedProvidersConfig(),
+		AllowList:                  NewAllowListConfig(),
+		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
 	}
 }
 
@@ -49,6 +51,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.AWS.AddFlags(flagset)
 	c.SupportedProviders.AddFlags(flagset)
 	c.AllowList.AddFlags(flagset)
+	c.ObservabilityConfiguration.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
@@ -84,11 +87,16 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	if !c.AllowList.EnableAllowList {
-		return nil
+	err = c.ObservabilityConfiguration.ReadFiles()
+	if err != nil {
+		return err
 	}
-	err = c.AllowList.ReadFiles()
-	return err
+
+	if c.AllowList.EnableAllowList {
+		return c.AllowList.ReadFiles()
+	}
+
+	return nil
 }
 
 // Read the contents of file into integer value
