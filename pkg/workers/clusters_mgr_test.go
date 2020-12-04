@@ -11,10 +11,14 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
+	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+
+	projectv1 "github.com/openshift/api/project/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // build a test addonInstallation
@@ -47,7 +51,6 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 		args    args
 		want    *api.Cluster
 		wantErr bool
-		setupFn func()
 	}{
 		{
 			name: "error when getting cluster status from ocm fails",
@@ -241,7 +244,6 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 		fields  fields
 		want    *clustersmgmtv1.AddOnInstallation
 		wantErr bool
-		setupFn func()
 	}{
 		{
 			name: "error when getting managed kafka addon from ocm fails",
@@ -467,6 +469,88 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 			err := c.reconcileClustersForRegions()
 			if err != nil && !tt.wantErr {
 				t.Errorf("reconcileClustersForRegions() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClusterManager_createSyncSet(t *testing.T) {
+
+	syncset, err := clustersmgmtv1.NewSyncset().
+		ID("ext-managed-application-services-observability").
+		Resources([]interface{}{
+			&projectv1.Project{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "project.openshift.io/v1",
+					Kind:       "Project",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "managed-application-services-observability",
+				},
+			},
+		}...).
+		Build()
+
+	if err != nil {
+		t.Fatal("Unabled to create test syncset")
+		return
+	}
+
+	type fields struct {
+		ocmClient ocm.Client
+		timer     *time.Timer
+	}
+
+	type result struct {
+		err     error
+		syncset *clustersmgmtv1.Syncset
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   result
+	}{
+		{
+			name: "throw an error when syncset creation fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateSyncSetFunc: func(clusterId string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return nil, errors.New("error when creating syncset")
+					},
+				},
+			},
+			want: result{
+				err:     errors.New("error when creating syncset"),
+				syncset: nil,
+			},
+		},
+		{
+			name: "returns created syncset",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateSyncSetFunc: func(clusterId string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return syncset, nil
+					},
+				},
+			},
+			want: result{
+				err:     nil,
+				syncset: syncset,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+
+			c := &ClusterManager{
+				ocmClient: tt.fields.ocmClient,
+				timer:     tt.fields.timer,
+			}
+			got, err := c.createSyncSet("clusterId")
+			Expect(got).To(Equal(tt.want.syncset))
+			if err != nil {
+				Expect(err).To(MatchError(tt.want.err))
 			}
 		})
 	}
