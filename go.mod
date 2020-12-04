@@ -24,20 +24,21 @@ require (
 	github.com/onsi/gomega v1.10.1
 	github.com/openshift-online/ocm-sdk-go v0.1.141
 	github.com/openshift/api v3.9.0+incompatible
+	github.com/operator-framework/api v0.3.25
 	github.com/prometheus/client_golang v1.8.0
 	github.com/rs/xid v1.2.1
 	github.com/segmentio/ksuid v1.0.2
 	github.com/selvatico/go-mocket v1.0.7
-	github.com/spf13/cobra v0.0.6
+	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
+	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	golang.org/x/sys v0.0.0-20201020230747-6e5568b54d1a // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.3.0
-	k8s.io/api v0.19.0
-	k8s.io/apimachinery v0.19.0
+	k8s.io/api v0.19.3
+	k8s.io/apimachinery v0.19.3
 )

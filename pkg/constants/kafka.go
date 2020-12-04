@@ -17,7 +17,19 @@ const (
 	KafkaOperationCreate KafkaOperation = "create"
 	// KafkaOperationDelete = Kafka cluster delete operations
 	KafkaOperationDelete KafkaOperation = "delete"
+
+	// ObservabilityCanaryPodLabelKey that will be used by the observability operator to scrap metrics
+	ObservabilityCanaryPodLabelKey = "managed-kafka-canary"
+
+	// ObservabilityCanaryPodLabelValue the value for ObservabilityCanaryPodLabelKey
+	ObservabilityCanaryPodLabelValue = "true"
 )
+
+// NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
+// A namespace with these labels will be scrapped by the Observability operator to retrieve metrics
+var NamespaceLabels = map[string]string{
+	"mas-managed": "true",
+}
 
 func (k KafkaStatus) String() string {
 	return string(k)

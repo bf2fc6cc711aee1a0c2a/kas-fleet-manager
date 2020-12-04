@@ -6,24 +6,40 @@ import (
 	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	projectv1 "github.com/openshift/api/project/v1"
+	observability "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/observability/v1"
+	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
-	AWSCloudProviderID     = "aws"
-	observabilityNamespace = "managed-application-services-observability"
+	AWSCloudProviderID              = "aws"
+	observabilityNamespace          = "managed-application-services-observability"
+	observabilityAuthType           = "dex"
+	observabilityDexCredentials     = "observatorium-dex-credentials"
+	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:latest"
+	observabilityOperatorGroupName  = "observability-operator-group-name"
+	observabilityCatalogSourceName  = "observability-operator-manifests"
+	observabilityStackName          = "observability-stack"
+	observabilitySubscriptionName   = "observability-operator"
 )
+
+var observabilityCanaryPodSelector = map[string]string{
+	constants.ObservabilityCanaryPodLabelKey: constants.ObservabilityCanaryPodLabelValue,
+}
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
@@ -126,20 +142,21 @@ func (c *ClusterManager) reconcile() {
 			continue
 		}
 
-		_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID)
-		if syncsetErr != nil {
-			sentry.CaptureException(syncsetErr)
-			glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ID, syncsetErr.Error())
-			continue
-		}
-
 		// The cluster is ready when the state reports ready
 		if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
+			_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID)
+			if syncsetErr != nil {
+				sentry.CaptureException(syncsetErr)
+				glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ID, syncsetErr.Error())
+				continue
+			}
+
 			if err = c.clusterService.UpdateStatus(provisionedCluster.ID, api.ClusterReady); err != nil {
 				sentry.CaptureException(err)
 				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ID, err.Error())
 				continue
 			}
+
 			// add entry for cluster creation metric
 			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
 		}
@@ -251,7 +268,14 @@ func (c *ClusterManager) createSyncSet(clusterID string) (*clustersmgmtv1.Syncse
 	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().
 		ID(fmt.Sprintf("ext-%s", observabilityNamespace)).
 		Resources(
-			[]interface{}{c.buildObservabilityNamespaceResource()}...).
+			[]interface{}{
+				c.buildObservabilityNamespaceResource(),
+				c.buildObservabilityDexSecretResource(),
+				c.buildObservabilityCatalogSourceResource(),
+				c.buildObservabilityOperatorGroupResource(),
+				c.buildObservabilitySubscriptionResource(),
+				c.buildObservabilityStackResource(),
+			}...).
 		Build()
 
 	if sysnsetBuilderErr != nil {
@@ -264,11 +288,123 @@ func (c *ClusterManager) createSyncSet(clusterID string) (*clustersmgmtv1.Syncse
 func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Project {
 	return &projectv1.Project{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: fmt.Sprintf("%s/%s", projectv1.GroupName, projectv1.SchemeGroupVersion.Version),
+			APIVersion: projectv1.SchemeGroupVersion.String(),
 			Kind:       "Project",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: observabilityNamespace,
+		},
+	}
+}
+
+func (c *ClusterManager) buildObservabilityDexSecretResource() *k8sCoreV1.Secret {
+	observabilityConfig := c.configService.GetObservabilityConfiguration()
+	stringDataMap := map[string]string{
+		"password": observabilityConfig.DexPassword,
+		"secret":   observabilityConfig.DexSecret,
+		"username": observabilityConfig.DexUsername,
+	}
+
+	return &k8sCoreV1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: metav1.SchemeGroupVersion.Version,
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilityDexCredentials,
+			Namespace: observabilityNamespace,
+		},
+		Type:       k8sCoreV1.SecretTypeOpaque,
+		StringData: stringDataMap,
+	}
+}
+
+func (c *ClusterManager) buildObservabilityCatalogSourceResource() *v1alpha1.CatalogSource {
+	return &v1alpha1.CatalogSource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+			Kind:       "CatalogSource",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilityCatalogSourceName,
+			Namespace: observabilityNamespace,
+		},
+		Spec: v1alpha1.CatalogSourceSpec{
+			SourceType: v1alpha1.SourceTypeGrpc,
+			Image:      observabilityCatalogSourceImage,
+		},
+	}
+}
+
+func (c *ClusterManager) buildObservabilityOperatorGroupResource() *v1alpha2.OperatorGroup {
+	return &v1alpha2.OperatorGroup{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1alpha2.SchemeGroupVersion.String(),
+			Kind:       "OperatorGroup",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilityOperatorGroupName,
+			Namespace: observabilityNamespace,
+		},
+		Spec: v1alpha2.OperatorGroupSpec{
+			TargetNamespaces: []string{observabilityNamespace},
+		},
+	}
+}
+
+func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subscription {
+	return &v1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+			Kind:       "Subscription",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilitySubscriptionName,
+			Namespace: observabilityNamespace,
+		},
+		Spec: &v1alpha1.SubscriptionSpec{
+			CatalogSource:          observabilityCatalogSourceName,
+			Channel:                "alpha",
+			CatalogSourceNamespace: observabilityNamespace,
+			StartingCSV:            "observability-operator.v0.0.1",
+			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
+			Package:                observabilitySubscriptionName,
+		},
+	}
+}
+
+func (c *ClusterManager) buildObservabilityStackResource() *observability.Observability {
+	observabilityConfig := c.configService.GetObservabilityConfiguration()
+
+	return &observability.Observability{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "observability.redhat.com/v1",
+			Kind:       "Observability",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilityStackName,
+			Namespace: observabilityNamespace,
+		},
+		Spec: observability.ObservabilitySpec{
+			Grafana: observability.GrafanaConfig{
+				Managed: false,
+			},
+			KafkaNamespaceSelector: metav1.LabelSelector{
+				MatchLabels: constants.NamespaceLabels,
+			},
+			CanaryPodSelector: metav1.LabelSelector{
+				MatchLabels: observabilityCanaryPodSelector,
+			},
+			Observatorium: observability.ObservatoriumConfig{
+				Gateway:  observabilityConfig.ObservatoriumGateway,
+				Tenant:   observabilityConfig.ObservatoriumTenant,
+				AuthType: observabilityAuthType,
+				AuthDex: &observability.DexConfig{
+					Url:                       observabilityConfig.DexUrl,
+					CredentialSecretName:      observabilityDexCredentials,
+					CredentialSecretNamespace: observabilityNamespace,
+				},
+			},
 		},
 	}
 }
