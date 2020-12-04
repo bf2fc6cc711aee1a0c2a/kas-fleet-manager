@@ -516,7 +516,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 	resources := []interface{}{
 		&projectv1.Project{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "project.openshift.io/v1",
+				APIVersion: fmt.Sprintf("%s/%s", projectv1.GroupName, projectv1.SchemeGroupVersion.Version),
 				Kind:       "Project",
 			},
 			ObjectMeta: metav1.ObjectMeta{
