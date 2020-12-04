@@ -253,7 +253,7 @@ func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErro
 func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
-	if err := dbConn.Table("kafka_requests").Where("id = ?", id).Update("status", status).Error; err != nil {
+	if err := dbConn.Model(&api.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
 		return errors.GeneralError("failed to update status: %s", err.Error())
 	}
 
