@@ -194,13 +194,26 @@ parameters:
 
 - name: OBSERVATORIUM_GATEWAY
   displayName: Observatorium gateway
-  description: A URL to an Observatorium instance where observability metrics will sent to. 
+  description: A URL to an Observatorium instance where observability metrics will sent to.
   value: "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
 
 - name: OBSERVATORIUM_TENANT
   displayName: Observatorium tenant
-  description: Observatorium tenant where observability metrics will sent to. 
-  value: "test"  
+  description: Observatorium tenant where observability metrics will sent to.
+  value: "test"
+
+- name: ENABLE_OBSERVATORIUM_DEBUG
+  displayName: Enable Observatorium Debug Logging
+  value: "false"
+
+- name: OBSERVATORIUM_TIMEOUT
+  displayName: observatorium Request Timeout (seconds)
+  description: Timeout duration for all requests made to Observatorium
+  value: "120s"
+
+- name: OBSERVATORIUM_INSECURE
+  displayName: Observatorium ssl mode (disable)
+  value: "false"
 
 - name: ENABLE_ALLOW_LIST
   displayName: Enable the Allow List
@@ -340,11 +353,15 @@ objects:
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
             - --dex-password-file=/secrets/service/dex.password
-            - --dex-secret-file=/secrets/service/dex.secret 
+            - --dex-secret-file=/secrets/service/dex.secret
             - --dex-username=${DEX_USERNAME}
             - --dex-url=${DEX_URL}
             - --observatorium-gateway=${OBSERVATORIUM_GATEWAY}
             - --observatorium-tenant=${OBSERVATORIUM_TENANT}
+            - --observatorium-debug=${ENABLE_OBSERVATORIUM_DEBUG}
+            - --observatorium-ignore-ssl=${OBSERVATORIUM_INSECURE}
+            - --observatorium-timeout=${OBSERVATORIUM_TIMEOUT}
+            - --observatorium-token-file=/secrets/service/observatorium.token
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
             - --db-user-file=/secrets/rds/db.user

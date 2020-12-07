@@ -2,6 +2,7 @@ package environments
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
 	"os"
 	"sync"
 
@@ -17,12 +18,12 @@ import (
 )
 
 const (
-	TestingEnv     string = "testing"
-	DevelopmentEnv string = "development"
-	ProductionEnv  string = "production"
-	StageEnv       string = "stage"
-	IntegrationEnv string = "integration"
-
+	TestingEnv           string = "testing"
+	DevelopmentEnv       string = "development"
+	ProductionEnv        string = "production"
+	StageEnv             string = "stage"
+	IntegrationEnv       string = "integration"
+	dataEndpoint         string = "/api/metrics/v1/"
 	EnvironmentStringKey string = "OCM_ENV"
 	EnvironmentDefault   string = DevelopmentEnv
 )
@@ -40,10 +41,12 @@ type Services struct {
 	Cluster        services.ClusterService
 	CloudProviders services.CloudProvidersService
 	Config         services.ConfigService
+	Observatorium  services.ObservatoriumService
 }
 
 type Clients struct {
-	OCM *ocm.Client
+	OCM           *ocm.Client
+	Observatorium *observatorium.Client
 }
 
 type ConfigDefaults struct {
@@ -142,10 +145,12 @@ func (env *Env) LoadServices() error {
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.Server, *env.Config.ObservabilityConfiguration)
+	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
 	env.Services.CloudProviders = cloudProviderService
+	env.Services.Observatorium = ObservatoriumService
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
 	env.Services.Config = configService
@@ -181,6 +186,26 @@ func (env *Env) LoadClients() error {
 	}
 	if err != nil {
 		glog.Errorf("Unable to create OCM Authz client: %s", err.Error())
+		return err
+	}
+
+	// Create Observatorium client
+	observatoriumConfig := &observatorium.Configuration{
+		BaseURL:   env.Config.ObservabilityConfiguration.ObservatoriumGateway + dataEndpoint + env.Config.ObservabilityConfiguration.ObservatoriumTenant,
+		AuthToken: env.Config.ObservabilityConfiguration.AuthToken,
+		Cookie:    env.Config.ObservabilityConfiguration.Cookie,
+		Timeout:   env.Config.ObservabilityConfiguration.Timeout,
+		Debug:     env.Config.ObservabilityConfiguration.Debug,
+		Insecure:  env.Config.ObservabilityConfiguration.Insecure,
+	}
+	if env.Config.ObservabilityConfiguration.EnableMock {
+		glog.Infof("Using Mock Observatorium Client")
+		env.Clients.Observatorium, err = observatorium.NewClientMock(observatoriumConfig)
+	} else {
+		env.Clients.Observatorium, err = observatorium.NewClient(observatoriumConfig)
+	}
+	if err != nil {
+		glog.Errorf("Unable to create Observatorium client: %s", err)
 		return err
 	}
 
