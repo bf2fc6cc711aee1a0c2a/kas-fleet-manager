@@ -17,21 +17,23 @@ type Reconciler struct {
 func (r *Reconciler) Start(worker Worker) {
 	*worker.GetStopChan() = make(chan struct{})
 	worker.GetSyncGroup().Add(1)
+	worker.SetIsRunning(true)
 
-	glog.V(1).Infoln(fmt.Sprintf("Starting %T", worker))
-	// start reconcile immediately and then on every repeat interval
+
+	glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
+	//starts reconcile immediately and then on every repeat interval
 	worker.reconcile()
 	ticker := time.NewTicker(RepeatInterval)
 	go func() {
 		for {
 			select {
-			case <-ticker.C:
-				glog.V(1).Infoln(fmt.Sprintf("Starting %T", worker))
+			case <-ticker.C: //time out
+				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
 				worker.reconcile()
 			case <-*worker.GetStopChan():
 				ticker.Stop()
 				defer worker.GetSyncGroup().Done()
-				glog.V(1).Infoln(fmt.Sprintf("Stopping reconcile loop for %T", worker))
+				glog.V(1).Infoln(fmt.Sprintf("Stopping reconciliation loop for %T [%s]", worker, worker.GetID()))
 				return
 			}
 		}
@@ -39,11 +41,12 @@ func (r *Reconciler) Start(worker Worker) {
 }
 
 func (r *Reconciler) Stop(worker Worker) {
+	defer worker.SetIsRunning(false)
 	select {
-	case <-*worker.GetStopChan():
+	case <-*worker.GetStopChan(): //already closed
 		return
 	default:
-		close(*worker.GetStopChan())
-		worker.GetSyncGroup().Wait()
+		close(*worker.GetStopChan()) //explicit close
+		worker.GetSyncGroup().Wait() //wait for in-flight job to finish
 	}
 }

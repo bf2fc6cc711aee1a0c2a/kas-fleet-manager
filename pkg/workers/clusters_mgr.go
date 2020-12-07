@@ -44,11 +44,14 @@ var observabilityCanaryPodSelector = map[string]string{
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
+	id                    string
+	workerType            string
+	isRunning             bool
 	ocmClient             ocm.Client
 	clusterService        services.ClusterService
 	cloudProvidersService services.CloudProvidersService
 	timer                 *time.Timer
-	imStop                chan struct{}
+	imStop                chan struct{} //a chan used only for cancellation
 	syncTeardown          sync.WaitGroup
 	reconciler            Reconciler
 	configService         services.ConfigService
@@ -56,8 +59,10 @@ type ClusterManager struct {
 
 // NewClusterManager creates a new cluster manager
 func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client,
-	configService services.ConfigService, serverConfig config.ServerConfig) *ClusterManager {
+	configService services.ConfigService, serverConfig config.ServerConfig, id string) *ClusterManager {
 	return &ClusterManager{
+		id:                    id,
+		workerType:            "cluster",
 		ocmClient:             ocmClient,
 		clusterService:        clusterService,
 		cloudProvidersService: cloudProvidersService,
@@ -73,6 +78,15 @@ func (c *ClusterManager) GetSyncGroup() *sync.WaitGroup {
 	return &c.syncTeardown
 }
 
+// GetID returns the ID that represents this worker
+func (c *ClusterManager) GetID() string {
+	return c.id
+}
+
+func (c *ClusterManager) GetWorkerType() string {
+	return c.workerType
+}
+
 // Start initializes the cluster manager to reconcile osd clusters
 func (c *ClusterManager) Start() {
 	c.reconciler.Start(c)
@@ -81,6 +95,14 @@ func (c *ClusterManager) Start() {
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
 	c.reconciler.Stop(c)
+}
+
+func (c *ClusterManager) IsRunning() bool {
+	return c.isRunning
+}
+
+func (c *ClusterManager) SetIsRunning(val bool) {
+	c.isRunning = val
 }
 
 func (c *ClusterManager) reconcile() {
