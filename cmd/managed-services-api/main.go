@@ -2,15 +2,13 @@ package main
 
 import (
 	"flag"
-	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cloudprovider"
-
-	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
-	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/kafka"
-
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
-
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cloudprovider"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/kafka"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/migrate"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/observatorium"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/servecmd"
 )
 
@@ -41,9 +39,10 @@ func main() {
 	migrateCmd := migrate.NewMigrateCommand()
 	serveCmd := servecmd.NewServeCommand()
 	clusterCmd := cluster.NewClusterCommand()
+	observatoriumCmd := observatorium.NewRunObservatoriumCommand()
 
 	// Add subcommand(s)
-	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand())
+	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand(), observatoriumCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)

@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/spf13/pflag"
+	"time"
 )
 
 type ObservabilityConfiguration struct {
@@ -15,8 +16,15 @@ type ObservabilityConfiguration struct {
 
 	// Observatorium configuration
 
-	ObservatoriumGateway string `json:"gateway" yaml:"gateway"`
-	ObservatoriumTenant  string `json:"tenant" yaml:"gateway"`
+	ObservatoriumGateway string        `json:"gateway" yaml:"gateway"`
+	ObservatoriumTenant  string        `json:"tenant" yaml:"gateway"`
+	AuthToken            string        `json:"auth_token"`
+	AuthTokenFile        string        `json:"auth_token_file"`
+	Cookie               string        `json:"cookie"`
+	Timeout              time.Duration `json:"timeout"`
+	Insecure             bool          `json:"insecure"`
+	Debug                bool          `json:"debug"`
+	EnableMock           bool          `json:"enable_mock"`
 }
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
@@ -27,6 +35,12 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		DexUsername:          "admin@example.com",
 		ObservatoriumGateway: "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io",
 		DexUrl:               "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
+		AuthToken:            "",
+		AuthTokenFile:        "secrets/observatorium.token",
+		Timeout:              120 * time.Second,
+		Debug:                true, // TODO: false
+		EnableMock:           false,
+		Insecure:             true, // TODO: false
 	}
 }
 
@@ -38,6 +52,11 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 
 	fs.StringVar(&c.ObservatoriumGateway, "observatorium-gateway", c.ObservatoriumGateway, "Observatorium gateway")
 	fs.StringVar(&c.ObservatoriumTenant, "observatorium-tenant", c.ObservatoriumTenant, "Observatorium tenant")
+	fs.StringVar(&c.AuthTokenFile, "observatorium-token-file", c.AuthTokenFile, "Token File for Observatorium client")
+	fs.DurationVar(&c.Timeout, "observatorium-timeout", c.Timeout, "Timeout for Observatorium client")
+	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
+	fs.BoolVar(&c.EnableMock, "enable-observatorium-mock", c.EnableMock, "Enable mock Observatorium client")
+	fs.BoolVar(&c.Debug, "observatorium-debug", c.Debug, "Debug flag for Observatorium client")
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
@@ -48,6 +67,9 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	dexSecret, err := readFile(c.DexSecretFile)
 	if err != nil {
 		return err
+	}
+	if c.AuthToken == "" && c.AuthTokenFile != "" {
+		return readFileValueString(c.AuthTokenFile, &c.AuthToken)
 	}
 
 	c.DexPassword = dexPassword
