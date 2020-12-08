@@ -4,17 +4,32 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	projectv1 "github.com/openshift/api/project/v1"
+	routev1 "github.com/openshift/api/route/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+var (
+	testCanaryName      string
+	testAdminServerName string
+)
+
+func init() {
+	// applying same rule for truncate and K8S sanitizing Kafka request name
+	sanitizedtestKafkaRequestName, _ := replaceNamespaceSpecialChar(fmt.Sprintf("%s-%s", truncateString(testKafkaRequestName, truncatedNameLen), strings.ToLower(testID)))
+	testCanaryName = sanitizedtestKafkaRequestName + "-canary"
+	testAdminServerName = sanitizedtestKafkaRequestName + "-admin-server"
+}
 
 // build a test project object
 func buildProject(modifyFn func(project *projectv1.Project)) *projectv1.Project {
@@ -58,7 +73,6 @@ func buildCanary(modifyFn func(canary *appsv1.Deployment)) *appsv1.Deployment {
 			Name:      testCanaryName,
 			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
 		},
-
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
@@ -102,6 +116,120 @@ func buildCanary(modifyFn func(canary *appsv1.Deployment)) *appsv1.Deployment {
 		modifyFn(canary)
 	}
 	return canary
+}
+
+// build a test admin server object
+func buildAdminServer(modifyFn func(adminServer *appsv1.Deployment)) *appsv1.Deployment {
+	adminServer := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testAdminServerName,
+			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": testAdminServerName,
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": testAdminServerName,
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  testAdminServerName,
+							Image: adminServerUrl,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
+									Value: testKafkaRequestName + "-kafka-bootstrap:9092",
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "http",
+									ContainerPort: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	if modifyFn != nil {
+		modifyFn(adminServer)
+	}
+	return adminServer
+}
+
+// build a test admin server service object
+func buildAdminServerService(modifyFn func(adminServerService *corev1.Service)) *corev1.Service {
+	adminServerService := &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testAdminServerName,
+			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": testAdminServerName,
+			},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       8080,
+					TargetPort: intstr.FromString("http"),
+				},
+			},
+		},
+	}
+	if modifyFn != nil {
+		modifyFn(adminServerService)
+	}
+	return adminServerService
+}
+
+// build a test admin server route object
+func buildAdminServerRoute(modifyFn func(adminServerService *routev1.Route)) *routev1.Route {
+	adminServerRoute := &routev1.Route{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "route.openshift.io/v1",
+			Kind:       "Route",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      testAdminServerName,
+			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+		},
+		Spec: routev1.RouteSpec{
+			To: routev1.RouteTargetReference{
+				Kind: "Service",
+				Name: testAdminServerName,
+			},
+			Port: &routev1.RoutePort{
+				TargetPort: intstr.FromString("http"),
+			},
+			Host: "admin-server-" + fmt.Sprintf("%s-%s.clusterDNS", testKafkaRequestName, testID),
+			TLS: &routev1.TLSConfig{
+				Termination: routev1.TLSTerminationEdge,
+			},
+		},
+	}
+	if modifyFn != nil {
+		modifyFn(adminServerRoute)
+	}
+	return adminServerRoute
 }
 
 func TestSyncsetService_Create(t *testing.T) {
@@ -292,6 +420,9 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 					}
 				}),
 				buildCanary(nil),
+				buildAdminServer(nil),
+				buildAdminServerService(nil),
+				buildAdminServerRoute(nil),
 			},
 		},
 		{
@@ -339,6 +470,9 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 					}
 				}),
 				buildCanary(nil),
+				buildAdminServer(nil),
+				buildAdminServerService(nil),
+				buildAdminServerRoute(nil),
 			},
 		},
 	}

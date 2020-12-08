@@ -7,6 +7,7 @@ import (
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	projectv1 "github.com/openshift/api/project/v1"
+	routev1 "github.com/openshift/api/route/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -14,6 +15,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	resource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
 const (
@@ -42,6 +44,8 @@ var (
 	kafkaImageUrl = string("quay.io/lulf/kafka:latest-kafka-2.6.0")
 
 	canaryImageUrl = "quay.io/ppatierno/strimzi-canary:0.0.1"
+
+	adminServerUrl = "quay.io/sknot/strimzi-admin:0.0.1"
 )
 
 var deleteClaim = false
@@ -294,6 +298,12 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}
 
+	sanitizedKafkaName := buildTruncateKafkaIdentifier(kafkaRequest)
+	sanitizedKafkaName, err = replaceNamespaceSpecialChar(sanitizedKafkaName)
+	if err != nil {
+		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
+	}
+
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.GenericKafkaListenerConfigurationBroker{}
 	for i := 0; i < numOfBrokers; i++ {
@@ -462,7 +472,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				})
 	}
 
-	canaryName := kafkaRequest.Name + "-canary"
+	canaryName := sanitizedKafkaName + "-canary"
 	// build the canary deployment
 	canary := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -513,6 +523,100 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		},
 	}
 
+	adminServerName := sanitizedKafkaName + "-admin-server"
+	adminServer := &appsv1.Deployment{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "apps/v1",
+			Kind:       "Deployment",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      adminServerName,
+			Namespace: namespaceName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": adminServerName,
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": adminServerName,
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  adminServerName,
+							Image: adminServerUrl,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
+									Value: kafkaRequest.Name + "-kafka-bootstrap:9092",
+								},
+							},
+							Ports: []corev1.ContainerPort{
+								{
+									Name:          "http",
+									ContainerPort: 8080,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	adminServerService := &corev1.Service{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      adminServerName,
+			Namespace: namespaceName,
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: map[string]string{
+				"app": adminServerName,
+			},
+			Ports: []corev1.ServicePort{
+				{
+					Name:       "http",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       8080,
+					TargetPort: intstr.FromString("http"),
+				},
+			},
+		},
+	}
+
+	adminServerRoute := &routev1.Route{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "route.openshift.io/v1",
+			Kind:       "Route",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      adminServerName,
+			Namespace: namespaceName,
+		},
+		Spec: routev1.RouteSpec{
+			To: routev1.RouteTargetReference{
+				Kind: "Service",
+				Name: adminServerService.Name,
+			},
+			Port: &routev1.RoutePort{
+				TargetPort: intstr.FromString("http"),
+			},
+			Host: "admin-server-" + kafkaRequest.BootstrapServerHost,
+			TLS: &routev1.TLSConfig{
+				Termination: routev1.TLSTerminationEdge,
+			},
+		},
+	}
+
 	resources := []interface{}{
 		&projectv1.Project{
 			TypeMeta: metav1.TypeMeta{
@@ -525,6 +629,9 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		},
 		kafkaCR,
 		canary,
+		adminServer,
+		adminServerService,
+		adminServerRoute,
 	}
 
 	syncsetBuilder = syncsetBuilder.Resources(resources...)
