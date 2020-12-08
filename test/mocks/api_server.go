@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -698,7 +699,8 @@ func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInst
 // GetMockClusterNodesBuilder for emulated OCM server
 func GetMockClusterNodesBuilder(modifyFn func(*clustersmgmtv1.ClusterNodesBuilder)) *clustersmgmtv1.ClusterNodesBuilder {
 	builder := clustersmgmtv1.NewClusterNodes().
-		Compute(constants.ClusterNodeScaleIncrement)
+		Compute(constants.ClusterNodeScaleIncrement).
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ocm.ComputeMachineType))
 	if modifyFn != nil {
 		modifyFn(builder)
 	}

@@ -9,8 +9,9 @@ import (
 
 // ClusterNamePrefix a prefix used for new OCM cluster names
 const (
-	ClusterNamePrefix = "ms-"
-	OpenshiftVersion  = "openshift-v4.6.1"
+	ClusterNamePrefix  = "ms-"
+	OpenshiftVersion   = "openshift-v4.6.1"
+	ComputeMachineType = "m5.4xlarge"
 )
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
@@ -66,6 +67,9 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	// AWS config read from the secrets/aws.* files
 	awsBuilder := clustersmgmtv1.NewAWS().AccountID(r.awsConfig.AccountID).AccessKeyID(r.awsConfig.AccessKey).SecretAccessKey(r.awsConfig.SecretAccessKey)
 	clusterBuilder.AWS(awsBuilder)
+
+	// Set compute node size
+	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
 
 	return clusterBuilder.Build()
 }

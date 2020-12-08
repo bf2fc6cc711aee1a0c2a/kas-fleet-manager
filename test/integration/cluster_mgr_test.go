@@ -2,9 +2,10 @@ package integration
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"testing"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
@@ -51,6 +52,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 
 	Expect(newCluster.Version().ID()).To(Equal(ocm.OpenshiftVersion))
+	Expect(newCluster.Nodes().ComputeMachineType().ID()).To(Equal(ocm.ComputeMachineType))
 
 	// Wait until cluster status has been updated to ready
 	var cluster api.Cluster
