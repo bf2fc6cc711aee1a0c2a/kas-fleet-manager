@@ -76,7 +76,7 @@ The following git hooks are currently available:
 ## Debugging
 ### VS Code
 Set the following configuration in your **Launch.json** file.
-```
+```json
 {
     "version": "0.2.0",
     "configurations": [
@@ -139,15 +139,13 @@ import (
 )
 
 ...
-
 $ make install
 ```
 
 The `go.mod` file we automatically be updated with the new required project, the `go.sum` file will be generated.
 
 ## Modifying the API definition
-
-All OpenAPI spec modifications must be done through [Apicurio Studio](https://studio.apicur.io/apis/35337) first and manually copied into the repo.
+The services' OpenAPI specification is located in `openapi/managed-services-api.yaml`. It can be modified using Apicurio Studio or Swagger.
 
 Once you've made your changes, the second step is to validate it:
 
@@ -161,6 +159,9 @@ Once the schema is valid, the remaining step is to generate the openapi modules 
 make openapi/generate
 ```
 
+## Adding a new endpoint
+See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint) documentation.
+
 ## Testing
 
 ### Mocking
@@ -170,13 +171,13 @@ We use the [moq](https://github.com/matryer/moq) tool to automate the generation
 In order to generate a mock on a new interface, simply place the following line above your interface
 definition:
 
-```
+```go
 //go:generate moq -out output_file.go . InterfaceName
 ```
 
 For example:
 
-```
+```go
 //go:generate moq -out output_file.go . InterfaceName
 // IDGenerator interface for string ID generators.
 type IDGenerator interface {
@@ -216,7 +217,7 @@ API server and background workers are running and that the database has been res
 state. `RegisterIntegration()` also returns a teardown function that should be invoked at the end
 of the test. This will stop the API server and background workers. For example:
 
-```
+```go
 helper, httpClient, teardown := test.RegisterIntegration(t, mockOCMServer)
 defer teardown()
 ```
@@ -303,7 +304,7 @@ On a scale from 1 -> 10, logging items at `V(10)` would be considered something 
 
 As a rule of thumb, we use verbosity settings in the following ways. Consider we have:
 
-```
+```go
 glog.V(1).Info("foo")
 glog.V(5).Info("bar")
 glog.V(10).Info("biz")
@@ -325,13 +326,13 @@ Logging can be enabled by importing the sentry-go package: "github.com/getsentry
 
 Following are possible ways of logging events via Sentry:
 
-```
+```go
 sentry.CaptureMessage(message) // for logging message
 sentry.CaptureEvent(event) // capture the events 
 sentry.CaptureException(error) // capture the exception
 ``` 
 Example : 
-```
+```go
 func check(err error, msg string) {
 	if err != nil && err != http.ErrServerClosed {
 		glog.Errorf("%s: %s", msg, err)
@@ -357,6 +358,6 @@ func check(err error, msg string) {
 
 To manually run the check, execute this command from the root of this repository
 
-```
+```sh
 make lint
 ```
