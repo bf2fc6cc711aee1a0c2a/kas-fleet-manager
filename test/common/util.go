@@ -70,7 +70,10 @@ func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.Se
 			return "", ocmErrors.GeneralError("Unable to get OSD cluster")
 		}
 		if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-			PersistClusterStruct(*foundCluster)
+			err := PersistClusterStruct(*foundCluster)
+			if err != nil {
+				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
+			}
 		}
 	}
 	return clusterID, nil

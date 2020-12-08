@@ -376,15 +376,10 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 	type args struct {
 		kafkaRequest *api.KafkaRequest
 	}
-	type want struct {
-		project *projectv1.Project
-		kafka   *strimzi.Kafka
-	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-		want    []interface{}
+		name string
+		args args
+		want []interface{}
 	}{
 		{
 			name: "build syncset with singleAZ Kafka successfully",

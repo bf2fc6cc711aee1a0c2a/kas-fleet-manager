@@ -158,7 +158,7 @@ func Test_truncateString(t *testing.T) {
 				str: exampleString,
 				num: 10,
 			},
-			want: fmt.Sprintf("%s", exampleString[0:10]),
+			want: exampleString[0:10],
 		},
 		{
 			name: "should not truncate string if wanted length is less than given string length",

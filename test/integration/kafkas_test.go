@@ -23,7 +23,6 @@ import (
 
 const (
 	mockKafkaName      = "test-kafka1"
-	mockKafkaOwner     = "owner"
 	kafkaReadyTimeout  = time.Minute * 10
 	kafkaCheckInterval = time.Second * 10
 	testMultiAZ        = true
@@ -322,7 +321,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusAccepted.String()))
 
 	// 404 Not Found
-	kafka, resp, err = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 }
 
@@ -383,6 +382,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
+	Expect(err).To(HaveOccurred(), "retrieving non-existent kafka should throw an error")
 	Expect(foundKafka.Id).Should(BeEmpty(), " Kafka ID should be deleted")
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
@@ -508,7 +508,7 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 
 	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 		if err != nil {
 			return true, err
