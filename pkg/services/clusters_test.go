@@ -615,7 +615,7 @@ func Test_UpdateStatus(t *testing.T) {
 			want:    nil,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (id =").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("UPDATE").WithExecException() //WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 		},
 		{
@@ -631,7 +631,7 @@ func Test_UpdateStatus(t *testing.T) {
 			want:    nil,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (cluster_id =").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("UPDATE").WithExecException() //WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 		},
 	}
