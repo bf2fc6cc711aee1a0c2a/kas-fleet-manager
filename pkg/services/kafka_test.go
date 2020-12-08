@@ -28,8 +28,6 @@ var (
 	testSyncsetID            = "test-syncset-id"
 	testID                   = "test"
 	testUser                 = "test-user"
-	testCanaryName           = testKafkaRequestName + "-canary"
-	testAdminServerName      = testKafkaRequestName + "-admin-server"
 	kafkaRequestTableName    = "kafka_requests"
 )
 

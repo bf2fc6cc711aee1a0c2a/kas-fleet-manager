@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -17,6 +18,18 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
+
+var (
+	testCanaryName      string
+	testAdminServerName string
+)
+
+func init() {
+	// applying same rule for truncate and K8S sanitizing Kafka request name
+	sanitizedtestKafkaRequestName, _ := replaceNamespaceSpecialChar(fmt.Sprintf("%s-%s", truncateString(testKafkaRequestName, truncatedNameLen), strings.ToLower(testID)))
+	testCanaryName = sanitizedtestKafkaRequestName + "-canary"
+	testAdminServerName = sanitizedtestKafkaRequestName + "-admin-server"
+}
 
 // build a test project object
 func buildProject(modifyFn func(project *projectv1.Project)) *projectv1.Project {
