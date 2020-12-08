@@ -36,20 +36,24 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				kafkaRequest: openapi.KafkaRequestPayload{},
-				configService: services.NewConfigService(config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "aws",
-							Default: true,
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "us-east-1",
-									Default: true,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "aws",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:    "us-east-1",
+										Default: true,
+									},
 								},
 							},
 						},
 					},
-				}, config.AllowListConfig{}, config.ServerConfig{}),
+					config.AllowListConfig{},
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{}),
 			},
 			want: result{
 				wantErr: false,
@@ -66,26 +70,31 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "gcp",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "eu-east-1",
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "gcp",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "eu-east-1",
+									},
 								},
 							},
-						},
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "us-east-1",
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
+									},
 								},
 							},
 						},
 					},
-				}, config.AllowListConfig{}, config.ServerConfig{}),
+					config.AllowListConfig{},
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{},
+				),
 			},
 			want: result{
 				wantErr: false,
@@ -102,18 +111,22 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "us-east-1",
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
+									},
 								},
 							},
 						},
 					},
-				}, config.AllowListConfig{}, config.ServerConfig{}),
+					config.AllowListConfig{},
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{}),
 			},
 			want: result{
 				wantErr: true,
@@ -167,9 +180,14 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return api.KafkaList{}, nil, nil
 					},
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
-					EnableAllowList: false,
-				}, config.ServerConfig{}),
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{
+						EnableAllowList: false,
+					},
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{},
+				),
 				context: context.TODO(),
 			},
 			want: nil,
@@ -182,17 +200,20 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{
-								Username:            username,
-								MaxAllowedInstances: 4,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							AllowedUsers: config.AllowedUsers{
+								config.AllowedUser{
+									Username:            username,
+									MaxAllowedInstances: 4,
+								},
 							},
 						},
-					},
-				}, config.ServerConfig{}),
+					}, config.ServerConfig{},
+					config.ObservabilityConfiguration{}),
 				context: context.TODO(),
 			},
 			want: errors.GeneralError("count failed from database"),
@@ -205,17 +226,22 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return nil, &api.PagingMeta{Total: 4}, nil
 					},
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{
-								Username:            username,
-								MaxAllowedInstances: 4,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							AllowedUsers: config.AllowedUsers{
+								config.AllowedUser{
+									Username:            username,
+									MaxAllowedInstances: 4,
+								},
 							},
 						},
 					},
-				}, config.ServerConfig{}),
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{},
+				),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
@@ -232,16 +258,21 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{
-								Username: username,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							AllowedUsers: config.AllowedUsers{
+								config.AllowedUser{
+									Username: username,
+								},
 							},
 						},
 					},
-				}, config.ServerConfig{}),
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{},
+				),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
@@ -258,9 +289,13 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
 				},
-				configService: services.NewConfigService(config.ProviderConfiguration{}, config.AllowListConfig{
-					EnableAllowList: true,
-				}, config.ServerConfig{}),
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{
+						EnableAllowList: true,
+					},
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{}),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
