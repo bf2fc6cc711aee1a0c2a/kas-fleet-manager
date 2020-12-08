@@ -15,13 +15,11 @@ import (
 )
 
 var (
-	testRegion        = "us-west-1"
-	testProvider      = "aws"
-	testDNS           = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
-	testCloudProvider = "aws"
-	testMultiAZ       = true
-	testStatus        = api.ClusterProvisioned
-	clustersTableName = "clusters"
+	testRegion   = "us-west-1"
+	testProvider = "aws"
+	testDNS      = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
+	testMultiAZ  = true
+	testStatus   = api.ClusterProvisioned
 )
 
 // build a test cluster
@@ -444,9 +442,6 @@ func Test_ListByStatus(t *testing.T) {
 
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		ocmClient         ocm.Client
-		awsConfig         *config.AWSConfig
-		clusterBuilder    ocm.ClusterBuilder
 	}
 	type args struct {
 		status api.ClusterStatus

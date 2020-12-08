@@ -24,7 +24,7 @@ func NewContext(ctx context.Context) (context.Context, error) {
 
 	// adding txid explicitly to context with a simple string key and int value
 	// due to a cyclical import cycle between pkg/db and pkg/logging
-	ctx = context.WithValue(ctx, "txid", tx.txid)
+	ctx = context.WithValue(ctx, "txid", tx.txid) //nolint
 	ctx = context.WithValue(ctx, transactionKey, tx)
 
 	return ctx, nil

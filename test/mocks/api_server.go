@@ -3,7 +3,6 @@ package mocks
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -368,7 +367,7 @@ func buildMockRequestHandler(successType interface{}, serviceErr *ocmErrors.Serv
 
 // marshalOCMType marshals known ocm types to a provided io.Writer using the ocm sdk marshallers
 func marshalOCMType(t interface{}, w io.Writer) error {
-	switch t.(type) {
+	switch t.(type) { //nolint
 	// handle cluster types
 	case *clustersmgmtv1.Cluster:
 		return clustersmgmtv1.MarshalCluster(t.(*clustersmgmtv1.Cluster), w)
@@ -441,7 +440,7 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError(""))
 	}
-	return errors.New(fmt.Sprintf("could not recognise type %s in ocm type marshaller", reflect.TypeOf(t).String()))
+	return fmt.Errorf("could not recognise type %s in ocm type marshaller", reflect.TypeOf(t).String())
 }
 
 // basic wrapper to emulate the the ocm list types as they're private
@@ -516,6 +515,9 @@ func init() {
 
 	// mock cluster status
 	MockClusterStatus, err = GetMockClusterStatus(nil)
+	if err != nil {
+		panic(err)
+	}
 	MockClusterAddonInstallation, err = GetMockClusterAddonInstallation(nil)
 	if err != nil {
 		panic(err)

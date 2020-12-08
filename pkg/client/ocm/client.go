@@ -90,7 +90,3 @@ func (c *Client) Close() {
 		c.Connection.Close()
 	}
 }
-
-type service struct {
-	client *Client
-}

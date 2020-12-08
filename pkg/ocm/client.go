@@ -131,7 +131,7 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 
 	var clusterDNS string
 	ingresses.Items().Each(func(ingress *clustersmgmtv1.Ingress) bool {
-		if ingress.Default() == true {
+		if ingress.Default() {
 			clusterDNS = ingress.DNSName()
 			return false
 		}
