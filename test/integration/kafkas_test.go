@@ -540,8 +540,38 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
 
-	// new account setup to prove that users can only list their own kafka instances
+	// new account setup to prove that users can list kafkas instances created by a memeber of their org
 	account = h.NewRandAccount()
+	ctx = h.NewAuthenticatedContext(account)
+
+	// get populated list of kafka requests
+
+	afterPostList, _, err = client.DefaultApi.ListKafkas(ctx, nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
+	Expect(afterPostList.Size).To(Equal(int32(1)), "Expected Size == 1")
+	Expect(afterPostList.Total).To(Equal(int32(1)), "Expected Total == 1")
+
+	// get kafka request item from the list
+	listItem = afterPostList.Items[0]
+
+	// check whether the seedKafka properties are the same as those from the kafka request list item
+	Expect(seedKafka.Id).To(Equal(listItem.Id))
+	Expect(seedKafka.Kind).To(Equal(listItem.Kind))
+	Expect(listItem.Kind).To(Equal(presenters.KindKafka))
+	Expect(seedKafka.Href).To(Equal(listItem.Href))
+	Expect(seedKafka.Region).To(Equal(listItem.Region))
+	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
+	Expect(seedKafka.CloudProvider).To(Equal(listItem.CloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
+	Expect(seedKafka.Name).To(Equal(listItem.Name))
+	Expect(listItem.Name).To(Equal(mockKafkaName))
+	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
+
+	// new account setup to prove that users can only list their own (the one they created and the one created by a memeber of their org) kafka instances
+	anotherOrgId := "13639843"
+	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgId)
 	ctx = h.NewAuthenticatedContext(account)
 
 	// expecting empty list for user that hasn't created any kafkas yet
