@@ -25,3 +25,7 @@ allowed_users_per_organisation:
   - id: 12147054
     allow_all: true
     allowed_users: []
+    # The Kafka Instances team
+  - id: 13639843
+    allow_all: true
+    allowed_users: []
