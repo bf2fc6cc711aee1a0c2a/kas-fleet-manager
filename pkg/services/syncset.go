@@ -298,6 +298,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}
 
+	sanitizedKafkaName, err := replaceNamespaceSpecialChar(kafkaRequest.Name)
+	if err != nil {
+		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
+	}
+
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.GenericKafkaListenerConfigurationBroker{}
 	for i := 0; i < numOfBrokers; i++ {
@@ -466,7 +471,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 				})
 	}
 
-	canaryName := kafkaRequest.Name + "-canary"
+	canaryName := sanitizedKafkaName + "-canary"
 	// build the canary deployment
 	canary := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
@@ -517,7 +522,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		},
 	}
 
-	adminServerName := kafkaRequest.Name + "-admin-server"
+	adminServerName := sanitizedKafkaName + "-admin-server"
 	adminServer := &appsv1.Deployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "apps/v1",
