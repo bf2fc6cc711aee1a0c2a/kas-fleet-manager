@@ -169,7 +169,7 @@ func (c *ClusterManager) reconcile() {
 				continue
 			}
 
-			if err = c.clusterService.UpdateStatus(provisionedCluster.ID, api.ClusterReady); err != nil {
+			if err = c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
 				sentry.CaptureException(err)
 				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 				continue

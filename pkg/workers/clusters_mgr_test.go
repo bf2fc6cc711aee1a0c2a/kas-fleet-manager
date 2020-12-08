@@ -29,6 +29,11 @@ import (
 	observability "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/observability/v1"
 )
 
+var (
+	testRegion   = "us-west-1"
+	testProvider = "aws"
+)
+
 // build a test addonInstallation
 func buildAddonInstallation(id string, state clustersmgmtv1.AddOnInstallationState) *clustersmgmtv1.AddOnInstallation {
 	managedKafkaAddonBuilder := clustersmgmtv1.NewAddOnInstallation()
@@ -352,6 +357,73 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("reconcileStrimziOperator() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
+	type fields struct {
+		providerLst     []string
+		clusterService  services.ClusterService
+		providersConfig config.ProviderConfiguration
+		serverConfig    config.ServerConfig
+	}
+
+	tests := []struct {
+		name    string
+		wantErr bool
+		fields  fields
+	}{
+		{
+			name: "reconcile cluster with cluster creation requests",
+			fields: fields{
+				providerLst: []string{"us-east-1"},
+				clusterService: &services.ClusterServiceMock{
+					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
+						var res []*services.ResGroupCPRegion
+						return res, nil
+					},
+					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
+						sample, _ := v1.NewCluster().Build()
+						return sample, nil
+					},
+				},
+				serverConfig: config.ServerConfig{
+					AutoOSDCreation: true,
+				},
+				providersConfig: config.ProviderConfiguration{
+					SupportedProviders: config.ProviderList{
+						config.Provider{
+							Name: "aws",
+							Regions: config.RegionList{
+								config.Region{
+									Name: "us-east-1",
+								},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := ClusterManager{
+				clusterService: tt.fields.clusterService,
+				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.serverConfig, config.ObservabilityConfiguration{}),
+			}
+
+			clusterRequest := &api.Cluster{
+				Region:        testRegion,
+				CloudProvider: testProvider,
+				Status:        "cluster_accepted",
+			}
+
+			err := c.reconcileAcceptedCluster(clusterRequest)
+			if err != nil && !tt.wantErr {
+				t.Errorf("reconcileAcceptedCluster() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
