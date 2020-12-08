@@ -22,11 +22,13 @@ import (
 )
 
 const (
-	mockKafkaName      = "test"
+	mockKafkaName      = "test-kafka1"
 	mockKafkaOwner     = "owner"
 	kafkaReadyTimeout  = time.Minute * 10
 	kafkaCheckInterval = time.Second * 10
 	testMultiAZ        = true
+	invalidKafkaName   = "Test_Cluster9"
+	longKafkaName      = "thisisaninvalidkafkaclusternamethatexceedsthenamesizelimit"
 )
 
 // TestKafkaCreate_Success validates the happy path of the kafka post endpoint:
@@ -157,6 +159,26 @@ func TestKafkaPost_Validations(t *testing.T) {
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name: "HTTP 400 when name is not valid",
+			body: openapi.KafkaRequestPayload{
+				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+				MultiAz:       mocks.MockCluster.MultiAZ(),
+				Region:        mocks.MockCluster.Region().ID(),
+				Name:          invalidKafkaName,
+			},
+			wantCode: http.StatusBadRequest,
+		},
+		{
+			name: "HTTP 400 when name is too long",
+			body: openapi.KafkaRequestPayload{
+				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+				MultiAz:       mocks.MockCluster.MultiAZ(),
+				Region:        mocks.MockCluster.Region().ID(),
+				Name:          longKafkaName,
 			},
 			wantCode: http.StatusBadRequest,
 		},

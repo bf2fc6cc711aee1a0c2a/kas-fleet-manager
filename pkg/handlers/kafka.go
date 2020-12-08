@@ -32,7 +32,8 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Validate: []validate{
 			validateAsyncEnabled(r, "creating kafka requests"),
 			validateNotEmpty(&owner, "owner"),
-			validateNotEmpty(&kafkaRequest.Name, "name"),
+			validateLength(&kafkaRequest.Name, "name", &minKafkaNameLength, &maxKafkaNameLength),
+			validateRegexp(validKafkaClusterNameRegexp, &kafkaRequest.Name, "name"),
 			validateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
 			validateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 			validateMaxAllowedInstances(h.service, h.config, r.Context()),

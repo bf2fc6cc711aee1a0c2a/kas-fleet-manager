@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -11,6 +12,13 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+)
+
+var (
+	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
+	validKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+	minKafkaNameLength          = 1
+	maxKafkaNameLength          = 32
 )
 
 func validateNotEmpty(value *string, field string) validate {
@@ -125,6 +133,31 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 			return errors.Forbidden(fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances()))
 		}
 
+		return nil
+	}
+}
+
+func validateRegexp(regexp *regexp.Regexp, value *string, field string) validate {
+	return func() *errors.ServiceError {
+		if !regexp.MatchString(*value) {
+			return errors.Validation("%s does not match %s", field, regexp.String())
+		}
+		return nil
+	}
+}
+
+func validateLength(value *string, field string, minVal *int, maxVal *int) validate {
+	var min = 1
+	if *minVal > 1 {
+		min = *minVal
+	}
+	return func() *errors.ServiceError {
+		if value == nil || len(*value) < min {
+			return errors.Validation("%s is not valid. Minimum length %d is required.", field, min)
+		}
+		if maxVal != nil && len(*value) > *maxVal {
+			return errors.Validation("%s is not valid. Maximum length %d is required", field, maxVal)
+		}
 		return nil
 	}
 }

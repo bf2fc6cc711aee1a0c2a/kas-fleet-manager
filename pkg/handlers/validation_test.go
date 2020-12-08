@@ -280,3 +280,55 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 		})
 	}
 }
+
+func Test_Validations_validateKafkaClusterNames(t *testing.T) {
+	tests := []struct {
+		description string
+		name        string
+		expectError bool
+	}{
+		{
+			description: "valid kafka cluster name",
+			name:        "test-kafka1",
+			expectError: false,
+		},
+		{
+			description: "valid kafka cluster name with multiple '-'",
+			name:        "test-my-cluster",
+			expectError: false,
+		},
+		{
+			description: "invalid kafka cluster name begins with number",
+			name:        "1test-cluster",
+			expectError: true,
+		},
+		{
+			description: "invalid kafka cluster name with invalid characters",
+			name:        "test-c%*_2",
+			expectError: true,
+		},
+		{
+			description: "invalid kafka cluster name with upper-case letters",
+			name:        "Test-cluster",
+			expectError: true,
+		},
+		{
+			description: "invalid kafka cluster name with spaces",
+			name:        "test cluster",
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.description, func(t *testing.T) {
+			RegisterTestingT(t)
+			validateFn := validateRegexp(validKafkaClusterNameRegexp, &tt.name, "name")
+			err := validateFn()
+			if tt.expectError {
+				Expect(err).Should(HaveOccurred())
+			} else {
+				Expect(err).ShouldNot(HaveOccurred())
+			}
+		})
+	}
+}
