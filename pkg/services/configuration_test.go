@@ -866,8 +866,6 @@ func Test_configService_validateProvider(t *testing.T) {
 }
 
 func Test_configService_IsAutoCreateOSDEnabled(t *testing.T) {
-	type fields struct {
-	}
 
 	tests := []struct {
 		name         string

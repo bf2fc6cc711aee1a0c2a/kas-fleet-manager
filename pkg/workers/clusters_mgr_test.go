@@ -244,9 +244,6 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 		ocmClient ocm.Client
 		timer     *time.Timer
 	}
-	type args struct {
-		addOnInstallationState clustersmgmtv1.AddOnInstallationState
-	}
 	tests := []struct {
 		name    string
 		fields  fields

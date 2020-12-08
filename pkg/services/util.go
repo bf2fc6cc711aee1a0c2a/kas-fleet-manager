@@ -67,10 +67,6 @@ func handleUpdateError(resourceType string, err error) *errors.ServiceError {
 	return errors.GeneralError("Unable to update %s: %s", resourceType, err.Error())
 }
 
-func handleDeleteError(resourceType string, err error) *errors.ServiceError {
-	return errors.GeneralError("Unable to delete %s: %s", resourceType, err.Error())
-}
-
 func truncateString(str string, num int) string {
 	truncatedString := str
 	if len(str) > num {

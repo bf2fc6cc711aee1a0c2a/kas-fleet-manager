@@ -65,21 +65,6 @@ func newGormigrate(db *gorm.DB) *gormigrate.Gormigrate {
 	return gormigrate.New(db, gormOptions, migrations)
 }
 
-type fkMigration struct {
-	Model interface{}
-	Field string
-	Dest  string
-}
-
-func addFKs(tx *gorm.DB, fks []fkMigration) error {
-	for _, fk := range fks {
-		if err := tx.Model(fk.Model).AddForeignKey(fk.Field, fk.Dest, "RESTRICT", "RESTRICT").Error; err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 // Model represents the base model struct. All entities will have this struct embedded.
 type Model struct {
 	ID        string `gorm:"primary_key"`

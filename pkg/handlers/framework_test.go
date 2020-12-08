@@ -2,6 +2,7 @@ package handlers
 
 import "net/http"
 
+//nolint
 type mockResponseWriter struct {
 	written string
 	status  int
@@ -10,6 +11,7 @@ type mockResponseWriter struct {
 func (m *mockResponseWriter) Header() http.Header {
 	return map[string][]string{}
 }
+
 func (m *mockResponseWriter) Write(b []byte) (int, error) {
 	m.written = string(b)
 	return 0, nil

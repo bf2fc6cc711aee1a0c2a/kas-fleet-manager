@@ -12,6 +12,10 @@ type OCMAuthorization interface {
 	AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 }
 
+type service struct {
+	client *Client //nolint
+}
+
 type authorization service
 
 var _ OCMAuthorization = &authorization{}
