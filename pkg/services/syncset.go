@@ -298,7 +298,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest) (*cmv1.SyncsetBuilde
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}
 
-	sanitizedKafkaName, err := replaceNamespaceSpecialChar(kafkaRequest.Name)
+	sanitizedKafkaName := buildTruncateKafkaIdentifier(kafkaRequest)
+	sanitizedKafkaName, err = replaceNamespaceSpecialChar(sanitizedKafkaName)
 	if err != nil {
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}
