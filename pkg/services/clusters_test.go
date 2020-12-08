@@ -719,9 +719,9 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		providers         [] string
-		regions           [] string
-		status            [] string
+		providers         []string
+		regions           []string
+		status            []string
 	}
 	tests := []struct {
 		name    string
@@ -734,8 +734,8 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 			name: "ListGroupByProviderAndRegion success",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providers:         [] string{"aws"},
-				regions:           [] string{"us-east-1"},
+				providers:         []string{"aws"},
+				regions:           []string{"us-east-1"},
 				status:            api.StatusForValidCluster,
 			},
 			want:    []*ResGroupCPRegion{},
@@ -748,8 +748,8 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 			name: "ListGroupByProviderAndRegion failure",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providers:         [] string{"aws"},
-				regions:           [] string{"us-east-1"},
+				providers:         []string{"aws"},
+				regions:           []string{"us-east-1"},
 				status:            api.StatusForValidCluster,
 			},
 			want:    nil,

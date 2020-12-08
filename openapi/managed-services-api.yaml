@@ -412,7 +412,7 @@ components:
           description: Set this to true to configure the Kafka cluster to be multiAZ
           type: boolean
         name:
-          description: The name of the Kafka cluster
+          description: 'The name of the Kafka cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
           type: string
         region:
           description: The region where the Kafka cluster will be created in

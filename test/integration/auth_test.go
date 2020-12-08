@@ -169,7 +169,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	token.Header["kid"] = "uhctestkey"
-	token.Header["alg"] =""
+	token.Header["alg"] = ""
 	strToken, _ := token.SignedString(h.JWTPrivateKey)
 
 	restyResp, err := resty.R().
