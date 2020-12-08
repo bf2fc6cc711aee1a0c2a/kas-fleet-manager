@@ -7,8 +7,12 @@ import (
 	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha2"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	. "github.com/onsi/gomega"
@@ -19,6 +23,10 @@ import (
 
 	projectv1 "github.com/openshift/api/project/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	k8sCoreV1 "k8s.io/api/core/v1"
+
+	observability "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/observability/v1"
 )
 
 // build a test addonInstallation
@@ -464,7 +472,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.serverConfig),
+				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.serverConfig, config.ObservabilityConfiguration{}),
 			}
 			err := c.reconcileClustersForRegions()
 			if err != nil && !tt.wantErr {
@@ -476,20 +484,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 
 func TestClusterManager_createSyncSet(t *testing.T) {
 
-	syncset, err := clustersmgmtv1.NewSyncset().
-		ID("ext-managed-application-services-observability").
-		Resources([]interface{}{
-			&projectv1.Project{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "project.openshift.io/v1",
-					Kind:       "Project",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "managed-application-services-observability",
-				},
-			},
-		}...).
-		Build()
+	observabilityConfig := buildObservabilityConfig()
+	syncset, err := buildSyncSet(observabilityConfig)
 
 	if err != nil {
 		t.Fatal("Unabled to create test syncset")
@@ -546,6 +542,12 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 			c := &ClusterManager{
 				ocmClient: tt.fields.ocmClient,
 				timer:     tt.fields.timer,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{},
+					config.ServerConfig{},
+					observabilityConfig,
+				),
 			}
 			got, err := c.createSyncSet("clusterId")
 			Expect(got).To(Equal(tt.want.syncset))
@@ -554,4 +556,128 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 			}
 		})
 	}
+}
+
+// buildObservabilityConfig builds a observability config used for testing
+func buildObservabilityConfig() config.ObservabilityConfiguration {
+	observabilityConfig := config.ObservabilityConfiguration{
+		DexUrl:               "dex-url",
+		DexPassword:          "dex-password",
+		DexUsername:          "dex-username",
+		DexSecret:            "dex-secret",
+		ObservatoriumTenant:  "tenant",
+		ObservatoriumGateway: "gateway",
+	}
+	return observabilityConfig
+}
+
+// buildSyncSet builds a syncset used for testing
+func buildSyncSet(observabilityConfig config.ObservabilityConfiguration) (*clustersmgmtv1.Syncset, error) {
+	syncset, err := clustersmgmtv1.NewSyncset().
+		ID("ext-managed-application-services-observability").
+		Resources([]interface{}{
+			&projectv1.Project{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "project.openshift.io/v1",
+					Kind:       "Project",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: observabilityNamespace,
+				},
+			},
+			&k8sCoreV1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: metav1.SchemeGroupVersion.Version,
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      observabilityDexCredentials,
+					Namespace: observabilityNamespace,
+				},
+				Type: k8sCoreV1.SecretTypeOpaque,
+				StringData: map[string]string{
+					"password": observabilityConfig.DexPassword,
+					"secret":   observabilityConfig.DexSecret,
+					"username": observabilityConfig.DexUsername,
+				},
+			},
+			&v1alpha1.CatalogSource{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operators.coreos.com/v1alpha1",
+					Kind:       "CatalogSource",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      observabilityCatalogSourceName,
+					Namespace: observabilityNamespace,
+				},
+				Spec: v1alpha1.CatalogSourceSpec{
+					SourceType: v1alpha1.SourceTypeGrpc,
+					Image:      observabilityCatalogSourceImage,
+				},
+			},
+			&v1alpha2.OperatorGroup{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operators.coreos.com/v1alpha2",
+					Kind:       "OperatorGroup",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      observabilityOperatorGroupName,
+					Namespace: observabilityNamespace,
+				},
+				Spec: v1alpha2.OperatorGroupSpec{
+					TargetNamespaces: []string{observabilityNamespace},
+				},
+			},
+			&v1alpha1.Subscription{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operators.coreos.com/v1alpha1",
+					Kind:       "Subscription",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      observabilitySubscriptionName,
+					Namespace: observabilityNamespace,
+				},
+				Spec: &v1alpha1.SubscriptionSpec{
+					CatalogSource:          observabilityCatalogSourceName,
+					Channel:                "alpha",
+					CatalogSourceNamespace: observabilityNamespace,
+					StartingCSV:            "observability-operator.v0.0.1",
+					InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
+					Package:                observabilitySubscriptionName,
+				},
+			},
+			&observability.Observability{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "observability.redhat.com/v1",
+					Kind:       "Observability",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      observabilityStackName,
+					Namespace: observabilityNamespace,
+				},
+				Spec: observability.ObservabilitySpec{
+					Grafana: observability.GrafanaConfig{
+						Managed: false,
+					},
+					KafkaNamespaceSelector: metav1.LabelSelector{
+						MatchLabels: constants.NamespaceLabels,
+					},
+					CanaryPodSelector: metav1.LabelSelector{
+						MatchLabels: observabilityCanaryPodSelector,
+					},
+					Observatorium: observability.ObservatoriumConfig{
+						Gateway:  observabilityConfig.ObservatoriumGateway,
+						Tenant:   observabilityConfig.ObservatoriumTenant,
+						AuthType: observabilityAuthType,
+						AuthDex: &observability.DexConfig{
+							Url:                       observabilityConfig.DexUrl,
+							CredentialSecretName:      observabilityDexCredentials,
+							CredentialSecretNamespace: observabilityNamespace,
+						},
+					},
+				},
+			},
+		}...).
+		Build()
+	return syncset, err
 }

@@ -12,6 +12,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -39,7 +40,8 @@ func buildProject(modifyFn func(project *projectv1.Project)) *projectv1.Project 
 			Kind:       "Project",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s", testUser, testID),
+			Name:   fmt.Sprintf("%s-%s", testUser, testID),
+			Labels: constants.NamespaceLabels,
 		},
 	}
 	if modifyFn != nil {
@@ -76,13 +78,15 @@ func buildCanary(modifyFn func(canary *appsv1.Deployment)) *appsv1.Deployment {
 		Spec: appsv1.DeploymentSpec{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": testCanaryName,
+					"app":                                    testCanaryName,
+					constants.ObservabilityCanaryPodLabelKey: constants.ObservabilityCanaryPodLabelValue,
 				},
 			},
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": testCanaryName,
+						"app":                                    testCanaryName,
+						constants.ObservabilityCanaryPodLabelKey: constants.ObservabilityCanaryPodLabelValue,
 					},
 				},
 				Spec: corev1.PodSpec{

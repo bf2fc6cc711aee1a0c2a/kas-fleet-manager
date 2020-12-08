@@ -33,6 +33,8 @@ type ConfigService interface {
 	Validate() error
 	// IsAutoCreateOSDEnabled returns true if the automatic creation of OSD cluster is enabled, false otherwise.
 	IsAutoCreateOSDEnabled() bool
+	// GetObservabilityConfiguration returns ObservabilityConfiguration.
+	GetObservabilityConfiguration() config.ObservabilityConfiguration
 }
 
 var _ ConfigService = &configService{}
@@ -47,14 +49,19 @@ type configService struct {
 
 	// serverConfig is the server configuration
 	serverConfig config.ServerConfig
+
+	// Observability coniguration
+	observabilityConfig config.ObservabilityConfiguration
 }
 
 // NewConfigService returns a new default implementation of ConfigService
-func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig, serverConfig config.ServerConfig) ConfigService {
+// TODO pass ApplicationConfiguration instead
+func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig, serverConfig config.ServerConfig, observabilityConfig config.ObservabilityConfiguration) ConfigService {
 	return &configService{
-		providersConfig: providersConfig,
-		allowListConfig: allowListConfig,
-		serverConfig:    serverConfig,
+		providersConfig:     providersConfig,
+		allowListConfig:     allowListConfig,
+		serverConfig:        serverConfig,
+		observabilityConfig: observabilityConfig,
 	}
 }
 
@@ -168,4 +175,9 @@ func (c configService) validateProvider(provider config.Provider) error {
 
 func (c configService) IsAutoCreateOSDEnabled() bool {
 	return c.serverConfig.AutoOSDCreation
+}
+
+// GetObservabilityConfiguration returns ObservabilityConfiguration.
+func (c configService) GetObservabilityConfiguration() config.ObservabilityConfiguration {
+	return c.observabilityConfig
 }
