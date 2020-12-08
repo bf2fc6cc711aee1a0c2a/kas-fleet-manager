@@ -1,7 +1,6 @@
 package ocm
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -23,7 +22,7 @@ func Test_idGenerator_Generate(t *testing.T) {
 			},
 			validateFn: func(id string) error {
 				if !strings.HasPrefix(id, ClusterNamePrefix) {
-					return errors.New(fmt.Sprintf("expected id to have prefix %s, got = %s", ClusterNamePrefix, id))
+					return fmt.Errorf("expected id to have prefix %s, got = %s", ClusterNamePrefix, id)
 				}
 				return nil
 			},

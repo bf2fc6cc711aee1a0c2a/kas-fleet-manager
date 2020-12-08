@@ -19,7 +19,7 @@ export TEST_SUMMARY_FORMAT="standard-verbose"
 
 # install linter
 test -f golangci-lint.sh || wget https://install.goreleaser.com/github.com/golangci/golangci-lint.sh
-sh ./golangci-lint.sh -d -b "$(go env GOPATH)/bin" v1.18.0
+sh ./golangci-lint.sh -d -b "$(go env GOPATH)/bin" v1.33.0
 
 # install gotestsum
 which gotestsum || curl -sSL "https://github.com/gotestyourself/gotestsum/releases/download/v0.3.5/gotestsum_0.3.5_linux_amd64.tar.gz" | tar -xz -C "$(go env GOPATH)/bin" gotestsum
@@ -30,7 +30,7 @@ PGDATA=/var/lib/postgresql/data /usr/lib/postgresql/*/bin/pg_ctl -w stop
 PGDATA=/var/lib/postgresql/data /usr/lib/postgresql/*/bin/pg_ctl start -o "-c listen_addresses='*' -p 5432"
 
 # check the code. Then run the unit and integration tests and cleanup cluster (if running against real OCM)
-make -k verify test test/integration test/cluster/cleanup
+make -k lint verify test test/integration test/cluster/cleanup
 
 # required for entrypoint script run by docker to exit and stop container
 exit 0

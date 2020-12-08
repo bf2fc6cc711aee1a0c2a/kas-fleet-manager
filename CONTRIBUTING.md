@@ -53,7 +53,7 @@ $GOPATH
          /cmd
            /managed-services-api  -- Main CLI entrypoint
          /pkg
-           /api      -- type definitions and models
+           /api      -- type definitions and models (Note. openapi folder is generated - see below)
            /config   -- configuration handling
 					 /db  		 -- database schema and migrations
            /handlers -- web handlers/controllers
@@ -350,3 +350,13 @@ func check(err error, msg string) {
   * each required environment 
   * each supported upgrade path
 * MR has been merged
+
+## Running linter
+
+`golangci-lint` is used to run a static code analysis. This is enabled on per MR check and it will fail, if any new changes don't conform to the rules specified by the linter.
+
+To manually run the check, execute this command from the root of this repository
+
+```
+make lint
+```

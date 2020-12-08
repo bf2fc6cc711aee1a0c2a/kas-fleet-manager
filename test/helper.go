@@ -38,7 +38,6 @@ import (
 )
 
 const (
-	apiPort        = ":8777"
 	jwtKeyFile     = "test/support/jwt_private_key.pem"
 	jwtCAFile      = "test/support/jwt_ca.pem"
 	jwkKID         = "uhctestkey"
@@ -46,7 +45,6 @@ const (
 	tokenExpMin    = 15
 )
 
-var originalServerURL string
 var helper *Helper
 var once sync.Once
 
@@ -87,7 +85,6 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 			fmt.Printf("Setting OCM base URL to %s\n", server.URL)
 			env.Config.OCM.BaseURL = server.URL
 		}
-		originalServerURL = env.Config.OCM.BaseURL
 
 		// Manually set environment name, ignoring environment variables
 		validTestEnv := false
@@ -107,7 +104,10 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 		}
 		if logLevel := os.Getenv("LOGLEVEL"); logLevel != "" {
 			glog.Infof("Using custom loglevel: %s", logLevel)
-			pflag.CommandLine.Set("-v", logLevel)
+			err = pflag.CommandLine.Set("-v", logLevel)
+			if err != nil {
+				glog.Warningf("Unable to set custom logLevel: %s", err.Error())
+			}
 		}
 		pflag.Parse()
 
@@ -139,8 +139,14 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 
 func (helper *Helper) SetServer(server *httptest.Server) {
 	helper.Env().Config.OCM.BaseURL = server.URL
-	helper.Env().LoadClients()
-	helper.Env().LoadServices()
+	err := helper.Env().LoadClients()
+	if err != nil {
+		glog.Fatalf("Unable to load clients: %s", err.Error())
+	}
+	err = helper.Env().LoadServices()
+	if err != nil {
+		glog.Fatalf("Unable to load services: %s", err.Error())
+	}
 }
 
 func (helper *Helper) Env() *environments.Env {
@@ -291,10 +297,13 @@ func (helper *Helper) Reset() {
 	// This new flag set ensures we don't hit conflicts defining the same flag twice
 	// Also on reset, we don't care to be re-defining 'v' and other glog flags
 	flagset := pflag.NewFlagSet(helper.NewID(), pflag.ContinueOnError)
-	env.AddFlags(flagset)
+	err := env.AddFlags(flagset)
+	if err != nil {
+		glog.Fatalf("Unable to load clients: %s", err.Error())
+	}
 	pflag.Parse()
 
-	err := env.Initialize()
+	err = env.Initialize()
 	if err != nil {
 		glog.Fatalf("Unable to reset testing environment: %s", err.Error())
 	}

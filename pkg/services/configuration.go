@@ -84,7 +84,7 @@ func (c configService) GetDefaultRegionForProvider(provider config.Provider) (co
 			return r, nil
 		}
 	}
-	return config.Region{}, errors.New(fmt.Sprintf("no default region found for provider %s", provider.Name))
+	return config.Region{}, fmt.Errorf("no default region found for provider %s", provider.Name)
 }
 
 func (c configService) IsProviderSupported(providerName string) bool {
@@ -154,7 +154,7 @@ func (c configService) Validate() error {
 		}
 	}
 	if providerDefaultCount != 1 {
-		return errors.New(fmt.Sprintf("expected 1 default provider in provider list, got %d", providerDefaultCount))
+		return fmt.Errorf("expected 1 default provider in provider list, got %d", providerDefaultCount)
 	}
 	return nil
 }
@@ -168,7 +168,7 @@ func (c configService) validateProvider(provider config.Provider) error {
 		}
 	}
 	if defaultCount != 1 {
-		return errors.New(fmt.Sprintf("expected 1 default region in provider %s, got %d", provider.Name, defaultCount))
+		return fmt.Errorf("expected 1 default region in provider %s, got %d", provider.Name, defaultCount)
 	}
 	return nil
 }

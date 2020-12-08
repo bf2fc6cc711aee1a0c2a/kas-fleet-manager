@@ -154,10 +154,16 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			body, err := ioutil.ReadAll(rr.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
 			var data map[string]string
-			json.Unmarshal(body, &data)
+			err = json.Unmarshal(body, &data)
+			if err != nil {
+				t.Fatal(err)
+			}
 			Expect(rr.Code).To(Equal(http.StatusForbidden))
-			Expect(rr.HeaderMap["Content-Type"][0]).To(Equal("application/json"))
+			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(data["kind"]).To(Equal("Error"))
 			Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
 		})
@@ -264,6 +270,9 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 
 // NextHandler is a dummy handler that returns OK when AllowList middleware has passed
 func NextHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, "OK")
+	w.WriteHeader(http.StatusOK) //nolint
+	_, err := io.WriteString(w, "OK")
+	if err != nil {
+		panic(err)
+	}
 }

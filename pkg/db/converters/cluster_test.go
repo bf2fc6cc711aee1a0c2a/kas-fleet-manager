@@ -9,11 +9,9 @@ import (
 var (
 	testRegion        = "us-west-1"
 	testProvider      = "aws"
-	testDNS           = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
 	testCloudProvider = "aws"
 	testMultiAZ       = true
 	testStatus        = api.ClusterProvisioned
-	clustersTableName = "clusters"
 	testClusterID     = "123"
 	testBYOC          = true
 	testManaged       = true
