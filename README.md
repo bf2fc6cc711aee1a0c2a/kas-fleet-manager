@@ -20,8 +20,10 @@ For more information on how the service works, see [the implementation documenta
     - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
     - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
 
+- Ensure that the organization's `external_id` appears in the [Allow List Configurations](config/allow-list-configuration.yaml). Follow the guide in [Allow List Configurations](#allow-list-configurations). 
+
 - Ensure the organization your personal OCM account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
-    - Find your organization in [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs). To find your organization id, follow the guide in [Allow List Configurations](#allow-list-configurations).
+    - Find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs).
 
 ## Allow List Configurations
 
