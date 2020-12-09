@@ -391,7 +391,7 @@ objects:
             - --mas-sso-client-id-file=/secrets/service/keycloak-service.clientId
             - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
             - --mas-sso-base-url=${MAS_SSO_BASE_URL}
-            - --mas-sso-realm-file=${MAS_SSO_REALM}
+            - --mas-sso-realm=${MAS_SSO_REALM}
             - --mas-sso-cert-file=/secrets/service/keycloak-service.crt
             - --mas-sso-debug=${MAS_SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
