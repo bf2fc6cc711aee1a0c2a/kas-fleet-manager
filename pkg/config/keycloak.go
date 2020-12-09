@@ -5,9 +5,7 @@ import "github.com/spf13/pflag"
 type KeycloakConfig struct {
 	EnableAuthenticationOnKafka bool   `json:"enable_auth"`
 	Realm                       string `json:"realm"`
-	RealmFile                   string `json:"realm_file"`
 	BaseURL                     string `json:"base_url"`
-	BaseUrlFile                 string `json:"base_url_file"`
 	ClientID                    string `json:"client-id"`
 	ClientIDFile                string `json:"client-id_file"`
 	ClientSecret                string `json:"client-secret"`
@@ -29,8 +27,6 @@ type KeycloakConfig struct {
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
 		EnableAuthenticationOnKafka: true,
-		RealmFile:                   "secrets/keycloak-service.realm",
-		BaseUrlFile:                 "secrets/keycloak-service.host",
 		ClientIDFile:                "secrets/keycloak-service.clientId",
 		ClientSecretFile:            "secrets/keycloak-service.clientSecret",
 		TLSTrustedCertificatesFile:  "secrets/keycloak-service.crt",
@@ -49,9 +45,7 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.ClientIDFile, "mas-sso-client-id-file", kc.ClientIDFile, "File containing Keycloak privileged account client-id")
 	fs.StringVar(&kc.ClientSecretFile, "mas-sso-client-secret-file", kc.ClientSecretFile, "File containing Keycloak privileged account client-secret")
 	fs.StringVar(&kc.BaseURL, "mas-sso-base-url", kc.BaseURL, "The base URL of the mas-sso, integration by default")
-	fs.StringVar(&kc.BaseUrlFile, "mas-sso-base-url-file", kc.BaseURL, "File containing base URL of the MAS Keycloak")
 	fs.StringVar(&kc.Realm, "mas-sso-realm", kc.Realm, "Realm for the mas-sso")
-	fs.StringVar(&kc.RealmFile, "mas-sso-realm-file", kc.RealmFile, "File containing Realm for the mas-sso")
 	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the mas-sso")
 	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
 	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with mas-sso")
@@ -67,14 +61,6 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		return err
 	}
 	err = readFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
-	if err != nil {
-		return err
-	}
-	err = readFileValueString(kc.BaseUrlFile, &kc.BaseURL)
-	if err != nil {
-		return err
-	}
-	err = readFileValueString(kc.RealmFile, &kc.Realm)
 	if err != nil {
 		return err
 	}
