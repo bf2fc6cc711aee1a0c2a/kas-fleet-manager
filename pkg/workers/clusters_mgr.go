@@ -1,6 +1,7 @@
 package workers
 
 import (
+	"bytes"
 	"fmt"
 	"sync"
 	"time"
@@ -85,6 +86,23 @@ func (c *ClusterManager) Stop() {
 func (c *ClusterManager) reconcile() {
 	glog.V(5).Infoln("reconciling clusters")
 
+	acceptedClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterAccepted)
+	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
+		glog.Errorf("failed to list accepted clusters: %s", serviceErr.Error())
+	}
+
+	for _, cluster := range acceptedClusters {
+		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
+			sentry.CaptureException(err)
+			glog.Errorf("failed to reconcile accepted cluster %s: %s", cluster.ID, err.Error())
+			continue
+		}
+		if err := c.clusterService.UpdateStatus(cluster, api.ClusterProvisioning); err != nil {
+			glog.Errorf("failed to change cluster state to provisioning %s: %s", cluster.ID, err.Error())
+		}
+	}
+
 	// reconcile the status of existing clusters in a non-ready state
 	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
 	if err != nil {
@@ -118,10 +136,10 @@ func (c *ClusterManager) reconcile() {
 		reconciledCluster, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
 			sentry.CaptureException(err)
-			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ID, err.Error())
+			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ClusterID, err.Error())
 			continue
 		}
-		glog.V(5).Infof("reconciled cluster %s state", reconciledCluster.ID)
+		glog.V(5).Infof("reconciled cluster %s state", reconciledCluster.ClusterID)
 	}
 
 	/*
@@ -147,21 +165,40 @@ func (c *ClusterManager) reconcile() {
 			_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID)
 			if syncsetErr != nil {
 				sentry.CaptureException(syncsetErr)
-				glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ID, syncsetErr.Error())
+				glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ClusterID, syncsetErr.Error())
 				continue
 			}
 
-			if err = c.clusterService.UpdateStatus(provisionedCluster.ID, api.ClusterReady); err != nil {
+			if err = c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
 				sentry.CaptureException(err)
-				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ID, err.Error())
+				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 				continue
 			}
 
 			// add entry for cluster creation metric
 			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
 		}
-		glog.V(5).Infof("reconciled cluster %s terraforming", provisionedCluster.ID)
+		glog.V(5).Infof("reconciled cluster %s terraforming", provisionedCluster.ClusterID)
 	}
+}
+
+func (c *ClusterManager) reconcileAcceptedCluster(cluster *api.Cluster) error {
+	reconciledCluster, err := c.clusterService.Create(cluster)
+	if err != nil {
+		return fmt.Errorf("failed to create cluster for request %s: %w", cluster.ID, err)
+	}
+
+	// as all fields on OCM structs are internal we cannot perform a standard json marshal as all fields will be empty,
+	// instead we need to use the OCM type-specific marshal functions when converting a struct to json
+	// declare a buffer to store the resulting json and invoke the OCM type-specific marshal function to populate the
+	// buffer with a json string containing the internal cluster values.
+	indentedCluster := new(bytes.Buffer)
+	if err := clustersmgmtv1.MarshalCluster(reconciledCluster, indentedCluster); err != nil {
+		return fmt.Errorf("unable to marshal cluster: %s", err.Error())
+	}
+
+	glog.V(10).Infof("%s", indentedCluster.String())
+	return nil
 }
 
 // reconcileClusterStatus updates the provided clusters stored status to reflect it's current state
@@ -188,8 +225,8 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	}
 	// if cluster is neither ready nor in an error state, assume it's pending
 	if needsUpdate {
-		if err = c.clusterService.UpdateStatus(cluster.ID, cluster.Status); err != nil {
-			return nil, fmt.Errorf("failed to update local cluster %s status: %w", cluster.ID, err)
+		if err = c.clusterService.UpdateStatus(*cluster, cluster.Status); err != nil {
+			return nil, fmt.Errorf("failed to update local cluster %s status: %w", cluster.ClusterID, err)
 		}
 	}
 	return cluster, nil

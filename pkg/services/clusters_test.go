@@ -60,7 +60,7 @@ func Test_Cluster_Create(t *testing.T) {
 		want    *v1.Cluster
 	}{
 		{
-			name: "successful cluster creation",
+			name: "successful cluster creation from cluster request job",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				ocmClient: &ocm.ClientMock{
@@ -82,6 +82,36 @@ func Test_Cluster_Create(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: false,
+			want:    wantedCluster,
+		},
+		{
+			name: "successful cluster creation without cluster request job",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				ocmClient: &ocm.ClientMock{
+					CreateClusterFunc: func(Cluster *v1.Cluster) (*v1.Cluster, error) {
+						newCluster, _ := v1.NewCluster().Build()
+						return newCluster, nil
+					},
+				},
+				awsConfig: awsConfig,
+				clusterBuilder: &ocm.ClusterBuilderMock{
+					NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
+						newCluster, _ := v1.NewCluster().Build()
+						return newCluster, nil
+					},
+				},
+			},
+			args: args{
+				cluster: buildCluster(func(cluster *api.Cluster) {
+					cluster.ID = ""
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException()
 			},
 			wantErr: false,
 			want:    wantedCluster,
@@ -536,8 +566,8 @@ func Test_UpdateStatus(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 	}
 	type args struct {
-		id     string
-		status api.ClusterStatus
+		cluster api.Cluster
+		status  api.ClusterStatus
 	}
 	tests := []struct {
 		name    string
@@ -557,8 +587,8 @@ func Test_UpdateStatus(t *testing.T) {
 		{
 			name: "error when id is undefined",
 			args: args{
-				id:     "",
-				status: testStatus,
+				cluster: api.Cluster{},
+				status:  testStatus,
 			},
 			wantErr: true,
 		},
@@ -569,22 +599,39 @@ func Test_UpdateStatus(t *testing.T) {
 			},
 			wantErr: true,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
 			},
 		},
 		{
-			name: "successful status update",
+			name: "successful status update by id",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				status: testStatus,
-				id:     testID,
+				status:  testStatus,
+				cluster: api.Cluster{Meta: api.Meta{ID: testID}},
 			},
 			wantErr: false,
 			want:    nil,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (id =").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithExecException() //WithReply(nil)
+			},
+		},
+		{
+			name: "successful status update by ClusterId",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				status:  testStatus,
+				cluster: api.Cluster{ClusterID: testID},
+			},
+			wantErr: false,
+			want:    nil,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (cluster_id =").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithExecException() //WithReply(nil)
 			},
 		},
 	}
@@ -596,9 +643,66 @@ func Test_UpdateStatus(t *testing.T) {
 			k := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
 			}
-			err := k.UpdateStatus(tt.args.id, tt.args.status)
+			err := k.UpdateStatus(tt.args.cluster, tt.args.status)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("UpdateStatus() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func Test_RegisterClusterJob(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		clusterRequest api.Cluster
+		status         api.ClusterStatus
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    error
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "success registering a new job",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				status: "",
+				clusterRequest: api.Cluster{
+					CloudProvider: "",
+					ClusterID:     "",
+					ExternalID:    "",
+					MultiAZ:       false,
+					Region:        "",
+					BYOC:          false,
+				},
+			},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException() // Fail on anything else
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+
+			err := k.RegisterClusterJob(&tt.args.clusterRequest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RegisterClusterJob() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
