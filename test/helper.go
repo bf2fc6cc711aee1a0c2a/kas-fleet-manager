@@ -207,8 +207,7 @@ func (helper *Helper) startHealthCheckServer() {
 
 func (helper *Helper) startKafkaWorker() {
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient)
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, helper.Env().Services.Keycloak)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.KafkaWorker.Start()

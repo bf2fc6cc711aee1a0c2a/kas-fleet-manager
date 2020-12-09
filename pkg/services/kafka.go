@@ -168,12 +168,15 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
 
-	// attempt to delete the syncset
-	clientName := buildKeycloakClientNameIdentifier(&kafkaRequest)
-	err := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
-	if err != nil {
-		return errors.GeneralError("error deleting sso client: %v", err)
+	// delete the kafka client in mas sso
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		clientName := buildKeycloakClientNameIdentifier(&kafkaRequest)
+		err := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
+		if err != nil {
+			return errors.GeneralError("error deleting sso client: %v", err)
+		}
 	}
+
 	// delete the syncset
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
 	statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
