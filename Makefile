@@ -39,6 +39,8 @@ DOCKER_CONFIG="${PWD}/.docker"
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
+MAS_SSO_BASE_URL ?="https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
+MAS_SSO_REALM ?="mas-sso-playground"
 
 
 GO := go

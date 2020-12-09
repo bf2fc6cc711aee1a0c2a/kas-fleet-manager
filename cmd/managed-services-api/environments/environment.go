@@ -42,6 +42,7 @@ type Services struct {
 	CloudProviders services.CloudProvidersService
 	Config         services.ConfigService
 	Observatorium  services.ObservatoriumService
+	Keycloak       services.KeycloakService
 }
 
 type Clients struct {
@@ -140,9 +141,9 @@ func (e *Env) Initialize() error {
 func (env *Env) LoadServices() error {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
-
+	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 	syncsetService := services.NewSyncsetService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.Server, *env.Config.ObservabilityConfiguration)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium)
@@ -151,6 +152,7 @@ func (env *Env) LoadServices() error {
 	env.Services.Cluster = clusterService
 	env.Services.CloudProviders = cloudProviderService
 	env.Services.Observatorium = ObservatoriumService
+	env.Services.Keycloak = keycloakService
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
 	env.Services.Config = configService
