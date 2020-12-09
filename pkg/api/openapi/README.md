@@ -33,15 +33,15 @@ All URIs are relative to *https://api.openshift.com*
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
 *DefaultApi* | [**CreateKafka**](docs/DefaultApi.md#createkafka) | **Post** /api/managed-services-api/v1/kafkas | Create a new kafka Request
-*DefaultApi* | [**CreateServiceAccount**](docs/DefaultApi.md#createserviceaccount) | **Post** /api/managed-services-api/v1/serviceaccounts | Create service account
+*DefaultApi* | [**CreateServiceAccount**](docs/DefaultApi.md#createserviceaccount) | **Post** /api/managed-services-api/v1/serviceaccounts | Create a service account
 *DefaultApi* | [**DeleteKafkaById**](docs/DefaultApi.md#deletekafkabyid) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
-*DefaultApi* | [**DeleteServiceAccount**](docs/DefaultApi.md#deleteserviceaccount) | **Delete** /api/managed-services-api/v1/serviceaccounts/{clientId} | Delete service account
+*DefaultApi* | [**DeleteServiceAccount**](docs/DefaultApi.md#deleteserviceaccount) | **Delete** /api/managed-services-api/v1/serviceaccounts/{id} | Delete service account
 *DefaultApi* | [**GetKafkaById**](docs/DefaultApi.md#getkafkabyid) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
 *DefaultApi* | [**ListCloudProviderRegions**](docs/DefaultApi.md#listcloudproviderregions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 *DefaultApi* | [**ListCloudProviders**](docs/DefaultApi.md#listcloudproviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
 *DefaultApi* | [**ListKafkas**](docs/DefaultApi.md#listkafkas) | **Get** /api/managed-services-api/v1/kafkas | Returns a list of Kafka requests
 *DefaultApi* | [**ListServiceAccounts**](docs/DefaultApi.md#listserviceaccounts) | **Get** /api/managed-services-api/v1/serviceaccounts | List service accounts
-*DefaultApi* | [**ResetServiceAccountCreds**](docs/DefaultApi.md#resetserviceaccountcreds) | **Get** /api/managed-services-api/v1/serviceaccounts/{clientId}/reset-credentials | reset credentials for the service account
+*DefaultApi* | [**ResetServiceAccountCreds**](docs/DefaultApi.md#resetserviceaccountcreds) | **Post** /api/managed-services-api/v1/serviceaccounts/{id}/reset-credentials | reset credentials for the service account
 
 
 ## Documentation For Models
@@ -65,11 +65,11 @@ Class | Method | HTTP request | Description
  - [ObjectReference](docs/ObjectReference.md)
  - [ServiceAccount](docs/ServiceAccount.md)
  - [ServiceAccountAllOf](docs/ServiceAccountAllOf.md)
+ - [ServiceAccountList](docs/ServiceAccountList.md)
+ - [ServiceAccountListAllOf](docs/ServiceAccountListAllOf.md)
+ - [ServiceAccountListItem](docs/ServiceAccountListItem.md)
+ - [ServiceAccountListItemAllOf](docs/ServiceAccountListItemAllOf.md)
  - [ServiceAccountRequest](docs/ServiceAccountRequest.md)
- - [ServiceAccountRequestAllOf](docs/ServiceAccountRequestAllOf.md)
- - [ServiceAccountRequestList](docs/ServiceAccountRequestList.md)
- - [ServiceAccountRequestListAllOf](docs/ServiceAccountRequestListAllOf.md)
- - [ServiceAccountsList](docs/ServiceAccountsList.md)
 
 
 ## Documentation For Authorization

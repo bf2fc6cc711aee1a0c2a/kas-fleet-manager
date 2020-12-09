@@ -21,6 +21,8 @@ func path(i interface{}) string {
 		return "kafkas"
 	case errors.ServiceError, *errors.ServiceError:
 		return "errors"
+	case api.ServiceAccount, *api.ServiceAccount:
+		return "serviceaccounts"
 	default:
 		return ""
 	}
