@@ -68,11 +68,12 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	if err != nil {
 		return err
 	}
+	c.DexPassword = dexPassword
+	c.DexSecret = dexSecret
+
 	if c.AuthToken == "" && c.AuthTokenFile != "" {
 		return readFileValueString(c.AuthTokenFile, &c.AuthToken)
 	}
 
-	c.DexPassword = dexPassword
-	c.DexSecret = dexSecret
 	return nil
 }
