@@ -686,7 +686,7 @@ func Test_RegisterClusterJob(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT  INTO \"clusters\"").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(nil)
 				mocket.Catcher.NewMock().WithExecException() // Fail on anything else
 			},
 		},
