@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,21 +19,23 @@ import (
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
-	ocmClient      ocm.Client
-	clusterService services.ClusterService
-	kafkaService   services.KafkaService
-	timer          *time.Timer
-	imStop         chan struct{}
-	syncTeardown   sync.WaitGroup
-	reconciler     Reconciler
+	ocmClient       ocm.Client
+	clusterService  services.ClusterService
+	kafkaService    services.KafkaService
+	keycloakService services.KeycloakService
+	timer           *time.Timer
+	imStop          chan struct{}
+	syncTeardown    sync.WaitGroup
+	reconciler      Reconciler
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, keycloakService services.KeycloakService) *KafkaManager {
 	return &KafkaManager{
-		ocmClient:      ocmClient,
-		clusterService: clusterService,
-		kafkaService:   kafkaService,
+		ocmClient:       ocmClient,
+		clusterService:  clusterService,
+		kafkaService:    kafkaService,
+		keycloakService: keycloakService,
 	}
 }
 
@@ -116,6 +119,12 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
+		clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
+		err := k.keycloakService.IsKafkaClientExist(clientId)
+		if err != nil {
+			k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed)
+			return fmt.Errorf("failed to create mas sso client for the kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
+		}
 		return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 	}
 	// consider the kafka in a complete state
