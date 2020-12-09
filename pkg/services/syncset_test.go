@@ -154,7 +154,7 @@ func buildAdminServer(modifyFn func(adminServer *appsv1.Deployment)) *appsv1.Dep
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
-									Value: testKafkaRequestName + "-kafka-bootstrap:9092",
+									Value: testKafkaRequestName + "-kafka-bootstrap:9095",
 								},
 							},
 							Ports: []corev1.ContainerPort{
