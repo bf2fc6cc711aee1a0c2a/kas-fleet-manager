@@ -27,7 +27,18 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 			if err != nil {
 				return nil, err
 			}
-			return sa, nil
+
+			serviceAccountList := openapi.ServiceAccountList{
+				Kind:  "ServiceAccountList",
+				Items: []openapi.ServiceAccountListItem{},
+			}
+
+			for _, account := range sa {
+				converted := presenters.PresentServiceAccountListItem(&account)
+				serviceAccountList.Items = append(serviceAccountList.Items, converted)
+			}
+
+			return serviceAccountList, nil
 		},
 		ErrorHandler: handleError,
 	}
@@ -48,7 +59,7 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentServiceAccountRequest(serviceAccount), nil
+			return presenters.PresentServiceAccount(serviceAccount), nil
 		},
 		ErrorHandler: handleError,
 	}
@@ -56,13 +67,14 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 }
 
 func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *http.Request) {
-	clientId := mux.Vars(r)["clientId"]
+	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateNotEmpty(&clientId, "clientId"),
+			validateNotEmpty(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			err := s.service.DeleteServiceAccount(clientId)
+			ctx := r.Context()
+			err := s.service.DeleteServiceAccount(ctx, id)
 			return nil, err
 		},
 		ErrorHandler: handleError,
@@ -72,17 +84,18 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 }
 
 func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWriter, r *http.Request) {
-	clientId := mux.Vars(r)["clientId"]
+	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateNotEmpty(&clientId, "clientId"),
+			validateNotEmpty(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
-			sa, err := s.service.ResetServiceAccountCredentials(clientId)
+			ctx := r.Context()
+			sa, err := s.service.ResetServiceAccountCredentials(ctx, id)
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentServiceAccountRequest(sa), nil
+			return presenters.PresentServiceAccount(sa), nil
 		},
 		ErrorHandler: handleError,
 	}

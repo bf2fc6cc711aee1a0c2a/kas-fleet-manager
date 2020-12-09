@@ -656,6 +656,7 @@ components:
               type: string
             description:
               description: ''
+              type: string
             clientID:
               type: string
             clientSecret:

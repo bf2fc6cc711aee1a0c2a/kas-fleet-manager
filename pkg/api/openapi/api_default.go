@@ -155,7 +155,7 @@ func (a *DefaultApiService) CreateKafka(ctx _context.Context, async bool, kafkaR
 }
 
 /*
-CreateServiceAccount Create service account
+CreateServiceAccount Create a service account
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param serviceAccountRequest service account request
 @return ServiceAccount
@@ -379,10 +379,10 @@ func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string) (Er
 /*
 DeleteServiceAccount Delete service account
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param clientId
+ * @param id The id of record
 @return Error
 */
-func (a *DefaultApiService) DeleteServiceAccount(ctx _context.Context, clientId string) (Error, *_nethttp.Response, error) {
+func (a *DefaultApiService) DeleteServiceAccount(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -393,8 +393,8 @@ func (a *DefaultApiService) DeleteServiceAccount(ctx _context.Context, clientId 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/serviceaccounts/{clientId}"
-	localVarPath = strings.Replace(localVarPath, "{"+"clientId"+"}", _neturl.QueryEscape(parameterToString(clientId, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/serviceaccounts/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -459,7 +459,7 @@ func (a *DefaultApiService) DeleteServiceAccount(ctx _context.Context, clientId 
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v Error
+			var v interface{}
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -938,16 +938,16 @@ func (a *DefaultApiService) ListKafkas(ctx _context.Context, localVarOptionals *
 /*
 ListServiceAccounts List service accounts
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-@return ServiceAccountRequestList
+@return ServiceAccountList
 */
-func (a *DefaultApiService) ListServiceAccounts(ctx _context.Context) (ServiceAccountRequestList, *_nethttp.Response, error) {
+func (a *DefaultApiService) ListServiceAccounts(ctx _context.Context) (ServiceAccountList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ServiceAccountRequestList
+		localVarReturnValue  ServiceAccountList
 	)
 
 	// create path and map variables
@@ -1041,12 +1041,12 @@ func (a *DefaultApiService) ListServiceAccounts(ctx _context.Context) (ServiceAc
 /*
 ResetServiceAccountCreds reset credentials for the service account
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param clientId
+ * @param id The id of record
 @return ServiceAccount
 */
-func (a *DefaultApiService) ResetServiceAccountCreds(ctx _context.Context, clientId string) (ServiceAccount, *_nethttp.Response, error) {
+func (a *DefaultApiService) ResetServiceAccountCreds(ctx _context.Context, id string) (ServiceAccount, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
@@ -1055,8 +1055,8 @@ func (a *DefaultApiService) ResetServiceAccountCreds(ctx _context.Context, clien
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/serviceaccounts/{clientId}/reset-credentials"
-	localVarPath = strings.Replace(localVarPath, "{"+"clientId"+"}", _neturl.QueryEscape(parameterToString(clientId, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/serviceaccounts/{id}/reset-credentials"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -1099,35 +1099,6 @@ func (a *DefaultApiService) ResetServiceAccountCreds(ctx _context.Context, clien
 		newErr := GenericOpenAPIError{
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

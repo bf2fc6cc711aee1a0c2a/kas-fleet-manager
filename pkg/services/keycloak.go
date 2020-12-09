@@ -30,8 +30,8 @@ type KeycloakService interface {
 	GetConfig() *config.KeycloakConfig
 	IsKafkaClientExist(clientId string) *errors.ServiceError
 	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
-	DeleteServiceAccount(clientId string) *errors.ServiceError
-	ResetServiceAccountCredentials(clientId string) (*api.ServiceAccount, *errors.ServiceError)
+	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
+	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
 	ListServiceAcc(ctx context.Context) ([]api.ServiceAccount, *errors.ServiceError)
 }
 
@@ -198,6 +198,14 @@ func (kc *keycloakService) getClient(clientId string, accessToken string) ([]*go
 	return client, nil
 }
 
+func (kc *keycloakService) getClientById(id string, accessToken string) (*gocloak.Client, *errors.ServiceError) {
+	client, err := kc.kcClient.GetClient(kc.ctx, accessToken, kc.config.Realm, id)
+	if err != nil {
+		return nil, errors.GeneralError("Failed to get client with id %s:%v", id, err)
+	}
+	return client, nil
+}
+
 func (kc *keycloakService) GetConfig() *config.KeycloakConfig {
 	return kc.config
 }
@@ -249,6 +257,10 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	if err != nil {
 		return nil, errors.GeneralError("failed to create the service account:%v", err)
 	}
+	clientSecret, err := kc.getClientSecret(internalClient, accessToken)
+	if err != nil {
+		return nil, errors.GeneralError("failed to retrieve client secret:%v", err)
+	}
 	serviceAccountUser, error := kc.kcClient.GetClientServiceAccount(kc.ctx, accessToken, kc.config.Realm, internalClient)
 	if error != nil {
 		return nil, errors.GeneralError("failed fetch the service account user:%v", err)
@@ -258,10 +270,11 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	if error != nil {
 		return nil, errors.GeneralError("failed add attributes to service account user:%v", err)
 	}
+	serviceAcc.ID = internalClient
 	serviceAcc.Name = c.Name
 	serviceAcc.ClientID = c.ClientID
 	serviceAcc.Description = c.Description
-	serviceAcc.ClientSecret = c.Secret
+	serviceAcc.ClientSecret = clientSecret
 	return &serviceAcc, nil
 }
 
@@ -279,9 +292,10 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context) ([]api.ServiceAcc
 		attributes := client.Attributes
 		att := *attributes
 		if att["rh-org-id"] == orgId {
+			acc.ID = *client.ID
 			acc.ClientID = *client.ClientID
-			acc.Name = *client.Name
-			acc.Description = *client.Description
+			acc.Name = safeString(client.Name)
+			acc.Description = safeString(client.Description)
 			sa = append(sa, acc)
 		}
 	}
@@ -310,33 +324,56 @@ func (kc *keycloakService) createProtocolMapperConfig() []gocloak.ProtocolMapper
 	return protocolMapper
 }
 
-func (kc *keycloakService) DeleteServiceAccount(clientId string) *errors.ServiceError {
+func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) *errors.ServiceError {
 	accessToken, _ := kc.getToken()
-	id, err := kc.isClientExist(clientId, accessToken)
+	orgId := auth.GetOrgIdFromContext(ctx)
+	c, err := kc.getClientById(id, accessToken)
 	if err != nil {
 		return errors.GeneralError("failed to check the sso client exists:%v", err)
 	}
-	kc.deleteClient(id, accessToken)
-	return nil
+	if isSameOrg(c, orgId) {
+		return kc.deleteClient(id, accessToken)
+	} else {
+		return errors.Forbidden("can not delete sso client due to permission error")
+	}
 }
 
-func (kc *keycloakService) ResetServiceAccountCredentials(clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	accessToken, _ := kc.getToken()
-	id, err := kc.isClientExist(clientId, accessToken)
+	orgId := auth.GetOrgIdFromContext(ctx)
+	c, err := kc.getClientById(id, accessToken)
 	if err != nil {
 		return nil, errors.GeneralError("failed to check the service account exists:%v", err)
 	}
-	credRep, error := kc.kcClient.RegenerateClientSecret(kc.ctx, accessToken, kc.config.Realm, id)
-	if error != nil {
-		return nil, errors.GeneralError("failed to regenerate service account secret:%v", err)
+	if isSameOrg(c, orgId) {
+		credRep, error := kc.kcClient.RegenerateClientSecret(kc.ctx, accessToken, kc.config.Realm, id)
+		if error != nil {
+			return nil, errors.GeneralError("failed to regenerate service account secret:%v", err)
+		}
+		value := *credRep.Value
+		return &api.ServiceAccount{
+			ID:           *c.ID,
+			ClientID:     *c.ClientID,
+			ClientSecret: value,
+			Name:         safeString(c.Name),
+			Description:  safeString(c.Description),
+		}, nil
+	} else {
+		return nil, errors.Forbidden("can not regenerate service account secret due to permission error")
 	}
-	value := *credRep.Value
-	var serviceAccount api.ServiceAccount
-	serviceAccount.ClientID = clientId
-	serviceAccount.ClientSecret = value
-	return &serviceAccount, nil
 }
 
 func NewUUID() string {
 	return uuid.New().String()
+}
+
+func isSameOrg(client *gocloak.Client, orgId string) bool {
+	if orgId == "" {
+		return false
+	}
+	attributes := *client.Attributes
+	if attributes["rh-org-id"] == orgId {
+		return true
+	}
+	return false
 }
