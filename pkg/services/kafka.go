@@ -8,6 +8,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -39,14 +40,16 @@ type kafkaService struct {
 	syncsetService    SyncsetService
 	clusterService    ClusterService
 	keycloakService   KeycloakService
+	kafkaConfig       *config.KafkaConfig
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
 		syncsetService:    syncsetService,
 		clusterService:    clusterService,
 		keycloakService:   keycloakService,
+		kafkaConfig:       kafkaConfig,
 	}
 }
 
@@ -88,7 +91,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		}
 	}
 	// create the syncset builder
-	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.keycloakService.GetConfig(), clientSecretValue)
+	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), clientSecretValue)
 	if err != nil {
 		sentry.CaptureException(err)
 		return errors.GeneralError("error creating kafka syncset builder: %v", err)
