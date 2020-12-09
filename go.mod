@@ -26,6 +26,7 @@ require (
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/api v0.3.25
 	github.com/prometheus/client_golang v1.8.0
+	github.com/prometheus/common v0.14.0
 	github.com/rs/xid v1.2.1
 	github.com/segmentio/ksuid v1.0.2
 	github.com/selvatico/go-mocket v1.0.7
