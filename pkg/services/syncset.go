@@ -544,56 +544,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 				})
 	}
 
-	if keycloakConfig.EnableAuthenticationOnKafka {
-		ssoClientID := buildKeycloakClientNameIdentifier(kafkaRequest)
-		authListener := strimzi.GenericKafkaListener{
-			Name: "external",
-			Type: strimzi.Route,
-			TLS:  true,
-			Port: 9094,
-			Authentication: &strimzi.KafkaListenerAuthentication{
-				KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
-					ClientID:        ssoClientID,
-					JwksEndpointURI: keycloakConfig.JwksEndpointURI,
-					UserNameClaim:   keycloakConfig.UserNameClaim,
-					TLSTrustedCertificates: []strimzi.CertSecretSource{
-						{
-							Certificate: config.NewKeycloakConfig().TLSTrustedCertificatesKey,
-							SecretName:  kafkaRequest.Name + "-sso-cert",
-						},
-					},
-					ClientSecret: strimzi.GenericSecretSource{
-						Key:        config.NewKeycloakConfig().MASClientSecretKey,
-						SecretName: kafkaRequest.Name + "-sso-secret",
-					},
-				},
-			},
-			Configuration: &strimzi.GenericKafkaListenerConfiguration{
-				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
-					Host: kafkaRequest.BootstrapServerHost,
-				},
-				Brokers: brokerOverrides,
-			},
-		}
-
-		kafkaCR.Spec.Kafka.Listeners = append(listeners, authListener)
-
-	} else {
-		externalListener := strimzi.GenericKafkaListener{
-			Name: "external",
-			Type: strimzi.Route,
-			TLS:  true,
-			Port: 9094,
-			Configuration: &strimzi.GenericKafkaListenerConfiguration{
-				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
-					Host: kafkaRequest.BootstrapServerHost,
-				},
-				Brokers: brokerOverrides,
-			},
-		}
-		kafkaCR.Spec.Kafka.Listeners = append(listeners, externalListener)
-	}
-
 	canaryName := sanitizedKafkaName + "-canary"
 	// build the canary deployment
 	canaryLabels := map[string]string{
