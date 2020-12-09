@@ -13,6 +13,9 @@ const (
 	KafkaRequestStatusProvisioning KafkaStatus = "provisioning"
 	// KafkaRequestStatusComplete - completed kafka request
 	KafkaRequestStatusComplete KafkaStatus = "complete"
+	// KafkaRequestStatusComplete - kafka request failed
+	KafkaRequestStatusFailed KafkaStatus = "failed"
+
 	// KafkaOperationCreate - Kafka cluster create operations
 	KafkaOperationCreate KafkaOperation = "create"
 	// KafkaOperationDelete = Kafka cluster delete operations

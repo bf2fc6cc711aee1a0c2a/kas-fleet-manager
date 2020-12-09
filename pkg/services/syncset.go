@@ -335,7 +335,7 @@ func (s syncsetService) Delete(syncsetId, clusterId string) (int, *errors.Servic
 }
 
 // syncset builder for a kafka/strimzi custom resource
-func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *config.KeycloakConfig) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
+func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *config.KeycloakConfig, clientSecretValue string) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
 	syncsetBuilder := cmv1.NewSyncset()
 
 	namespaceName := buildKafkaNamespaceIdentifier(kafkaRequest)
@@ -720,7 +720,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 			},
 			Type: corev1.SecretType("Opaque"),
 			Data: map[string][]byte{
-				keycloakConfig.MASClientSecretKey: []byte(keycloakConfig.MASClientSecretValue),
+				keycloakConfig.MASClientSecretKey: []byte(clientSecretValue),
 			},
 		}
 		caSecret := &corev1.Secret{

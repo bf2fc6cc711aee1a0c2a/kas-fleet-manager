@@ -23,7 +23,7 @@ type ApplicationConfig struct {
 	SupportedProviders         *ProviderConfig             `json:"providers"`
 	AllowList                  *AllowListConfig            `json:"allow_list"`
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
-	Keycloak                   *KeycloakConfig             `json:keycloak`
+	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
