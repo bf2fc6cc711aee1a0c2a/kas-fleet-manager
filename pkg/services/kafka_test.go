@@ -393,6 +393,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{}
+					},
 				},
 			},
 			args: args{
@@ -413,6 +416,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				keycloakService: &KeycloakServiceMock{
 					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{}
 					},
 				},
 			},
@@ -441,6 +447,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				keycloakService: &KeycloakServiceMock{
 					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{}
 					},
 				},
 			},
