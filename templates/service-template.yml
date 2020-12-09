@@ -243,7 +243,7 @@ parameters:
 - name: MAS_SSO_ENABLE_AUTH
   displayName: Enable MAS SSO Auth
   description: Enable MAS SSO Auth for the data plane
-  value: "true"
+  value: "false"
 
 - name: MAS_SSO_BASE_URL
   displayName: MAS SSO Host Url

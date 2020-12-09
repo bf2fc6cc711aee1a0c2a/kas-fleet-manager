@@ -28,7 +28,7 @@ type KeycloakConfig struct {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		EnableAuthenticationOnKafka: true,
+		EnableAuthenticationOnKafka: false,
 		ClientIDFile:                "secrets/keycloak-service.clientId",
 		ClientSecretFile:            "secrets/keycloak-service.clientSecret",
 		TLSTrustedCertificatesFile:  "secrets/keycloak-service.crt",
