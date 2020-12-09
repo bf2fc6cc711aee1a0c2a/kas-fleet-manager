@@ -334,7 +334,7 @@ func (s syncsetService) Delete(syncsetId, clusterId string) (int, *errors.Servic
 }
 
 // syncset builder for a kafka/strimzi custom resource
-func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *config.KeycloakConfig, clientSecretValue string) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
+func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, clientSecretValue string) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
 	syncsetBuilder := cmv1.NewSyncset()
 
 	namespaceName := buildKafkaNamespaceIdentifier(kafkaRequest)
@@ -349,6 +349,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}
 
+	kafkaTLSSecretName := kafkaRequest.Name + "-tls-secret"
+
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.GenericKafkaListenerConfigurationBroker{}
 	for i := 0; i < numOfBrokers; i++ {
@@ -360,7 +362,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 	}
 
 	// Derive Kafka config based on global constants
-	kafkaConfig := map[string]string{
+	kafkaCRConfig := map[string]string{
 		"offsets.topic.replication.factor": "3",
 		// Retention and segment size is set to disk capacity
 		"log.retention.ms":                         fmt.Sprintf("%d", 1000*kafkaVolumeSize.Value()/produceQuota),
@@ -444,7 +446,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
 					Host: kafkaRequest.BootstrapServerHost,
 				},
-				Brokers: brokerOverrides,
+				Brokers:               brokerOverrides,
+				BrokerCertChainAndKey: buildBrokerCertChainAndKeyResource(kafkaConfig, kafkaTLSSecretName),
 			},
 		},
 		{
@@ -468,7 +471,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
-				Config:   kafkaConfig,
+				Config:   kafkaCRConfig,
 				Replicas: numOfBrokers,
 				Resources: &corev1.ResourceRequirements{
 					Requests: map[corev1.ResourceName]resource.Quantity{
@@ -763,7 +766,41 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		resources = append(resources, clientSecret, caSecret)
 	}
 
+	if kafkaConfig.EnableKafkaTLS {
+		resources = append(resources, buildKafkaTLSSecretResource(kafkaConfig, kafkaTLSSecretName, namespaceName))
+	}
+
 	syncsetBuilder = syncsetBuilder.Resources(resources...)
 	syncsetId := buildSyncsetIdentifier(kafkaRequest)
 	return syncsetBuilder, syncsetId, nil
+}
+
+func buildKafkaTLSSecretResource(kafkaConfig *config.KafkaConfig, kafkaTLSSecretName string, kafkaNamespace string) *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaTLSSecretName,
+			Namespace: kafkaNamespace,
+		},
+		Type: corev1.SecretTypeTLS,
+		Data: map[string][]byte{
+			corev1.TLSCertKey:       []byte(kafkaConfig.KafkaTLSCert),
+			corev1.TLSPrivateKeyKey: []byte(kafkaConfig.KafkaTLSKey),
+		},
+	}
+}
+
+func buildBrokerCertChainAndKeyResource(kafkaConfig *config.KafkaConfig, kafkaTLSSecretName string) *strimzi.CertAndKeySecretSource {
+	if !kafkaConfig.EnableKafkaTLS {
+		return nil
+	}
+
+	return &strimzi.CertAndKeySecretSource{
+		Certificate: corev1.TLSCertKey,
+		Key:         corev1.TLSPrivateKeyKey,
+		SecretName:  kafkaTLSSecretName,
+	}
 }

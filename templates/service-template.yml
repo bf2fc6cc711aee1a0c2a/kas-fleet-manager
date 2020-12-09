@@ -182,6 +182,11 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
+- name: ENABLE_KAFKA_TLS
+  displayName: Enable Kafka TLS
+  description: Enable the Kafka TLS certificate
+  value: "false"
+
 - name: DEX_URL
   displayName: Dex url
   description: A URL to dex that will be used by the observability stack for authentication.
@@ -303,59 +308,18 @@ objects:
           serviceAccount: managed-services-api
           serviceAccountName: managed-services-api
           volumes:
-          - name: tls
-            secret:
-              secretName: managed-services-api-tls
-          - name: service
-            secret:
-              secretName: managed-services-api
-          - name: rds
-            secret:
-              secretName: managed-services-api-rds
-          - name: ocm-managed-services-providers-config
-            configMap:
-              name: ocm-managed-services-providers-config
-          - name: ocm-managed-services-allowed-users-config
-            configMap:
-              name: ocm-managed-services-allowed-users-config     
-          initContainers:
-          - name: id
-            image: quay.io/app-sre/centos:8
-            command:
-            - echo
-            - ${VERSION}-${BUILD_ID}-${BUILD_TS}
-          - name: migration
-            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
-            imagePullPolicy: IfNotPresent
-            volumeMounts:
-            - name: service
-              mountPath: /secrets/service
-            - name: rds
-              mountPath: /secrets/rds
-            command:
-            - /usr/local/bin/managed-services-api
-            - migrate
-            - --db-host-file=/secrets/rds/db.host
-            - --db-port-file=/secrets/rds/db.port
-            - --db-user-file=/secrets/rds/db.user
-            - --db-password-file=/secrets/rds/db.password
-            - --db-name-file=/secrets/rds/db.name
-            - --alsologtostderr
-            - -v=${GLOG_V}
-          containers:
-          - name: service
-            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
-            imagePullPolicy: IfNotPresent
-            volumeMounts:
             - name: tls
-              mountPath: /secrets/tls
+              secret:
+                secretName: managed-services-api-tls
             - name: service
-              mountPath: /secrets/service
+              secret:
+                secretName: managed-services-api
             - name: rds
-              mountPath: /secrets/rds
+              secret:
+                secretName: managed-services-api-rds
             - name: ocm-managed-services-providers-config
-              mountPath: /config/provider-configuration.yaml
-              subPath: provider-configuration.yaml
+              configMap:
+                name: ocm-managed-services-providers-config
             - name: ocm-managed-services-allowed-users-config
               mountPath: /config/allow-list-configuration.yaml
               subPath: allow-list-configuration.yaml
@@ -365,6 +329,9 @@ objects:
             command:
             - /usr/local/bin/managed-services-api
             - serve
+            - --kafka-tls-cert-file=secrets/kafka-tls.crt
+            - --kafka-tls-key-file=secrets/kafka-tls.key
+            - --enable-kafka-tls=${ENABLE_KAFKA_TLS}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
@@ -487,9 +454,9 @@ objects:
       selector:
         app: managed-services-api
       ports:
-      - port: 8080
-        targetPort: 8080
-        name: metrics
+        - port: 8080
+          targetPort: 8080
+          name: metrics
 
   - apiVersion: v1
     kind: Service
@@ -502,5 +469,5 @@ objects:
       selector:
         app: managed-services-api
       ports:
-      - port: 8083
-        targetPort: 8083
+        - port: 8083
+          targetPort: 8083
