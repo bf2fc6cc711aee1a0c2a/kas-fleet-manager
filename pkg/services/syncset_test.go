@@ -535,6 +535,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := config.KeycloakConfig{}
+			config.EnableAuthenticationOnKafka = true
 			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest,&config)
 			syncset, err := got.Build()
 			if err != nil {
