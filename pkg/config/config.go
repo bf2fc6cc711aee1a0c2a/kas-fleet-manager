@@ -54,6 +54,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.SupportedProviders.AddFlags(flagset)
 	c.AllowList.AddFlags(flagset)
 	c.ObservabilityConfiguration.AddFlags(flagset)
+	c.Keycloak.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {

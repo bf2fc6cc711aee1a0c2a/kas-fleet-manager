@@ -245,6 +245,14 @@ parameters:
   description: Enable MAS SSO Auth for the data plane
   value: "true"
 
+- name: MAS_SSO_BASE_URL
+  displayName: MAS SSO Host Url
+  description: MAS SSO Host url
+
+- name: MAS_SSO_REALM
+  displayName: MAS SSO REALM
+  description: MAS SSO realm
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -382,8 +390,8 @@ objects:
             - --mas-sso-enable-auth=${MAS_SSO_ENABLE_AUTH}
             - --mas-sso-client-id-file=/secrets/service/keycloak-service.clientId
             - --mas-sso-client-secret-file=/secrets/service/keycloak-service.clientSecret
-            - --mas-sso-base-url-file=/secrets/service/keycloak-service.host
-            - --mas-sso-realm-file=/secrets/service/keycloak-service.realm
+            - --mas-sso-base-url=${MAS_SSO_BASE_URL}
+            - --mas-sso-realm-file=${MAS_SSO_REALM}
             - --mas-sso-cert-file=/secrets/service/keycloak-service.crt
             - --mas-sso-debug=${MAS_SSO_DEBUG}
             - --self-token-file=/secrets/service/ocm-service.token
