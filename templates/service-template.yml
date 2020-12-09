@@ -182,21 +182,6 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
-- name: ENABLE_ALLOW_LIST
-  displayName: Enable the Allow List
-  description: Enable the allow list access control feature
-  value: "false"
-
-- name: MAX_ALLOWED_INSTANCES
-  displayName: Maximum allowed instances
-  description: The default value of maximum number of instances that can be created by users.
-  value: "1"  
-
-- name: ALLOWED_USERS
-  displayName: A list of allowed users
-  description: A list of allowed users that are allowed to access the service irrespective of their organisation in a yaml format.
-  value: "[]"
-
 - name: DEX_URL
   displayName: Dex url
   description: A URL to dex that will be used by the observability stack for authentication.
@@ -217,15 +202,25 @@ parameters:
   description: Observatorium tenant where observability metrics will sent to. 
   value: "test"  
 
-- name: ALLOWED_USERS
-  displayName: A list of allowed users
-  description: A list of allowed users that are allowed to access the service irrespective of their organisation in a yaml format.
+- name: ENABLE_ALLOW_LIST
+  displayName: Enable the Allow List
+  description: Enable the allow list access control feature
+  value: "false"
+
+- name: MAX_ALLOWED_INSTANCES
+  displayName: Maximum allowed instances
+  description: The default value of maximum number of instances that can be created by users.
+  value: "1"
+
+- name: ALLOWED_SERVICE_ACCOUNTS
+  displayName: A list of allowed service accounts
+  description: A list of allowed service accounts that are allowed to access the service without requiring an organisation to do so in a yaml format.
   value: "[]"
 
 - name: ALLOWED_USERS_PER_ORGANISATION
   displayName: A list of allowed users per organisation
   description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
-  value: "[{id: 13640203, allow_all: true, allowed_users: []}, {id: 12147054, allow_all: true, allowed_users: []}]"
+  value: "[{id: 13640203, max_allowed_instances: 5, allow_all: true, allowed_users: []}, {id: 12147054, max_allowed_instances: 1, allow_all: true, allowed_users: []}, {id: 13639843, max_allowed_instances: 1, allow_all: true, allowed_users: []}]"
 
 objects:
   - kind: ConfigMap
@@ -245,7 +240,7 @@ objects:
         qontract.recycle: "true"
     data:
       allow-list-configuration.yaml: |-
-        allowed_users: ${ALLOWED_USERS}
+        allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
         allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}       
   - kind: ServiceAccount
     apiVersion: v1

@@ -205,8 +205,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					config.AllowListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
-							AllowedUsers: config.AllowedUsers{
-								config.AllowedUser{
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{
 									Username:            username,
 									MaxAllowedInstances: 4,
 								},
@@ -217,6 +217,39 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				context: context.TODO(),
 			},
 			want: errors.GeneralError("count failed from database"),
+		},
+		{
+			name: "throw an error when user cannot create any more instances after exceeding allowed organisation limits",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+						return nil, &api.PagingMeta{Total: 4}, nil
+					},
+				},
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:                  "org-id",
+									MaxAllowedInstances: 4,
+									AllowAll:            true,
+								},
+							},
+						},
+					},
+					config.ServerConfig{},
+					config.ObservabilityConfiguration{},
+				),
+				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
+			},
+			want: &errors.ServiceError{
+				HttpCode: http.StatusForbidden,
+				Reason:   "Organisation 'org-id' has reached a maximum number of 4 allowed instances.",
+				Code:     4,
+			},
 		},
 		{
 			name: "throw an error when user cannot create any more instances after exceeding allowed limits",
@@ -231,8 +264,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					config.AllowListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
-							AllowedUsers: config.AllowedUsers{
-								config.AllowedUser{
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{
 									Username:            username,
 									MaxAllowedInstances: 4,
 								},
@@ -263,8 +296,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					config.AllowListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
-							AllowedUsers: config.AllowedUsers{
-								config.AllowedUser{
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{
 									Username: username,
 								},
 							},
@@ -282,7 +315,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			},
 		},
 		{
-			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allowed users list",
+			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allowed service accounts list",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {

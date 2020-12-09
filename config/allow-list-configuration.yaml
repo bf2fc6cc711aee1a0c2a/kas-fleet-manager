@@ -1,31 +1,32 @@
 ---
 # A list of allowed users given by their usernames irrespective whether they are under an organisation or not.
-# For now, this only supports RH username or service account at the moment. 
-# In the future it may support users outside RH. For example, when testing, you can add your account
-# via `allowed_users_per_organisation` entry, if the account isn't already inside any of the organisations in the organisations list
-# The structure of allowed users is:
+# For now, this only supports RH service account at the moment. 
+# In the future it may support service accounts outside RH. 
+# The structure of allowed service accounts is:
 #       - username: is the account of the user. The username must be unique
 #       - max_allowed_instances: is the maximum number of instances this user can create. 
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments. 
-allowed_users: []
+allowed_service_accounts: []
 
 # A list of allowed users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.  
 # - "id": is the organisation id
 # - "allow_all": Controls whether to allow all users to access the service for this organisation if "allowed_users" list is empty.
-# - "allowed_users": A list of allowed users (see structure below) for this organisation. If empty, no one is allowed unless "allow_all" is set to true. 
-#       - username: is the account of the user. The username must be unique within the organisation and across organisations.
-#       - max_allowed_instances: is the maximum number of instances this user can create. 
-#         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
+# - max_allowed_instances: is the maximum number of instances this orgnisation. Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.    
+# - "allowed_users": A list of allowed users for this organisation. If empty, no one is allowed unless "allow_all" is set to true. 
+#      - username: is the account of the user. The username must be unique within the organisation and across organisations.
 allowed_users_per_organisation:
     # The Control Plane team
   - id: 13640203
     allow_all: true
+    max_allowed_instances: 5
     allowed_users: []
     # The App SRE team
   - id: 12147054
     allow_all: true
+    max_allowed_instances: 1
     allowed_users: []
     # The Kafka Instances team
   - id: 13639843
     allow_all: true
+    max_allowed_instances: 1
     allowed_users: []

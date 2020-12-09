@@ -440,9 +440,9 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 
 	organisation := config.Organisation{
 		Id: "some-id",
-		AllowedUsers: config.AllowedUsers{
-			config.AllowedUser{Username: "username-0"},
-			config.AllowedUser{Username: "username-1"},
+		AllowedAccounts: config.AllowedAccounts{
+			config.AllowedAccount{Username: "username-0"},
+			config.AllowedAccount{Username: "username-1"},
 		},
 	}
 
@@ -509,7 +509,7 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "return 'true' when user is not among the listed organisation but is contained in list of allowed users",
+			name: "return 'true' when user is not among the listed organisation but is contained in list of allowed service accounts",
 			arg: args{
 				username:     "username-10",
 				organisation: organisation,
@@ -520,10 +520,10 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 						Organisations: config.OrganisationList{
 							organisation,
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "username-0"},
-							config.AllowedUser{Username: "username-10"},
-							config.AllowedUser{Username: "username-3"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "username-0"},
+							config.AllowedAccount{Username: "username-10"},
+							config.AllowedAccount{Username: "username-3"},
 						},
 					},
 				},
@@ -532,7 +532,7 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 		},
 
 		{
-			name: "return 'false' when user is not among the listed organisation and in list of allowed users",
+			name: "return 'false' when user is not among the listed organisation and in list of allowed service accounts",
 			arg: args{
 				username:     "username-10",
 				organisation: organisation,
@@ -543,9 +543,9 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 						Organisations: config.OrganisationList{
 							organisation,
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "username-0"},
-							config.AllowedUser{Username: "username-3"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "username-0"},
+							config.AllowedAccount{Username: "username-3"},
 						},
 					},
 				},
@@ -563,22 +563,22 @@ func Test_configService_IsUserAllowed(t *testing.T) {
 	}
 }
 
-func Test_configService_GetAllowedUserByUsernameAndOrgId(t *testing.T) {
+func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	type args struct {
 		username string
 		orgId    string
 	}
 
 	type result struct {
-		allowedUser config.AllowedUser
-		found       bool
+		AllowedAccount config.AllowedAccount
+		found          bool
 	}
 
 	organisation := config.Organisation{
 		Id: "some-id",
-		AllowedUsers: config.AllowedUsers{
-			config.AllowedUser{Username: "username-0"},
-			config.AllowedUser{Username: "username-1"},
+		AllowedAccounts: config.AllowedAccounts{
+			config.AllowedAccount{Username: "username-0"},
+			config.AllowedAccount{Username: "username-1"},
 		},
 	}
 
@@ -604,12 +604,12 @@ func Test_configService_GetAllowedUserByUsernameAndOrgId(t *testing.T) {
 				},
 			},
 			want: result{
-				found:       true,
-				allowedUser: config.AllowedUser{Username: "username-1"},
+				found:          true,
+				AllowedAccount: config.AllowedAccount{Username: "username-1"},
 			},
 		},
 		{
-			name: "return 'true' and the user when user is not among the listed organisation but is contained in list of allowed users",
+			name: "return 'true' and the user when user is not among the listed organisation but is contained in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
 				orgId:    organisation.Id,
@@ -620,21 +620,21 @@ func Test_configService_GetAllowedUserByUsernameAndOrgId(t *testing.T) {
 						Organisations: config.OrganisationList{
 							organisation,
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "username-0"},
-							config.AllowedUser{Username: "username-10"},
-							config.AllowedUser{Username: "username-3"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "username-0"},
+							config.AllowedAccount{Username: "username-10"},
+							config.AllowedAccount{Username: "username-3"},
 						},
 					},
 				},
 			},
 			want: result{
-				found:       true,
-				allowedUser: config.AllowedUser{Username: "username-10"},
+				found:          true,
+				AllowedAccount: config.AllowedAccount{Username: "username-10"},
 			},
 		},
 		{
-			name: "return 'false' when user is not among the listed organisation and in list of allowed users",
+			name: "return 'false' when user is not among the listed organisation and in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
 				orgId:    "some-org-id",
@@ -645,9 +645,9 @@ func Test_configService_GetAllowedUserByUsernameAndOrgId(t *testing.T) {
 						Organisations: config.OrganisationList{
 							organisation,
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "username-0"},
-							config.AllowedUser{Username: "username-3"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "username-0"},
+							config.AllowedAccount{Username: "username-3"},
 						},
 					},
 				},
@@ -661,8 +661,90 @@ func Test_configService_GetAllowedUserByUsernameAndOrgId(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			user, ok := tt.service.GetAllowedUserByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
-			Expect(user).To(Equal(tt.want.allowedUser))
+			user, ok := tt.service.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
+			Expect(user).To(Equal(tt.want.AllowedAccount))
+			Expect(ok).To(Equal(tt.want.found))
+		})
+	}
+}
+
+func Test_configService_GetServiceAccountByUsername(t *testing.T) {
+	type args struct {
+		username string
+	}
+
+	type result struct {
+		AllowedAccount config.AllowedAccount
+		found          bool
+	}
+
+	organisation := config.Organisation{
+		Id: "some-id",
+		AllowedAccounts: config.AllowedAccounts{
+			config.AllowedAccount{Username: "username-0"},
+			config.AllowedAccount{Username: "username-1"},
+		},
+	}
+
+	tests := []struct {
+		name    string
+		service configService
+		arg     args
+		want    result
+	}{
+		{
+			name: "return 'true' and the user when user is contained in list of allowed service accounts",
+			arg: args{
+				username: "username-10",
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "username-0"},
+							config.AllowedAccount{Username: "username-10"},
+							config.AllowedAccount{Username: "username-3"},
+						},
+					},
+				},
+			},
+			want: result{
+				found:          true,
+				AllowedAccount: config.AllowedAccount{Username: "username-10"},
+			},
+		},
+		{
+			name: "return 'false' when user is not in the list of allowed service accounts",
+			arg: args{
+				username: "username-10",
+			},
+			service: configService{
+				allowListConfig: config.AllowListConfig{
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							organisation,
+						},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "username-0"},
+							config.AllowedAccount{Username: "username-3"},
+						},
+					},
+				},
+			},
+			want: result{
+				found: false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			user, ok := tt.service.GetServiceAccountByUsername(tt.arg.username)
+			Expect(user).To(Equal(tt.want.AllowedAccount))
 			Expect(ok).To(Equal(tt.want.found))
 		})
 	}
@@ -866,7 +948,6 @@ func Test_configService_validateProvider(t *testing.T) {
 }
 
 func Test_configService_IsAutoCreateOSDEnabled(t *testing.T) {
-
 	tests := []struct {
 		name         string
 		serverConfig config.ServerConfig

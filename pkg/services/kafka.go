@@ -174,12 +174,20 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 		Size: listArgs.Size,
 	}
 
-	// filter kafka requests by owner
 	user := auth.GetUsernameFromContext(ctx)
 	if user == "" {
 		return nil, nil, errors.Unauthenticated("user not authenticated")
 	}
-	dbConn = dbConn.Where("owner = ?", user)
+
+	orgId := auth.GetOrgIdFromContext(ctx)
+
+	if orgId != "" {
+		// filter kafka requests by organisation_id since the user is allowed to see all kafka requests of my id
+		dbConn = dbConn.Where("organisation_id = ?", orgId)
+	} else {
+		// filter kafka requests by owner as we are dealing with service accounts which may not have an org id
+		dbConn = dbConn.Where("owner = ?", user)
+	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	dbConn.Model(&kafkaRequestList).Count(&pagingMeta.Total)

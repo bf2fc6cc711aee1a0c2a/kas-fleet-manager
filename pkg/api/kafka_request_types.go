@@ -12,6 +12,7 @@ type KafkaRequest struct {
 	Status              string `json:"status"`
 	Owner               string `json:"owner"` // TODO: ocm owner?
 	BootstrapServerHost string `json:"bootstrap_server_host"`
+	OrganisationId      string `json:"organisation_id"`
 }
 
 type KafkaList []*KafkaRequest

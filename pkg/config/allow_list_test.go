@@ -34,8 +34,8 @@ func Test_OrganisationList_GetById(t *testing.T) {
 			arg:  id,
 			orgs: OrganisationList{
 				Organisation{
-					Id:           "org-1",
-					AllowedUsers: AllowedUsers{},
+					Id:              "org-1",
+					AllowedAccounts: AllowedAccounts{},
 				},
 			},
 			want: result{
@@ -48,19 +48,19 @@ func Test_OrganisationList_GetById(t *testing.T) {
 			arg:  id,
 			orgs: OrganisationList{
 				Organisation{
-					Id:           "org-2",
-					AllowedUsers: AllowedUsers{AllowedUser{Username: "username"}},
+					Id:              "org-2",
+					AllowedAccounts: AllowedAccounts{AllowedAccount{Username: "username"}},
 				},
 				Organisation{
-					Id:           id,
-					AllowedUsers: AllowedUsers{AllowedUser{Username: "user-1"}},
+					Id:              id,
+					AllowedAccounts: AllowedAccounts{AllowedAccount{Username: "user-1"}},
 				},
 			},
 			want: result{
 				ok: true,
 				organisation: Organisation{
-					Id:           id,
-					AllowedUsers: AllowedUsers{AllowedUser{Username: "user-1"}},
+					Id:              id,
+					AllowedAccounts: AllowedAccounts{AllowedAccount{Username: "user-1"}},
 				},
 			},
 		},
@@ -96,7 +96,7 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 			name: "return 'false' when allow list does not contain the given username",
 			arg:  username,
 			org: Organisation{
-				AllowedUsers: AllowedUsers{AllowedUser{Username: "user-1"}},
+				AllowedAccounts: AllowedAccounts{AllowedAccount{Username: "user-1"}},
 			},
 			want: false,
 		},
@@ -104,9 +104,9 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 			name: "return 'true' and the organisation allow list contains the given username",
 			arg:  username,
 			org: Organisation{
-				AllowedUsers: AllowedUsers{
-					AllowedUser{Username: "user-1"},
-					AllowedUser{Username: username},
+				AllowedAccounts: AllowedAccounts{
+					AllowedAccount{Username: "user-1"},
+					AllowedAccount{Username: username},
 				},
 			},
 			want: true,
@@ -115,8 +115,8 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 			name: "return 'true' if organisation is empty and all users are allowed",
 			arg:  username,
 			org: Organisation{
-				AllowedUsers: AllowedUsers{},
-				AllowAll:     true,
+				AllowedAccounts: AllowedAccounts{},
+				AllowAll:        true,
 			},
 			want: true,
 		},
@@ -124,8 +124,8 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 			name: "return 'false' if organisation is empty and not all users are allowed",
 			arg:  username,
 			org: Organisation{
-				AllowedUsers: AllowedUsers{},
-				AllowAll:     false,
+				AllowedAccounts: AllowedAccounts{},
+				AllowAll:        false,
 			},
 			want: false,
 		},
@@ -141,7 +141,7 @@ func Test_Organisation_IsUserAllowed(t *testing.T) {
 	}
 }
 
-func Test_Organisation_HasAllowedUsers(t *testing.T) {
+func Test_Organisation_HasAllowedAccounts(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
@@ -151,16 +151,16 @@ func Test_Organisation_HasAllowedUsers(t *testing.T) {
 		{
 			name: "return 'false' when the organisation allow list of users is empty",
 			org: Organisation{
-				AllowedUsers: AllowedUsers{},
+				AllowedAccounts: AllowedAccounts{},
 			},
 			want: false,
 		},
 		{
 			name: "return 'true' when the organisation contains a non empty allow list of users",
 			org: Organisation{
-				AllowedUsers: AllowedUsers{
-					AllowedUser{Username: "username-1"},
-					AllowedUser{Username: "username-2"},
+				AllowedAccounts: AllowedAccounts{
+					AllowedAccount{Username: "username-1"},
+					AllowedAccount{Username: "username-2"},
 				},
 			},
 			want: true,
@@ -171,53 +171,53 @@ func Test_Organisation_HasAllowedUsers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			RegisterTestingT(t)
-			ok := tt.org.HasAllowedUsers()
+			ok := tt.org.HasAllowedAccounts()
 			Expect(ok).To(Equal(tt.want))
 		})
 	}
 }
 
-func Test_AllowedUsers_GetByUsername(t *testing.T) {
+func Test_AllowedAccounts_GetByUsername(t *testing.T) {
 	t.Parallel()
 	username := "username"
 	type result struct {
-		found       bool
-		allowedUser AllowedUser
+		found          bool
+		allowedAccount AllowedAccount
 	}
 	tests := []struct {
-		name         string
-		arg          string
-		allowedUsers AllowedUsers
-		want         result
+		name            string
+		arg             string
+		allowedAccounts AllowedAccounts
+		want            result
 	}{
 		{
-			name:         "return 'false' when allowed users is empty",
-			arg:          username,
-			allowedUsers: AllowedUsers{},
+			name:            "return 'false' when allowed users is empty",
+			arg:             username,
+			allowedAccounts: AllowedAccounts{},
 			want: result{
-				found:       false,
-				allowedUser: AllowedUser{},
+				found:          false,
+				allowedAccount: AllowedAccount{},
 			},
 		},
 		{
-			name:         "return 'false' when allowed users does not contain the given username",
-			arg:          username,
-			allowedUsers: AllowedUsers{AllowedUser{Username: "user-1"}},
+			name:            "return 'false' when allowed users does not contain the given username",
+			arg:             username,
+			allowedAccounts: AllowedAccounts{AllowedAccount{Username: "user-1"}},
 			want: result{
-				found:       false,
-				allowedUser: AllowedUser{},
+				found:          false,
+				allowedAccount: AllowedAccount{},
 			},
 		},
 		{
 			name: "return 'true' and the allowed user when when allowed users contains the given username",
 			arg:  username,
-			allowedUsers: AllowedUsers{
-				AllowedUser{Username: "user-1"},
-				AllowedUser{Username: username},
+			allowedAccounts: AllowedAccounts{
+				AllowedAccount{Username: "user-1"},
+				AllowedAccount{Username: username},
 			},
 			want: result{
-				found:       true,
-				allowedUser: AllowedUser{Username: username},
+				found:          true,
+				allowedAccount: AllowedAccount{Username: username},
 			},
 		},
 	}
@@ -226,44 +226,68 @@ func Test_AllowedUsers_GetByUsername(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			RegisterTestingT(t)
-			user, found := tt.allowedUsers.GetByUsername(tt.arg)
-			Expect(user).To(Equal(tt.want.allowedUser))
+			user, found := tt.allowedAccounts.GetByUsername(tt.arg)
+			Expect(user).To(Equal(tt.want.allowedAccount))
 			Expect(found).To(Equal(tt.want.found))
 		})
 	}
 }
 
-func Test_AllowedUser_IsInstanceCountWithinLimit(t *testing.T) {
+func Test_AllowedAccount_IsInstanceCountWithinLimit(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name        string
-		count       int
-		allowedUser AllowedUser
-		want        bool
+		name  string
+		count int
+		item  AllowedListItem
+		want  bool
 	}{
 		{
-			name:        "return 'false' when count is above or equal max allowed instances for the given user",
-			count:       3,
-			allowedUser: AllowedUser{MaxAllowedInstances: 2},
-			want:        false,
+			name:  "return 'false' when count is above or equal max allowed instances for the given organisation",
+			count: 3,
+			item:  Organisation{MaxAllowedInstances: 2},
+			want:  false,
 		},
 		{
-			name:        "return 'true' when count is below max allowed instances for the given user",
-			count:       1,
-			allowedUser: AllowedUser{MaxAllowedInstances: 2},
-			want:        true,
+			name:  "return 'true' when count is below max allowed instances for the given organisation",
+			count: 1,
+			item:  Organisation{MaxAllowedInstances: 2},
+			want:  true,
 		},
 		{
-			name:        "return 'false' when count is above or equal default value (1) of max allowed instances for the given user without max allowed instances set",
-			count:       1,
-			allowedUser: AllowedUser{},
-			want:        false,
+			name:  "return 'false' when count is above or equal default value (1) of max allowed instances for the given organisation without max allowed instances set",
+			count: 1,
+			item:  Organisation{},
+			want:  false,
 		},
 		{
-			name:        "return 'true' when count is below the default value (1) of max allowed instances for the given user without max allowed instances set",
-			count:       0,
-			allowedUser: AllowedUser{},
-			want:        true,
+			name:  "return 'true' when count is below the default value (1) of max allowed instances for the given organisation without max allowed instances set",
+			count: 0,
+			item:  Organisation{},
+			want:  true,
+		},
+		{
+			name:  "return 'false' when count is above or equal max allowed instances for the given account",
+			count: 3,
+			item:  AllowedAccount{MaxAllowedInstances: 2},
+			want:  false,
+		},
+		{
+			name:  "return 'true' when count is below max allowed instances for the given account",
+			count: 1,
+			item:  AllowedAccount{MaxAllowedInstances: 2},
+			want:  true,
+		},
+		{
+			name:  "return 'false' when count is above or equal default value (1) of max allowed instances for the given account without max allowed instances set",
+			count: 1,
+			item:  AllowedAccount{},
+			want:  false,
+		},
+		{
+			name:  "return 'true' when count is below the default value (1) of max allowed instances for the given account without max allowed instances set",
+			count: 0,
+			item:  AllowedAccount{},
+			want:  true,
 		},
 	}
 
@@ -272,28 +296,28 @@ func Test_AllowedUser_IsInstanceCountWithinLimit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			RegisterTestingT(t)
-			ok := tt.allowedUser.IsInstanceCountWithinLimit(tt.count)
+			ok := tt.item.IsInstanceCountWithinLimit(tt.count)
 			Expect(ok).To(Equal(tt.want))
 		})
 	}
 }
 
-func Test_AllowedUser_GetMaxAllowedInstances(t *testing.T) {
+func Test_AllowedAccount_GetMaxAllowedInstances(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		name        string
-		allowedUser AllowedUser
-		want        int
+		name           string
+		allowedAccount AllowedAccount
+		want           int
 	}{
 		{
-			name:        "return max allowed instances of the user when its value is given",
-			allowedUser: AllowedUser{MaxAllowedInstances: 2},
-			want:        2,
+			name:           "return max allowed instances of the user when its value is given",
+			allowedAccount: AllowedAccount{MaxAllowedInstances: 2},
+			want:           2,
 		},
 		{
-			name:        "return default value (1) of max allowed instances when max allowed instance per user is not set",
-			allowedUser: AllowedUser{},
-			want:        1,
+			name:           "return default value (1) of max allowed instances when max allowed instance per user is not set",
+			allowedAccount: AllowedAccount{},
+			want:           1,
 		},
 	}
 
@@ -302,7 +326,7 @@ func Test_AllowedUser_GetMaxAllowedInstances(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			RegisterTestingT(t)
-			ok := tt.allowedUser.GetMaxAllowedInstances()
+			ok := tt.allowedAccount.GetMaxAllowedInstances()
 			Expect(ok).To(Equal(tt.want))
 		})
 	}

@@ -7,22 +7,42 @@ import (
 
 var MaxAllowedInstances int = 1
 
+type AllowedListItem interface {
+	// IsInstanceCountWithinLimit returns true if the given count is within limits
+	IsInstanceCountWithinLimit(count int) bool
+	// GetMaxAllowedInstances returns maximum number of allowed instances.
+	GetMaxAllowedInstances() int
+}
+
 type Organisation struct {
-	Id           string       `yaml:"id"`
-	AllowAll     bool         `yaml:"allow_all"`
-	AllowedUsers AllowedUsers `yaml:"allowed_users"`
+	Id                  string          `yaml:"id"`
+	AllowAll            bool            `yaml:"allow_all"`
+	MaxAllowedInstances int             `yaml:"max_allowed_instances"`
+	AllowedAccounts     AllowedAccounts `yaml:"allowed_users"`
 }
 
 func (org Organisation) IsUserAllowed(username string) bool {
-	if !org.HasAllowedUsers() {
+	if !org.HasAllowedAccounts() {
 		return org.AllowAll
 	}
-	_, found := org.AllowedUsers.GetByUsername(username)
+	_, found := org.AllowedAccounts.GetByUsername(username)
 	return found
 }
 
-func (org Organisation) HasAllowedUsers() bool {
-	return len(org.AllowedUsers) > 0
+func (org Organisation) HasAllowedAccounts() bool {
+	return len(org.AllowedAccounts) > 0
+}
+
+func (org Organisation) IsInstanceCountWithinLimit(count int) bool {
+	return count < org.GetMaxAllowedInstances()
+}
+
+func (org Organisation) GetMaxAllowedInstances() int {
+	if org.MaxAllowedInstances <= 0 {
+		return MaxAllowedInstances
+	}
+
+	return org.MaxAllowedInstances
 }
 
 type OrganisationList []Organisation
@@ -37,38 +57,38 @@ func (orgList OrganisationList) GetById(Id string) (Organisation, bool) {
 	return Organisation{}, false
 }
 
-type AllowedUser struct {
+type AllowedAccount struct {
 	Username            string `yaml:"username"`
 	MaxAllowedInstances int    `yaml:"max_allowed_instances"`
 }
 
-func (allowedUser AllowedUser) IsInstanceCountWithinLimit(count int) bool {
-	return count < allowedUser.GetMaxAllowedInstances()
+func (account AllowedAccount) IsInstanceCountWithinLimit(count int) bool {
+	return count < account.GetMaxAllowedInstances()
 }
 
-func (allowedUser AllowedUser) GetMaxAllowedInstances() int {
-	if allowedUser.MaxAllowedInstances <= 0 {
+func (account AllowedAccount) GetMaxAllowedInstances() int {
+	if account.MaxAllowedInstances <= 0 {
 		return MaxAllowedInstances
 	}
 
-	return allowedUser.MaxAllowedInstances
+	return account.MaxAllowedInstances
 }
 
-type AllowedUsers []AllowedUser
+type AllowedAccounts []AllowedAccount
 
-func (allowedUsers AllowedUsers) GetByUsername(username string) (AllowedUser, bool) {
-	for _, user := range allowedUsers {
+func (allowedAccounts AllowedAccounts) GetByUsername(username string) (AllowedAccount, bool) {
+	for _, user := range allowedAccounts {
 		if username == user.Username {
 			return user, true
 		}
 	}
 
-	return AllowedUser{}, false
+	return AllowedAccount{}, false
 }
 
 type AllowListConfiguration struct {
-	Organisations OrganisationList `yaml:"allowed_users_per_organisation"`
-	AllowedUsers  AllowedUsers     `yaml:"allowed_users"`
+	Organisations   OrganisationList `yaml:"allowed_users_per_organisation"`
+	ServiceAccounts AllowedAccounts  `yaml:"allowed_service_accounts"`
 }
 
 type AllowListConfig struct {
