@@ -254,7 +254,8 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 }
 
 // TestKafkaAllowList_MaxAllowedInstances tests the allow list max allowed instances creation validations is performed when enabled
-// The default max allowed instances limit is set to "1", we should verify that this is not depassed
+// The max allowed instances limit is set to "1" set for one organusation is not depassed.
+// At the same time, users of a different organisation should be able to create instances.
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
@@ -262,8 +263,10 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	// this value if taken from config/allow-list-configuration.yaml
+	orgIdWithLimitOfOne := "12147054"
+	ownerAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
+	ctx := h.NewAuthenticatedContext(ownerAccount)
 
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -281,9 +284,30 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	// verify that the first request was accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
 
-	// verify that the second request errored with 403 forbidden
+	// verify that the second request errored with 403 forbidden for the ownerAccount
 	Expect(resp2.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(resp2.Header.Get("Content-Type")).To(Equal("application/json"))
+
+	// verify that user of the same org cannot create a new kafka since limit has been reached
+	accountInSameOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
+	ctx = h.NewAuthenticatedContext(accountInSameOrg)
+
+	// attempt to create kafka for this user account
+	_, resp3, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// verify that the request errored with 403 forbidden for the account in same organisation
+	Expect(resp3.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(resp3.Header.Get("Content-Type")).To(Equal("application/json"))
+
+	// verify that user of a different organisation can still create kafka instances
+	accountInDifferentOrg := h.NewRandAccount()
+	ctx = h.NewAuthenticatedContext(accountInDifferentOrg)
+
+	// attempt to create kafka for this user account
+	_, resp4, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// verify that the request was accepted
+	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
 }
 
 // TestKafkaGet tests getting kafkas via the API endpoint
@@ -570,6 +594,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a memeber of their org) kafka instances
+	// this value if taken from config/allow-list-configuration.yaml
 	anotherOrgId := "13639843"
 	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgId)
 	ctx = h.NewAuthenticatedContext(account)

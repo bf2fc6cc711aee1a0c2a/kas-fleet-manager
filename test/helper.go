@@ -346,8 +346,11 @@ func (helper *Helper) NewApiClient() *openapi.APIClient {
 }
 
 // NewRandAccount returns a random account that has the control plane team org id as its organisation id
+// The org id value is taken from config/allow-list-configuration.yaml
 func (helper *Helper) NewRandAccount() *amv1.Account {
-	return helper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), "13640203")
+	// this value if taken from config/allow-list-configuration.yaml
+	orgId := "13640203"
+	return helper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), orgId)
 }
 
 func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
