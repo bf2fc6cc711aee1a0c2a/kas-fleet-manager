@@ -25,8 +25,10 @@ type ConfigService interface {
 	IsAllowListEnabled() bool
 	// GetOrganisationById returns the organisaion by the given id
 	GetOrganisationById(orgId string) (config.Organisation, bool)
-	// GetAllowedUserByUsernameAndOrgId returns the allowed user in a given organisation (if found organisation is found), else return user by from the global list
-	GetAllowedUserByUsernameAndOrgId(username string, orgId string) (config.AllowedUser, bool)
+	// GetAllowedAccountByUsernameAndOrgId returns the allowed user in a given organisation (if found organisation is found), else return user by from the global list
+	GetAllowedAccountByUsernameAndOrgId(username string, orgId string) (config.AllowedAccount, bool)
+	// GetServiceAccountByUsername returns allowed account by from the list of service accounts
+	GetServiceAccountByUsername(username string) (config.AllowedAccount, bool)
 	// IsUserAllowed returns true if the provided username is allowed to access the service
 	IsUserAllowed(username string, org config.Organisation) bool
 	// Validate ensures all configuration managed by the service contains correct and valid values
@@ -109,18 +111,23 @@ func (c configService) GetOrganisationById(orgId string) (config.Organisation, b
 	return c.allowListConfig.AllowList.Organisations.GetById(orgId)
 }
 
-// GetAllowedUserByUsernameAndOrgId returns the allowed user in a given organisation (if found organisation is found),
+// GetServiceAccountByUsername returns allowed account by from the list of service accounts
+func (c configService) GetServiceAccountByUsername(username string) (config.AllowedAccount, bool) {
+	return c.allowListConfig.AllowList.ServiceAccounts.GetByUsername(username)
+}
+
+// GetAllowedAccountByUsernameAndOrgId returns the allowed user in a given organisation (if found organisation is found),
 // else return user by from the global list
-func (c configService) GetAllowedUserByUsernameAndOrgId(username string, orgId string) (config.AllowedUser, bool) {
-	var user config.AllowedUser
+func (c configService) GetAllowedAccountByUsernameAndOrgId(username string, orgId string) (config.AllowedAccount, bool) {
+	var user config.AllowedAccount
 	var found bool
 	org, _ := c.GetOrganisationById(orgId)
-	user, found = org.AllowedUsers.GetByUsername(username)
+	user, found = org.AllowedAccounts.GetByUsername(username)
 	if found {
 		return user, found
 	}
 
-	return c.allowListConfig.AllowList.AllowedUsers.GetByUsername(username)
+	return c.GetServiceAccountByUsername(username)
 }
 
 // A user is allowed to access the service if:
@@ -139,7 +146,7 @@ func (c configService) IsUserAllowed(username string, org config.Organisation) b
 		return true
 	}
 
-	_, found := c.allowListConfig.AllowList.AllowedUsers.GetByUsername(username)
+	_, found := c.GetServiceAccountByUsername(username)
 	return found
 }
 

@@ -8,6 +8,7 @@ import (
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -91,16 +92,29 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 			return nil
 		}
 
-		username, orgId := auth.GetUsernameFromContext(context), auth.GetOrgIdFromContext(context)
-		user, _ := configService.GetAllowedUserByUsernameAndOrgId(username, orgId)
+		var allowListItem config.AllowedListItem
+
+		orgId := auth.GetOrgIdFromContext(context)
+		username := auth.GetUsernameFromContext(context)
+
+		org, orgFound := configService.GetOrganisationById(orgId)
+		var message string
+		if orgFound {
+			allowListItem = org
+			message = fmt.Sprintf("Organisation '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
+		} else {
+			user, _ := configService.GetServiceAccountByUsername(username)
+			allowListItem = user
+			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
+		}
 
 		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
 		if err != nil {
 			return err
 		}
 
-		if !user.IsInstanceCountWithinLimit(pageMeta.Total) {
-			return errors.Forbidden(fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances()))
+		if !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total) {
+			return errors.Forbidden(message)
 		}
 
 		return nil

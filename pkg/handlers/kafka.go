@@ -41,6 +41,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
 			convKafka.Owner = owner
+			convKafka.OrganisationId = auth.GetOrgIdFromContext(r.Context())
 			err := h.service.RegisterKafkaJob(convKafka)
 			if err != nil {
 				return nil, err

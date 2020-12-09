@@ -254,7 +254,8 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 }
 
 // TestKafkaAllowList_MaxAllowedInstances tests the allow list max allowed instances creation validations is performed when enabled
-// The default max allowed instances limit is set to "1", we should verify that this is not depassed
+// The max allowed instances limit is set to "1" set for one organusation is not depassed.
+// At the same time, users of a different organisation should be able to create instances.
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
@@ -262,8 +263,10 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	// this value if taken from config/allow-list-configuration.yaml
+	orgIdWithLimitOfOne := "12147054"
+	ownerAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
+	ctx := h.NewAuthenticatedContext(ownerAccount)
 
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -281,9 +284,30 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	// verify that the first request was accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
 
-	// verify that the second request errored with 403 forbidden
+	// verify that the second request errored with 403 forbidden for the ownerAccount
 	Expect(resp2.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(resp2.Header.Get("Content-Type")).To(Equal("application/json"))
+
+	// verify that user of the same org cannot create a new kafka since limit has been reached
+	accountInSameOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
+	ctx = h.NewAuthenticatedContext(accountInSameOrg)
+
+	// attempt to create kafka for this user account
+	_, resp3, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// verify that the request errored with 403 forbidden for the account in same organisation
+	Expect(resp3.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(resp3.Header.Get("Content-Type")).To(Equal("application/json"))
+
+	// verify that user of a different organisation can still create kafka instances
+	accountInDifferentOrg := h.NewRandAccount()
+	ctx = h.NewAuthenticatedContext(accountInDifferentOrg)
+
+	// attempt to create kafka for this user account
+	_, resp4, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	// verify that the request was accepted
+	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
 }
 
 // TestKafkaGet tests getting kafkas via the API endpoint
@@ -540,8 +564,39 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
 
-	// new account setup to prove that users can only list their own kafka instances
+	// new account setup to prove that users can list kafkas instances created by a memeber of their org
 	account = h.NewRandAccount()
+	ctx = h.NewAuthenticatedContext(account)
+
+	// get populated list of kafka requests
+
+	afterPostList, _, err = client.DefaultApi.ListKafkas(ctx, nil)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
+	Expect(afterPostList.Size).To(Equal(int32(1)), "Expected Size == 1")
+	Expect(afterPostList.Total).To(Equal(int32(1)), "Expected Total == 1")
+
+	// get kafka request item from the list
+	listItem = afterPostList.Items[0]
+
+	// check whether the seedKafka properties are the same as those from the kafka request list item
+	Expect(seedKafka.Id).To(Equal(listItem.Id))
+	Expect(seedKafka.Kind).To(Equal(listItem.Kind))
+	Expect(listItem.Kind).To(Equal(presenters.KindKafka))
+	Expect(seedKafka.Href).To(Equal(listItem.Href))
+	Expect(seedKafka.Region).To(Equal(listItem.Region))
+	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
+	Expect(seedKafka.CloudProvider).To(Equal(listItem.CloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
+	Expect(seedKafka.Name).To(Equal(listItem.Name))
+	Expect(listItem.Name).To(Equal(mockKafkaName))
+	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
+
+	// new account setup to prove that users can only list their own (the one they created and the one created by a memeber of their org) kafka instances
+	// this value if taken from config/allow-list-configuration.yaml
+	anotherOrgId := "13639843"
+	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgId)
 	ctx = h.NewAuthenticatedContext(account)
 
 	// expecting empty list for user that hasn't created any kafkas yet
