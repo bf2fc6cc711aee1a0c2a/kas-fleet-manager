@@ -24,6 +24,7 @@ type KeycloakService interface {
 	GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError)
 	getClient(clientId string, accessToken string) ([]*gocloak.Client, *errors.ServiceError)
 	GetConfig() *config.KeycloakConfig
+	IsKafkaClientExist(clientId string) *errors.ServiceError
 }
 
 type keycloakService struct {
@@ -200,4 +201,13 @@ func (kc *keycloakService) isClientExist(clientId string, accessToken string) (s
 		return internalClientID, nil
 	}
 	return internalClientID, err
+}
+
+func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceError {
+	accessToken, _ := kc.getToken()
+	_, err := kc.isClientExist(clientId, accessToken)
+	if err != nil {
+		return errors.GeneralError("failed to get sso client for the Kafka request: %v", err)
+	}
+	return nil
 }

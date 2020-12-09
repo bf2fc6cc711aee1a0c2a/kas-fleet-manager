@@ -62,7 +62,8 @@ func runServe(cmd *cobra.Command, args []string) {
 	// start kafka worker
 	clusterService = environments.Environment().Services.Cluster
 	kafkaService := environments.Environment().Services.Kafka
-	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient)
+	keycloakService := environments.Environment().Services.Keycloak
+	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, keycloakService)
 	kafkaManager.Start()
 
 	select {}
