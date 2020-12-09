@@ -91,6 +91,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.AWS(clusterAWS)
 					builder.MultiAZ(true)
 					builder.Version(clustersmgmtv1.NewVersion().ID(OpenshiftVersion))
+					builder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
 				})
 				if err != nil {
 					panic(err)
