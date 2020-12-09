@@ -25,6 +25,7 @@ type KafkaService interface {
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
 	UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError
 }
 
 var _ KafkaService = &kafkaService{}
@@ -33,13 +34,15 @@ type kafkaService struct {
 	connectionFactory *db.ConnectionFactory
 	syncsetService    SyncsetService
 	clusterService    ClusterService
+	keycloakService   KeycloakService
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
 		syncsetService:    syncsetService,
 		clusterService:    clusterService,
+		keycloakService:   keycloakService,
 	}
 }
 
@@ -73,11 +76,17 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		sentry.CaptureException(err)
 		return errors.GeneralError("generated host is not valid: %v", replaceErr)
 	}
-
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
-
+	var clientSecretValue string
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
+		clientSecretValue, err = k.keycloakService.GetSecretForRegisteredKafkaClient(clientName)
+		if err != nil || clientSecretValue == "" {
+			return errors.GeneralError("failed to create sso client: %v", err)
+		}
+	}
 	// create the syncset builder
-	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest)
+	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.keycloakService.GetConfig(), clientSecretValue)
 	if err != nil {
 		sentry.CaptureException(err)
 		return errors.GeneralError("error creating kafka syncset builder: %v", err)
@@ -96,6 +105,19 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		return errors.GeneralError("failed to update kafka request: %v", err)
 	}
 
+	return nil
+}
+
+func (k *kafkaService) RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		orgId := auth.GetOrgIdFromContext(ctx)
+		// registering client in sso
+		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
+		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, orgId)
+		if err != nil || keycloakSecret == "" {
+			return errors.GeneralError("failed to create sso client: %v", err)
+		}
+	}
 	return nil
 }
 
@@ -146,7 +168,16 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
 
-	// attempt to delete the syncset
+	// delete the kafka client in mas sso
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		clientName := buildKeycloakClientNameIdentifier(&kafkaRequest)
+		err := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
+		if err != nil {
+			return errors.GeneralError("error deleting sso client: %v", err)
+		}
+	}
+
+	// delete the syncset
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
 	statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 
