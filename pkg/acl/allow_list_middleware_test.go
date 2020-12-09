@@ -52,8 +52,8 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 					AllowList: config.AllowListConfiguration{
 						Organisations: config.OrganisationList{
 							config.Organisation{
-								Id:           "org-id-0",
-								AllowedUsers: config.AllowedUsers{config.AllowedUser{Username: "another-username"}},
+								Id:              "org-id-0",
+								AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "another-username"}},
 							},
 						},
 					},
@@ -71,9 +71,9 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 					AllowList: config.AllowListConfiguration{
 						Organisations: config.OrganisationList{
 							config.Organisation{
-								Id:           "org-id-0",
-								AllowAll:     false,
-								AllowedUsers: config.AllowedUsers{},
+								Id:              "org-id-0",
+								AllowAll:        false,
+								AllowedAccounts: config.AllowedAccounts{},
 							},
 						},
 					},
@@ -83,7 +83,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			),
 		},
 		{
-			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allow list",
+			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allowed service accounts list",
 			arg: services.NewConfigService(
 				config.ProviderConfiguration{},
 				config.AllowListConfig{
@@ -95,9 +95,9 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 								AllowAll: false,
 							},
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "allowed-user-1"},
-							config.AllowedUser{Username: "allowed-user-2"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "allowed-user-1"},
+							config.AllowedAccount{Username: "allowed-user-2"},
 						},
 					},
 				},
@@ -106,7 +106,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			),
 		},
 		{
-			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the global allow list",
+			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the service accounts allow list",
 			arg: services.NewConfigService(
 				config.ProviderConfiguration{},
 				config.AllowListConfig{
@@ -114,14 +114,14 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 					AllowList: config.AllowListConfiguration{
 						Organisations: config.OrganisationList{
 							config.Organisation{
-								Id:           "org-id-0",
-								AllowAll:     false,
-								AllowedUsers: config.AllowedUsers{},
+								Id:              "org-id-0",
+								AllowAll:        false,
+								AllowedAccounts: config.AllowedAccounts{},
 							},
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "allowed-user-1"},
-							config.AllowedUser{Username: "allowed-user-2"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "allowed-user-1"},
+							config.AllowedAccount{Username: "allowed-user-2"},
 						},
 					},
 				},
@@ -185,8 +185,8 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 					AllowList: config.AllowListConfiguration{
 						Organisations: config.OrganisationList{
 							config.Organisation{
-								Id:           "org-id-0",
-								AllowedUsers: config.AllowedUsers{config.AllowedUser{Username: "username"}},
+								Id:              "org-id-0",
+								AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
 							},
 						},
 					},
@@ -204,9 +204,9 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 					AllowList: config.AllowListConfiguration{
 						Organisations: config.OrganisationList{
 							config.Organisation{
-								Id:           "org-id-0",
-								AllowAll:     true,
-								AllowedUsers: config.AllowedUsers{},
+								Id:              "org-id-0",
+								AllowAll:        true,
+								AllowedAccounts: config.AllowedAccounts{},
 							},
 						},
 					},
@@ -215,7 +215,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 				config.ObservabilityConfiguration{}),
 		},
 		{
-			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the global allow list",
+			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
 			arg: services.NewConfigService(
 				config.ProviderConfiguration{},
 				config.AllowListConfig{
@@ -223,14 +223,14 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 					AllowList: config.AllowListConfiguration{
 						Organisations: config.OrganisationList{
 							config.Organisation{
-								Id:           "org-id-0",
-								AllowAll:     false,
-								AllowedUsers: config.AllowedUsers{},
+								Id:              "org-id-0",
+								AllowAll:        false,
+								AllowedAccounts: config.AllowedAccounts{},
 							},
 						},
-						AllowedUsers: config.AllowedUsers{
-							config.AllowedUser{Username: "allowed-user-1"},
-							config.AllowedUser{Username: "username"},
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{Username: "allowed-user-1"},
+							config.AllowedAccount{Username: "username"},
 						},
 					},
 				},
