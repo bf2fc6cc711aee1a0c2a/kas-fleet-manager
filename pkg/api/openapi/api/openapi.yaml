@@ -392,6 +392,292 @@ paths:
       security:
       - Bearer: []
       summary: Retrieves the list of supported regions of the supported cloud provider.
+  /api/managed-services-api/v1/serviceaccounts:
+    get:
+      operationId: listServiceAccounts
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                listsa:
+                  value:
+                    serviceaccounts:
+                      clientID: some text
+                      name: some text
+                      description: some text
+              schema:
+                $ref: '#/components/schemas/ServiceAccountRequestList'
+          description: 'List of service accounts '
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  value:
+                    id: "11"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/11
+                    code: OCM-EX-11
+                    reason: 'Unable to verify JWT token: Required authorization token
+                      not found'
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  value:
+                    id: "4"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/4
+                    code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
+                    reason: User foo-bar is not authorized to access the service.
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  value:
+                    id: "9"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/9
+                    code: MGD-SERV-API-9
+                    reason: Unspecified error
+                    operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: List service accounts
+    post:
+      operationId: createServiceAccount
+      requestBody:
+        content:
+          application/json:
+            examples:
+              sa:
+                value:
+                  name: some text
+                  description: some text
+            schema:
+              $ref: '#/components/schemas/ServiceAccountRequest'
+        description: service account request
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                serviceaccount:
+                  value:
+                    clientID: some text
+                    clientSecret: some text
+                    name: some text
+                    description: some text
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+          description: service account created
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  value:
+                    id: "11"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/11
+                    code: OCM-EX-11
+                    reason: 'Unable to verify JWT token: Required authorization token
+                      not found'
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  value:
+                    id: "4"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/4
+                    code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
+                    reason: User foo-bar is not authorized to access the service.
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: list of service account
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  value:
+                    id: "9"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/9
+                    code: MGD-SERV-API-9
+                    reason: Unspecified error
+                    operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Create service account
+    summary: Returns list of service accounts based on orgId
+  /api/managed-services-api/v1/serviceaccounts/{clientId}:
+    delete:
+      operationId: deleteServiceAccount
+      parameters:
+      - examples:
+          clientid-ex:
+            value: srvc-acct-123
+        explode: false
+        in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Deleted
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  value:
+                    id: "11"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/11
+                    code: OCM-EX-11
+                    reason: 'Unable to verify JWT token: Required authorization token
+                      not found'
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  value:
+                    id: "4"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/4
+                    code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
+                    reason: User foo-bar is not authorized to access the service.
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  value:
+                    id: "9"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/9
+                    code: MGD-SERV-API-9
+                    reason: Unspecified error
+                    operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Delete service account
+    description: Returns clientId & clientSecret for service account created in mas-sso
+      for the client
+    summary: Returns service account created in the mas-sso for the clients
+  /api/managed-services-api/v1/serviceaccounts/{clientId}/reset-credentials:
+    get:
+      operationId: resetServiceAccountCreds
+      parameters:
+      - examples:
+          clientid-ex:
+            value: '"srvc-acct-123"'
+        explode: false
+        in: path
+        name: clientId
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                sa-reset:
+                  value:
+                    clientID: some text
+                    clientSecret: some text
+                    name: some text
+                    description: some text
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+          description: reset credentials
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  value:
+                    id: "11"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/11
+                    code: OCM-EX-11
+                    reason: 'Unable to verify JWT token: Required authorization token
+                      not found'
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "403Example":
+                  value:
+                    id: "4"
+                    kind: Error
+                    href: /api/managed-services-api/v1/errors/4
+                    code: 1kVjvf2mHPrC9MpwmdyL41vFCAM
+                    reason: User foo-bar is not authorized to access the service.
+                    operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: reset credentials for the service account
+    summary: Reset service account credentials
 components:
   examples:
     USRegionExample:
@@ -469,15 +755,15 @@ components:
         kind: Error
         href: /api/managed-services-api/v1/errors/4
         code: MGD-SERV-API-4
-        reason: User foo-bar is not authorized to access the service.
+        reason: User 'foo-bar' is not authorized to access the service.
         operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
     "403MaxAllowedInstanceReachedExample":
       value:
-        id: "6"
+        id: "4"
         kind: Error
-        href: /api/managed-services-api/v1/errors/6
-        code: MGD-SERV-API-6
-        reason: User foo-bar has reached a maximum number of 6 allowed instances.
+        href: /api/managed-services-api/v1/errors/4
+        code: MGD-SERV-API-4
+        reason: User 'foo-bar' has reached a maximum number of 6 allowed instances.
         operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
     "500Example":
       value:
@@ -648,6 +934,40 @@ components:
           type: boolean
       required:
       - enabled
+    ServiceAccountRequest:
+      allOf:
+      - $ref: '#/components/schemas/ServiceAccountRequest_allOf'
+      - $ref: '#/components/schemas/ObjectReference'
+      example:
+        name: some text
+        description: some text
+      type: object
+    ServiceAccountsList:
+      properties:
+        clientID:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+      type: object
+    ServiceAccountRequestList:
+      allOf:
+      - $ref: '#/components/schemas/ServiceAccountRequestList_allOf'
+      - $ref: '#/components/schemas/List'
+      type: object
+    ServiceAccount:
+      allOf:
+      - $ref: '#/components/schemas/ServiceAccount_allOf'
+      - $ref: '#/components/schemas/ObjectReference'
+      description: Service Account created in MAS-SSO for the Kafka Cluster for authentication
+      example:
+        clientID: sa-121212
+        clientSecret: secret
+        name: some text
+        description: some text
+      title: Root Type for ServiceAccount
+      type: object
     Error_allOf:
       properties:
         code:
@@ -709,6 +1029,32 @@ components:
             allOf:
             - $ref: '#/components/schemas/CloudRegion'
           type: array
+    ServiceAccountRequest_allOf:
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+      required:
+      - name
+    ServiceAccountRequestList_allOf:
+      properties:
+        serviceaccounts:
+          items:
+            $ref: '#/components/schemas/ServiceAccountsList'
+          type: array
+      required:
+      - serviceaccounts
+    ServiceAccount_allOf:
+      properties:
+        clientID:
+          type: string
+        clientSecret:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
   securitySchemes:
     Bearer:
       bearerFormat: JWT
