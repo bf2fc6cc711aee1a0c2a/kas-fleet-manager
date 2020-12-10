@@ -368,7 +368,6 @@ aws/setup:
 keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
-	@echo -n "$(MAS_SSO_CERT)" > secrets/keycloak-service.crt
 .PHONY:keycloak/setup
 
 # OCM login

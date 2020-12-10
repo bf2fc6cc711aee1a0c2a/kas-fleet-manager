@@ -46,7 +46,6 @@ else
   cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
   sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
   sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
-  sed -i "s/<mas_sso_cert>/${MAS_SSO_CERT}/g" Dockerfile_integration_tests
 fi
 
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
