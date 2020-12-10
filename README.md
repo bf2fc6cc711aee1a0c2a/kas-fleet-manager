@@ -86,6 +86,10 @@ $ ./managed-services-api -h
     ```
     $ make aws/setup
     ```
+    #### mas sso setup
+    ```
+    $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> MAS_SSO_CERT=<mas_sso_cert>
+    ```
 
 4. Generate a temporary ocm token
     Generate a temporary ocm token and set it in the secrets/ocm-service.token file

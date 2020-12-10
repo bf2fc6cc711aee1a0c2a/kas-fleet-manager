@@ -160,6 +160,7 @@ help:
 	@echo "make project              	create and use the UHC project"
 	@echo "make clean                	delete temporary generated files"
 	@echo "make setup/git/hooks      	setup git hooks"
+	@echo "make keycloak/setup     	    setup mas sso clientId, clientSecret & crt"
 	@echo "make docker/login/internal	login to an openshift cluster image registry"
 	@echo "make image/build/push/internal  build and push image to an openshift cluster image registry."
 	@echo "make deploy               	deploy the service via templates to an openshift cluster"
@@ -362,6 +363,13 @@ aws/setup:
 	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
 .PHONY: aws/setup
+
+# Setup for AWS credentials
+keycloak/setup:
+	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
+	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
+	@echo -n "$(MAS_SSO_CERT)" > secrets/keycloak-service.crt
+.PHONY:keycloak/setup
 
 # OCM login
 ocm/login:
