@@ -200,6 +200,8 @@ type KafkaListenerAuthenticationOAuth struct {
 	UserNameClaim                  string              `json:"userNameClaim,omitempty"`
 	ValidIssuerURI                 string              `json:"validIssuerUri,omitempty"`
 	ValidTokenType                 string              `json:"validTokenType,omitempty"`
+	EnablePlain                    bool                `json:"enablePlain,omitempty"`
+	TokenEndpointURI               string              `json:"tokenEndpointUri,omitempty"`
 }
 
 // KafkaListenerExternalType type of possible external listeners.
