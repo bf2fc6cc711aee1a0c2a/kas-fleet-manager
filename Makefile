@@ -364,7 +364,7 @@ aws/setup:
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
 .PHONY: aws/setup
 
-# Setup for AWS credentials
+# Setup for mas sso credentials
 keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
