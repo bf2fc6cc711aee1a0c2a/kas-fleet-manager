@@ -87,8 +87,14 @@ $ ./managed-services-api -h
     $ make aws/setup
     ```
     #### mas sso setup
+
+    ##### keycloak cert
     ```
-    $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> MAS_SSO_CERT=<mas_sso_cert>
+    echo "" | openssl s_client -connect keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secret/keycloak-service.crt
+    ```
+    ##### mas sso client id & client secret from keepassdb
+    ```
+    $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret>
     ```
 
 4. Generate a temporary ocm token
