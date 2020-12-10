@@ -27,6 +27,7 @@ import (
 	k8sCoreV1 "k8s.io/api/core/v1"
 
 	observability "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/observability/v1"
+	apiErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 var (
@@ -443,7 +444,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		fields  fields
 	}{
 		{
-			name: "creates a missing OSD cluster automatically",
+			name: "creates a missing OSD cluster request automatically",
 			fields: fields{
 				providerLst: []string{"us-east-1"},
 				clusterService: &services.ClusterServiceMock{
@@ -451,9 +452,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						var res []*services.ResGroupCPRegion
 						return res, nil
 					},
-					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
-						sample, _ := v1.NewCluster().Build()
-						return sample, nil
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return nil
 					},
 				},
 				serverConfig: config.ServerConfig{
@@ -475,7 +475,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "failed to create OSD in OCM",
+			name: "failed to create OSD request",
 			fields: fields{
 				providerLst: []string{"us-east-1"},
 				clusterService: &services.ClusterServiceMock{
@@ -483,8 +483,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						var res []*services.ResGroupCPRegion
 						return res, nil
 					},
-					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
-						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "failed to create an OSD cluster in OCM")
+					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed to create cluster request")
 					},
 				},
 				serverConfig: config.ServerConfig{
@@ -512,10 +512,6 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				clusterService: &services.ClusterServiceMock{
 					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
 						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "Database retrieval failed")
-					},
-					CreateFunc: func(Cluster *api.Cluster) (cls *v1.Cluster, e *ocmErrors.ServiceError) {
-						sample, _ := v1.NewCluster().Build()
-						return sample, nil
 					},
 				},
 				serverConfig: config.ServerConfig{
