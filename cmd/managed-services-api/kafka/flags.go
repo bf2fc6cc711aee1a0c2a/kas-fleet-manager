@@ -15,4 +15,6 @@ const (
 	FlagMultiAZ = "multi-az"
 	// FlagClusterID is a flag representing a Kafka's cluster ID
 	FlagClusterID = "cluster-id"
+	// FlagOrgID is a flag representing the OCM org id
+	FlagOrgID = "org-id"
 )

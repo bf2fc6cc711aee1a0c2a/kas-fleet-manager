@@ -60,6 +60,7 @@ func NewAPIServer() Server {
 	kafkaHandler := handlers.NewKafkaHandler(services.Kafka, services.Config)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(services.CloudProviders, services.Config)
 	errorsHandler := handlers.NewErrorsHandler()
+	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
 
 	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
 	if env().Config.Server.EnableJWT {
@@ -136,6 +137,12 @@ func NewAPIServer() Server {
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
 	apiV1CloudProvidersRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
+	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/serviceaccounts").Subrouter()
+	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
+	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.Use(authMiddleware.AuthenticateAccountJWT)
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
 

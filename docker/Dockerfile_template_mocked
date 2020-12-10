@@ -13,6 +13,9 @@ ENV GORM_PASSWORD foobar-bizz-buzz
 ENV GORM_SSLMODE disable
 ENV GORM_DEBUG false
 ENV OCM_ENV integration
+ENV MAS_SSO_CLIENT_ID test-managed-services-api
+ENV MAS_SSO_CLIENT_SECRET ***REMOVED***
+
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
@@ -49,6 +52,7 @@ COPY . /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
 WORKDIR /uhc/src/gitlab.cee.redhat.com/service/managed-services-api
 RUN make aws/setup
 RUN make ocm/setup
+RUN make keycloak/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /uhc /usr/local/go
