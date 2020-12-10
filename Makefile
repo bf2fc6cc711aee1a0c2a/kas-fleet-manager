@@ -258,11 +258,12 @@ openapi/validate:
 	openapi-generator validate -i openapi/managed-services-api.yaml
 .PHONY: openapi/validate
 
-# generate the openapi schema
+# generate the openapi schema and data/generated/openapi/openapi.go
 openapi/generate:
 	rm -rf pkg/api/openapi
 	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	openapi-generator validate -i openapi/managed-services-api.yaml
+	go-bindata -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ ./openapi
 	$(GOFMT) -w pkg/api/openapi
 .PHONY: openapi/generate
 
