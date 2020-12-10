@@ -12,11 +12,11 @@ package openapi
 // ServiceAccount Service Account created in MAS-SSO for the Kafka Cluster for authentication
 type ServiceAccount struct {
 	// server generated unique id of the service account
-	Id           string      `json:"id,omitempty"`
-	Kind         string      `json:"kind,omitempty"`
-	Href         string      `json:"href,omitempty"`
-	Name         string      `json:"name,omitempty"`
-	Description  interface{} `json:"description,omitempty"`
-	ClientID     string      `json:"clientID,omitempty"`
-	ClientSecret string      `json:"clientSecret,omitempty"`
+	Id           string `json:"id,omitempty"`
+	Kind         string `json:"kind,omitempty"`
+	Href         string `json:"href,omitempty"`
+	Name         string `json:"name,omitempty"`
+	Description  string `json:"description,omitempty"`
+	ClientID     string `json:"clientID,omitempty"`
+	ClientSecret string `json:"clientSecret,omitempty"`
 }
