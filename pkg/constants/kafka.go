@@ -26,6 +26,8 @@ const (
 
 	// ObservabilityCanaryPodLabelValue the value for ObservabilityCanaryPodLabelKey
 	ObservabilityCanaryPodLabelValue = "true"
+    // KafkaClusterStateReady the state from observatorium
+	KafkaClusterStateReady = "ready"
 )
 
 // NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
