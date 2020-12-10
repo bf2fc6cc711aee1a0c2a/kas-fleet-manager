@@ -431,6 +431,13 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 				Brokers: brokerOverrides,
 			},
 		},
+		{
+			Name:           "plainoauth",
+			Type:           strimzi.Internal,
+			TLS:            false,
+			Port:           9095,
+			Authentication: authenticationListener,
+		},
 	}
 
 	// build array of objects to be created by the syncset
@@ -626,7 +633,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
-									Value: kafkaRequest.Name + "-kafka-bootstrap:9092",
+									Value: kafkaRequest.Name + "-kafka-bootstrap:9095",
 								},
 							},
 							Ports: []corev1.ContainerPort{
