@@ -44,7 +44,7 @@ func runGet(cmd *cobra.Command, _ []string) {
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
 	syncsetService := services.NewSyncsetService(ocmClient)
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
 
 	kafkaRequest, err := kafkaService.GetById(id)
 	if err != nil {

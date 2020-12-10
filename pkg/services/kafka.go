@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/getsentry/sentry-go"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/aws"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
@@ -31,6 +34,7 @@ type KafkaService interface {
 	UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -41,15 +45,17 @@ type kafkaService struct {
 	clusterService    ClusterService
 	keycloakService   KeycloakService
 	kafkaConfig       *config.KafkaConfig
+	awsConfig         *config.AWSConfig
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
 		syncsetService:    syncsetService,
 		clusterService:    clusterService,
 		keycloakService:   keycloakService,
 		kafkaConfig:       kafkaConfig,
+		awsConfig:         awsConfig,
 	}
 }
 
@@ -69,19 +75,35 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 // The kafka object in the database will be updated with a updated_at
 // timestamp and the corresponding cluster identifier.
 func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
+	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
+	if replaceErr != nil {
+		sentry.CaptureException(replaceErr)
+		return errors.GeneralError("generated host is not valid: %v", replaceErr)
+	}
+
 	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 	if err != nil || clusterDNS == "" {
 		sentry.CaptureException(err)
 		return errors.GeneralError("error retreiving cluster DNS: %v", err)
 	}
-
-	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
-	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
-	if replaceErr != nil {
-		sentry.CaptureException(err)
-		return errors.GeneralError("generated host is not valid: %v", replaceErr)
+	// We are manually creating a new IngressController on the data plane OSD clusters which the Kafka Clusters will use
+	// Our ClusterDNS reference needs to match this
+	if k.kafkaConfig.EnableDedicatedIngress {
+		clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
 	}
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
+
+	if k.kafkaConfig.EnableKafkaTLS {
+		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
+		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
+
+		_, err = k.ChangeKafkaCNAMErecords(kafkaRequest, clusterDNS, "CREATE")
+		if err != nil {
+			return err
+		}
+	}
+
 	var clientSecretValue string
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
@@ -212,11 +234,29 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 		}
 	}
 
+	if k.kafkaConfig.EnableKafkaTLS {
+		clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
+		if err != nil || clusterDNS == "" {
+			sentry.CaptureException(err)
+			return errors.GeneralError("error retreiving cluster DNS: %v", err)
+		}
+		// We are manually creating a new IngressController on the data plane OSD clusters which the Kafka Clusters will use
+		// Our ClusterDNS reference needs to match this
+		if k.kafkaConfig.EnableDedicatedIngress {
+			clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
+		}
+
+		_, err = k.ChangeKafkaCNAMErecords(&kafkaRequest, clusterDNS, "DELETE")
+		if err != nil {
+			return err
+		}
+	}
+
 	// delete the syncset
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
-	statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
+	statusCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 
-	if err != nil && statucCode != http.StatusNotFound {
+	if err != nil && statusCode != http.StatusNotFound {
 		sentry.CaptureException(err)
 		return errors.GeneralError("error deleting syncset: %v", err)
 	}
@@ -290,4 +330,67 @@ func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) *err
 	}
 
 	return nil
+}
+
+func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(kafkaRequest.BootstrapServerHost, clusterDNS, action, k.kafkaConfig)
+
+	// Create AWS client with the region of this Kafka Cluster
+	awsConfig := aws.Config{
+		AccessKeyID:     k.awsConfig.Route53AccessKey,
+		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
+	}
+	awsClient, err := aws.NewClient(awsConfig, kafkaRequest.Region)
+	if err != nil {
+		sentry.CaptureException(err)
+		return nil, errors.GeneralError("Unable to create aws client: %v", err)
+	}
+
+	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.kafkaConfig.KafkaDomainName, domainRecordBatch)
+	if err != nil {
+		sentry.CaptureException(err)
+		return nil, errors.GeneralError("Unable to create domain record sets: %v", err)
+	}
+
+	return changeRecordsOutput, nil
+}
+
+func buildKafkaClusterCNAMESRecordBatch(recordName string, clusterIngress string, action string, kafkaConfig *config.KafkaConfig) *route53.ChangeBatch {
+	// Need to append some string to the start of the clusterIngress for the CNAME record
+	clusterIngress = fmt.Sprintf("elb.%s", clusterIngress)
+
+	recordChangeBatch := &route53.ChangeBatch{
+		Changes: []*route53.Change{
+			buildResourceRecordChange(recordName, clusterIngress, action),
+			buildResourceRecordChange(fmt.Sprintf("admin-server-%s", recordName), clusterIngress, action),
+		},
+	}
+
+	for i := 0; i < kafkaConfig.NumOfBrokers; i++ {
+		recordName := fmt.Sprintf("broker-%d-%s", i, recordName)
+		recordChangeBatch.Changes = append(recordChangeBatch.Changes, buildResourceRecordChange(recordName, clusterIngress, action))
+	}
+
+	return recordChangeBatch
+}
+
+func buildResourceRecordChange(recordName string, clusterIngress string, action string) *route53.Change {
+	recordType := "CNAME"
+	recordTTL := int64(300)
+
+	resourceRecordChange := &route53.Change{
+		Action: &action,
+		ResourceRecordSet: &route53.ResourceRecordSet{
+			Name: &recordName,
+			Type: &recordType,
+			TTL:  &recordTTL,
+			ResourceRecords: []*route53.ResourceRecord{
+				{
+					Value: &clusterIngress,
+				},
+			},
+		},
+	}
+
+	return resourceRecordChange
 }

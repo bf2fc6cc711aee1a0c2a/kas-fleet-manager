@@ -22,7 +22,6 @@ import (
 )
 
 const (
-	numOfBrokers       = 3
 	numOfZookeepers    = 3
 	produceQuota       = 4000000
 	consumeQuota       = 4000000
@@ -353,7 +352,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 
 	// Need to override the broker route hosts to ensure the length is not above 63 characters which is the max length of the Host on an OpenShift route
 	brokerOverrides := []strimzi.GenericKafkaListenerConfigurationBroker{}
-	for i := 0; i < numOfBrokers; i++ {
+	for i := 0; i < kafkaConfig.NumOfBrokers; i++ {
 		brokerOverride := strimzi.GenericKafkaListenerConfigurationBroker{
 			Host:   fmt.Sprintf("broker-%d-%s", i, kafkaRequest.BootstrapServerHost),
 			Broker: i,
@@ -472,7 +471,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
 				Config:   kafkaCRConfig,
-				Replicas: numOfBrokers,
+				Replicas: kafkaConfig.NumOfBrokers,
 				Resources: &corev1.ResourceRequirements{
 					Requests: map[corev1.ResourceName]resource.Quantity{
 						"memory": *kafkaContainerMemory,
@@ -713,6 +712,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 				Termination: routev1.TLSTerminationEdge,
 			},
 		},
+	}
+
+	if kafkaConfig.EnableKafkaTLS {
+		adminServerRoute.Spec.TLS.Certificate = kafkaConfig.KafkaTLSCert
+		adminServerRoute.Spec.TLS.Key = kafkaConfig.KafkaTLSKey
 	}
 
 	resources := []interface{}{

@@ -108,11 +108,7 @@ func (c *ApplicationConfig) ReadFiles() error {
 		}
 	}
 	err = c.Kafka.ReadFiles()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Read the contents of file into integer value

@@ -187,6 +187,11 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
+- name: ENABLE_DEDICATED_INGRESS
+  displayName: Enable Dedicated Ingress
+  description: Enable dedicated Ingress for all Kafka Clusters
+  value: "false"
+
 - name: DEX_URL
   displayName: Dex url
   description: A URL to dex that will be used by the observability stack for authentication.
@@ -308,18 +313,64 @@ objects:
           serviceAccount: managed-services-api
           serviceAccountName: managed-services-api
           volumes:
-            - name: tls
-              secret:
-                secretName: managed-services-api-tls
+          - name: tls
+            secret:
+              secretName: managed-services-api-tls
+          - name: service
+            secret:
+              secretName: managed-services-api
+          - name: dataplane-certificate
+            secret:
+              secretName: managed-services-api-dataplane-certificate
+          - name: rds
+            secret:
+              secretName: managed-services-api-rds
+          - name: ocm-managed-services-providers-config
+            configMap:
+              name: ocm-managed-services-providers-config
+          - name: ocm-managed-services-allowed-users-config
+            configMap:
+              name: ocm-managed-services-allowed-users-config     
+          initContainers:
+          - name: id
+            image: quay.io/app-sre/centos:8
+            command:
+            - echo
+            - ${VERSION}-${BUILD_ID}-${BUILD_TS}
+          - name: migration
+            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
             - name: service
-              secret:
-                secretName: managed-services-api
+              mountPath: /secrets/service
             - name: rds
-              secret:
-                secretName: managed-services-api-rds
+              mountPath: /secrets/rds
+            command:
+            - /usr/local/bin/managed-services-api
+            - migrate
+            - --db-host-file=/secrets/rds/db.host
+            - --db-port-file=/secrets/rds/db.port
+            - --db-user-file=/secrets/rds/db.user
+            - --db-password-file=/secrets/rds/db.password
+            - --db-name-file=/secrets/rds/db.name
+            - --alsologtostderr
+            - -v=${GLOG_V}
+          containers:
+          - name: service
+            image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
+            imagePullPolicy: IfNotPresent
+            volumeMounts:
+            - name: tls
+              mountPath: /secrets/tls
+            - name: service
+              mountPath: /secrets/service
+            - name: dataplane-certificate
+              mountPath: /secrets/dataplane-certificate
+            - name: rds
+              mountPath: /secrets/rds
             - name: ocm-managed-services-providers-config
-              configMap:
-                name: ocm-managed-services-providers-config
+              mountPath: /config/provider-configuration.yaml
+              subPath: provider-configuration.yaml
             - name: ocm-managed-services-allowed-users-config
               mountPath: /config/allow-list-configuration.yaml
               subPath: allow-list-configuration.yaml
@@ -329,14 +380,17 @@ objects:
             command:
             - /usr/local/bin/managed-services-api
             - serve
-            - --kafka-tls-cert-file=secrets/kafka-tls.crt
-            - --kafka-tls-key-file=secrets/kafka-tls.key
+            - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
+            - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-tls=${ENABLE_KAFKA_TLS}
+            - --enable-dedicated-ingress=${ENABLE_DEDICATED_INGRESS}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
+            - --aws-route53-access-key-file=/secrets/service/aws.route53accesskey
+            - --aws-route53-secret-access-key-file=/secrets/service/aws.route53secretaccesskey
             - --dex-password-file=/secrets/service/dex.password
             - --dex-secret-file=/secrets/service/dex.secret
             - --dex-username=${DEX_USERNAME}
