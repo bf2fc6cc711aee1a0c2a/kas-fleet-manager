@@ -26,7 +26,7 @@ const (
 )
 
 // This represents the valid statuses of a OSD cluster
-var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady)}
+var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady), string(ClusterAccepted)}
 
 type Cluster struct {
 	Meta
