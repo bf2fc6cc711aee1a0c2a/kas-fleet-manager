@@ -1,12 +1,12 @@
 package serviceaccounts
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -24,18 +24,21 @@ func NewResetCredsCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagSaID, "", "Service Account id")
+	cmd.Flags().String(FlagOrgID, "", "OCM org id")
 	return cmd
 }
 
 func runResetCreds(cmd *cobra.Command, args []string) {
 	id := flags.MustGetDefinedString(FlagSaID, cmd.Flags())
+	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
 	env := environments.Environment()
 	// setup required services
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
-	ctx := context.TODO()
+	ctx := cmd.Context()
+	ctx = auth.SetOrgIdContext(ctx, orgId)
 	sa, err := keycloakService.ResetServiceAccountCredentials(ctx, id)
 	if err != nil {
 		glog.Fatalf("Unable to reset credentials of a service account: %s", err.Error())
