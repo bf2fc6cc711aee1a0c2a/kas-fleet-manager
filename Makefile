@@ -80,7 +80,7 @@ GOTESTSUM=$(shell which gotestsum)
 endif
 
 moq:
-ifeq (, $(shell which gotestsum 2> /dev/null))
+ifeq (, $(shell which moq 2> /dev/null))
 	@{ \
 	set -e ;\
 	MOQ_TMP_DIR=$$(mktemp -d) ;\
