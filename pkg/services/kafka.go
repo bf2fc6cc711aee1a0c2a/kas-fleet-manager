@@ -17,7 +17,12 @@ import (
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
-	Get(id string) (*api.KafkaRequest, *errors.ServiceError)
+	// Get method will retrieve the kafkaRequest instance that the give ctx has access to from the database.
+	// This should be used when you want to make sure the result is filtered based on the request context.
+	Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
+	// GetById method will retrieve the KafkaRequest instance from the database without checking any permissions.
+	// You should only use this if you are sure permission check is not required.
+	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
 	Delete(ctx context.Context, id string) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
@@ -136,7 +141,31 @@ func (k *kafkaService) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaR
 	return kafkas, nil
 }
 
-func (k *kafkaService) Get(id string) (*api.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
+	if id == "" {
+		return nil, errors.Validation("id is undefined")
+	}
+
+	user := auth.GetUsernameFromContext(ctx)
+	if user == "" {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+
+	orgId := auth.GetOrgIdFromContext(ctx)
+	dbConn := k.connectionFactory.New().Where("id = ?", id)
+	var kafkaRequest api.KafkaRequest
+	if orgId != "" {
+		dbConn = dbConn.Where("organisation_id = ?", orgId)
+	} else {
+		dbConn = dbConn.Where("owner = ?", user)
+	}
+	if err := dbConn.First(&kafkaRequest).Error; err != nil {
+		return nil, handleGetError("KafkaResource", "id", id, err)
+	}
+	return &kafkaRequest, nil
+}
+
+func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}

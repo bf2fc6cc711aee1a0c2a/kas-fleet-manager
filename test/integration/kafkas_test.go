@@ -350,6 +350,18 @@ func TestKafkaGet(t *testing.T) {
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+
+	// different account but same org, should be able to read the Kafka cluster
+	account = h.NewRandAccount()
+	ctx = h.NewAuthenticatedContext(account)
+	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	Expect(kafka.Id).NotTo(BeEmpty())
+
+	// a serviceaccount that doesn't have orgId, and owner field is different too so it should get 404
+	account = h.NewAllowedServiceAccount()
+	ctx = h.NewAuthenticatedContext(account)
+	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 }
 
 // TestKafkaDelete - tests Success kafka delete
