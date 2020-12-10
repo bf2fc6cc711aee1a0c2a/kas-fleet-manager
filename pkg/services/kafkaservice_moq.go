@@ -5,10 +5,12 @@ package services
 
 import (
 	"context"
+	"sync"
+
+	"github.com/aws/aws-sdk-go/service/route53"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"sync"
 )
 
 // Ensure, that KafkaServiceMock does implement KafkaService.
@@ -21,6 +23,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 //         // make and configure a mocked KafkaService
 //         mockedKafkaService := &KafkaServiceMock{
+//             ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+// 	               panic("mock out the ChangeKafkaCNAMErecords method")
+//             },
 //             CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the Create method")
 //             },
@@ -58,6 +63,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 //     }
 type KafkaServiceMock struct {
+	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
+	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+
 	// CreateFunc mocks the Create method.
 	CreateFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 
@@ -90,6 +98,15 @@ type KafkaServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// ChangeKafkaCNAMErecords holds details about calls to the ChangeKafkaCNAMErecords method.
+		ChangeKafkaCNAMErecords []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *api.KafkaRequest
+			// ClusterDNS is the clusterDNS argument value.
+			ClusterDNS string
+			// Action is the action argument value.
+			Action string
+		}
 		// Create holds details about calls to the Create method.
 		Create []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -151,16 +168,56 @@ type KafkaServiceMock struct {
 			Status constants.KafkaStatus
 		}
 	}
-	lockCreate             sync.RWMutex
-	lockDelete             sync.RWMutex
-	lockGet                sync.RWMutex
-	lockGetById            sync.RWMutex
-	lockList               sync.RWMutex
-	lockListByStatus       sync.RWMutex
-	lockRegisterKafkaInSSO sync.RWMutex
-	lockRegisterKafkaJob   sync.RWMutex
-	lockUpdate             sync.RWMutex
-	lockUpdateStatus       sync.RWMutex
+	lockChangeKafkaCNAMErecords sync.RWMutex
+	lockCreate                  sync.RWMutex
+	lockDelete                  sync.RWMutex
+	lockGet                     sync.RWMutex
+	lockGetById                 sync.RWMutex
+	lockList                    sync.RWMutex
+	lockListByStatus            sync.RWMutex
+	lockRegisterKafkaInSSO      sync.RWMutex
+	lockRegisterKafkaJob        sync.RWMutex
+	lockUpdate                  sync.RWMutex
+	lockUpdateStatus            sync.RWMutex
+}
+
+// ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
+func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+	if mock.ChangeKafkaCNAMErecordsFunc == nil {
+		panic("KafkaServiceMock.ChangeKafkaCNAMErecordsFunc: method is nil but KafkaService.ChangeKafkaCNAMErecords was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *api.KafkaRequest
+		ClusterDNS   string
+		Action       string
+	}{
+		KafkaRequest: kafkaRequest,
+		ClusterDNS:   clusterDNS,
+		Action:       action,
+	}
+	mock.lockChangeKafkaCNAMErecords.Lock()
+	mock.calls.ChangeKafkaCNAMErecords = append(mock.calls.ChangeKafkaCNAMErecords, callInfo)
+	mock.lockChangeKafkaCNAMErecords.Unlock()
+	return mock.ChangeKafkaCNAMErecordsFunc(kafkaRequest, clusterDNS, action)
+}
+
+// ChangeKafkaCNAMErecordsCalls gets all the calls that were made to ChangeKafkaCNAMErecords.
+// Check the length with:
+//     len(mockedKafkaService.ChangeKafkaCNAMErecordsCalls())
+func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
+	KafkaRequest *api.KafkaRequest
+	ClusterDNS   string
+	Action       string
+} {
+	var calls []struct {
+		KafkaRequest *api.KafkaRequest
+		ClusterDNS   string
+		Action       string
+	}
+	mock.lockChangeKafkaCNAMErecords.RLock()
+	calls = mock.calls.ChangeKafkaCNAMErecords
+	mock.lockChangeKafkaCNAMErecords.RUnlock()
+	return calls
 }
 
 // Create calls CreateFunc.

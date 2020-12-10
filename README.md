@@ -156,6 +156,10 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `ENABLE_OCM_MOCK`: Enables mock ocm client. Defaults to false.
 - `OCM_MOCK_MODE`: The type of mock to use when ocm mock is enabled. Defaults to 'emulate-server'.
 - `JWKS_URL`: JWK Token Certificate URL. Defaults to https://api.openshift.com/.well-known/jwks.json.
+- `ROUTE53_ACCESS_KEY`: AWS route 53 access key for creating CNAME records
+- `ROUTE53_SECRET_ACCESS_KEY`: AWS route 53 secret access key for creating CNAME records
+- `KAFKA_TLS_CERT`: Kafka TLS external certificate.
+- `KAFKA_TLS_KEY`: Kakfa TLS external certificate private key.
 
 The service can be accessed by via the host of the route created by the service deployment.
 ```
