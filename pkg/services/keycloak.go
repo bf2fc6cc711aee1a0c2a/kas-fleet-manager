@@ -69,7 +69,7 @@ func NewKeycloakService(config *config.KeycloakConfig) *keycloakService {
 
 func setTokenEndpoints(config *config.KeycloakConfig) {
 	config.JwksEndpointURI = config.BaseURL + "/auth/realms/" + config.Realm + "/protocol/openid-connect/certs"
-	config.TokenEndpointURI = config.BaseURL + "/auth/realms/" + config.Realm + "/protocol/openid-connect/certs"
+	config.TokenEndpointURI = config.BaseURL + "/auth/realms/" + config.Realm + "/protocol/openid-connect/token"
 	config.ValidIssuerURI = config.BaseURL + "/auth/realms/" + config.Realm
 }
 
