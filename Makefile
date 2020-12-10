@@ -414,6 +414,8 @@ deploy: deploy/db
 		-p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
 		-p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
 		-P MAS_SSO_CRT="${MAS_SSO_CRT}" \
+		-P DEX_SECRET="${DEX_SECRET}" \
+		-P DEX_PASSWORD="${DEX_PASSWORD}" \
 		-p DATABASE_HOST="$(shell oc get service/managed-services-api-db -o jsonpath="{.spec.clusterIP}")" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
