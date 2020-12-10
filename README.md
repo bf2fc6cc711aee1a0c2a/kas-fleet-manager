@@ -90,7 +90,7 @@ $ ./managed-services-api -h
 
     ##### keycloak cert
     ```
-    echo "" | openssl s_client -connect keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secret/keycloak-service.crt
+    echo "" | openssl s_client -connect keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
     ```
     ##### mas sso client id & client secret from keepassdb
     ```
