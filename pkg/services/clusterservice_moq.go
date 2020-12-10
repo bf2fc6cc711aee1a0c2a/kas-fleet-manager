@@ -153,29 +153,6 @@ type ClusterServiceMock struct {
 	lockListByStatus                 sync.RWMutex
 	lockListGroupByProviderAndRegion sync.RWMutex
 	lockRegisterClusterJob           sync.RWMutex
-	lockScaleDownComputeNodes        sync.RWMutex
-	lockScaleUpComputeNodes          sync.RWMutex
-	lockUpdateStatus                 sync.RWMutex
-}
-
-// Create calls CreateFunc.
-func (mock *ClusterServiceMock) Create(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError) {
-	if mock.CreateFunc == nil {
-		panic("ClusterServiceMock.CreateFunc: method is nil but ClusterService.Create was just called")
-	}
-	callInfo := struct {
-		Cluster *api.Cluster
-	}{
-		Cluster: cluster,
-	}
-	mock.lockCreate.Lock()
-	mock.calls.Create = append(mock.calls.Create, callInfo)
-	mock.lockCreate.Unlock()
-	return mock.CreateFunc(cluster)
-}
-
-// CreateCalls gets all the calls that were made to Create.
-// Check the length with:
 //     len(mockedClusterService.CreateCalls())
 func (mock *ClusterServiceMock) CreateCalls() []struct {
 	Cluster *api.Cluster
@@ -381,17 +358,10 @@ func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 	calls = mock.calls.RegisterClusterJob
 	mock.lockRegisterClusterJob.RUnlock()
 	return calls
-}
 
 // ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
 func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string) (*v1.Cluster, *errors.ServiceError) {
 	if mock.ScaleDownComputeNodesFunc == nil {
-		panic("ClusterServiceMock.ScaleDownComputeNodesFunc: method is nil but ClusterService.ScaleDownComputeNodes was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
 	}
 	mock.lockScaleDownComputeNodes.Lock()
 	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
