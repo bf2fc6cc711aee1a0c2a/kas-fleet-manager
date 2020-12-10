@@ -35,15 +35,22 @@ export GOBIN="${PWD}/.gobin"
 export PATH="${GOBIN}:${PATH}"
 
 export IMAGE_NAME="test/managed-services-api"
-
+export ENV MAS_SSO_CLIENT_ID="test-managed-services-api"
+export MAS_SSO_CLIENT_SECRET="c1a79f76-272d-4b2b-ad27-2740fc81a508"
 INTEGRATION_ENV="integration"
 
+if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]];
+then
+   echo "Required mas sso env var: client id & client secret & crt is not provided"
+   exit 1
+fi
+
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
-if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]] ;
+if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]];
 then
   cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
 else
-  if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]] ; then
+  if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]];  then
     echo "Required env var not provided. Exiting...".
     exit 1
   fi
