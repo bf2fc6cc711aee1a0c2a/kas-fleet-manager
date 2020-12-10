@@ -112,7 +112,7 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 }
 
 func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error {
-	_, err := k.kafkaService.Get(kafka.ID)
+	_, err := k.kafkaService.GetById(kafka.ID)
 	if err != nil {
 		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
 	}

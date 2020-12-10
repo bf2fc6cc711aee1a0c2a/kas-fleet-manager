@@ -353,6 +353,12 @@ func (helper *Helper) NewRandAccount() *amv1.Account {
 	return helper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), orgId)
 }
 
+func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
+	// this value if taken from config/allow-list-configuration.yaml
+	allowedSA := "testuser@example.com"
+	return helper.NewAccount(allowedSA, allowedSA, allowedSA, "")
+}
+
 func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
 	var firstName string
 	var lastName string
