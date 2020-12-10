@@ -31,6 +31,7 @@ func NewCreateCommand() *cobra.Command {
 	cmd.Flags().String(FlagOwner, "test-user", "User name")
 	cmd.Flags().String(FlagClusterID, "000", "Kafka  request cluster ID")
 	cmd.Flags().Bool(FlagMultiAZ, true, "Whether Kafka request should be Multi AZ or not")
+	cmd.Flags().String(FlagOrgID, "", "OCM org id")
 
 	return cmd
 }
@@ -42,6 +43,7 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 	multiAZ := flags.MustGetBool(FlagMultiAZ, cmd.Flags())
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
+	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
@@ -58,12 +60,13 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService)
 
 	kafkaRequest := &api.KafkaRequest{
-		Region:        region,
-		ClusterID:     clusterID,
-		CloudProvider: provider,
-		MultiAZ:       multiAZ,
-		Name:          name,
-		Owner:         owner,
+		Region:         region,
+		ClusterID:      clusterID,
+		CloudProvider:  provider,
+		MultiAZ:        multiAZ,
+		Name:           name,
+		Owner:          owner,
+		OrganisationId: orgId,
 	}
 
 	if err := kafkaService.RegisterKafkaJob(kafkaRequest); err != nil {

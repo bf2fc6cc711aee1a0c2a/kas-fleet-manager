@@ -1,11 +1,11 @@
 package serviceaccounts
 
 import (
-	"context"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -23,11 +23,13 @@ func NewDeleteCommand() *cobra.Command {
 	}
 
 	cmd.Flags().String(FlagSaID, "", "Service Account id")
+	cmd.Flags().String(FlagOrgID, "", "OCM org id")
 	return cmd
 }
 
 func runDelete(cmd *cobra.Command, args []string) {
 	id := flags.MustGetDefinedString(FlagSaID, cmd.Flags())
+	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
@@ -35,7 +37,8 @@ func runDelete(cmd *cobra.Command, args []string) {
 	// setup required services
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 
-	ctx := context.TODO()
+	ctx := cmd.Context()
+	ctx = auth.SetOrgIdContext(ctx, orgId)
 	err := keycloakService.DeleteServiceAccount(ctx, id)
 	if err != nil {
 		glog.Fatalf("Unable to delete service account: %s", err.Error())

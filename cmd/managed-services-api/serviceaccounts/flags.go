@@ -7,4 +7,6 @@ const (
 	FlagName = "name"
 	// FlagDesc is a flag representing a service account description
 	FlagDesc = "description"
+	// FlagOrgID is a flag representing the OCM org id
+	FlagOrgID = "org-id"
 )
