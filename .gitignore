@@ -42,10 +42,13 @@ cmd/managed-services-api/managed-services-api
 # Ignore IntelliJ config
 .idea/
 
-# Ignore AWS secret files
+# Ignore secret files
 /secrets/aws.*
 /secrets/ocm-service.token
 /secrets/kafka-tls.*
+/secrets/keycloak-service.*
+/secrets/dx.*
+/secrets/observatorium.*
 
 # cluster details (used for testing)
 /test/integration/test_cluster.json

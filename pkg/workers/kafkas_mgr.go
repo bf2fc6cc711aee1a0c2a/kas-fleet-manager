@@ -13,7 +13,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
@@ -26,6 +26,7 @@ type KafkaManager struct {
 	clusterService  services.ClusterService
 	kafkaService    services.KafkaService
 	keycloakService services.KeycloakService
+	observatoriumService services.ObservatoriumService
 	timer           *time.Timer
 	imStop          chan struct{}
 	syncTeardown    sync.WaitGroup
@@ -33,7 +34,7 @@ type KafkaManager struct {
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService,observatoriumService services.ObservatoriumService) *KafkaManager {
 	return &KafkaManager{
 		id:             id,
 		workerType:     "kafka",
@@ -41,6 +42,7 @@ func NewKafkaManager(kafkaService services.KafkaService, clusterService services
 		clusterService:  clusterService,
 		kafkaService:    kafkaService,
 		keycloakService: keycloakService,
+		observatoriumService: observatoriumService,
 	}
 }
 
