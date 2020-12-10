@@ -372,8 +372,5 @@ func isSameOrg(client *gocloak.Client, orgId string) bool {
 		return false
 	}
 	attributes := *client.Attributes
-	if attributes["rh-org-id"] == orgId {
-		return true
-	}
-	return false
+	return attributes["rh-org-id"] == orgId
 }

@@ -41,13 +41,13 @@ func TestServiceAccounts_Success(t *testing.T) {
 	//verify reset
 	id := sa.Id
 	oldSecret := sa.ClientSecret
-	sa, resp, err = client.DefaultApi.ResetServiceAccountCreds(ctx, id)
+	sa, _, err = client.DefaultApi.ResetServiceAccountCreds(ctx, id)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
 
 	//verify delete
-	_, resp, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
+	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
 	Expect(err).ShouldNot(HaveOccurred())
 
 	f := false
