@@ -411,6 +411,9 @@ deploy: deploy/db
 		-p AWS_ACCESS_KEY="$(AWS_ACCESS_KEY)" \
 		-p AWS_ACCOUNT_ID="$(AWS_ACCOUNT_ID)" \
 		-p AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
+		-p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
+		-p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
+		-P MAS_SSO_CRT="${MAS_SSO_CRT}" \
 		-p DATABASE_HOST="$(shell oc get service/managed-services-api-db -o jsonpath="{.spec.clusterIP}")" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
