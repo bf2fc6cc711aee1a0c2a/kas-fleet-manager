@@ -38,15 +38,23 @@ export IMAGE_NAME="test/managed-services-api"
 
 INTEGRATION_ENV="integration"
 
-# copy dockerfile depending on targetted environment and set env vars in the dockerfile
-if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]] || [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${MAS_SSO_CERT}" ]];
+if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${MAS_SSO_CERT}" ]];
 then
+   echo "Required mas sso env var: client id & client secret & crt is not provided"
+   exit 1
+else
   cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
   sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
   sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
   sed -i "s/<mas_sso_cert>/${MAS_SSO_CERT}/g" Dockerfile_integration_tests
+fi
+
+# copy dockerfile depending on targetted environment and set env vars in the dockerfile
+if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]];
+then
+  cp docker/Dockerfile_template_mocked Dockerfile_integration_tests
 else
-  if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]] || [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${MAS_SSO_CERT}" ]];  then
+  if [[ -z "${OCM_ENV}" ]] || [[ -z "${AWS_ACCESS_KEY}" ]] || [[ -z "${AWS_ACCOUNT_ID}" ]] || [[ -z "${AWS_SECRET_ACCESS_KEY}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]];  then
     echo "Required env var not provided. Exiting...".
     exit 1
   fi
@@ -56,9 +64,6 @@ else
   sed -i "s/<aws_account_id>/${AWS_ACCOUNT_ID}/g" Dockerfile_integration_tests
   sed -i "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" Dockerfile_integration_tests
   sed -i "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" Dockerfile_integration_tests
-  sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
-  sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
-  sed -i "s/<mas_sso_cert>/${MAS_SSO_CERT}/g" Dockerfile_integration_tests
 fi
 
 docker build -t "$IMAGE_NAME" -f Dockerfile_integration_tests .
