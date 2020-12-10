@@ -401,6 +401,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 					Key:        config.NewKeycloakConfig().MASClientSecretKey,
 					SecretName: kafkaRequest.Name + "-sso-secret",
 				},
+				EnablePlain:      true,
+				TokenEndpointURI: keycloakConfig.TokenEndpointURI,
 			},
 		}
 	}
