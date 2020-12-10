@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 **Kind** | **string** |  | [optional] 
 **Href** | **string** |  | [optional] 
 **Name** | **string** |  | [optional] 
-**Description** | [**interface{}**](.md) |  | [optional] 
+**Description** | **string** |  | [optional] 
 **ClientID** | **string** |  | [optional] 
 **ClientSecret** | **string** |  | [optional] 
 
