@@ -44,7 +44,6 @@ var (
 		Xms: "512m",
 		Xmx: "512m",
 	}
-	kafkaImageUrl = string("quay.io/lulf/kafka:latest-kafka-2.6.0")
 
 	canaryImageUrl = "quay.io/ppatierno/strimzi-canary:0.0.1"
 
@@ -381,28 +380,43 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		"quota.window.size.seconds": "2",
 	}
 
-	var authenticationListener *strimzi.KafkaListenerAuthentication
+	var plainOverOauthAuthenticationListener *strimzi.KafkaListenerAuthentication
+	var oauthAuthenticationListener *strimzi.KafkaListenerAuthentication
 	if keycloakConfig.EnableAuthenticationOnKafka {
 		ssoClientID := buildKeycloakClientNameIdentifier(kafkaRequest)
-		authenticationListener = &strimzi.KafkaListenerAuthentication{
+		secretSources := []strimzi.CertSecretSource{
+			{
+				Certificate: config.NewKeycloakConfig().TLSTrustedCertificatesKey,
+				SecretName:  kafkaRequest.Name + "-sso-cert",
+			},
+		}
+		secretSource := strimzi.GenericSecretSource{
+			Key:        config.NewKeycloakConfig().MASClientSecretKey,
+			SecretName: kafkaRequest.Name + "-sso-secret",
+		}
+		plainOverOauthAuthenticationListener = &strimzi.KafkaListenerAuthentication{
 			Type: strimzi.OAuth,
 			KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
-				ClientID:        ssoClientID,
-				JwksEndpointURI: keycloakConfig.JwksEndpointURI,
-				UserNameClaim:   keycloakConfig.UserNameClaim,
-				ValidIssuerURI:  keycloakConfig.ValidIssuerURI,
-				TLSTrustedCertificates: []strimzi.CertSecretSource{
-					{
-						Certificate: config.NewKeycloakConfig().TLSTrustedCertificatesKey,
-						SecretName:  kafkaRequest.Name + "-sso-cert",
-					},
-				},
-				ClientSecret: strimzi.GenericSecretSource{
-					Key:        config.NewKeycloakConfig().MASClientSecretKey,
-					SecretName: kafkaRequest.Name + "-sso-secret",
-				},
-				EnablePlain:      true,
-				TokenEndpointURI: keycloakConfig.TokenEndpointURI,
+				ClientID:               ssoClientID,
+				JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
+				UserNameClaim:          keycloakConfig.UserNameClaim,
+				ValidIssuerURI:         keycloakConfig.ValidIssuerURI,
+				TLSTrustedCertificates: secretSources,
+				ClientSecret:           secretSource,
+				EnablePlain:            true,
+				TokenEndpointURI:       keycloakConfig.TokenEndpointURI,
+			},
+		}
+
+		oauthAuthenticationListener = &strimzi.KafkaListenerAuthentication{
+			Type: strimzi.OAuth,
+			KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
+				ClientID:               ssoClientID,
+				JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
+				UserNameClaim:          keycloakConfig.UserNameClaim,
+				ValidIssuerURI:         keycloakConfig.ValidIssuerURI,
+				TLSTrustedCertificates: secretSources,
+				ClientSecret:           secretSource,
 			},
 		}
 	}
@@ -425,7 +439,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 			Type:           strimzi.Route,
 			TLS:            true,
 			Port:           9094,
-			Authentication: authenticationListener,
+			Authentication: plainOverOauthAuthenticationListener,
 			Configuration: &strimzi.GenericKafkaListenerConfiguration{
 				Bootstrap: &strimzi.GenericKafkaListenerConfigurationBootstrap{
 					Host: kafkaRequest.BootstrapServerHost,
@@ -434,11 +448,11 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 			},
 		},
 		{
-			Name:           "plainoauth",
+			Name:           "oauth",
 			Type:           strimzi.Internal,
 			TLS:            false,
 			Port:           9095,
-			Authentication: authenticationListener,
+			Authentication: oauthAuthenticationListener,
 		},
 	}
 
@@ -454,7 +468,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, keycloakConfig *conf
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
-				Image:    &kafkaImageUrl,
 				Config:   kafkaConfig,
 				Replicas: numOfBrokers,
 				Resources: &corev1.ResourceRequirements{
