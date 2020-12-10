@@ -10,6 +10,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/migrate"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/observatorium"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/servecmd"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/serviceaccounts"
 )
 
 //nolint
@@ -40,9 +41,10 @@ func main() {
 	serveCmd := servecmd.NewServeCommand()
 	clusterCmd := cluster.NewClusterCommand()
 	observatoriumCmd := observatorium.NewRunObservatoriumCommand()
+	serviceaccountCmd := serviceaccounts.NewServiceAccountCommand()
 
 	// Add subcommand(s)
-	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand(), observatoriumCmd)
+	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand(), observatoriumCmd, serviceaccountCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)
