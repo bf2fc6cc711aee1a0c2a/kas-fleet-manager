@@ -38,7 +38,7 @@ export IMAGE_NAME="test/managed-services-api"
 
 INTEGRATION_ENV="integration"
 
-if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${MAS_SSO_CERT}" ]];
+if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]];
 then
    echo "Required mas sso env var: client id & client secret & crt is not provided"
    exit 1
