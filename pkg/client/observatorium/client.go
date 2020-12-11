@@ -83,9 +83,6 @@ func NewClientMock(config *Configuration) (*Client, error) {
 
 	return client, nil
 }
-func (c *Client) MockAPI() pV1.API {
-	return nil
-}
 
 type authRoundTripper struct {
 	config  ClientConfiguration

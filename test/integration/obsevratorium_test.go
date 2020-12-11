@@ -21,12 +21,13 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	// start servers
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
+	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 	err := h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occur in loading client:  %v", err)
 
 	defer h.Reset()
 	service := services.NewObservatoriumService(h.Env().Clients.Observatorium)
-	_, err = service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
+	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
-
+	Expect(kafkaState.State).NotTo(BeEmpty(), "Should return state")
 }
