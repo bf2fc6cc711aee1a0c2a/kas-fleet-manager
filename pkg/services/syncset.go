@@ -47,7 +47,7 @@ var (
 
 	canaryImageUrl = "quay.io/ppatierno/strimzi-canary:0.0.1"
 
-	adminServerUrl = "quay.io/sknot/strimzi-admin:0.0.1"
+	adminServerUrl = "quay.io/sknot/strimzi-admin:0.0.2"
 )
 
 var deleteClaim = false
