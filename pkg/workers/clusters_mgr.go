@@ -284,14 +284,15 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 	for _, p := range providerList {
 		for _, v := range p.Regions {
 			if _, exist := grpResultMap[p.Name+"."+v.Name]; !exist {
-				cluster, err := c.clusterService.Create(&api.Cluster{
+				clusterRequest := api.Cluster{
 					CloudProvider: p.Name,
 					Region:        v.Name,
-				})
-				if err != nil {
-					glog.Errorf("Failed to auto-create cluster in %s, region: %s %s", p.Name, v.Name, err.Error())
+					MultiAZ:       true,
+				}
+				if err := c.clusterService.RegisterClusterJob(&clusterRequest); err != nil {
+					glog.Errorf("Failed to auto-create cluster request in %s, region: %s %s", p.Name, v.Name, err.Error())
 				} else {
-					glog.Infof("Auto-created cluster in %s, region: %s, Id: %s ", p.Name, v.Name, cluster.ID())
+					glog.Infof("Auto-created cluster request in %s, region: %s, Id: %s ", p.Name, v.Name, clusterRequest.ID)
 				}
 			} //
 		} //region
