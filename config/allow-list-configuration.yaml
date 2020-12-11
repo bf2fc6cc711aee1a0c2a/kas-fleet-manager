@@ -6,7 +6,9 @@
 #       - username: is the account of the user. The username must be unique
 #       - max_allowed_instances: is the maximum number of instances this user can create. 
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments. 
-allowed_service_accounts: []
+allowed_service_accounts:
+  - username: testuser@example.com
+    max_allowed_instances: 1
 
 # A list of allowed users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.  
 # - "id": is the organisation id

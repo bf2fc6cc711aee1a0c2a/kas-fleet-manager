@@ -63,7 +63,8 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
-			kafkaRequest, err := h.service.Get(id)
+			ctx := r.Context()
+			kafkaRequest, err := h.service.Get(ctx, id)
 			if err != nil {
 				return nil, err
 			}

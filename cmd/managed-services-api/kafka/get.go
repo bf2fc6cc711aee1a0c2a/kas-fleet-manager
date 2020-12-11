@@ -46,7 +46,7 @@ func runGet(cmd *cobra.Command, _ []string) {
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService)
 
-	kafkaRequest, err := kafkaService.Get(id)
+	kafkaRequest, err := kafkaService.GetById(id)
 	if err != nil {
 		glog.Fatalf("Unable to get kafka request: %s", err.Error())
 	}
