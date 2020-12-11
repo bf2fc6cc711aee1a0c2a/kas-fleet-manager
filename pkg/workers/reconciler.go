@@ -2,12 +2,13 @@ package workers
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 const (
-	repeatInterval = 30 * time.Second
+	RepeatInterval = 30 * time.Second
 )
 
 type Reconciler struct {
@@ -20,7 +21,7 @@ func (r *Reconciler) Start(worker Worker) {
 	glog.V(1).Infoln(fmt.Sprintf("Starting %T", worker))
 	// start reconcile immediately and then on every repeat interval
 	worker.reconcile()
-	ticker := time.NewTicker(repeatInterval)
+	ticker := time.NewTicker(RepeatInterval)
 	go func() {
 		for {
 			select {

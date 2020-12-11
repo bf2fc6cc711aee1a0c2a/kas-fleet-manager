@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/getsentry/sentry-go"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -62,8 +61,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 // The kafka object in the database will be updated with a updated_at
 // timestamp and the corresponding cluster identifier.
 func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-
 	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 	if err != nil || clusterDNS == "" {
 		sentry.CaptureException(err)
@@ -99,9 +96,15 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		return errors.GeneralError("error creating syncset: %v", err)
 	}
 
-	kafkaRequest.UpdatedAt = time.Now()
-	// update kafka updated_at timestamp
-	if err := dbConn.Save(kafkaRequest).Error; err != nil {
+	// Update the Kafka Request record in the database
+	// Only updates the fields below
+	updatedKafkaRequest := &api.KafkaRequest{
+		Meta: api.Meta{
+			ID: kafkaRequest.ID,
+		},
+		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
+	}
+	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.GeneralError("failed to update kafka request: %v", err)
 	}
 
@@ -250,7 +253,7 @@ func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErro
 func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
-	if err := dbConn.Table("kafka_requests").Where("id = ?", id).Update("status", status).Error; err != nil {
+	if err := dbConn.Model(&api.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
 		return errors.GeneralError("failed to update status: %s", err.Error())
 	}
 
