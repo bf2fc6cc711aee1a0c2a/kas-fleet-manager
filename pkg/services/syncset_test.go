@@ -241,11 +241,13 @@ func TestSyncsetService_Create(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
-	config := config.NewKeycloakConfig()
+	keycloakConfig := config.NewKeycloakConfig()
+	kafkaConfig := config.NewKafkaConfig()
+
 	kafkaSyncBuilder, _, _ := newKafkaSyncsetBuilder(&api.KafkaRequest{
 		Name:      testKafkaRequestName,
 		ClusterID: testClusterID,
-	}, config, "")
+	}, kafkaConfig, keycloakConfig, "")
 
 	type args struct {
 		syncsetBuilder *v1.SyncsetBuilder
@@ -313,11 +315,13 @@ func TestSyncsetService_Delete(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
-	config := config.NewKeycloakConfig()
+	keycloakConfig := config.NewKeycloakConfig()
+	kafkaConfig := config.NewKafkaConfig()
+
 	kafkaSyncBuilder, _, _ := newKafkaSyncsetBuilder(&api.KafkaRequest{
 		Name:      testKafkaRequestName,
 		ClusterID: testClusterID,
-	}, config, "")
+	}, kafkaConfig, keycloakConfig, "")
 
 	type args struct {
 		syncsetBuilder *v1.SyncsetBuilder
@@ -534,9 +538,12 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			config := config.KeycloakConfig{}
-			config.EnableAuthenticationOnKafka = true
-			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest, &config, "")
+			keycloakConfig := config.KeycloakConfig{}
+			keycloakConfig.EnableAuthenticationOnKafka = true
+
+			kafkaConfig := config.NewKafkaConfig()
+
+			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest, kafkaConfig, &keycloakConfig, "")
 			syncset, err := got.Build()
 			if err != nil {
 				t.Errorf("newKafkaSyncsetBuilder() failed to build syncset")

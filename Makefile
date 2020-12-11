@@ -161,6 +161,7 @@ help:
 	@echo "make clean                	delete temporary generated files"
 	@echo "make setup/git/hooks      	setup git hooks"
 	@echo "make keycloak/setup     	    setup mas sso clientId, clientSecret & crt"
+	@echo "make kafkacert/setup     	    setup the kafka certificate used for Kafka Brokers"
 	@echo "make docker/login/internal	login to an openshift cluster image registry"
 	@echo "make image/build/push/internal  build and push image to an openshift cluster image registry."
 	@echo "make deploy               	deploy the service via templates to an openshift cluster"
@@ -363,6 +364,8 @@ aws/setup:
 	@echo -n "$(AWS_ACCOUNT_ID)" > secrets/aws.accountid
 	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
+	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
+	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
 
 # Setup for mas sso credentials
@@ -370,6 +373,12 @@ keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
 .PHONY:keycloak/setup
+
+# Setup for the kafka broker certificate
+kafkacert/setup:
+	@echo -n "$(KAFKA_TLS_CERT)" > secrets/kafka-tls.crt
+	@echo -n "$(KAFKA_TLS_KEY)" > secrets/kafka-tls.key
+.PHONY:kafkacert/setup
 
 # OCM login
 ocm/login:
@@ -416,6 +425,10 @@ deploy: deploy/db
 		-P MAS_SSO_CRT="${MAS_SSO_CRT}" \
 		-P DEX_SECRET="${DEX_SECRET}" \
 		-P DEX_PASSWORD="${DEX_PASSWORD}" \
+		-p ROUTE53_ACCESS_KEY="$(ROUTE53_ACCESS_KEY)" \
+		-p ROUTE53_SECRET_ACCESS_KEY="$(ROUTE53_SECRET_ACCESS_KEY)" \
+		-p KAFKA_TLS_CERT="$(KAFKA_TLS_CERT)" \
+		-p KAFKA_TLS_KEY="$(KAFKA_TLS_KEY)" \
 		-p DATABASE_HOST="$(shell oc get service/managed-services-api-db -o jsonpath="{.spec.clusterIP}")" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \

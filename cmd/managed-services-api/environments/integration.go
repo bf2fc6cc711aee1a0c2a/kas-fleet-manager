@@ -8,21 +8,23 @@ import (
 )
 
 var integrationConfigDefaults map[string]string = map[string]string{
-	"v":                     "0",
-	"logtostderr":           "true",
-	"ocm-base-url":          "https://api-integration.6943.hive-integration.openshiftapps.com",
-	"enable-https":          "false",
-	"enable-metrics-https":  "false",
-	"enable-authz":          "true",
-	"ocm-debug":             "false",
-	"enable-ocm-mock":       "true",
-	"ocm-mock-mode":         config.MockModeEmulateServer,
-	"enable-sentry":         "false",
-	"enable-allow-list":     "true",
-	"max-allowed-instances": "1",
-	"auto-osd-creation":     "false",
-	"mas-sso-base-url":      "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
-	"mas-sso-realm":         "mas-sso-playground",
+	"v":                        "0",
+	"logtostderr":              "true",
+	"ocm-base-url":             "https://api-integration.6943.hive-integration.openshiftapps.com",
+	"enable-https":             "false",
+	"enable-metrics-https":     "false",
+	"enable-authz":             "true",
+	"ocm-debug":                "false",
+	"enable-ocm-mock":          "true",
+	"ocm-mock-mode":            config.MockModeEmulateServer,
+	"enable-sentry":            "false",
+	"enable-allow-list":        "true",
+	"max-allowed-instances":    "1",
+	"auto-osd-creation":        "false",
+	"mas-sso-base-url":         "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
+	"mas-sso-realm":            "mas-sso-playground",
+	"enable-kafka-tls":         "false",
+	"enable-dedicated-ingress": "false",
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server

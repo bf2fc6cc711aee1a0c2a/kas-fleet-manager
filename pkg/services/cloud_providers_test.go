@@ -2,9 +2,10 @@ package services
 
 import (
 	"errors"
-	"github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"reflect"
+
+	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
 	"testing"
 )

@@ -24,6 +24,7 @@ type ApplicationConfig struct {
 	AllowList                  *AllowListConfig            `json:"allow_list"`
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
+	Kafka                      *KafkaConfig                `json:"kafka_tls"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
@@ -39,6 +40,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		AllowList:                  NewAllowListConfig(),
 		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
 		Keycloak:                   NewKeycloakConfig(),
+		Kafka:                      NewKafkaConfig(),
 	}
 }
 
@@ -55,6 +57,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.AllowList.AddFlags(flagset)
 	c.ObservabilityConfiguration.AddFlags(flagset)
 	c.Keycloak.AddFlags(flagset)
+	c.Kafka.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
@@ -99,9 +102,13 @@ func (c *ApplicationConfig) ReadFiles() error {
 		return err
 	}
 	if c.AllowList.EnableAllowList {
-		return c.AllowList.ReadFiles()
+		err = c.AllowList.ReadFiles()
+		if err != nil {
+			return err
+		}
 	}
-	return nil
+	err = c.Kafka.ReadFiles()
+	return err
 }
 
 // Read the contents of file into integer value

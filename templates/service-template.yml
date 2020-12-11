@@ -182,6 +182,16 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
+- name: ENABLE_KAFKA_TLS
+  displayName: Enable Kafka TLS
+  description: Enable the Kafka TLS certificate
+  value: "false"
+
+- name: ENABLE_DEDICATED_INGRESS
+  displayName: Enable Dedicated Ingress
+  description: Enable dedicated Ingress for all Kafka Clusters
+  value: "false"
+
 - name: DEX_URL
   displayName: Dex url
   description: A URL to dex that will be used by the observability stack for authentication.
@@ -309,6 +319,9 @@ objects:
           - name: service
             secret:
               secretName: managed-services-api
+          - name: dataplane-certificate
+            secret:
+              secretName: managed-services-api-dataplane-certificate
           - name: rds
             secret:
               secretName: managed-services-api-rds
@@ -351,6 +364,8 @@ objects:
               mountPath: /secrets/tls
             - name: service
               mountPath: /secrets/service
+            - name: dataplane-certificate
+              mountPath: /secrets/dataplane-certificate
             - name: rds
               mountPath: /secrets/rds
             - name: ocm-managed-services-providers-config
@@ -365,11 +380,17 @@ objects:
             command:
             - /usr/local/bin/managed-services-api
             - serve
+            - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
+            - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
+            - --enable-kafka-tls=${ENABLE_KAFKA_TLS}
+            - --enable-dedicated-ingress=${ENABLE_DEDICATED_INGRESS}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
+            - --aws-route53-access-key-file=/secrets/service/aws.route53accesskey
+            - --aws-route53-secret-access-key-file=/secrets/service/aws.route53secretaccesskey
             - --dex-password-file=/secrets/service/dex.password
             - --dex-secret-file=/secrets/service/dex.secret
             - --dex-username=${DEX_USERNAME}
@@ -487,9 +508,9 @@ objects:
       selector:
         app: managed-services-api
       ports:
-      - port: 8080
-        targetPort: 8080
-        name: metrics
+        - port: 8080
+          targetPort: 8080
+          name: metrics
 
   - apiVersion: v1
     kind: Service
@@ -502,5 +523,5 @@ objects:
       selector:
         app: managed-services-api
       ports:
-      - port: 8083
-        targetPort: 8083
+        - port: 8083
+          targetPort: 8083
