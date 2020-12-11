@@ -64,7 +64,10 @@ func (s *LeaderElectionManager) Start() {
 
 // impl. Stoppable
 func (s *LeaderElectionManager) Stop() {
-	if s.tearDown != nil {
+	select {
+	case <-s.tearDown:
+		return
+	default:
 		close(s.tearDown)
 	}
 }
