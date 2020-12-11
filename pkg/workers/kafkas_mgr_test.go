@@ -35,7 +35,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
-					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
 					},
 				},
@@ -60,7 +60,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
-					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
 					},
 				},
@@ -85,7 +85,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return nil
 					},
-					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, errors.NotFound("Not Found")
 					},
 				},
@@ -105,7 +105,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
 						return nil
 					},
-					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
 					},
 				},
@@ -193,7 +193,7 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
 					},
 				},

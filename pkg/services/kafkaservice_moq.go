@@ -27,8 +27,11 @@ var _ KafkaService = &KafkaServiceMock{}
 //             DeleteFunc: func(ctx context.Context, id string) *errors.ServiceError {
 // 	               panic("mock out the Delete method")
 //             },
-//             GetFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+//             GetFunc: func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
 // 	               panic("mock out the Get method")
+//             },
+//             GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+// 	               panic("mock out the GetById method")
 //             },
 //             ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 // 	               panic("mock out the List method")
@@ -62,7 +65,10 @@ type KafkaServiceMock struct {
 	DeleteFunc func(ctx context.Context, id string) *errors.ServiceError
 
 	// GetFunc mocks the Get method.
-	GetFunc func(id string) (*api.KafkaRequest, *errors.ServiceError)
+	GetFunc func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
+
+	// GetByIdFunc mocks the GetById method.
+	GetByIdFunc func(id string) (*api.KafkaRequest, *errors.ServiceError)
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
@@ -98,6 +104,13 @@ type KafkaServiceMock struct {
 		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+		}
+		// GetById holds details about calls to the GetById method.
+		GetById []struct {
 			// ID is the id argument value.
 			ID string
 		}
@@ -141,6 +154,7 @@ type KafkaServiceMock struct {
 	lockCreate             sync.RWMutex
 	lockDelete             sync.RWMutex
 	lockGet                sync.RWMutex
+	lockGetById            sync.RWMutex
 	lockList               sync.RWMutex
 	lockListByStatus       sync.RWMutex
 	lockRegisterKafkaInSSO sync.RWMutex
@@ -216,33 +230,68 @@ func (mock *KafkaServiceMock) DeleteCalls() []struct {
 }
 
 // Get calls GetFunc.
-func (mock *KafkaServiceMock) Get(id string) (*api.KafkaRequest, *errors.ServiceError) {
+func (mock *KafkaServiceMock) Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
 	if mock.GetFunc == nil {
 		panic("KafkaServiceMock.GetFunc: method is nil but KafkaService.Get was just called")
 	}
 	callInfo := struct {
-		ID string
+		Ctx context.Context
+		ID  string
 	}{
-		ID: id,
+		Ctx: ctx,
+		ID:  id,
 	}
 	mock.lockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
 	mock.lockGet.Unlock()
-	return mock.GetFunc(id)
+	return mock.GetFunc(ctx, id)
 }
 
 // GetCalls gets all the calls that were made to Get.
 // Check the length with:
 //     len(mockedKafkaService.GetCalls())
 func (mock *KafkaServiceMock) GetCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockGet.RLock()
+	calls = mock.calls.Get
+	mock.lockGet.RUnlock()
+	return calls
+}
+
+// GetById calls GetByIdFunc.
+func (mock *KafkaServiceMock) GetById(id string) (*api.KafkaRequest, *errors.ServiceError) {
+	if mock.GetByIdFunc == nil {
+		panic("KafkaServiceMock.GetByIdFunc: method is nil but KafkaService.GetById was just called")
+	}
+	callInfo := struct {
+		ID string
+	}{
+		ID: id,
+	}
+	mock.lockGetById.Lock()
+	mock.calls.GetById = append(mock.calls.GetById, callInfo)
+	mock.lockGetById.Unlock()
+	return mock.GetByIdFunc(id)
+}
+
+// GetByIdCalls gets all the calls that were made to GetById.
+// Check the length with:
+//     len(mockedKafkaService.GetByIdCalls())
+func (mock *KafkaServiceMock) GetByIdCalls() []struct {
 	ID string
 } {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGet.RLock()
-	calls = mock.calls.Get
-	mock.lockGet.RUnlock()
+	mock.lockGetById.RLock()
+	calls = mock.calls.GetById
+	mock.lockGetById.RUnlock()
 	return calls
 }
 
