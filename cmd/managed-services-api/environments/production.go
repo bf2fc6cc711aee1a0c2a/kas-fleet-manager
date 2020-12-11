@@ -5,15 +5,17 @@ import (
 )
 
 var productionConfigDefaults map[string]string = map[string]string{
-	"v":                     "1",
-	"ocm-debug":             "false",
-	"enable-ocm-mock":       "false",
-	"enable-sentry":         "true",
-	"enable-allow-list":     "true",
-	"max-allowed-instances": "1",
-	"auto-osd-creation":     "true",
-	"mas-sso-realm":         "mas-sso",
-	"mas-sso-base-url":      "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
+	"v":                        "1",
+	"ocm-debug":                "false",
+	"enable-ocm-mock":          "false",
+	"enable-sentry":            "true",
+	"enable-allow-list":        "true",
+	"max-allowed-instances":    "1",
+	"auto-osd-creation":        "true",
+	"mas-sso-realm":            "mas-sso",
+	"mas-sso-base-url":         "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
+	"enable-kafka-tls":         "true",
+	"enable-dedicated-ingress": "true",
 }
 
 func loadProduction(env *Env) error {

@@ -429,6 +429,8 @@ func Test_kafkaService_Create(t *testing.T) {
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				keycloakService:   tt.fields.keycloakService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 
 			if err := k.Create(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
@@ -584,6 +586,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				keycloakService:   tt.fields.keycloakService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 			err := k.Delete(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
@@ -651,6 +655,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 
 			if err := k.RegisterKafkaJob(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
@@ -887,6 +893,8 @@ func Test_kafkaService_List(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 
 			result, pagingMeta, err := k.List(tt.args.ctx, tt.args.listArgs)
@@ -961,6 +969,8 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 			got, err := k.ListByStatus(tt.args.status)
 			// check errors
@@ -1019,6 +1029,8 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 			err := k.UpdateStatus(tt.args.id, tt.args.status)
 			if (err != nil) != tt.wantErr {
@@ -1078,6 +1090,8 @@ func Test_kafkaService_Update(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
 			}
 			err := k.Update(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
