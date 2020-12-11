@@ -153,3 +153,13 @@ func safeString(ptr *string) string {
 	}
 	return *ptr
 }
+
+// checks if slice of strings contains given string
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}

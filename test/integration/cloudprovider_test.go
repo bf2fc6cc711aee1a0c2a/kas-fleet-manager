@@ -58,7 +58,7 @@ func TestListCloudProviders(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account)
 
 	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviders(ctx, nil)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud providers list")
 
