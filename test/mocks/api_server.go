@@ -212,6 +212,10 @@ func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostResponse(syncset *c
 	b.handlerRegister[EndpointClusterSyncsetPost] = buildMockRequestHandler(syncset, err)
 }
 
+func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostRequestHandler(customMockRequestHandler func() func(w http.ResponseWriter, r *http.Request)) {
+	b.handlerRegister[EndpointClusterSyncsetPost] = customMockRequestHandler()
+}
+
 // SetClusterIngressGetResponse set a mock response ingress or error for the GET /api/clusters_mgmt/v1/clusters/{id}/ingresses endpoint
 func (b *MockConfigurableServerBuilder) SetClusterIngressGetResponse(ingress *clustersmgmtv1.Ingress, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterIngressGet] = buildMockRequestHandler(ingress, err)

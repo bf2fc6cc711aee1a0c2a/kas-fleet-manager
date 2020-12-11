@@ -139,11 +139,11 @@ func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStat
 	dbConn := c.connectionFactory.New()
 
 	if cluster.ID != "" {
-		if err := dbConn.Table("clusters").Where("id = ?", cluster.ID).Update("status", status).Error; err != nil {
+		if err := dbConn.Model(&api.Cluster{Meta: api.Meta{ID: cluster.ID}}).Update("status", status).Error; err != nil {
 			return ocmErrors.GeneralError("failed to update status: %s", err.Error())
 		}
 	} else {
-		if err := dbConn.Table("clusters").Where("cluster_id = ?", cluster.ClusterID).Update("status", status).Error; err != nil {
+		if err := dbConn.Model(&api.Cluster{ClusterID: cluster.ClusterID}).Update("status", status).Error; err != nil {
 			return ocmErrors.GeneralError("failed to update status: %s", err.Error())
 		}
 	}
