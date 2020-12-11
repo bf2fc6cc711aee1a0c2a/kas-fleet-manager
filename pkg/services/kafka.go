@@ -295,15 +295,34 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 		dbConn = dbConn.Where("owner = ?", user)
 	}
 
+	// TODO add integration tests
+	// Apply search query
+	if len(listArgs.Search) > 0 {
+		searchDbQuery, err := GetSearchQuery(listArgs.Search)
+		if err != nil {
+			return kafkaRequestList, pagingMeta, errors.FailedToParseSearch("Unable to list kafka requests for %s: %s", user, err)
+		}
+		for _, dbQuery := range searchDbQuery {
+			dbConn = dbConn.Where(dbQuery.query, dbQuery.value)
+		}
+	}
+
+	if len(listArgs.OrderBy) == 0 {
+		// default orderBy name
+		dbConn = dbConn.Order("name")
+	}
+
+	// Set the order by arguments if any
+	for _, orderByArg := range listArgs.OrderBy {
+		dbConn = dbConn.Order(orderByArg)
+	}
+
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
 	dbConn.Model(&kafkaRequestList).Count(&pagingMeta.Total)
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
 	}
 	dbConn = dbConn.Offset((pagingMeta.Page - 1) * pagingMeta.Size).Limit(pagingMeta.Size)
-
-	// default the order by name
-	dbConn = dbConn.Order("name")
 
 	// execute query
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {

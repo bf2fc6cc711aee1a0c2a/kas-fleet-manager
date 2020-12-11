@@ -819,8 +819,10 @@ func (a *DefaultApiService) ListCloudProviders(ctx _context.Context, localVarOpt
 
 // ListKafkasOpts Optional parameters for the method 'ListKafkas'
 type ListKafkasOpts struct {
-	Page optional.String
-	Size optional.String
+	Page    optional.String
+	Size    optional.String
+	OrderBy optional.String
+	Search  optional.String
 }
 
 /*
@@ -829,6 +831,8 @@ ListKafkas Returns a list of Kafka requests
  * @param optional nil or *ListKafkasOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
+ * @param "OrderBy" (optional.String) -  Specifies the order by criteria. The syntax of this parameter is similar to the syntax of the _order by_ clause of an SQL statement. Each query can be ordered by any of the kafkaRequests fields. For example, in order to retrieve all kafkas ordered by their name:  ```sql name asc ```  Or in order to retrieve all kafkas ordered by their name _and_ created date:  ```sql name asc, created_at asc ```  If the parameter isn't provided, or if the value is empty, then the results will be ordered by name.
+ * @param "Search" (optional.String) -  Search criteria.  The syntax of this parameter is similar to the syntax of the _where_ clause of an SQL statement. Allowed fields in the search are: region, cloud_provider, multi_az, name, status. For example, in order to retrieve all kafka requests with a name starting with `my` the value should be:  ``` name like 'my%' ```  To retrieve all kafka requests with a name starting with `my` and region equal `aws`, the value should be:  ``` name like 'my%' and cloud_provider = aws ```  If the parameter isn't provided, or if the value is empty, then all the kafkas that the user has permission to see will be returned. Note. If the query is invalid, an error will be returned
 @return KafkaRequestList
 */
 func (a *DefaultApiService) ListKafkas(ctx _context.Context, localVarOptionals *ListKafkasOpts) (KafkaRequestList, *_nethttp.Response, error) {
@@ -852,6 +856,12 @@ func (a *DefaultApiService) ListKafkas(ctx _context.Context, localVarOptionals *
 	}
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.OrderBy.IsSet() {
+		localVarQueryParams.Add("orderBy", parameterToString(localVarOptionals.OrderBy.Value(), ""))
+	}
+	if localVarOptionals != nil && localVarOptionals.Search.IsSet() {
+		localVarQueryParams.Add("search", parameterToString(localVarOptionals.Search.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -890,6 +900,16 @@ func (a *DefaultApiService) ListKafkas(ctx _context.Context, localVarOptionals *
 		newErr := GenericOpenAPIError{
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
 			var v Error
