@@ -43,10 +43,6 @@ var (
 		Xms: "512m",
 		Xmx: "512m",
 	}
-
-	canaryImageUrl = "quay.io/ppatierno/strimzi-canary:0.0.1"
-
-	adminServerUrl = "quay.io/sknot/strimzi-admin:0.0.2"
 )
 
 var deleteClaim = false
@@ -458,7 +454,24 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		},
 	}
 
+	labels := make(map[string]string)
+	labels["ingressType"] = "sharded"  // signal detected by the shared ingress controller
+
 	// build array of objects to be created by the syncset
+	kafkaStorage := strimzi.PersistentClaimStorage{
+		Size:        kafkaVolumeSize.String(),
+		DeleteClaim: &deleteClaim,
+	}
+	zooKeeperStorage := strimzi.PersistentClaimStorage{
+		Size:        zkVolumeSize.String(),
+		DeleteClaim: &deleteClaim,
+	}
+
+	if kafkaConfig.KafkaStorageClass != "" {
+		kafkaStorage.Class = kafkaConfig.KafkaStorageClass
+		zooKeeperStorage.Class = kafkaConfig.KafkaStorageClass
+	}
+
 	kafkaCR := &strimzi.Kafka{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "kafka.strimzi.io/v1beta1",
@@ -467,6 +480,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
 			Namespace: namespaceName,
+			Labels: labels,
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
@@ -488,12 +502,9 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 					JbodStorage: strimzi.JbodStorage{
 						Volumes: []strimzi.JbodVolume{
 							{
-								ID:   &jbodVolumeId,
-								Type: strimzi.PersistentClaim,
-								PersistentClaimStorage: strimzi.PersistentClaimStorage{
-									Size:        kafkaVolumeSize.String(),
-									DeleteClaim: &deleteClaim,
-								},
+								ID:                     &jbodVolumeId,
+								Type:                   strimzi.PersistentClaim,
+								PersistentClaimStorage: kafkaStorage,
 							},
 						},
 					},
@@ -517,11 +528,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 			Zookeeper: strimzi.ZookeeperClusterSpec{
 				Replicas: numOfZookeepers,
 				Storage: strimzi.Storage{
-					Type: strimzi.PersistentClaim,
-					PersistentClaimStorage: strimzi.PersistentClaimStorage{
-						Size:        zkVolumeSize.String(),
-						DeleteClaim: &deleteClaim,
-					},
+					Type:                   strimzi.PersistentClaim,
+					PersistentClaimStorage: zooKeeperStorage,
 				},
 				Resources: &corev1.ResourceRequirements{
 					Requests: map[corev1.ResourceName]resource.Quantity{
@@ -596,7 +604,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 					Containers: []corev1.Container{
 						{
 							Name:  canaryName,
-							Image: canaryImageUrl,
+							Image: kafkaConfig.KafkaCanaryImage,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_BOOTSTRAP_SERVERS",
@@ -646,7 +654,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 					Containers: []corev1.Container{
 						{
 							Name:  adminServerName,
-							Image: adminServerUrl,
+							Image: kafkaConfig.KafkaAdminServerImage,
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
