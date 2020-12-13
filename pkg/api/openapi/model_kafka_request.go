@@ -27,4 +27,5 @@ type KafkaRequest struct {
 	BootstrapServerHost string    `json:"bootstrapServerHost,omitempty"`
 	CreatedAt           time.Time `json:"created_at,omitempty"`
 	UpdatedAt           time.Time `json:"updated_at,omitempty"`
+	FailedReason        string    `json:"failed_reason,omitempty"`
 }
