@@ -375,6 +375,8 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		"client.quota.callback.static.storage.check-interval": "30",
 		"quota.window.num":          "30",
 		"quota.window.size.seconds": "2",
+		// Limit client connections to 500 per broker
+		"max.connections": "500",
 	}
 
 	var plainOverOauthAuthenticationListener *strimzi.KafkaListenerAuthentication
