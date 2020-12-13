@@ -453,7 +453,9 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 	}
 
 	labels := make(map[string]string)
-	labels["ingressType"] = "sharded"  // signal detected by the shared ingress controller
+	if kafkaConfig.EnableDedicatedIngress {
+		labels["ingressType"] = "sharded"  // signal detected by the shared ingress controller
+	}
 
 	// build array of objects to be created by the syncset
 	kafkaStorage := strimzi.PersistentClaimStorage{
