@@ -25,12 +25,11 @@ const (
 	numOfZookeepers    = 3
 	produceQuota       = 4000000
 	consumeQuota       = 4000000
-	kafkaMaxPartitions = 50
 )
 
 var (
 	zkVolumeSize         = resource.NewScaledQuantity(10, resource.Giga)
-	kafkaVolumeSize      = resource.NewScaledQuantity(100, resource.Giga)
+	kafkaVolumeSize      = resource.NewScaledQuantity(225, resource.Giga)
 	kafkaContainerMemory = resource.NewScaledQuantity(1, resource.Giga)
 	kafkaContainerCpu    = resource.NewMilliQuantity(1000, resource.DecimalSI)
 	kafkaJvmOptions      = &strimzi.JvmOptionsSpec{
@@ -359,9 +358,6 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 	// Derive Kafka config based on global constants
 	kafkaCRConfig := map[string]string{
 		"offsets.topic.replication.factor": "3",
-		// Retention and segment size is set to disk capacity
-		"log.retention.ms":                         fmt.Sprintf("%d", 1000*kafkaVolumeSize.Value()/produceQuota),
-		"log.segment.bytes":                        fmt.Sprintf("%d", kafkaVolumeSize.Value()/kafkaMaxPartitions),
 		"transaction.state.log.min.isr":            "2",
 		"transaction.state.log.replication.factor": "3",
 		"client.quota.callback.class":              "org.apache.kafka.server.quota.StaticQuotaCallback",
