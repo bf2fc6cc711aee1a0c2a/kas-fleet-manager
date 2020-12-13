@@ -238,7 +238,7 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 		clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 		if err != nil || clusterDNS == "" {
 			sentry.CaptureException(err)
-			return errors.GeneralError("error retreiving cluster DNS: %v", err)
+			return errors.GeneralError("error retrieving cluster DNS: %v", err)
 		}
 		// We are manually creating a new IngressController on the data plane OSD clusters which the Kafka Clusters will use
 		// Our ClusterDNS reference needs to match this
