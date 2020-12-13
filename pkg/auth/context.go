@@ -64,11 +64,11 @@ func GetAuthPayloadFromContext(ctx context.Context) (*AuthPayload, error) {
 	// Get user token from request context and validate
 	user := ctx.Value(ContextAuthKey)
 	if user == nil {
-		return nil, fmt.Errorf("Unable to retreive JWT token from request context")
+		return nil, fmt.Errorf("Unable to retrieve JWT token from request context")
 	}
 	userToken, ok := user.(*jwt.Token)
 	if !ok {
-		return nil, fmt.Errorf("JWT token retreived has invalid type")
+		return nil, fmt.Errorf("JWT token retrieved has invalid type")
 	}
 
 	if !userToken.Valid {
