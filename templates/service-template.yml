@@ -192,6 +192,21 @@ parameters:
   description: Enable dedicated Ingress for all Kafka Clusters
   value: "false"
 
+- name: KAFKA_STORAGE_CLASS
+  displayName: Kafka Storage Classe
+  description: Specifies a storage class for Kafka
+  value: "mk-storageclass"
+
+- name: KAFKA_CANARY_IMAGE
+  displayName: Kafka Canary Image
+  description: Specifies a canary image
+  value: "quay.io/ppatierno/strimzi-canary:0.0.1"
+
+- name: KAFKA_ADMIN_SERVER_IMAGE
+  displayName: Kafka Admin Server Image
+  description: Specifies an admin server image
+  value: "quay.io/sknot/strimzi-admin:0.0.2"
+
 - name: DEX_URL
   displayName: Dex url
   description: A URL to dex that will be used by the observability stack for authentication.
@@ -384,6 +399,9 @@ objects:
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-tls=${ENABLE_KAFKA_TLS}
             - --enable-dedicated-ingress=${ENABLE_DEDICATED_INGRESS}
+            - --kafka-storage-class=${KAFKA_STORAGE_CLASS}
+            - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
+            - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
