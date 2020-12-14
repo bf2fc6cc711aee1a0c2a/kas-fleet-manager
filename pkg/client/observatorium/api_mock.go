@@ -16,14 +16,16 @@ func (c *Client) MockAPI() pV1.API {
 type httpAPIMock struct {
 }
 
+type mockAPISample struct {
+	value    pModel.Value
+	warnings pV1.Warnings
+	err      error
+}
+
 // performs a query for the kafka state, retun value '1' which mean ready state.
-func (*httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
-	values := pModel.Vector{
-		&pModel.Sample{
-			Value: 1,
-		},
-	}
-	return values, []string{}, nil
+func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
+	api := SetMockValue(1)
+	return api.value, api.warnings, api.err
 }
 
 // Not implemented
@@ -82,4 +84,17 @@ func (*httpAPIMock) TSDB(ctx context.Context) (pV1.TSDBResult, error) {
 func (*httpAPIMock) Runtimeinfo(ctx context.Context) (pV1.RuntimeinfoResult, error) {
 
 	return pV1.RuntimeinfoResult{}, fmt.Errorf("not implemented")
+}
+
+//SetMockValue in httpAPIMock
+func SetMockValue(expectedValue float64) *mockAPISample {
+	sample := &pModel.Sample{Value: pModel.SampleValue(expectedValue)}
+	vector := []*pModel.Sample{sample}
+
+	api := mockAPISample{
+		value: pModel.Vector(vector),
+	}
+
+	return &api
+
 }

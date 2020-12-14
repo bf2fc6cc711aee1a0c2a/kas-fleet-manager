@@ -238,3 +238,145 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		})
 	}
 }
+
+func TestKafkaManager_reconcileResourceCreationKafka(t *testing.T) {
+	type fields struct {
+		ocmClient            ocm.Client
+		clusterService       services.ClusterService
+		kafkaService         services.KafkaService
+		timer                *time.Timer
+		keycloakService      services.KeycloakService
+		observatoriumService services.ObservatoriumService
+	}
+	type args struct {
+		kafka *api.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "error when creating kafka fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.GeneralError("test")
+					},
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
+				},
+				keycloakService: &services.KeycloakServiceMock{
+					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
+						return nil
+					},
+				},
+				observatoriumService: &services.ObservatoriumServiceMock{
+					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
+						return observatorium.KafkaState{}, errors.NotFound("Not Found")
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when updating kafka status fails",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
+						return errors.GeneralError("test")
+					},
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
+				},
+				keycloakService: &services.KeycloakServiceMock{
+					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
+						return nil
+					},
+				},
+				observatoriumService: &services.ObservatoriumServiceMock{
+					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
+						return observatorium.KafkaState{}, errors.NotFound("Not Found")
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when kafka resource_creating status does not exist in the DB before creation",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, errors.NotFound("Not Found")
+					},
+				},
+				observatoriumService: &services.ObservatoriumServiceMock{
+					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
+						return observatorium.KafkaState{},  errors.NotFound("Not Found")
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "successful reconcile",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
+				},
+				observatoriumService: &services.ObservatoriumServiceMock{
+					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
+						return observatorium.KafkaState{State:"ready"}, nil
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k := &KafkaManager{
+				ocmClient:            tt.fields.ocmClient,
+				clusterService:       tt.fields.clusterService,
+				kafkaService:         tt.fields.kafkaService,
+				timer:                tt.fields.timer,
+				keycloakService:      tt.fields.keycloakService,
+				observatoriumService: tt.fields.observatoriumService,
+			}
+			if err := k.reconcileResourceCreationKafka(tt.args.kafka); (err != nil) != tt.wantErr {
+				t.Errorf("reconcileResourceCreationKafka() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

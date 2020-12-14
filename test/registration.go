@@ -21,7 +21,6 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 		helper.SetServer(server)
 	}
 	helper.Env().Config.ObservabilityConfiguration.EnableMock = true
-
 	helper.StartServer()
 	// Reset the database to a seeded blank state
 	helper.ResetDB()

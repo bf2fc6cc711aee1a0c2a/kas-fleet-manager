@@ -142,6 +142,15 @@ func replaceHostSpecialChar(name string) (string, error) {
 	return replacedName, nil
 }
 
+func BuildNamespaceName(kafka *api.KafkaRequest) (string, error) {
+	namespaceName := buildKafkaNamespaceIdentifier(kafka)
+	namespaceName, err := replaceNamespaceSpecialChar(namespaceName)
+	if err != nil {
+		return namespaceName, fmt.Errorf("failed to build namespace for kafka %s: %w", kafka.ID, err)
+	}
+	return namespaceName, nil
+}
+
 func safeString(ptr *string) string {
 	if ptr == nil {
 		return ""

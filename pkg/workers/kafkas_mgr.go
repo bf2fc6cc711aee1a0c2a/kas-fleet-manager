@@ -19,29 +19,29 @@ import (
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
-	id             string
-	workerType     string
-	isRunning      bool
-	ocmClient       ocm.Client
-	clusterService  services.ClusterService
-	kafkaService    services.KafkaService
-	keycloakService services.KeycloakService
+	id                   string
+	workerType           string
+	isRunning            bool
+	ocmClient            ocm.Client
+	clusterService       services.ClusterService
+	kafkaService         services.KafkaService
+	keycloakService      services.KeycloakService
 	observatoriumService services.ObservatoriumService
-	timer           *time.Timer
-	imStop          chan struct{}
-	syncTeardown    sync.WaitGroup
-	reconciler      Reconciler
+	timer                *time.Timer
+	imStop               chan struct{}
+	syncTeardown         sync.WaitGroup
+	reconciler           Reconciler
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService,observatoriumService services.ObservatoriumService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService) *KafkaManager {
 	return &KafkaManager{
-		id:             id,
-		workerType:     "kafka",
-		ocmClient:       ocmClient,
-		clusterService:  clusterService,
-		kafkaService:    kafkaService,
-		keycloakService: keycloakService,
+		id:                   id,
+		workerType:           "kafka",
+		ocmClient:            ocmClient,
+		clusterService:       clusterService,
+		kafkaService:         kafkaService,
+		keycloakService:      keycloakService,
 		observatoriumService: observatoriumService,
 	}
 }
@@ -107,11 +107,25 @@ func (k *KafkaManager) reconcile() {
 
 	for _, kafka := range provisioningKafkas {
 		if err := k.reconcileProvisionedKafka(kafka); err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			continue
 		}
 	}
+
+	// handle resource creation kafkas state
+	resourceCreationKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusResourceCreation)
+	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
+		glog.Errorf("failed to list resource creation kafkas: %s", serviceErr.Error())
+	}
+
+	for _, kafka := range resourceCreationKafkas {
+		if err := k.reconcileResourceCreationKafka(kafka); err != nil {
+			glog.Errorf("reconcile resource creating %s: %s", kafka.ID, err.Error())
+			continue
+		}
+	}
+
 }
 
 func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
@@ -137,6 +151,7 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error {
 	_, err := k.kafkaService.GetById(kafka.ID)
 	if err != nil {
+		sentry.CaptureException(err)
 		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
 	}
 
@@ -157,12 +172,33 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 		return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 	}
 	// consider the kafka in a complete state
-	if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusComplete); err != nil {
-		return fmt.Errorf("failed to update kafka %s to status complete: %w", kafka.ID, err)
+	if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusResourceCreation); err != nil {
+		return fmt.Errorf("failed to update kafka %s to status resource creation: %w", kafka.ID, err)
 	}
-	// lines below (responsible for adding metrics) will need to be moved to a place
-	// where successful kafka cluster creation check takes place (once this check is implemented)
-	metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
-	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
+
+	return nil
+}
+
+func (k *KafkaManager) reconcileResourceCreationKafka(kafka *api.KafkaRequest) error {
+
+	namespace, err := services.BuildNamespaceName(kafka)
+	if err != nil {
+		return err
+	}
+	kafkaState, err := k.observatoriumService.GetKafkaState(kafka.Name, namespace)
+	if err != nil {
+		sentry.CaptureException(err)
+		return fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err)
+	}
+	if kafkaState.State == constants.KafkaClusterStateReady {
+		glog.Infof("Kafka %s state %s", kafka.ID, kafkaState.State)
+		if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusComplete); err != nil {
+			return fmt.Errorf("failed to update kafka %s to status complete: %w", kafka.ID, err)
+		}
+		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
+		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
+		return nil
+	}
+	glog.V(1).Infof("reconciled kafka %s state %s", kafka.ID, kafkaState.State)
 	return nil
 }
