@@ -225,7 +225,7 @@ func buildAdminServerRoute(modifyFn func(adminServerService *routev1.Route)) *ro
 			Port: &routev1.RoutePort{
 				TargetPort: intstr.FromString("http"),
 			},
-			Host: "admin-server-" + fmt.Sprintf("%s-%s.clusterDNS", testKafkaRequestName, testID),
+			Host: "admin-server-" + fmt.Sprintf("%s-%s.clusterDNS:443", testKafkaRequestName, testID),
 			TLS: &routev1.TLSConfig{
 				Termination: routev1.TLSTerminationEdge,
 			},
@@ -390,7 +390,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 			name: "build syncset with singleAZ Kafka successfully",
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
-					kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s-%s.clusterDNS", testKafkaRequestName, testID)
+					kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s-%s.clusterDNS:443", testKafkaRequestName, testID)
 				}),
 			},
 			want: []interface{}{
@@ -461,7 +461,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 			name: "build syncset with multiAZ Kafka successfully",
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
-					kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s-%s.clusterDNS", testKafkaRequestName, testID)
+					kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s-%s.clusterDNS:443", testKafkaRequestName, testID)
 					kafkaRequest.MultiAZ = true
 				}),
 			},
