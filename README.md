@@ -97,14 +97,28 @@ $ ./managed-services-api -h
     $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret>
     ```
 
-4. Generate a temporary ocm token
+4. Setup external certificate for kafka brokers
+    #### Option A)
+    Needed when ENV != (stage|production)
+    ```
+    $ make kafkacert/setup
+    ```
+    
+    #### Option B)
+    Works when ENV == (stage|production)
+    The certificate and private key can be retrieved from Vault
+    ```
+    $ make kafkacert/setup KAFKA_TLS_CERT=<kafka_tls_cert> KAFKA_TLS_KEY=<kafka_tls_key>
+    ```
+
+5. Generate a temporary ocm token
     Generate a temporary ocm token and set it in the secrets/ocm-service.token file
     > **Note**: This will need to be re-generated as this temporary token will expire within a few minutes.
     ```
     $ make ocm/setup OCM_OFFLINE_TOKEN="$(ocm token)" OCM_ENV=development
     ```
    
-5. Running the service locally
+6. Running the service locally
     ```
     $ ./managed-services-api serve  (default: http://localhost:8000)
     ```
