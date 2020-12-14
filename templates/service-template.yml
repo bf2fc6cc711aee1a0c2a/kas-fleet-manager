@@ -200,12 +200,12 @@ parameters:
 - name: KAFKA_CANARY_IMAGE
   displayName: Kafka Canary Image
   description: Specifies a canary image
-  value: "quay.io/ppatierno/strimzi-canary:0.0.1"
+  value: "quay.io/ppatierno/strimzi-canary:0.0.1-1"
 
 - name: KAFKA_ADMIN_SERVER_IMAGE
   displayName: Kafka Admin Server Image
   description: Specifies an admin server image
-  value: "quay.io/sknot/strimzi-admin:0.0.2"
+  value: "quay.io/sknot/strimzi-admin:0.0.3"
 
 - name: DEX_URL
   displayName: Dex url

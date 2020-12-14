@@ -27,8 +27,8 @@ func NewKafkaConfig() *KafkaConfig {
 		EnableDedicatedIngress:         false,
 		NumOfBrokers:                   3,
 		KafkaStorageClass:              "",
-		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1",
-		KafkaAdminServerImage:          "quay.io/sknot/strimzi-admin:0.0.2",
+		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1-1",
+		KafkaAdminServerImage:          "quay.io/sknot/strimzi-admin:0.0.3",
 	}
 }
 
