@@ -94,7 +94,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
-	if k.kafkaConfig.EnableKafkaTLS {
+	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
 
@@ -234,7 +234,7 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 		}
 	}
 
-	if k.kafkaConfig.EnableKafkaTLS {
+	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 		if err != nil || clusterDNS == "" {
 			sentry.CaptureException(err)
