@@ -469,3 +469,45 @@ func Test_contains(t *testing.T) {
 		})
 	}
 }
+
+func Test_BuildNamespaceName(t *testing.T) {
+	mockKafkaName := "example-kafka"
+	mockKafkaNamespace := "a1ilzo99dvkvaoqnjeovhp8pfizs"
+
+	type args struct {
+		kafkaRequest *api.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Build namespace name successfully",
+			args: args{
+				kafkaRequest: &api.KafkaRequest{
+					Name: mockKafkaName,
+					Meta: api.Meta{
+						ID: mockKafkaRequestID,
+					},
+				},
+			},
+			wantErr: false,
+			want:    mockKafkaNamespace,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := BuildNamespaceName(tt.args.kafkaRequest)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("BuildNamespaceName() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("BuildNamespaceName() got = %+v, want %+v", got, tt.want)
+			}
+
+		})
+	}
+}
