@@ -94,7 +94,7 @@ func buildCanary(modifyFn func(canary *appsv1.Deployment)) *appsv1.Deployment {
 					Containers: []corev1.Container{
 						{
 							Name:  testCanaryName,
-							Image: "quay.io/ppatierno/strimzi-canary:0.0.1",
+							Image: "quay.io/ppatierno/strimzi-canary:0.0.1-1",
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_BOOTSTRAP_SERVERS",
@@ -150,7 +150,7 @@ func buildAdminServer(modifyFn func(adminServer *appsv1.Deployment)) *appsv1.Dep
 					Containers: []corev1.Container{
 						{
 							Name:  testAdminServerName,
-							Image: "quay.io/sknot/strimzi-admin:0.0.2",
+							Image: "quay.io/sknot/strimzi-admin:0.0.3",
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
