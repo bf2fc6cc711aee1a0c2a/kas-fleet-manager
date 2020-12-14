@@ -14,6 +14,7 @@ var stageConfigDefaults map[string]string = map[string]string{
 	"mas-sso-realm":            "mas-sso-staging",
 	"enable-kafka-tls":         "true",
 	"enable-dedicated-ingress": "true",
+	"kafka-storage-class":      "mk-storageclass",
 }
 
 func loadStage(env *Env) error {
