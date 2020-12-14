@@ -5,16 +5,16 @@ import (
 )
 
 var stageConfigDefaults map[string]string = map[string]string{
-	"ocm-base-url":             "https://api.stage.openshift.com",
-	"enable-ocm-mock":          "false",
-	"enable-allow-list":        "true",
-	"max-allowed-instances":    "1",
-	"auto-osd-creation":        "true",
-	"mas-sso-base-url":         "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
-	"mas-sso-realm":            "mas-sso-staging",
-	"enable-kafka-tls":         "true",
-	"enable-dedicated-ingress": "true",
-	"kafka-storage-class":      "mk-storageclass",
+	"ocm-base-url":                      "https://api.stage.openshift.com",
+	"enable-ocm-mock":                   "false",
+	"enable-allow-list":                 "true",
+	"max-allowed-instances":             "1",
+	"auto-osd-creation":                 "true",
+	"mas-sso-base-url":                  "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
+	"mas-sso-realm":                     "mas-sso-staging",
+	"enable-kafka-external-certificate": "true",
+	"enable-dedicated-ingress":          "true",
+	"kafka-storage-class":               "mk-storageclass",
 }
 
 func loadStage(env *Env) error {
