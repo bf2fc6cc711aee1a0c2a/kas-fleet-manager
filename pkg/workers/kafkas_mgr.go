@@ -120,8 +120,8 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
 		clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
-		err := k.keycloakService.IsKafkaClientExist(clientId)
-		if err != nil {
+		keycloakErr := k.keycloakService.IsKafkaClientExist(clientId)
+		if keycloakErr != nil {
 			if err == k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed) {
 				return fmt.Errorf("failed to update kafka %s to status: %w", kafka.ID, err)
 			}
