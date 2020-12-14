@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	numOfZookeepers    = 3
-	produceQuota       = 4000000
-	consumeQuota       = 4000000
+	numOfZookeepers = 3
+	produceQuota    = 4000000
+	consumeQuota    = 4000000
 )
 
 var (
@@ -357,7 +357,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 
 	// Derive Kafka config based on global constants
 	kafkaCRConfig := map[string]string{
-		"offsets.topic.replication.factor": "3",
+		"offsets.topic.replication.factor":         "3",
 		"transaction.state.log.min.isr":            "2",
 		"transaction.state.log.replication.factor": "3",
 		"client.quota.callback.class":              "org.apache.kafka.server.quota.StaticQuotaCallback",
@@ -454,7 +454,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 
 	labels := make(map[string]string)
 	if kafkaConfig.EnableDedicatedIngress {
-		labels["ingressType"] = "sharded"  // signal detected by the shared ingress controller
+		labels["ingressType"] = "sharded" // signal detected by the shared ingress controller
 	}
 
 	// build array of objects to be created by the syncset
@@ -480,7 +480,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
 			Namespace: namespaceName,
-			Labels: labels,
+			Labels:    labels,
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
@@ -722,7 +722,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		},
 	}
 
-	if kafkaConfig.EnableKafkaTLS {
+	if kafkaConfig.EnableKafkaExternalCertificate {
 		adminServerRoute.Spec.TLS.Certificate = kafkaConfig.KafkaTLSCert
 		adminServerRoute.Spec.TLS.Key = kafkaConfig.KafkaTLSKey
 	}
@@ -778,7 +778,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		resources = append(resources, clientSecret, caSecret)
 	}
 
-	if kafkaConfig.EnableKafkaTLS {
+	if kafkaConfig.EnableKafkaExternalCertificate {
 		resources = append(resources, buildKafkaTLSSecretResource(kafkaConfig, kafkaTLSSecretName, namespaceName))
 	}
 
@@ -806,7 +806,7 @@ func buildKafkaTLSSecretResource(kafkaConfig *config.KafkaConfig, kafkaTLSSecret
 }
 
 func buildBrokerCertChainAndKeyResource(kafkaConfig *config.KafkaConfig, kafkaTLSSecretName string) *strimzi.CertAndKeySecretSource {
-	if !kafkaConfig.EnableKafkaTLS {
+	if !kafkaConfig.EnableKafkaExternalCertificate {
 		return nil
 	}
 

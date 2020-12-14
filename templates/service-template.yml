@@ -182,7 +182,7 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
-- name: ENABLE_KAFKA_TLS
+- name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
   displayName: Enable Kafka TLS
   description: Enable the Kafka TLS certificate
   value: "false"
@@ -397,7 +397,7 @@ objects:
             - serve
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
-            - --enable-kafka-tls=${ENABLE_KAFKA_TLS}
+            - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
             - --enable-dedicated-ingress=${ENABLE_DEDICATED_INGRESS}
             - --kafka-storage-class=${KAFKA_STORAGE_CLASS}
             - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
