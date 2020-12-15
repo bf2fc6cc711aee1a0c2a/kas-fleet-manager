@@ -186,17 +186,11 @@ paths:
           Search criteria.
 
           The syntax of this parameter is similar to the syntax of the _where_ clause of an
-          SQL statement. Allowed fields in the search are: region, cloud_provider, multi_az, name, status.
-          For example, in order to retrieve all kafka requests with a name starting with `my` the value should be:
+          SQL statement. Allowed fields in the search are: region, cloud_provider, multi_az, name, status. Allowed comparators are `<>` and `=`
+          For example, to retrieve kafka request with name equal `my-kafka` and region equal `aws`, the value should be:
 
           ```
-          name like 'my%'
-          ```
-
-          To retrieve all kafka requests with a name starting with `my` and region equal `aws`, the value should be:
-
-          ```
-          name like 'my%' and cloud_provider = aws
+          name = my-kafka and cloud_provider = aws
           ```
 
           If the parameter isn't provided, or if the value is empty, then all the kafkas
@@ -204,7 +198,7 @@ paths:
           Note. If the query is invalid, an error will be returned
         examples:
           search:
-            value: name like 'my%' and region = us-east-1
+            value: name = my-kafka and cloud_provider = aws
         explode: true
         in: query
         name: search
@@ -832,17 +826,11 @@ components:
         Search criteria.
 
         The syntax of this parameter is similar to the syntax of the _where_ clause of an
-        SQL statement. Allowed fields in the search are: region, cloud_provider, multi_az, name, status.
-        For example, in order to retrieve all kafka requests with a name starting with `my` the value should be:
+        SQL statement. Allowed fields in the search are: region, cloud_provider, multi_az, name, status. Allowed comparators are `<>` and `=`
+        For example, to retrieve kafka request with name equal `my-kafka` and region equal `aws`, the value should be:
 
         ```
-        name like 'my%'
-        ```
-
-        To retrieve all kafka requests with a name starting with `my` and region equal `aws`, the value should be:
-
-        ```
-        name like 'my%' and cloud_provider = aws
+        name = my-kafka and cloud_provider = aws
         ```
 
         If the parameter isn't provided, or if the value is empty, then all the kafkas
@@ -850,7 +838,7 @@ components:
         Note. If the query is invalid, an error will be returned
       examples:
         search:
-          value: name like 'my%' and region = us-east-1
+          value: name = my-kafka and cloud_provider = aws
       explode: true
       in: query
       name: search
