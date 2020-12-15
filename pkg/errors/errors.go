@@ -51,6 +51,8 @@ const (
 
 	// Synchronous request not supported
 	ErrorSyncActionNotSupported ServiceErrorCode = 103
+
+	ErrorFailedToCreateSSOClient ServiceErrorCode = 106
 )
 
 type ServiceErrorCode int
@@ -80,6 +82,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorBadRequest, "Bad request", http.StatusBadRequest},
 		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
 		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
+		ServiceError{ErrorFailedToCreateSSOClient, "failed to create kafka client in the mas sso", http.StatusBadRequest},
 	}
 }
 
