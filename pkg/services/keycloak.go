@@ -144,7 +144,7 @@ func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName st
 	accessToken, _ := kc.getToken()
 	internalClientId, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
-		return "", errors.GeneralError("failed to get sso client:%v", err)
+		return "", errors.GeneralError("failed to get sso client: %v", err)
 	}
 	if internalClientId != "" {
 		secretValue, _ := kc.getClientSecret(internalClientId, accessToken)
