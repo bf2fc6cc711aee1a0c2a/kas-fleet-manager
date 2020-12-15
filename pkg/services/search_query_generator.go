@@ -34,7 +34,7 @@ func removeExcessiveWhiteSpaces(somestring string) string {
 
 // validate search query and return sanitized query ready to be executed by gorm
 func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSearchQuery, *errors.ServiceError) {
-	validComparators := []string{"=", "LIKE", "<>"}
+	validComparators := []string{"=", "<>"}
 	validColumnNames := []string{"region", "name", "cloud_provider", "status"}
 	var dbQueries []DbSearchQuery
 	var query string
@@ -60,28 +60,28 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSea
 			stringToMatchRegexp := queryToken
 			stringToMatchRegexp = strings.TrimPrefix(stringToMatchRegexp, "'")
 			stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "'")
-			startsWithWildcard := strings.HasPrefix(stringToMatchRegexp, "%")
-			endsWithWildcard := strings.HasSuffix(stringToMatchRegexp, "%")
+			// startsWithWildcard := strings.HasPrefix(stringToMatchRegexp, "%")
+			// endsWithWildcard := strings.HasSuffix(stringToMatchRegexp, "%")
 
-			if startsWithWildcard && endsWithWildcard && len(stringToMatchRegexp) <= 2 {
-				return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and end with '%%' and must conform to '%s'", queryToken, searchQuery, searchValueFormat)
-			}
-			if startsWithWildcard {
-				stringToMatchRegexp = strings.TrimPrefix(stringToMatchRegexp, "%")
-			}
-			if endsWithWildcard {
-				stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "%")
-			}
+			// if startsWithWildcard && endsWithWildcard && len(stringToMatchRegexp) <= 2 {
+			// 	return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and end with '%%' and must conform to '%s'", queryToken, searchQuery, searchValueFormat)
+			// }
+			// // if startsWithWildcard {
+			// // 	stringToMatchRegexp = strings.TrimPrefix(stringToMatchRegexp, "%")
+			// // }
+			// // if endsWithWildcard {
+			// // 	stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "%")
+			// // }
 			r, _ := regexp.Compile(searchValueFormat)
 			if !r.MatchString(stringToMatchRegexp) {
-				return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and end with '%%' and must conform to '%s'", queryToken, searchQuery, searchValueFormat)
+				return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value must conform to '%s'", queryToken, searchQuery, searchValueFormat)
 			}
-			if startsWithWildcard {
-				stringToMatchRegexp = fmt.Sprintf("%%%s", stringToMatchRegexp)
-			}
-			if endsWithWildcard {
-				stringToMatchRegexp = fmt.Sprintf("%s%%", stringToMatchRegexp)
-			}
+			// if startsWithWildcard {
+			// 	stringToMatchRegexp = fmt.Sprintf("%%%s", stringToMatchRegexp)
+			// }
+			// if endsWithWildcard {
+			// 	stringToMatchRegexp = fmt.Sprintf("%s%%", stringToMatchRegexp)
+			// }
 			dbQueries = append(dbQueries, DbSearchQuery{query: query, value: stringToMatchRegexp})
 			index++
 		case 3: // only 'and' allowed here
