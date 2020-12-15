@@ -2,6 +2,7 @@ package aws
 
 import (
 	"fmt"
+	"strings"
 
 	errors "github.com/zgalor/weberr"
 
@@ -84,6 +85,13 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 	recordSetsOutput, err := client.route53Client.ChangeResourceRecordSets(recordChanges)
 
 	if err != nil {
+		awsErr := err.(awserr.Error)
+		if awsErr.Code() == "InvalidChangeBatch" {
+			recordSetNotFound := strings.Contains(awsErr.Message(), "but it was not found")
+			if recordSetNotFound == true {
+				return nil, nil
+			}
+		}
 		return nil, wrapAWSError(err, "Failed to get DNS zone.")
 	}
 	return recordSetsOutput, nil
