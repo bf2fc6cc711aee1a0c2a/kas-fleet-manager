@@ -46,19 +46,17 @@ $GOPATH
   /pkg
   /src
     /gitlab.cee.rh.com/service/
-       /uhc-cluster-service
-         /cmd
-         /pkg
-       /managed-services-api  -- our git root
-         /cmd
-           /managed-services-api  -- Main CLI entrypoint
-         /pkg
-           /api      -- type definitions and models (Note. openapi folder is generated - see below)
-           /config   -- configuration handling
-					 /db  		 -- database schema and migrations
-           /handlers -- web handlers/controllers
-           /services -- interfaces for CRUD and business logic
-					 /workers  -- background workers for async reconciliation logic
+      /managed-services-api  -- our git root
+        /cmd
+          /managed-services-api  -- Main CLI entrypoint
+        /pkg
+          /api      -- type definitions and models (Note. openapi folder is generated - see below)
+          /config   -- configuration handling
+          /db  		 -- database schema and migrations
+          /handlers -- web handlers/controllers
+          /services -- interfaces for CRUD and business logic
+            /syncsetresources -- resource definitions to be created via syncset
+          /workers  -- background workers for async reconciliation logic
 
 ```
 

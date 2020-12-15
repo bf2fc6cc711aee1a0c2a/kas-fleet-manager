@@ -16,6 +16,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 )
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
@@ -106,7 +107,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 
 	var clientSecretValue string
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
+		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		clientSecretValue, err = k.keycloakService.GetSecretForRegisteredKafkaClient(clientName)
 		if err != nil || clientSecretValue == "" {
 			return errors.FailedToCreateSSOClient("Failed to create sso client: %v", err)
@@ -145,7 +146,7 @@ func (k *kafkaService) RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		orgId := auth.GetOrgIdFromContext(ctx)
 		// registering client in sso
-		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
+		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, orgId)
 		if err != nil || keycloakSecret == "" {
 			return errors.GeneralError("failed to create sso client: %v", err)
@@ -227,7 +228,7 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 
 	// delete the kafka client in mas sso
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		clientName := buildKeycloakClientNameIdentifier(&kafkaRequest)
+		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		keycloakErr := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
 		if keycloakErr != nil {
 			return errors.GeneralError("error deleting sso client: %v", keycloakErr)
