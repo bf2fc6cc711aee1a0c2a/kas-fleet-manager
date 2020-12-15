@@ -295,7 +295,6 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 		dbConn = dbConn.Where("owner = ?", user)
 	}
 
-	// TODO add integration tests
 	// Apply search query
 	if len(listArgs.Search) > 0 {
 		searchDbQuery, err := GetSearchQuery(listArgs.Search)
