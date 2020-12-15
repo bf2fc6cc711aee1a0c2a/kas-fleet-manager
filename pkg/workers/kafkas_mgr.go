@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"strings"
 	"sync"
 	"time"
@@ -119,7 +120,7 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
-		if err.Reason == "failed to create sso client" {
+		if err.Code == errors.ErrorFailedToCreateSSOClient {
 			clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
 			// todo retry logic for kafka client creation in mas sso
 			keycloakErr := k.keycloakService.IsKafkaClientExist(clientId)
