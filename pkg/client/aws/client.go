@@ -88,7 +88,7 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 		awsErr := err.(awserr.Error)
 		if awsErr.Code() == "InvalidChangeBatch" {
 			recordSetNotFound := strings.Contains(awsErr.Message(), "but it was not found")
-			if recordSetNotFound == true {
+			if recordSetNotFound {
 				return nil, nil
 			}
 		}
