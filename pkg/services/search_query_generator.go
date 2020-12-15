@@ -14,6 +14,14 @@ type DbSearchQuery struct {
 	value string
 }
 
+var (
+	// ValidComparators - valid comparators for search queries
+	ValidComparators = []string{"=", "<>"}
+	// ValidColumnNames - valid column names for search queries
+	ValidColumnNames       = []string{"region", "name", "cloud_provider", "status"}
+	validSearchValueRegexp = regexp.MustCompile("^([a-zA-Z0-9-_]*[a-zA-Z0-9-_])?$")
+)
+
 // GetSearchQuery - parses searchQuery and returns query ready to be passed to
 // the database. If the searchQuery isn't valid, error is returned
 func GetSearchQuery(searchQuery string) ([]DbSearchQuery, *errors.ServiceError) {
@@ -34,8 +42,6 @@ func removeExcessiveWhiteSpaces(somestring string) string {
 
 // validate search query and return sanitized query ready to be executed by gorm
 func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSearchQuery, *errors.ServiceError) {
-	validComparators := []string{"=", "<>"}
-	validColumnNames := []string{"region", "name", "cloud_provider", "status"}
 	var dbQueries []DbSearchQuery
 	var query string
 	index := 0 // used to determine position of the item in order to construct full query or return error if invalid query has been passed
@@ -43,20 +49,19 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSea
 		switch index {
 		case 0: // column name
 			columnName := strings.ToLower(queryToken)
-			if !contains(validColumnNames, columnName) {
-				return nil, errors.FailedToParseSearch("Unsupported column name for search: '%s'. Supported column names are: %s. Query invalid: %s", columnName, strings.Join(validColumnNames[:], ", "), searchQuery)
+			if !contains(ValidColumnNames, columnName) {
+				return nil, errors.FailedToParseSearch("Unsupported column name for search: '%s'. Supported column names are: %s. Query invalid: %s", columnName, strings.Join(ValidColumnNames[:], ", "), searchQuery)
 			}
 			query = columnName
 			index++
 		case 1: // comparator
 			comparator := strings.ToUpper(queryToken)
-			if !contains(validComparators, comparator) {
-				return nil, errors.FailedToParseSearch("Unsupported comparator: '%s'. Supported comparators are: %s. Query invalid: %s", queryToken, strings.Join(validComparators[:], ", "), searchQuery)
+			if !contains(ValidComparators, comparator) {
+				return nil, errors.FailedToParseSearch("Unsupported comparator: '%s'. Supported comparators are: %s. Query invalid: %s", queryToken, strings.Join(ValidComparators[:], ", "), searchQuery)
 			}
 			query = fmt.Sprintf("%s %s ?", query, comparator)
 			index++
 		case 2: // searched value
-			searchValueFormat := "^([a-zA-Z0-9-_]*[a-zA-Z0-9-_])?$"
 			stringToMatchRegexp := queryToken
 			stringToMatchRegexp = strings.TrimPrefix(stringToMatchRegexp, "'")
 			stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "'")
@@ -72,9 +77,8 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSea
 			// // if endsWithWildcard {
 			// // 	stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "%")
 			// // }
-			r, _ := regexp.Compile(searchValueFormat)
-			if !r.MatchString(stringToMatchRegexp) {
-				return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value must conform to '%s'", queryToken, searchQuery, searchValueFormat)
+			if !validSearchValueRegexp.MatchString(stringToMatchRegexp) {
+				return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value must conform to '%s'", queryToken, searchQuery, validSearchValueRegexp)
 			}
 			// if startsWithWildcard {
 			// 	stringToMatchRegexp = fmt.Sprintf("%%%s", stringToMatchRegexp)
