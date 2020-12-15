@@ -119,14 +119,18 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
-		clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
-		keycloakErr := k.keycloakService.IsKafkaClientExist(clientId)
-		if keycloakErr != nil {
-			if err == k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed) {
-				return fmt.Errorf("failed to update kafka %s to status: %w", kafka.ID, err)
+		if err.IsFailedToCreateSSOClient() {
+			clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
+			// todo retry logic for kafka client creation in mas sso
+			keycloakErr := k.keycloakService.IsKafkaClientExist(clientId)
+			if keycloakErr != nil {
+				if updateErr := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); updateErr != nil {
+					return fmt.Errorf("failed to update kafka %s to status: %w", kafka.ID, updateErr)
+				}
+				return fmt.Errorf("failed to create mas sso client for the kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 			}
-			return fmt.Errorf("failed to create mas sso client for the kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 		}
+
 		return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafka.ID, kafka.ClusterID, err)
 	}
 	// consider the kafka in a complete state

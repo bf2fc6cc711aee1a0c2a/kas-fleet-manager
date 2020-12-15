@@ -51,6 +51,8 @@ const (
 
 	// Synchronous request not supported
 	ErrorSyncActionNotSupported ServiceErrorCode = 103
+
+	ErrorFailedToCreateSSOClient ServiceErrorCode = 106
 )
 
 type ServiceErrorCode int
@@ -80,6 +82,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorBadRequest, "Bad request", http.StatusBadRequest},
 		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
 		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
+		ServiceError{ErrorFailedToCreateSSOClient, "Failed to create kafka client in the mas sso", http.StatusInternalServerError},
 	}
 }
 
@@ -128,6 +131,10 @@ func (e *ServiceError) IsConflict() bool {
 
 func (e *ServiceError) IsForbidden() bool {
 	return e.Code == Forbidden("").Code
+}
+
+func (e *ServiceError) IsFailedToCreateSSOClient() bool {
+	return e.Code == FailedToCreateSSOClient("").Code
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
@@ -201,4 +208,8 @@ func SyncActionNotSupported(reason string, values ...interface{}) *ServiceError 
 func NotMultiAzActionNotSupported(reason string, values ...interface{}) *ServiceError {
 	message := "only multi_az is supported, use multi_az=true in Kafka requests"
 	return New(ErrorBadRequest, message)
+}
+
+func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToCreateSSOClient, reason, values...)
 }
