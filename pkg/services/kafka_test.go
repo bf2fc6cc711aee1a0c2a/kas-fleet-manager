@@ -415,7 +415,7 @@ func Test_kafkaService_Create(t *testing.T) {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr:                 false,
-			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS:443", truncateString(longKafkaName, truncatedNameLen), testID),
+			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
 		},
 	}
 	for _, tt := range tests {

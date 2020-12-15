@@ -92,11 +92,11 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	if k.kafkaConfig.EnableDedicatedIngress {
 		clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
 	}
-	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s:443", truncatedKafkaIdentifier, clusterDNS)
+	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
-		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s:443", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
+		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
 
 		_, err = k.ChangeKafkaCNAMErecords(kafkaRequest, clusterDNS, "CREATE")
 		if err != nil {
