@@ -420,3 +420,52 @@ func Test_replaceHostSpecialChar(t *testing.T) {
 		})
 	}
 }
+
+func Test_contains(t *testing.T) {
+	searchedString := "findMe"
+	someSlice := []string{"some", "string", "values"}
+	sliceWithFindMe := []string{"some", "string", "values", "findMe"}
+	var emptySlice []string
+	type args struct {
+		slice []string
+		s     string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "Check for a string in an empty slice",
+			args: args{
+				s:     searchedString,
+				slice: emptySlice,
+			},
+			want: false,
+		},
+		{
+			name: "Check for a string in a non-empty slice that doesn't contain the string",
+			args: args{
+				s:     searchedString,
+				slice: someSlice,
+			},
+			want: false,
+		},
+		{
+			name: "Check for a string in a non-empty slice that contains that string",
+			args: args{
+				s:     searchedString,
+				slice: sliceWithFindMe,
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := contains(tt.args.slice, tt.args.s)
+			if got != tt.want {
+				t.Errorf("contains() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
