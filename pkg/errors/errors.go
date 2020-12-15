@@ -133,6 +133,10 @@ func (e *ServiceError) IsForbidden() bool {
 	return e.Code == Forbidden("").Code
 }
 
+func (e *ServiceError) IsFailedToCreateSSOClient() bool {
+	return e.Code == FailedToCreateSSOClient("").Code
+}
+
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
 	return openapi.Error{
 		Kind:        "Error",
@@ -204,4 +208,8 @@ func SyncActionNotSupported(reason string, values ...interface{}) *ServiceError 
 func NotMultiAzActionNotSupported(reason string, values ...interface{}) *ServiceError {
 	message := "only multi_az is supported, use multi_az=true in Kafka requests"
 	return New(ErrorBadRequest, message)
+}
+
+func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToCreateSSOClient, reason, values...)
 }

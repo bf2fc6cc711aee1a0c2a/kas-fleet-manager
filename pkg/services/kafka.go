@@ -109,7 +109,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
 		clientSecretValue, err = k.keycloakService.GetSecretForRegisteredKafkaClient(clientName)
 		if err != nil || clientSecretValue == "" {
-			return errors.New(errors.ErrorFailedToCreateSSOClient, "failed to create sso client")
+			return errors.FailedToCreateSSOClient("Failed to create sso client: %v", err)
 		}
 	}
 	// create the syncset builder
