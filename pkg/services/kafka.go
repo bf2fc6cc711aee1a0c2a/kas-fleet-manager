@@ -109,7 +109,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		clientName := buildKeycloakClientNameIdentifier(kafkaRequest)
 		clientSecretValue, err = k.keycloakService.GetSecretForRegisteredKafkaClient(clientName)
 		if err != nil || clientSecretValue == "" {
-			return errors.GeneralError("failed to create sso client: %v", err)
+			return errors.GeneralError("failed to create sso client")
 		}
 	}
 	// create the syncset builder
@@ -228,9 +228,9 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 	// delete the kafka client in mas sso
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		clientName := buildKeycloakClientNameIdentifier(&kafkaRequest)
-		err := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
-		if err != nil {
-			return errors.GeneralError("error deleting sso client: %v", err)
+		keycloakErr := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
+		if keycloakErr != nil {
+			return errors.GeneralError("error deleting sso client: %v", keycloakErr)
 		}
 	}
 

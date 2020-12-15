@@ -144,7 +144,7 @@ func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName st
 	accessToken, _ := kc.getToken()
 	internalClientId, err := kc.isClientExist(kafkaClusterName, accessToken)
 	if err != nil {
-		return "", errors.GeneralError("failed to check the sso client exists:%v", err)
+		return "", errors.GeneralError("failed to get sso client:%v", err)
 	}
 	if internalClientId != "" {
 		secretValue, _ := kc.getClientSecret(internalClientId, accessToken)
@@ -155,11 +155,11 @@ func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName st
 
 func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *errors.ServiceError {
 	accessToken, _ := kc.getToken()
-	internalClientID, err := kc.isClientExist(kafkaClusterName, accessToken)
-	if err != nil {
-		return errors.GeneralError("failed to check the sso client exists:%v", err)
+	internalClientID, _ := kc.isClientExist(kafkaClusterName, accessToken)
+	if internalClientID == "" {
+		return nil
 	}
-	err = kc.deleteClient(internalClientID, accessToken)
+	err := kc.deleteClient(internalClientID, accessToken)
 	if err != nil {
 		return errors.GeneralError("failed to delete the sso client:%v", err)
 	}
@@ -214,7 +214,7 @@ func (kc *keycloakService) isClientExist(clientId string, accessToken string) (s
 	client, err := kc.getClient(clientId, accessToken)
 	var internalClientID string
 	if err != nil {
-		return internalClientID, errors.GeneralError("failed to get client: %v", err)
+		return internalClientID, errors.GeneralError("failed to get sso client: %v", err)
 	}
 	if len(client) > 0 {
 		internalClientID = *client[0].ID
@@ -227,7 +227,7 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 	accessToken, _ := kc.getToken()
 	_, err := kc.isClientExist(clientId, accessToken)
 	if err != nil {
-		return errors.GeneralError("failed to get sso client for the Kafka request: %v", err)
+		return errors.GeneralError("failed to get sso client: %v", err)
 	}
 	return nil
 }
