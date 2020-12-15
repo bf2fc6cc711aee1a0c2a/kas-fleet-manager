@@ -82,7 +82,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorBadRequest, "Bad request", http.StatusBadRequest},
 		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
 		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
-		ServiceError{ErrorFailedToCreateSSOClient, "failed to create kafka client in the mas sso", http.StatusBadRequest},
+		ServiceError{ErrorFailedToCreateSSOClient, "Failed to create kafka client in the mas sso", http.StatusInternalServerError},
 	}
 }
 
