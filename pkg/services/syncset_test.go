@@ -216,6 +216,7 @@ func buildAdminServerRoute(modifyFn func(adminServerService *routev1.Route)) *ro
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testAdminServerName,
 			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+			Labels:    map[string]string{},
 		},
 		Spec: routev1.RouteSpec{
 			To: routev1.RouteTargetReference{
