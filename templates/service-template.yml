@@ -348,7 +348,7 @@ objects:
               name: ocm-managed-services-allowed-users-config     
           initContainers:
           - name: id
-            image: quay.io/app-sre/centos:8
+            image: quay.io/centos/centos:8
             command:
             - echo
             - ${VERSION}-${BUILD_ID}-${BUILD_TS}
