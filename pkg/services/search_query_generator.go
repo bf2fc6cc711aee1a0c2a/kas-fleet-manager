@@ -18,7 +18,7 @@ var (
 	// ValidComparators - valid comparators for search queries
 	ValidComparators = []string{"=", "<>"}
 	// ValidColumnNames - valid column names for search queries
-	ValidColumnNames       = []string{"region", "name", "cloud_provider", "status"}
+	ValidColumnNames       = []string{"region", "name", "cloud_provider", "status", "owner"}
 	validSearchValueRegexp = regexp.MustCompile("^([a-zA-Z0-9-_]*[a-zA-Z0-9-_])?$")
 )
 
