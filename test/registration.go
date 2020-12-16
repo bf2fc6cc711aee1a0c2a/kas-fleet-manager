@@ -23,9 +23,9 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 	helper.StartServer()
 	// Reset the database to a seeded blank state
 	helper.ResetDB()
-	// Start workers
-	helper.StartClusterWorker()
-	helper.StartKafkaWorker()
+	// Start Leader Election Manager
+	helper.StartLeaderElectionWorker()
+
 	helper.ResetMetrics()
 	// Create an api client
 	client := helper.NewApiClient()
@@ -35,8 +35,7 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 func buildTeardownHelperFn(h *Helper) func() {
 	return func() {
 		h.StopServer()
-		h.StopKafkaWorker()
-		h.StopClusterWorker()
+		h.StopLeaderElectionWorker()
 	}
 }
 

@@ -73,7 +73,7 @@ parameters:
 
 - name: REPLICAS
   description: Number of replicas of the service to run.
-  value: "1"
+  value: "3"
 
 - name: ENABLE_JWT
   displayName: Enable JWT
