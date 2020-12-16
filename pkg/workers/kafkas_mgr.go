@@ -19,6 +19,9 @@ import (
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
+	id             string
+	workerType     string
+	isRunning      bool
 	ocmClient       ocm.Client
 	clusterService  services.ClusterService
 	kafkaService    services.KafkaService
@@ -30,8 +33,10 @@ type KafkaManager struct {
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, keycloakService services.KeycloakService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService) *KafkaManager {
 	return &KafkaManager{
+		id:             id,
+		workerType:     "kafka",
 		ocmClient:       ocmClient,
 		clusterService:  clusterService,
 		kafkaService:    kafkaService,
@@ -47,6 +52,14 @@ func (k *KafkaManager) GetSyncGroup() *sync.WaitGroup {
 	return &k.syncTeardown
 }
 
+func (k *KafkaManager) GetID() string {
+	return k.id
+}
+
+func (c *KafkaManager) GetWorkerType() string {
+	return c.workerType
+}
+
 // Start initializes the kafka manager to reconcile kafka requests
 func (k *KafkaManager) Start() {
 	k.reconciler.Start(k)
@@ -55,6 +68,14 @@ func (k *KafkaManager) Start() {
 // Stop causes the process for reconciling kafka requests to stop.
 func (k *KafkaManager) Stop() {
 	k.reconciler.Stop(k)
+}
+
+func (c *KafkaManager) IsRunning() bool {
+	return c.isRunning
+}
+
+func (c *KafkaManager) SetIsRunning(val bool) {
+	c.isRunning = val
 }
 
 func (k *KafkaManager) reconcile() {

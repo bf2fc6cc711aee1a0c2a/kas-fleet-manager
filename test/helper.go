@@ -64,6 +64,7 @@ type Helper struct {
 	HealthCheckServer server.Server
 	KafkaWorker       *workers.KafkaManager
 	ClusterWorker     *workers.ClusterManager
+	LeaderEleWorker   *workers.LeaderElectionManager
 	TimeFunc          TimeFunc
 	JWTPrivateKey     *rsa.PrivateKey
 	JWTCA             *rsa.PublicKey
@@ -207,7 +208,7 @@ func (helper *Helper) startHealthCheckServer() {
 
 func (helper *Helper) startKafkaWorker() {
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, helper.Env().Services.Keycloak)
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.KafkaWorker.Start()
@@ -227,7 +228,7 @@ func (helper *Helper) startClusterWorker() {
 
 	// start cluster worker
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server)
+		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server, uuid.New().String())
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -240,6 +241,43 @@ func (helper *Helper) stopClusterWorker() {
 		return
 	}
 	helper.ClusterWorker.Stop()
+}
+
+func (helper *Helper) startLeaderElectionWorker() {
+
+	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
+		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server, uuid.New().String())
+
+	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak)
+
+	var workerLst []workers.Worker
+	workerLst = append(workerLst, helper.ClusterWorker)
+	workerLst = append(workerLst, helper.KafkaWorker)
+
+	helper.LeaderEleWorker = workers.NewLeaderLeaseManager(workerLst, helper.DBFactory)
+	go func() {
+		glog.V(10).Info("Test Leader Election Manager started")
+		helper.LeaderEleWorker.Start()
+		glog.V(10).Info("Test Leader Election Manager stopped")
+	}()
+}
+
+func (helper *Helper) stopLeaderElectionWorker() {
+	if helper.LeaderEleWorker == nil {
+		return
+	}
+	helper.LeaderEleWorker.Stop()
+}
+
+func (helper *Helper) StartLeaderElectionWorker() {
+	helper.stopLeaderElectionWorker()
+	helper.startLeaderElectionWorker()
+}
+
+func (helper *Helper) StopLeaderElectionWorker() {
+	helper.stopLeaderElectionWorker()
 }
 
 func (helper *Helper) StartServer() {
@@ -447,6 +485,7 @@ func (helper *Helper) CleanDB() {
 		"clusters",
 		"kafka_requests",
 		"migrations",
+		"leader_leases",
 	} {
 		if gorm.HasTable(table) {
 			err := gorm.DropTable(table).Error

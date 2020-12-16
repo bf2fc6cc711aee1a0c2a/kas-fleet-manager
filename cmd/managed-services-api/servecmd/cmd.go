@@ -2,6 +2,7 @@ package servecmd
 
 import (
 	"github.com/golang/glog"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
@@ -49,22 +50,33 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// Run the cluster manager
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	// start cluster worker
+
+	// creates cluster worker
 	cloudProviderService := environments.Environment().Services.CloudProviders
 	clusterService := environments.Environment().Services.Cluster
 	configService := environments.Environment().Services.Config
 	serverConfig := *environments.Environment().Config.Server
-	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, serverConfig)
-	clusterManager.Start()
+
+	var workerList []workers.Worker
+
+	//set Unique Id for each work to facilitate Leader Election process
+	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, serverConfig, uuid.New().String())
+	workerList = append(workerList, clusterManager)
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 
-	// start kafka worker
+	// creates kafka worker
 	clusterService = environments.Environment().Services.Cluster
 	kafkaService := environments.Environment().Services.Kafka
 	keycloakService := environments.Environment().Services.Keycloak
-	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, keycloakService)
-	kafkaManager.Start()
+
+	//set Unique Id for each work to facilitate Leader Election process
+	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService)
+	workerList = append(workerList, kafkaManager)
+
+	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
+	leaderElectionManager := workers.NewLeaderLeaseManager(workerList, environments.Environment().DBFactory)
+	leaderElectionManager.Start()
 
 	select {}
 }
