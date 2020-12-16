@@ -5,15 +5,12 @@ approvers:
 - ahameed
 - akoserwa
 - weil
-reviewers:
-- ahameed
-- akoserwa
-- dffrench
-- jbriones
 - myeung
 - mchitimb
-- ppaszki
-- ppatiern
-- weil
 - hstefans
 - msoriano
+- mziccard
+- jary
+- pbraun
+- mmikhail
+reviewers:
