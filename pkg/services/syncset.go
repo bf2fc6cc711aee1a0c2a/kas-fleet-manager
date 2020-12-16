@@ -706,6 +706,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      adminServerName,
 			Namespace: namespaceName,
+			Labels:    labels,
 		},
 		Spec: routev1.RouteSpec{
 			To: routev1.RouteTargetReference{
