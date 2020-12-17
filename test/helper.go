@@ -208,7 +208,7 @@ func (helper *Helper) startHealthCheckServer() {
 
 func (helper *Helper) startKafkaWorker() {
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak)
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak,helper.Env().Services.Observatorium)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.KafkaWorker.Start()
@@ -250,7 +250,7 @@ func (helper *Helper) startLeaderElectionWorker() {
 		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server, uuid.New().String())
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak)
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak,helper.Env().Services.Observatorium)
 
 	var workerLst []workers.Worker
 	workerLst = append(workerLst, helper.ClusterWorker)

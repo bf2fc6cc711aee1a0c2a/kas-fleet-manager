@@ -20,6 +20,7 @@ func RegisterIntegration(t *testing.T, server *httptest.Server) (*Helper, *opena
 	if server != nil && helper.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		helper.SetServer(server)
 	}
+	helper.Env().Config.ObservabilityConfiguration.EnableMock = true
 	helper.StartServer()
 	// Reset the database to a seeded blank state
 	helper.ResetDB()
