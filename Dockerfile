@@ -1,4 +1,4 @@
-FROM quay.io/app-sre/centos:8
+FROM quay.io/centos/centos:8
 
 RUN \
     yum install -y \
