@@ -53,4 +53,6 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	if err := clusterService.RegisterClusterJob(&clusterRequest); err != nil {
 		glog.Fatalf("Unable to create cluster request: %s", err.Error())
 	}
+
+	glog.Infoln("Cluster request has been registered and will be reconciled shortly.")
 }
