@@ -88,6 +88,10 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 		awsErr := err.(awserr.Error)
 		if awsErr.Code() == "InvalidChangeBatch" {
 			recordSetNotFound := strings.Contains(awsErr.Message(), "but it was not found")
+			if !recordSetNotFound {
+				// Kafka cluster failed to create on the cluster, we have an entry in the database.
+				recordSetNotFound = strings.Contains(awsErr.Message(), "Domain name is empty")
+			}
 			if recordSetNotFound {
 				return nil, nil
 			}
