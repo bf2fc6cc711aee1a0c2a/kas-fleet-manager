@@ -192,7 +192,8 @@ $ make undeploy
 ## Using the Service
 #### Creating an OSD Cluster
 ```
-# Create a new cluster (OSD)
+# Create a new cluster (OSD). 
+# The following command will register a cluster request which will be reconciled by the cluster worker
 $ ./managed-services-api cluster create
 
 # Verify cluster record is created 
