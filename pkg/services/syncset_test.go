@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	"reflect"
 	"strings"
 	"testing"
@@ -57,6 +58,9 @@ func buildKafka(modifyFn func(kafka *strimzi.Kafka)) *strimzi.Kafka {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testKafkaRequestName,
 			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
+			Labels: map[string]string{
+				syncsetresources.IngressLabelValue: syncsetresources.IngressLabelName,
+			},
 		},
 	}
 	if modifyFn != nil {
@@ -216,7 +220,9 @@ func buildAdminServerRoute(modifyFn func(adminServerService *routev1.Route)) *ro
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      testAdminServerName,
 			Namespace: fmt.Sprintf("%s-%s", testUser, testID),
-			Labels:    map[string]string{},
+			Labels: map[string]string{
+				syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+			},
 		},
 		Spec: routev1.RouteSpec{
 			To: routev1.RouteTargetReference{

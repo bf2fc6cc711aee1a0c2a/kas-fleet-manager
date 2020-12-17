@@ -12,8 +12,6 @@ type KafkaConfig struct {
 	EnableKafkaExternalCertificate bool   `json:"enable_kafka_external_certificate"`
 	NumOfBrokers                   int    `json:"num_of_brokers"`
 	KafkaDomainName                string `json:"kafka_domain_name"`
-	EnableDedicatedIngress         bool   `json:"enable_dedicated_ingress"`
-	KafkaStorageClass              string `json:"kafka_storage_class"`
 	KafkaCanaryImage               string `json:"kafka_canary_image"`
 	KafkaAdminServerImage          string `json:"kafka_admin_server_image"`
 }
@@ -24,9 +22,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaTLSKeyFile:                "secrets/kafka-tls.key",
 		EnableKafkaExternalCertificate: false,
 		KafkaDomainName:                "kafka.devshift.org",
-		EnableDedicatedIngress:         false,
 		NumOfBrokers:                   3,
-		KafkaStorageClass:              "",
 		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1-1",
 		KafkaAdminServerImage:          "quay.io/sknot/strimzi-admin:0.0.3",
 	}
@@ -36,8 +32,6 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaTLSCertFile, "kafka-tls-cert-file", c.KafkaTLSCertFile, "File containing kafka certificate")
 	fs.StringVar(&c.KafkaTLSKeyFile, "kafka-tls-key-file", c.KafkaTLSKeyFile, "File containing kafka certificate private key")
 	fs.BoolVar(&c.EnableKafkaExternalCertificate, "enable-kafka-external-certificate", c.EnableKafkaExternalCertificate, "Enable custom certificate for Kafka TLS")
-	fs.BoolVar(&c.EnableDedicatedIngress, "enable-dedicated-ingress", c.EnableDedicatedIngress, "Enable a dedicated ingress for Kafka")
-	fs.StringVar(&c.KafkaStorageClass, "kafka-storage-class", c.KafkaStorageClass, "Specifies a storage class for Kafka")
 	fs.StringVar(&c.KafkaCanaryImage, "kafka-canary-image", c.KafkaCanaryImage, "Specifies a canary image")
 	fs.StringVar(&c.KafkaAdminServerImage, "kafka-admin-server-image", c.KafkaAdminServerImage, "Specifies an admin server image")
 }

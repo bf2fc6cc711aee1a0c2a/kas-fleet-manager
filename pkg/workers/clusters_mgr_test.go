@@ -2,6 +2,9 @@ package workers
 
 import (
 	"errors"
+	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
+	storagev1 "k8s.io/api/storage/v1"
 	"reflect"
 	"testing"
 	"time"
@@ -548,12 +551,12 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 }
 
 func TestClusterManager_createSyncSet(t *testing.T) {
-
+	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
-	syncset, err := buildSyncSet(observabilityConfig)
+	syncset, err := buildSyncSet(observabilityConfig, ingressDNS)
 
 	if err != nil {
-		t.Fatal("Unabled to create test syncset")
+		t.Fatal("Unable to create test syncset")
 		return
 	}
 
@@ -614,7 +617,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 					observabilityConfig,
 				),
 			}
-			got, err := c.createSyncSet("clusterId")
+			got, err := c.createSyncSet("clusterId", ingressDNS)
 			Expect(got).To(Equal(tt.want.syncset))
 			if err != nil {
 				Expect(err).To(MatchError(tt.want.err))
@@ -637,10 +640,58 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 }
 
 // buildSyncSet builds a syncset used for testing
-func buildSyncSet(observabilityConfig config.ObservabilityConfiguration) (*clustersmgmtv1.Syncset, error) {
+func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
+	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
+	expansion := true
+	consumer := storagev1.VolumeBindingWaitForFirstConsumer
+	r := ingressReplicas
+
 	syncset, err := clustersmgmtv1.NewSyncset().
-		ID("ext-managed-application-services-observability").
+		ID(syncsetName).
 		Resources([]interface{}{
+			&storagev1.StorageClass{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "storage.k8s.io/v1",
+					Kind:       "StorageClass",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: syncsetresources.KafkaStorageClass,
+				},
+				Parameters: map[string]string{
+					"encrypted": "false",
+					"type":      "gp2",
+				},
+				Provisioner:          "kubernetes.io/aws-ebs",
+				ReclaimPolicy:        &reclaimDelete,
+				AllowVolumeExpansion: &expansion,
+				VolumeBindingMode:    &consumer,
+			},
+			&ingressoperatorv1.IngressController{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "operator.openshift.io/v1",
+					Kind:       "IngressController",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "sharded",
+					Namespace: openshiftIngressNamespace,
+				},
+				Spec: ingressoperatorv1.IngressControllerSpec {
+					Domain: ingressDNS,
+					RouteSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+						},
+					},
+					Replicas: &r,
+					NodePlacement: &ingressoperatorv1.NodePlacement{
+						NodeSelector: &metav1.LabelSelector{
+							MatchLabels: map[string]string{
+								"node-role.kubernetes.io/worker": "",
+							},
+						},
+					},
+				},
+			},
 			&projectv1.Project{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "project.openshift.io/v1",

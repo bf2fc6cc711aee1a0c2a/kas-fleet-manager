@@ -187,16 +187,6 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
-- name: ENABLE_DEDICATED_INGRESS
-  displayName: Enable Dedicated Ingress
-  description: Enable dedicated Ingress for all Kafka Clusters
-  value: "false"
-
-- name: KAFKA_STORAGE_CLASS
-  displayName: Kafka Storage Classe
-  description: Specifies a storage class for Kafka
-  value: "mk-storageclass"
-
 - name: KAFKA_CANARY_IMAGE
   displayName: Kafka Canary Image
   description: Specifies a canary image
@@ -398,8 +388,6 @@ objects:
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
-            - --enable-dedicated-ingress=${ENABLE_DEDICATED_INGRESS}
-            - --kafka-storage-class=${KAFKA_STORAGE_CLASS}
             - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
             - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
