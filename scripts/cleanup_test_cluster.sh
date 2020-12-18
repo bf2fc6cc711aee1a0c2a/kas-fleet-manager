@@ -8,7 +8,7 @@ INTEGRATION_ENV="integration"
 ENV=$(echo "$OCM_ENV")
 if test -f "$FILE"; then
   if [[ $ENV != "$INTEGRATION_ENV" ]] ; then
-    clusterID=$(jq -r .id ${FILE})
+    clusterID=$(jq -r .cluster_id ${FILE})
     if [[ $clusterID != "null" ]] ; then
       ocm login --url=https://api.stage.openshift.com/ --token="$OCM_OFFLINE_TOKEN"
       ocm delete /api/clusters_mgmt/v1/clusters/"$clusterID"
