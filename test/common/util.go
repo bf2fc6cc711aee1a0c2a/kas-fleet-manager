@@ -34,33 +34,31 @@ func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.Se
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
 		clusterID, _ = readClusterDetailsFromFile(h, t)
 	}
+	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
+		_, err := h.Env().Services.Cluster.Create(&api.Cluster{
+			CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+			Region:        mocks.MockCluster.Region().ID(),
+			MultiAZ:       mocks.MockMultiAZ,
+		})
+		if err != nil {
+			return "", err
+		}
+	}
 
 	if clusterID == "" {
 		foundCluster, svcErr := h.Env().Services.Cluster.FindCluster(services.FindClusterCriteria{
-			Region:   mocks.MockCluster.Region().Name(),
-			Provider: mocks.MockCluster.CloudProvider().Name(),
+			Region:   mocks.MockCluster.Region().ID(),
+			Provider: mocks.MockCluster.CloudProvider().ID(),
 		})
 		if svcErr != nil {
 			return "", svcErr
 		}
 		if foundCluster == nil {
-			foundCluster, svcErr := h.Env().Services.Cluster.Create(&api.Cluster{
-				CloudProvider: mocks.MockCloudProvider.ID(),
-				ClusterID:     mocks.MockCluster.ID(),
-				ExternalID:    mocks.MockCluster.ExternalID(),
-				Region:        mocks.MockCluster.Region().ID(),
-			})
-			if svcErr != nil {
-				return "", svcErr
-			}
-			if foundCluster == nil {
-				return "", ocmErrors.GeneralError("Unable to create new OSD cluster")
-			}
-			clusterID = foundCluster.ID()
+			return "", nil
 		} else {
 			clusterID = foundCluster.ClusterID
 		}
-		if err := wait.PollImmediate(30*time.Second, 120*time.Minute, func() (bool, error) {
+		if err := wait.PollImmediate(10*time.Second, 120*time.Minute, func() (bool, error) {
 			foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
 			if err != nil {
 				return true, err

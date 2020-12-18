@@ -8,7 +8,7 @@ import (
 var developmentConfigDefaults map[string]string = map[string]string{
 	"v":                                 "10",
 	"enable-authz":                      "true",
-	"ocm-debug":                         "true",
+	"ocm-debug":                         "false",
 	"ocm-base-url":                      "https://api.stage.openshift.com",
 	"enable-ocm-mock":                   "false",
 	"enable-https":                      "false",
