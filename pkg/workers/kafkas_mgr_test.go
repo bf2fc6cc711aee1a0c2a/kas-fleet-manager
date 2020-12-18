@@ -330,7 +330,7 @@ func TestKafkaManager_reconcileResourceCreationKafka(t *testing.T) {
 				},
 				observatoriumService: &services.ObservatoriumServiceMock{
 					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
-						return observatorium.KafkaState{},  errors.NotFound("Not Found")
+						return observatorium.KafkaState{}, errors.NotFound("Not Found")
 					},
 				},
 			},
@@ -355,7 +355,7 @@ func TestKafkaManager_reconcileResourceCreationKafka(t *testing.T) {
 				},
 				observatoriumService: &services.ObservatoriumServiceMock{
 					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
-						return observatorium.KafkaState{State:"ready"}, nil
+						return observatorium.KafkaState{State: "ready"}, nil
 					},
 				},
 			},
