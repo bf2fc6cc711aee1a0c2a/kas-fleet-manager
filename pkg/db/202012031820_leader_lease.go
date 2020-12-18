@@ -26,13 +26,13 @@ func addLeaderLease() *gormigrate.Migration {
 			// pre-seed a single empty leader lease for each type of workers that leader election mgr can begin attempting to claim
 			now := time.Now().Add(-time.Minute) //set to a expired time
 			if err := tx.Create(&api.LeaderLease{
-				Expires: &now,
+				Expires:   &now,
 				LeaseType: "cluster",
 			}).Error; err != nil {
 				return err
 			}
 			if err := tx.Create(&api.LeaderLease{
-				Expires: &now,
+				Expires:   &now,
 				LeaseType: "kafka",
 			}).Error; err != nil {
 				return err
