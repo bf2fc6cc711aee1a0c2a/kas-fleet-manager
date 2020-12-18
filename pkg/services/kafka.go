@@ -215,9 +215,9 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 	}
 
 	// filter kafka request by owner to only retrieve request of the current authenticated user
-	// user := auth.GetUsernameFromContext(ctx)
+	user := auth.GetUsernameFromContext(ctx)
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Where("id = ?", id) //.Where("owner = ? ", user)
+	dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
