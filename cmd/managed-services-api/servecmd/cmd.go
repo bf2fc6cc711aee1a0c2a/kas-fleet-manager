@@ -72,7 +72,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	observatoriumService := environments.Environment().Services.Observatorium
 
 	//set Unique Id for each work to facilitate Leader Election process
-	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService,observatoriumService)
+	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService, observatoriumService)
 	workerList = append(workerList, kafkaManager)
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
