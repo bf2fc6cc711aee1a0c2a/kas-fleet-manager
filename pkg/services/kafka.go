@@ -302,9 +302,8 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 		if err != nil {
 			return kafkaRequestList, pagingMeta, errors.FailedToParseSearch("Unable to list kafka requests for %s: %s", user, err)
 		}
-		for _, dbQuery := range searchDbQuery {
-			dbConn = dbConn.Where(dbQuery.query, dbQuery.value)
-		}
+
+		dbConn = dbConn.Where(searchDbQuery.query, searchDbQuery.values...)
 	}
 
 	if len(listArgs.OrderBy) == 0 {

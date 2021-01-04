@@ -10,28 +10,30 @@ import (
 
 // DbSearchQuery - struct to be used by gorm in search
 type DbSearchQuery struct {
-	query string
-	value string
+	query  string
+	values []interface{}
 }
 
 var (
+	// ValidJoins for chained queries
+	ValidJoins = []string{"AND", "OR"}
 	// ValidComparators - valid comparators for search queries
-	ValidComparators = []string{"=", "<>"}
+	ValidComparators = []string{"=", "<>", "LIKE"}
 	// ValidColumnNames - valid column names for search queries
 	ValidColumnNames       = []string{"region", "name", "cloud_provider", "status", "owner"}
-	validSearchValueRegexp = regexp.MustCompile("^([a-zA-Z0-9-_]*[a-zA-Z0-9-_])?$")
+	validSearchValueRegexp = regexp.MustCompile("^([a-zA-Z0-9-_%]*[a-zA-Z0-9-_%])?$")
 )
 
 // GetSearchQuery - parses searchQuery and returns query ready to be passed to
 // the database. If the searchQuery isn't valid, error is returned
-func GetSearchQuery(searchQuery string) ([]DbSearchQuery, *errors.ServiceError) {
+func GetSearchQuery(searchQuery string) (DbSearchQuery, *errors.ServiceError) {
 	noExcessiveWhiteSpaces := removeExcessiveWhiteSpaces(searchQuery) // remove excessive white spaces
 	queryTokens := strings.Fields(noExcessiveWhiteSpaces)             // tokenize
-	parsedQueries, err := validateAndReturnDbQuery(searchQuery, queryTokens)
+	parsedQuery, err := validateAndReturnDbQuery(searchQuery, queryTokens)
 	if err != nil {
-		return nil, err
+		return DbSearchQuery{}, err
 	}
-	return parsedQueries, nil
+	return parsedQuery, nil
 }
 
 // remove any excessive white spaces inside the query string
@@ -41,23 +43,32 @@ func removeExcessiveWhiteSpaces(somestring string) string {
 }
 
 // validate search query and return sanitized query ready to be executed by gorm
-func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSearchQuery, *errors.ServiceError) {
-	var dbQueries []DbSearchQuery
+func validateAndReturnDbQuery(searchQuery string, queryTokens []string) (DbSearchQuery, *errors.ServiceError) {
+	// checking for incomplete queries (query tokens length must be either 3 or 3 + n * 4)
+	if !(len(queryTokens) == 3 || (len(queryTokens)+1)%4 == 0) {
+		return DbSearchQuery{}, errors.FailedToParseSearch("Provided search query seems incomplete: '%s'", searchQuery)
+	}
+	// limit to 4 joins
+	if len(queryTokens) > 19 {
+		return DbSearchQuery{}, errors.FailedToParseSearch("Provided search query has too many joins (max 4 allowed): '%s'", searchQuery)
+	}
+	var searchValues []string
 	var query string
+	var comparator string
 	index := 0 // used to determine position of the item in order to construct full query or return error if invalid query has been passed
 	for _, queryToken := range queryTokens {
 		switch index {
 		case 0: // column name
 			columnName := strings.ToLower(queryToken)
 			if !contains(ValidColumnNames, columnName) {
-				return nil, errors.FailedToParseSearch("Unsupported column name for search: '%s'. Supported column names are: %s. Query invalid: %s", columnName, strings.Join(ValidColumnNames[:], ", "), searchQuery)
+				return DbSearchQuery{}, errors.FailedToParseSearch("Unsupported column name for search: '%s'. Supported column names are: %s. Query invalid: %s", columnName, strings.Join(ValidColumnNames[:], ", "), searchQuery)
 			}
-			query = columnName
+			query = fmt.Sprintf("%s%s", query, columnName)
 			index++
 		case 1: // comparator
-			comparator := strings.ToUpper(queryToken)
+			comparator = strings.ToUpper(queryToken)
 			if !contains(ValidComparators, comparator) {
-				return nil, errors.FailedToParseSearch("Unsupported comparator: '%s'. Supported comparators are: %s. Query invalid: %s", queryToken, strings.Join(ValidComparators[:], ", "), searchQuery)
+				return DbSearchQuery{}, errors.FailedToParseSearch("Unsupported comparator: '%s'. Supported comparators are: %s. Query invalid: %s", queryToken, strings.Join(ValidComparators[:], ", "), searchQuery)
 			}
 			query = fmt.Sprintf("%s %s ?", query, comparator)
 			index++
@@ -65,35 +76,29 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) ([]DbSea
 			stringToMatchRegexp := queryToken
 			stringToMatchRegexp = strings.TrimPrefix(stringToMatchRegexp, "'")
 			stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "'")
-			// startsWithWildcard := strings.HasPrefix(stringToMatchRegexp, "%")
-			// endsWithWildcard := strings.HasSuffix(stringToMatchRegexp, "%")
+			startsWithWildcard := strings.HasPrefix(stringToMatchRegexp, "%")
+			endsWithWildcard := strings.HasSuffix(stringToMatchRegexp, "%")
 
-			// if startsWithWildcard && endsWithWildcard && len(stringToMatchRegexp) <= 2 {
-			// 	return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and end with '%%' and must conform to '%s'", queryToken, searchQuery, searchValueFormat)
-			// }
-			// // if startsWithWildcard {
-			// // 	stringToMatchRegexp = strings.TrimPrefix(stringToMatchRegexp, "%")
-			// // }
-			// // if endsWithWildcard {
-			// // 	stringToMatchRegexp = strings.TrimSuffix(stringToMatchRegexp, "%")
-			// // }
-			if !validSearchValueRegexp.MatchString(stringToMatchRegexp) {
-				return nil, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value must conform to '%s'", queryToken, searchQuery, validSearchValueRegexp)
+			if (startsWithWildcard || endsWithWildcard) && comparator != "LIKE" {
+				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Wildcards only allowed with `LIKE` comparator", queryToken, searchQuery)
 			}
-			// if startsWithWildcard {
-			// 	stringToMatchRegexp = fmt.Sprintf("%%%s", stringToMatchRegexp)
-			// }
-			// if endsWithWildcard {
-			// 	stringToMatchRegexp = fmt.Sprintf("%s%%", stringToMatchRegexp)
-			// }
-			dbQueries = append(dbQueries, DbSearchQuery{query: query, value: stringToMatchRegexp})
+			if startsWithWildcard && endsWithWildcard && len(stringToMatchRegexp) <= 2 {
+				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and/ or end with '%%25' and must conform to '%s'", queryToken, searchQuery, validSearchValueRegexp.String())
+			}
+
+			if !validSearchValueRegexp.MatchString(stringToMatchRegexp) {
+				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and/ or end with '%%25' when using 'LIKE' comparator and must conform to '%s'", queryToken, searchQuery, validSearchValueRegexp.String())
+			}
+			searchValues = append(searchValues, stringToMatchRegexp)
 			index++
 		case 3: // only 'and' allowed here
-			if strings.ToLower(queryToken) != "and" {
-				return nil, errors.FailedToParseSearch("Currently only 'and' is allowed search with chained queries. Got: %s in the query %s", queryToken, searchQuery)
+			join := strings.ToUpper(queryToken)
+			if !contains(ValidJoins, join) {
+				return DbSearchQuery{}, errors.FailedToParseSearch("Unsupported join value: '%s'. Supported joins are: %s. Query invalid: %s", queryToken, strings.Join(ValidJoins[:], ", "), searchQuery)
 			}
+			query = fmt.Sprintf("%s %s ", query, join)
 			index = 0
 		}
 	}
-	return dbQueries, nil
+	return DbSearchQuery{query: strings.TrimSuffix(query, " "), values: stringSliceToInterfaceSlice(searchValues)}, nil
 }

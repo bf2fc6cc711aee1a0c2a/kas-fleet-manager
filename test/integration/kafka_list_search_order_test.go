@@ -41,7 +41,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	// get initial list (should be empty)
 	initList, resp, err := client.DefaultApi.ListKafkas(ctx, nil)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(initList.Items).To(BeEmpty(), "Expected empty kafka requests list")
 	Expect(initList.Size).To(Equal(int32(0)), "Expected Size == 0")
@@ -81,7 +81,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	// get populated list of kafka requests
 	populatedKafkaList, _, err := client.DefaultApi.ListKafkas(ctx, nil)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(populatedKafkaList.Items)).To(Equal(3), "Expected kafka requests list length to be 1")
 	Expect(populatedKafkaList.Size).To(Equal(int32(3)), "Expected Size == 3")
@@ -92,7 +92,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	// test orderBy (by name in ascending order)
 	listByNameAsc, _, err := client.DefaultApi.ListKafkas(ctx, orderBy)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(listByNameAsc.Size).To(Equal(int32(3)), "Expected Size == 3")
 	Expect(listByNameAsc.Total).To(Equal(int32(3)), "Expected Total == 3")
 	Expect(listByNameAsc.Items[0].Name).To(Equal(mockKafkaName2))
@@ -100,9 +100,9 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	orderBy = &openapi.ListKafkasOpts{OrderBy: optional.NewString("name desc")}
 
-	// test orderBy (by name in descendiing order)
+	// test orderBy (by name in descending order)
 	listByNameDesc, _, err := client.DefaultApi.ListKafkas(ctx, orderBy)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(listByNameDesc.Size).To(Equal(int32(3)), "Expected Size == 3")
 	Expect(listByNameDesc.Total).To(Equal(int32(3)), "Expected Total == 3")
 	Expect(listByNameDesc.Items[2].Name).To(Equal(mockKafkaName2))
@@ -113,7 +113,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	search := &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", mockKafkaName1))}
 
 	searchName, _, err := client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(searchName.Size).To(Equal(int32(1)), "Expected Size == 1")
 	Expect(searchName.Total).To(Equal(int32(1)), "Expected Total == 1")
 	Expect(searchName.Items[0].Name).To(Equal(mockKafkaName1))
@@ -122,7 +122,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))}
 
 	searchName, _, err = client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(searchName.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(searchName.Total).To(Equal(int32(0)), "Expected Total == 0")
 
@@ -130,7 +130,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", mockKafkaName1))}
 
 	searchNameInv, _, err := client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(searchNameInv.Size).To(Equal(int32(2)), "Expected Size == 2")
 	Expect(searchNameInv.Total).To(Equal(int32(2)), "Expected Total == 2")
 	Expect(searchNameInv.Items[0].Name).NotTo(Equal(mockKafkaName1))
@@ -140,7 +140,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", nonExistentKafkaName))}
 
 	searchNameInv, _, err = client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(searchNameInv.Size).To(Equal(int32(3)), "Expected Size == 3")
 	Expect(searchNameInv.Total).To(Equal(int32(3)), "Expected Total == 3")
 	Expect(searchNameInv.Items[0].Name).NotTo(Equal(nonExistentKafkaName))
@@ -157,27 +157,65 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
 	Expect(err).To(HaveOccurred()) // expecting an error here
 
-	// search with dangerous SQL query
+	// search with incomplete query
+	search = &openapi.ListKafkasOpts{Search: optional.NewString("name <>")}
+	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
+	Expect(err).To(HaveOccurred()) // expecting an error here
+
+	// search with dangerous SQL query (which is also an incomplete query)
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and %s", mockKafkaName1, sqlDeleteQuery))}
 	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
 	Expect(err).To(HaveOccurred()) // expecting an error here
 
-	// search with invalid join (or not yet supported)
-	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name = %s", nonExistentKafkaName, mockKafkaName1))}
+	// search with invalid join
+	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or_maybe name = %s", nonExistentKafkaName, mockKafkaName1))}
 	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
 	Expect(err).To(HaveOccurred()) // expecting an error here
 
-	// search with valid joined query
-	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID()))}
+	// search with `or` join
+	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name = %s", nonExistentKafkaName, mockKafkaName1))}
 	searchJoined, _, err := client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
+	Expect(searchJoined.Size).To(Equal(int32(3)), "Expected Size == 3")
+	Expect(searchJoined.Total).To(Equal(int32(3)), "Expected Total == 3")
+
+	// search with 'and' join
+	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID()))}
+	searchJoined, _, err = client.DefaultApi.ListKafkas(ctx, search)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(searchJoined.Size).To(Equal(int32(3)), "Expected Size == 3")
 	Expect(searchJoined.Total).To(Equal(int32(3)), "Expected Total == 3")
 
 	// search with valid query with two joins
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s and region = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID(), mocks.MockCluster.Region().ID()))}
 	searchJoined, _, err = client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
 	Expect(searchJoined.Size).To(Equal(int32(3)), "Expected Size == 3")
 	Expect(searchJoined.Total).To(Equal(int32(3)), "Expected Total == 3")
+
+	// search with too many joins
+	search = &openapi.ListKafkasOpts{Search: optional.NewString(
+		fmt.Sprintf("name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s",
+			nonExistentKafkaName,
+			mockKafkaName1,
+			mockKafkaName1,
+			mockKafkaName1,
+			mockKafkaName1,
+			mockKafkaName1))}
+	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
+	Expect(err).To(HaveOccurred()) // expecting an error here
+
+	// checking that like works correctly
+	search = &openapi.ListKafkasOpts{Search: optional.NewString("name LIKE %kafka1")}
+	searchLike, _, err := client.DefaultApi.ListKafkas(ctx, search)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
+	Expect(searchLike.Size).To(Equal(int32(3)), "Expected Size == 3")
+	Expect(searchLike.Total).To(Equal(int32(3)), "Expected Total == 3")
+
+	search = &openapi.ListKafkasOpts{Search: optional.NewString("name LIKE test%")}
+	searchLike, _, err = client.DefaultApi.ListKafkas(ctx, search)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
+	Expect(searchLike.Size).To(Equal(int32(1)), "Expected Size == 1")
+	Expect(searchLike.Total).To(Equal(int32(1)), "Expected Total == 1")
+	Expect(searchNameInv.Items[0].Name).NotTo(Equal(mockKafkaName1))
 }
