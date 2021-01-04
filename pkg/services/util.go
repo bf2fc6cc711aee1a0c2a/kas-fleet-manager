@@ -167,3 +167,11 @@ func contains(s []string, str string) bool {
 	}
 	return false
 }
+
+func stringSliceToInterfaceSlice(stringSlice []string) []interface{} {
+	interfaceSlice := make([]interface{}, len(stringSlice))
+	for i := range stringSlice {
+		interfaceSlice[i] = stringSlice[i]
+	}
+	return interfaceSlice
+}
