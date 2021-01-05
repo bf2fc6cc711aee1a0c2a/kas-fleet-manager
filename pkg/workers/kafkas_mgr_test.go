@@ -46,6 +46,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
 						return nil
 					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
 				},
 				observatoriumService: &services.ObservatoriumServiceMock{
 					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
@@ -76,6 +79,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
 						return nil
 					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
 				},
 				observatoriumService: &services.ObservatoriumServiceMock{
 					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
@@ -102,6 +108,11 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return &api.KafkaRequest{}, errors.NotFound("Not Found")
 					},
 				},
+				keycloakService: &services.KeycloakServiceMock{
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+				},
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -125,6 +136,11 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 				observatoriumService: &services.ObservatoriumServiceMock{
 					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
 						return observatorium.KafkaState{}, nil
+					},
+				},
+				keycloakService: &services.KeycloakServiceMock{
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
 					},
 				},
 			},
