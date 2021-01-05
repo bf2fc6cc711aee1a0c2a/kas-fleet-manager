@@ -248,7 +248,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
 				Reason:   "Organisation 'org-id' has reached a maximum number of 4 allowed instances.",
-				Code:     4,
+				Code:     5,
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
 				Reason:   "User 'username' has reached a maximum number of 4 allowed instances.",
-				Code:     4,
+				Code:     5,
 			},
 		},
 		{
@@ -311,7 +311,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
 				Reason:   "User 'username' has reached a maximum number of 1 allowed instances.",
-				Code:     4,
+				Code:     5,
 			},
 		},
 		{
@@ -334,7 +334,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
 				Reason:   "User 'username' has reached a maximum number of 1 allowed instances.",
-				Code:     4,
+				Code:     5,
 			},
 		},
 	}
@@ -390,7 +390,7 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			RegisterTestingT(t)
-			validateFn := validateRegexp(validKafkaClusterNameRegexp, &tt.name, "name")
+			validateFn := validKafkaClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
 				Expect(err).Should(HaveOccurred())

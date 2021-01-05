@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"net/http"
 )
 
 type serviceAccountsHandler struct {
@@ -50,7 +51,7 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 	cfg := &handlerConfig{
 		MarshalInto: &serviceAccountRequest,
 		Validate: []validate{
-			validateNotEmpty(&serviceAccountRequest.Name, "name"),
+			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -70,7 +71,7 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateNotEmpty(&id, "id"),
+			validateLength(&id, "id", &minRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -87,7 +88,7 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateNotEmpty(&id, "id"),
+			validateLength(&id, "id", &minRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
