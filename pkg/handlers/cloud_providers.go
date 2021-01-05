@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"net/http"
 )
 
 type cloudProvidersHandler struct {
@@ -27,7 +28,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	cfg := &handlerConfig{
 
 		Validate: []validate{
-			validateNotEmpty(&id, "id"),
+			validateLength(&id, "id", &minRequiredFieldLength, nil),
 		},
 
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
