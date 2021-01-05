@@ -2,7 +2,6 @@ package workers
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	"strings"
 	"sync"
@@ -164,7 +163,7 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafka.ID)
 		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, kafka.OrganisationId)
 		if err != nil || keycloakSecret == "" {
-			return errors.FailedToCreateSSOClient("Failed to create sso client: %v", err)
+			return fmt.Errorf("failed to create sso client %s: %w", kafka.ID, err)
 		}
 	}
 
