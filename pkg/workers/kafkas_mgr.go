@@ -112,7 +112,7 @@ func (k *KafkaManager) reconcile() {
 
 		for _, kafka := range prepareKafkas {
 			if err := k.reconcilePreparedKafka(kafka); err != nil {
-				glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
+				glog.Errorf("failed to reconcile prepared kafka %s: %s", kafka.ID, err.Error())
 				continue
 			}
 		}
