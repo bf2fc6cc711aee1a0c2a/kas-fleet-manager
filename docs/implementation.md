@@ -24,7 +24,7 @@ This will serve the OpenAPI spec on `localhost:80`
 It's important to note that the system is asynchronous, meaning that once a Kafka resource is
 created via the REST API, there won't be a running Kafka instance created by the time the HTTP
 response is sent by the service. A client will need to continue watching or polling their Kafka
-resource to determine whether it has a `complete` status or not.
+resource to determine whether it has a `ready` status or not.
 
 The REST API requires a valid `Authorization` OCM Bearer token header to be provided with all
 requests, to obtain a short-lived token run:
@@ -41,7 +41,7 @@ periodically reconcile on all pending Kafka resources, attempt to find a valid O
 fit it's requirements (cloud provider, region, etc.) and provision a Kafka instance to the cluster.
 
 Once the Kafka Worker has set up a Kafka resource, it will mark the Kafka request status as
-`complete`.
+`ready`.
 
 The end-user has no way to directly interact with the Kafka worker, management of Kafka resources
 should be handled through the REST API.
