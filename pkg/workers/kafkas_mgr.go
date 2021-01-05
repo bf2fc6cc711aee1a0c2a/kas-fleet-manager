@@ -2,10 +2,13 @@ package workers
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
 	"strings"
 	"sync"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
@@ -99,6 +102,22 @@ func (k *KafkaManager) reconcile() {
 		}
 	}
 
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		// handle preparing kafkas
+		prepareKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusPrepare)
+		if serviceErr != nil {
+			sentry.CaptureException(serviceErr)
+			glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
+		}
+
+		for _, kafka := range prepareKafkas {
+			if err := k.reconcilePreparedKafka(kafka); err != nil {
+				glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
+				continue
+			}
+		}
+	}
+
 	// handle provisioning kafkas
 	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
@@ -143,7 +162,11 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	if cluster != nil {
 		kafka.ClusterID = cluster.ClusterID
-		kafka.Status = constants.KafkaRequestStatusProvisioning.String()
+		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+			kafka.Status = constants.KafkaRequestStatusPrepare.String()
+		} else {
+			kafka.Status = constants.KafkaRequestStatusProvisioning.String()
+		}
 		if err = k.kafkaService.Update(kafka); err != nil {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
 		}
@@ -183,7 +206,6 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 }
 
 func (k *KafkaManager) reconcileResourceCreationKafka(kafka *api.KafkaRequest) error {
-
 	namespace, err := services.BuildNamespaceName(kafka)
 	if err != nil {
 		return err
@@ -203,5 +225,28 @@ func (k *KafkaManager) reconcileResourceCreationKafka(kafka *api.KafkaRequest) e
 		return nil
 	}
 	glog.V(1).Infof("reconciled kafka %s state %s", kafka.ID, kafkaState.State)
+	return nil
+}
+
+func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
+	_, err := k.kafkaService.GetById(kafka.ID)
+	if err != nil {
+		sentry.CaptureException(err)
+		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
+	}
+
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafka.ID)
+		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, kafka.OrganisationId)
+		if err != nil || keycloakSecret == "" {
+			return errors.FailedToCreateSSOClient("Failed to create sso client: %v", err)
+		}
+		if keycloakSecret != "" {
+			if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusProvisioning); err != nil {
+				return fmt.Errorf("failed to update kafka %s to status resource creation: %w", kafka.ID, err)
+			}
+		}
+
+	}
 	return nil
 }
