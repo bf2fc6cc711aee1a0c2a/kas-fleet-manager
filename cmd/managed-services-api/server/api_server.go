@@ -62,6 +62,7 @@ func NewAPIServer() Server {
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(services.CloudProviders, services.Config)
 	errorsHandler := handlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
+	metricsHandler := handlers.NewMetricsHandler(services.Observatorium)
 
 	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
 	if env().Config.Server.EnableJWT {
@@ -145,6 +146,12 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+	//  /api/managed-services-api/v1/kafkas/{id}/metrics
+	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
+	apiV1MetricsRouter.HandleFunc("", metricsHandler.Get).Methods(http.MethodGet)
+	apiV1MetricsRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
 

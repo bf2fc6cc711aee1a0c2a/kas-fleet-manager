@@ -107,6 +107,14 @@ func (c *Client) send(query string) (pModel.Value, pV1.Warnings, error) {
 	return c.connection.Query(ctx, query, time.Now())
 }
 
+// Send a POST request to server.
+func (c *Client) sendRange(query string, bounds pV1.Range) (pModel.Value, pV1.Warnings, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.Config.Timeout)
+	defer cancel()
+	return c.connection.QueryRange(ctx, query, bounds)
+
+}
+
 // Query sends a metrics request to server and returns unmashalled Vector response.
 // The VectorResult(s) inside will contain either .Value for queries resulting in instant vector,
 // or .Values for queries resulting in a range vector.
@@ -133,6 +141,25 @@ func (c *Client) Query(queryTemplate string, label string) (*pModel.Vector, erro
 		return nil, fmt.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
 	}
 	return &v, err
+}
+func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range) Metric {
+
+	queryString := fmt.Sprintf(queryTemplate, label)
+	values, warnings, err := c.sendRange(queryString, bounds)
+	if len(warnings) > 0 {
+		glog.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
+	}
+	if err != nil {
+		return Metric{Err: err}
+	}
+
+	m, ok := values.(pModel.Matrix)
+	if !ok {
+		glog.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)
+		return Metric{Err: fmt.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)}
+
+	}
+	return Metric{Matrix: m}
 }
 
 func all(items []string, conjunction string) string {
