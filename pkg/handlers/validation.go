@@ -17,18 +17,9 @@ import (
 var (
 	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
 	validKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
-	minKafkaNameLength          = 1
+	minRequiredFieldLength      = 1
 	maxKafkaNameLength          = 32
 )
-
-func validateNotEmpty(value *string, field string) validate {
-	return func() *errors.ServiceError {
-		if value == nil || len(*value) == 0 {
-			return errors.Validation("%s is required", field)
-		}
-		return nil
-	}
-}
 
 // validateAsyncEnabled returns a validator that returns an error if the async query param is not true
 func validateAsyncEnabled(r *http.Request, action string) validate {
@@ -64,7 +55,7 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 		// Validation for Cloud Provider
 		provider, providerSupported := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
 		if !providerSupported {
-			return errors.Validation("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, configService.GetSupportedProviders())
+			return errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, configService.GetSupportedProviders())
 		}
 
 		// Set Cloud Region default if not received in the request
@@ -77,7 +68,7 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 		regionSupported := configService.IsRegionSupportedForProvider(kafkaRequest.CloudProvider, kafkaRequest.Region)
 		if !regionSupported {
 			provider, _ := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
-			return errors.Validation("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
+			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
 		}
 
 		return nil
@@ -114,17 +105,17 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		}
 
 		if !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total) {
-			return errors.Forbidden(message)
+			return errors.MaximumAllowedInstanceReached(message)
 		}
 
 		return nil
 	}
 }
 
-func validateRegexp(regexp *regexp.Regexp, value *string, field string) validate {
+func validKafkaClusterName(value *string, field string) validate {
 	return func() *errors.ServiceError {
-		if !regexp.MatchString(*value) {
-			return errors.Validation("%s does not match %s", field, regexp.String())
+		if !validKafkaClusterNameRegexp.MatchString(*value) {
+			return errors.MalformedKafkaClusterName("%s does not match %s", field, validKafkaClusterNameRegexp.String())
 		}
 		return nil
 	}
@@ -137,10 +128,10 @@ func validateLength(value *string, field string, minVal *int, maxVal *int) valid
 	}
 	return func() *errors.ServiceError {
 		if value == nil || len(*value) < min {
-			return errors.Validation("%s is not valid. Minimum length %d is required.", field, min)
+			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, min)
 		}
 		if maxVal != nil && len(*value) > *maxVal {
-			return errors.Validation("%s is not valid. Maximum length %d is required", field, maxVal)
+			return errors.MaximumFieldLengthMissing("%s is not valid. Maximum length %d is required", field, maxVal)
 		}
 		return nil
 	}

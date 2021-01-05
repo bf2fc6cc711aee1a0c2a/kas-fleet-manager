@@ -16,8 +16,11 @@ const (
 	// HREF for API errors
 	ERROR_HREF = "/api/managed-services-api/v1/errors/"
 
-	// Forbidden occurs when a user has been blacklisted
+	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden ServiceErrorCode = 4
+
+	// Forbidden occurs when a user or organisation has reached maximum number of allowed instances
+	ErrorMaxAllowedInstanceReached ServiceErrorCode = 5
 
 	// Conflict occurs when a database constraint is violated
 	ErrorConflict ServiceErrorCode = 6
@@ -52,7 +55,23 @@ const (
 	// Synchronous request not supported
 	ErrorSyncActionNotSupported ServiceErrorCode = 103
 
+	// Failed to create sso client
 	ErrorFailedToCreateSSOClient ServiceErrorCode = 106
+
+	// Provider not supported
+	ErrorProviderNotSupported ServiceErrorCode = 30
+
+	// Region not supported
+	ErrorRegionNotSupported ServiceErrorCode = 31
+
+	// Invalid kafka cluster name
+	ErrorMalformedKafkaClusterName ServiceErrorCode = 32
+
+	// Minimum field length validation
+	ErrorMinimumFieldLength ServiceErrorCode = 33
+
+	// Maximum field length validation
+	ErrorMaximumFieldLength ServiceErrorCode = 34
 )
 
 type ServiceErrorCode int
@@ -71,6 +90,7 @@ func Find(code ServiceErrorCode) (bool, *ServiceError) {
 func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, "Forbidden to perform this action", http.StatusForbidden},
+		ServiceError{ErrorMaxAllowedInstanceReached, "Forbidden to create more instances than the maximum allowed", http.StatusForbidden},
 		ServiceError{ErrorConflict, "An entity with the specified unique values already exists", http.StatusConflict},
 		ServiceError{ErrorNotFound, "Resource not found", http.StatusNotFound},
 		ServiceError{ErrorValidation, "General validation failure", http.StatusBadRequest},
@@ -83,6 +103,11 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
 		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
 		ServiceError{ErrorFailedToCreateSSOClient, "Failed to create kafka client in the mas sso", http.StatusInternalServerError},
+		ServiceError{ErrorProviderNotSupported, "Provider not supported", http.StatusBadRequest},
+		ServiceError{ErrorRegionNotSupported, "Region not supported", http.StatusBadRequest},
+		ServiceError{ErrorMalformedKafkaClusterName, "Kafka cluster name is invalid", http.StatusBadRequest},
+		ServiceError{ErrorMinimumFieldLength, "Minimum field length not reached", http.StatusBadRequest},
+		ServiceError{ErrorMaximumFieldLength, "Maximum field length has been depassed", http.StatusBadRequest},
 	}
 }
 
@@ -176,6 +201,10 @@ func Forbidden(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorForbidden, reason, values...)
 }
 
+func MaximumAllowedInstanceReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMaxAllowedInstanceReached, reason, values...)
+}
+
 func NotImplemented(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorNotImplemented, reason, values...)
 }
@@ -205,6 +234,7 @@ func SyncActionNotSupported(reason string, values ...interface{}) *ServiceError 
 	message := fmt.Sprintf("Synchronous action (%s) is unsupported, use async=true parameter", reason)
 	return New(ErrorSyncActionNotSupported, message)
 }
+
 func NotMultiAzActionNotSupported(reason string, values ...interface{}) *ServiceError {
 	message := "only multi_az is supported, use multi_az=true in Kafka requests"
 	return New(ErrorBadRequest, message)
@@ -212,4 +242,24 @@ func NotMultiAzActionNotSupported(reason string, values ...interface{}) *Service
 
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateSSOClient, reason, values...)
+}
+
+func RegionNotSupported(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorRegionNotSupported, reason, values...)
+}
+
+func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorProviderNotSupported, reason, values...)
+}
+
+func MalformedKafkaClusterName(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedKafkaClusterName, reason, values...)
+}
+
+func MinimumFieldLengthNotReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMinimumFieldLength, reason, values...)
+}
+
+func MaximumFieldLengthMissing(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMaximumFieldLength, reason, values...)
 }
