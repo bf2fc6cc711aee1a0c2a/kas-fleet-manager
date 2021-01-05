@@ -94,11 +94,11 @@ func TestKafkaCreate_Success(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == constants.KafkaRequestStatusComplete.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
 	})
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become complete: %v", err)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	// final check on the status
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
@@ -410,10 +410,10 @@ func TestKafkaDelete_Success(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == constants.KafkaRequestStatusComplete.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
 	})
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become complete: %v", err)
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 
@@ -643,7 +643,7 @@ func TestKafkaList_Success(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == constants.KafkaRequestStatusComplete.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
 	})
 
 	// get populated list of kafka requests
@@ -668,7 +668,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
+	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 
 	// new account setup to prove that users can list kafkas instances created by a memeber of their org
 	account = h.NewRandAccount()
@@ -697,7 +697,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusComplete.String()))
+	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a memeber of their org) kafka instances
 	// this value if taken from config/allow-list-configuration.yaml

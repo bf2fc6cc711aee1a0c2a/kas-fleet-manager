@@ -13,9 +13,9 @@ const (
 	KafkaRequestStatusProvisioning KafkaStatus = "provisioning"
 	// KafkaRequestStatusResourceCreation - kafka request status of creating resource kafka
 	KafkaRequestStatusResourceCreation KafkaStatus = "resource_creating"
-	// KafkaRequestStatusComplete - completed kafka request
-	KafkaRequestStatusComplete KafkaStatus = "complete"
-	// KafkaRequestStatusComplete - kafka request failed
+	// KafkaRequestStatusReady - completed kafka request
+	KafkaRequestStatusReady KafkaStatus = "ready"
+	// KafkaRequestStatusFailed - kafka request failed
 	KafkaRequestStatusFailed KafkaStatus = "failed"
 
 	// KafkaOperationCreate - Kafka cluster create operations
@@ -28,8 +28,6 @@ const (
 
 	// ObservabilityCanaryPodLabelValue the value for ObservabilityCanaryPodLabelKey
 	ObservabilityCanaryPodLabelValue = "true"
-	// KafkaClusterStateReady the state from observatorium
-	KafkaClusterStateReady = "ready"
 )
 
 // NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
