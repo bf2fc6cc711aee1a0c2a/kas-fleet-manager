@@ -7,11 +7,11 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
 )
 
-func NewRunFetchMetricsCommand() *cobra.Command {
+func NewRunGetStateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fetch-state",
+		Use:   "get-state",
 		Short: "Fetch kafka state metric from Prometheus",
-		Run:   runFetchResourceStateMetrics,
+		Run:   runGethResourceStateMetrics,
 	}
 
 	cmd.Flags().String(FlagName, "", "Kafka name")
@@ -19,7 +19,7 @@ func NewRunFetchMetricsCommand() *cobra.Command {
 
 	return cmd
 }
-func runFetchResourceStateMetrics(cmd *cobra.Command, _args []string) {
+func runGethResourceStateMetrics(cmd *cobra.Command, _args []string) {
 
 	name := flags.MustGetDefinedString(FlagName, cmd.Flags())
 	namespace := flags.MustGetDefinedString(FlagNameSpace, cmd.Flags())

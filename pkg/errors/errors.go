@@ -430,3 +430,8 @@ func MaximumFieldLengthMissing(reason string, values ...interface{}) *ServiceErr
 func UnableToSendErrorResponse() *ServiceError {
 	return New(ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason)
 }
+
+func FailedToParseQueryParms(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorBadRequest, reason, values...)
+
+}

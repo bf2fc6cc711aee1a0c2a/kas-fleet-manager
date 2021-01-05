@@ -37,7 +37,7 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		DexUrl:               "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
 		AuthToken:            "",
 		AuthTokenFile:        "secrets/observatorium.token",
-		Timeout:              120 * time.Second,
+		Timeout:              240 * time.Second,
 		Debug:                true, // TODO: false
 		EnableMock:           false,
 		Insecure:             true, // TODO: false

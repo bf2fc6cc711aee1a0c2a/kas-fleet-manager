@@ -3,6 +3,7 @@ package observatorium
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -16,16 +17,16 @@ func (c *Client) MockAPI() pV1.API {
 type httpAPIMock struct {
 }
 
-type mockAPISample struct {
-	value    pModel.Value
-	warnings pV1.Warnings
-	err      error
+// performs a query for the kafka metrics.
+func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
+	values := getMockQueryData(query)
+	return values, []string{}, nil
 }
 
-// performs a query for the kafka state, retun value '1' which mean ready state.
-func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
-	api := SetMockValue(1)
-	return api.value, api.warnings, api.err
+//Query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error)
+func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
+	values := getMockQueryRangeData(query)
+	return values, []string{}, nil
 }
 
 // Not implemented
@@ -54,10 +55,6 @@ func (*httpAPIMock) LabelValues(ctx context.Context, label string, startTime tim
 	return pModel.LabelValues{}, pV1.Warnings{}, fmt.Errorf("not implemented")
 }
 
-//Query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error)
-func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
-	return nil, pV1.Warnings{}, fmt.Errorf("not implemented")
-}
 func (*httpAPIMock) Series(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]pModel.LabelSet, pV1.Warnings, error) {
 	return []pModel.LabelSet{}, pV1.Warnings{}, fmt.Errorf("not implemented")
 }
@@ -86,15 +83,75 @@ func (*httpAPIMock) Runtimeinfo(ctx context.Context) (pV1.RuntimeinfoResult, err
 	return pV1.RuntimeinfoResult{}, fmt.Errorf("not implemented")
 }
 
-//SetMockValue in httpAPIMock
-func SetMockValue(expectedValue float64) *mockAPISample {
-	sample := &pModel.Sample{Value: pModel.SampleValue(expectedValue)}
-	vector := []*pModel.Sample{sample}
-
-	api := mockAPISample{
-		value: pModel.Vector(vector),
+//getMockQueryData
+func getMockQueryData(query string) pModel.Vector {
+	for key, values := range queryData {
+		if strings.Contains(query, key) {
+			return values
+		}
 	}
+	return pModel.Vector{}
 
-	return &api
+}
 
+//getMockQueryRangeData
+func getMockQueryRangeData(query string) pModel.Matrix {
+	for key, values := range rangeQuerydata {
+		if strings.Contains(query, key) {
+			return values
+		}
+	}
+	return pModel.Matrix{}
+
+}
+
+var rangeQuerydata = map[string]pModel.Matrix{
+	"kubelet_volume_stats_available_bytes": {
+		fakeMetricData("kubelet_volume_stats_available_bytes", 220792516608),
+	},
+	"kafka_server_brokertopicmetrics_messages_in_total": {
+		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 0),
+	},
+	"kafka_server_brokertopicmetrics_bytes_in_total": {
+		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 0),
+	},
+	"kafka_server_brokertopicmetrics_bytes_out_total": {
+		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 0),
+	},
+	"kafka_controller_kafkacontroller_offline_partitions_count": {
+		fakeMetricData("kafka_controller_kafkacontroller_offline_partitions_count", 0),
+	},
+	"kafka_controller_kafkacontroller_global_partition_count": {
+		fakeMetricData("kafka_controller_kafkacontroller_global_partition_count", 0),
+	},
+	"sum by (namespace, topic)(kafka_log_log_size": {
+		fakeMetricData("sum by (namespace, topic)(kafka_log_log_size", 220),
+	},
+}
+
+func fakeMetricData(name string, value int) *pModel.SampleStream {
+	return &pModel.SampleStream{
+		Metric: pModel.Metric{
+			"namespace": "kafka-namespace",
+			"__name__":  pModel.LabelValue(name),
+			"tenant_id": "whatever",
+			"job":       "whatever",
+		},
+		Values: []pModel.SamplePair{{Timestamp: 0, Value: pModel.SampleValue(value)},
+			{Timestamp: 0, Value: pModel.SampleValue(value)}},
+	}
+}
+
+var queryData = map[string]pModel.Vector{
+	"strimzi_resource_state": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"strimzi_io_kind": "Kafka",
+				"strimzi_io_name": "test-kafka",
+				"namespace":       "my-kafka-namespace",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     1,
+		},
+	},
 }

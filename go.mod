@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.36.5
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
+	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
@@ -22,7 +23,10 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/grokify/html-strip-tags-go v0.0.0-20200923094847-079d207a09f1 // indirect
 	github.com/jinzhu/gorm v1.9.8
-	github.com/lib/pq v1.1.1
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.1 // indirect
+	github.com/lib/pq v1.3.0
+	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/onsi/gomega v1.10.1
 	github.com/openshift-online/ocm-sdk-go v0.1.141
