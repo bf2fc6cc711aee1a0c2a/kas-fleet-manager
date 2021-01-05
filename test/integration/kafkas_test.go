@@ -105,6 +105,9 @@ func TestKafkaCreate_Success(t *testing.T) {
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
+
+	// delete test kafka to free up resources on an OSD cluster
+	deleteTestKafka(ctx, client, foundKafka.Id)
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
@@ -559,8 +562,9 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	if clusterID == "" {
 		panic("No cluster found")
 	}
+
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	initCtx := h.NewAuthenticatedContext(account)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -571,7 +575,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	var kafka openapi.KafkaRequest
 	var resp *http.Response
 	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+		kafka, resp, err = client.DefaultApi.CreateKafka(initCtx, true, k)
 		if err != nil {
 			return true, err
 		}
@@ -582,14 +586,24 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 
+	var foundKafka openapi.KafkaRequest
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		foundKafka, _, err = client.DefaultApi.GetKafkaById(initCtx, kafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
+	})
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
+
 	// attempt to delete kafka not created by the owner (should result in an error)
 	account = h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account)
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
 	Expect(err).To(HaveOccurred())
-	// user auth is failed, so the metric is not expected to exist
-	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount), false)
-	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount), false)
+
+	// delete test kafka to free up resources on an OSD cluster
+	deleteTestKafka(initCtx, client, foundKafka.Id)
 }
 
 // TestKafkaList_Success tests getting kafka requests list
@@ -606,10 +620,10 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// setup pre-requisites to performing requests
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	initCtx := h.NewAuthenticatedContext(account)
 
 	// get initial list (should be empty)
-	initList, resp, err := client.DefaultApi.ListKafkas(ctx, nil)
+	initList, resp, err := client.DefaultApi.ListKafkas(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(initList.Items).To(BeEmpty(), "Expected empty kafka requests list")
@@ -632,14 +646,14 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 
 	// POST kafka request to populate the list
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, _, err := client.DefaultApi.CreateKafka(initCtx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
 
 	var foundKafka openapi.KafkaRequest
 	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+		foundKafka, _, err = client.DefaultApi.GetKafkaById(initCtx, seedKafka.Id)
 		if err != nil {
 			return true, err
 		}
@@ -647,7 +661,7 @@ func TestKafkaList_Success(t *testing.T) {
 	})
 
 	// get populated list of kafka requests
-	afterPostList, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+	afterPostList, _, err := client.DefaultApi.ListKafkas(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -670,9 +684,9 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 
-	// new account setup to prove that users can list kafkas instances created by a memeber of their org
+	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account)
 
 	// get populated list of kafka requests
 
@@ -699,10 +713,10 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 
-	// new account setup to prove that users can only list their own (the one they created and the one created by a memeber of their org) kafka instances
+	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) kafka instances
 	// this value if taken from config/allow-list-configuration.yaml
-	anotherOrgId := "13639843"
-	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgId)
+	anotherOrgID := "13639843"
+	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account)
 
 	// expecting empty list for user that hasn't created any kafkas yet
@@ -712,6 +726,9 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(len(newUserList.Items)).To(Equal(0), "Expected kafka requests list length to be 0")
 	Expect(newUserList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
+
+	// delete test kafka to free up resources on an OSD cluster
+	deleteTestKafka(initCtx, client, foundKafka.Id)
 }
 
 // TestKafkaList_InvalidToken - tests listing kafkas with invalid token
@@ -732,4 +749,9 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	Expect(kafkaRequests.Items).To(BeNil())
 	Expect(kafkaRequests.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(kafkaRequests.Total).To(Equal(int32(0)), "Expected Total == 0")
+}
+
+func deleteTestKafka(ctx context.Context, client *openapi.APIClient, kafkaID string) {
+	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID)
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }
