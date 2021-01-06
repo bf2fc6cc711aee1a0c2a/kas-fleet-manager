@@ -46,6 +46,36 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// SendMethodNotAllowed response
+func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
+	notImplError := errors.NotImplemented("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
+	code := notImplError.Code
+	response := Error{
+		Type:   "Error",
+		ID:     fmt.Sprint(code),
+		HREF:   errors.Href(code),
+		Code:   errors.CodeStr(code),
+		Reason: notImplError.Reason,
+	}
+	jsonPayload, err := json.Marshal(response)
+	if err != nil {
+		SendPanic(w, r)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	_, err = w.Write(jsonPayload)
+	if err != nil {
+		err = fmt.Errorf("Can't send response body for request '%s'", r.URL.Path)
+		glog.Error(err)
+		sentry.CaptureException(err)
+		return
+	}
+}
+
+// SendUnauthorized response
 func SendUnauthorized(w http.ResponseWriter, r *http.Request, message string) {
 	w.Header().Set("Content-Type", "application/json")
 

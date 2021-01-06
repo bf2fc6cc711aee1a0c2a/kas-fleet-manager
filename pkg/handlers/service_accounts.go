@@ -70,9 +70,6 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
-		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			err := s.service.DeleteServiceAccount(ctx, id)
