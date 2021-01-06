@@ -170,9 +170,9 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
 		if err.IsFailedToCreateSSOClient() {
-			clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
+			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafka.ID)
 			// todo retry logic for kafka client creation in mas sso
-			keycloakErr := k.keycloakService.IsKafkaClientExist(clientId)
+			keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
 			if keycloakErr != nil {
 				if updateErr := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); updateErr != nil {
 					return fmt.Errorf("failed to update kafka %s to status: %w", kafka.ID, updateErr)
