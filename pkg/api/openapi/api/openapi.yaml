@@ -717,8 +717,7 @@ components:
         kind: Error
         href: /api/managed-services-api/v1/errors/103
         code: OCM-EX-103
-        reason: Synchronous action (creating kafka requests) is unsupported, use async=true
-          parameter
+        reason: Synchronous action is not supported, use async=true parameter
         operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
     "400InvalidQueryExample":
       value:
@@ -764,10 +763,10 @@ components:
         operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
     "403MaxAllowedInstanceReachedExample":
       value:
-        id: "4"
+        id: "5"
         kind: Error
-        href: /api/managed-services-api/v1/errors/4
-        code: MGD-SERV-API-4
+        href: /api/managed-services-api/v1/errors/5
+        code: MGD-SERV-API-5
         reason: User 'foo-bar' has reached a maximum number of 6 allowed instances.
         operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
     "500Example":
