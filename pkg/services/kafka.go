@@ -34,7 +34,6 @@ type KafkaService interface {
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
 	UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
-	RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 }
 
@@ -139,19 +138,6 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		return errors.GeneralError("failed to update kafka request: %v", err)
 	}
 
-	return nil
-}
-
-func (k *kafkaService) RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		orgId := auth.GetOrgIdFromContext(ctx)
-		// registering client in sso
-		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, orgId)
-		if err != nil || keycloakSecret == "" {
-			return errors.GeneralError("failed to create sso client: %v", err)
-		}
-	}
 	return nil
 }
 

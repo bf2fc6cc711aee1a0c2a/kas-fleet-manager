@@ -5,12 +5,24 @@ package services
 
 import (
 	"context"
-	"sync"
-
 	"github.com/aws/aws-sdk-go/service/route53"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"sync"
+)
+
+var (
+	lockKafkaServiceMockChangeKafkaCNAMErecords sync.RWMutex
+	lockKafkaServiceMockCreate                  sync.RWMutex
+	lockKafkaServiceMockDelete                  sync.RWMutex
+	lockKafkaServiceMockGet                     sync.RWMutex
+	lockKafkaServiceMockGetById                 sync.RWMutex
+	lockKafkaServiceMockList                    sync.RWMutex
+	lockKafkaServiceMockListByStatus            sync.RWMutex
+	lockKafkaServiceMockRegisterKafkaJob        sync.RWMutex
+	lockKafkaServiceMockUpdate                  sync.RWMutex
+	lockKafkaServiceMockUpdateStatus            sync.RWMutex
 )
 
 // Ensure, that KafkaServiceMock does implement KafkaService.
@@ -43,9 +55,6 @@ var _ KafkaService = &KafkaServiceMock{}
 //             },
 //             ListByStatusFunc: func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
 // 	               panic("mock out the ListByStatus method")
-//             },
-//             RegisterKafkaInSSOFunc: func(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-// 	               panic("mock out the RegisterKafkaInSSO method")
 //             },
 //             RegisterKafkaJobFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the RegisterKafkaJob method")
@@ -83,9 +92,6 @@ type KafkaServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
-
-	// RegisterKafkaInSSOFunc mocks the RegisterKafkaInSSO method.
-	RegisterKafkaInSSOFunc func(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError
 
 	// RegisterKafkaJobFunc mocks the RegisterKafkaJob method.
 	RegisterKafkaJobFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
@@ -143,13 +149,6 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status constants.KafkaStatus
 		}
-		// RegisterKafkaInSSO holds details about calls to the RegisterKafkaInSSO method.
-		RegisterKafkaInSSO []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// KafkaRequest is the kafkaRequest argument value.
-			KafkaRequest *api.KafkaRequest
-		}
 		// RegisterKafkaJob holds details about calls to the RegisterKafkaJob method.
 		RegisterKafkaJob []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -168,17 +167,6 @@ type KafkaServiceMock struct {
 			Status constants.KafkaStatus
 		}
 	}
-	lockChangeKafkaCNAMErecords sync.RWMutex
-	lockCreate                  sync.RWMutex
-	lockDelete                  sync.RWMutex
-	lockGet                     sync.RWMutex
-	lockGetById                 sync.RWMutex
-	lockList                    sync.RWMutex
-	lockListByStatus            sync.RWMutex
-	lockRegisterKafkaInSSO      sync.RWMutex
-	lockRegisterKafkaJob        sync.RWMutex
-	lockUpdate                  sync.RWMutex
-	lockUpdateStatus            sync.RWMutex
 }
 
 // ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
@@ -195,9 +183,9 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaReq
 		ClusterDNS:   clusterDNS,
 		Action:       action,
 	}
-	mock.lockChangeKafkaCNAMErecords.Lock()
+	lockKafkaServiceMockChangeKafkaCNAMErecords.Lock()
 	mock.calls.ChangeKafkaCNAMErecords = append(mock.calls.ChangeKafkaCNAMErecords, callInfo)
-	mock.lockChangeKafkaCNAMErecords.Unlock()
+	lockKafkaServiceMockChangeKafkaCNAMErecords.Unlock()
 	return mock.ChangeKafkaCNAMErecordsFunc(kafkaRequest, clusterDNS, action)
 }
 
@@ -214,9 +202,9 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
 		ClusterDNS   string
 		Action       string
 	}
-	mock.lockChangeKafkaCNAMErecords.RLock()
+	lockKafkaServiceMockChangeKafkaCNAMErecords.RLock()
 	calls = mock.calls.ChangeKafkaCNAMErecords
-	mock.lockChangeKafkaCNAMErecords.RUnlock()
+	lockKafkaServiceMockChangeKafkaCNAMErecords.RUnlock()
 	return calls
 }
 
@@ -230,9 +218,9 @@ func (mock *KafkaServiceMock) Create(kafkaRequest *api.KafkaRequest) *errors.Ser
 	}{
 		KafkaRequest: kafkaRequest,
 	}
-	mock.lockCreate.Lock()
+	lockKafkaServiceMockCreate.Lock()
 	mock.calls.Create = append(mock.calls.Create, callInfo)
-	mock.lockCreate.Unlock()
+	lockKafkaServiceMockCreate.Unlock()
 	return mock.CreateFunc(kafkaRequest)
 }
 
@@ -245,9 +233,9 @@ func (mock *KafkaServiceMock) CreateCalls() []struct {
 	var calls []struct {
 		KafkaRequest *api.KafkaRequest
 	}
-	mock.lockCreate.RLock()
+	lockKafkaServiceMockCreate.RLock()
 	calls = mock.calls.Create
-	mock.lockCreate.RUnlock()
+	lockKafkaServiceMockCreate.RUnlock()
 	return calls
 }
 
@@ -263,9 +251,9 @@ func (mock *KafkaServiceMock) Delete(ctx context.Context, id string) *errors.Ser
 		Ctx: ctx,
 		ID:  id,
 	}
-	mock.lockDelete.Lock()
+	lockKafkaServiceMockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
-	mock.lockDelete.Unlock()
+	lockKafkaServiceMockDelete.Unlock()
 	return mock.DeleteFunc(ctx, id)
 }
 
@@ -280,9 +268,9 @@ func (mock *KafkaServiceMock) DeleteCalls() []struct {
 		Ctx context.Context
 		ID  string
 	}
-	mock.lockDelete.RLock()
+	lockKafkaServiceMockDelete.RLock()
 	calls = mock.calls.Delete
-	mock.lockDelete.RUnlock()
+	lockKafkaServiceMockDelete.RUnlock()
 	return calls
 }
 
@@ -298,9 +286,9 @@ func (mock *KafkaServiceMock) Get(ctx context.Context, id string) (*api.KafkaReq
 		Ctx: ctx,
 		ID:  id,
 	}
-	mock.lockGet.Lock()
+	lockKafkaServiceMockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
-	mock.lockGet.Unlock()
+	lockKafkaServiceMockGet.Unlock()
 	return mock.GetFunc(ctx, id)
 }
 
@@ -315,9 +303,9 @@ func (mock *KafkaServiceMock) GetCalls() []struct {
 		Ctx context.Context
 		ID  string
 	}
-	mock.lockGet.RLock()
+	lockKafkaServiceMockGet.RLock()
 	calls = mock.calls.Get
-	mock.lockGet.RUnlock()
+	lockKafkaServiceMockGet.RUnlock()
 	return calls
 }
 
@@ -331,9 +319,9 @@ func (mock *KafkaServiceMock) GetById(id string) (*api.KafkaRequest, *errors.Ser
 	}{
 		ID: id,
 	}
-	mock.lockGetById.Lock()
+	lockKafkaServiceMockGetById.Lock()
 	mock.calls.GetById = append(mock.calls.GetById, callInfo)
-	mock.lockGetById.Unlock()
+	lockKafkaServiceMockGetById.Unlock()
 	return mock.GetByIdFunc(id)
 }
 
@@ -346,9 +334,9 @@ func (mock *KafkaServiceMock) GetByIdCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGetById.RLock()
+	lockKafkaServiceMockGetById.RLock()
 	calls = mock.calls.GetById
-	mock.lockGetById.RUnlock()
+	lockKafkaServiceMockGetById.RUnlock()
 	return calls
 }
 
@@ -364,9 +352,9 @@ func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *ListArguments)
 		Ctx:      ctx,
 		ListArgs: listArgs,
 	}
-	mock.lockList.Lock()
+	lockKafkaServiceMockList.Lock()
 	mock.calls.List = append(mock.calls.List, callInfo)
-	mock.lockList.Unlock()
+	lockKafkaServiceMockList.Unlock()
 	return mock.ListFunc(ctx, listArgs)
 }
 
@@ -381,9 +369,9 @@ func (mock *KafkaServiceMock) ListCalls() []struct {
 		Ctx      context.Context
 		ListArgs *ListArguments
 	}
-	mock.lockList.RLock()
+	lockKafkaServiceMockList.RLock()
 	calls = mock.calls.List
-	mock.lockList.RUnlock()
+	lockKafkaServiceMockList.RUnlock()
 	return calls
 }
 
@@ -397,9 +385,9 @@ func (mock *KafkaServiceMock) ListByStatus(status constants.KafkaStatus) ([]*api
 	}{
 		Status: status,
 	}
-	mock.lockListByStatus.Lock()
+	lockKafkaServiceMockListByStatus.Lock()
 	mock.calls.ListByStatus = append(mock.calls.ListByStatus, callInfo)
-	mock.lockListByStatus.Unlock()
+	lockKafkaServiceMockListByStatus.Unlock()
 	return mock.ListByStatusFunc(status)
 }
 
@@ -412,44 +400,9 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 	var calls []struct {
 		Status constants.KafkaStatus
 	}
-	mock.lockListByStatus.RLock()
+	lockKafkaServiceMockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
-	mock.lockListByStatus.RUnlock()
-	return calls
-}
-
-// RegisterKafkaInSSO calls RegisterKafkaInSSOFunc.
-func (mock *KafkaServiceMock) RegisterKafkaInSSO(ctx context.Context, kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	if mock.RegisterKafkaInSSOFunc == nil {
-		panic("KafkaServiceMock.RegisterKafkaInSSOFunc: method is nil but KafkaService.RegisterKafkaInSSO was just called")
-	}
-	callInfo := struct {
-		Ctx          context.Context
-		KafkaRequest *api.KafkaRequest
-	}{
-		Ctx:          ctx,
-		KafkaRequest: kafkaRequest,
-	}
-	mock.lockRegisterKafkaInSSO.Lock()
-	mock.calls.RegisterKafkaInSSO = append(mock.calls.RegisterKafkaInSSO, callInfo)
-	mock.lockRegisterKafkaInSSO.Unlock()
-	return mock.RegisterKafkaInSSOFunc(ctx, kafkaRequest)
-}
-
-// RegisterKafkaInSSOCalls gets all the calls that were made to RegisterKafkaInSSO.
-// Check the length with:
-//     len(mockedKafkaService.RegisterKafkaInSSOCalls())
-func (mock *KafkaServiceMock) RegisterKafkaInSSOCalls() []struct {
-	Ctx          context.Context
-	KafkaRequest *api.KafkaRequest
-} {
-	var calls []struct {
-		Ctx          context.Context
-		KafkaRequest *api.KafkaRequest
-	}
-	mock.lockRegisterKafkaInSSO.RLock()
-	calls = mock.calls.RegisterKafkaInSSO
-	mock.lockRegisterKafkaInSSO.RUnlock()
+	lockKafkaServiceMockListByStatus.RUnlock()
 	return calls
 }
 
@@ -463,9 +416,9 @@ func (mock *KafkaServiceMock) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *
 	}{
 		KafkaRequest: kafkaRequest,
 	}
-	mock.lockRegisterKafkaJob.Lock()
+	lockKafkaServiceMockRegisterKafkaJob.Lock()
 	mock.calls.RegisterKafkaJob = append(mock.calls.RegisterKafkaJob, callInfo)
-	mock.lockRegisterKafkaJob.Unlock()
+	lockKafkaServiceMockRegisterKafkaJob.Unlock()
 	return mock.RegisterKafkaJobFunc(kafkaRequest)
 }
 
@@ -478,9 +431,9 @@ func (mock *KafkaServiceMock) RegisterKafkaJobCalls() []struct {
 	var calls []struct {
 		KafkaRequest *api.KafkaRequest
 	}
-	mock.lockRegisterKafkaJob.RLock()
+	lockKafkaServiceMockRegisterKafkaJob.RLock()
 	calls = mock.calls.RegisterKafkaJob
-	mock.lockRegisterKafkaJob.RUnlock()
+	lockKafkaServiceMockRegisterKafkaJob.RUnlock()
 	return calls
 }
 
@@ -494,9 +447,9 @@ func (mock *KafkaServiceMock) Update(kafkaRequest *api.KafkaRequest) *errors.Ser
 	}{
 		KafkaRequest: kafkaRequest,
 	}
-	mock.lockUpdate.Lock()
+	lockKafkaServiceMockUpdate.Lock()
 	mock.calls.Update = append(mock.calls.Update, callInfo)
-	mock.lockUpdate.Unlock()
+	lockKafkaServiceMockUpdate.Unlock()
 	return mock.UpdateFunc(kafkaRequest)
 }
 
@@ -509,9 +462,9 @@ func (mock *KafkaServiceMock) UpdateCalls() []struct {
 	var calls []struct {
 		KafkaRequest *api.KafkaRequest
 	}
-	mock.lockUpdate.RLock()
+	lockKafkaServiceMockUpdate.RLock()
 	calls = mock.calls.Update
-	mock.lockUpdate.RUnlock()
+	lockKafkaServiceMockUpdate.RUnlock()
 	return calls
 }
 
@@ -527,9 +480,9 @@ func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStat
 		ID:     id,
 		Status: status,
 	}
-	mock.lockUpdateStatus.Lock()
+	lockKafkaServiceMockUpdateStatus.Lock()
 	mock.calls.UpdateStatus = append(mock.calls.UpdateStatus, callInfo)
-	mock.lockUpdateStatus.Unlock()
+	lockKafkaServiceMockUpdateStatus.Unlock()
 	return mock.UpdateStatusFunc(id, status)
 }
 
@@ -544,8 +497,8 @@ func (mock *KafkaServiceMock) UpdateStatusCalls() []struct {
 		ID     string
 		Status constants.KafkaStatus
 	}
-	mock.lockUpdateStatus.RLock()
+	lockKafkaServiceMockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
-	mock.lockUpdateStatus.RUnlock()
+	lockKafkaServiceMockUpdateStatus.RUnlock()
 	return calls
 }

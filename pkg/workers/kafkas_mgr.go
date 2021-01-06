@@ -2,11 +2,11 @@ package workers
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
-	"strings"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	"sync"
 	"time"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -158,12 +158,20 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
 	}
 
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafka.ID)
+		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, kafka.OrganisationId)
+		if err != nil || keycloakSecret == "" {
+			return fmt.Errorf("failed to create sso client %s: %w", kafka.ID, err)
+		}
+	}
+
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	if err := k.kafkaService.Create(kafka); err != nil {
 		if err.IsFailedToCreateSSOClient() {
-			clientId := fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafka.ID))
+			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafka.ID)
 			// todo retry logic for kafka client creation in mas sso
-			keycloakErr := k.keycloakService.IsKafkaClientExist(clientId)
+			keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
 			if keycloakErr != nil {
 				if updateErr := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); updateErr != nil {
 					return fmt.Errorf("failed to update kafka %s to status: %w", kafka.ID, updateErr)
@@ -183,7 +191,6 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 }
 
 func (k *KafkaManager) reconcileResourceCreationKafka(kafka *api.KafkaRequest) error {
-
 	namespace, err := services.BuildNamespaceName(kafka)
 	if err != nil {
 		return err
