@@ -905,7 +905,7 @@ components:
         kind: "Error"
         href: "/api/managed-services-api/v1/errors/103"
         code: "OCM-EX-103"
-        reason: "Synchronous action (creating kafka requests) is unsupported, use async=true parameter"
+        reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400InvalidQueryExample:
       value:

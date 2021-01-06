@@ -17,79 +17,108 @@ const (
 	ERROR_HREF = "/api/managed-services-api/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
-	ErrorForbidden ServiceErrorCode = 4
+	ErrorForbidden       ServiceErrorCode = 4
+	ErrorForbiddenReason string           = "Forbidden to perform this action"
 
 	// Forbidden occurs when a user or organisation has reached maximum number of allowed instances
-	ErrorMaxAllowedInstanceReached ServiceErrorCode = 5
+	ErrorMaxAllowedInstanceReached       ServiceErrorCode = 5
+	ErrorMaxAllowedInstanceReachedReason string           = "Forbidden to create more instances than the maximum allowed"
 
 	// Conflict occurs when a database constraint is violated
-	ErrorConflict ServiceErrorCode = 6
+	ErrorConflict       ServiceErrorCode = 6
+	ErrorConflictReason string           = "An entity with the specified unique values already exists"
 
 	// NotFound occurs when a record is not found in the database
-	ErrorNotFound ServiceErrorCode = 7
+	ErrorNotFound       ServiceErrorCode = 7
+	ErrorNotFoundReason string           = "Resource not found"
 
 	// Validation occurs when an object fails validation
-	ErrorValidation ServiceErrorCode = 8
+	ErrorValidation       ServiceErrorCode = 8
+	ErrorValidationReason string           = "General validation failure"
 
 	// General occurs when an error fails to match any other error code
-	ErrorGeneral ServiceErrorCode = 9
+	ErrorGeneral       ServiceErrorCode = 9
+	ErrorGeneralReason string           = "Unspecified error"
 
 	// NotImplemented occurs when an API REST method is not implemented in a handler
-	ErrorNotImplemented ServiceErrorCode = 10
+	ErrorNotImplemented       ServiceErrorCode = 10
+	ErrorNotImplementedReason string           = "HTTP Method not implemented for this endpoint"
 
 	// Unauthorized occurs when the requester is not authorized to perform the specified action
-	ErrorUnauthorized ServiceErrorCode = 11
+	ErrorUnauthorized       ServiceErrorCode = 11
+	ErrorUnauthorizedReason string           = "Account is unauthorized to perform this action"
 
 	// Unauthenticated occurs when the provided credentials cannot be validated
-	ErrorUnauthenticated ServiceErrorCode = 15
+	ErrorUnauthenticated       ServiceErrorCode = 15
+	ErrorUnauthenticatedReason string           = "Account authentication could not be verified"
 
 	// MalformedRequest occurs when the request body cannot be read
-	ErrorMalformedRequest ServiceErrorCode = 17
+	ErrorMalformedRequest       ServiceErrorCode = 17
+	ErrorMalformedRequestReason string           = "Unable to read request body"
 
 	// Bad Request
-	ErrorBadRequest ServiceErrorCode = 21
+	ErrorBadRequest       ServiceErrorCode = 21
+	ErrorBadRequestReason string           = "Bad request"
 
 	// Invalid Search Query
-	ErrorFailedToParseSearch ServiceErrorCode = 23
+	ErrorFailedToParseSearch       ServiceErrorCode = 23
+	ErrorFailedToParseSearchReason string           = "Failed to parse search query"
 
 	// Synchronous request not supported
-	ErrorSyncActionNotSupported ServiceErrorCode = 103
+	ErrorSyncActionNotSupported       ServiceErrorCode = 103
+	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
 
 	// Failed to create sso client
-	ErrorFailedToCreateSSOClient ServiceErrorCode = 106
+	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
+	ErrorFailedToCreateSSOClientReason string           = "Failed to create kafka client in the mas sso"
 
 	// Failed to get sso client secret
-	ErrorFailedToGetSSOClientSecret ServiceErrorCode = 107
+	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
+	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get kafka client secret from the mas sso"
 
 	// Failed to get sso client
-	ErrorFailedToGetSSOClient ServiceErrorCode = 108
+	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
+	ErrorFailedToGetSSOClientReason string           = "Failed to get kafka client from the mas sso"
 
 	// Failed to delete sso client
-	ErrorFailedToDeleteSSOClient ServiceErrorCode = 109
+	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
+	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete kafka client from the mas sso"
 
 	// Failed to create service account
-	ErrorFailedToCreateServiceAccount ServiceErrorCode = 110
+	ErrorFailedToCreateServiceAccount       ServiceErrorCode = 110
+	ErrorFailedToCreateServiceAccountReason string           = "Failed to create service account"
 
 	// Failed to get service account
-	ErrorFailedToGetServiceAccount ServiceErrorCode = 111
+	ErrorFailedToGetServiceAccount       ServiceErrorCode = 111
+	ErrorFailedToGetServiceAccountReason string           = "Failed to get service account"
 
 	// Failed to delete service account
-	ErrorFailedToDeleteServiceAccount ServiceErrorCode = 112
+	ErrorFailedToDeleteServiceAccount       ServiceErrorCode = 112
+	ErrorFailedToDeleteServiceAccountReason string           = "Failed to delete service account"
 
 	// Provider not supported
-	ErrorProviderNotSupported ServiceErrorCode = 30
+	ErrorProviderNotSupported       ServiceErrorCode = 30
+	ErrorProviderNotSupportedReason string           = "Provider not supported"
 
 	// Region not supported
-	ErrorRegionNotSupported ServiceErrorCode = 31
+	ErrorRegionNotSupported       ServiceErrorCode = 31
+	ErrorRegionNotSupportedReason string           = "Region not supported"
 
 	// Invalid kafka cluster name
-	ErrorMalformedKafkaClusterName ServiceErrorCode = 32
+	ErrorMalformedKafkaClusterName       ServiceErrorCode = 32
+	ErrorMalformedKafkaClusterNameReason string           = "Kafka cluster name is invalid"
 
 	// Minimum field length validation
-	ErrorMinimumFieldLength ServiceErrorCode = 33
+	ErrorMinimumFieldLength       ServiceErrorCode = 33
+	ErrorMinimumFieldLengthReason string           = "Minimum field length not reached"
 
 	// Maximum field length validation
-	ErrorMaximumFieldLength ServiceErrorCode = 34
+	ErrorMaximumFieldLength       ServiceErrorCode = 34
+	ErrorMaximumFieldLengthReason string           = "Maximum field length has been depassed"
+
+	// Only MultiAZ is supported
+	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
+	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Kafkas are supported, use multi_az=true"
 )
 
 type ServiceErrorCode int
@@ -107,31 +136,32 @@ func Find(code ServiceErrorCode) (bool, *ServiceError) {
 
 func Errors() ServiceErrors {
 	return ServiceErrors{
-		ServiceError{ErrorForbidden, "Forbidden to perform this action", http.StatusForbidden},
-		ServiceError{ErrorMaxAllowedInstanceReached, "Forbidden to create more instances than the maximum allowed", http.StatusForbidden},
-		ServiceError{ErrorConflict, "An entity with the specified unique values already exists", http.StatusConflict},
-		ServiceError{ErrorNotFound, "Resource not found", http.StatusNotFound},
-		ServiceError{ErrorValidation, "General validation failure", http.StatusBadRequest},
-		ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError},
-		ServiceError{ErrorNotImplemented, "HTTP Method not implemented for this endpoint", http.StatusMethodNotAllowed},
-		ServiceError{ErrorUnauthorized, "Account is unauthorized to perform this action", http.StatusForbidden},
-		ServiceError{ErrorUnauthenticated, "Account authentication could not be verified", http.StatusUnauthorized},
-		ServiceError{ErrorMalformedRequest, "Unable to read request body", http.StatusBadRequest},
-		ServiceError{ErrorBadRequest, "Bad request", http.StatusBadRequest},
-		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
-		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
-		ServiceError{ErrorFailedToCreateSSOClient, "Failed to create kafka client in the mas sso", http.StatusInternalServerError},
-		ServiceError{ErrorFailedToGetSSOClientSecret, "Failed to get kafka client secret from the mas sso", http.StatusInternalServerError},
-		ServiceError{ErrorFailedToGetSSOClient, "Failed to get kafka client from the mas sso", http.StatusInternalServerError},
-		ServiceError{ErrorFailedToDeleteSSOClient, "Failed to delete kafka client from the mas sso", http.StatusInternalServerError},
-		ServiceError{ErrorFailedToCreateServiceAccount, "Failed to create service account", http.StatusInternalServerError},
-		ServiceError{ErrorFailedToGetServiceAccount, "Failed to get service account", http.StatusInternalServerError},
-		ServiceError{ErrorFailedToDeleteServiceAccount, "Failed to delete service account", http.StatusInternalServerError},
-		ServiceError{ErrorProviderNotSupported, "Provider not supported", http.StatusBadRequest},
-		ServiceError{ErrorRegionNotSupported, "Region not supported", http.StatusBadRequest},
-		ServiceError{ErrorMalformedKafkaClusterName, "Kafka cluster name is invalid", http.StatusBadRequest},
-		ServiceError{ErrorMinimumFieldLength, "Minimum field length not reached", http.StatusBadRequest},
-		ServiceError{ErrorMaximumFieldLength, "Maximum field length has been depassed", http.StatusBadRequest},
+		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden},
+		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden},
+		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict},
+		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound},
+		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest},
+		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError},
+		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed},
+		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden},
+		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized},
+		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest},
+		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest},
+		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest},
+		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest},
+		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError},
+		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest},
+		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest},
+		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest},
+		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest},
+		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest},
+		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest},
 	}
 }
 
@@ -282,18 +312,16 @@ func BadRequest(reason string, values ...interface{}) *ServiceError {
 }
 
 func FailedToParseSearch(reason string, values ...interface{}) *ServiceError {
-	message := fmt.Sprintf("Failed to parse search query: %s", reason)
+	message := fmt.Sprintf("%s: %s", ErrorFailedToParseSearchReason, reason)
 	return New(ErrorFailedToParseSearch, message, values...)
 }
 
-func SyncActionNotSupported(reason string, values ...interface{}) *ServiceError {
-	message := fmt.Sprintf("Synchronous action (%s) is unsupported, use async=true parameter", reason)
-	return New(ErrorSyncActionNotSupported, message)
+func SyncActionNotSupported() *ServiceError {
+	return New(ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason)
 }
 
-func NotMultiAzActionNotSupported(reason string, values ...interface{}) *ServiceError {
-	message := "only multi_az is supported, use multi_az=true in Kafka requests"
-	return New(ErrorBadRequest, message)
+func NotMultiAzActionNotSupported() *ServiceError {
+	return New(ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason)
 }
 
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
