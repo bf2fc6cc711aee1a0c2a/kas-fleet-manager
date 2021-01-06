@@ -3,7 +3,6 @@ package workers
 import (
 	"fmt"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
-	"strings"
 	"sync"
 	"time"
 
