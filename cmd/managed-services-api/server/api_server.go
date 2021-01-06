@@ -3,12 +3,13 @@ package server
 import (
 	"context"
 	"fmt"
-	sdk "github.com/openshift-online/ocm-sdk-go"
-	"github.com/openshift-online/ocm-sdk-go/authentication"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"net"
 	"net/http"
 	"time"
+
+	sdk "github.com/openshift-online/ocm-sdk-go"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 
 	_ "github.com/auth0/go-jwt-middleware"
 	_ "github.com/dgrijalva/jwt-go"
@@ -78,6 +79,7 @@ func NewAPIServer() Server {
 	// mainRouter is top level "/"
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
+	mainRouter.MethodNotAllowedHandler = http.HandlerFunc(api.SendMethodNotAllowed)
 
 	// Top-level middlewares
 

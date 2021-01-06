@@ -430,6 +430,23 @@ func TestKafkaDelete_Success(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
 }
 
+// TestKafkaDelete_WithoutID - should result in 405 code being returned
+func TestKafkaDelete_WithoutID(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+
+	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, "")
+	Expect(err).To(HaveOccurred(), "Error should be thrown if no ID is provided: %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusMethodNotAllowed), "Status code for delete kafka response without kafka ID should be %d. Got: %d", http.StatusMethodNotAllowed, resp.StatusCode)
+	Expect(resp.Body).NotTo(Equal(""), "Body should be returned when trying to hit /kafkas delete without kafka ID")
+}
+
 // TestKafkaDelete - test deleting kafka instance during creation
 func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
