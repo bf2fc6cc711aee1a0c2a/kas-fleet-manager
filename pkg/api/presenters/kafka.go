@@ -30,6 +30,7 @@ func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) openapi.KafkaRequest {
 		Status:              setStatus(kafkaRequest.Status),
 		CreatedAt:           kafkaRequest.CreatedAt,
 		UpdatedAt:           kafkaRequest.UpdatedAt,
+		FailedReason:        kafkaRequest.FailedReason,
 	}
 }
 

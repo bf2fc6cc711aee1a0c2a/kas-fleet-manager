@@ -162,6 +162,14 @@ func (e *ServiceError) IsFailedToCreateSSOClient() bool {
 	return e.Code == FailedToCreateSSOClient("").Code
 }
 
+func (e *ServiceError) IsClientErrorClass() bool {
+	return e.HttpCode >= http.StatusBadRequest && e.HttpCode < http.StatusInternalServerError
+}
+
+func (e *ServiceError) IsServerErrorClass() bool {
+	return e.HttpCode >= http.StatusInternalServerError
+}
+
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
 	return openapi.Error{
 		Kind:        "Error",

@@ -1,10 +1,11 @@
 package workers
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"testing"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
@@ -26,13 +27,14 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 		kafka *api.KafkaRequest
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name                string
+		fields              fields
+		args                args
+		wantErr             bool
+		expectedKafkaStatus constants.KafkaStatus
 	}{
 		{
-			name: "error when creating kafka fails",
+			name: "kafka request marked as failed when kafka creation fails with 5XX and maximum time limit has been reached",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
@@ -40,6 +42,42 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				keycloakService: &services.KeycloakServiceMock{
+					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
+						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{
+					Meta: api.Meta{
+						CreatedAt: time.Now().Add(-(constants.KafkaMaxDurationWithProvisioningErrs + 1)),
+					},
+				},
+			},
+			wantErr:             true,
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+		},
+		{
+			name: "kafka request marked as failed when kafka creation fails with 4XX error",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.BadRequest("test badrequest")
+					},
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
 					},
 				},
 				keycloakService: &services.KeycloakServiceMock{
@@ -59,7 +97,42 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 			args: args{
 				kafka: &api.KafkaRequest{},
 			},
-			wantErr: true,
+			wantErr:             true,
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+		},
+		{
+			name: "kafka creation returns error without marking kafka request as failed when kafka creation fails with 5XX error and no time limit is reached",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.GeneralError("test")
+					},
+					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
+						return &api.KafkaRequest{}, nil
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
+				keycloakService: &services.KeycloakServiceMock{
+					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
+						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{
+					Meta: api.Meta{
+						CreatedAt: time.Now(),
+					},
+					Status: string(constants.KafkaRequestStatusProvisioning),
+				},
+			},
+			wantErr:             true,
+			expectedKafkaStatus: constants.KafkaRequestStatusProvisioning,
 		},
 		{
 			name: "error when updating kafka status fails",
@@ -161,6 +234,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 			}
 			if err := k.reconcileProvisionedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileProvisionedKafka() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if string(tt.expectedKafkaStatus) != tt.args.kafka.Status {
+				t.Errorf("reconcileProvisionedKafka() kafka status = %v, expectedKafkaStatus :%v", tt.args.kafka.Status, tt.expectedKafkaStatus)
 			}
 		})
 	}
