@@ -87,7 +87,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		sentry.CaptureException(err)
 		return errors.GeneralError("error retrieving cluster DNS: %v", err)
 	}
-	clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
+	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
@@ -223,7 +223,7 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 			sentry.CaptureException(err)
 			return errors.GeneralError("error retrieving cluster DNS: %v", err)
 		}
-		clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
+		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 
 		_, err = k.ChangeKafkaCNAMErecords(&kafkaRequest, clusterDNS, "DELETE")
 		if err != nil {
