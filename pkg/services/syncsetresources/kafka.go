@@ -76,7 +76,7 @@ func BuildKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfi
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
 			Namespace: namespace,
-			Labels:    getKafkaLabels(kafkaConfig),
+			Labels:    getKafkaLabels(),
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
@@ -200,7 +200,7 @@ func getBrokerOverrides(numOfBrokers int, bootstrapServerHost string) []strimzi.
 	return brokerOverrides
 }
 
-func getKafkaLabels(_ *config.KafkaConfig) map[string]string {
+func getKafkaLabels() map[string]string {
 	labels := make(map[string]string)
 	labels[IngressLabelName] = IngressLabelValue // signal detected by the shared ingress controller
 	return labels
