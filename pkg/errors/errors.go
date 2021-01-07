@@ -58,6 +58,24 @@ const (
 	// Failed to create sso client
 	ErrorFailedToCreateSSOClient ServiceErrorCode = 106
 
+	// Failed to get sso client secret
+	ErrorFailedToGetSSOClientSecret ServiceErrorCode = 107
+
+	// Failed to get sso client
+	ErrorFailedToGetSSOClient ServiceErrorCode = 108
+
+	// Failed to delete sso client
+	ErrorFailedToDeleteSSOClient ServiceErrorCode = 109
+
+	// Failed to create service account
+	ErrorFailedToCreateServiceAccount ServiceErrorCode = 110
+
+	// Failed to get service account
+	ErrorFailedToGetServiceAccount ServiceErrorCode = 111
+
+	// Failed to delete service account
+	ErrorFailedToDeleteServiceAccount ServiceErrorCode = 112
+
 	// Provider not supported
 	ErrorProviderNotSupported ServiceErrorCode = 30
 
@@ -103,6 +121,12 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorFailedToParseSearch, "Failed to parse search query", http.StatusBadRequest},
 		ServiceError{ErrorSyncActionNotSupported, "Synchronous action is not supported", http.StatusBadRequest},
 		ServiceError{ErrorFailedToCreateSSOClient, "Failed to create kafka client in the mas sso", http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetSSOClientSecret, "Failed to get kafka client secret from the mas sso", http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetSSOClient, "Failed to get kafka client from the mas sso", http.StatusInternalServerError},
+		ServiceError{ErrorFailedToDeleteSSOClient, "Failed to delete kafka client from the mas sso", http.StatusInternalServerError},
+		ServiceError{ErrorFailedToCreateServiceAccount, "Failed to create service account", http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetServiceAccount, "Failed to get service account", http.StatusInternalServerError},
+		ServiceError{ErrorFailedToDeleteServiceAccount, "Failed to delete service account", http.StatusInternalServerError},
 		ServiceError{ErrorProviderNotSupported, "Provider not supported", http.StatusBadRequest},
 		ServiceError{ErrorRegionNotSupported, "Region not supported", http.StatusBadRequest},
 		ServiceError{ErrorMalformedKafkaClusterName, "Kafka cluster name is invalid", http.StatusBadRequest},
@@ -168,6 +192,30 @@ func (e *ServiceError) IsClientErrorClass() bool {
 
 func (e *ServiceError) IsServerErrorClass() bool {
 	return e.HttpCode >= http.StatusInternalServerError
+}
+
+func (e *ServiceError) IsFailedToGetSSOClientSecret() bool {
+	return e.Code == FailedToGetSSOClientSecret("").Code
+}
+
+func (e *ServiceError) IsFailedToGetSSOClient() bool {
+	return e.Code == FailedToGetSSOClient("").Code
+}
+
+func (e *ServiceError) IsFailedToDeleteSSOClient() bool {
+	return e.Code == FailedToDeleteSSOClient("").Code
+}
+
+func (e *ServiceError) IsFailedToCreateServiceAccount() bool {
+	return e.Code == FailedToCreateServiceAccount("").Code
+}
+
+func (e *ServiceError) IsFailedToGetServiceAccount() bool {
+	return e.Code == FailedToGetServiceAccount("").Code
+}
+
+func (e *ServiceError) IsFailedToDeleteServiceAccount() bool {
+	return e.Code == FailedToDeleteServiceAccount("").Code
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
@@ -250,6 +298,30 @@ func NotMultiAzActionNotSupported(reason string, values ...interface{}) *Service
 
 func FailedToCreateSSOClient(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateSSOClient, reason, values...)
+}
+
+func FailedToGetSSOClientSecret(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToGetSSOClientSecret, reason, values...)
+}
+
+func FailedToGetSSOClient(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToGetSSOClient, reason, values...)
+}
+
+func FailedToDeleteSSOClient(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToDeleteSSOClient, reason, values...)
+}
+
+func FailedToCreateServiceAccount(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToCreateServiceAccount, reason, values...)
+}
+
+func FailedToDeleteServiceAccount(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToDeleteServiceAccount, reason, values...)
+}
+
+func FailedToGetServiceAccount(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorFailedToGetServiceAccount, reason, values...)
 }
 
 func RegionNotSupported(reason string, values ...interface{}) *ServiceError {
