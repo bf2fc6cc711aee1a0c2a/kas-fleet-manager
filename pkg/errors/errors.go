@@ -119,6 +119,10 @@ const (
 	// Only MultiAZ is supported
 	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
 	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Kafkas are supported, use multi_az=true"
+
+	// Failure to send an error response (i.e. unable to send error response as the error can't be converted to JSON.)
+	ErrorUnableToSendErrorResponse       ServiceErrorCode = 1000
+	ErrorUnableToSendErrorResponseReason string           = "An unexpected error happened, please check the log of the service for details"
 )
 
 type ServiceErrorCode int
@@ -162,6 +166,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest},
 		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest},
+		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError},
 	}
 }
 
@@ -370,4 +375,8 @@ func MinimumFieldLengthNotReached(reason string, values ...interface{}) *Service
 
 func MaximumFieldLengthMissing(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaximumFieldLength, reason, values...)
+}
+
+func UnableToSendErrorResponse() *ServiceError {
+	return New(ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason)
 }

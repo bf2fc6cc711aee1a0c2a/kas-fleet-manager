@@ -17,19 +17,12 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
-	id := "404"
 	reason := fmt.Sprintf(
 		"The requested resource '%s' doesn't exist",
 		r.URL.Path,
 	)
-	body := Error{
-		Type:   ErrorType,
-		ID:     id,
-		HREF:   "/api/managed-services-api/v1/errors/" + id,
-		Code:   "OCM-EX-" + id,
-		Reason: reason,
-	}
-	data, err := json.Marshal(body)
+	apiError := errors.NotFound(reason).AsOpenapiError("")
+	data, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
 		return
@@ -48,16 +41,9 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 
 // SendMethodNotAllowed response
 func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
-	notImplError := errors.NotImplemented("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
-	code := notImplError.Code
-	response := Error{
-		Type:   "Error",
-		ID:     fmt.Sprint(code),
-		HREF:   errors.Href(code),
-		Code:   errors.CodeStr(code),
-		Reason: notImplError.Reason,
-	}
-	jsonPayload, err := json.Marshal(response)
+	reason := fmt.Sprintf("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
+	apiError := errors.NotImplemented(reason).AsOpenapiError("")
+	jsonPayload, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
 		return
@@ -80,7 +66,7 @@ func SendUnauthorized(w http.ResponseWriter, r *http.Request, message string) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
-	apiError := errors.Unauthorized(message)
+	apiError := errors.Unauthorized(message).AsOpenapiError("")
 	data, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
@@ -101,6 +87,7 @@ func SendUnauthorized(w http.ResponseWriter, r *http.Request, message string) {
 // SendPanic sends a panic error response to the client, but it doesn't end the process.
 func SendPanic(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
 	_, err := w.Write(panicBody)
 	if err != nil {
 		err = fmt.Errorf(
@@ -122,18 +109,8 @@ func init() {
 	var err error
 
 	// Create the panic error body:
-	panicID := "1000"
-	panicError := Error{
-		Type: ErrorType,
-		ID:   panicID,
-		HREF: "/api/managed-services-api/v1/" + panicID,
-		Code: "OCM-EX-" + panicID,
-		Reason: "An unexpected error happened, please check the log of the service " +
-			"for details",
-	}
-
-	// Convert it to JSON:
-	panicBody, err = json.Marshal(panicError)
+	apiError := errors.UnableToSendErrorResponse().AsOpenapiError("")
+	panicBody, err = json.Marshal(apiError)
 	if err != nil {
 		err = fmt.Errorf(
 			"Can't create the panic error body: %s",

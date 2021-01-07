@@ -904,7 +904,7 @@ components:
         id: "103"
         kind: "Error"
         href: "/api/managed-services-api/v1/errors/103"
-        code: "OCM-EX-103"
+        code: "MGD-SERV-API-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400InvalidQueryExample:
@@ -919,57 +919,57 @@ components:
       value:
         id: "404"
         kind: "Error"
-        href: "/api/gateway/v1/errors/404"
-        code: "GATEWAY-404"
+        href: "/api/managed-services-api/v1/errors/7"
+        code: "MGD-SERV-API-7"
         reason: "The requested resource doesn't exist"
     404DeleteExample:
       value:
-        id: '7'
-        kind: Error
+        id: "7"
+        kind: "Error"
         href: "/api/managed-services-api/v1/errors/7"
-        code: OCM-EX-7
-        reason: KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found
-        operation_id: 1iYO7g2g6HTdUKUa2ksH82kQD3y
+        code: "MGD-SERV-API-7"
+        reason: "KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
+        operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
     401Example:
       value:
         id: "11"
         kind: "Error"
         href: "/api/managed-services-api/v1/errors/11"
-        code: "OCM-EX-11"
+        code: "MGD-SERV-API-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
     403Example:
       value:
-        id: '4'
-        kind: Error
-        href: /api/managed-services-api/v1/errors/4
-        code: MGD-SERV-API-4
-        reason: User 'foo-bar' is not authorized to access the service.
-        operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
+        id: "4"
+        kind: "Error"
+        href: "/api/managed-services-api/v1/errors/4"
+        code: "MGD-SERV-API-4"
+        reason: "User 'foo-bar' is not authorized to access the service."
+        operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
     403MaxAllowedInstanceReachedExample:
       value:
-        id: '5'
-        kind: Error
-        href: /api/managed-services-api/v1/errors/5
-        code: MGD-SERV-API-5
-        reason: User 'foo-bar' has reached a maximum number of 6 allowed instances.
-        operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
+        id: "5"
+        kind: "Error"
+        href: "/api/managed-services-api/v1/errors/5"
+        code: "MGD-SERV-API-5"
+        reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
+        operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     500Example:
       value:
-        id: '9'
-        kind: Error
+        id: "9"
+        kind: "Error"
         href: "/api/managed-services-api/v1/errors/9"
-        code: MGD-SERV-API-9
-        reason: Unspecified error
-        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+        code: "MGD-SERV-API-9"
+        reason: "Unspecified error"
+        operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
     500DeleteExample:
       value:
-        id: '9'
-        kind: Error
+        id: "9"
+        kind: "Error"
         href: "/api/managed-services-api/v1/errors/9"
-        code: OCM-EX-9
-        reason: 'error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
+        code: "MGD-SERV-API-9"
+        reason: "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
-          is ''404'', code is ''CLUSTERS-MGMT-404'' and operation identifier is ''1g5or50viu07oealuehrkc26dgftj1ac'':
-          Cluster ''1g5d88q0lrcdv4g7alb7slfgnj3dhbsj'' not found)'
-        operation_id: 1iYTsWry6nsqb2sNmFj5bXpD7Ca
+          is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':
+          Cluster '1g5d88q0lrcdv4g7alb7slfgnj3dhbsj' not found)"
+        operation_id: "1iYTsWry6nsqb2sNmFj5bXpD7Ca"
