@@ -130,11 +130,9 @@ func buildAdminServerRoute(kafkaRequest *api.KafkaRequest, kafkaConfig *config.K
 	return adminServerRoute
 }
 
-func getAdminServerRouteLabels(kafkaConfig *config.KafkaConfig) map[string]string {
+func getAdminServerRouteLabels(_ *config.KafkaConfig) map[string]string {
 	labels := make(map[string]string)
-	if kafkaConfig.EnableDedicatedIngress {
-		labels["ingressType"] = "sharded" // allows admin server route to use the sharded IngressController
-	}
+	labels[IngressLabelName] = IngressLabelValue // allows admin server route to use the sharded IngressController
 
 	return labels
 }

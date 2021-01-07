@@ -3,6 +3,10 @@ package workers
 import (
 	"bytes"
 	"fmt"
+	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
+	storagev1 "k8s.io/api/storage/v1"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,6 +33,7 @@ import (
 const (
 	AWSCloudProviderID              = "aws"
 	observabilityNamespace          = "managed-application-services-observability"
+	openshiftIngressNamespace       = "openshift-ingress-operator"
 	observabilityAuthType           = "dex"
 	observabilityDexCredentials     = "observatorium-dex-credentials"
 	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:latest"
@@ -36,6 +41,8 @@ const (
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilityStackName          = "observability-stack"
 	observabilitySubscriptionName   = "observability-operator"
+	syncsetName                     = "ext-managedservice-cluster-mgr"
+	ingressReplicas                 = int32(3)
 )
 
 var observabilityCanaryPodSelector = map[string]string{
@@ -184,7 +191,15 @@ func (c *ClusterManager) reconcile() {
 
 		// The cluster is ready when the state reports ready
 		if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-			_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID)
+			clusterDNS, dnsErr := c.clusterService.GetClusterDNS(provisionedCluster.ClusterID)
+			if dnsErr != nil || clusterDNS == "" {
+				sentry.CaptureException(dnsErr)
+				glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, dnsErr.Error())
+				continue
+			}
+			clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+
+			_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID, clusterDNS)
 			if syncsetErr != nil {
 				sentry.CaptureException(syncsetErr)
 				glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ClusterID, syncsetErr.Error())
@@ -323,12 +338,14 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 }
 
 // createSyncSet creates the syncset during cluster terraforming
-func (c *ClusterManager) createSyncSet(clusterID string) (*clustersmgmtv1.Syncset, error) {
-	// observability operator terraforming phase
+func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
+	// terraforming phase
 	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().
-		ID(fmt.Sprintf("ext-%s", observabilityNamespace)).
+		ID(syncsetName).
 		Resources(
 			[]interface{}{
+				c.buildStorageClass(),
+				c.buildIngressController(ingressDNS),
 				c.buildObservabilityNamespaceResource(),
 				c.buildObservabilityDexSecretResource(),
 				c.buildObservabilityCatalogSourceResource(),
@@ -466,5 +483,59 @@ func (c *ClusterManager) buildObservabilityStackResource() *observability.Observ
 				},
 			},
 		},
+	}
+}
+
+func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressoperatorv1.IngressController {
+	r := ingressReplicas
+	return &ingressoperatorv1.IngressController{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "operator.openshift.io/v1",
+			Kind:       "IngressController",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "sharded",
+			Namespace: openshiftIngressNamespace,
+		},
+		Spec: ingressoperatorv1.IngressControllerSpec {
+			Domain: ingressDNS,
+			RouteSelector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+				},
+			},
+			Replicas: &r,
+			NodePlacement: &ingressoperatorv1.NodePlacement{
+				NodeSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"node-role.kubernetes.io/worker": "",
+					},
+				},
+			},
+		},
+	}
+}
+
+func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
+	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
+	expansion := true
+	consumer := storagev1.VolumeBindingWaitForFirstConsumer
+
+	return &storagev1.StorageClass{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "storage.k8s.io/v1",
+			Kind:       "StorageClass",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: syncsetresources.KafkaStorageClass,
+		},
+		Parameters: map[string]string{
+			"encrypted": "false",
+			"type": "gp2",
+		},
+		Provisioner:          "kubernetes.io/aws-ebs",
+		ReclaimPolicy:        &reclaimDelete,
+		AllowVolumeExpansion: &expansion,
+		VolumeBindingMode:    &consumer,
 	}
 }

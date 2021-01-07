@@ -2,7 +2,6 @@ package syncsetresources
 
 import (
 	"fmt"
-
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
@@ -12,9 +11,12 @@ import (
 )
 
 const (
-	numOfZookeepers = 3
-	produceQuota    = 4000000
-	consumeQuota    = 4000000
+	numOfZookeepers   = 3
+	produceQuota      = 4000000
+	consumeQuota      = 4000000
+	KafkaStorageClass = "mk-storageclass"
+	IngressLabelName  = "ingressType"
+	IngressLabelValue = "sharded"
 )
 
 var (
@@ -74,7 +76,7 @@ func BuildKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfi
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
 			Namespace: namespace,
-			Labels:    getKafkaLabels(kafkaConfig),
+			Labels:    getKafkaLabels(),
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
@@ -98,7 +100,7 @@ func BuildKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfi
 							{
 								ID:                     &jbodVolumeId,
 								Type:                   strimzi.PersistentClaim,
-								PersistentClaimStorage: getKafkaStorage(kafkaConfig.KafkaStorageClass),
+								PersistentClaimStorage: getKafkaStorage(KafkaStorageClass),
 							},
 						},
 					},
@@ -123,7 +125,7 @@ func BuildKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfi
 				Replicas: numOfZookeepers,
 				Storage: strimzi.Storage{
 					Type:                   strimzi.PersistentClaim,
-					PersistentClaimStorage: getZookeeperStorage(kafkaConfig.KafkaStorageClass),
+					PersistentClaimStorage: getZookeeperStorage(KafkaStorageClass),
 				},
 				Resources: &corev1.ResourceRequirements{
 					Requests: map[corev1.ResourceName]resource.Quantity{
@@ -198,12 +200,9 @@ func getBrokerOverrides(numOfBrokers int, bootstrapServerHost string) []strimzi.
 	return brokerOverrides
 }
 
-func getKafkaLabels(kafkaConfig *config.KafkaConfig) map[string]string {
+func getKafkaLabels() map[string]string {
 	labels := make(map[string]string)
-	if kafkaConfig.EnableDedicatedIngress {
-		labels["ingressType"] = "sharded" // signal detected by the shared ingress controller
-	}
-
+	labels[IngressLabelName] = IngressLabelValue // signal detected by the shared ingress controller
 	return labels
 }
 
