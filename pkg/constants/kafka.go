@@ -1,5 +1,7 @@
 package constants
 
+import "time"
+
 // KafkaStatus type
 type KafkaStatus string
 
@@ -28,6 +30,10 @@ const (
 
 	// ObservabilityCanaryPodLabelValue the value for ObservabilityCanaryPodLabelKey
 	ObservabilityCanaryPodLabelValue = "true"
+
+	// KafkaMaxDurationWithProvisioningErrs the maximum duration a Kafka request
+	// might be in provisioning state while receiving 5XX errors
+	KafkaMaxDurationWithProvisioningErrs = 5 * time.Minute
 )
 
 // NamespaceLabels contains labels that indicates if a namespace is a managed application services namespace.
