@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"

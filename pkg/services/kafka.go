@@ -87,11 +87,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		sentry.CaptureException(err)
 		return errors.GeneralError("error retrieving cluster DNS: %v", err)
 	}
-	// We are manually creating a new IngressController on the data plane OSD clusters which the Kafka Clusters will use
-	// Our ClusterDNS reference needs to match this
-	if k.kafkaConfig.EnableDedicatedIngress {
-		clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
-	}
+	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
@@ -227,11 +223,7 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 			sentry.CaptureException(err)
 			return errors.GeneralError("error retrieving cluster DNS: %v", err)
 		}
-		// We are manually creating a new IngressController on the data plane OSD clusters which the Kafka Clusters will use
-		// Our ClusterDNS reference needs to match this
-		if k.kafkaConfig.EnableDedicatedIngress {
-			clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
-		}
+		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 
 		_, err = k.ChangeKafkaCNAMErecords(&kafkaRequest, clusterDNS, "DELETE")
 		if err != nil {
