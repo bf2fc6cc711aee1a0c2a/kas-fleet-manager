@@ -197,7 +197,7 @@ func (c *ClusterManager) reconcile() {
 				glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, dnsErr.Error())
 				continue
 			}
-			clusterDNS = strings.Replace(clusterDNS, "apps", "mk", 1)
+			clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 
 			_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID, clusterDNS)
 			if syncsetErr != nil {
