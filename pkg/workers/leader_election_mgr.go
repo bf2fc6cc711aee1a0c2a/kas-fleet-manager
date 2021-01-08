@@ -2,11 +2,12 @@ package workers
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/golang/glog"
 	"github.com/jinzhu/gorm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
-	"time"
 )
 
 const (
@@ -42,10 +43,10 @@ func NewLeaderLeaseManager(workers []Worker, connectionFactory *db.ConnectionFac
 func (s *LeaderElectionManager) Start() {
 	s.tearDown = make(chan struct{})
 	glog.V(1).Infoln("Starting LeaderElectionManager")
-	// Starts once immediately
-	s.startWorkers()
-	ticker := time.NewTicker(s.mgrRepeatInterval)
 	go func() {
+		// Starts once immediately
+		s.startWorkers()
+		ticker := time.NewTicker(s.mgrRepeatInterval)
 		for {
 			select {
 			case <-ticker.C:
