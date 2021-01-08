@@ -30,15 +30,20 @@ var _ ClusterBuilder = &clusterBuilder{}
 type clusterBuilder struct {
 	// idGenerator generates cluster IDs.
 	idGenerator IDGenerator
+
 	// awsConfig contains aws credentials for use with the OCM cluster service.
 	awsConfig *config.AWSConfig
+
+	// clusterCreationConfig contains cluster creation configuration.
+	clusterCreationConfig *config.ClusterCreationConfig
 }
 
 // NewClusterBuilder create a new default implementation of ClusterBuilder.
-func NewClusterBuilder(awsConfig *config.AWSConfig) ClusterBuilder {
+func NewClusterBuilder(awsConfig *config.AWSConfig, clusterCreationConfig *config.ClusterCreationConfig) ClusterBuilder {
 	return &clusterBuilder{
-		idGenerator: NewIDGenerator(ClusterNamePrefix),
-		awsConfig:   awsConfig,
+		idGenerator:           NewIDGenerator(ClusterNamePrefix),
+		awsConfig:             awsConfig,
+		clusterCreationConfig: clusterCreationConfig,
 	}
 }
 
@@ -56,7 +61,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	clusterBuilder.Name(r.idGenerator.Generate())
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cluster.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(cluster.Region))
-	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(OpenshiftVersion))
+	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.clusterCreationConfig.OpenshiftVersion))
 	// currently only enabled for MultiAZ.
 	clusterBuilder.MultiAZ(true)
 
@@ -69,7 +74,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	clusterBuilder.AWS(awsBuilder)
 
 	// Set compute node size
-	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
+	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(r.clusterCreationConfig.ComputeMachineType)))
 
 	return clusterBuilder.Build()
 }
@@ -79,8 +84,14 @@ func (r clusterBuilder) validate() *errors.ServiceError {
 	if r.idGenerator == nil {
 		return errors.New(errors.ErrorValidation, "idGenerator is not defined")
 	}
+
 	if r.awsConfig == nil {
 		return errors.New(errors.ErrorValidation, "awsConfig is not defined")
 	}
+
+	if r.clusterCreationConfig == nil {
+		return errors.New(errors.ErrorValidation, "clusterCreationConfig is not defined")
+	}
+
 	return nil
 }

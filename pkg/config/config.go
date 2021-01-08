@@ -25,6 +25,7 @@ type ApplicationConfig struct {
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
+	ClusterCreationConfig      *ClusterCreationConfig      `json:"cluster_creation"`
 }
 
 func NewApplicationConfig() *ApplicationConfig {
@@ -41,6 +42,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
+		ClusterCreationConfig:      NewClusterCreationConfig(),
 	}
 }
 
@@ -58,6 +60,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.ObservabilityConfiguration.AddFlags(flagset)
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
+	c.ClusterCreationConfig.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {

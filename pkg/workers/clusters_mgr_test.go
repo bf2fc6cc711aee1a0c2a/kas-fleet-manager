@@ -2,12 +2,13 @@ package workers
 
 import (
 	"errors"
-	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
-	storagev1 "k8s.io/api/storage/v1"
 	"reflect"
 	"testing"
 	"time"
+
+	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
+	storagev1 "k8s.io/api/storage/v1"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
@@ -368,10 +369,10 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 
 func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 	type fields struct {
-		providerLst     []string
-		clusterService  services.ClusterService
-		providersConfig config.ProviderConfiguration
-		serverConfig    config.ServerConfig
+		providerLst           []string
+		clusterService        services.ClusterService
+		providersConfig       config.ProviderConfiguration
+		clusterCreationConfig config.ClusterCreationConfig
 	}
 
 	tests := []struct {
@@ -393,7 +394,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 						return sample, nil
 					},
 				},
-				serverConfig: config.ServerConfig{
+				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -416,7 +417,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.serverConfig, config.ObservabilityConfiguration{}),
+				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.clusterCreationConfig, config.ObservabilityConfiguration{}),
 			}
 
 			clusterRequest := &api.Cluster{
@@ -435,10 +436,10 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 
 func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 	type fields struct {
-		providerLst     []string
-		clusterService  services.ClusterService
-		providersConfig config.ProviderConfiguration
-		serverConfig    config.ServerConfig
+		providerLst           []string
+		clusterService        services.ClusterService
+		providersConfig       config.ProviderConfiguration
+		clusterCreationConfig config.ClusterCreationConfig
 	}
 
 	tests := []struct {
@@ -459,7 +460,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return nil
 					},
 				},
-				serverConfig: config.ServerConfig{
+				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -490,7 +491,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return apiErrors.GeneralError("failed to create cluster request")
 					},
 				},
-				serverConfig: config.ServerConfig{
+				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -517,7 +518,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "Database retrieval failed")
 					},
 				},
-				serverConfig: config.ServerConfig{
+				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfiguration{
@@ -540,7 +541,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.serverConfig, config.ObservabilityConfiguration{}),
+				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.clusterCreationConfig, config.ObservabilityConfiguration{}),
 			}
 			err := c.reconcileClustersForRegions()
 			if err != nil && !tt.wantErr {
@@ -613,7 +614,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ProviderConfiguration{},
 					config.AllowListConfig{},
-					config.ServerConfig{},
+					config.ClusterCreationConfig{},
 					observabilityConfig,
 				),
 			}
@@ -675,7 +676,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingress
 					Name:      "sharded",
 					Namespace: openshiftIngressNamespace,
 				},
-				Spec: ingressoperatorv1.IngressControllerSpec {
+				Spec: ingressoperatorv1.IngressControllerSpec{
 					Domain: ingressDNS,
 					RouteSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{

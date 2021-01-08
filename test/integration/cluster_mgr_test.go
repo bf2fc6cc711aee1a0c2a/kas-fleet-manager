@@ -40,7 +40,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// setup required services
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
 
 	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
 	clusterRegisterError := clusterService.RegisterClusterJob(&api.Cluster{
