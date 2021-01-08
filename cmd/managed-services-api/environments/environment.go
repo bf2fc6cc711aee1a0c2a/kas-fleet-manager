@@ -141,12 +141,12 @@ func (e *Env) Initialize() error {
 
 func (env *Env) LoadServices() error {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 	syncsetService := services.NewSyncsetService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
-	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.Server, *env.Config.ObservabilityConfiguration)
+	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.ClusterCreationConfig, *env.Config.ObservabilityConfiguration)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium)
 
 	env.Services.Kafka = kafkaService
