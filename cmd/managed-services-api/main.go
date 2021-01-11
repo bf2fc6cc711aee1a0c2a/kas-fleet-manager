@@ -2,10 +2,12 @@ package main
 
 import (
 	"flag"
+
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cloudprovider"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
+	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/kafka"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/migrate"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/observatorium"
@@ -42,9 +44,10 @@ func main() {
 	clusterCmd := cluster.NewClusterCommand()
 	observatoriumCmd := observatorium.NewRunObservatoriumCommand()
 	serviceaccountCmd := serviceaccounts.NewServiceAccountCommand()
+	errorsCmd := errors.NewErrorsCommand()
 
 	// Add subcommand(s)
-	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand(), observatoriumCmd, serviceaccountCmd)
+	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand(), observatoriumCmd, serviceaccountCmd, errorsCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		glog.Fatalf("error running command: %v", err)

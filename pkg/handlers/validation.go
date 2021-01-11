@@ -26,7 +26,7 @@ func validateAsyncEnabled(r *http.Request, action string) validate {
 	return func() *errors.ServiceError {
 		asyncParam := r.URL.Query().Get("async")
 		if asyncParam != "true" {
-			return errors.SyncActionNotSupported(action)
+			return errors.SyncActionNotSupported()
 		}
 		return nil
 	}
@@ -36,7 +36,7 @@ func validateAsyncEnabled(r *http.Request, action string) validate {
 func validateMultiAZEnabled(value *bool, action string) validate {
 	return func() *errors.ServiceError {
 		if !*value {
-			return errors.NotMultiAzActionNotSupported(action)
+			return errors.NotMultiAzActionNotSupported()
 		}
 		return nil
 	}
