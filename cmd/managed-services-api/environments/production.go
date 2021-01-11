@@ -15,6 +15,7 @@ var productionConfigDefaults map[string]string = map[string]string{
 	"mas-sso-realm":                     "mas-sso",
 	"mas-sso-base-url":                  "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
 	"enable-kafka-external-certificate": "true",
+	"cluster-compute-machine-type":      "m5.4xlarge",
 }
 
 func loadProduction(env *Env) error {

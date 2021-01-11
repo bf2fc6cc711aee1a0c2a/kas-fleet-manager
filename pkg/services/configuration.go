@@ -49,8 +49,8 @@ type configService struct {
 	// allowListConfig is the list of users allowed to access the service
 	allowListConfig config.AllowListConfig
 
-	// serverConfig is the server configuration
-	serverConfig config.ServerConfig
+	// clusterCreationConfig is the cluster creation configuration
+	clusterCreationConfig config.ClusterCreationConfig
 
 	// Observability coniguration
 	observabilityConfig config.ObservabilityConfiguration
@@ -58,12 +58,12 @@ type configService struct {
 
 // NewConfigService returns a new default implementation of ConfigService
 // TODO pass ApplicationConfiguration instead
-func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig, serverConfig config.ServerConfig, observabilityConfig config.ObservabilityConfiguration) ConfigService {
+func NewConfigService(providersConfig config.ProviderConfiguration, allowListConfig config.AllowListConfig, clusterCreationConfig config.ClusterCreationConfig, observabilityConfig config.ObservabilityConfiguration) ConfigService {
 	return &configService{
-		providersConfig:     providersConfig,
-		allowListConfig:     allowListConfig,
-		serverConfig:        serverConfig,
-		observabilityConfig: observabilityConfig,
+		providersConfig:       providersConfig,
+		allowListConfig:       allowListConfig,
+		clusterCreationConfig: clusterCreationConfig,
+		observabilityConfig:   observabilityConfig,
 	}
 }
 
@@ -181,7 +181,7 @@ func (c configService) validateProvider(provider config.Provider) error {
 }
 
 func (c configService) IsAutoCreateOSDEnabled() bool {
-	return c.serverConfig.AutoOSDCreation
+	return c.clusterCreationConfig.AutoOSDCreation
 }
 
 // GetObservabilityConfiguration returns ObservabilityConfiguration.
