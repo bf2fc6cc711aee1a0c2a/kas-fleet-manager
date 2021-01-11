@@ -41,7 +41,7 @@ func runGet(cmd *cobra.Command, _ []string) {
 	// setup required services
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 	syncsetService := services.NewSyncsetService(ocmClient)
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
