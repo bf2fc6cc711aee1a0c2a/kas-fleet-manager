@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -24,6 +25,12 @@ func (h errorHandler) List(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			listArgs := services.NewListArguments(r.URL.Query())
 			allErrors := errors.Errors()
+
+			// Sort errors by code
+			sort.SliceStable(allErrors, func(i, j int) bool {
+				return allErrors[i].Code < allErrors[j].Code
+			})
+
 			list, total := determineListRange(allErrors, listArgs.Page, listArgs.Size)
 			errorList := openapi.ErrorList{
 				Kind:  "ErrorList",

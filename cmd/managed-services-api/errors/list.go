@@ -3,13 +3,15 @@ package errors
 import (
 	"encoding/json"
 	"os"
+	"sort"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/flags"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
 	svcErr "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
@@ -38,14 +40,17 @@ func NewListCommand() *cobra.Command {
 func runList(cmd *cobra.Command, _ []string) {
 	filePath := flags.MustGetString(FlagsSaveToFile, cmd.Flags())
 
-	var svcErrors []api.Error
+	var svcErrors []openapi.Error
+	errors := svcErr.Errors()
+
+	// Sort errors by code
+	sort.SliceStable(errors, func(i, j int) bool {
+		return errors[i].Code < errors[j].Code
+	})
 
 	// add code prefix to service error code
-	for _, err := range svcErr.Errors() {
-		svcErrors = append(svcErrors, api.Error{
-			Code:   svcErr.CodeStr(err.Code),
-			Reason: err.Reason,
-		})
+	for _, err := range errors {
+		svcErrors = append(svcErrors, presenters.PresentError(&err))
 	}
 
 	svcErrorsJson, err := json.MarshalIndent(svcErrors, "", "\t")
