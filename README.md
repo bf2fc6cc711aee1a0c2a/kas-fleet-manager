@@ -310,7 +310,7 @@ See the [setup git hooks](CONTRIBUTING.md#set-up-git-hooks) section in the contr
 ### Additional CLI commands
 
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
-with cluster creation logic etc without having to run the server.
+with the service (i.e. cluster creation/scaling, Kafka creation, Errors list, etc.) without having to use a REST API client.
 
 To use these commands, run `make binary` to create the `./managed-services-api` CLI.
 
