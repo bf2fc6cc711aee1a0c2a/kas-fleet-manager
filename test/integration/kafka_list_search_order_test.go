@@ -195,7 +195,14 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	// search with too many joins
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(
-		fmt.Sprintf("name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s",
+		fmt.Sprintf(
+			"name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s or name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s",
+			nonExistentKafkaName,
+			mockKafkaName1,
+			mockKafkaName1,
+			mockKafkaName1,
+			mockKafkaName1,
+			mockKafkaName1,
 			nonExistentKafkaName,
 			mockKafkaName1,
 			mockKafkaName1,

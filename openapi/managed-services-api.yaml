@@ -790,7 +790,7 @@ components:
 
         The syntax of this parameter is similar to the syntax of the _where_ clause of an
         SQL statement. Allowed fields in the search are: cloud_provider, name, owner, region and status. Allowed comparators are `<>`, `=` or `LIKE`.
-        Allowed joins are `AND` and `OR`, however there is a limit of max four joins in the search query.
+        Allowed joins are `AND` and `OR`, however there is a limit of max 10 joins in the search query.
 
         Examples:
         
