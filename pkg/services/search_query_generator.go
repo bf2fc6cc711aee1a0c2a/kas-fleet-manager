@@ -8,6 +8,11 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
+const (
+	// up to 10 joins (10 * 4 ("<column> <comparator> <value> <join>") + 3 (last query: "<column> <comparator> <value>"))
+	maxQueryTokenLength = 43
+)
+
 // DbSearchQuery - struct to be used by gorm in search
 type DbSearchQuery struct {
 	query  string
@@ -48,9 +53,9 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) (DbSearc
 	if !(len(queryTokens) == 3 || (len(queryTokens)+1)%4 == 0) {
 		return DbSearchQuery{}, errors.FailedToParseSearch("Provided search query seems incomplete: '%s'", searchQuery)
 	}
-	// limit to 4 joins
-	if len(queryTokens) > 19 {
-		return DbSearchQuery{}, errors.FailedToParseSearch("Provided search query has too many joins (max 4 allowed): '%s'", searchQuery)
+	// limit to 10 joins
+	if len(queryTokens) > maxQueryTokenLength {
+		return DbSearchQuery{}, errors.FailedToParseSearch("Provided search query has too many joins (max 10 allowed): '%s'", searchQuery)
 	}
 	var searchValues []string
 	var query string
