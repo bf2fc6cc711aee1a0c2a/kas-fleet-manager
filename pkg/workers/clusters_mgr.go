@@ -43,6 +43,9 @@ const (
 	observabilitySubscriptionName   = "observability-operator"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	ingressReplicas                 = int32(3)
+	alertManagerSecretNamespace     = "managed-application-services-observability"
+	deadmanSnitchSecretName         = "observability-alertmanager-deadmanssnitch"
+	pagerDutySecretName             = "observability-alertmanager-pagerduty"
 )
 
 var observabilityCanaryPodSelector = map[string]string{
@@ -482,6 +485,12 @@ func (c *ClusterManager) buildObservabilityStackResource() *observability.Observ
 					CredentialSecretNamespace: observabilityNamespace,
 				},
 			},
+			Alertmanager: observability.AlertmanagerConfig{
+				DeadMansSnitchSecretName:      deadmanSnitchSecretName,
+				DeadMansSnitchSecretNamespace: alertManagerSecretNamespace,
+				PagerDutySecretName:           pagerDutySecretName,
+				PagerDutySecretNamespace:      alertManagerSecretNamespace,
+			},
 		},
 	}
 }
@@ -497,7 +506,7 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 			Name:      "sharded",
 			Namespace: openshiftIngressNamespace,
 		},
-		Spec: ingressoperatorv1.IngressControllerSpec {
+		Spec: ingressoperatorv1.IngressControllerSpec{
 			Domain: ingressDNS,
 			RouteSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
@@ -531,7 +540,7 @@ func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
 		},
 		Parameters: map[string]string{
 			"encrypted": "false",
-			"type": "gp2",
+			"type":      "gp2",
 		},
 		Provisioner:          "kubernetes.io/aws-ebs",
 		ReclaimPolicy:        &reclaimDelete,
