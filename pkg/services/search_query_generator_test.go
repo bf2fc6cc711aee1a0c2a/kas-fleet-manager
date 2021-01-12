@@ -60,7 +60,26 @@ func Test_GetSearchQuery(t *testing.T) {
 	wildcardString := "%kafka"
 	wildcardStringQuery := fmt.Sprintf("%s LIKE %s", ValidColumnNames[0], wildcardString)
 	wildcardStringQueryWithoutLike := fmt.Sprintf("%s = %s", ValidColumnNames[0], wildcardString)
-	tooManyJoins := fmt.Sprintf("%s %s %s AND %s %s %s OR %s %s %s AND %s %s %s OR %s %s %s OR %s %s %s",
+	tooManyJoins := fmt.Sprintf(
+		"%s %s %s AND %s %s %s OR %s %s %s AND %s %s %s OR %s %s %s OR %s %s %s OR %s %s %s AND %s %s %s OR %s %s %s AND %s %s %s OR %s %s %s OR %s %s %s",
+		ValidColumnNames[0],
+		ValidComparators[0],
+		searchValue,
+		ValidColumnNames[1],
+		ValidComparators[1],
+		searchValue,
+		ValidColumnNames[2],
+		ValidComparators[2],
+		searchValue,
+		ValidColumnNames[0],
+		ValidComparators[0],
+		searchValue,
+		ValidColumnNames[1],
+		ValidComparators[1],
+		searchValue,
+		ValidColumnNames[2],
+		ValidComparators[2],
+		searchValue,
 		ValidColumnNames[0],
 		ValidComparators[0],
 		searchValue,
@@ -178,7 +197,7 @@ func Test_GetSearchQuery(t *testing.T) {
 			wantErr: true,
 			want: want{
 				parsedQuery: DbSearchQuery{},
-				err:         errors.FailedToParseSearch("Provided search query has too many joins (max 4 allowed): '%s'", tooManyJoins),
+				err:         errors.FailedToParseSearch("Provided search query has too many joins (max 10 allowed): '%s'", tooManyJoins),
 			},
 		},
 		{
