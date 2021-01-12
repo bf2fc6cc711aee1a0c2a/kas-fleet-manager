@@ -9,6 +9,65 @@ var kafkaMetrics = &strimzi.Metrics{
 	LowercaseOutputName: true,
 	Rules: []strimzi.Rule{
 		{
+			Pattern: "kafka.server<type=(.+), name=(.+), clientId=(.+), topic=(.+), partition=(.*)><>Value",
+			Name:    "kafka_server_$1_$2",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"clientID":  "$3",
+				"topic":     "$4",
+				"partition": "$5",
+			},
+		},
+		{
+			Pattern: "kafka.server<type=(.+), name=(.+), clientId=(.+), brokerHost=(.+), brokerPort=(.+)><>Value",
+			Name:    "kafka_server_$1_$2",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"clientId": "$3",
+				"broker":   "$4:$5",
+			},
+		},
+		{
+			Pattern: "kafka.server<type=(.+), cipher=(.+), protocol=(.+), listener=(.+), networkProcessor=(.+)><>connections",
+			Name:    "kafka_server_$1_connections_tls_info",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"listener":         "$2",
+				"networkProcessor": "$3",
+				"protocol":         "$4",
+				"cipher":           "$5",
+			},
+		},
+		{
+			Pattern: "kafka.server<type=(.+), clientSoftwareName=(.+), clientSoftwareVersion=(.+), listener=(.+), networkProcessor=(.+)><>connections",
+			Name:    "kafka_server_$1_connections_software",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"clientSoftwareName":    "$2",
+				"clientSoftwareVersion": "$3",
+				"listener":              "$4",
+				"networkProcessor":      "$5",
+			},
+		},
+		{
+			Pattern: "kafka.server<type=(.+), listener=(.+), networkProcessor=(.+)><>(.+):",
+			Name:    "kafka_server_$1_$4",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"listener":         "$2",
+				"networkProcessor": "$3",
+			},
+		},
+		{
+			Pattern: "kafka.server<type=(.+), listener=(.+), networkProcessor=(.+)><>(.+)",
+			Name:    "kafka_server_$1_$4",
+			Type:    "GAUGE",
+			Labels: map[string]string{
+				"listener":         "$2",
+				"networkProcessor": "$3",
+			},
+		},
+		{
 			Pattern: "kafka.controller<type=KafkaController, name=OfflinePartitionsCount><>Value",
 			Name:    "kafka_controller_kafkacontroller_offline_partitions_count",
 			Type:    "GAUGE",
