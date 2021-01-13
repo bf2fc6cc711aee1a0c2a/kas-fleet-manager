@@ -170,6 +170,47 @@ func Errors() ServiceErrors {
 	}
 }
 
+func NewErrorFromHTTPStatusCode(httpCode int, reason string, values ...interface{}) *ServiceError {
+	if httpCode >= http.StatusBadRequest && httpCode < http.StatusInternalServerError {
+		switch httpCode {
+		case http.StatusBadRequest:
+			return BadRequest(reason, values...)
+		case http.StatusUnauthorized:
+			return Unauthorized(reason, values...)
+		case http.StatusForbidden:
+			return Forbidden(reason, values...)
+		case http.StatusNotFound:
+			return NotFound(reason, values...)
+		case http.StatusMethodNotAllowed:
+			return NotImplemented(reason, values...)
+		case http.StatusConflict:
+			return Conflict(reason, values...)
+		default:
+			return BadRequest(reason, values...)
+		}
+	}
+
+	if httpCode >= http.StatusInternalServerError {
+		switch httpCode {
+		case http.StatusInternalServerError:
+			return GeneralError(reason, values...)
+		default:
+			return GeneralError(reason, values...)
+		}
+	}
+
+	return GeneralError(reason, values...)
+}
+
+func ToServiceError(err error) *ServiceError {
+	switch convertedErr := err.(type) {
+	case *ServiceError:
+		return convertedErr
+	default:
+		return GeneralError(convertedErr.Error())
+	}
+}
+
 type ServiceError struct {
 	// Code is the numeric and distinct ID for the error
 	Code ServiceErrorCode

@@ -119,7 +119,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
 	if err != nil {
 		sentry.CaptureException(err)
-		return errors.GeneralError("error creating syncset: %v", err)
+		return err
 	}
 
 	// Update the Kafka Request record in the database
