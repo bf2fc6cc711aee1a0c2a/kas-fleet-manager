@@ -148,7 +148,11 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 		Add().
 		Body(syncset).
 		Send()
-	return response.Body(), syncsetErr
+	var err error
+	if syncsetErr != nil {
+		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create syncset: %s", syncsetErr)
+	}
+	return response.Body(), err
 }
 
 // Status returns the response status code.

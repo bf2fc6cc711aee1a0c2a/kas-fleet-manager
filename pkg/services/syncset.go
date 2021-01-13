@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
@@ -41,8 +42,9 @@ func (s syncsetService) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId, c
 	response, syncsetErr := s.ocmClient.CreateSyncSet(clusterId, syncset)
 
 	if syncsetErr != nil {
+		err := errors.ToServiceError(syncsetErr)
 		fmt.Println(syncsetErr)
-		return nil, errors.GeneralError(fmt.Sprintf("failed to create syncset: %s for cluster id: %s", syncset.ID(), clusterId), syncsetErr)
+		return nil, errors.New(err.Code, "failed to create syncset '%s' for cluster id '%s': %s", syncset.ID(), clusterId, err)
 	}
 	return response, nil
 }
