@@ -34,6 +34,13 @@ type ObservatoriumConfig struct {
 	AuthDex *DexConfig `json:"dexConfig,omitempty" yaml:"dexConfig,omitempty"`
 }
 
+type AlertmanagerConfig struct {
+	PagerDutySecretName           string `json:"pagerDutySecretName"`
+	PagerDutySecretNamespace      string `json:"pagerDutySecretNamespace,omitempty"`
+	DeadMansSnitchSecretName      string `json:"deadMansSnitchSecretName"`
+	DeadMansSnitchSecretNamespace string `json:"deadMansSnitchSecretNamespace,omitempty"`
+}
+
 // ObservabilitySpec defines the desired state of Observability
 type ObservabilitySpec struct {
 	// Observatorium config
@@ -41,6 +48,9 @@ type ObservabilitySpec struct {
 
 	// Grafana config
 	Grafana GrafanaConfig `json:"grafana"`
+
+	// Alertmanager config
+	Alertmanager AlertmanagerConfig `json:"alertmanager,omitempty"`
 
 	// Selector for all namespaces that should be scraped
 	KafkaNamespaceSelector metav1.LabelSelector `json:"kafkaNamespaceSelector"`

@@ -792,6 +792,12 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingress
 							CredentialSecretNamespace: observabilityNamespace,
 						},
 					},
+					Alertmanager: observability.AlertmanagerConfig{
+						DeadMansSnitchSecretName:      deadmanSnitchSecretName,
+						DeadMansSnitchSecretNamespace: alertManagerSecretNamespace,
+						PagerDutySecretName:           pagerDutySecretName,
+						PagerDutySecretNamespace:      alertManagerSecretNamespace,
+					},
 				},
 			},
 		}...).
