@@ -390,7 +390,7 @@ func (helper *Helper) NewRandAccount() *amv1.Account {
 
 func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
 	// this value if taken from config/allow-list-configuration.yaml
-	allowedSA := "testuser@example.com"
+	allowedSA := "testuser1@example.com"
 	return helper.NewAccount(allowedSA, allowedSA, allowedSA, "")
 }
 

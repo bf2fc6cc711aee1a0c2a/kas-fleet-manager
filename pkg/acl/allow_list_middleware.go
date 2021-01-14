@@ -29,11 +29,26 @@ func (middleware *AllowListMiddleware) Authorize(next http.Handler) http.Handler
 			context := r.Context()
 			username, orgId := auth.GetUsernameFromContext(context), auth.GetOrgIdFromContext(context)
 			org, _ := middleware.configService.GetOrganisationById(orgId)
-			userIsAllowed := middleware.configService.IsUserAllowed(username, org)
+			var userIsAllowed, userIsAllowedAsServiceAccount bool
+
+			// check if user is allowed within the organisation
+			if org.IsUserAllowed(username) {
+				userIsAllowed = true
+				userIsAllowedAsServiceAccount = false
+			} else {
+				// check if user is allowed a service account
+				_, found := middleware.configService.GetServiceAccountByUsername(username)
+				userIsAllowed = found
+				userIsAllowedAsServiceAccount = found
+			}
+
 			if !userIsAllowed {
 				shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User '%s' is not authorized to access the service.", username))
 				return
 			}
+
+			context = auth.SetUserIsAllowedAsServiceAccountContext(context, userIsAllowedAsServiceAccount)
+			*r = *r.WithContext(context)
 		}
 
 		next.ServeHTTP(w, r)
