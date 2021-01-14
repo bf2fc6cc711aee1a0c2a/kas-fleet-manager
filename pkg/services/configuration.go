@@ -29,8 +29,6 @@ type ConfigService interface {
 	GetAllowedAccountByUsernameAndOrgId(username string, orgId string) (config.AllowedAccount, bool)
 	// GetServiceAccountByUsername returns allowed account by from the list of service accounts
 	GetServiceAccountByUsername(username string) (config.AllowedAccount, bool)
-	// IsUserAllowed returns true if the provided username is allowed to access the service
-	IsUserAllowed(username string, org config.Organisation) bool
 	// Validate ensures all configuration managed by the service contains correct and valid values
 	Validate() error
 	// IsAutoCreateOSDEnabled returns true if the automatic creation of OSD cluster is enabled, false otherwise.
@@ -128,26 +126,6 @@ func (c configService) GetAllowedAccountByUsernameAndOrgId(username string, orgI
 	}
 
 	return c.GetServiceAccountByUsername(username)
-}
-
-// A user is allowed to access the service if:
-//
-// - Within the organisation:
-//
-//     - The list of allowed users is empty and that "allow-all" is set to true
-// 	- The user is among the list of allowed users for the organisation
-//
-// OR
-//
-// - The user is among the list of allowed users not represented by any organisation
-func (c configService) IsUserAllowed(username string, org config.Organisation) bool {
-	allowed := org.IsUserAllowed(username)
-	if allowed {
-		return true
-	}
-
-	_, found := c.GetServiceAccountByUsername(username)
-	return found
 }
 
 func (c configService) Validate() error {

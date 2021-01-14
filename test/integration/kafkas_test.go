@@ -316,6 +316,66 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
 }
 
+func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// a random organisationId to make sure that it is set in context
+	orgId := "12345688097"
+
+	// the values are taken from config/allow-list-configuration.yaml
+	email1 := "testuser2@example.com"
+	email2 := "testuser3@example.com"
+
+	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, orgId)
+	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, orgId)
+
+	ctx1 := h.NewAuthenticatedContext(serviceAccount1)
+	ctx2 := h.NewAuthenticatedContext(serviceAccount2)
+
+	k := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+	}
+
+	// create the first kafka for first service account
+	kafka1, resp1, _ := client.DefaultApi.CreateKafka(ctx1, true, k)
+
+	// create the second kafka for the second service account
+	_, resp2, _ := client.DefaultApi.CreateKafka(ctx2, true, k)
+
+	// verify that the two requests were accepted
+	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(resp2.StatusCode).To(Equal(http.StatusAccepted))
+
+	// verify get works for owner and not the other
+	_, respGet1, _ := client.DefaultApi.GetKafkaById(ctx1, kafka1.Id)
+	_, respGet2, _ := client.DefaultApi.GetKafkaById(ctx2, kafka1.Id)
+	// the owner should get the kafka
+	Expect(respGet1.StatusCode).To(Equal(http.StatusOK))
+	// non owner should not get the kafka
+	Expect(respGet2.StatusCode).To(Equal(http.StatusNotFound))
+
+	// check the list of kafkas size for the first service account to equal one
+	list1, list1Resp, list1Err := client.DefaultApi.ListKafkas(ctx1, nil)
+	Expect(list1Err).NotTo(HaveOccurred())
+	Expect(list1Resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(list1.Size).To(Equal(int32(1)))
+	Expect(list1.Total).To(Equal(int32(1)))
+
+	// check the list of kafkas size for the second service account to equal one
+	list2, list2Resp, list2Err := client.DefaultApi.ListKafkas(ctx1, nil)
+	Expect(list2Err).NotTo(HaveOccurred())
+	Expect(list2Resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(list2.Size).To(Equal(int32(1)))
+	Expect(list2.Total).To(Equal(int32(1)))
+}
+
 // TestKafkaGet tests getting kafkas via the API endpoint
 func TestKafkaGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()

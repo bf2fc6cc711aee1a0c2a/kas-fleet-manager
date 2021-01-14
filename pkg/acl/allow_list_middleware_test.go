@@ -166,6 +166,9 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(data["kind"]).To(Equal("Error"))
 			Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
+			// verify that context about user being allowed as service account is set to false always
+			ctxAfterMiddleware := req.Context()
+			Expect(auth.GetUserIsAllowedAsServiceAccountFromContext(ctxAfterMiddleware)).To(Equal(false))
 		})
 	}
 
@@ -173,8 +176,9 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 
 func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 	tests := []struct {
-		name string
-		arg  services.ConfigService
+		name                          string
+		arg                           services.ConfigService
+		userIsAllowedAsServiceAccount bool
 	}{
 		{
 			name: "returns 200 Ok response when user is allowed to access service for the given organisation with allowed users",
@@ -194,6 +198,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 				config.ClusterCreationConfig{},
 				config.ObservabilityConfiguration{},
 			),
+			userIsAllowedAsServiceAccount: false,
 		},
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
@@ -212,7 +217,9 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 					},
 				},
 				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{}),
+				config.ObservabilityConfiguration{},
+			),
+			userIsAllowedAsServiceAccount: false,
 		},
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
@@ -237,6 +244,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 				config.ClusterCreationConfig{},
 				config.ObservabilityConfiguration{},
 			),
+			userIsAllowedAsServiceAccount: true,
 		},
 	}
 
@@ -263,6 +271,10 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 
 			Expect(rr.Code).To(Equal(http.StatusOK))
+
+			// verify that the context is set with whether the user is allowed as a service account or not
+			ctxAfterMiddleware := req.Context()
+			Expect(auth.GetUserIsAllowedAsServiceAccountFromContext(ctxAfterMiddleware)).To(Equal(tt.userIsAllowedAsServiceAccount))
 		})
 	}
 

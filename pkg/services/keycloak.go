@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/google/uuid"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
@@ -112,6 +113,7 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 	}
 	return nil
 }
+
 func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	var serviceAcc api.ServiceAccount
 	accessToken, _ := kc.kcClient.GetToken()
