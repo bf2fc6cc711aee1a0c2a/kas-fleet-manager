@@ -160,13 +160,19 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 	}
 
 	orgId := auth.GetOrgIdFromContext(ctx)
+	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
+
 	dbConn := k.connectionFactory.New().Where("id = ?", id)
-	var kafkaRequest api.KafkaRequest
-	if orgId != "" {
+
+	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
+	if filterByOrganisationId {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
 		dbConn = dbConn.Where("owner = ?", user)
 	}
+
+	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
 		return nil, handleGetError("KafkaResource", "id", id, err)
 	}
@@ -265,8 +271,11 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	}
 
 	orgId := auth.GetOrgIdFromContext(ctx)
+	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
+	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
 
-	if orgId != "" {
+	if filterByOrganisationId {
 		// filter kafka requests by organisation_id since the user is allowed to see all kafka requests of my id
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
