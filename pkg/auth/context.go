@@ -14,9 +14,11 @@ import (
 type contextKey string
 
 const (
-	ContextUsernameKey contextKey = "username"
+	contextUsernameKey contextKey = "username"
 
-	ContextOrgIdKey contextKey = "organisation_id"
+	contextOrgIdKey contextKey = "organisation_id"
+
+	contextIsAllowedAsServiceAccount contextKey = "user-is-allowed-as-service-account"
 
 	// Does not use contextKey type because the jwt middleware improperly updates context with string key type
 	// See https://github.com/auth0/go-jwt-middleware/blob/master/jwtmiddleware.go#L232
@@ -36,11 +38,11 @@ type AuthPayload struct {
 }
 
 func SetUsernameContext(ctx context.Context, username string) context.Context {
-	return context.WithValue(ctx, ContextUsernameKey, username)
+	return context.WithValue(ctx, contextUsernameKey, username)
 }
 
 func GetUsernameFromContext(ctx context.Context) string {
-	username := ctx.Value(ContextUsernameKey)
+	username := ctx.Value(contextUsernameKey)
 	if username == nil {
 		return ""
 	}
@@ -48,15 +50,27 @@ func GetUsernameFromContext(ctx context.Context) string {
 }
 
 func SetOrgIdContext(ctx context.Context, orgId string) context.Context {
-	return context.WithValue(ctx, ContextOrgIdKey, orgId)
+	return context.WithValue(ctx, contextOrgIdKey, orgId)
 }
 
 func GetOrgIdFromContext(ctx context.Context) string {
-	orgId := ctx.Value(ContextOrgIdKey)
+	orgId := ctx.Value(contextOrgIdKey)
 	if orgId == nil {
 		return ""
 	}
 	return fmt.Sprintf("%v", orgId)
+}
+
+func SetUserIsAllowedAsServiceAccountContext(ctx context.Context, isAllowedAsServiceAccount bool) context.Context {
+	return context.WithValue(ctx, contextIsAllowedAsServiceAccount, isAllowedAsServiceAccount)
+}
+
+func GetUserIsAllowedAsServiceAccountFromContext(ctx context.Context) bool {
+	isAllowedAsServiceAccount := ctx.Value(contextIsAllowedAsServiceAccount)
+	if isAllowedAsServiceAccount == nil {
+		return false
+	}
+	return isAllowedAsServiceAccount.(bool)
 }
 
 // Get authorization payload api object from context
