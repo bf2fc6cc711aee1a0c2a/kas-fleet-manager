@@ -128,11 +128,11 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					Meta: api.Meta{
 						CreatedAt: time.Now(),
 					},
-					Status: string(constants.KafkaRequestStatusProvisioning),
+					Status: string(constants.KafkaRequestStatusPreparing),
 				},
 			},
 			wantErr:             true,
-			expectedKafkaStatus: constants.KafkaRequestStatusProvisioning,
+			expectedKafkaStatus: constants.KafkaRequestStatusPreparing,
 		},
 		{
 			name: "error when updating kafka status fails",
@@ -232,11 +232,11 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
 			}
-			if err := k.reconcileProvisionedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
-				t.Errorf("reconcileProvisionedKafka() error = %v, wantErr %v", err, tt.wantErr)
+			if err := k.reconcilePreparedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
+				t.Errorf("reconcilePreparedKafka() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if string(tt.expectedKafkaStatus) != tt.args.kafka.Status {
-				t.Errorf("reconcileProvisionedKafka() kafka status = %v, expectedKafkaStatus :%v", tt.args.kafka.Status, tt.expectedKafkaStatus)
+				t.Errorf("reconcilePreparedKafka() kafka status = %v, expectedKafkaStatus :%v", tt.args.kafka.Status, tt.expectedKafkaStatus)
 			}
 		})
 	}
@@ -347,7 +347,7 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 	}
 }
 
-func TestKafkaManager_reconcileResourceCreationKafka(t *testing.T) {
+func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 	type fields struct {
 		ocmClient            ocm.Client
 		clusterService       services.ClusterService
@@ -482,8 +482,8 @@ func TestKafkaManager_reconcileResourceCreationKafka(t *testing.T) {
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
 			}
-			if err := k.reconcileResourceCreationKafka(tt.args.kafka); (err != nil) != tt.wantErr {
-				t.Errorf("reconcileResourceCreationKafka() error = %v, wantErr %v", err, tt.wantErr)
+			if err := k.reconcileProvisioningKafka(tt.args.kafka); (err != nil) != tt.wantErr {
+				t.Errorf("reconcileProvisioningKafka() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
