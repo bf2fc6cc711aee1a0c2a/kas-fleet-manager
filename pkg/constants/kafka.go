@@ -11,10 +11,10 @@ type KafkaOperation string
 const (
 	// KafkaRequestStatusAccepted - kafka request status when accepted by kafka worker
 	KafkaRequestStatusAccepted KafkaStatus = "accepted"
-	// KafkaRequestStatusProvisioning - kafka request status of a provioned kafka
+	// KafkaRequestStatusPreparing - kafka request status of a preparing kafka
+	KafkaRequestStatusPreparing KafkaStatus = "preparing"
+	// KafkaRequestStatusProvisioning - kafka in provisioning state
 	KafkaRequestStatusProvisioning KafkaStatus = "provisioning"
-	// KafkaRequestStatusResourceCreation - kafka request status of creating resource kafka
-	KafkaRequestStatusResourceCreation KafkaStatus = "resource_creating"
 	// KafkaRequestStatusReady - completed kafka request
 	KafkaRequestStatusReady KafkaStatus = "ready"
 	// KafkaRequestStatusFailed - kafka request failed
