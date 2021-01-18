@@ -3,7 +3,6 @@ package presenters
 import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 )
 
 func ConvertKafkaRequest(kafkaRequest openapi.KafkaRequestPayload) *api.KafkaRequest {
@@ -27,17 +26,9 @@ func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) openapi.KafkaRequest {
 		MultiAz:             kafkaRequest.MultiAZ,
 		Owner:               kafkaRequest.Owner,
 		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
-		Status:              setStatus(kafkaRequest.Status),
+		Status:              kafkaRequest.Status,
 		CreatedAt:           kafkaRequest.CreatedAt,
 		UpdatedAt:           kafkaRequest.UpdatedAt,
 		FailedReason:        kafkaRequest.FailedReason,
 	}
-}
-
-//set the status provisioning if it's resource_creating on UI
-func setStatus(status string) string {
-	if status == constants.KafkaRequestStatusResourceCreation.String() {
-		return constants.KafkaRequestStatusProvisioning.String()
-	}
-	return status
 }
