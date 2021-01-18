@@ -572,7 +572,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					ClusterID:     clusterservicetest.MockClusterID,
 					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       false,
-					Status:        constants.KafkaRequestStatusProvisioning.String(),
+					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
 			},
 		},

@@ -570,10 +570,10 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusPreparing.String(), nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusProvisioning.String()))
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusPreparing.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 
 	// wait a few seconds to ensure that deletion is triggered during kafka syncset creation
@@ -595,7 +595,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find soft deleted kafka request")
 	}
-	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusProvisioning.String()))
+	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusPreparing.String()))
 }
 
 // TestKafkaDelete - tests fail kafka delete

@@ -101,32 +101,32 @@ func (k *KafkaManager) reconcile() {
 		}
 	}
 
-	// handle provisioning kafkas
-	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
+	// handle preparing kafkas
+	preparingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusPreparing)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 	}
 
-	for _, kafka := range provisioningKafkas {
-		if err := k.reconcileProvisionedKafka(kafka); err != nil {
+	for _, kafka := range preparingKafkas {
+		if err := k.reconcilePreparedKafka(kafka); err != nil {
 			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			continue
 		}
 	}
 
-	// handle resource creation kafkas state
-	resourceCreationKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusResourceCreation)
+	// handle provisioning kafkas state
+	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
-		glog.Errorf("failed to list resource creation kafkas: %s", serviceErr.Error())
+		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
 	}
 
-	for _, kafka := range resourceCreationKafkas {
-		if err := k.reconcileResourceCreationKafka(kafka); err != nil {
+	for _, kafka := range provisioningKafkas {
+		if err := k.reconcileProvisioningKafka(kafka); err != nil {
 			sentry.CaptureException(err)
-			glog.Errorf("reconcile resource creating %s: %s", kafka.ID, err.Error())
+			glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
 			continue
 		}
 	}
@@ -145,7 +145,7 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	if cluster != nil {
 		kafka.ClusterID = cluster.ClusterID
-		kafka.Status = constants.KafkaRequestStatusProvisioning.String()
+		kafka.Status = constants.KafkaRequestStatusPreparing.String()
 		if err = k.kafkaService.Update(kafka); err != nil {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
 		}
@@ -153,7 +153,7 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	return nil
 }
 
-func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error {
+func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
 	_, err := k.kafkaService.GetById(kafka.ID)
 	if err != nil {
 		sentry.CaptureException(err)
@@ -173,15 +173,15 @@ func (k *KafkaManager) reconcileProvisionedKafka(kafka *api.KafkaRequest) error 
 	if err := k.kafkaService.Create(kafka); err != nil {
 		return k.handleKafkaRequestCreationError(kafka, err)
 	}
-	// consider the kafka in a resource creation state
-	if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusResourceCreation); err != nil {
-		return fmt.Errorf("failed to update kafka %s to status resource creation: %w", kafka.ID, err)
+	// consider the kafka in a provisioning state
+	if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusProvisioning); err != nil {
+		return fmt.Errorf("failed to update kafka %s to status provisioning: %w", kafka.ID, err)
 	}
 
 	return nil
 }
 
-func (k *KafkaManager) reconcileResourceCreationKafka(kafka *api.KafkaRequest) error {
+func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error {
 	namespace, err := services.BuildNamespaceName(kafka)
 	if err != nil {
 		return err
