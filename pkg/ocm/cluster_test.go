@@ -10,11 +10,13 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 )
 
+const openshiftVersion = "openshift-v4.6.1"
+
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
 
 	clusterCreationConfig := &config.ClusterCreationConfig{
-		OpenshiftVersion:   OpenshiftVersion,
+		OpenshiftVersion:   openshiftVersion,
 		ComputeMachineType: ComputeMachineType,
 	}
 
@@ -119,7 +121,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 					builder.Name("")
 					builder.AWS(clusterAWS)
 					builder.MultiAZ(true)
-					builder.Version(clustersmgmtv1.NewVersion().ID(OpenshiftVersion))
+					builder.Version(clustersmgmtv1.NewVersion().ID(openshiftVersion))
 					builder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ComputeMachineType)))
 				})
 				if err != nil {

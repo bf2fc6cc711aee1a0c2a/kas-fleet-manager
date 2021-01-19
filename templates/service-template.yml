@@ -268,6 +268,16 @@ parameters:
   displayName: MAS SSO REALM
   description: MAS SSO realm
 
+- name: CLUSTER_OPENSHIFT_VERSION
+  displayName: The version of openshift
+  description: The version of openshift to be deployed on a new created OSD cluster
+  value: ""
+
+- name: CLUSTER_COMPUTE_MACHINE_TYPE
+  displayName: Compute machine type
+  description: The compute machine type of each node on a new created cluster.
+  value: "m5.4xlarge"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -453,6 +463,8 @@ objects:
             - --enable-allow-list=${ENABLE_ALLOW_LIST}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
+            - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
+            - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:
