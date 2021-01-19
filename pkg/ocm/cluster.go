@@ -10,7 +10,6 @@ import (
 // ClusterNamePrefix a prefix used for new OCM cluster names
 const (
 	ClusterNamePrefix  = "ms-"
-	OpenshiftVersion   = "openshift-v4.6.1"
 	ComputeMachineType = "m5.4xlarge"
 )
 
@@ -61,10 +60,11 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	clusterBuilder.Name(r.idGenerator.Generate())
 	clusterBuilder.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(cluster.CloudProvider))
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(cluster.Region))
-	clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.clusterCreationConfig.OpenshiftVersion))
 	// currently only enabled for MultiAZ.
 	clusterBuilder.MultiAZ(true)
-
+	if r.clusterCreationConfig.OpenshiftVersion != "" {
+		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.clusterCreationConfig.OpenshiftVersion))
+	}
 	// setting BYOC to always be true for now as this is the only available cluster type within our quota.
 	clusterBuilder.BYOC(true)
 	clusterBuilder.Managed(true)
