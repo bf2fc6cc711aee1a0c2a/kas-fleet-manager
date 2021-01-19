@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -102,6 +103,12 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
+
+	// checking kafka_request bootstrap server port number being present
+	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
+	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
+	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
+
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
