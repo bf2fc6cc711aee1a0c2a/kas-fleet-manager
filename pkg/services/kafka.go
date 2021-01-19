@@ -223,7 +223,8 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 		}
 	}
 
-	if k.kafkaConfig.EnableKafkaExternalCertificate {
+	// ClusterID is empty only for Accepted kafka requests
+	if k.kafkaConfig.EnableKafkaExternalCertificate && kafkaRequest.ClusterID != "" {
 		clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 		if err != nil || clusterDNS == "" {
 			sentry.CaptureException(err)
