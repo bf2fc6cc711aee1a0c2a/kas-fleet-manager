@@ -58,3 +58,6 @@ cmd/managed-services-api/managed-services-api
 
 # Docker template
 Dockerfile_integration_tests
+
+# performance tests leftovers
+test/performance/__pycache__

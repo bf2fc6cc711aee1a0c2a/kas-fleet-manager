@@ -42,6 +42,11 @@ JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
 MAS_SSO_BASE_URL ?="https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
 MAS_SSO_REALM ?="mas-sso-playground"
 
+# default performance test flags
+PERF_TEST_USERS ?= 10 # to be adjusted later
+PERF_TEST_USER_SPAWN_RATE ?= 1 # to be adjusted later
+PERF_TEST_RUN_TIME ?= 1m # to be adjusted later
+PERF_TEST_WORKERS_NUMBER ?= 5 # to be adjusted later
 
 GO := go
 GOFMT := gofmt
@@ -243,10 +248,25 @@ test/integration: test/prepare gotestsum
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
-# requires OCM_OFFLINE_TOKEN env var exporteds
+# requires OCM_OFFLINE_TOKEN env var exported
 test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
+
+# run performance tests
+# requires at least the api route to be set as "PERF_TEST_ROUTE_HOST" and "OCM_OFFLINE_TOKEN"
+test/performance:
+ifeq (, $(shell which docker-compose 2> /dev/null))
+	@echo "Please install docker-compose to run performance tests"
+else
+	@if [[ -z "${PERF_TEST_ROUTE_HOST}" ]] || [[ -z "${OCM_OFFLINE_TOKEN}" ]]; \
+		then echo "Env vars required to run the performance tests (PERF_TEST_ROUTE_HOST or OCM_OFFLINE_TOKEN not provided!" ; exit 1 ; fi;
+	
+	PERF_TEST_ROUTE_HOST=$(PERF_TEST_ROUTE_HOST) PERF_TEST_USERS=$(PERF_TEST_USERS) PERF_TEST_USER_SPAWN_RATE=$(PERF_TEST_USER_SPAWN_RATE) \
+		PERF_TEST_RUN_TIME=$(PERF_TEST_RUN_TIME) docker-compose --file test/performance/docker-compose.yml up \
+			--scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
+endif
+.PHONY: test/performance
 
 # generate files
 generate: openapi/generate
