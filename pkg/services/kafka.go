@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/getsentry/sentry-go"
+	"github.com/golang/glog"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/aws"
@@ -242,10 +243,17 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
 	statusCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 
-	if err != nil && statusCode != http.StatusNotFound {
+	if err != nil {
 		sentry.CaptureException(err)
-		return errors.GeneralError("error deleting syncset: %v", err)
+
+		if statusCode != http.StatusNotFound {
+			return errors.GeneralError("error deleting syncset: %v", err)
+		}
 	}
+
+	glog.V(5).Infof("Kafka Delete - Kafka Name: %s", kafkaRequest.Name)
+	glog.V(5).Infof("Kafka Delete - Kafka Status: %s", kafkaRequest.Status)
+	glog.V(5).Infof("Kafka Delete - Kafka syncSetId: %s", syncsetId)
 
 	// soft delete the kafka request
 	if err := dbConn.Delete(&kafkaRequest).Error; err != nil {
