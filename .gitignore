@@ -44,7 +44,7 @@ cmd/managed-services-api/managed-services-api
 
 # Ignore secret files
 /secrets/aws.*
-/secrets/ocm-service.token
+/secrets/ocm-service.*
 /secrets/kafka-tls.*
 /secrets/keycloak-service.*
 /secrets/dx.*
