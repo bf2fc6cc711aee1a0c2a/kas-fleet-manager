@@ -405,14 +405,14 @@ ocm/login:
 	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
 .PHONY: ocm/login
 
-# Setup OCM Client ID and Secret
+# Setup OCM_OFFLINE_TOKEN and 
+# OCM Client ID and Secret (only when running inside docker in integration ENV)  
 ocm/setup: OCM_CLIENT_ID ?= ocm-ams-testing
 ocm/setup: OCM_CLIENT_SECRET ?= 8f0c06c5-a558-4a78-a406-02deb1fd3f17
 ocm/setup:
 	@echo -n "$(OCM_OFFLINE_TOKEN)" > secrets/ocm-service.token
 ifeq ($(OCM_ENV), integration)
-	@echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId
-	@echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret
+	@if [[ -n "$(DOCKER_PR_CHECK)" ]]; then echo -n "$(OCM_CLIENT_ID)" > secrets/ocm-service.clientId; echo -n "$(OCM_CLIENT_SECRET)" > secrets/ocm-service.clientSecret; fi;
 endif
 .PHONY: ocm/setup
 

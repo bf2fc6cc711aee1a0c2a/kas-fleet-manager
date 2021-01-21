@@ -19,7 +19,7 @@ ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
 ENV KAFKA_TLS_KEY <kafka_tls_key>
-
+ENV DOCKER_PR_CHECK true
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
