@@ -121,6 +121,23 @@ func validKafkaClusterName(value *string, field string) validate {
 	}
 }
 
+// validateKafkaClusterNameIsUnique returns a validator that validates that the kafka cluster name is unique
+func validateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaService, context context.Context) validate {
+	return func() *errors.ServiceError {
+
+		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1, Search: fmt.Sprintf("name = %s", *name)})
+		if err != nil {
+			return err
+		}
+
+		if pageMeta.Total > 0 {
+			return errors.DuplicateKafkaClusterName()
+		}
+
+		return nil
+	}
+}
+
 func validateLength(value *string, field string, minVal *int, maxVal *int) validate {
 	var min = 1
 	if *minVal > 1 {
