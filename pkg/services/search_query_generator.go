@@ -49,8 +49,8 @@ func removeExcessiveWhiteSpaces(somestring string) string {
 
 // validate search query and return sanitized query ready to be executed by gorm
 func validateAndReturnDbQuery(searchQuery string, queryTokens []string) (DbSearchQuery, *errors.ServiceError) {
-	// checking for incomplete queries (query tokens length must be either 3 or 3 + n * 4)
-	if !(len(queryTokens) == 3 || (len(queryTokens)+1)%4 == 0) {
+	// checking for incomplete queries (query tokens length must be 3 + n * 4)
+	if (len(queryTokens)+1)%4 != 0 {
 		return DbSearchQuery{}, errors.FailedToParseSearch("Provided search query seems incomplete: '%s'", searchQuery)
 	}
 	// limit to 10 joins
