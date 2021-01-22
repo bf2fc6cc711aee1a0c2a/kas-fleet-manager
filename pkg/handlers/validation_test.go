@@ -349,6 +349,73 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 	}
 }
 
+func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
+	type args struct {
+		kafkaService services.KafkaService
+		name         string
+		context      context.Context
+	}
+
+	tests := []struct {
+		name string
+		arg  args
+		want *errors.ServiceError
+	}{
+		{
+			name: "throw an error when the KafkaService call throws an error",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
+					},
+				},
+				name:    "some-name",
+				context: context.TODO(),
+			},
+			want: errors.GeneralError("count failed from database"),
+		},
+		{
+			name: "throw an error when name is already used",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+						return nil, &api.PagingMeta{Total: 1}, nil
+					},
+				},
+				name:    "duplicate-name",
+				context: context.TODO(),
+			},
+			want: &errors.ServiceError{
+				HttpCode: http.StatusConflict,
+				Reason:   "Kafka cluster name is already used",
+				Code:     36,
+			},
+		},
+		{
+			name: "does not throw an error when name is unique",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+						return nil, &api.PagingMeta{Total: 0}, nil
+					},
+				},
+				name:    "unique-name",
+				context: context.TODO(),
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			validateFn := validateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
+			err := validateFn()
+			Expect(tt.want).To(Equal(err))
+		})
+	}
+}
+
 func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 	tests := []struct {
 		description string
