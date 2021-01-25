@@ -6,7 +6,7 @@ A service for provisioning and managing fleets of Kafka instances.
 For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
 ## Prerequisites
-* [OpenAPI Generator](https://openapi-generator.tech/docs/installation/)
+* [OpenAPI Generator (4.3.1)](https://openapi-generator.tech/docs/installation/)
 * [Golang](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [go-bindata (3.1.2+)](https://github.com/go-bindata/go-bindata) - for code generation
