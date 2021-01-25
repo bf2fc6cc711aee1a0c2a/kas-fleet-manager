@@ -2,8 +2,9 @@ package aws
 
 import (
 	"fmt"
-	errors "github.com/zgalor/weberr"
 	"strings"
+
+	errors "github.com/zgalor/weberr"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -86,12 +87,18 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 	if err != nil {
 		awsErr := err.(awserr.Error)
 		if awsErr.Code() == "InvalidChangeBatch" {
+			errorMessage := awsErr.Message()
+
 			// Record set not created in the first place
-			recordSetNotFound := strings.Contains(awsErr.Message(), "but it was not found")
+			recordSetNotFound := strings.Contains(errorMessage, "but it was not found")
 
 			// Kafka cluster failed to create on the cluster, we have an entry in the database.
-			recordSetDomainNameEmpty := strings.Contains(awsErr.Message(), "Domain name is empty")
-			if recordSetNotFound || recordSetDomainNameEmpty {
+			recordSetDomainNameEmpty := strings.Contains(errorMessage, "Domain name is empty")
+
+			// Record set has already been created
+			recordSetAlreadyExists := strings.Contains(errorMessage, "but it already exists")
+
+			if recordSetNotFound || recordSetDomainNameEmpty || recordSetAlreadyExists {
 				return nil, nil
 			}
 		}
