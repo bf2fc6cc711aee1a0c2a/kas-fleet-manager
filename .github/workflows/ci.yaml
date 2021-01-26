@@ -1,0 +1,121 @@
+# This runs checks to verify if code is properly formated and that tests (unit and integration against a mocked environment) are passing.
+name: Lint & Test
+
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+      - 'build_deploy.sh'
+      - '.github/*.md'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+      
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '*.md'
+      - 'build_deploy.sh'
+      - '.github/*.md'
+      - 'templates/**'
+      - '.openapi-generator-ignore'
+      - 'openapi/**'
+      - 'docs/**'
+      - 'pkg/api/openapi/docs/**'
+      - 'pkg/api/openapi/.openapi-generator-ignore'
+
+
+env:
+  # set ocm env to integration
+  OCM_ENV: integration
+  # GORM env variables. These values are defined in the postgres service definition above
+  GORM_DIALECT: postgres
+  GORM_HOST: 127.0.0.1
+  GORM_PORT: 5432
+  GORM_NAME: serviceapitests
+  GORM_USERNAME: managed_services_api
+  GORM_PASSWORD: foobar-bizz-buzz
+  GORM_SSLMODE: disable
+  GORM_DEBUG: false
+  # Dummy MAS SSO variables
+  MAS_SSO_CLIENT_ID: test-managed-services-api
+  MAS_SSO_CLIENT_SECRET: c1a79f76-272d-4b2b-ad27-2740fc81a508
+  # Dummy AWS credentials 
+  AWS_ACCOUNT_ID: aws_accountid
+  AWS_ACCESS_KEY: aws_accesskey
+  AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
+  ROUTE53_ACCESS_KEY: aws_route53_access_key
+  ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key
+  # Dummy Kafka TLS env variables
+  KAFKA_TLS_CERT: kafka_tls_cert
+  KAFKA_TLS_KEY: kafka_tls_key
+  # So that OCM secrets are initialised
+  DOCKER_PR_CHECK: true
+
+jobs:
+  lint-test:
+    name: "Lint & Test"
+    runs-on: ubuntu-latest
+    # Skip draft PRs and those with WIP in the subject, rerun as soon as its removed
+    if: "github.event_name != 'pull_request' || ( \
+           github.event.pull_request.draft == false && \
+           github.event.pull_request.state != 'closed' && \
+           contains(github.event.pull_request.title, 'wip ') == false && \
+           contains(github.event.pull_request.title, '[wip]') == false && \
+           (
+             github.event.action != 'edited' || \
+             contains(github.event.changes.title.from, 'wip ') || \
+             contains(github.event.changes.title.from, '[wip]') \
+           ) \
+         )"
+    services:
+      postgres:
+        image: postgres:11
+        env:
+          POSTGRES_PASSWORD: foobar-bizz-buzz
+          POSTGRES_USER: managed_services_api
+          POSTGRES_DB: serviceapitests
+        ports:
+          - 5432:5432
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+     
+    steps:
+      - name: Cancel Previous Runs
+        uses: n1hility/cancel-previous-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set up Go 1.13
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.13"
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          # This will be used to determine Project root directory.
+          # The heuristic to do so will need improvement and there is a separate issue for that. 
+          path: managed-services-api
+      - name: Cache go module
+        uses: actions/cache@v2
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('managed-services-api/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Setup tests secrets
+        working-directory: managed-services-api
+        run: |
+          make ocm/setup aws/setup keycloak/setup kafkacert/setup
+      - name: Lint & Test
+        working-directory: managed-services-api
+        run: |
+          export GOPATH=$(go env GOPATH)
+          export PATH=${PATH}:$GOPATH/bin
+          make test test/integration
