@@ -45,8 +45,8 @@ MAS_SSO_REALM ?="mas-sso-playground"
 # default performance test flags
 PERF_TEST_USERS ?= 10 # to be adjusted later
 PERF_TEST_USER_SPAWN_RATE ?= 1 # to be adjusted later
-PERF_TEST_RUN_TIME ?= 1m # to be adjusted later
-PERF_TEST_WORKERS_NUMBER ?= 5 # to be adjusted later
+PERF_TEST_RUN_TIME ?= 20m # to be adjusted later
+PERF_TEST_WORKERS_NUMBER ?= 10 # to be adjusted later
 
 GO := go
 GOFMT := gofmt
