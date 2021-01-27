@@ -228,10 +228,9 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 // timestamp.
 func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
 
-	// if the request is still in `accepted` state we just have to delete the row from the table
-	if kafkaRequest.Status != constants.KafkaRequestStatusAccepted.String() {
+	// if the we don't have the clusterID we can only delete the row from the database
+	if kafkaRequest.ClusterID != "" {
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
@@ -270,6 +269,7 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		return errors.GeneralError("unable to delete kafka request with id %s: %s", kafkaRequest.ID, err)
 	}
 
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
 	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDelete)
 
 	return nil
