@@ -642,8 +642,9 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
-	// Sleep for worker interval duration to ensure kafka manager reconciliation has finished
-	time.Sleep(workers.RepeatInterval)
+	// Sleep for worker interval duration to ensure kafka manager reconciliation has finished: 1 time for
+	// updating the status to `deprovision` and one time for the real deletion
+	time.Sleep(workers.RepeatInterval * 2)
 	kafkaList, _, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
