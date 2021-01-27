@@ -204,6 +204,53 @@ func TestKafkaPost_Validations(t *testing.T) {
 	}
 }
 
+// TestKafkaPost_NameUniquenessValidations tests kafka cluster name uniqueness verification during its creation by the API
+func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// create two random accounts in same organisation
+	account1 := h.NewRandAccount()
+	ctx1 := h.NewAuthenticatedContext(account1)
+
+	account2 := h.NewRandAccount()
+	ctx2 := h.NewAuthenticatedContext(account2)
+
+	// this value if taken from config/allow-list-configuration.yaml
+	anotherOrgID := "12147054"
+
+	// create a third account in a different organisation
+	accountFromAnotherOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
+	ctx3 := h.NewAuthenticatedContext(accountFromAnotherOrg)
+
+	k := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+	}
+
+	// create the first kafka
+	_, resp1, _ := client.DefaultApi.CreateKafka(ctx1, true, k)
+
+	// attempt to create the second kafka with same name
+	_, resp2, _ := client.DefaultApi.CreateKafka(ctx2, true, k)
+
+	// create another kafka with same name for different org
+	_, resp3, _ := client.DefaultApi.CreateKafka(ctx3, true, k)
+
+	// verify that the first and third requests were accepted
+	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(resp3.StatusCode).To(Equal(http.StatusAccepted))
+
+	// verify that the second request resulted into an error accepted
+	Expect(resp2.StatusCode).To(Equal(http.StatusConflict))
+
+}
+
 // TestKafkaAllowList_UnauthorizedValidation tests the allow list API access validations is performed when enabled
 func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -281,18 +328,25 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	ownerAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
 	ctx := h.NewAuthenticatedContext(ownerAccount)
 
-	k := openapi.KafkaRequestPayload{
+	kafka1 := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
+	kafka2 := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-2",
+		MultiAz:       testMultiAZ,
+	}
+
 	// create the first kafka
-	_, resp1, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp1, _ := client.DefaultApi.CreateKafka(ctx, true, kafka1)
 
 	// create the second kafka
-	_, resp2, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp2, _ := client.DefaultApi.CreateKafka(ctx, true, kafka2)
 
 	// verify that the first request was accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
@@ -306,7 +360,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(accountInSameOrg)
 
 	// attempt to create kafka for this user account
-	_, resp3, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp3, _ := client.DefaultApi.CreateKafka(ctx, true, kafka2)
 
 	// verify that the request errored with 403 forbidden for the account in same organisation
 	Expect(resp3.StatusCode).To(Equal(http.StatusForbidden))
@@ -317,7 +371,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(accountInDifferentOrg)
 
 	// attempt to create kafka for this user account
-	_, resp4, _ := client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp4, _ := client.DefaultApi.CreateKafka(ctx, true, kafka1)
 
 	// verify that the request was accepted
 	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))

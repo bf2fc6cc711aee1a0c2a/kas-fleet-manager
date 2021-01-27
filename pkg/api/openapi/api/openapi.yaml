@@ -341,6 +341,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: The requested resource doesn't exist
+        "409":
+          content:
+            application/json:
+              examples:
+                "409NameConflictExample":
+                  $ref: '#/components/examples/409NameConflictExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: A conflict has been detected in the creation of this resource
         "500":
           content:
             application/json:
@@ -769,6 +778,14 @@ components:
         code: MGD-SERV-API-5
         reason: User 'foo-bar' has reached a maximum number of 6 allowed instances.
         operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
+    "409NameConflictExample":
+      value:
+        id: "36"
+        kind: Error
+        href: /api/managed-services-api/v1/errors/36
+        code: MGD-SERV-API-36
+        reason: Kafka cluster name is already used
+        operation_id: 6kY0UiEkzkXCzWPeI2oYehd3ED
     "500Example":
       value:
         id: "9"
