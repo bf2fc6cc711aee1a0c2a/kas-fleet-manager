@@ -20,6 +20,7 @@ const (
 	// Namespace name is built using the kafka request id (always generated with 27 length) and the owner (truncated with this var).
 	// Set the truncate index to 35 to ensure that the namespace name does not go over the maximum limit.
 	truncatedNamespaceLen     = 35
+	truncatedSyncsetIdLen     = 50
 	replacementForSpecialChar = "-"
 	appendChar                = "a"
 )
@@ -96,7 +97,9 @@ func buildTruncateKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
 // buildSyncsetIdentifier creates a unique identifier for the syncset given
 // the unique kafka identifier
 func buildSyncsetIdentifier(kafkaRequest *api.KafkaRequest) string {
-	return fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
+	fullSyncSetId := fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
+	// Max SyncSetID length in OCM is 50
+	return truncateString(fullSyncSetId, truncatedSyncsetIdLen)
 }
 
 // maskProceedingandTrailingDash replaces the first and final character of a string with a subdomain safe
