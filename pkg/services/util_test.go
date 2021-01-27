@@ -266,7 +266,8 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 }
 
 func Test_buildSyncsetIdentifier(t *testing.T) {
-	mockKafkaName := "example-kafka"
+	mockShortKafkaName := "kafka"
+	mockLongKafkaName := "sample-kafka-name-long-test"
 
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -277,13 +278,22 @@ func Test_buildSyncsetIdentifier(t *testing.T) {
 		want string
 	}{
 		{
-			name: "build syncset identifier successfully",
+			name: "build syncset identifier with a short name successfully",
 			args: args{
 				kafkaRequest: &api.KafkaRequest{
-					Name: mockKafkaName,
+					Name: mockShortKafkaName,
 				},
 			},
-			want: fmt.Sprintf("ext-%s-%s", mockKafkaName, strings.ToLower(mockKafkaRequestID)),
+			want: fmt.Sprintf("ext-%s-%s", mockShortKafkaName, strings.ToLower(mockKafkaRequestID)),
+		},
+		{
+			name: "build syncset identifier with a long name successfully",
+			args: args{
+				kafkaRequest: &api.KafkaRequest{
+					Name: mockLongKafkaName,
+				},
+			},
+			want: fmt.Sprintf("ext-%s-%s", mockLongKafkaName, strings.ToLower(mockKafkaRequestID))[0:truncatedSyncsetIdLen],
 		},
 	}
 	for _, tt := range tests {
