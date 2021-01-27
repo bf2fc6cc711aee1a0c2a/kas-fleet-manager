@@ -275,9 +275,10 @@ func (a *DefaultApiService) CreateServiceAccount(ctx _context.Context, serviceAc
 DeleteKafkaById Delete a kafka request by id
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The id of record
+ * @param async Perform the action in an asynchronous manner
 @return Error
 */
-func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
+func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string, async bool) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -295,6 +296,7 @@ func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string) (Er
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	localVarQueryParams.Add("async", parameterToString(async, ""))
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -332,6 +334,16 @@ func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string) (Er
 		newErr := GenericOpenAPIError{
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
 			var v Error

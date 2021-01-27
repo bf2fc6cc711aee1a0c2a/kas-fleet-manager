@@ -451,8 +451,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 		keycloakService   KeycloakService
 	}
 	type args struct {
-		id  string
-		ctx context.Context
+		kafkaRequest *api.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -467,8 +466,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id:  "",
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
 			},
 			wantErr: true,
 		},
@@ -478,8 +478,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				id:  testID,
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
 			},
 			wantErr: true,
 			setupFn: func() {
@@ -505,8 +506,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				id:  testID,
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
 			},
 			wantErr: true,
 		},
@@ -529,8 +531,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				id:  testID,
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
@@ -560,8 +563,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				id:  testID,
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
@@ -589,7 +593,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
 			}
-			err := k.Delete(tt.args.ctx, tt.args.id)
+			err := k.Delete(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
