@@ -38,6 +38,8 @@ func loadIntegration(env *Env) error {
 		env.Config.Database.Debug = true
 	}
 
+	env.Config.ObservabilityConfiguration.EnableMock = true
+
 	err := env.LoadClients()
 	if err != nil {
 		return err
