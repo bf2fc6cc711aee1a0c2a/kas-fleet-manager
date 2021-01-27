@@ -28,7 +28,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //             CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the Create method")
 //             },
-//             DeleteFunc: func(ctx context.Context, id string) *errors.ServiceError {
+//             DeleteFunc: func(in1 *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the Delete method")
 //             },
 //             GetFunc: func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
@@ -42,6 +42,9 @@ var _ KafkaService = &KafkaServiceMock{}
 //             },
 //             ListByStatusFunc: func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
 // 	               panic("mock out the ListByStatus method")
+//             },
+//             RegisterKafkaDeprovisionJobFunc: func(ctx context.Context, id string) *errors.ServiceError {
+// 	               panic("mock out the RegisterKafkaDeprovisionJob method")
 //             },
 //             RegisterKafkaJobFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the RegisterKafkaJob method")
@@ -66,7 +69,7 @@ type KafkaServiceMock struct {
 	CreateFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(ctx context.Context, id string) *errors.ServiceError
+	DeleteFunc func(in1 *api.KafkaRequest) *errors.ServiceError
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
@@ -79,6 +82,9 @@ type KafkaServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+
+	// RegisterKafkaDeprovisionJobFunc mocks the RegisterKafkaDeprovisionJob method.
+	RegisterKafkaDeprovisionJobFunc func(ctx context.Context, id string) *errors.ServiceError
 
 	// RegisterKafkaJobFunc mocks the RegisterKafkaJob method.
 	RegisterKafkaJobFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
@@ -107,10 +113,8 @@ type KafkaServiceMock struct {
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
-			// Ctx is the ctx argument value.
-			Ctx context.Context
-			// ID is the id argument value.
-			ID string
+			// In1 is the in1 argument value.
+			In1 *api.KafkaRequest
 		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
@@ -136,6 +140,13 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status constants.KafkaStatus
 		}
+		// RegisterKafkaDeprovisionJob holds details about calls to the RegisterKafkaDeprovisionJob method.
+		RegisterKafkaDeprovisionJob []struct {
+			// Ctx is the ctx argument value.
+			Ctx context.Context
+			// ID is the id argument value.
+			ID string
+		}
 		// RegisterKafkaJob holds details about calls to the RegisterKafkaJob method.
 		RegisterKafkaJob []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -154,16 +165,17 @@ type KafkaServiceMock struct {
 			Status constants.KafkaStatus
 		}
 	}
-	lockChangeKafkaCNAMErecords sync.RWMutex
-	lockCreate                  sync.RWMutex
-	lockDelete                  sync.RWMutex
-	lockGet                     sync.RWMutex
-	lockGetById                 sync.RWMutex
-	lockList                    sync.RWMutex
-	lockListByStatus            sync.RWMutex
-	lockRegisterKafkaJob        sync.RWMutex
-	lockUpdate                  sync.RWMutex
-	lockUpdateStatus            sync.RWMutex
+	lockChangeKafkaCNAMErecords     sync.RWMutex
+	lockCreate                      sync.RWMutex
+	lockDelete                      sync.RWMutex
+	lockGet                         sync.RWMutex
+	lockGetById                     sync.RWMutex
+	lockList                        sync.RWMutex
+	lockListByStatus                sync.RWMutex
+	lockRegisterKafkaDeprovisionJob sync.RWMutex
+	lockRegisterKafkaJob            sync.RWMutex
+	lockUpdate                      sync.RWMutex
+	lockUpdateStatus                sync.RWMutex
 }
 
 // ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
@@ -237,33 +249,29 @@ func (mock *KafkaServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *KafkaServiceMock) Delete(ctx context.Context, id string) *errors.ServiceError {
+func (mock *KafkaServiceMock) Delete(in1 *api.KafkaRequest) *errors.ServiceError {
 	if mock.DeleteFunc == nil {
 		panic("KafkaServiceMock.DeleteFunc: method is nil but KafkaService.Delete was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
-		ID  string
+		In1 *api.KafkaRequest
 	}{
-		Ctx: ctx,
-		ID:  id,
+		In1: in1,
 	}
 	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
 	mock.lockDelete.Unlock()
-	return mock.DeleteFunc(ctx, id)
+	return mock.DeleteFunc(in1)
 }
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
 //     len(mockedKafkaService.DeleteCalls())
 func (mock *KafkaServiceMock) DeleteCalls() []struct {
-	Ctx context.Context
-	ID  string
+	In1 *api.KafkaRequest
 } {
 	var calls []struct {
-		Ctx context.Context
-		ID  string
+		In1 *api.KafkaRequest
 	}
 	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
@@ -400,6 +408,41 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
+	return calls
+}
+
+// RegisterKafkaDeprovisionJob calls RegisterKafkaDeprovisionJobFunc.
+func (mock *KafkaServiceMock) RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
+	if mock.RegisterKafkaDeprovisionJobFunc == nil {
+		panic("KafkaServiceMock.RegisterKafkaDeprovisionJobFunc: method is nil but KafkaService.RegisterKafkaDeprovisionJob was just called")
+	}
+	callInfo := struct {
+		Ctx context.Context
+		ID  string
+	}{
+		Ctx: ctx,
+		ID:  id,
+	}
+	mock.lockRegisterKafkaDeprovisionJob.Lock()
+	mock.calls.RegisterKafkaDeprovisionJob = append(mock.calls.RegisterKafkaDeprovisionJob, callInfo)
+	mock.lockRegisterKafkaDeprovisionJob.Unlock()
+	return mock.RegisterKafkaDeprovisionJobFunc(ctx, id)
+}
+
+// RegisterKafkaDeprovisionJobCalls gets all the calls that were made to RegisterKafkaDeprovisionJob.
+// Check the length with:
+//     len(mockedKafkaService.RegisterKafkaDeprovisionJobCalls())
+func (mock *KafkaServiceMock) RegisterKafkaDeprovisionJobCalls() []struct {
+	Ctx context.Context
+	ID  string
+} {
+	var calls []struct {
+		Ctx context.Context
+		ID  string
+	}
+	mock.lockRegisterKafkaDeprovisionJob.RLock()
+	calls = mock.calls.RegisterKafkaDeprovisionJob
+	mock.lockRegisterKafkaDeprovisionJob.RUnlock()
 	return calls
 }
 
