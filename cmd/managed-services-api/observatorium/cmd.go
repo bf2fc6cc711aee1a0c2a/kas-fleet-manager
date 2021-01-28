@@ -18,7 +18,7 @@ func NewRunObservatoriumCommand() *cobra.Command {
 	}
 
 	// add sub-commands
-	cmd.AddCommand(NewRunFetchMetricsCommand())
-
+	cmd.AddCommand(NewRunGetStateCommand())
+	cmd.AddCommand(NewRunListMetricsCommand())
 	return cmd
 }
