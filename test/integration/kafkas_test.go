@@ -545,10 +545,23 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
-	Expect(err).NotTo(HaveOccurred(), "retrieving non-existent kafka should throw an error")
+	Expect(err).NotTo(HaveOccurred(), "It should be possible to retrieve kafka marked for deletion")
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+
+	// wait for kafka to be deleted
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id); err != nil {
+			if err.Error() == "404 Not Found" {
+				return true, nil
+			}
+
+			return false, err
+		}
+		return false, nil
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }
 
 // TestKafkaDelete - tests Fail kafka delete if calling as sync
@@ -937,5 +950,18 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 
 func deleteTestKafka(ctx context.Context, client *openapi.APIClient, kafkaID string) {
 	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+
+	// wait for kafka to be deleted
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafkaID); err != nil {
+			if err.Error() == "404 Not Found" {
+				return true, nil
+			}
+
+			return false, err
+		}
+		return false, nil
+	})
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }
