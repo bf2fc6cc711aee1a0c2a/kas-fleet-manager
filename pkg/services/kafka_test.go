@@ -3,13 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"net/http"
 	"reflect"
 	"testing"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -444,7 +443,7 @@ func Test_kafkaService_Create(t *testing.T) {
 	}
 }
 
-func Test_kafkaService_Delete(t *testing.T) {
+func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
@@ -593,7 +592,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
 			}
-			err := k.Delete(tt.args.kafkaRequest)
+			err := k.RegisterKafkaDeprovisionJob(context.TODO(), tt.args.kafkaRequest.ID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -1022,7 +1021,10 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+			},
+			args: args{
+				id: testID,
 			},
 		},
 	}
