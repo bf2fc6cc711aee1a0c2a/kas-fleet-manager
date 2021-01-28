@@ -3,6 +3,9 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	. "github.com/onsi/gomega"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
@@ -11,9 +14,9 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
-	"net/http"
-	"testing"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -73,7 +76,6 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	_, err = service.GetMetricsByKafkaId(ctx, metricsList, seedKafka.Id, q)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka metrics:  %v", err)
 	Expect(len(*metricsList)).NotTo(Equal(0), "Should return length greater then zero")
-
 }
 
 func TestObservatorium_GetMetricsByKafkaId(t *testing.T) {
@@ -83,6 +85,14 @@ func TestObservatorium_GetMetricsByKafkaId(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
+
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
@@ -98,6 +108,15 @@ func TestObservatorium_GetMetricsByKafkaId(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
+	var foundKafka openapi.KafkaRequest
+	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
+	})
+
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
@@ -108,7 +127,7 @@ func TestObservatorium_GetMetricsByKafkaId(t *testing.T) {
 	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusAccepted.String()))
+	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
@@ -128,5 +147,4 @@ func TestObservatorium_GetMetricsByKafkaId(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metric data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metric.Items)).NotTo(Equal(0))
-
 }
