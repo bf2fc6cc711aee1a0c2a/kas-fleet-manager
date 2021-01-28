@@ -3,13 +3,14 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"regexp"
-
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strconv"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
@@ -152,4 +153,20 @@ func validateLength(value *string, field string, minVal *int, maxVal *int) valid
 		}
 		return nil
 	}
+}
+
+func validatQueryParam(queryParams url.Values, field string) validate {
+
+	return func() *errors.ServiceError {
+		fieldValue := queryParams.Get(field)
+		if fieldValue == "" {
+			return errors.FailedToParseQueryParms("bad request, cannot parse query parameter '%s' '%s'", field, fieldValue)
+		}
+		if _, err := strconv.ParseInt(fieldValue, 10, 64); err != nil {
+			return errors.FailedToParseQueryParms("bad request, cannot parse query parameter '%s' '%s'", field, fieldValue)
+		}
+
+		return nil
+	}
+
 }

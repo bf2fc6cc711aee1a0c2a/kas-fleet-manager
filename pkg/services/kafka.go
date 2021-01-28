@@ -174,7 +174,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return nil, handleGetError("KafkaResource", "id", id, err)
+		return nil, handleGetError("KafkaResource for user "+user, "id", id, err)
 	}
 	return &kafkaRequest, nil
 }

@@ -147,7 +147,7 @@ func (env *Env) LoadServices() error {
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.ClusterCreationConfig, *env.Config.ObservabilityConfiguration)
-	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium)
+	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
