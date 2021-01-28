@@ -551,6 +551,51 @@ func TestKafkaDelete_Success(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 }
 
+// TestKafkaDelete - tests Fail kafka delete if calling as sync
+func TestKafkaDelete_FailSync(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+	k := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+	}
+
+	var kafka openapi.KafkaRequest
+	var resp *http.Response
+	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+		if err != nil {
+			return true, err
+		}
+		return resp.StatusCode == http.StatusAccepted, err
+	})
+
+	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+
+	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, false)
+	Expect(err).To(HaveOccurred(), "Failed to delete kafka request: %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest), "Status code for delete kafka response with async 'false' should be %d. Got: %d", http.StatusBadRequest, resp.StatusCode)
+}
+
 // TestKafkaDelete_WithoutID - should result in 405 code being returned
 func TestKafkaDelete_WithoutID(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
