@@ -19,7 +19,7 @@ const (
 	KafkaRequestStatusReady KafkaStatus = "ready"
 	// KafkaRequestStatusFailed - kafka request failed
 	KafkaRequestStatusFailed KafkaStatus = "failed"
-	// KafkaRequestStatusDeprovision - kafka request status when accepted by kafka worker
+	// KafkaRequestStatusDeprovision - kafka request status when to be deleted by kafka
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
 
 	// KafkaOperationCreate - Kafka cluster create operations
