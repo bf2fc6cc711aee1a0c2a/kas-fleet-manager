@@ -86,6 +86,21 @@ func (c *KafkaManager) SetIsRunning(val bool) {
 func (k *KafkaManager) reconcile() {
 	glog.V(5).Infoln("reconciling kafkas")
 
+	// handle deprovisioning requests
+	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
+	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
+		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
+	}
+
+	for _, kafka := range deprovisioningRequests {
+		if err := k.reconcileDeprovisioningRequest(kafka); err != nil {
+			sentry.CaptureException(err)
+			glog.Errorf("failed to reconcile deprovisioning request %s: %s", kafka.ID, err.Error())
+			continue
+		}
+	}
+
 	// handle accepted kafkas
 	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusAccepted)
 	if serviceErr != nil {
@@ -150,6 +165,14 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
 		}
 	}
+	return nil
+}
+
+func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
+	if err := k.kafkaService.Delete(kafka); err != nil {
+		return fmt.Errorf("failed to delete kafka %s: %w", kafka.ID, err)
+	}
+
 	return nil
 }
 

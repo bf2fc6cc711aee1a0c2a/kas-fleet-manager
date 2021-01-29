@@ -28,13 +28,14 @@ type KafkaService interface {
 	// GetById method will retrieve the KafkaRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
 	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
-	Delete(ctx context.Context, id string) *errors.ServiceError
+	Delete(*api.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
 	UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 }
 
 var _ KafkaService = &kafkaService{}
@@ -142,6 +143,10 @@ func (k *kafkaService) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaR
 
 	var kafkas []*api.KafkaRequest
 
+	if err := dbConn.Model(&api.KafkaRequest{}).Scan(&kafkas).Error; err != nil {
+		return nil, errors.GeneralError(err.Error())
+	}
+
 	if err := dbConn.Model(&api.KafkaRequest{}).Where("status = ?", status).Scan(&kafkas).Error; err != nil {
 		return nil, errors.GeneralError(err.Error())
 	}
@@ -192,12 +197,8 @@ func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceErr
 	return &kafkaRequest, nil
 }
 
-// Delete deletes a kafka request and its corresponding syncset from
-// the associated cluster it was deployed on. Deleting the syncset will
-// delete all resources (Kafka CR, Project) associated with the syncset.
-// The kafka object in the database will be updated with a deleted_at
-// timestamp.
-func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceError {
+// RegisterKafkaJob registers a kafka deprovision job in the kafka table
+func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
 	if id == "" {
 		return errors.Validation("id is undefined")
 	}
@@ -211,47 +212,64 @@ func (k *kafkaService) Delete(ctx context.Context, id string) *errors.ServiceErr
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
 		return handleGetError("KafkaResource", "id", id, err)
 	}
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
-	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
-
-	// delete the kafka client in mas sso
-	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		keycloakErr := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
-		if keycloakErr != nil {
-			return errors.GeneralError("error deleting sso client: %v", keycloakErr)
-		}
+	if err := k.UpdateStatus(id, constants.KafkaRequestStatusDeprovision); err != nil {
+		return handleGetError("KafkaResource", "id", id, err)
 	}
+	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+	return nil
+}
 
-	// ClusterID is empty only for Accepted kafka requests
-	if k.kafkaConfig.EnableKafkaExternalCertificate && kafkaRequest.ClusterID != "" {
-		clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
-		if err != nil || clusterDNS == "" {
+// Delete deletes a kafka request and its corresponding syncset from
+// the associated cluster it was deployed on. Deleting the syncset will
+// delete all resources (Kafka CR, Project) associated with the syncset.
+// The kafka object in the database will be updated with a deleted_at
+// timestamp.
+func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+
+	// if the we don't have the clusterID we can only delete the row from the database
+	if kafkaRequest.ClusterID != "" {
+		// delete the kafka client in mas sso
+		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+			keycloakErr := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
+			if keycloakErr != nil {
+				return errors.GeneralError("error deleting sso client: %v", keycloakErr)
+			}
+		}
+
+		if k.kafkaConfig.EnableKafkaExternalCertificate {
+			clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
+			if err != nil || clusterDNS == "" {
+				sentry.CaptureException(err)
+				return errors.GeneralError("error retrieving cluster DNS: %v", err)
+			}
+			clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+
+			_, err = k.ChangeKafkaCNAMErecords(kafkaRequest, clusterDNS, "DELETE")
+			if err != nil {
+				return err
+			}
+		}
+
+		// delete the syncset
+		syncsetId := buildSyncsetIdentifier(kafkaRequest)
+		statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
+
+		if err != nil && statucCode != http.StatusNotFound {
 			sentry.CaptureException(err)
-			return errors.GeneralError("error retrieving cluster DNS: %v", err)
+			return errors.GeneralError("error deleting syncset: %v", err)
 		}
-		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
-
-		_, err = k.ChangeKafkaCNAMErecords(&kafkaRequest, clusterDNS, "DELETE")
-		if err != nil {
-			return err
-		}
-	}
-
-	// delete the syncset
-	syncsetId := buildSyncsetIdentifier(&kafkaRequest)
-	statusCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
-
-	if err != nil && statusCode != http.StatusNotFound {
-		sentry.CaptureException(err)
-		return errors.GeneralError("error deleting syncset: %v", err)
 	}
 
 	// soft delete the kafka request
-	if err := dbConn.Delete(&kafkaRequest).Error; err != nil {
+	if err := dbConn.Delete(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("unable to delete kafka request with id %s: %s", kafkaRequest.ID, err)
 	}
 
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
 	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDelete)
 
 	return nil
@@ -330,6 +348,14 @@ func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErro
 
 func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
+
+	if kafka, err := k.GetById(id); err != nil {
+		return errors.GeneralError("failed to update status: %s", err.Error())
+	} else {
+		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
+			return errors.GeneralError("failed to update status: Kafka cluster id %s is deprovisining", id)
+		}
+	}
 
 	if err := dbConn.Model(&api.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
 		return errors.GeneralError("failed to update status: %s", err.Error())
