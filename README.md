@@ -216,7 +216,7 @@ $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
 ```
 #### Using an existing OSD Cluster
 Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
-cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.
+cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.  The cluster must have been created with multizone availability.
 
 1. Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`). There are two ways of getting this:
    - From the cluster overview URL. 
@@ -248,7 +248,7 @@ cluster, you will need to register it in the database so that it can be used by 
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
-$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi"}'
+$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
 
 # Login to the database
 $ make db/login
