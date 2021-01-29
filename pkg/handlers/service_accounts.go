@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
@@ -24,13 +26,16 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			sa, err := s.service.ListServiceAcc(ctx)
+			Page, Size := s.handleParams(r.URL.Query())
+			sa, err := s.service.ListServiceAcc(ctx, Page, Size)
 			if err != nil {
 				return nil, err
 			}
 
 			serviceAccountList := openapi.ServiceAccountList{
 				Kind:  "ServiceAccountList",
+				Page:  int32(Page),
+				Size:  int32(Size),
 				Items: []openapi.ServiceAccountListItem{},
 			}
 
@@ -44,6 +49,18 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 		ErrorHandler: handleError,
 	}
 	handleList(w, r, cfg)
+}
+
+func (s serviceAccountsHandler) handleParams(params url.Values) (int, int) {
+	Page := 1
+	Size := 100
+	if v := params.Get("page"); v != "" {
+		Page, _ = strconv.Atoi(v)
+	}
+	if v := params.Get("size"); v != "" {
+		Size, _ = strconv.Atoi(v)
+	}
+	return Page, Size
 }
 
 func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *http.Request) {

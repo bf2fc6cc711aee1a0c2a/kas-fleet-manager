@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
-	github.com/Nerzal/gocloak/v7 v7.5.0
+	github.com/Nerzal/gocloak/v8 v8.1.1
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/aws/aws-sdk-go v1.36.5

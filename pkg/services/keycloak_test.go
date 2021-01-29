@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	gocloak "github.com/Nerzal/gocloak/v7"
+	gocloak "github.com/Nerzal/gocloak/v8"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/keycloak"
@@ -469,7 +469,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
 						return true
 					},
-					GetClientsFunc: func(accessToken string) ([]*gocloak.Client, error) {
+					GetClientsFunc: func(accessToken string, first int, max int) ([]*gocloak.Client, error) {
 						testClient := []*gocloak.Client{}
 						return testClient, nil
 					},
@@ -488,7 +488,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			got, err := keycloakService.ListServiceAcc(tt.args.ctx)
+			got, err := keycloakService.ListServiceAcc(tt.args.ctx, 0, 10)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}

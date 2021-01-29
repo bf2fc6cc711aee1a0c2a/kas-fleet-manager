@@ -9,4 +9,8 @@ const (
 	FlagDesc = "description"
 	// FlagOrgID is a flag representing the OCM org id
 	FlagOrgID = "org-id"
+	// FlagFirst is a flag representing listing the first results
+	FlagFirst = "first"
+	// FlagMax is a flag representing listing the max results
+	FlagMax = "max"
 )
