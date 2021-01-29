@@ -291,7 +291,7 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 		{
 			name: "HTTP 403 when deleting new kafka request",
 			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.DeleteKafkaById(ctx, "kafka-id")
+				_, resp, _ := client.DefaultApi.DeleteKafkaById(ctx, "kafka-id", true)
 				return resp
 			},
 		},
@@ -541,14 +541,72 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
+	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
-	Expect(err).To(HaveOccurred(), "retrieving non-existent kafka should throw an error")
-	Expect(foundKafka.Id).Should(BeEmpty(), " Kafka ID should be deleted")
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+	Expect(err).NotTo(HaveOccurred(), "It should be possible to retrieve kafka marked for deletion")
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+
+	// wait for kafka to be deleted
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id); err != nil {
+			if err.Error() == "404 Not Found" {
+				return true, nil
+			}
+
+			return false, err
+		}
+		return false, nil
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+}
+
+// TestKafkaDelete - tests Fail kafka delete if calling as sync
+func TestKafkaDelete_FailSync(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account)
+	k := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+	}
+
+	var kafka openapi.KafkaRequest
+	var resp *http.Response
+	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+		if err != nil {
+			return true, err
+		}
+		return resp.StatusCode == http.StatusAccepted, err
+	})
+
+	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+
+	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, false)
+	Expect(err).To(HaveOccurred(), "Failed to delete kafka request: %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest), "Status code for delete kafka response with async 'false' should be %d. Got: %d", http.StatusBadRequest, resp.StatusCode)
 }
 
 // TestKafkaDelete_WithoutID - should result in 405 code being returned
@@ -562,7 +620,7 @@ func TestKafkaDelete_WithoutID(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
 
-	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, "")
+	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, "", true)
 	Expect(err).To(HaveOccurred(), "Error should be thrown if no ID is provided: %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusMethodNotAllowed), "Status code for delete kafka response without kafka ID should be %d. Got: %d", http.StatusMethodNotAllowed, resp.StatusCode)
 	Expect(resp.Body).NotTo(Equal(""), "Body should be returned when trying to hit /kafkas delete without kafka ID")
@@ -639,24 +697,25 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// wait a few seconds to ensure that deletion is triggered during kafka syncset creation
 	time.Sleep(kafkaCheckInterval)
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
+	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
-	// Sleep for worker interval duration to ensure kafka manager reconciliation has finished
-	time.Sleep(workers.RepeatInterval)
+	// Sleep for worker interval duration to ensure kafka manager reconciliation has finished: 1 time for
+	// updating the status to `deprovision` and one time for the real deletion
+	time.Sleep(workers.RepeatInterval * 2)
 	kafkaList, _, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
-	// Check status of soft deleted kafka request. Status should not be updated
+	// Check status of soft deleted kafka request. Status should not be 'deprovision'
 	db := h.Env().DBFactory.New()
 	var kafkaRequest openapi.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find soft deleted kafka request")
 	}
-	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusPreparing.String()))
+	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
 }
 
 // TestKafkaDelete - tests fail kafka delete
@@ -677,7 +736,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 		Id:            "invalid-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9",
 	}
 
-	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
+	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).To(HaveOccurred())
 	// The id is invalid, so the metric is not expected to exist
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount), false)
@@ -737,7 +796,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	// attempt to delete kafka not created by the owner (should result in an error)
 	account = h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account)
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id)
+	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).To(HaveOccurred())
 
 	// delete test kafka to free up resources on an OSD cluster
@@ -890,6 +949,19 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 }
 
 func deleteTestKafka(ctx context.Context, client *openapi.APIClient, kafkaID string) {
-	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID)
+	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+
+	// wait for kafka to be deleted
+	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafkaID); err != nil {
+			if err.Error() == "404 Not Found" {
+				return true, nil
+			}
+
+			return false, err
+		}
+		return false, nil
+	})
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }

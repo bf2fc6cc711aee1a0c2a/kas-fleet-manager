@@ -48,10 +48,9 @@ func runDelete(cmd *cobra.Command, _ []string) {
 
 	ctx := auth.SetUsernameContext(context.TODO(), owner)
 
-	err := kafkaService.Delete(ctx, id)
-	if err != nil {
-		glog.Fatalf("Unable to delete kafka request: %s", err.Error())
+	if err := kafkaService.RegisterKafkaDeprovisionJob(ctx, id); err != nil {
+		glog.Fatalf("Unable to register the deprovisioning request: %s", err.Error())
+	} else {
+		glog.V(10).Infof("Deprovisioning request accepted for kafka cluster with id %s", id)
 	}
-
-	glog.V(10).Infof("Deleted kafka request with id %s", id)
 }

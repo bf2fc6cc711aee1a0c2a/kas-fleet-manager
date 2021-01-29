@@ -85,7 +85,7 @@ Name | Type | Description  | Notes
 
 ## DeleteKafkaById
 
-> Error DeleteKafkaById(ctx, id)
+> Error DeleteKafkaById(ctx, id, async)
 
 Delete a kafka request by id
 
@@ -96,6 +96,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
 **id** | **string**| The id of record | 
+**async** | **bool**| Perform the action in an asynchronous manner | 
 
 ### Return type
 
