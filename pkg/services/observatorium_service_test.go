@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 )
 
 func Test_ObservatoriumService_GetKafkaState(t *testing.T) {

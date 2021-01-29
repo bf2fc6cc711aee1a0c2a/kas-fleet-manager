@@ -3,13 +3,13 @@ package integration
 import (
 	"testing"
 
+	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
-	api "gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
 func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {

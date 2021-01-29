@@ -1,9 +1,9 @@
 package syncsetresources
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"

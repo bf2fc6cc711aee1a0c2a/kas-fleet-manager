@@ -7,25 +7,25 @@ import (
 	"sync"
 	"time"
 
+	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/pkg/errors"
-	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	storagev1 "k8s.io/api/storage/v1"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
-	svcErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	projectv1 "github.com/openshift/api/project/v1"
 	k8sCoreV1 "k8s.io/api/core/v1"

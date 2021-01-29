@@ -2,12 +2,12 @@ package integration
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"gopkg.in/resty.v1"
 	"net/http"
 	"testing"

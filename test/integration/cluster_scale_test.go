@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"testing"
 
+	clusterscalecmd "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/cluster"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	clusterscalecmd "gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
 func TestClusterComputeNodesScaling(t *testing.T) {

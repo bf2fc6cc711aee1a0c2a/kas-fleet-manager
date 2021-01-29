@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 func Test_removeExcessiveWhiteSpaces(t *testing.T) {

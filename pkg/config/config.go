@@ -190,7 +190,7 @@ func readFile(file string) (string, error) {
 
 // GetProjectRootDir returns the root directory of the project.
 // The root directory of the project is the directory that contains the go.mod file which contains
-// the "gitlab.cee.redhat.com/service/managed-services-api" module name.
+// the "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager" module name.
 func GetProjectRootDir() string {
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -207,9 +207,9 @@ func GetProjectRootDir() string {
 			continue
 		}
 		// The project root directory is obtained based on the assumption that module name,
-		// "gitlab.cee.redhat.com/service/managed-services-api", is contained in the 'go.mod' file.
+		// "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager", is contained in the 'go.mod' file.
 		// Should the module name change in the code repo then it needs to be changed here too.
-		if strings.Contains(string(goModFile),"gitlab.cee.redhat.com/service/managed-services-api")  {
+		if strings.Contains(string(goModFile), "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager") {
 			break
 		}
 	}

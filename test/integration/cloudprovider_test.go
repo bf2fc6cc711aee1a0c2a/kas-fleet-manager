@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
 func TestCloudProviderRegions(t *testing.T) {

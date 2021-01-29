@@ -14,11 +14,10 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -29,13 +28,13 @@ import (
 
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
-	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 )
 
 const (

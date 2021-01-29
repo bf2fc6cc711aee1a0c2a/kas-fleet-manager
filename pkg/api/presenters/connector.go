@@ -2,9 +2,10 @@ package presenters
 
 import (
 	"encoding/json"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/private/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 func ConvertConnector(from openapi.Connector) (*api.Connector, *errors.ServiceError) {

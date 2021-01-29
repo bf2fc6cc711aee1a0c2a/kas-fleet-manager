@@ -41,11 +41,11 @@ To get the org id:
 ## Compile from master branch
 ```
 # Change current directory to your source code folder (ie: cd <any_your_source_code_folder>)
-$ git clone https://gitlab.cee.redhat.com/service/managed-services-api.git
+$ git clone https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git managed-services-api
 $ cd managed-services-api
 $ git checkout master
 $ make binary
-$ ./managed-services-api -h
+$ ./kas-fleet-manager -h
 ```
 
 ## Configuring Observability
@@ -84,9 +84,9 @@ follow this process again to generate a new token.
                        List of relations
      Schema |      Name      | Type  |        Owner         
     --------+----------------+-------+----------------------
-     public | clusters       | table | managed_services_api
-     public | kafka_requests | table | managed_services_api
-     public | migrations     | table | managed_services_api
+     public | clusters       | table | kas_fleet_manager
+     public | kafka_requests | table | kas_fleet_manager
+     public | migrations     | table | kas_fleet_manager
     ```
 
 3.  Setup AWS credentials 
@@ -136,7 +136,7 @@ follow this process again to generate a new token.
    
 6. Running the service locally
     ```
-    $ ./managed-services-api serve  (default: http://localhost:8000)
+    $ ./kas-fleet-manager serve  (default: http://localhost:8000)
     ```
 
 ## Running the Service on an OpenShift cluster
@@ -166,7 +166,7 @@ $ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 - `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
 
 ### Deploy the Service using Templates
-This will deploy a postgres database and the managed-services-api to a namespace in an OpenShift cluster.
+This will deploy a postgres database and the kas-fleet-manager to a namespace in an OpenShift cluster.
 
 ```
 # Deploy the service
@@ -175,7 +175,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the service will be deployed to. Defaults to managed-services-$USER.
 - `IMAGE_REGISTRY`: Registry used by the image. Defaults to the OpenShift internal registry.
-- `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/managed-services-api'.
+- `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/kas-fleet-manager'.
 - `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
 - `OCM_SERVICE_CLIENT_ID`: Client id used to interact with other UHC services.
 - `OCM_SERVICE_CLIENT_SECRET`: Client secret used to interact with other UHC services.
@@ -211,7 +211,7 @@ $ make undeploy
 ```
 # Create a new cluster (OSD). 
 # The following command will register a cluster request which will be reconciled by the cluster worker
-$ ./managed-services-api cluster create
+$ ./kas-fleet-manager cluster create
 
 # Verify cluster record is created 
 # Login to the database
@@ -253,7 +253,7 @@ cluster, you will need to register it in the database so that it can be used by 
         - Login to the local database using `make db/login`
         - Ensure that the **clusters** table is available.
             - Create the binary by running `make binary`
-            - Run `./managed-services-api migrate`
+            - Run `./kas-fleet-manager migrate`
         - Once the table is available, the generated **INSERT** command can now be run.
 
 3. Ensure the cluster is ready to be used for incoming Kafka requests.
@@ -375,9 +375,9 @@ See the [setup git hooks](CONTRIBUTING.md#set-up-git-hooks) section in the contr
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
 with the service (i.e. cluster creation/scaling, Kafka creation, Errors list, etc.) without having to use a REST API client.
 
-To use these commands, run `make binary` to create the `./managed-services-api` CLI.
+To use these commands, run `make binary` to create the `./kas-fleet-manager` CLI.
 
-Run `./managed-services-api -h` for information on the additional commands.
+Run `./kas-fleet-manager -h` for information on the additional commands.
 
 ### Running unit tests
 ```

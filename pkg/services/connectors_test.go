@@ -5,11 +5,11 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	mocket "github.com/selvatico/go-mocket"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
-	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
 )
 
 var (

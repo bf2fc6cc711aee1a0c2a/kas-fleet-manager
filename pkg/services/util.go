@@ -5,11 +5,11 @@ import (
 	"regexp"
 	"strings"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/jinzhu/gorm"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 )

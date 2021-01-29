@@ -34,7 +34,7 @@ mkdir -p "${XDG_RUNTIME_DIR}"
 export GOBIN="${PWD}/.gobin"
 export PATH="${GOBIN}:${PATH}"
 
-export IMAGE_NAME="test/managed-services-api"
+export IMAGE_NAME="test/kas-fleet-manager"
 export ENV MAS_SSO_CLIENT_ID="test-managed-services-api"
 export MAS_SSO_CLIENT_SECRET="***REMOVED***"
 INTEGRATION_ENV="integration"

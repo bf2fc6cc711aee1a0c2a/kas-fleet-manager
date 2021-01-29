@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
 // handlerConfig defines the common things each REST controller must do.

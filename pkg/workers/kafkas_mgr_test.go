@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {

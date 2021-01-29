@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 // SendNotFound sends a 404 response with some details about the non existing resource.

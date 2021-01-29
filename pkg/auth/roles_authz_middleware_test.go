@@ -1,13 +1,14 @@
 package auth
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	"github.com/openshift-online/ocm-sdk-go/authentication"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
 func setContextToken(next http.Handler, token *jwt.Token) http.Handler {

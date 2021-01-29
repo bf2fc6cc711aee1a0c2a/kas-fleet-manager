@@ -3,13 +3,13 @@ package services
 import (
 	"fmt"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 //go:generate moq -out syncset_moq.go . SyncsetService

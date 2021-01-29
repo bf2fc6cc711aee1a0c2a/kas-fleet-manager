@@ -6,11 +6,11 @@ import (
 	"testing"
 
 	"github.com/antihax/optional"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 )
 
 const (

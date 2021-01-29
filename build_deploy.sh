@@ -37,7 +37,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 # Set the Go path:
 export GOPATH="${PWD}/.gopath"
 export PATH="${PATH}:${GOPATH}/bin"
-LINK="${GOPATH}/src/gitlab.cee.redhat.com/service/managed-services-api"
+LINK="${GOPATH}/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager"
 
 # print go version
 go version  

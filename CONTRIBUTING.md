@@ -26,16 +26,14 @@ export PATH=$PATH:$GOPATH/bin
 
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
 
-Fork managed-services-api to your own gitlab repository: https://gitlab.cee.redhat.com/service/managed-services-api/forks/new
-
-**IMPORTANT**: The [devtools-bot](https://gitlab.cee.redhat.com/devtools-bot) user needs to be added as a `Maintainer` to your fork in order for your merge requests (MRs) to pass CI checks.
+Fork kas-fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/fork
 
 ```sh
 cd $GOPATH
-git clone git@gitlab.cee.redhat.com:{username}/managed-services-api.git src/gitlab.cee.redhat.com/service/managed-services-api
+git clone https://github.com/{username}/kas-fleet-manager.git src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 
-cd $GOPATH/src/gitlab.cee.redhat.com/service/managed-services-api
-git remote add upstream git@gitlab.cee.redhat.com:service/managed-services-api.git
+cd $GOPATH/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+git remote add upstream https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 ```
 
 Resulting workspace:
@@ -45,10 +43,10 @@ $GOPATH
   /bin
   /pkg
   /src
-    /gitlab.cee.rh.com/service/
-      /managed-services-api  -- our git root
+    /github.com/bf2fc6cc711aee1a0c2a/
+      /kas-fleet-manager -- our git root
         /cmd
-          /managed-services-api  -- Main CLI entrypoint
+          /kas-fleet-manager  -- Main CLI entrypoint
         /pkg
           /api      -- type definitions and models (Note. openapi folder is generated - see below)
           /config   -- configuration handling
@@ -79,11 +77,11 @@ Set the following configuration in your **Launch.json** file.
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Managed Service API",
+            "name": "Kas Fleet Manager API",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/managed-services-api/main.go",
+            "program": "${workspaceFolder}/cmd/kas-fleet-manager/main.go",
             "env": {
                 "OCM_ENV": "development"
             },
@@ -143,7 +141,7 @@ $ make install
 The `go.mod` file we automatically be updated with the new required project, the `go.sum` file will be generated.
 
 ## Modifying the API definition
-The services' OpenAPI specification is located in `openapi/managed-services-api.yaml`. It can be modified using Apicurio Studio or Swagger.
+The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio or Swagger.
 
 Once you've made your changes, the second step is to validate it:
 

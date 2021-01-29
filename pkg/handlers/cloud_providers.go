@@ -3,11 +3,11 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
 type cloudProvidersHandler struct {

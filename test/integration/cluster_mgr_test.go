@@ -5,20 +5,20 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
+	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	ocm "gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/common"
-	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
