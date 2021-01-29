@@ -44,8 +44,8 @@ const (
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	ingressReplicas                 = int32(3)
 	alertManagerSecretNamespace     = "managed-application-services-observability"
-	deadmanSnitchSecretName         = "observability-alertmanager-deadmanssnitch"
-	pagerDutySecretName             = "observability-alertmanager-pagerduty"
+	deadmanSnitchSecretName         = "redhat-managed-kafka-deadmanssnitch"
+	pagerDutySecretName             = "redhat-managed-kafka-pagerduty"
 )
 
 var observabilityCanaryPodSelector = map[string]string{
