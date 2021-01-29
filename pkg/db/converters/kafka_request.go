@@ -3,7 +3,7 @@ package converters
 import (
 	"encoding/json"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
 func ConvertKafkaRequest(request *api.KafkaRequest) []map[string]interface{} {

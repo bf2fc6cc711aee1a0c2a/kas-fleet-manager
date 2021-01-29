@@ -3,18 +3,18 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/xeipuuv/gojsonschema"
 	"net/http"
-	"regexp"
-
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"net/url"
+	"regexp"
 	"strconv"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/xeipuuv/gojsonschema"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 var (

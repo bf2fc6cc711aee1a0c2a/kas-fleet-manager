@@ -12,16 +12,17 @@ import (
 	"reflect"
 	"sync"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"time"
 
+	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
+
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	ocmErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 const (

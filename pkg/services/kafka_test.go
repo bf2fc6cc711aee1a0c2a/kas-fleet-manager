@@ -3,22 +3,23 @@ package services
 import (
 	"context"
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/clusterservicetest"
 	"net/http"
 	"reflect"
 	"testing"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
-	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 var (

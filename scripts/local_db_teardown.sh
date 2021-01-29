@@ -12,4 +12,4 @@ docker stop kas-fleet-manager-db
 
 docker rm kas-fleet-manager-db
 
-docker network rm managed-services-api-network
+docker network rm kas-fleet-manager-network

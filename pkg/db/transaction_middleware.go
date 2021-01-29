@@ -7,8 +7,8 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
 // TransactionMiddleware creates a new HTTP middleware that begins a database transaction

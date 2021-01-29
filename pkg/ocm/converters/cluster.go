@@ -1,8 +1,8 @@
 package converters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 )
 
 // ConvertCluster convert an OCM cluster type from the Cluster Service to an internal cluster type for this

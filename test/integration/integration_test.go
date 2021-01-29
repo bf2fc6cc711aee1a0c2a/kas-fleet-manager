@@ -8,7 +8,7 @@ import (
 
 	"github.com/golang/glog"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 )
 
 func TestMain(m *testing.M) {

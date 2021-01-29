@@ -12,7 +12,7 @@ package auth
 import (
 	"net/http"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 )
 
 type AuthorizationMiddleware interface {

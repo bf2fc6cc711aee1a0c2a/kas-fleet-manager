@@ -2,10 +2,11 @@ package syncsetresources
 
 import (
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
-	managedkafka "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

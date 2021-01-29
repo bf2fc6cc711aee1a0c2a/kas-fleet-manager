@@ -1,9 +1,9 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"testing"
 	"time"

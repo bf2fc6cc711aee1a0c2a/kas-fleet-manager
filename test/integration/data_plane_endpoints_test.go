@@ -1,14 +1,15 @@
 package integration
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/private/openapi"
-	"gitlab.cee.redhat.com/service/managed-services-api/test"
-	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
-	"gopkg.in/resty.v1"
 	"net/http"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/dgrijalva/jwt-go"
+	. "github.com/onsi/gomega"
+	"gopkg.in/resty.v1"
 )
 
 func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {

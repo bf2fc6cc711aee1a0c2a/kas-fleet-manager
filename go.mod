@@ -1,4 +1,4 @@
-module gitlab.cee.redhat.com/service/managed-services-api
+module github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 
 go 1.12
 

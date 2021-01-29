@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
 type AllowListMiddleware struct {
