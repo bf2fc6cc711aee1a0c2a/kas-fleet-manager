@@ -39,7 +39,7 @@ var _ KeycloakService = &KeycloakServiceMock{}
 //             IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
 // 	               panic("mock out the IsKafkaClientExist method")
 //             },
-//             ListServiceAccFunc: func(ctx context.Context) ([]api.ServiceAccount, *errors.ServiceError) {
+//             ListServiceAccFunc: func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 // 	               panic("mock out the ListServiceAcc method")
 //             },
 //             RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
@@ -74,7 +74,7 @@ type KeycloakServiceMock struct {
 	IsKafkaClientExistFunc func(clientId string) *errors.ServiceError
 
 	// ListServiceAccFunc mocks the ListServiceAcc method.
-	ListServiceAccFunc func(ctx context.Context) ([]api.ServiceAccount, *errors.ServiceError)
+	ListServiceAccFunc func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
 
 	// RegisterKafkaClientInSSOFunc mocks the RegisterKafkaClientInSSO method.
 	RegisterKafkaClientInSSOFunc func(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
@@ -120,6 +120,10 @@ type KeycloakServiceMock struct {
 		ListServiceAcc []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
+			// First is the first argument value.
+			First int
+			// Max is the max argument value.
+			Max int
 		}
 		// RegisterKafkaClientInSSO holds details about calls to the RegisterKafkaClientInSSO method.
 		RegisterKafkaClientInSSO []struct {
@@ -337,29 +341,37 @@ func (mock *KeycloakServiceMock) IsKafkaClientExistCalls() []struct {
 }
 
 // ListServiceAcc calls ListServiceAccFunc.
-func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context) ([]api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	if mock.ListServiceAccFunc == nil {
 		panic("KeycloakServiceMock.ListServiceAccFunc: method is nil but KeycloakService.ListServiceAcc was just called")
 	}
 	callInfo := struct {
-		Ctx context.Context
+		Ctx   context.Context
+		First int
+		Max   int
 	}{
-		Ctx: ctx,
+		Ctx:   ctx,
+		First: first,
+		Max:   max,
 	}
 	mock.lockListServiceAcc.Lock()
 	mock.calls.ListServiceAcc = append(mock.calls.ListServiceAcc, callInfo)
-	mock.lockListServiceAcc.Unlock()
-	return mock.ListServiceAccFunc(ctx)
+	lockKeycloakServiceMockListServiceAcc.Unlock()
+	return mock.ListServiceAccFunc(ctx, first, max)
 }
 
 // ListServiceAccCalls gets all the calls that were made to ListServiceAcc.
 // Check the length with:
 //     len(mockedKeycloakService.ListServiceAccCalls())
 func (mock *KeycloakServiceMock) ListServiceAccCalls() []struct {
-	Ctx context.Context
+	Ctx   context.Context
+	First int
+	Max   int
 } {
 	var calls []struct {
-		Ctx context.Context
+		Ctx   context.Context
+		First int
+		Max   int
 	}
 	mock.lockListServiceAcc.RLock()
 	calls = mock.calls.ListServiceAcc

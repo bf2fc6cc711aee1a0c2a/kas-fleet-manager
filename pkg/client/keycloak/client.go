@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/Nerzal/gocloak/v7"
+	"github.com/Nerzal/gocloak/v8"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 )
 
@@ -22,7 +22,7 @@ type KcClient interface {
 	CreateProtocolMapperConfig(string) []gocloak.ProtocolMapperRepresentation
 	GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error)
 	UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error
-	GetClients(accessToken string) ([]*gocloak.Client, error)
+	GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error)
 	IsSameOrg(client *gocloak.Client, orgId string) bool
 	RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error)
 }
@@ -200,8 +200,11 @@ func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountU
 	return err
 }
 
-func (kc *kcClient) GetClients(accessToken string) ([]*gocloak.Client, error) {
-	params := gocloak.GetClientsParams{}
+func (kc *kcClient) GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error) {
+	params := gocloak.GetClientsParams {
+		First: &first,
+		Max: &max,
+	}
 	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.config.Realm, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the sso clients: %s", err.Error())
