@@ -3,7 +3,7 @@ package metrics
 import (
 	"time"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
 	"github.com/prometheus/client_golang/prometheus"
 )

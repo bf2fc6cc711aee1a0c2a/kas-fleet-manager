@@ -30,8 +30,8 @@
 /coverage
 
 # Ignore built binaries
-/managed-services-api
-cmd/managed-services-api/managed-services-api
+/kas-fleet-manager
+cmd/kas-fleet-manager/kas-fleet-manager
 
 # Ignore generated templates
 /templates/*-template.json

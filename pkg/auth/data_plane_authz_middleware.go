@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"github.com/gorilla/mux"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/gorilla/mux"
 )
 
 // DataPlaneAuthorisationMiddleware is mainly used to perform authorisation checks for endpoints that are called by the kas-fleetshard-operator

@@ -409,7 +409,7 @@ objects:
             - name: rds
               mountPath: /secrets/rds
             command:
-            - /usr/local/bin/managed-services-api
+            - /usr/local/bin/kas-fleet-manager
             - migrate
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
@@ -443,7 +443,7 @@ objects:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
             command:
-            - /usr/local/bin/managed-services-api
+            - /usr/local/bin/kas-fleet-manager
             - serve
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key

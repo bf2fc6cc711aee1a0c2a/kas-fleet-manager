@@ -8,15 +8,15 @@ RUN \
     yum clean all
 
 COPY \
-    managed-services-api \
+    kas-fleet-manager \
     /usr/local/bin/
 
 EXPOSE 8000
 
-ENTRYPOINT ["/usr/local/bin/managed-services-api", "serve"]
+ENTRYPOINT ["/usr/local/bin/kas-fleet-manager", "serve"]
 
-LABEL name="managed-services-api" \
+LABEL name="kas-fleet-manager" \
       vendor="Red Hat" \
       version="0.0.1" \
-      summary="Managed Service API" \
-      description="Managed Service API"
+      summary="KasFleetManager" \
+      description="Kafka Service Fleet Manager"

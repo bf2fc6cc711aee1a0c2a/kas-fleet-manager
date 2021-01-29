@@ -1,8 +1,8 @@
 package presenters
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 )
 
 func ConvertServiceAccountRequest(account openapi.ServiceAccountRequest) *api.ServiceAccountRequest {

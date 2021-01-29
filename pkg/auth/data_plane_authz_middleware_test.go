@@ -1,12 +1,13 @@
 package auth
 
 import (
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/mux"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 )
 
 func TestDataPlaneAuthzMiddleware_CheckClusterId(t *testing.T) {

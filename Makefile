@@ -6,7 +6,7 @@ include $(PROJECT_PATH)/test/performance/Makefile.mk
 SHELL = bash
 
 # The details of the application:
-binary:=managed-services-api
+binary:=kas-fleet-manager
 
 # The version needs to be different for each deployment because otherwise the
 # cluster will not pull the new image from the internal registry:
@@ -21,7 +21,7 @@ NAMESPACE ?= managed-services-${USER}
 # corresponding image stream inside that namespace. If the namespace doesn't
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/managed-services-api
+image_repository:=$(NAMESPACE)/kas-fleet-manager
 
 # Tag for the image:
 image_tag:=$(version)
@@ -35,7 +35,7 @@ external_image_registry:=default-route-openshift-image-registry.apps-crc.testing
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 # Test image name that will be used for PR checks
-test_image:=test/managed-services-api
+test_image:=test/kas-fleet-manager
 
 DOCKER_CONFIG="${PWD}/.docker"
 
@@ -226,12 +226,12 @@ lint: golangci-lint
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 binary: verify lint 
-	$(GO) build ./cmd/managed-services-api
+	$(GO) build ./cmd/kas-fleet-manager
 .PHONY: binary
 
 # Install
 install: verify lint 
-	$(GO) install ./cmd/managed-services-api
+	$(GO) install ./cmd/kas-fleet-manager
 .PHONY: install
 
 # Runs the unit tests.
@@ -282,17 +282,17 @@ generate: moq openapi/generate
 
 # validate the openapi schema
 openapi/validate: openapi-generator
-	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api-private.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and data/generated/openapi/openapi.go
 openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
-	$(OPENAPI_GENERATOR) generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
-	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/managed-services-api-private.yaml -g go -o pkg/api/private/openapi --ignore-file-override ./.openapi-generator-ignore
-	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api-private.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ -mode 420 -modtime 1 ./openapi
 	$(GOFMT) -w pkg/api/openapi
 	$(GOFMT) -w pkg/api/private/openapi
@@ -305,14 +305,14 @@ code/fix:
 .PHONY: code/fix
 
 run: install
-	managed-services-api migrate
-	managed-services-api serve
+	kas-fleet-manager migrate
+	kas-fleet-manager serve
 .PHONY: run
 
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/managed-services-api.yaml\", name: \"Public API\" },{url: \"./openapi/managed-services-api-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
+	docker run --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager.yaml-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
@@ -326,7 +326,7 @@ db/setup:
 .PHONY: db/setup
 
 db/migrate: install
-	OCM_ENV=integration managed-services-api migrate
+	OCM_ENV=integration kas-fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:

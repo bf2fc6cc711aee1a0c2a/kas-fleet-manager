@@ -2,9 +2,9 @@ package workers
 
 import (
 	"errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/jinzhu/gorm"
 	mocket "github.com/selvatico/go-mocket"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"testing"
 	"time"
 )

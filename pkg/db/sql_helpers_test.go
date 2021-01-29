@@ -3,8 +3,8 @@ package db
 import (
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
 func TestSQLTranslation(t *testing.T) {

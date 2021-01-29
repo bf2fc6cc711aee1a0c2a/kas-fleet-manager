@@ -1,7 +1,7 @@
 package syncsetresources
 
 import (
-	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
+	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
 )
 
 // Metrics configuration for Kafka Brokers

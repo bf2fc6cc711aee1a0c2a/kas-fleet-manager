@@ -1,8 +1,8 @@
 package syncsetresources
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	projectv1 "github.com/openshift/api/project/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

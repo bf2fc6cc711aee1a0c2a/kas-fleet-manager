@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 var _ ObservatoriumService = &observatoriumService{}

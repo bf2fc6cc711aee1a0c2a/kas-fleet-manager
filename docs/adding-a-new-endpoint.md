@@ -24,7 +24,7 @@ Converters/presenters are defined in the `pkg/api/presenters` directory. Please 
 Handlers are defined in the `pkg/handlers` directory. Add a handler for your new endpoint here.
 
 ### Format
-All handlers should follow a specific format as defined in this [framework](https://gitlab.cee.redhat.com/service/managed-services-api/-/blob/master/pkg/handlers/framework.go). See existing handlers as an example.
+All handlers should follow a specific format as defined in this [framework](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
 
 ### Request Validation
 Any request validation should be specified in the handler config's `Validate` field as seen below.
@@ -40,13 +40,13 @@ cfg := &handlerConfig{
 }
 ```
 
-Validation functions are available in [validation.go](https://gitlab.cee.redhat.com/service/managed-services-api/-/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
+Validation functions are available in [validation.go](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
 
 ### Services
 Any backend functionality called from your handler should be specified in `pkg/services`.
 
 ## Add your new endpoint to the API server
-The [api_server.go](https://gitlab.cee.redhat.com/service/managed-services-api/-/blob/master/cmd/managed-services-api/server/api_server.go) contains the definition of the service's endpoints. Add your new endpoint to the router and attach your handler using `HandleFunc()` here.
+The [api_server.go](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/master/cmd/kas-fleet-manager/server/api_server.go) contains the definition of the service's endpoints. Add your new endpoint to the router and attach your handler using `HandleFunc()` here.
 
 For example
 
@@ -68,7 +68,7 @@ router.Use(authMiddleware.AuthenticateAccountJWT)
 ## Add a new command to the CLI
 The CLI will only be used for local development and testing. If a new endpoint was added, a new command should be added to the CLI to reflect that new endpoint.
 
-The CLI is built using [Cobra](https://github.com/spf13/cobra) and all of the commands are located in `cmd/managed-services-api`.
+The CLI is built using [Cobra](https://github.com/spf13/cobra) and all of the commands are located in `cmd/kas-fleet-manager`.
 
 ```
 /cloudprovider - command definition for the /cloudprovider endpoint
