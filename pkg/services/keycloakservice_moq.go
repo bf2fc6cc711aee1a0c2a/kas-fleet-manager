@@ -11,6 +11,18 @@ import (
 	"sync"
 )
 
+var (
+	lockKeycloakServiceMockCreateServiceAccount              sync.RWMutex
+	lockKeycloakServiceMockDeRegisterKafkaClientInSSO        sync.RWMutex
+	lockKeycloakServiceMockDeleteServiceAccount              sync.RWMutex
+	lockKeycloakServiceMockGetConfig                         sync.RWMutex
+	lockKeycloakServiceMockGetSecretForRegisteredKafkaClient sync.RWMutex
+	lockKeycloakServiceMockIsKafkaClientExist                sync.RWMutex
+	lockKeycloakServiceMockListServiceAcc                    sync.RWMutex
+	lockKeycloakServiceMockRegisterKafkaClientInSSO          sync.RWMutex
+	lockKeycloakServiceMockResetServiceAccountCredentials    sync.RWMutex
+)
+
 // Ensure, that KeycloakServiceMock does implement KeycloakService.
 // If this is not the case, regenerate this file with moq.
 var _ KeycloakService = &KeycloakServiceMock{}
@@ -140,15 +152,6 @@ type KeycloakServiceMock struct {
 			ClientId string
 		}
 	}
-	lockCreateServiceAccount              sync.RWMutex
-	lockDeRegisterKafkaClientInSSO        sync.RWMutex
-	lockDeleteServiceAccount              sync.RWMutex
-	lockGetConfig                         sync.RWMutex
-	lockGetSecretForRegisteredKafkaClient sync.RWMutex
-	lockIsKafkaClientExist                sync.RWMutex
-	lockListServiceAcc                    sync.RWMutex
-	lockRegisterKafkaClientInSSO          sync.RWMutex
-	lockResetServiceAccountCredentials    sync.RWMutex
 }
 
 // CreateServiceAccount calls CreateServiceAccountFunc.
@@ -163,9 +166,9 @@ func (mock *KeycloakServiceMock) CreateServiceAccount(serviceAccountRequest *api
 		ServiceAccountRequest: serviceAccountRequest,
 		Ctx:                   ctx,
 	}
-	mock.lockCreateServiceAccount.Lock()
+	lockKeycloakServiceMockCreateServiceAccount.Lock()
 	mock.calls.CreateServiceAccount = append(mock.calls.CreateServiceAccount, callInfo)
-	mock.lockCreateServiceAccount.Unlock()
+	lockKeycloakServiceMockCreateServiceAccount.Unlock()
 	return mock.CreateServiceAccountFunc(serviceAccountRequest, ctx)
 }
 
@@ -180,9 +183,9 @@ func (mock *KeycloakServiceMock) CreateServiceAccountCalls() []struct {
 		ServiceAccountRequest *api.ServiceAccountRequest
 		Ctx                   context.Context
 	}
-	mock.lockCreateServiceAccount.RLock()
+	lockKeycloakServiceMockCreateServiceAccount.RLock()
 	calls = mock.calls.CreateServiceAccount
-	mock.lockCreateServiceAccount.RUnlock()
+	lockKeycloakServiceMockCreateServiceAccount.RUnlock()
 	return calls
 }
 
@@ -196,9 +199,9 @@ func (mock *KeycloakServiceMock) DeRegisterKafkaClientInSSO(kafkaNamespace strin
 	}{
 		KafkaNamespace: kafkaNamespace,
 	}
-	mock.lockDeRegisterKafkaClientInSSO.Lock()
+	lockKeycloakServiceMockDeRegisterKafkaClientInSSO.Lock()
 	mock.calls.DeRegisterKafkaClientInSSO = append(mock.calls.DeRegisterKafkaClientInSSO, callInfo)
-	mock.lockDeRegisterKafkaClientInSSO.Unlock()
+	lockKeycloakServiceMockDeRegisterKafkaClientInSSO.Unlock()
 	return mock.DeRegisterKafkaClientInSSOFunc(kafkaNamespace)
 }
 
@@ -211,9 +214,9 @@ func (mock *KeycloakServiceMock) DeRegisterKafkaClientInSSOCalls() []struct {
 	var calls []struct {
 		KafkaNamespace string
 	}
-	mock.lockDeRegisterKafkaClientInSSO.RLock()
+	lockKeycloakServiceMockDeRegisterKafkaClientInSSO.RLock()
 	calls = mock.calls.DeRegisterKafkaClientInSSO
-	mock.lockDeRegisterKafkaClientInSSO.RUnlock()
+	lockKeycloakServiceMockDeRegisterKafkaClientInSSO.RUnlock()
 	return calls
 }
 
@@ -229,9 +232,9 @@ func (mock *KeycloakServiceMock) DeleteServiceAccount(ctx context.Context, clien
 		Ctx:      ctx,
 		ClientId: clientId,
 	}
-	mock.lockDeleteServiceAccount.Lock()
+	lockKeycloakServiceMockDeleteServiceAccount.Lock()
 	mock.calls.DeleteServiceAccount = append(mock.calls.DeleteServiceAccount, callInfo)
-	mock.lockDeleteServiceAccount.Unlock()
+	lockKeycloakServiceMockDeleteServiceAccount.Unlock()
 	return mock.DeleteServiceAccountFunc(ctx, clientId)
 }
 
@@ -246,9 +249,9 @@ func (mock *KeycloakServiceMock) DeleteServiceAccountCalls() []struct {
 		Ctx      context.Context
 		ClientId string
 	}
-	mock.lockDeleteServiceAccount.RLock()
+	lockKeycloakServiceMockDeleteServiceAccount.RLock()
 	calls = mock.calls.DeleteServiceAccount
-	mock.lockDeleteServiceAccount.RUnlock()
+	lockKeycloakServiceMockDeleteServiceAccount.RUnlock()
 	return calls
 }
 
@@ -259,9 +262,9 @@ func (mock *KeycloakServiceMock) GetConfig() *config.KeycloakConfig {
 	}
 	callInfo := struct {
 	}{}
-	mock.lockGetConfig.Lock()
+	lockKeycloakServiceMockGetConfig.Lock()
 	mock.calls.GetConfig = append(mock.calls.GetConfig, callInfo)
-	mock.lockGetConfig.Unlock()
+	lockKeycloakServiceMockGetConfig.Unlock()
 	return mock.GetConfigFunc()
 }
 
@@ -272,9 +275,9 @@ func (mock *KeycloakServiceMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
 	}
-	mock.lockGetConfig.RLock()
+	lockKeycloakServiceMockGetConfig.RLock()
 	calls = mock.calls.GetConfig
-	mock.lockGetConfig.RUnlock()
+	lockKeycloakServiceMockGetConfig.RUnlock()
 	return calls
 }
 
@@ -288,9 +291,9 @@ func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClient(kafkaClusterN
 	}{
 		KafkaClusterName: kafkaClusterName,
 	}
-	mock.lockGetSecretForRegisteredKafkaClient.Lock()
+	lockKeycloakServiceMockGetSecretForRegisteredKafkaClient.Lock()
 	mock.calls.GetSecretForRegisteredKafkaClient = append(mock.calls.GetSecretForRegisteredKafkaClient, callInfo)
-	mock.lockGetSecretForRegisteredKafkaClient.Unlock()
+	lockKeycloakServiceMockGetSecretForRegisteredKafkaClient.Unlock()
 	return mock.GetSecretForRegisteredKafkaClientFunc(kafkaClusterName)
 }
 
@@ -303,9 +306,9 @@ func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClientCalls() []stru
 	var calls []struct {
 		KafkaClusterName string
 	}
-	mock.lockGetSecretForRegisteredKafkaClient.RLock()
+	lockKeycloakServiceMockGetSecretForRegisteredKafkaClient.RLock()
 	calls = mock.calls.GetSecretForRegisteredKafkaClient
-	mock.lockGetSecretForRegisteredKafkaClient.RUnlock()
+	lockKeycloakServiceMockGetSecretForRegisteredKafkaClient.RUnlock()
 	return calls
 }
 
@@ -319,9 +322,9 @@ func (mock *KeycloakServiceMock) IsKafkaClientExist(clientId string) *errors.Ser
 	}{
 		ClientId: clientId,
 	}
-	mock.lockIsKafkaClientExist.Lock()
+	lockKeycloakServiceMockIsKafkaClientExist.Lock()
 	mock.calls.IsKafkaClientExist = append(mock.calls.IsKafkaClientExist, callInfo)
-	mock.lockIsKafkaClientExist.Unlock()
+	lockKeycloakServiceMockIsKafkaClientExist.Unlock()
 	return mock.IsKafkaClientExistFunc(clientId)
 }
 
@@ -334,9 +337,9 @@ func (mock *KeycloakServiceMock) IsKafkaClientExistCalls() []struct {
 	var calls []struct {
 		ClientId string
 	}
-	mock.lockIsKafkaClientExist.RLock()
+	lockKeycloakServiceMockIsKafkaClientExist.RLock()
 	calls = mock.calls.IsKafkaClientExist
-	mock.lockIsKafkaClientExist.RUnlock()
+	lockKeycloakServiceMockIsKafkaClientExist.RUnlock()
 	return calls
 }
 
@@ -354,7 +357,7 @@ func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context, first int, 
 		First: first,
 		Max:   max,
 	}
-	mock.lockListServiceAcc.Lock()
+	lockKeycloakServiceMockListServiceAcc.Lock()
 	mock.calls.ListServiceAcc = append(mock.calls.ListServiceAcc, callInfo)
 	lockKeycloakServiceMockListServiceAcc.Unlock()
 	return mock.ListServiceAccFunc(ctx, first, max)
@@ -373,9 +376,9 @@ func (mock *KeycloakServiceMock) ListServiceAccCalls() []struct {
 		First int
 		Max   int
 	}
-	mock.lockListServiceAcc.RLock()
+	lockKeycloakServiceMockListServiceAcc.RLock()
 	calls = mock.calls.ListServiceAcc
-	mock.lockListServiceAcc.RUnlock()
+	lockKeycloakServiceMockListServiceAcc.RUnlock()
 	return calls
 }
 
@@ -391,9 +394,9 @@ func (mock *KeycloakServiceMock) RegisterKafkaClientInSSO(kafkaNamespace string,
 		KafkaNamespace: kafkaNamespace,
 		OrgId:          orgId,
 	}
-	mock.lockRegisterKafkaClientInSSO.Lock()
+	lockKeycloakServiceMockRegisterKafkaClientInSSO.Lock()
 	mock.calls.RegisterKafkaClientInSSO = append(mock.calls.RegisterKafkaClientInSSO, callInfo)
-	mock.lockRegisterKafkaClientInSSO.Unlock()
+	lockKeycloakServiceMockRegisterKafkaClientInSSO.Unlock()
 	return mock.RegisterKafkaClientInSSOFunc(kafkaNamespace, orgId)
 }
 
@@ -408,9 +411,9 @@ func (mock *KeycloakServiceMock) RegisterKafkaClientInSSOCalls() []struct {
 		KafkaNamespace string
 		OrgId          string
 	}
-	mock.lockRegisterKafkaClientInSSO.RLock()
+	lockKeycloakServiceMockRegisterKafkaClientInSSO.RLock()
 	calls = mock.calls.RegisterKafkaClientInSSO
-	mock.lockRegisterKafkaClientInSSO.RUnlock()
+	lockKeycloakServiceMockRegisterKafkaClientInSSO.RUnlock()
 	return calls
 }
 
@@ -426,9 +429,9 @@ func (mock *KeycloakServiceMock) ResetServiceAccountCredentials(ctx context.Cont
 		Ctx:      ctx,
 		ClientId: clientId,
 	}
-	mock.lockResetServiceAccountCredentials.Lock()
+	lockKeycloakServiceMockResetServiceAccountCredentials.Lock()
 	mock.calls.ResetServiceAccountCredentials = append(mock.calls.ResetServiceAccountCredentials, callInfo)
-	mock.lockResetServiceAccountCredentials.Unlock()
+	lockKeycloakServiceMockResetServiceAccountCredentials.Unlock()
 	return mock.ResetServiceAccountCredentialsFunc(ctx, clientId)
 }
 
@@ -443,8 +446,8 @@ func (mock *KeycloakServiceMock) ResetServiceAccountCredentialsCalls() []struct 
 		Ctx      context.Context
 		ClientId string
 	}
-	mock.lockResetServiceAccountCredentials.RLock()
+	lockKeycloakServiceMockResetServiceAccountCredentials.RLock()
 	calls = mock.calls.ResetServiceAccountCredentials
-	mock.lockResetServiceAccountCredentials.RUnlock()
+	lockKeycloakServiceMockResetServiceAccountCredentials.RUnlock()
 	return calls
 }
