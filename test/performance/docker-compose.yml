@@ -6,6 +6,8 @@ services:
     image: "quay.io/ppaszki/locust:latest"
     environment:
       - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
+      - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
+      - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER}
       - ATTACKED_HOST=${PERF_TEST_ROUTE_HOST}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=master
@@ -21,6 +23,8 @@ services:
     image: "quay.io/ppaszki/locust:latest"
     environment:
       - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
+      - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
+      - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER}
       - ATTACKED_HOST=${PERF_TEST_ROUTE_HOST}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=worker
