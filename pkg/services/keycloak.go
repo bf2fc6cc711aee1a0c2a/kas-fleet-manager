@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strings"
 
 	"github.com/google/uuid"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -178,7 +179,7 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 		acc := api.ServiceAccount{}
 		attributes := client.Attributes
 		att := *attributes
-		if att["rh-org-id"] == orgId {
+		if att["rh-org-id"] == orgId && strings.HasPrefix(safeString(client.ClientID), "srvc-acct"){
 			acc.ID = *client.ID
 			acc.ClientID = *client.ClientID
 			acc.Name = safeString(client.Name)
