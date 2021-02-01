@@ -25,7 +25,7 @@ type KeycloakService interface {
 	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
-	ListServiceAcc(ctx context.Context) ([]api.ServiceAccount, *errors.ServiceError)
+	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
 }
 
 type keycloakService struct {
@@ -166,11 +166,11 @@ func (kc *keycloakService) buildServiceAccountIdentifier() string {
 	return "srvc-acct-" + NewUUID()
 }
 
-func (kc *keycloakService) ListServiceAcc(ctx context.Context) ([]api.ServiceAccount, *errors.ServiceError) {
+func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	accessToken, _ := kc.kcClient.GetToken()
 	orgId := auth.GetOrgIdFromContext(ctx)
 	var sa []api.ServiceAccount
-	clients, err := kc.kcClient.GetClients(accessToken)
+	clients, err := kc.kcClient.GetClients(accessToken, first, max)
 	if err != nil {
 		return nil, errors.GeneralError("failed to check the sso client exists:%v", err)
 	}
