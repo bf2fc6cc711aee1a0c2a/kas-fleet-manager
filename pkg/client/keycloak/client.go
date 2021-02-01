@@ -201,9 +201,9 @@ func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountU
 }
 
 func (kc *kcClient) GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error) {
-	params := gocloak.GetClientsParams {
+	params := gocloak.GetClientsParams{
 		First: &first,
-		Max: &max,
+		Max:   &max,
 	}
 	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.config.Realm, params)
 	if err != nil {
