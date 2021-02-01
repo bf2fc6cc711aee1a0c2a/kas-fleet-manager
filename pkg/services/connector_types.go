@@ -37,7 +37,6 @@ type connectorTypesService struct {
 	connectorTypeIndex   api.ConnectorTypeIndex
 	connectorTypeIndexMu sync.Mutex
 	connectorsConfig     *config.ConnectorsConfig
-	closeWatch           func()
 }
 
 func NewConnectorTypesService(config *config.ConnectorsConfig) *connectorTypesService {
@@ -159,17 +158,6 @@ func getConnectorType(ctx context.Context, serviceUrl string) (*openapi.Connecto
 }
 
 func (k *connectorTypesService) DiscoverExtensions() error {
-	if k.closeWatch != nil {
-		panic("DiscoverExtensions should only called once.")
-	}
-	closeWatch, err := k.connectorsConfig.WatchFiles(func(c config.ConnectorsConfig) {
-		k.discoverExtensions(c.ConnectorTypeSvcUrls)
-	})
-	if err != nil {
-		return err
-	}
-	// TODO: let callers close the open watch.
-	k.closeWatch = closeWatch
 	k.discoverExtensions(k.connectorsConfig.ConnectorTypeSvcUrls)
 	return nil
 }
