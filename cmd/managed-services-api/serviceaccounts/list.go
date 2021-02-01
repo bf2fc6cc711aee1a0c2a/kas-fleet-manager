@@ -36,7 +36,7 @@ func runList(cmd *cobra.Command, args []string) {
 	}
 	max, err := strconv.Atoi(flags.MustGetDefinedString(FlagMax, cmd.Flags()))
 	if err != nil {
-		glog.Fatalf("Unable to read flag first: %s", err.Error())
+		glog.Fatalf("Unable to read flag max: %s", err.Error())
 	}
 	if err := environments.Environment().Initialize(); err != nil {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
