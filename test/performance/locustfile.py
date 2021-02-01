@@ -10,9 +10,18 @@ import subprocess
 import os
 OFFLINE_TOKEN = os.environ['OCM_OFFLINE_TOKEN']
 
+# if set to "TRUE" - db will be seeded with kafkas
+populate_db = os.environ['PERF_TEST_PREPOPULATE_DB']
+# if PERF_TEST_PREPOPULATE_DB == "TRUE" - this number determines the number of seed kafkas per locust user
+seed_kafkas = int(os.environ["PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER"])
+
 import jwt
 
 import time
+
+import random, string
+
+kafkas_created = 0
 
 # get ocm token on each of the workers and set headers to use the token when talking to the API
 def get_token(self):
@@ -45,18 +54,48 @@ def login_to_ocm():
     stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
   assert len(output) == 0,'There should be no output when logging in to OCM'
-  assert len(error) == 0,'There should be no error when logging in to OCM'
+
+def random_string(length):
+   letters = string.ascii_lowercase
+   return ''.join(random.choice(letters) for i in range(length))
 
 class QuickstartUser(HttpUser):
   def on_start(self):
     login_to_ocm()
     get_token(self)
 
-  wait_time = constant_pacing(0.005) # to be adjusted later
+  wait_time = constant_pacing(0.05) # to be adjusted later
   @task
-  def kafkas_list(self):
-    with self.client.get('/api/managed-services-api/v1/kafkas', verify=False, catch_response=True) as response:
-      if response.status_code == 401:
-        response.success()
-        get_token(self)
+  def main_task(self):
+    global populate_db
+    global kafkas_created
+    # create and then instantly delete kafka_requests to seed the database
+    if populate_db == "TRUE":
+      # logging.info(run_time)
+      json = {
+        "cloud_provider": "aws",
+        "region": "us-east-1",
+        "name": random_string(15),
+        "multi_az": True
+      }
+      with self.client.post('/api/managed-services-api/v1/kafkas?async=true', json=json, verify=False, catch_response=True) as response:
+        if response.status_code == 409:
+          response.success() # ignore unlike 409 errors when generated kafka name is duplicated
+        if response.status_code == 401:
+          response.success()
+          get_token(self)
+        if response.status_code == 202:
+          kafka_id = response.json()["id"]
+          kafkas_created = kafkas_created + 1
+          with self.client.delete(f'/api/managed-services-api/v1/kafkas/{kafka_id}?async=true', json=json, verify=False, catch_response=True, name="/api/managed-services-api/v1/kafkas/[id]") as response:
+            assert response.status_code == 204,'Unexpected status code for kafka deletion. Manual cleanup required!'
+            if kafkas_created >= seed_kafkas:
+              time.sleep(120) # wait for all kafkas to be deleted
+              populate_db = "FALSE"
+              wait_time = constant_pacing(0.00005)
+    else:
+      with self.client.get('/api/managed-services-api/v1/kafkas', verify=False, catch_response=True) as response:
+        if response.status_code == 401:
+          response.success()
+          get_token(self)
     

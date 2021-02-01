@@ -43,10 +43,13 @@ MAS_SSO_BASE_URL ?="https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-sta
 MAS_SSO_REALM ?="mas-sso-playground"
 
 # default performance test flags
-PERF_TEST_USERS ?= 10 # to be adjusted later
+PERF_TEST_USERS ?= 100 # to be adjusted later
 PERF_TEST_USER_SPAWN_RATE ?= 1 # to be adjusted later
 PERF_TEST_RUN_TIME ?= 20m # to be adjusted later
-PERF_TEST_WORKERS_NUMBER ?= 10 # to be adjusted later
+PERF_TEST_WORKERS_NUMBER ?= 20 # to be adjusted later
+PERF_TEST_PREPOPULATE_DB ?= FALSE # whether to prepopulate db with kafka_requests
+# number of kafkas to prepopulate (in deleted state) per locust user (only if PERF_TEST_PREPOPULATE_DB == TRUE)
+PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER ?= 500
 
 GO := go
 GOFMT := gofmt
@@ -263,8 +266,8 @@ else
 		then echo "Env vars required to run the performance tests (PERF_TEST_ROUTE_HOST or OCM_OFFLINE_TOKEN not provided!" ; exit 1 ; fi;
 	
 	PERF_TEST_ROUTE_HOST=$(PERF_TEST_ROUTE_HOST) PERF_TEST_USERS=$(PERF_TEST_USERS) PERF_TEST_USER_SPAWN_RATE=$(PERF_TEST_USER_SPAWN_RATE) \
-		PERF_TEST_RUN_TIME=$(PERF_TEST_RUN_TIME) docker-compose --file test/performance/docker-compose.yml up \
-			--scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
+		PERF_TEST_RUN_TIME=$(PERF_TEST_RUN_TIME) PERF_TEST_PREPOPULATE_DB=$(PERF_TEST_PREPOPULATE_DB) PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER=$(PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER) \
+		  docker-compose --file test/performance/docker-compose.yml up --scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
 endif
 .PHONY: test/performance
 
