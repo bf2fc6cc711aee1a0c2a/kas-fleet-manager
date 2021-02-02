@@ -88,7 +88,7 @@ func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		},
 		ErrorHandler: handleError,
 	}
-	handleDelete(w, r, cfg, http.StatusNoContent)
+	handleDelete(w, r, cfg, http.StatusAccepted)
 }
 
 func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {

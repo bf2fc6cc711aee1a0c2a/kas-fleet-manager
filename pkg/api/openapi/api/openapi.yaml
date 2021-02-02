@@ -34,7 +34,7 @@ paths:
           type: boolean
         style: form
       responses:
-        "204":
+        "202":
           content:
             application/json:
               schema:
