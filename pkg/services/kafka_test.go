@@ -15,7 +15,7 @@ import (
 	mocket "github.com/selvatico/go-mocket"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
-	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	dbConverters "gitlab.cee.redhat.com/service/managed-services-api/pkg/db/converters"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -999,14 +999,16 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 		status constants.KafkaStatus
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		setupFn func()
+		name         string
+		fields       fields
+		args         args
+		wantErr      bool
+		wantExecuted bool
+		setupFn      func()
 	}{
 		{
-			name: "fail when database returns an error",
+			name:         "fail when database returns an error",
+			wantExecuted: true,
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -1016,12 +1018,33 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "success",
+			name: "refuse execution because cluster in deprovisioning state",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr:      true,
+			wantExecuted: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
+				})))
+			},
+			args: args{
+				id:     testID,
+				status: constants.KafkaRequestStatusPreparing,
+			},
+		},
+		{
+			name:         "success",
+			wantExecuted: true,
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+				})))
 			},
 			args: args{
 				id: testID,
@@ -1038,7 +1061,11 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
 			}
-			err := k.UpdateStatus(tt.args.id, tt.args.status)
+			executed, err := k.UpdateStatus(tt.args.id, tt.args.status)
+			if executed != tt.wantExecuted {
+				t.Error("kafkaService.UpdateStatus() error = should have refused execution but didn't")
+				return
+			}
 			if (err != nil) != tt.wantErr {
 				t.Errorf("kafkaService.UpdateStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return

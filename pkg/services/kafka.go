@@ -12,7 +12,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/auth"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/aws"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/db"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
@@ -32,7 +32,12 @@ type KafkaService interface {
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
-	UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError
+	// UpdateStatus change the status of the Kafka cluster
+	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
+	// original status is 'deprovision' (cluster in deprovision state can't be change state) or if the final status is the
+	// same as the original status. The error will contain any error encountered when attempting to update or the reason
+	// why no attempt has been done
+	UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError)
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
@@ -214,10 +219,13 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	}
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
-	if err := k.UpdateStatus(id, constants.KafkaRequestStatusDeprovision); err != nil {
-		return handleGetError("KafkaResource", "id", id, err)
+	if executed, err := k.UpdateStatus(id, constants.KafkaRequestStatusDeprovision); executed {
+		if err != nil {
+			return handleGetError("KafkaResource", "id", id, err)
+		}
+		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
 	}
-	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+
 	return nil
 }
 
@@ -346,22 +354,27 @@ func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErro
 	return nil
 }
 
-func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError {
+func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
 	if kafka, err := k.GetById(id); err != nil {
-		return errors.GeneralError("failed to update status: %s", err.Error())
+		return true, errors.GeneralError("failed to update status: %s", err.Error())
 	} else {
 		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
-			return errors.GeneralError("failed to update status: Kafka cluster id %s is deprovisining", id)
+			return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
+		}
+
+		if kafka.Status == status.String() {
+			// no update needed
+			return false, errors.GeneralError("failed to update status: the cluster %s is already in %s state", id, status.String())
 		}
 	}
 
 	if err := dbConn.Model(&api.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
-		return errors.GeneralError("failed to update status: %s", err.Error())
+		return true, errors.GeneralError("failed to update status: %s", err.Error())
 	}
 
-	return nil
+	return true, nil
 }
 
 func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {

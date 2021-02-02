@@ -77,7 +77,7 @@ paths:
             type: boolean
           required: true
       responses:
-        "204":
+        "202":
           content:
             application/json:
               schema:
@@ -213,7 +213,7 @@ paths:
               examples:
                 409NameConflictExample:
                   $ref: '#/components/examples/409NameConflictExample'
-          description: A conflict has been detected in the creation of this resource 
+          description: A conflict has been detected in the creation of this resource
         "500":
           content:
             application/json:
@@ -1488,7 +1488,7 @@ components:
         href: "/api/managed-services-api/v1/errors/36"
         code: "MGD-SERV-API-36"
         reason: "Kafka cluster name is already used"
-        operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"     
+        operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
     500Example:
       value:
         id: "9"

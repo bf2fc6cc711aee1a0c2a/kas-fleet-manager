@@ -197,7 +197,7 @@ func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
 		return k.handleKafkaRequestCreationError(kafka, err)
 	}
 	// consider the kafka in a provisioning state
-	if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusProvisioning); err != nil {
+	if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusProvisioning); executed && err != nil {
 		return fmt.Errorf("failed to update kafka %s to status provisioning: %w", kafka.ID, err)
 	}
 
@@ -216,9 +216,21 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 	}
 	if kafkaState.State == observatorium.ClusterStateReady {
 		glog.Infof("Kafka %s state %s", kafka.ID, kafkaState.State)
-		if err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusReady); err != nil {
+
+		executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusReady)
+		if !executed {
+			if err != nil {
+				glog.Warningf("failed to update kafka %s to status ready: %s", kafka.ID, err.Reason)
+			} else {
+				glog.Warningf("failed to update kafka %s to status ready", kafka.ID)
+			}
+			return nil
+		}
+
+		if err != nil {
 			return fmt.Errorf("failed to update kafka %s to status ready: %w", kafka.ID, err)
 		}
+
 		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
 		return nil
@@ -258,7 +270,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		// todo retry logic for kafka client creation in mas sso
 		keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
 		if keycloakErr != nil {
-			if updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); updateErr != nil {
+			if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed && updateErr != nil {
 				return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
 			}
 			return fmt.Errorf("failed to create mas sso client for the kafka %s on cluster %s: %w", kafkaRequest.ID, kafkaRequest.ClusterID, err)
