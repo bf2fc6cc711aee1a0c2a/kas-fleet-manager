@@ -1208,6 +1208,81 @@ components:
             status:
               type: string
 
+    DataPlaneClusterUpdateStatusRequest:
+      # TODO are there any fields that should be required?
+      # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
+      description: "Schema for the request to update a data plane cluster's status"
+      type: object
+      properties:
+        conditions:
+          description: "The cluster data plane conditions"
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+              lastTransitionTime:
+                type: string
+                #format: date-time # enable this?? or just set it as pure plain string?
+        total:
+          type: object
+          properties:
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+            connections:
+              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+            dataRetentionSize:
+              type: string
+            partitions:
+              type: integer
+        remaining:
+          type: object
+          properties:
+            # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+            connections:
+              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+            dataRetentionSize:
+              type: string
+            partitions:
+              type: integer
+        nodeInfo:
+          type: object
+          properties:
+            ceiling:
+              type: integer
+            floor:
+              type: integer
+            current:
+              type: integer
+            currentWorkLoadMinimum:
+              type: integer
+        resizeInfo:
+          type: object
+          properties:
+            nodeDelta:
+              type: integer
+            delta:
+              type: object
+              properties:
+                ingressEgressThroughputPerSec:
+                  type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+                connections:
+                  type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+                dataRetentionSize:
+                  type: string
+                maxPartitions:
+                  type: integer
+      example:
+        $ref: "#/components/examples/DataPlaneClusterUpdateStatusRequestExample"
   parameters:
     id:
       name: id
@@ -1417,6 +1492,8 @@ components:
         name: "my-app-sa"
         description: "service account for my app"
         clientID: "SA-121212"
+    DataPlaneClusterUpdateStatusRequestExample:
+      value: {} # TODO fill this
     400DeletionExample:
       value:
         id: "103"
