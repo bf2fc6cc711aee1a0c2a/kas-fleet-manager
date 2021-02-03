@@ -39,7 +39,7 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	Expect(kafkaState).To(Equal(true))
 
 	// Take down a worker and valid it is really down
-	h.ClusterWorker.SetIsRunning(false)
+	h.LeaderEleWorker.Stop()
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
 		clusterState = h.ClusterWorker.IsRunning()
 		return !clusterState, nil
@@ -47,6 +47,7 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
 	Expect(clusterState).To(Equal(false))
 
+	h.LeaderEleWorker.Start()
 	// Wait for Leader Election Manager to start it up again
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
 		clusterState = h.ClusterWorker.IsRunning()
