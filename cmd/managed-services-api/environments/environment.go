@@ -38,14 +38,15 @@ type Env struct {
 }
 
 type Services struct {
-	Kafka          services.KafkaService
-	Connectors     services.ConnectorsService
-	ConnectorTypes services.ConnectorTypesService
-	Cluster        services.ClusterService
-	CloudProviders services.CloudProvidersService
-	Config         services.ConfigService
-	Observatorium  services.ObservatoriumService
-	Keycloak       services.KeycloakService
+	Kafka            services.KafkaService
+	Connectors       services.ConnectorsService
+	ConnectorTypes   services.ConnectorTypesService
+	Cluster          services.ClusterService
+	CloudProviders   services.CloudProvidersService
+	Config           services.ConfigService
+	Observatorium    services.ObservatoriumService
+	Keycloak         services.KeycloakService
+	DataPlaneCluster services.DataPlaneClusterService
 }
 
 type Clients struct {
@@ -150,12 +151,14 @@ func (env *Env) LoadServices() error {
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(env.Config.SupportedProviders.ProvidersConfig, *env.Config.AllowList, *env.Config.ClusterCreationConfig, *env.Config.ObservabilityConfiguration)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
+	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
 	env.Services.CloudProviders = cloudProviderService
 	env.Services.Observatorium = ObservatoriumService
 	env.Services.Keycloak = keycloakService
+	env.Services.DataPlaneCluster = dataPlaneClusterService
 
 	env.Services.Connectors = services.NewConnectorsService(env.DBFactory)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
