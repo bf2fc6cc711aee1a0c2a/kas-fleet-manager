@@ -19,6 +19,9 @@ var _ KcClient = &KcClientMock{}
 //
 //         // make and configure a mocked KcClient
 //         mockedKcClient := &KcClientMock{
+//             AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
+// 	               panic("mock out the AddRealmRoleToUser method")
+//             },
 //             ClientConfigFunc: func(client ClientRepresentation) gocloak.Client {
 // 	               panic("mock out the ClientConfig method")
 //             },
@@ -28,10 +31,13 @@ var _ KcClient = &KcClientMock{}
 //             CreateProtocolMapperConfigFunc: func(in1 string) []gocloak.ProtocolMapperRepresentation {
 // 	               panic("mock out the CreateProtocolMapperConfig method")
 //             },
+//             CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+// 	               panic("mock out the CreateRealmRole method")
+//             },
 //             DeleteClientFunc: func(internalClientID string, accessToken string) error {
 // 	               panic("mock out the DeleteClient method")
 //             },
-//             GetClientFunc: func(clientId string, accessToken string) ([]*gocloak.Client, error) {
+//             GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
 // 	               panic("mock out the GetClient method")
 //             },
 //             GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
@@ -49,6 +55,9 @@ var _ KcClient = &KcClientMock{}
 //             GetConfigFunc: func() *config.KeycloakConfig {
 // 	               panic("mock out the GetConfig method")
 //             },
+//             GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
+// 	               panic("mock out the GetRealmRole method")
+//             },
 //             GetTokenFunc: func() (string, error) {
 // 	               panic("mock out the GetToken method")
 //             },
@@ -64,6 +73,9 @@ var _ KcClient = &KcClientMock{}
 //             UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
 // 	               panic("mock out the UpdateServiceAccountUser method")
 //             },
+//             UserHasRealmRoleFunc: func(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+// 	               panic("mock out the UserHasRealmRole method")
+//             },
 //         }
 //
 //         // use mockedKcClient in code that requires KcClient
@@ -71,6 +83,9 @@ var _ KcClient = &KcClientMock{}
 //
 //     }
 type KcClientMock struct {
+	// AddRealmRoleToUserFunc mocks the AddRealmRoleToUser method.
+	AddRealmRoleToUserFunc func(accessToken string, userId string, role gocloak.Role) error
+
 	// ClientConfigFunc mocks the ClientConfig method.
 	ClientConfigFunc func(client ClientRepresentation) gocloak.Client
 
@@ -80,11 +95,14 @@ type KcClientMock struct {
 	// CreateProtocolMapperConfigFunc mocks the CreateProtocolMapperConfig method.
 	CreateProtocolMapperConfigFunc func(in1 string) []gocloak.ProtocolMapperRepresentation
 
+	// CreateRealmRoleFunc mocks the CreateRealmRole method.
+	CreateRealmRoleFunc func(accessToken string, roleName string) (*gocloak.Role, error)
+
 	// DeleteClientFunc mocks the DeleteClient method.
 	DeleteClientFunc func(internalClientID string, accessToken string) error
 
 	// GetClientFunc mocks the GetClient method.
-	GetClientFunc func(clientId string, accessToken string) ([]*gocloak.Client, error)
+	GetClientFunc func(clientId string, accessToken string) (*gocloak.Client, error)
 
 	// GetClientByIdFunc mocks the GetClientById method.
 	GetClientByIdFunc func(id string, accessToken string) (*gocloak.Client, error)
@@ -101,6 +119,9 @@ type KcClientMock struct {
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *config.KeycloakConfig
 
+	// GetRealmRoleFunc mocks the GetRealmRole method.
+	GetRealmRoleFunc func(accessToken string, roleName string) (*gocloak.Role, error)
+
 	// GetTokenFunc mocks the GetToken method.
 	GetTokenFunc func() (string, error)
 
@@ -116,8 +137,20 @@ type KcClientMock struct {
 	// UpdateServiceAccountUserFunc mocks the UpdateServiceAccountUser method.
 	UpdateServiceAccountUserFunc func(accessToken string, serviceAccountUser gocloak.User) error
 
+	// UserHasRealmRoleFunc mocks the UserHasRealmRole method.
+	UserHasRealmRoleFunc func(accessToken string, userId string, roleName string) (*gocloak.Role, error)
+
 	// calls tracks calls to the methods.
 	calls struct {
+		// AddRealmRoleToUser holds details about calls to the AddRealmRoleToUser method.
+		AddRealmRoleToUser []struct {
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// UserId is the userId argument value.
+			UserId string
+			// Role is the role argument value.
+			Role gocloak.Role
+		}
 		// ClientConfig holds details about calls to the ClientConfig method.
 		ClientConfig []struct {
 			// Client is the client argument value.
@@ -134,6 +167,13 @@ type KcClientMock struct {
 		CreateProtocolMapperConfig []struct {
 			// In1 is the in1 argument value.
 			In1 string
+		}
+		// CreateRealmRole holds details about calls to the CreateRealmRole method.
+		CreateRealmRole []struct {
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// RoleName is the roleName argument value.
+			RoleName string
 		}
 		// DeleteClient holds details about calls to the DeleteClient method.
 		DeleteClient []struct {
@@ -182,6 +222,13 @@ type KcClientMock struct {
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
 		}
+		// GetRealmRole holds details about calls to the GetRealmRole method.
+		GetRealmRole []struct {
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// RoleName is the roleName argument value.
+			RoleName string
+		}
 		// GetToken holds details about calls to the GetToken method.
 		GetToken []struct {
 		}
@@ -213,10 +260,21 @@ type KcClientMock struct {
 			// ServiceAccountUser is the serviceAccountUser argument value.
 			ServiceAccountUser gocloak.User
 		}
+		// UserHasRealmRole holds details about calls to the UserHasRealmRole method.
+		UserHasRealmRole []struct {
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+			// UserId is the userId argument value.
+			UserId string
+			// RoleName is the roleName argument value.
+			RoleName string
+		}
 	}
+	lockAddRealmRoleToUser         sync.RWMutex
 	lockClientConfig               sync.RWMutex
 	lockCreateClient               sync.RWMutex
 	lockCreateProtocolMapperConfig sync.RWMutex
+	lockCreateRealmRole            sync.RWMutex
 	lockDeleteClient               sync.RWMutex
 	lockGetClient                  sync.RWMutex
 	lockGetClientById              sync.RWMutex
@@ -224,11 +282,52 @@ type KcClientMock struct {
 	lockGetClientServiceAccount    sync.RWMutex
 	lockGetClients                 sync.RWMutex
 	lockGetConfig                  sync.RWMutex
+	lockGetRealmRole               sync.RWMutex
 	lockGetToken                   sync.RWMutex
 	lockIsClientExist              sync.RWMutex
 	lockIsSameOrg                  sync.RWMutex
 	lockRegenerateClientSecret     sync.RWMutex
 	lockUpdateServiceAccountUser   sync.RWMutex
+	lockUserHasRealmRole           sync.RWMutex
+}
+
+// AddRealmRoleToUser calls AddRealmRoleToUserFunc.
+func (mock *KcClientMock) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
+	if mock.AddRealmRoleToUserFunc == nil {
+		panic("KcClientMock.AddRealmRoleToUserFunc: method is nil but KcClient.AddRealmRoleToUser was just called")
+	}
+	callInfo := struct {
+		AccessToken string
+		UserId      string
+		Role        gocloak.Role
+	}{
+		AccessToken: accessToken,
+		UserId:      userId,
+		Role:        role,
+	}
+	mock.lockAddRealmRoleToUser.Lock()
+	mock.calls.AddRealmRoleToUser = append(mock.calls.AddRealmRoleToUser, callInfo)
+	mock.lockAddRealmRoleToUser.Unlock()
+	return mock.AddRealmRoleToUserFunc(accessToken, userId, role)
+}
+
+// AddRealmRoleToUserCalls gets all the calls that were made to AddRealmRoleToUser.
+// Check the length with:
+//     len(mockedKcClient.AddRealmRoleToUserCalls())
+func (mock *KcClientMock) AddRealmRoleToUserCalls() []struct {
+	AccessToken string
+	UserId      string
+	Role        gocloak.Role
+} {
+	var calls []struct {
+		AccessToken string
+		UserId      string
+		Role        gocloak.Role
+	}
+	mock.lockAddRealmRoleToUser.RLock()
+	calls = mock.calls.AddRealmRoleToUser
+	mock.lockAddRealmRoleToUser.RUnlock()
+	return calls
 }
 
 // ClientConfig calls ClientConfigFunc.
@@ -328,6 +427,41 @@ func (mock *KcClientMock) CreateProtocolMapperConfigCalls() []struct {
 	return calls
 }
 
+// CreateRealmRole calls CreateRealmRoleFunc.
+func (mock *KcClientMock) CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
+	if mock.CreateRealmRoleFunc == nil {
+		panic("KcClientMock.CreateRealmRoleFunc: method is nil but KcClient.CreateRealmRole was just called")
+	}
+	callInfo := struct {
+		AccessToken string
+		RoleName    string
+	}{
+		AccessToken: accessToken,
+		RoleName:    roleName,
+	}
+	mock.lockCreateRealmRole.Lock()
+	mock.calls.CreateRealmRole = append(mock.calls.CreateRealmRole, callInfo)
+	mock.lockCreateRealmRole.Unlock()
+	return mock.CreateRealmRoleFunc(accessToken, roleName)
+}
+
+// CreateRealmRoleCalls gets all the calls that were made to CreateRealmRole.
+// Check the length with:
+//     len(mockedKcClient.CreateRealmRoleCalls())
+func (mock *KcClientMock) CreateRealmRoleCalls() []struct {
+	AccessToken string
+	RoleName    string
+} {
+	var calls []struct {
+		AccessToken string
+		RoleName    string
+	}
+	mock.lockCreateRealmRole.RLock()
+	calls = mock.calls.CreateRealmRole
+	mock.lockCreateRealmRole.RUnlock()
+	return calls
+}
+
 // DeleteClient calls DeleteClientFunc.
 func (mock *KcClientMock) DeleteClient(internalClientID string, accessToken string) error {
 	if mock.DeleteClientFunc == nil {
@@ -364,7 +498,7 @@ func (mock *KcClientMock) DeleteClientCalls() []struct {
 }
 
 // GetClient calls GetClientFunc.
-func (mock *KcClientMock) GetClient(clientId string, accessToken string) ([]*gocloak.Client, error) {
+func (mock *KcClientMock) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
 	if mock.GetClientFunc == nil {
 		panic("KcClientMock.GetClientFunc: method is nil but KcClient.GetClient was just called")
 	}
@@ -568,6 +702,41 @@ func (mock *KcClientMock) GetConfigCalls() []struct {
 	return calls
 }
 
+// GetRealmRole calls GetRealmRoleFunc.
+func (mock *KcClientMock) GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
+	if mock.GetRealmRoleFunc == nil {
+		panic("KcClientMock.GetRealmRoleFunc: method is nil but KcClient.GetRealmRole was just called")
+	}
+	callInfo := struct {
+		AccessToken string
+		RoleName    string
+	}{
+		AccessToken: accessToken,
+		RoleName:    roleName,
+	}
+	mock.lockGetRealmRole.Lock()
+	mock.calls.GetRealmRole = append(mock.calls.GetRealmRole, callInfo)
+	mock.lockGetRealmRole.Unlock()
+	return mock.GetRealmRoleFunc(accessToken, roleName)
+}
+
+// GetRealmRoleCalls gets all the calls that were made to GetRealmRole.
+// Check the length with:
+//     len(mockedKcClient.GetRealmRoleCalls())
+func (mock *KcClientMock) GetRealmRoleCalls() []struct {
+	AccessToken string
+	RoleName    string
+} {
+	var calls []struct {
+		AccessToken string
+		RoleName    string
+	}
+	mock.lockGetRealmRole.RLock()
+	calls = mock.calls.GetRealmRole
+	mock.lockGetRealmRole.RUnlock()
+	return calls
+}
+
 // GetToken calls GetTokenFunc.
 func (mock *KcClientMock) GetToken() (string, error) {
 	if mock.GetTokenFunc == nil {
@@ -731,5 +900,44 @@ func (mock *KcClientMock) UpdateServiceAccountUserCalls() []struct {
 	mock.lockUpdateServiceAccountUser.RLock()
 	calls = mock.calls.UpdateServiceAccountUser
 	mock.lockUpdateServiceAccountUser.RUnlock()
+	return calls
+}
+
+// UserHasRealmRole calls UserHasRealmRoleFunc.
+func (mock *KcClientMock) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+	if mock.UserHasRealmRoleFunc == nil {
+		panic("KcClientMock.UserHasRealmRoleFunc: method is nil but KcClient.UserHasRealmRole was just called")
+	}
+	callInfo := struct {
+		AccessToken string
+		UserId      string
+		RoleName    string
+	}{
+		AccessToken: accessToken,
+		UserId:      userId,
+		RoleName:    roleName,
+	}
+	mock.lockUserHasRealmRole.Lock()
+	mock.calls.UserHasRealmRole = append(mock.calls.UserHasRealmRole, callInfo)
+	mock.lockUserHasRealmRole.Unlock()
+	return mock.UserHasRealmRoleFunc(accessToken, userId, roleName)
+}
+
+// UserHasRealmRoleCalls gets all the calls that were made to UserHasRealmRole.
+// Check the length with:
+//     len(mockedKcClient.UserHasRealmRoleCalls())
+func (mock *KcClientMock) UserHasRealmRoleCalls() []struct {
+	AccessToken string
+	UserId      string
+	RoleName    string
+} {
+	var calls []struct {
+		AccessToken string
+		UserId      string
+		RoleName    string
+	}
+	mock.lockUserHasRealmRole.RLock()
+	calls = mock.calls.UserHasRealmRole
+	mock.lockUserHasRealmRole.RUnlock()
 	return calls
 }

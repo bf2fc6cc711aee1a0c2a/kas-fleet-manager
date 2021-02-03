@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/environments"
 	"gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/server"
@@ -55,12 +56,12 @@ func runServe(cmd *cobra.Command, args []string) {
 	cloudProviderService := environments.Environment().Services.CloudProviders
 	clusterService := environments.Environment().Services.Cluster
 	configService := environments.Environment().Services.Config
-	serverConfig := *environments.Environment().Config.Server
+	keycloakService := environments.Environment().Services.Keycloak
 
 	var workerList []workers.Worker
-
+	kasFleetshardOperatorAddon := services.NewKasFleetshardOperatorAddon(keycloakService, ocmClient)
 	//set Unique Id for each work to facilitate Leader Election process
-	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, serverConfig, uuid.New().String())
+	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon)
 	workerList = append(workerList, clusterManager)
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
@@ -68,7 +69,6 @@ func runServe(cmd *cobra.Command, args []string) {
 	// creates kafka worker
 	clusterService = environments.Environment().Services.Cluster
 	kafkaService := environments.Environment().Services.Kafka
-	keycloakService := environments.Environment().Services.Keycloak
 	observatoriumService := environments.Environment().Services.Observatorium
 
 	//set Unique Id for each work to facilitate Leader Election process

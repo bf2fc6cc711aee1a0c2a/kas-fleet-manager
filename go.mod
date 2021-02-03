@@ -32,6 +32,7 @@ require (
 	github.com/openshift-online/ocm-sdk-go v0.1.141
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/api v0.3.25
+	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.8.0
 	github.com/prometheus/common v0.14.0
 	github.com/rs/xid v1.2.1

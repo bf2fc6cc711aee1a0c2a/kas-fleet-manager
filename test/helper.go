@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"io/ioutil"
 	"log"
 	"net/http/httptest"
@@ -228,7 +229,7 @@ func (helper *Helper) startClusterWorker() {
 
 	// start cluster worker
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server, uuid.New().String())
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{})
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -247,7 +248,7 @@ func (helper *Helper) startLeaderElectionWorker() {
 
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, *environments.Environment().Config.Server, uuid.New().String())
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{})
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak, helper.Env().Services.Observatorium)
