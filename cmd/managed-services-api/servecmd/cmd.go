@@ -76,7 +76,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	workerList = append(workerList, kafkaManager)
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
-	leaderElectionManager := workers.NewLeaderLeaseManager(workerList, environments.Environment().DBFactory)
+	leaderElectionManager := workers.NewLeaderElectionManager(workerList, environments.Environment().DBFactory)
 	leaderElectionManager.Start()
 
 	select {}
