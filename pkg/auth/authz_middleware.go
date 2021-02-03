@@ -39,7 +39,6 @@ func NewAuthzMiddleware(ocmClient *ocm.Client, action, resourceType string) Auth
 func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
 		// Get username from context
 		username := GetUsernameFromContext(ctx)
 		if username == "" {

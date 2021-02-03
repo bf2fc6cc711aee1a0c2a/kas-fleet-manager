@@ -26,12 +26,10 @@ func NewKafkaHandler(service services.KafkaService, configService services.Confi
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var kafkaRequest openapi.KafkaRequestPayload
-	owner := auth.GetUsernameFromContext(r.Context())
 	cfg := &handlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []validate{
 			validateAsyncEnabled(r, "creating kafka requests"),
-			validateLength(&owner, "owner", &minRequiredFieldLength, nil),
 			validateLength(&kafkaRequest.Name, "name", &minRequiredFieldLength, &maxKafkaNameLength),
 			validKafkaClusterName(&kafkaRequest.Name, "name"),
 			validateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
@@ -40,10 +38,10 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			validateMaxAllowedInstances(h.service, h.config, r.Context()),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
-			convKafka.Owner = owner
-			context := r.Context()
-			convKafka.OrganisationId = auth.GetOrgIdFromContext(context)
+			convKafka.Owner = auth.GetUsernameFromContext(ctx)
+			convKafka.OrganisationId = auth.GetOrgIdFromContext(ctx)
 			err := h.service.RegisterKafkaJob(convKafka)
 			if err != nil {
 				return nil, err

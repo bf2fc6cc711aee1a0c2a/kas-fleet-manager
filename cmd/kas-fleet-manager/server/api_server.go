@@ -64,12 +64,6 @@ func NewAPIServer() Server {
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(services.Observatorium)
 
-	var authMiddleware auth.JWTMiddleware = &auth.AuthMiddlewareMock{}
-	if env().Config.Server.EnableJWT {
-		authMiddleware, err = auth.NewAuthMiddleware(env().Config.Server.JwkCertURL, env().Config.Server.JwkCertCA)
-		check(err, "Unable to create auth middleware")
-	}
-
 	/* TODO
 	var authzMiddleware auth.AuthorizationMiddleware = auth.NewAuthzMiddlewareMock()
 	if env().Config.Server.EnableAuthz {
@@ -128,7 +122,6 @@ func NewAPIServer() Server {
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
-	apiV1KafkasRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	if env().Services.Config.IsAllowListEnabled() {
 		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
@@ -138,7 +131,6 @@ func NewAPIServer() Server {
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
 	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
-	apiV1CloudProvidersRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/serviceaccounts").Subrouter()
 	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
@@ -146,13 +138,11 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
-	apiV1ServiceAccountsRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	//  /api/managed-services-api/v1/kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
 	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
 	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
-	apiV1MetricsRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	if env().Config.ConnectorsConfig.Enabled {
 
@@ -162,7 +152,6 @@ func NewAPIServer() Server {
 		apiV1ConnectorTypesRouter.HandleFunc("/{id}", connectorTypesHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.HandleFunc("/{id}/{path:.*}", connectorTypesHandler.ProxyToExtensionService).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
-		apiV1ConnectorTypesRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes)
@@ -171,15 +160,12 @@ func NewAPIServer() Server {
 		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Delete).Methods(http.MethodDelete)
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
-		apiV1ConnectorsRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments-of/{tid}
 		apiV1ConnectorsTypedRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments-of/{tid}").Subrouter()
 		apiV1ConnectorsTypedRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
-		apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
-
 	}
 
 	///api/managed-services-api/v1/agent-clusters/{id}
@@ -199,6 +185,7 @@ func NewAPIServer() Server {
 	var mainHandler http.Handler = mainRouter
 
 	if env().Config.Server.EnableJWT {
+		mainHandler = auth.SetClaimsInContextHandler(mainHandler)
 		authnLogger, err := sdk.NewGlogLoggerBuilder().
 			InfoV(glog.Level(1)).
 			DebugV(glog.Level(5)).
@@ -208,6 +195,8 @@ func NewAPIServer() Server {
 		mainHandler, err = authentication.NewHandler().
 			Logger(authnLogger).
 			KeysURL(env().Config.Server.JwkCertURL).
+			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
+			Service(errors.ERROR_CODE_PREFIX).
 			Public(fmt.Sprintf("^%s/%s/?$", apiEndpoint, managedServicesApi)).
 			Public(fmt.Sprintf("^%s/%s/%s/?$", apiEndpoint, managedServicesApi, version)).
 			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", apiEndpoint, managedServicesApi, version)).

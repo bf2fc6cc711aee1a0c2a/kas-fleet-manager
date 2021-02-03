@@ -11,10 +11,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/xeipuuv/gojsonschema"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+
+	"github.com/xeipuuv/gojsonschema"
 )
 
 var (
@@ -87,7 +87,6 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		}
 
 		var allowListItem config.AllowedListItem
-
 		orgId := auth.GetOrgIdFromContext(context)
 		username := auth.GetUsernameFromContext(context)
 
