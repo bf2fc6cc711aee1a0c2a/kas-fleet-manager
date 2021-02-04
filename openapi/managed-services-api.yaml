@@ -775,6 +775,7 @@ components:
               description: ''
     ServiceAccountList:
       allOf:
+        - $ref: "#/components/schemas/List"
         - type: object
           example:
             kind: "ServiceAccountList"
