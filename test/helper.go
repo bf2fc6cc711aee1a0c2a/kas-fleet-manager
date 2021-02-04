@@ -256,7 +256,7 @@ func (helper *Helper) startLeaderElectionWorker() {
 	workerLst = append(workerLst, helper.ClusterWorker)
 	workerLst = append(workerLst, helper.KafkaWorker)
 
-	helper.LeaderEleWorker = workers.NewLeaderLeaseManager(workerLst, helper.DBFactory)
+	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerLst, helper.DBFactory)
 	helper.LeaderEleWorker.Start()
 	glog.V(10).Info("Test Leader Election Manager started")
 }
