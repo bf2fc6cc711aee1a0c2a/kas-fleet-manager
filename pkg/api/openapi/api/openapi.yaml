@@ -1199,6 +1199,7 @@ components:
       - $ref: '#/components/schemas/ServiceAccountListItem_allOf'
     ServiceAccountList:
       allOf:
+      - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ServiceAccountList_allOf'
     MetricsList:
       allOf:
