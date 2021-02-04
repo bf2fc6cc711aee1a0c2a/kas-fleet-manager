@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -21,6 +22,7 @@ type LeaderElectionManager struct {
 	tearDown          chan struct{}
 	mgrRepeatInterval time.Duration
 	leaseRenewTime    time.Duration
+	workerGrp         sync.WaitGroup
 }
 
 // leaderLeaseAcquisition a wrapper for a lease and whether it's been acquired/is owned by another worker
@@ -31,7 +33,7 @@ type leaderLeaseAcquisition struct {
 	currentLease *api.LeaderLease
 }
 
-func NewLeaderLeaseManager(workers []Worker, connectionFactory *db.ConnectionFactory) *LeaderElectionManager {
+func NewLeaderElectionManager(workers []Worker, connectionFactory *db.ConnectionFactory) *LeaderElectionManager {
 	return &LeaderElectionManager{
 		workers:           workers,
 		connectionFactory: connectionFactory,
@@ -41,35 +43,47 @@ func NewLeaderLeaseManager(workers []Worker, connectionFactory *db.ConnectionFac
 }
 
 func (s *LeaderElectionManager) Start() {
-	s.tearDown = make(chan struct{})
 	glog.V(1).Infoln("Starting LeaderElectionManager")
+
+	s.tearDown = make(chan struct{})
+	waitWorkersStart := make(chan struct{})
 	go func() {
 		// Starts once immediately
 		s.startWorkers()
+		close(waitWorkersStart) //let Start() to proceed
 		ticker := time.NewTicker(s.mgrRepeatInterval)
 		for {
 			select {
 			case <-ticker.C:
 				s.startWorkers()
 			case <-s.tearDown:
+				ticker.Stop()
 				for _, worker := range s.workers {
+					//stopping all of the running workers.
 					if worker.IsRunning() {
 						worker.Stop()
+						s.workerGrp.Done()
 					}
 				}
 				return
 			}
 		}
 	}()
+
+	//wait for all workers started before leave.
+	<-waitWorkersStart
 }
 
 // impl. Stoppable
+// Workers started with Leader Election manager should be stop from here
 func (s *LeaderElectionManager) Stop() {
 	select {
 	case <-s.tearDown:
-		return
+		return //already closed/stopped
 	default:
-		close(s.tearDown)
+		close(s.tearDown) //it is started before, now close/stop
+		//wait for all workers are stopped before leaving
+		s.workerGrp.Wait()
 	}
 }
 
@@ -79,9 +93,11 @@ func (s *LeaderElectionManager) startWorkers() {
 		if isLeader && !worker.IsRunning() {
 			glog.V(1).Infoln(fmt.Sprintf("Running as the leader and starting worker %T [%s]", worker, worker.GetID()))
 			worker.Start()
+			s.workerGrp.Add(1) //a new worker is added to the group
 		} else if !isLeader && worker.IsRunning() {
 			glog.V(1).Infoln(fmt.Sprintf("No longer the leader and stopping worker %T [%s]", worker, worker.GetID()))
 			worker.Stop()
+			s.workerGrp.Done() //a worker is removed from the group
 		}
 	}
 }
