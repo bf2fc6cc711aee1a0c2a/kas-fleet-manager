@@ -39,6 +39,8 @@ type Env struct {
 
 type Services struct {
 	Kafka          services.KafkaService
+	Connectors     services.ConnectorsService
+	ConnectorTypes services.ConnectorTypesService
 	Cluster        services.ClusterService
 	CloudProviders services.CloudProvidersService
 	Config         services.ConfigService
@@ -154,6 +156,15 @@ func (env *Env) LoadServices() error {
 	env.Services.CloudProviders = cloudProviderService
 	env.Services.Observatorium = ObservatoriumService
 	env.Services.Keycloak = keycloakService
+
+	env.Services.Connectors = services.NewConnectorsService(env.DBFactory)
+	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
+	if env.Config.ConnectorsConfig.Enabled {
+		err := env.Services.ConnectorTypes.DiscoverExtensions()
+		if err != nil {
+			return err
+		}
+	}
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
 	env.Services.Config = configService

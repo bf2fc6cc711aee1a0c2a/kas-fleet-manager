@@ -85,6 +85,11 @@ parameters:
   description: Enable HTTPS rather than HTTP
   value: "true"
 
+- name: ENABLE_CONNECTORS
+  displayName: Enable Connectors API
+  description: Enable the connectors API
+  value: "false"
+
 - name: API_SERVER_BINDADDRESS
   displayName: API Server Bindaddress
   description: API server bind adddress
@@ -297,7 +302,17 @@ objects:
     data:
       allow-list-configuration.yaml: |-
         allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
-        allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}       
+        allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-connector-types-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      camelv1: http://camelv1-type-service:9090
+      camelv2: http://camelv2-type-service:9090
+
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
@@ -345,7 +360,10 @@ objects:
               name: ocm-managed-services-providers-config
           - name: ocm-managed-services-allowed-users-config
             configMap:
-              name: ocm-managed-services-allowed-users-config     
+              name: ocm-managed-services-allowed-users-config
+          - name: ocm-managed-services-connector-types-config
+            configMap:
+              name: ocm-managed-services-connector-types-config
           initContainers:
           - name: id
             image: quay.io/centos/centos:8
@@ -389,6 +407,8 @@ objects:
             - name: ocm-managed-services-allowed-users-config
               mountPath: /config/allow-list-configuration.yaml
               subPath: allow-list-configuration.yaml
+            - name: ocm-managed-services-connector-types-config
+              mountPath: /config/connector-types
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -458,6 +478,7 @@ objects:
             - --sentry-project=${SENTRY_PROJECT}
             - --sentry-timeout=${SENTRY_TIMEOUT}
             - --sentry-key-file=/secrets/service/sentry.key
+            - --enable-connectors=${ENABLE_CONNECTORS}
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
             - --enable-allow-list=${ENABLE_ALLOW_LIST}
