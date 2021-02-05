@@ -152,6 +152,33 @@ func NewAPIServer() Server {
 	apiV1MetricsRouter.HandleFunc("", metricsHandler.Get).Methods(http.MethodGet)
 	apiV1MetricsRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
+	if env().Config.ConnectorsConfig.Enabled {
+
+		//  /api/managed-services-api/v1/connector-types
+		connectorTypesHandler := handlers.NewConnectorTypesHandler(services.ConnectorTypes)
+		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/connector-types").Subrouter()
+		apiV1ConnectorTypesRouter.HandleFunc("/{id}", connectorTypesHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorTypesRouter.HandleFunc("/{id}/{path:.*}", connectorTypesHandler.ProxyToExtensionService).Methods(http.MethodGet)
+		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
+		apiV1ConnectorTypesRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments
+		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes)
+		apiV1ConnectorsRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments").Subrouter()
+		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Delete).Methods(http.MethodDelete)
+		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
+		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments-of/{tid}
+		apiV1ConnectorsTypedRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments-of/{tid}").Subrouter()
+		apiV1ConnectorsTypedRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
+		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
+		apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+	}
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
 
