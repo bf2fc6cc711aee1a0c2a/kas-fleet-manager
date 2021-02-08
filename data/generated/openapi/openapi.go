@@ -93,7 +93,7 @@ func managedServicesApiYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "managed-services-api.yaml", size: 47545, mode: os.FileMode(436), modTime: time.Unix(1612784242, 0)}
+	info := bindataFileInfo{name: "managed-services-api.yaml", size: 47545, mode: os.FileMode(436), modTime: time.Unix(1612784711, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
