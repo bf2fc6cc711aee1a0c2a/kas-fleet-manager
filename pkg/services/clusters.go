@@ -29,8 +29,8 @@ type ClusterService interface {
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *ocmErrors.ServiceError)
 	FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError)
-	ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
-	ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
+	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
+	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 }
@@ -234,13 +234,13 @@ func (c clusterService) FindClusterByID(clusterID string) (api.Cluster, *ocmErro
 }
 
 // ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
+func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, ocmErrors.Validation("clusterID is undefined")
 	}
 
 	// scale up compute nodes
-	cluster, err := c.ocmClient.ScaleUpComputeNodes(clusterID)
+	cluster, err := c.ocmClient.ScaleUpComputeNodes(clusterID, increment)
 	if err != nil {
 		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
@@ -248,13 +248,13 @@ func (c clusterService) ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.C
 }
 
 // ScaleDownComputeNodes removes three compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
+func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, ocmErrors.Validation("clusterID is undefined")
 	}
 
 	// scale up compute nodes
-	cluster, err := c.ocmClient.ScaleDownComputeNodes(clusterID)
+	cluster, err := c.ocmClient.ScaleDownComputeNodes(clusterID, decrement)
 	if err != nil {
 		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}

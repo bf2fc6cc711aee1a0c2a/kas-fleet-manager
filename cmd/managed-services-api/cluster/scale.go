@@ -12,6 +12,9 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 )
 
+// ClusterNodeScaleIncrement - default increment/ decrement node count when scaling multiAZ clusters
+const DefaultClusterNodeScaleIncrement = 3
+
 // NewScaleCommand creates a new command for scaling Compute nodes in a OSD cluster
 func NewScaleCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -61,7 +64,7 @@ func runScaleUp(cmd *cobra.Command, _ []string) {
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 
 	// scale up compute nodes
-	cluster, err := clusterService.ScaleUpComputeNodes(clusterID)
+	cluster, err := clusterService.ScaleUpComputeNodes(clusterID, DefaultClusterNodeScaleIncrement)
 	if err != nil {
 		glog.Fatalf("Unable to scale up compute nodes: %s", err.Error())
 	}
@@ -84,7 +87,7 @@ func runScaleDown(cmd *cobra.Command, _ []string) {
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 
 	// scale down compute nodes
-	cluster, err := clusterService.ScaleDownComputeNodes(clusterID)
+	cluster, err := clusterService.ScaleDownComputeNodes(clusterID, DefaultClusterNodeScaleIncrement)
 	if err != nil {
 		glog.Fatalf("Unable to scale down compute nodes: %s", err.Error())
 	}

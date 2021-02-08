@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
-
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	clusterscalecmd "gitlab.cee.redhat.com/service/managed-services-api/cmd/managed-services-api/cluster"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	utils "gitlab.cee.redhat.com/service/managed-services-api/test/common"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
@@ -33,19 +32,17 @@ func TestClusterComputeNodesScaling(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	expectedReplicas := constants.ClusterNodeScaleIncrement * 2 // 3 (initially) + 3 after scaling
+	expectedReplicas := mocks.MockClusterComputeNodes + clusterscalecmd.DefaultClusterNodeScaleIncrement
 
 	overrideClusterMockResponse(ocmServerBuilder, expectedReplicas)
 
-	// scale up compute nodes to 6
-	scaleUpComputeNodes(h, expectedReplicas, clusterID)
+	scaleUpComputeNodes(h, expectedReplicas, clusterID, clusterscalecmd.DefaultClusterNodeScaleIncrement)
 
-	expectedReplicas = expectedReplicas - constants.ClusterNodeScaleIncrement
+	expectedReplicas = expectedReplicas - clusterscalecmd.DefaultClusterNodeScaleIncrement
 
 	overrideClusterMockResponse(ocmServerBuilder, expectedReplicas)
 
-	// scale down to 3
-	scaleDownComputeNodes(h, expectedReplicas, clusterID)
+	scaleDownComputeNodes(h, expectedReplicas, clusterID, clusterscalecmd.DefaultClusterNodeScaleIncrement)
 }
 
 // get mock Cluster with specified Compute replicas number
@@ -63,15 +60,15 @@ func getClusterForScaleTest(replicas int) *clustersmgmtv1.Cluster {
 }
 
 // scaleUpComputeNodes and confirm that it is scaled without error
-func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string) {
-	cluster, err := h.Env().Services.Cluster.ScaleUpComputeNodes(clusterID)
+func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, increment int) {
+	cluster, err := h.Env().Services.Cluster.ScaleUpComputeNodes(clusterID, increment)
 	Expect(err).To(BeNil())
 	Expect(cluster.Nodes().Compute()).To(Equal(expectedReplicas))
 }
 
 // scaleDownComputeNodes and confirm that it is scaled without error
-func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string) {
-	cluster, err := h.Env().Services.Cluster.ScaleDownComputeNodes(clusterID)
+func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, decrement int) {
+	cluster, err := h.Env().Services.Cluster.ScaleDownComputeNodes(clusterID, decrement)
 	Expect(err).To(BeNil())
 	Expect(cluster.Nodes().Compute()).To(Equal(expectedReplicas))
 }
