@@ -28,7 +28,10 @@ type ClusterService interface {
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *ocmErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *ocmErrors.ServiceError)
-	FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError)
+	// FindClusterByID returns the cluster corresponding to the provided clusterID.
+	// If the cluster has not been found nil is returned. If there has been an issue
+	// finding the cluster an error is set
+	FindClusterByID(clusterID string) (*api.Cluster, *ocmErrors.ServiceError)
 	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError)
@@ -211,23 +214,23 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 	return &cluster, nil
 }
 
-func (c clusterService) FindClusterByID(clusterID string) (api.Cluster, *ocmErrors.ServiceError) {
+func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *ocmErrors.ServiceError) {
 	if clusterID == "" {
-		return api.Cluster{}, ocmErrors.Validation("clusterID is undefined")
+		return nil, ocmErrors.Validation("clusterID is undefined")
 	}
 	dbConn := c.connectionFactory.New()
 
-	var cluster api.Cluster
+	var cluster *api.Cluster = &api.Cluster{}
 
 	clusterDetails := &api.Cluster{
 		ClusterID: clusterID,
 	}
 
-	if err := dbConn.Where(clusterDetails).First(&cluster).Error; err != nil {
+	if err := dbConn.Where(clusterDetails).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return api.Cluster{}, nil
+			return nil, nil
 		}
-		return api.Cluster{}, ocmErrors.GeneralError("failed to find cluster with id: %s %s", clusterID, err.Error())
+		return nil, ocmErrors.GeneralError("failed to find cluster with id: %s %s", clusterID, err.Error())
 	}
 
 	return cluster, nil

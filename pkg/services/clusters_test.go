@@ -300,12 +300,23 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    api.Cluster
+		want    *api.Cluster
 		wantErr bool
 		setupFn func()
 	}{
 		{
-			name: "error when id is undefined",
+			name: "nil and no error when id is not found",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id: "non-existentID",
+			},
+			wantErr: false,
+			want:    nil,
+		},
+		{
+			name: "error when id is empty (undefined)",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -313,6 +324,7 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 				id: "",
 			},
 			wantErr: true,
+			want:    nil,
 		},
 		{
 			name: "error when sql where query fails",
@@ -323,6 +335,7 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 				id: testClusterID,
 			},
 			wantErr: true,
+			want:    nil,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
 			},
@@ -335,9 +348,10 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 			args: args{
 				id: testClusterID,
 			},
-			want: api.Cluster{},
+			want: &api.Cluster{ClusterID: testClusterID},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID}}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(mockedResponse)
 			},
 		},
 	}
