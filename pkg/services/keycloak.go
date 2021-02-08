@@ -2,6 +2,9 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"github.com/Nerzal/gocloak/v8"
+	"github.com/golang/glog"
 	"strings"
 
 	"github.com/google/uuid"
@@ -13,7 +16,8 @@ import (
 )
 
 const (
-	rhOrgId = "rh-org-id"
+	rhOrgId   = "rh-org-id"
+	clusterId = "kas-fleetshard-operator-cluster-id"
 )
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
@@ -27,6 +31,7 @@ type KeycloakService interface {
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
 	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
+	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
 }
 
 type keycloakService struct {
@@ -231,6 +236,116 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 	} else {
 		return nil, errors.Forbidden("can not regenerate service account secret due to permission error")
 	}
+}
+
+func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
+	accessToken, _ := kc.kcClient.GetToken()
+	role, err := kc.createRealmRoleIfNotExists(accessToken, roleName)
+	if err != nil {
+		return nil, err
+	}
+	protocolMapper := kc.kcClient.CreateProtocolMapperConfig(clusterId)
+	c := keycloak.ClientRepresentation{
+		ClientID:               serviceAccountId,
+		Name:                   serviceAccountId,
+		Description:            fmt.Sprintf("service account for agent on cluster %s", agentClusterId),
+		ServiceAccountsEnabled: true,
+		StandardFlowEnabled:    false,
+		ProtocolMappers:        protocolMapper,
+		Attributes: map[string]string{
+			clusterId: agentClusterId,
+		},
+	}
+	account, err := kc.createServiceAccountIfNotExists(accessToken, c)
+	if err != nil {
+		return nil, errors.GeneralError("failed to create service account:%v", err)
+	}
+	serviceAccountUser, getErr := kc.kcClient.GetClientServiceAccount(accessToken, account.ID)
+	if getErr != nil {
+		return nil, errors.GeneralError("failed to read service account user:%v", getErr)
+	}
+	if serviceAccountUser.Attributes == nil || !gocloak.UserAttributeContains(*serviceAccountUser.Attributes, clusterId, agentClusterId) {
+		glog.V(10).Infof("Client %s has no attribute %s, set it", serviceAccountId, clusterId)
+		serviceAccountUser.Attributes = &map[string][]string{
+			clusterId: {agentClusterId},
+		}
+		updateErr := kc.kcClient.UpdateServiceAccountUser(accessToken, *serviceAccountUser)
+		if updateErr != nil {
+			return nil, errors.GeneralError("failed to update service account user:%v", updateErr)
+		}
+	}
+	glog.V(5).Infof("Attribute %s is added for client %s", clusterId, serviceAccountId)
+	hasRole, checkErr := kc.kcClient.UserHasRealmRole(accessToken, *serviceAccountUser.ID, roleName)
+	if checkErr != nil {
+		return nil, errors.GeneralError("failed to check if user has role:%v", checkErr)
+	}
+	if hasRole == nil {
+		glog.V(10).Infof("Client %s has no role %s, adding", serviceAccountId, roleName)
+		addRoleErr := kc.kcClient.AddRealmRoleToUser(accessToken, *serviceAccountUser.ID, *role)
+		if addRoleErr != nil {
+			return nil, errors.GeneralError("failed to add role to user:%v", addRoleErr)
+		}
+	}
+	glog.V(5).Infof("Client %s created successfully", serviceAccountId)
+	return account, nil
+}
+
+func (kc *keycloakService) createRealmRoleIfNotExists(token string, roleName string) (*gocloak.Role, *errors.ServiceError) {
+	glog.V(5).Infof("Creating realm role %s", roleName)
+	role, err := kc.kcClient.GetRealmRole(token, roleName)
+	if err != nil {
+		return nil, errors.GeneralError("failed to get realm role:%v", err)
+	}
+	if role == nil {
+		glog.V(10).Infof("No existing realm role %s found, creating a new one", roleName)
+		role, err = kc.kcClient.CreateRealmRole(token, roleName)
+		if err != nil {
+			return nil, errors.GeneralError("failed to create realm role: %v", err)
+		}
+	}
+	glog.V(5).Infof("Realm role %s created. id = %s", roleName, *role.ID)
+	return role, nil
+}
+
+func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientRep keycloak.ClientRepresentation) (*api.ServiceAccount, *errors.ServiceError) {
+	glog.V(5).Infof("Creating service account: clientId = %s", clientRep.ClientID)
+	client, err := kc.kcClient.GetClient(clientRep.ClientID, token)
+	if err != nil {
+		return nil, errors.GeneralError("failed to check if client exists:%v", err)
+	}
+	var internalClientId, clientSecret string
+	if client == nil {
+		glog.V(10).Infof("No exiting client found for %s, creating a new one", clientRep.ClientID)
+		clientConfig := kc.kcClient.ClientConfig(clientRep)
+		internalClientId, err = kc.kcClient.CreateClient(clientConfig, token)
+		if err != nil {
+			return nil, errors.FailedToCreateServiceAccount("failed to create the service account")
+		}
+		clientSecret, err = kc.kcClient.GetClientSecret(internalClientId, token)
+		if err != nil {
+			return nil, errors.FailedToGetSSOClientSecret("failed to get service account secret")
+		}
+	} else {
+		glog.V(10).Infof("Existing client found for %s, internalId=%s", clientRep.ClientID, *client.ID)
+		internalClientId = *client.ID
+		clientSecret, err = kc.kcClient.GetClientSecret(internalClientId, token)
+		if err != nil {
+			return nil, errors.FailedToGetSSOClientSecret("failed to get service account secret")
+		}
+	}
+	serviceAcc := &api.ServiceAccount{
+		ID:           internalClientId,
+		ClientID:     clientRep.ClientID,
+		ClientSecret: clientSecret,
+		Name:         clientRep.Name,
+		Description:  clientRep.Description,
+	}
+	return serviceAcc, nil
+}
+
+func buildAgentOperatorServiceAccountId(agentClusterId string) string {
+	return fmt.Sprintf("kas-fleetshard-agent-%s", agentClusterId)
 }
 
 func NewUUID() string {

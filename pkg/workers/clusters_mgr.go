@@ -3,6 +3,7 @@ package workers
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	storagev1 "k8s.io/api/storage/v1"
@@ -10,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
@@ -54,29 +54,31 @@ var observabilityCanaryPodSelector = map[string]string{
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
-	id                    string
-	workerType            string
-	isRunning             bool
-	ocmClient             ocm.Client
-	clusterService        services.ClusterService
-	cloudProvidersService services.CloudProvidersService
-	timer                 *time.Timer
-	imStop                chan struct{} //a chan used only for cancellation
-	syncTeardown          sync.WaitGroup
-	reconciler            Reconciler
-	configService         services.ConfigService
+	id                         string
+	workerType                 string
+	isRunning                  bool
+	ocmClient                  ocm.Client
+	clusterService             services.ClusterService
+	cloudProvidersService      services.CloudProvidersService
+	timer                      *time.Timer
+	imStop                     chan struct{} //a chan used only for cancellation
+	syncTeardown               sync.WaitGroup
+	reconciler                 Reconciler
+	configService              services.ConfigService
+	kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 }
 
 // NewClusterManager creates a new cluster manager
 func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client,
-	configService services.ConfigService, serverConfig config.ServerConfig, id string) *ClusterManager {
+	configService services.ConfigService, id string, agentOperatorAddon services.KasFleetshardOperatorAddon) *ClusterManager {
 	return &ClusterManager{
-		id:                    id,
-		workerType:            "cluster",
-		ocmClient:             ocmClient,
-		clusterService:        clusterService,
-		cloudProvidersService: cloudProvidersService,
-		configService:         configService,
+		id:                         id,
+		workerType:                 "cluster",
+		ocmClient:                  ocmClient,
+		clusterService:             clusterService,
+		cloudProvidersService:      cloudProvidersService,
+		configService:              configService,
+		kasFleetshardOperatorAddon: agentOperatorAddon,
 	}
 }
 
@@ -185,39 +187,13 @@ func (c *ClusterManager) reconcile() {
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		addonInstallation, addOnErr := c.reconcileStrimziOperator(provisionedCluster.ClusterID)
+		addOnErr := c.reconcileAddonOperator(provisionedCluster)
 		if addOnErr != nil {
 			sentry.CaptureException(addOnErr)
-			glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, addOnErr.Error())
+			glog.Errorf("failed to reconcile cluster %s addon operator: %s", provisionedCluster.ID, addOnErr.Error())
 			continue
 		}
 
-		// The cluster is ready when the state reports ready
-		if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-			clusterDNS, dnsErr := c.clusterService.GetClusterDNS(provisionedCluster.ClusterID)
-			if dnsErr != nil || clusterDNS == "" {
-				sentry.CaptureException(dnsErr)
-				glog.Errorf("failed to reconcile cluster %s strimzi operator: %s", provisionedCluster.ID, dnsErr.Error())
-				continue
-			}
-			clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
-
-			_, syncsetErr := c.createSyncSet(provisionedCluster.ClusterID, clusterDNS)
-			if syncsetErr != nil {
-				sentry.CaptureException(syncsetErr)
-				glog.Errorf("failed to create syncset on cluster %s: %s", provisionedCluster.ClusterID, syncsetErr.Error())
-				continue
-			}
-
-			if err = c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
-				sentry.CaptureException(err)
-				glog.Errorf("failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-				continue
-			}
-
-			// add entry for cluster creation metric
-			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
-		}
 		glog.V(5).Infof("reconciled cluster %s terraforming", provisionedCluster.ClusterID)
 	}
 }
@@ -272,24 +248,68 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	return cluster, nil
 }
 
-// reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
-func (c *ClusterManager) reconcileStrimziOperator(clusterID string) (*clustersmgmtv1.AddOnInstallation, error) {
+func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
+	if c.configService.IsKasFleetshardOperatorEnabled() {
+		if c.kasFleetshardOperatorAddon != nil {
+			glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
+			ready, err := c.kasFleetshardOperatorAddon.Provision(provisionedCluster)
+			if err != nil {
+				return err
+			}
+			if ready {
+				glog.V(5).Infof("kas-fleetshard-operator is ready for cluster %s", provisionedCluster.ClusterID)
+				if err := c.clusterService.UpdateStatus(provisionedCluster, api.AddonInstalled); err != nil {
+					return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+				}
+				// add entry for cluster creation metric
+				metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
+			}
+		}
+	} else {
+		//TODO: remove this function once we switch to use agent operators
+		return c.reconcileStrimziOperator(provisionedCluster)
+	}
+	return nil
+}
 
-	addonInstallation, err := c.ocmClient.GetManagedKafkaAddon(clusterID)
+// reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
+func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) error {
+	clusterId := provisionedCluster.ClusterID
+	addonInstallation, err := c.ocmClient.GetManagedKafkaAddon(clusterId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cluster %s addon: %w", clusterID, err)
+		return errors.WithMessagef(err, "failed to get cluster %s addon: %s", clusterId, err.Error())
 	}
 
 	// Addon needs to be installed if addonInstallation doesn't exist
 	if addonInstallation.ID() == "" {
 		// Install the Stimzi operator
-		addonInstallation, err = c.ocmClient.CreateManagedKafkaAddon(clusterID)
+		addonInstallation, err = c.ocmClient.CreateManagedKafkaAddon(clusterId)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create cluster %s addon: %w", clusterID, err)
+			return errors.WithMessagef(err, "failed to create cluster %s addon: %s", clusterId, err.Error())
 		}
 	}
 
-	return addonInstallation, nil
+	// The cluster is ready when the state reports ready
+	if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
+		clusterDNS, dnsErr := c.clusterService.GetClusterDNS(clusterId)
+		if dnsErr != nil || clusterDNS == "" {
+			return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s strimzi operator: %s", clusterId, dnsErr.Error())
+		}
+		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+
+		_, syncsetErr := c.createSyncSet(clusterId, clusterDNS)
+		if syncsetErr != nil {
+			return errors.WithMessagef(syncsetErr, "failed to create syncset on cluster %s: %s", clusterId, syncsetErr.Error())
+		}
+
+		if err = c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
+			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", clusterId, err.Error())
+		}
+
+		// add entry for cluster creation metric
+		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
+	}
+	return nil
 }
 
 // reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists

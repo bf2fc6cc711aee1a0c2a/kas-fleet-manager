@@ -23,6 +23,8 @@ const (
 	ManagedKafkaAddonID = "managed-kafka"
 	// ClusterReady the cluster is terraformed and ready for kafka instances
 	ClusterReady ClusterStatus = "ready"
+	// ClusterAddonInstalled addon is installed on the cluster
+	AddonInstalled ClusterStatus = "addon_installed"
 )
 
 // This represents the valid statuses of a OSD cluster

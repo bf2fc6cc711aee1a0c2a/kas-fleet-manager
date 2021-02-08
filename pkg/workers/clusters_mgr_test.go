@@ -39,21 +39,6 @@ var (
 	testProvider = "aws"
 )
 
-// build a test addonInstallation
-func buildAddonInstallation(id string, state clustersmgmtv1.AddOnInstallationState) *clustersmgmtv1.AddOnInstallation {
-	managedKafkaAddonBuilder := clustersmgmtv1.NewAddOnInstallation()
-	if id != "" {
-		managedKafkaAddonBuilder.ID(id)
-	}
-	if state != "" {
-		managedKafkaAddonBuilder.State(state)
-	}
-
-	// Not possible to return an error when no cluster or addon information is being set
-	managedKafkaAddon, _ := managedKafkaAddonBuilder.Build()
-	return managedKafkaAddon
-}
-
 func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 	type fields struct {
 		ocmClient      ocm.Client
@@ -251,13 +236,13 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 
 func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
-		timer     *time.Timer
+		ocmClient      ocm.Client
+		timer          *time.Timer
+		clusterService services.ClusterService
 	}
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *clustersmgmtv1.AddOnInstallation
 		wantErr bool
 	}{
 		{
@@ -285,7 +270,6 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 					},
 				},
 			},
-			want:    &clustersmgmtv1.AddOnInstallation{},
 			wantErr: false,
 		},
 		{
@@ -301,7 +285,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 					},
 				},
 			},
-			want: buildAddonInstallation(api.ManagedKafkaAddonID, ""),
+			wantErr: false,
 		},
 		{
 			name: "failed state returned when managed kafka addon is found but with a AddOnInstallationStateFailed state",
@@ -316,7 +300,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 					},
 				},
 			},
-			want: buildAddonInstallation(api.ManagedKafkaAddonID, clustersmgmtv1.AddOnInstallationStateFailed),
+			wantErr: false,
 		},
 		{
 			name: "ready state returned when managed kafka addon is found but with a AddOnInstallationStateReady state",
@@ -329,9 +313,20 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 						}
 						return managedKafkaAddon, nil
 					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "apps.example.com", nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
 				},
 			},
-			want: buildAddonInstallation(api.ManagedKafkaAddonID, clustersmgmtv1.AddOnInstallationStateReady),
+			wantErr: false,
 		},
 		{
 			name: "error when creating managed kafka addon from ocm fails",
@@ -352,16 +347,22 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				ocmClient: tt.fields.ocmClient,
-				timer:     tt.fields.timer,
+				ocmClient:      tt.fields.ocmClient,
+				clusterService: tt.fields.clusterService,
+				timer:          tt.fields.timer,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{},
+					config.ClusterCreationConfig{},
+					config.ObservabilityConfiguration{},
+				),
 			}
-			got, err := c.reconcileStrimziOperator("clusterId")
+			err := c.reconcileStrimziOperator(api.Cluster{
+				ClusterID: "clusterId",
+			})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reconcileStrimziOperator() error = %v, wantErr %v", err, tt.wantErr)
 				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("reconcileStrimziOperator() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -622,6 +623,70 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 			Expect(got).To(Equal(tt.want.syncset))
 			if err != nil {
 				Expect(err).To(MatchError(tt.want.err))
+			}
+		})
+	}
+}
+
+func TestClusterManager_reconcileAddonOperator(t *testing.T) {
+	type fields struct {
+		agentOperator  services.KasFleetshardOperatorAddon
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "agent operator is ready",
+			fields: fields{
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "agent operator is not ready",
+			fields: fields{
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				clusterService: tt.fields.clusterService,
+				configService: services.NewConfigService(
+					config.ProviderConfiguration{},
+					config.AllowListConfig{},
+					config.ClusterCreationConfig{
+						EnableKasFleetshardOperator: true,
+					},
+					config.ObservabilityConfiguration{},
+				),
+				kasFleetshardOperatorAddon: tt.fields.agentOperator,
+			}
+
+			err := c.reconcileAddonOperator(api.Cluster{
+				ClusterID: "test-cluster-id",
+			})
+			if err != nil && !tt.wantErr {
+				t.Errorf("reconcileAddonOperator() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

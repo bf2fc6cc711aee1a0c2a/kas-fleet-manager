@@ -14,7 +14,7 @@ type KcClient interface {
 	GetToken() (string, error)
 	GetClientSecret(internalClientId string, accessToken string) (string, error)
 	DeleteClient(internalClientID string, accessToken string) error
-	GetClient(clientId string, accessToken string) ([]*gocloak.Client, error)
+	GetClient(clientId string, accessToken string) (*gocloak.Client, error)
 	IsClientExist(clientId string, accessToken string) (string, error)
 	GetConfig() *config.KeycloakConfig
 	GetClientById(id string, accessToken string) (*gocloak.Client, error)
@@ -25,6 +25,10 @@ type KcClient interface {
 	GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error)
 	IsSameOrg(client *gocloak.Client, orgId string) bool
 	RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error)
+	GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error)
+	CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error)
+	UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error)
+	AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error
 }
 
 type ClientRepresentation struct {
@@ -107,7 +111,7 @@ func (kc *kcClient) CreateClient(client gocloak.Client, accessToken string) (str
 	return internalClientID, err
 }
 
-func (kc *kcClient) GetClient(clientId string, accessToken string) ([]*gocloak.Client, error) {
+func (kc *kcClient) GetClient(clientId string, accessToken string) (*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{
 		ClientID: &clientId,
 	}
@@ -115,7 +119,11 @@ func (kc *kcClient) GetClient(clientId string, accessToken string) ([]*gocloak.C
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch the sso client: %s", err.Error())
 	}
-	return client, err
+	if len(client) > 0 {
+		return client[0], nil
+	} else {
+		return nil, nil
+	}
 }
 
 func (kc *kcClient) GetToken() (string, error) {
@@ -226,4 +234,62 @@ func (kc *kcClient) RegenerateClientSecret(accessToken string, id string) (*gocl
 		return nil, fmt.Errorf("failed to regenerate client secret: %s:%s", id, err.Error())
 	}
 	return credRep, err
+}
+
+func (kc *kcClient) GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
+	r, err := kc.kcClient.GetRealmRole(kc.ctx, accessToken, kc.config.Realm, roleName)
+	if err != nil {
+		if isNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get realm role: %s:%s", roleName, err.Error())
+	}
+	return r, err
+}
+
+func (kc *kcClient) CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error) {
+	r := &gocloak.Role{
+		Name: &roleName,
+	}
+	_, err := kc.kcClient.CreateRealmRole(kc.ctx, accessToken, kc.config.Realm, *r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create realm role: %s:%s", roleName, err.Error())
+	}
+	// for some reason, the internal id of the role is not returned by kcClient.CreateRealmRole, so we have to get the role again to get the full details
+	r, err = kc.kcClient.GetRealmRole(kc.ctx, accessToken, kc.config.Realm, roleName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create realm role: %s:%s", roleName, err.Error())
+	}
+	return r, nil
+}
+
+func (kc *kcClient) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
+	roles, err := kc.kcClient.GetRealmRolesByUserID(kc.ctx, accessToken, kc.config.Realm, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list realm roles for user: %s:%s", userId, err.Error())
+	}
+	for _, r := range roles {
+		if *r.Name == roleName {
+			return r, nil
+		}
+	}
+	return nil, nil
+}
+
+func (kc *kcClient) AddRealmRoleToUser(accessToken string, userId string, role gocloak.Role) error {
+	roles := []gocloak.Role{role}
+	err := kc.kcClient.AddRealmRoleToUser(kc.ctx, accessToken, kc.config.Realm, userId, roles)
+	if err != nil {
+		return fmt.Errorf("failed to add realm role to user: %s:%s:%s", userId, *role.Name, err.Error())
+	}
+	return nil
+}
+
+func isNotFoundError(err error) bool {
+	if e, ok := err.(*gocloak.APIError); ok {
+		if e.Code == 404 {
+			return true
+		}
+	}
+	return false
 }
