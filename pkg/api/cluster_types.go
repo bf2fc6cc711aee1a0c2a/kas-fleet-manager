@@ -25,6 +25,8 @@ const (
 	ClusterReady ClusterStatus = "ready"
 	// ClusterAddonInstalled addon is installed on the cluster
 	AddonInstalled ClusterStatus = "addon_installed"
+	// KasFleetshardOperatorAddonId the ID of the kas-fleetshard-operator addon
+	KasFleetshardOperatorAddonId = "kas-fleetshard-operator"
 )
 
 // This represents the valid statuses of a OSD cluster
