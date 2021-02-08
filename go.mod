@@ -8,14 +8,12 @@ require (
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/aws/aws-sdk-go v1.36.5
-	github.com/bep/debounce v1.2.0
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
-	github.com/fsnotify/fsnotify v1.4.9
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-sql-driver/mysql v1.5.0 // indirect

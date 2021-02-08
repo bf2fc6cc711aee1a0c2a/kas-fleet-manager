@@ -41,10 +41,10 @@ var _ ClusterService = &ClusterServiceMock{}
 //             RegisterClusterJobFunc: func(clusterRequest *api.Cluster) *errors.ServiceError {
 // 	               panic("mock out the RegisterClusterJob method")
 //             },
-//             ScaleDownComputeNodesFunc: func(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+//             ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ScaleDownComputeNodes method")
 //             },
-//             ScaleUpComputeNodesFunc: func(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+//             ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ScaleUpComputeNodes method")
 //             },
 //             UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -79,10 +79,10 @@ type ClusterServiceMock struct {
 	RegisterClusterJobFunc func(clusterRequest *api.Cluster) *errors.ServiceError
 
 	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
-	ScaleDownComputeNodesFunc func(clusterID string) (*v1.Cluster, *errors.ServiceError)
+	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*v1.Cluster, *errors.ServiceError)
 
 	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
-	ScaleUpComputeNodesFunc func(clusterID string) (*v1.Cluster, *errors.ServiceError)
+	ScaleUpComputeNodesFunc func(clusterID string, increment int) (*v1.Cluster, *errors.ServiceError)
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
@@ -132,11 +132,15 @@ type ClusterServiceMock struct {
 		ScaleDownComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
+			// Decrement is the decrement argument value.
+			Decrement int
 		}
 		// ScaleUpComputeNodes holds details about calls to the ScaleUpComputeNodes method.
 		ScaleUpComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
+			// Increment is the increment argument value.
+			Increment int
 		}
 		// UpdateStatus holds details about calls to the UpdateStatus method.
 		UpdateStatus []struct {
@@ -384,19 +388,21 @@ func (mock *ClusterServiceMock) RegisterClusterJobCalls() []struct {
 }
 
 // ScaleDownComputeNodes calls ScaleDownComputeNodesFunc.
-func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string, decrement int) (*v1.Cluster, *errors.ServiceError) {
 	if mock.ScaleDownComputeNodesFunc == nil {
 		panic("ClusterServiceMock.ScaleDownComputeNodesFunc: method is nil but ClusterService.ScaleDownComputeNodes was just called")
 	}
 	callInfo := struct {
 		ClusterID string
+		Decrement int
 	}{
 		ClusterID: clusterID,
+		Decrement: decrement,
 	}
 	mock.lockScaleDownComputeNodes.Lock()
 	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
 	mock.lockScaleDownComputeNodes.Unlock()
-	return mock.ScaleDownComputeNodesFunc(clusterID)
+	return mock.ScaleDownComputeNodesFunc(clusterID, decrement)
 }
 
 // ScaleDownComputeNodesCalls gets all the calls that were made to ScaleDownComputeNodes.
@@ -404,9 +410,11 @@ func (mock *ClusterServiceMock) ScaleDownComputeNodes(clusterID string) (*v1.Clu
 //     len(mockedClusterService.ScaleDownComputeNodesCalls())
 func (mock *ClusterServiceMock) ScaleDownComputeNodesCalls() []struct {
 	ClusterID string
+	Decrement int
 } {
 	var calls []struct {
 		ClusterID string
+		Decrement int
 	}
 	mock.lockScaleDownComputeNodes.RLock()
 	calls = mock.calls.ScaleDownComputeNodes
@@ -415,19 +423,21 @@ func (mock *ClusterServiceMock) ScaleDownComputeNodesCalls() []struct {
 }
 
 // ScaleUpComputeNodes calls ScaleUpComputeNodesFunc.
-func (mock *ClusterServiceMock) ScaleUpComputeNodes(clusterID string) (*v1.Cluster, *errors.ServiceError) {
+func (mock *ClusterServiceMock) ScaleUpComputeNodes(clusterID string, increment int) (*v1.Cluster, *errors.ServiceError) {
 	if mock.ScaleUpComputeNodesFunc == nil {
 		panic("ClusterServiceMock.ScaleUpComputeNodesFunc: method is nil but ClusterService.ScaleUpComputeNodes was just called")
 	}
 	callInfo := struct {
 		ClusterID string
+		Increment int
 	}{
 		ClusterID: clusterID,
+		Increment: increment,
 	}
 	mock.lockScaleUpComputeNodes.Lock()
 	mock.calls.ScaleUpComputeNodes = append(mock.calls.ScaleUpComputeNodes, callInfo)
 	mock.lockScaleUpComputeNodes.Unlock()
-	return mock.ScaleUpComputeNodesFunc(clusterID)
+	return mock.ScaleUpComputeNodesFunc(clusterID, increment)
 }
 
 // ScaleUpComputeNodesCalls gets all the calls that were made to ScaleUpComputeNodes.
@@ -435,9 +445,11 @@ func (mock *ClusterServiceMock) ScaleUpComputeNodes(clusterID string) (*v1.Clust
 //     len(mockedClusterService.ScaleUpComputeNodesCalls())
 func (mock *ClusterServiceMock) ScaleUpComputeNodesCalls() []struct {
 	ClusterID string
+	Increment int
 } {
 	var calls []struct {
 		ClusterID string
+		Increment int
 	}
 	mock.lockScaleUpComputeNodes.RLock()
 	calls = mock.calls.ScaleUpComputeNodes

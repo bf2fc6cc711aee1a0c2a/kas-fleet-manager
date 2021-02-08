@@ -1,8 +1,6 @@
 package ocm
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
-
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
@@ -21,8 +19,8 @@ type Client interface {
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
-	ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, error)
-	ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, error)
+	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
+	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
 }
 
 var _ Client = &client{}
@@ -167,14 +165,14 @@ func (c client) DeleteSyncSet(clusterID string, syncsetID string) (int, error) {
 	return response.Status(), syncsetErr
 }
 
-// ScaleUpComputeNodes scales up compute nodes by ClusterNodeScaleIncrement value
-func (c client) ScaleUpComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, constants.ClusterNodeScaleIncrement)
+// ScaleUpComputeNodes scales up compute nodes by increment value
+func (c client) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error) {
+	return c.scaleComputeNodes(clusterID, increment)
 }
 
-// ScaleDownComputeNodes scales down compute nodes by ClusterNodeScaleIncrement value
-func (c client) ScaleDownComputeNodes(clusterID string) (*clustersmgmtv1.Cluster, error) {
-	return c.scaleComputeNodes(clusterID, -constants.ClusterNodeScaleIncrement)
+// ScaleDownComputeNodes scales down compute nodes by decrement value
+func (c client) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
+	return c.scaleComputeNodes(clusterID, -decrement)
 }
 
 // scaleComputeNodes scales the Compute nodes up or down by the value of `numNodes`
