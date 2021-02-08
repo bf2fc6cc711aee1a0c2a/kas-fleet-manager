@@ -52,7 +52,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //             UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 // 	               panic("mock out the Update method")
 //             },
-//             UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
+//             UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 // 	               panic("mock out the UpdateStatus method")
 //             },
 //         }
@@ -93,7 +93,7 @@ type KafkaServiceMock struct {
 	UpdateFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
-	UpdateStatusFunc func(id string, status constants.KafkaStatus) *errors.ServiceError
+	UpdateStatusFunc func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -509,7 +509,7 @@ func (mock *KafkaServiceMock) UpdateCalls() []struct {
 }
 
 // UpdateStatus calls UpdateStatusFunc.
-func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStatus) *errors.ServiceError {
+func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 	if mock.UpdateStatusFunc == nil {
 		panic("KafkaServiceMock.UpdateStatusFunc: method is nil but KafkaService.UpdateStatus was just called")
 	}

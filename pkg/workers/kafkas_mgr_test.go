@@ -8,7 +8,7 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	constants "gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
@@ -141,8 +141,8 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
-						return errors.GeneralError("test")
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, errors.GeneralError("test")
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
@@ -174,8 +174,8 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
-						return nil
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return false, nil
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, errors.NotFound("Not Found")
@@ -199,8 +199,8 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
-						return nil
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return false, nil
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
@@ -463,8 +463,8 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
-						return errors.GeneralError("test")
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return false, errors.GeneralError("test")
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
@@ -493,8 +493,8 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
-						return nil
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return false, nil
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, errors.NotFound("Not Found")
@@ -518,8 +518,8 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) *errors.ServiceError {
-						return nil
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
