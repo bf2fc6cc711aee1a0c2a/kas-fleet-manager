@@ -710,6 +710,7 @@ func Test_RegisterClusterJob(t *testing.T) {
 }
 
 func Test_ScaleUpComputeNodes(t *testing.T) {
+	testNodeIncrement := 3
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -737,7 +738,7 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					ScaleUpComputeNodesFunc: func(clusterID string) (*v1.Cluster, error) {
+					ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*v1.Cluster, error) {
 						return nil, errors.New("test ScaleUpComputeNodes failure")
 					},
 				},
@@ -753,7 +754,7 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 			k := &clusterService{
 				ocmClient: tt.fields.ocmClient,
 			}
-			_, err := k.ScaleUpComputeNodes(tt.args.clusterID)
+			_, err := k.ScaleUpComputeNodes(tt.args.clusterID, testNodeIncrement)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ScaleUpComputeNodes() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -763,6 +764,7 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 }
 
 func Test_ScaleDownComputeNodes(t *testing.T) {
+	testNodeDecrement := 3
 	type fields struct {
 		ocmClient ocm.Client
 	}
@@ -790,7 +792,7 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					ScaleDownComputeNodesFunc: func(clusterID string) (*v1.Cluster, error) {
+					ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*v1.Cluster, error) {
 						return nil, errors.New("test ScaleDownComputeNodes failure")
 					},
 				},
@@ -806,7 +808,7 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 			k := &clusterService{
 				ocmClient: tt.fields.ocmClient,
 			}
-			_, err := k.ScaleDownComputeNodes(tt.args.clusterID)
+			_, err := k.ScaleDownComputeNodes(tt.args.clusterID, testNodeDecrement)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ScaleDownComputeNodes() error = %v, wantErr %v", err, tt.wantErr)
 				return
