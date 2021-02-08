@@ -77,7 +77,10 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		if findClusterErr != nil {
 			return true, fmt.Errorf("failed to find cluster with id %s: %s", cluster.ClusterID, err)
 		}
-		cluster = foundCluster
+		if foundCluster == nil {
+			return false, nil
+		}
+		cluster = *foundCluster
 		return cluster.Status == api.ClusterReady, nil
 	})
 

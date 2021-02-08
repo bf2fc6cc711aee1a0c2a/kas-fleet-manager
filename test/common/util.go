@@ -63,6 +63,9 @@ func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.Se
 			if err != nil {
 				return true, err
 			}
+			if foundCluster == nil {
+				return false, nil
+			}
 			return foundCluster.Status.String() == api.ClusterReady.String(), nil
 		}); err != nil {
 			return "", ocmErrors.GeneralError("Unable to get OSD cluster")
