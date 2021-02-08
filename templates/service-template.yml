@@ -288,6 +288,26 @@ parameters:
   description: Install the kas-fleetshard-operator when terraform the OSD clusters
   value: "false"
 
+- name: OBSERVABILITY_CONFIG_REPO
+  displayName: Observability configuration repo URL
+  description: URL of the observability configuration repo
+  value: "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
+
+- name: OBSERVABILITY_CONFIG_CHANNEL
+  displayName: Observability configuration channel
+  description: Channel of the observability configuration
+  value: "production"
+
+- name: SERVICE_PUBLIC_HOST_URL
+  displayName: The public HTTP host URL of the service
+  description: The public HTTP host URL of the service
+  value: "https://api.openshift.com"
+
+- name: STRIMZI_OPERATOR_VERSION
+  displayName: Strimzi operator version
+  description: The version of the Strimzi operator to install
+  value: "v0.21.3"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -492,6 +512,11 @@ objects:
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --enable-kas-fleetshard-operator=${ENABLE_KAS_FLEETSHARD_OPERATOR}
+            - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
+            - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
+            - --observability-config-access-token-file=/secrets/service/observability-config-access.token
+            - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
+            - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:

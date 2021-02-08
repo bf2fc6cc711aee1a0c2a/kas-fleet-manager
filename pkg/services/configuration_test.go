@@ -11,7 +11,7 @@ import (
 
 func Test_configService_GetDefaultProvider(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	tests := []struct {
 		name    string
@@ -22,8 +22,10 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 		{
 			name: "error when no default provider found",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{},
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{},
+					},
 				},
 			},
 			wantErr: true,
@@ -32,11 +34,13 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 		{
 			name: "success when default provider found",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test",
-							Default: true,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test",
+								Default: true,
+							},
 						},
 					},
 				},
@@ -49,15 +53,17 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 		{
 			name: "first default returned when multiple defaults specified",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test1",
-							Default: true,
-						},
-						config.Provider{
-							Name:    "test2",
-							Default: true,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test1",
+								Default: true,
+							},
+							config.Provider{
+								Name:    "test2",
+								Default: true,
+							},
 						},
 					},
 				},
@@ -71,7 +77,9 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := configService{
-				providersConfig: tt.fields.providersConfig,
+				config.ApplicationConfig{
+					SupportedProviders: &tt.fields.providersConfig,
+				},
 			}
 			got, err := c.GetDefaultProvider()
 			if (err != nil) != tt.wantErr {
@@ -87,7 +95,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 
 func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	type args struct {
 		provider config.Provider
@@ -151,7 +159,9 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := configService{
-				providersConfig: tt.fields.providersConfig,
+				config.ApplicationConfig{
+					SupportedProviders: &tt.fields.providersConfig,
+				},
 			}
 			got, err := c.GetDefaultRegionForProvider(tt.args.provider)
 			if (err != nil) != tt.wantErr {
@@ -167,7 +177,7 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 
 func Test_configService_GetSupportedProviders(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	tests := []struct {
 		name   string
@@ -177,10 +187,12 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 		{
 			name: "successful get",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "test",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "test",
+							},
 						},
 					},
 				},
@@ -195,7 +207,9 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := configService{
-				providersConfig: tt.fields.providersConfig,
+				config.ApplicationConfig{
+					SupportedProviders: &tt.fields.providersConfig,
+				},
 			}
 			if got := c.GetSupportedProviders(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetSupportedProviders() = %v, want %v", got, tt.want)
@@ -206,7 +220,7 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 
 func Test_configService_IsProviderSupported(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	type args struct {
 		providerName string
@@ -220,8 +234,10 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 		{
 			name: "false when provider not in supported list",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{},
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{},
+					},
 				},
 			},
 			args: args{
@@ -232,10 +248,12 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 		{
 			name: "true when provider in supported list",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "test",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "test",
+							},
 						},
 					},
 				},
@@ -249,7 +267,9 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := configService{
-				providersConfig: tt.fields.providersConfig,
+				config.ApplicationConfig{
+					SupportedProviders: &tt.fields.providersConfig,
+				},
 			}
 			if got := c.IsProviderSupported(tt.args.providerName); got != tt.want {
 				t.Errorf("IsProviderSupported() = %v, want %v", got, tt.want)
@@ -260,7 +280,7 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 
 func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	type args struct {
 		providerName string
@@ -275,8 +295,10 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		{
 			name: "false when provider is not supported",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{},
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{},
+					},
 				},
 			},
 			args: args{
@@ -288,10 +310,12 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		{
 			name: "false when region is not supported",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "testProvider",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "testProvider",
+							},
 						},
 					},
 				},
@@ -305,13 +329,15 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		{
 			name: "true when region is supported",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "testProvider",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "testRegion",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "testProvider",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "testRegion",
+									},
 								},
 							},
 						},
@@ -328,7 +354,9 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := configService{
-				providersConfig: tt.fields.providersConfig,
+				config.ApplicationConfig{
+					SupportedProviders: &tt.fields.providersConfig,
+				},
 			}
 			if got := c.IsRegionSupportedForProvider(tt.args.providerName, tt.args.regionName); got != tt.want {
 				t.Errorf("IsRegionSupportedForProvider() = %v, want %v", got, tt.want)
@@ -345,8 +373,10 @@ func Test_configService_IsAllowListEnabled(t *testing.T) {
 		{
 			name: "return 'false' when allow list feature disabled",
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					EnableAllowList: false,
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: false,
+					},
 				},
 			},
 			want: false,
@@ -354,8 +384,10 @@ func Test_configService_IsAllowListEnabled(t *testing.T) {
 		{
 			name: "return 'true' when allow list feature enabled",
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					EnableAllowList: true,
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+					},
 				},
 			},
 			want: true,
@@ -385,11 +417,13 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			name: "return 'false' when organisation does not exist in the allowed list",
 			arg:  "some-id",
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id: "different-id",
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id: "different-id",
+								},
 							},
 						},
 					},
@@ -404,11 +438,13 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			name: "return 'true' when organisation exists in the allowed list",
 			arg:  "some-id",
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id: "some-id",
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id: "some-id",
+								},
 							},
 						},
 					},
@@ -464,10 +500,12 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				orgId:    organisation.Id,
 			},
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							organisation,
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								organisation,
+							},
 						},
 					},
 				},
@@ -484,15 +522,17 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				orgId:    organisation.Id,
 			},
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							organisation,
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "username-0"},
-							config.AllowedAccount{Username: "username-10"},
-							config.AllowedAccount{Username: "username-3"},
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								organisation,
+							},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username-0"},
+								config.AllowedAccount{Username: "username-10"},
+								config.AllowedAccount{Username: "username-3"},
+							},
 						},
 					},
 				},
@@ -509,14 +549,16 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				orgId:    "some-org-id",
 			},
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							organisation,
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "username-0"},
-							config.AllowedAccount{Username: "username-3"},
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								organisation,
+							},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username-0"},
+								config.AllowedAccount{Username: "username-3"},
+							},
 						},
 					},
 				},
@@ -567,15 +609,17 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 				username: "username-10",
 			},
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							organisation,
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "username-0"},
-							config.AllowedAccount{Username: "username-10"},
-							config.AllowedAccount{Username: "username-3"},
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								organisation,
+							},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username-0"},
+								config.AllowedAccount{Username: "username-10"},
+								config.AllowedAccount{Username: "username-3"},
+							},
 						},
 					},
 				},
@@ -591,14 +635,16 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 				username: "username-10",
 			},
 			service: configService{
-				allowListConfig: config.AllowListConfig{
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							organisation,
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "username-0"},
-							config.AllowedAccount{Username: "username-3"},
+				appConfig: config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								organisation,
+							},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username-0"},
+								config.AllowedAccount{Username: "username-3"},
+							},
 						},
 					},
 				},
@@ -621,7 +667,7 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 
 func Test_configService_Validate(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	tests := []struct {
 		name    string
@@ -631,11 +677,13 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when no default provider provided",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test",
-							Default: false,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test",
+								Default: false,
+							},
 						},
 					},
 				},
@@ -645,24 +693,26 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when no default region in default provider",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test",
-							Default: true,
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "test",
-									Default: false,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:    "test",
+										Default: false,
+									},
 								},
 							},
-						},
-						config.Provider{
-							Name: "test",
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "test",
-									Default: true,
+							config.Provider{
+								Name: "test",
+								Regions: config.RegionList{
+									config.Region{
+										Name:    "test",
+										Default: true,
+									},
 								},
 							},
 						},
@@ -674,15 +724,17 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when multiple default providers provided",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test1",
-							Default: true,
-						},
-						config.Provider{
-							Name:    "test2",
-							Default: true,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test1",
+								Default: true,
+							},
+							config.Provider{
+								Name:    "test2",
+								Default: true,
+							},
 						},
 					},
 				},
@@ -692,19 +744,21 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when multiple default regions in default provider",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test",
-							Default: true,
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "test1",
-									Default: true,
-								},
-								config.Region{
-									Name:    "test2",
-									Default: true,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:    "test1",
+										Default: true,
+									},
+									config.Region{
+										Name:    "test2",
+										Default: true,
+									},
 								},
 							},
 						},
@@ -716,19 +770,21 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "success when default provider and region provided",
 			fields: fields{
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name:    "test",
-							Default: true,
-							Regions: config.RegionList{
-								config.Region{
-									Name:    "test1",
-									Default: true,
-								},
-								config.Region{
-									Name:    "test2",
-									Default: false,
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "test",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:    "test1",
+										Default: true,
+									},
+									config.Region{
+										Name:    "test2",
+										Default: false,
+									},
 								},
 							},
 						},
@@ -739,7 +795,9 @@ func Test_configService_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{providersConfig: tt.fields.providersConfig}
+			c := configService{appConfig: config.ApplicationConfig{
+				SupportedProviders: &tt.fields.providersConfig,
+			}}
 			if err := c.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -749,7 +807,7 @@ func Test_configService_Validate(t *testing.T) {
 
 func Test_configService_validateProvider(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfiguration
+		providersConfig config.ProviderConfig
 	}
 	type args struct {
 		provider config.Provider
@@ -806,9 +864,9 @@ func Test_configService_validateProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				providersConfig: tt.fields.providersConfig,
-			}
+			c := configService{appConfig: config.ApplicationConfig{
+				SupportedProviders: &tt.fields.providersConfig,
+			}}
 			if err := c.validateProvider(tt.args.provider); (err != nil) != tt.wantErr {
 				t.Errorf("validateProvider() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -838,7 +896,9 @@ func Test_configService_IsAutoCreateOSDEnabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			c := configService{
-				clusterCreationConfig: tt.clusterCreationConfig,
+				appConfig: config.ApplicationConfig{
+					ClusterCreationConfig: &tt.clusterCreationConfig,
+				},
 			}
 			enabled := c.IsAutoCreateOSDEnabled()
 			Expect(enabled).To(Equal(tt.want))

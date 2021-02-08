@@ -25,22 +25,32 @@ type ObservabilityConfiguration struct {
 	Insecure             bool          `json:"insecure"`
 	Debug                bool          `json:"debug"`
 	EnableMock           bool          `json:"enable_mock"`
+
+	// Configuration repo for the Observability operator
+	ObservabilityConfigRepo            string `json:"observability_config_repo"`
+	ObservabilityConfigChannel         string `json:"observability_config_channel"`
+	ObservabilityConfigAccessToken     string `json:"observability_config_access_token"`
+	ObservabilityConfigAccessTokenFile string `json:"observability_config_access_token_file"`
 }
 
 func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 	return &ObservabilityConfiguration{
-		DexSecretFile:        "secrets/dex.secret",
-		DexPasswordFile:      "secrets/dex.password",
-		ObservatoriumTenant:  "test",
-		DexUsername:          "admin@example.com",
-		ObservatoriumGateway: "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io",
-		DexUrl:               "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
-		AuthToken:            "",
-		AuthTokenFile:        "secrets/observatorium.token",
-		Timeout:              240 * time.Second,
-		Debug:                true, // TODO: false
-		EnableMock:           false,
-		Insecure:             true, // TODO: false
+		DexSecretFile:                      "secrets/dex.secret",
+		DexPasswordFile:                    "secrets/dex.password",
+		ObservatoriumTenant:                "test",
+		DexUsername:                        "admin@example.com",
+		ObservatoriumGateway:               "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io",
+		DexUrl:                             "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io",
+		AuthToken:                          "",
+		AuthTokenFile:                      "secrets/observatorium.token",
+		Timeout:                            240 * time.Second,
+		Debug:                              true, // TODO: false
+		EnableMock:                         false,
+		Insecure:                           true, // TODO: false
+		ObservabilityConfigRepo:            "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
+		ObservabilityConfigChannel:         "staging",
+		ObservabilityConfigAccessToken:     "",
+		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
 	}
 }
 
@@ -57,6 +67,10 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Insecure, "observatorium-ignore-ssl", c.Insecure, "ignore SSL Observatorium certificate")
 	fs.BoolVar(&c.EnableMock, "enable-observatorium-mock", c.EnableMock, "Enable mock Observatorium client")
 	fs.BoolVar(&c.Debug, "observatorium-debug", c.Debug, "Debug flag for Observatorium client")
+
+	fs.StringVar(&c.ObservabilityConfigRepo, "observability-config-repo", c.ObservabilityConfigRepo, "Repo for the observability operator configuration repo")
+	fs.StringVar(&c.ObservabilityConfigChannel, "observability-config-channel", c.ObservabilityConfigChannel, "Channel for the observability operator configuration repo")
+	fs.StringVar(&c.ObservabilityConfigAccessTokenFile, "observability-config-access-token-file", c.ObservabilityConfigAccessTokenFile, "File contains the access token to the observability operator configuration repo")
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
@@ -73,6 +87,10 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 
 	if c.AuthToken == "" && c.AuthTokenFile != "" {
 		return readFileValueString(c.AuthTokenFile, &c.AuthToken)
+	}
+
+	if c.ObservabilityConfigAccessToken == "" && c.ObservabilityConfigAccessTokenFile != "" {
+		return readFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
 	}
 
 	return nil

@@ -249,7 +249,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			name: "error when getting managed kafka addon from ocm fails",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						return nil, errors.New("error when getting managed kafka addon from ocm")
 					},
 				},
@@ -260,11 +260,11 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			name: "empty state returned when managed kafka addon not found",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						managedKafkaAddon := &clustersmgmtv1.AddOnInstallation{}
 						return managedKafkaAddon, nil
 					},
-					CreateManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					CreateAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						managedKafkaAddon := &clustersmgmtv1.AddOnInstallation{}
 						return managedKafkaAddon, nil
 					},
@@ -276,7 +276,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			name: "empty state returned when managed kafka addon is found but with no state",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).Build()
 						if err != nil {
 							panic(err)
@@ -291,7 +291,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			name: "failed state returned when managed kafka addon is found but with a AddOnInstallationStateFailed state",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateFailed).Build()
 						if err != nil {
 							panic(err)
@@ -306,7 +306,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			name: "ready state returned when managed kafka addon is found but with a AddOnInstallationStateReady state",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 						if err != nil {
 							panic(err)
@@ -332,11 +332,11 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			name: "error when creating managed kafka addon from ocm fails",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						managedKafkaAddon := &clustersmgmtv1.AddOnInstallation{}
 						return managedKafkaAddon, nil
 					},
-					CreateManagedKafkaAddonFunc: func(id string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+					CreateAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						return nil, errors.New("error when creating managed kafka addon from ocm")
 					},
 				},
@@ -351,10 +351,12 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 				clusterService: tt.fields.clusterService,
 				timer:          tt.fields.timer,
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{},
+					config.ApplicationConfig{
+						SupportedProviders:         &config.ProviderConfig{},
+						AllowList:                  &config.AllowListConfig{},
+						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+						ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					},
 				),
 			}
 			err := c.reconcileStrimziOperator(api.Cluster{
@@ -372,7 +374,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 	type fields struct {
 		providerLst           []string
 		clusterService        services.ClusterService
-		providersConfig       config.ProviderConfiguration
+		providersConfig       config.ProviderConfig
 		clusterCreationConfig config.ClusterCreationConfig
 	}
 
@@ -398,13 +400,15 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "us-east-1",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
+									},
 								},
 							},
 						},
@@ -418,7 +422,13 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.clusterCreationConfig, config.ObservabilityConfiguration{}),
+				configService: services.NewConfigService(
+					config.ApplicationConfig{
+						SupportedProviders:         &tt.fields.providersConfig,
+						AllowList:                  &config.AllowListConfig{},
+						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+						ClusterCreationConfig:      &tt.fields.clusterCreationConfig,
+					}),
 			}
 
 			clusterRequest := &api.Cluster{
@@ -439,7 +449,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 	type fields struct {
 		providerLst           []string
 		clusterService        services.ClusterService
-		providersConfig       config.ProviderConfiguration
+		providersConfig       config.ProviderConfig
 		clusterCreationConfig config.ClusterCreationConfig
 	}
 
@@ -464,13 +474,15 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "us-east-1",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
+									},
 								},
 							},
 						},
@@ -495,13 +507,15 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "us-east-1",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
+									},
 								},
 							},
 						},
@@ -522,13 +536,15 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				clusterCreationConfig: config.ClusterCreationConfig{
 					AutoOSDCreation: true,
 				},
-				providersConfig: config.ProviderConfiguration{
-					SupportedProviders: config.ProviderList{
-						config.Provider{
-							Name: "aws",
-							Regions: config.RegionList{
-								config.Region{
-									Name: "us-east-1",
+				providersConfig: config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
+									},
 								},
 							},
 						},
@@ -542,7 +558,12 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService:  services.NewConfigService(tt.fields.providersConfig, config.AllowListConfig{}, tt.fields.clusterCreationConfig, config.ObservabilityConfiguration{}),
+				configService: services.NewConfigService(config.ApplicationConfig{
+					SupportedProviders:         &tt.fields.providersConfig,
+					AllowList:                  &config.AllowListConfig{},
+					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+				}),
 			}
 			err := c.reconcileClustersForRegions()
 			if err != nil && !tt.wantErr {
@@ -612,12 +633,12 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 			c := &ClusterManager{
 				ocmClient: tt.fields.ocmClient,
 				timer:     tt.fields.timer,
-				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{},
-					config.ClusterCreationConfig{},
-					observabilityConfig,
-				),
+				configService: services.NewConfigService(config.ApplicationConfig{
+					SupportedProviders:         &config.ProviderConfig{},
+					AllowList:                  &config.AllowListConfig{},
+					ObservabilityConfiguration: &observabilityConfig,
+					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+				}),
 			}
 			got, err := c.createSyncSet("clusterId", ingressDNS)
 			Expect(got).To(Equal(tt.want.syncset))
@@ -671,14 +692,12 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{},
-					config.ClusterCreationConfig{
-						EnableKasFleetshardOperator: true,
-					},
-					config.ObservabilityConfiguration{},
-				),
+				configService: services.NewConfigService(config.ApplicationConfig{
+					SupportedProviders:         &config.ProviderConfig{},
+					AllowList:                  &config.AllowListConfig{},
+					ClusterCreationConfig:      &config.ClusterCreationConfig{EnableKasFleetshardOperator: true},
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+				}),
 				kasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}
 

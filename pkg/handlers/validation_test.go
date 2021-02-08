@@ -37,23 +37,24 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			arg: args{
 				kafkaRequest: openapi.KafkaRequestPayload{},
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
-								Name:    "aws",
-								Default: true,
-								Regions: config.RegionList{
-									config.Region{
-										Name:    "us-east-1",
+					config.ApplicationConfig{
+						SupportedProviders: &config.ProviderConfig{
+							ProvidersConfig: config.ProviderConfiguration{
+								SupportedProviders: config.ProviderList{
+									config.Provider{
+										Name:    "aws",
 										Default: true,
+										Regions: config.RegionList{
+											config.Region{
+												Name:    "us-east-1",
+												Default: true,
+											},
+										},
 									},
 								},
 							},
 						},
-					},
-					config.AllowListConfig{},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{}),
+					}),
 			},
 			want: result{
 				wantErr: false,
@@ -71,29 +72,30 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					Region:        "us-east-1",
 				},
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
-								Name: "gcp",
-								Regions: config.RegionList{
-									config.Region{
-										Name: "eu-east-1",
+					config.ApplicationConfig{
+						SupportedProviders: &config.ProviderConfig{
+							ProvidersConfig: config.ProviderConfiguration{
+								SupportedProviders: config.ProviderList{
+									config.Provider{
+										Name: "gcp",
+										Regions: config.RegionList{
+											config.Region{
+												Name: "eu-east-1",
+											},
+										},
 									},
-								},
-							},
-							config.Provider{
-								Name: "aws",
-								Regions: config.RegionList{
-									config.Region{
-										Name: "us-east-1",
+									config.Provider{
+										Name: "aws",
+										Regions: config.RegionList{
+											config.Region{
+												Name: "us-east-1",
+											},
+										},
 									},
 								},
 							},
 						},
 					},
-					config.AllowListConfig{},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{},
 				),
 			},
 			want: result{
@@ -111,22 +113,22 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
-				configService: services.NewConfigService(
-					config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
-								Name: "aws",
-								Regions: config.RegionList{
-									config.Region{
-										Name: "us-east-1",
+				configService: services.NewConfigService(config.ApplicationConfig{
+					SupportedProviders: &config.ProviderConfig{
+						ProvidersConfig: config.ProviderConfiguration{
+							SupportedProviders: config.ProviderList{
+								config.Provider{
+									Name: "aws",
+									Regions: config.RegionList{
+										config.Region{
+											Name: "us-east-1",
+										},
 									},
 								},
 							},
 						},
 					},
-					config.AllowListConfig{},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{}),
+				}),
 			},
 			want: result{
 				wantErr: true,
@@ -181,12 +183,11 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					},
 				},
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{
-						EnableAllowList: false,
+					config.ApplicationConfig{
+						AllowList: &config.AllowListConfig{
+							EnableAllowList: false,
+						},
 					},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{},
 				),
 				context: context.TODO(),
 			},
@@ -200,9 +201,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
 				},
-				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{
+				configService: services.NewConfigService(config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							ServiceAccounts: config.AllowedAccounts{
@@ -212,8 +212,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 								},
 							},
 						},
-					}, config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{}),
+					},
+				}),
 				context: context.TODO(),
 			},
 			want: errors.GeneralError("count failed from database"),
@@ -227,21 +227,20 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					},
 				},
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{
-						EnableAllowList: true,
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:                  "org-id",
-									MaxAllowedInstances: 4,
-									AllowAll:            true,
+					config.ApplicationConfig{
+						AllowList: &config.AllowListConfig{
+							EnableAllowList: true,
+							AllowList: config.AllowListConfiguration{
+								Organisations: config.OrganisationList{
+									config.Organisation{
+										Id:                  "org-id",
+										MaxAllowedInstances: 4,
+										AllowAll:            true,
+									},
 								},
 							},
 						},
 					},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{},
 				),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
@@ -260,20 +259,19 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					},
 				},
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{
-						EnableAllowList: true,
-						AllowList: config.AllowListConfiguration{
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{
-									Username:            username,
-									MaxAllowedInstances: 4,
+					config.ApplicationConfig{
+						AllowList: &config.AllowListConfig{
+							EnableAllowList: true,
+							AllowList: config.AllowListConfiguration{
+								ServiceAccounts: config.AllowedAccounts{
+									config.AllowedAccount{
+										Username:            username,
+										MaxAllowedInstances: 4,
+									},
 								},
 							},
 						},
 					},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{},
 				),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
@@ -292,19 +290,18 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					},
 				},
 				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{
-						EnableAllowList: true,
-						AllowList: config.AllowListConfiguration{
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{
-									Username: username,
+					config.ApplicationConfig{
+						AllowList: &config.AllowListConfig{
+							EnableAllowList: true,
+							AllowList: config.AllowListConfiguration{
+								ServiceAccounts: config.AllowedAccounts{
+									config.AllowedAccount{
+										Username: username,
+									},
 								},
 							},
 						},
 					},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{},
 				),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
@@ -322,13 +319,11 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
 				},
-				configService: services.NewConfigService(
-					config.ProviderConfiguration{},
-					config.AllowListConfig{
+				configService: services.NewConfigService(config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
 						EnableAllowList: true,
 					},
-					config.ClusterCreationConfig{},
-					config.ObservabilityConfiguration{}),
+				}),
 				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
 			},
 			want: &errors.ServiceError{
