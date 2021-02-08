@@ -8,10 +8,9 @@
  */
 
 package openapi
-
 // ConnectorType Represents a connector type supported by the API
 type ConnectorType struct {
-	Id   string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 	Kind string `json:"kind,omitempty"`
 	Href string `json:"href,omitempty"`
 	// Name of the connector type.

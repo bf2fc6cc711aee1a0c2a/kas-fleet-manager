@@ -853,6 +853,24 @@ components:
         clientID: SA-121212
     DataPlaneClusterUpdateStatusRequestExample:
       value: {}
+    DataPlaneKafkaUpdateStatusRequestExample:
+      value:
+        "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg":
+          conditions:
+          - type: Ready
+            reason: KafkaInstanceReady
+            message: installing
+            status: "False"
+            lastTransitionTime: 2018-01-01T00:00:00Z
+          capacity:
+            ingressEgressThroughputPerSec: 4Mi
+            totalMaxConnections: 500
+            maxDataRetentionSize: 100Gi
+            maxPartitions: 100
+            maxDataRetentionPeriod: P14D
+          versions:
+            kafka: 2.4.1
+            strimzi: 0.21.2
     "400DeletionExample":
       value:
         id: "103"
@@ -1278,6 +1296,27 @@ components:
         resizeInfo:
           $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resizeInfo'
       type: object
+    DataPlaneKafkaStatus:
+      description: Schema of the status object for a Kafka cluster
+      properties:
+        conditions:
+          description: The status conditions of a Kafka cluster
+          items:
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
+          type: array
+        capacity:
+          $ref: '#/components/schemas/DataPlaneKafkaStatus_capacity'
+        versions:
+          $ref: '#/components/schemas/DataPlaneKafkaStatus_versions'
+      type: object
+    DataPlaneKafkaStatusUpdateRequest:
+      additionalProperties:
+        $ref: '#/components/schemas/DataPlaneKafkaStatus'
+      description: Schema for the request to update the statuses of Kafka clusters
+        from data plane
+      example:
+        $ref: '#/components/examples/DataPlaneKafkaUpdateStatusRequestExample'
+      type: object
     Error_allOf:
       properties:
         code:
@@ -1435,6 +1474,26 @@ components:
           type: integer
         delta:
           $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resizeInfo_delta'
+    DataPlaneKafkaStatus_capacity:
+      description: Capacity information of the data plane cluster
+      properties:
+        ingressEgressThroughputPerSec:
+          type: string
+        totalMaxConnections:
+          type: integer
+        maxDataRetentionSize:
+          type: string
+        maxPartitions:
+          type: integer
+        maxDataRetentionPeriod:
+          type: string
+    DataPlaneKafkaStatus_versions:
+      description: Version information related to a Kafka cluster
+      properties:
+        kafka:
+          type: string
+        strimzi:
+          type: string
   securitySchemes:
     Bearer:
       bearerFormat: JWT

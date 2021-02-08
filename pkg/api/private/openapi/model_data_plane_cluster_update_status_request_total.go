@@ -8,11 +8,10 @@
  */
 
 package openapi
-
 // DataPlaneClusterUpdateStatusRequestTotal struct for DataPlaneClusterUpdateStatusRequestTotal
 type DataPlaneClusterUpdateStatusRequestTotal struct {
 	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec,omitempty"`
-	Connections                   int32  `json:"connections,omitempty"`
-	DataRetentionSize             string `json:"dataRetentionSize,omitempty"`
-	Partitions                    int32  `json:"partitions,omitempty"`
+	Connections int32 `json:"connections,omitempty"`
+	DataRetentionSize string `json:"dataRetentionSize,omitempty"`
+	Partitions int32 `json:"partitions,omitempty"`
 }
