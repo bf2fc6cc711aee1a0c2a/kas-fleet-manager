@@ -3,9 +3,15 @@ package ocm
 import (
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
+
+// Specify the parameters for an addon
+// Value will be string here and OCM will convert it to the right type
+type AddonParameter struct {
+	Id    string
+	Value string
+}
 
 //go:generate moq -out client_moq.go . Client
 type Client interface {
@@ -14,8 +20,9 @@ type Client interface {
 	GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error)
 	GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error)
 	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
-	GetManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
-	CreateManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error)
+	GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddonWithParams(clusterId string, addonId string, parameters []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
@@ -86,36 +93,44 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	return regionList, nil
 }
 
-func (c client) CreateManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error) {
-	addon := clustersmgmtv1.NewAddOn().ID(api.ManagedKafkaAddonID)
-	addonInstallation, err := clustersmgmtv1.NewAddOnInstallation().Addon(addon).Build()
+func (c client) CreateAddonWithParams(clusterId string, addonId string, params []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+	addon := clustersmgmtv1.NewAddOn().ID(addonId)
+	addonParameters := newAddonParameterListBuilder(params)
+	addonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation().Addon(addon)
+	if addonParameters != nil {
+		addonInstallationBuilder = addonInstallationBuilder.Parameters(addonParameters)
+	}
+	addonInstallation, err := addonInstallationBuilder.Build()
 	if err != nil {
 		return nil, err
 	}
-
-	resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(id).Addons().Add().Body(addonInstallation).Send()
+	resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Add().Body(addonInstallation).Send()
 	if err != nil {
 		return nil, err
 	}
 	return resp.Body(), nil
 }
 
-func (c client) GetManagedKafkaAddon(id string) (*clustersmgmtv1.AddOnInstallation, error) {
-	resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(id).Addons().List().Send()
+func (c client) CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+	return c.CreateAddonWithParams(clusterId, addonId, []AddonParameter{})
+}
+
+func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+	resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().List().Send()
 	if err != nil {
 		return nil, err
 	}
 
-	managedKafkaAddon := &clustersmgmtv1.AddOnInstallation{}
+	addon := &clustersmgmtv1.AddOnInstallation{}
 	resp.Items().Each(func(addOnInstallation *clustersmgmtv1.AddOnInstallation) bool {
-		if addOnInstallation.ID() == api.ManagedKafkaAddonID {
-			managedKafkaAddon = addOnInstallation
+		if addOnInstallation.ID() == addonId {
+			addon = addOnInstallation
 			return false
 		}
 		return true
 	})
 
-	return managedKafkaAddon, nil
+	return addon, nil
 }
 
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
@@ -202,4 +217,16 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 	}
 
 	return resp.Body(), nil
+}
+
+func newAddonParameterListBuilder(params []AddonParameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {
+	if len(params) > 0 {
+		var items []*clustersmgmtv1.AddOnInstallationParameterBuilder
+		for _, p := range params {
+			pb := clustersmgmtv1.NewAddOnInstallationParameter().ID(p.Id).Value(p.Value)
+			items = append(items, pb)
+		}
+		return clustersmgmtv1.NewAddOnInstallationParameterList().Items(items...)
+	}
+	return nil
 }

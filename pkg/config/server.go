@@ -19,6 +19,10 @@ type ServerConfig struct {
 	JwkCertURL    string        `json:"jwk_cert_url"`
 	JwkCertCA     string        `json:"jwk_cert_ca"`
 	JwkCertCAFile string        `json:"jwk_cert_ca_file"`
+	// The public http host URL to access the service
+	// For staging it is "https://api.stage.openshift.com"
+	// For production it is "https://api.openshift.com"
+	PublicHostURL string `json:"public_url"`
 }
 
 func NewServerConfig() *ServerConfig {
@@ -35,6 +39,7 @@ func NewServerConfig() *ServerConfig {
 		JwkCertCAFile: "secrets/rhsm.ca",
 		HTTPSCertFile: "",
 		HTTPSKeyFile:  "",
+		PublicHostURL: "http://localhost",
 	}
 }
 
@@ -50,6 +55,7 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&s.EnableAuthz, "enable-authz", s.EnableAuthz, "Enable Authorization on endpoints, should only be disabled for debug")
 	fs.StringVar(&s.JwkCertURL, "jwk-cert-url", s.JwkCertURL, "JWK Certificate URL")
 	fs.StringVar(&s.JwkCertCAFile, "jwk-cert-ca-file", s.JwkCertCAFile, "JWK Certificate CA file")
+	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
 }
 
 func (s *ServerConfig) ReadFiles() error {

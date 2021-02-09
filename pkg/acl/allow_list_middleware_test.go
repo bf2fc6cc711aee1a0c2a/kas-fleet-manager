@@ -25,11 +25,11 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	middleware := NewAllowListMiddleware(services.NewConfigService(
-		config.ProviderConfiguration{},
-		config.AllowListConfig{
-			EnableAllowList: false,
-		}, config.ClusterCreationConfig{},
-		config.ObservabilityConfiguration{},
+		config.ApplicationConfig{
+			AllowList: &config.AllowListConfig{
+				EnableAllowList: false,
+			},
+		},
 	))
 	handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
@@ -46,87 +46,83 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with allowed users",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:              "org-id-0",
-								AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "another-username"}},
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "another-username"}},
+								},
 							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 		},
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with empty allowed users and no users is allowed to access the service",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:              "org-id-0",
-								AllowAll:        false,
-								AllowedAccounts: config.AllowedAccounts{},
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowAll:        false,
+									AllowedAccounts: config.AllowedAccounts{},
+								},
 							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 		},
 		{
 			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allowed service accounts list",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:       "org-id-3",
-								AllowAll: false,
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:       "org-id-3",
+									AllowAll: false,
+								},
 							},
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "allowed-user-1"},
-							config.AllowedAccount{Username: "allowed-user-2"},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "allowed-user-1"},
+								config.AllowedAccount{Username: "allowed-user-2"},
+							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 		},
 		{
 			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the service accounts allow list",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:              "org-id-0",
-								AllowAll:        false,
-								AllowedAccounts: config.AllowedAccounts{},
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowAll:        false,
+									AllowedAccounts: config.AllowedAccounts{},
+								},
 							},
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "allowed-user-1"},
-							config.AllowedAccount{Username: "allowed-user-2"},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "allowed-user-1"},
+								config.AllowedAccount{Username: "allowed-user-2"},
+							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 		},
 	}
@@ -183,66 +179,63 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 		{
 			name: "returns 200 Ok response when user is allowed to access service for the given organisation with allowed users",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:              "org-id-0",
-								AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+								},
 							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 			userIsAllowedAsServiceAccount: false,
 		},
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:              "org-id-0",
-								AllowAll:        true,
-								AllowedAccounts: config.AllowedAccounts{},
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowAll:        true,
+									AllowedAccounts: config.AllowedAccounts{},
+								},
 							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 			userIsAllowedAsServiceAccount: false,
 		},
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
 			arg: services.NewConfigService(
-				config.ProviderConfiguration{},
-				config.AllowListConfig{
-					EnableAllowList: true,
-					AllowList: config.AllowListConfiguration{
-						Organisations: config.OrganisationList{
-							config.Organisation{
-								Id:              "org-id-0",
-								AllowAll:        false,
-								AllowedAccounts: config.AllowedAccounts{},
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowAll:        false,
+									AllowedAccounts: config.AllowedAccounts{},
+								},
 							},
-						},
-						ServiceAccounts: config.AllowedAccounts{
-							config.AllowedAccount{Username: "allowed-user-1"},
-							config.AllowedAccount{Username: "username"},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "allowed-user-1"},
+								config.AllowedAccount{Username: "username"},
+							},
 						},
 					},
 				},
-				config.ClusterCreationConfig{},
-				config.ObservabilityConfiguration{},
 			),
 			userIsAllowedAsServiceAccount: true,
 		},

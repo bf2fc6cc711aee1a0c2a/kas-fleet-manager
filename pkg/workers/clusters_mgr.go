@@ -275,7 +275,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 // reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
 func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) error {
 	clusterId := provisionedCluster.ClusterID
-	addonInstallation, err := c.ocmClient.GetManagedKafkaAddon(clusterId)
+	addonInstallation, err := c.ocmClient.GetAddon(clusterId, api.ManagedKafkaAddonID)
 	if err != nil {
 		return errors.WithMessagef(err, "failed to get cluster %s addon: %s", clusterId, err.Error())
 	}
@@ -283,7 +283,7 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 	// Addon needs to be installed if addonInstallation doesn't exist
 	if addonInstallation.ID() == "" {
 		// Install the Stimzi operator
-		addonInstallation, err = c.ocmClient.CreateManagedKafkaAddon(clusterId)
+		addonInstallation, err = c.ocmClient.CreateAddon(clusterId, api.ManagedKafkaAddonID)
 		if err != nil {
 			return errors.WithMessagef(err, "failed to create cluster %s addon: %s", clusterId, err.Error())
 		}

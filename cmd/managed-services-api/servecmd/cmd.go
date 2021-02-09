@@ -59,7 +59,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	keycloakService := environments.Environment().Services.Keycloak
 
 	var workerList []workers.Worker
-	kasFleetshardOperatorAddon := services.NewKasFleetshardOperatorAddon(keycloakService, ocmClient)
+	kasFleetshardOperatorAddon := services.NewKasFleetshardOperatorAddon(keycloakService, ocmClient, configService)
 	//set Unique Id for each work to facilitate Leader Election process
 	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon)
 	workerList = append(workerList, clusterManager)
