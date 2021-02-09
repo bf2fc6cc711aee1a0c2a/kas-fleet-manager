@@ -38,15 +38,16 @@ type Env struct {
 }
 
 type Services struct {
-	Kafka            services.KafkaService
-	Connectors       services.ConnectorsService
-	ConnectorTypes   services.ConnectorTypesService
-	Cluster          services.ClusterService
-	CloudProviders   services.CloudProvidersService
-	Config           services.ConfigService
-	Observatorium    services.ObservatoriumService
-	Keycloak         services.KeycloakService
-	DataPlaneCluster services.DataPlaneClusterService
+	Kafka                 services.KafkaService
+	Connectors            services.ConnectorsService
+	ConnectorTypes        services.ConnectorTypesService
+	Cluster               services.ClusterService
+	CloudProviders        services.CloudProvidersService
+	Config                services.ConfigService
+	Observatorium         services.ObservatoriumService
+	Keycloak              services.KeycloakService
+	DataPlaneCluster      services.DataPlaneClusterService
+	DataPlaneKafkaService services.DataPlaneKafkaService
 }
 
 type Clients struct {
@@ -151,14 +152,17 @@ func (env *Env) LoadServices() error {
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(*env.Config)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
-	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
 	env.Services.CloudProviders = cloudProviderService
 	env.Services.Observatorium = ObservatoriumService
 	env.Services.Keycloak = keycloakService
+
+	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient)
+	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService)
 	env.Services.DataPlaneCluster = dataPlaneClusterService
+	env.Services.DataPlaneKafkaService = dataPlaneKafkaService
 
 	env.Services.Connectors = services.NewConnectorsService(env.DBFactory)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)

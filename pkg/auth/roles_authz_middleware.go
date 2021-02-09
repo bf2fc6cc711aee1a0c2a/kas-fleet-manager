@@ -1,0 +1,67 @@
+package auth
+
+import (
+	"github.com/dgrijalva/jwt-go"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/shared"
+	"net/http"
+	"strings"
+)
+
+// RolesAuthorizationMiddleware can be used to perform RBAC authorization checks on endpoints
+type RolesAuthorizationMiddleware interface {
+	// RequireRealmRole will check the given realm role exists in the request token
+	RequireRealmRole(roleName string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
+}
+
+type rolesAuthMiddleware struct{}
+
+var _ RolesAuthorizationMiddleware = &rolesAuthMiddleware{}
+
+func NewRolesAuhzMiddleware() RolesAuthorizationMiddleware {
+	return &rolesAuthMiddleware{}
+}
+
+func (m *rolesAuthMiddleware) RequireRealmRole(roleName string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			ctx := request.Context()
+			claims, err := GetClaimsFromContext(ctx)
+			if err != nil {
+				shared.HandleError(ctx, writer, code, "")
+				return
+			}
+			roles := getRealmRolesClaim(claims)
+			if hasRole(roles, roleName) {
+				next.ServeHTTP(writer, request)
+			} else {
+				shared.HandleError(ctx, writer, code, "")
+				return
+			}
+		})
+	}
+}
+
+func getRealmRolesClaim(claims jwt.MapClaims) []string {
+	if realmRoles, ok := claims["realm_access"]; ok {
+		if roles, ok := realmRoles.(map[string]interface{}); ok {
+			if arr, ok := roles["roles"].([]interface{}); ok {
+				var r []string
+				for _, i := range arr {
+					r = append(r, i.(string))
+				}
+				return r
+			}
+		}
+	}
+	return []string{}
+}
+
+func hasRole(roles []string, roleName string) bool {
+	for _, role := range roles {
+		if strings.EqualFold(role, roleName) {
+			return true
+		}
+	}
+	return false
+}
