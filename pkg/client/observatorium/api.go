@@ -49,7 +49,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		//Check metrics for available disk space per broker
 		"kubelet_volume_stats_available_bytes": {
 			`kubelet_volume_stats_available_bytes{%s}`,
-			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-.*", namespace=~'%s'`, namespace),
+			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-[0-9]*$", namespace=~'%s'`, namespace),
 			func(m Metric) {
 				*metrics = append(*metrics, m)
 			},
