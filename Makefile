@@ -60,61 +60,83 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
+# Add the project-level bin directory into PATH. Needed in order
+# for `go generate` to use project-level bin directory binaries first
+export PATH := ${LOCAL_BIN_PATH}:$(PATH)
+
+GOLANGCI_LINT ?= $(LOCAL_BIN_PATH)/golangci-lint
 golangci-lint:
-ifeq (, $(shell which golangci-lint 2> /dev/null))
+ifeq (, $(shell which $(LOCAL_BIN_PATH)/golangci-lint 2> /dev/null))
 	@{ \
 	set -e ;\
 	VERSION="v1.33.0" ;\
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${GOBIN} $${VERSION} ;\
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/$${VERSION}/install.sh | sh -s -- -b ${LOCAL_BIN_PATH} $${VERSION} ;\
 	}
-GOLANGCI_LINT=$(GOBIN)/golangci-lint
-else
-GOLANGCI_LINT=$(shell which golangci-lint)
 endif
 
+GOTESTSUM ?=$(LOCAL_BIN_PATH)/gotestsum
 gotestsum:
-ifeq (, $(shell which gotestsum 2> /dev/null))
+ifeq (, $(shell which $(LOCAL_BIN_PATH)/gotestsum 2> /dev/null))
 	@{ \
 	set -e ;\
 	GOTESTSUM_TMP_DIR=$$(mktemp -d) ;\
 	cd $$GOTESTSUM_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get gotest.tools/gotestsum@v0.6.0 ;\
+	$(GO) get -d gotest.tools/gotestsum@v0.6.0 ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	$(GO) build -o ${LOCAL_BIN_PATH}/gotestsum gotest.tools/gotestsum ;\
 	rm -rf $$GOTESTSUM_TMP_DIR ;\
 	}
-GOTESTSUM=$(GOBIN)/gotestsum
-else
-GOTESTSUM=$(shell which gotestsum)
 endif
 
+MOQ ?= ${LOCAL_BIN_PATH}/moq
 moq:
-ifeq (, $(shell which moq 2> /dev/null))
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/moq 2> /dev/null))
 	@{ \
 	set -e ;\
 	MOQ_TMP_DIR=$$(mktemp -d) ;\
 	cd $$MOQ_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get github.com/matryer/moq@v0.1.4 ;\
+	$(GO) get -d github.com/matryer/moq@v0.1.4 ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	$(GO) build -o ${LOCAL_BIN_PATH}/moq github.com/matryer/moq ;\
 	rm -rf $$MOQ_TMP_DIR ;\
 	}
-MOQ=$(GOBIN)/moq
-else
-MOQ=$(shell which moq)
 endif
 
+GOBINDATA ?= ${LOCAL_BIN_PATH}/go-bindata
 go-bindata:
-ifeq (, $(shell which go-bindata 2> /dev/null))
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	@{ \
 	set -e ;\
 	GOBINDATA_TMP_DIR=$$(mktemp -d) ;\
 	cd $$GOBINDATA_TMP_DIR ;\
 	$(GO) mod init tmp ;\
-	$(GO) get github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
+	$(GO) get -d github.com/go-bindata/go-bindata/v3/...@v3.1.3 ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	$(GO) build -o ${LOCAL_BIN_PATH}/go-bindata github.com/go-bindata/go-bindata/v3/go-bindata ;\
 	rm -rf $$GOBINDATA_TMP_DIR ;\
 	}
-GOBINDATA=$(GOBIN)/go-bindata
-else
-GOBINDATA=$(shell which go-bindata)
+endif
+
+OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
+NPM ?= "$(shell which npm)"
+openapi-generator:
+ifeq (, $(shell which ${NPM} 2> /dev/null))
+	@echo "npm is not available please install it to be able to install openapi-generator"
+	exit 1
+endif
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	cd ${LOCAL_BIN_PATH} ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
+	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
+	}
 endif
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -272,21 +294,21 @@ endif
 .PHONY: test/performance
 
 # generate files
-generate: openapi/generate
+generate: moq openapi/generate
 	$(GO) generate ./...
 	$(GOFMT) -w pkg/api/openapi
 .PHONY: generate
 
 # validate the openapi schema
-openapi/validate:
-	openapi-generator validate -i openapi/managed-services-api.yaml
+openapi/validate: openapi-generator
+	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and data/generated/openapi/openapi.go
-openapi/generate: go-bindata
+openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
-	openapi-generator generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
-	openapi-generator validate -i openapi/managed-services-api.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ ./openapi
 	$(GOFMT) -w pkg/api/openapi
 .PHONY: openapi/generate
