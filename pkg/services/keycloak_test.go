@@ -730,3 +730,77 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 		})
 	}
 }
+
+
+func TestKeycloakService_GetServiceAccountById(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		ctx context.Context
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *api.ServiceAccount
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Get service account by id",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						return gocloak.Client{
+							ClientID: &testID,
+						}
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := "12221"
+						return &gocloak.Client{
+							ID:       &testID,
+							ClientID: &testID,
+						}, nil
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetOrgIdContext(context.TODO(), "12221"),
+			},
+			want: &api.ServiceAccount{
+				ID:           "12221",
+				ClientID:     "12221",
+				Name:         "",
+				Description:  "",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			keycloakService := keycloakService{
+				tt.fields.kcClient,
+			}
+			got, err := keycloakService.GetServiceAccountById(tt.args.ctx, testClientID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetServiceAccountById() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetServiceAccountById() got = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}
