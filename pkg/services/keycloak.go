@@ -32,6 +32,7 @@ type KeycloakService interface {
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
 	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
 	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
 }
 
 type keycloakService struct {
@@ -235,6 +236,25 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 		}, nil
 	} else {
 		return nil, errors.Forbidden("can not regenerate service account secret due to permission error")
+	}
+}
+
+func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+	accessToken, _ := kc.kcClient.GetToken()
+	orgId := auth.GetOrgIdFromContext(ctx)
+	c, err := kc.kcClient.GetClientById(id, accessToken)
+	if err != nil {
+		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists")
+	}
+	if kc.kcClient.IsSameOrg(c, orgId) {
+		return &api.ServiceAccount{
+			ID:          *c.ID,
+			ClientID:    *c.ClientID,
+			Name:        safeString(c.Name),
+			Description: safeString(c.Description),
+		}, nil
+	} else {
+		return nil, errors.FailedToGetServiceAccount("failed to get service account due to permission error")
 	}
 }
 
