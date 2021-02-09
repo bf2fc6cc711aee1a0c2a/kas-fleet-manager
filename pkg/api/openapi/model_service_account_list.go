@@ -11,9 +11,6 @@ package openapi
 
 // ServiceAccountList struct for ServiceAccountList
 type ServiceAccountList struct {
-	Kind  string                   `json:"kind"`
-	Page  int32                    `json:"page"`
-	Size  int32                    `json:"size"`
-	Total int32                    `json:"total"`
-	Items []ServiceAccountListItem `json:"items"`
+	Kind  string                   `json:"kind,omitempty"`
+	Items []ServiceAccountListItem `json:"items,omitempty"`
 }
