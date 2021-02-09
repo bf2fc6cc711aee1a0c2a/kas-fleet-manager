@@ -34,8 +34,6 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 
 			serviceAccountList := openapi.ServiceAccountList{
 				Kind:  "ServiceAccountList",
-				Page:  int32(Page),
-				Size:  int32(Size),
 				Items: []openapi.ServiceAccountListItem{},
 			}
 
@@ -52,8 +50,8 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 }
 
 func (s serviceAccountsHandler) handleParams(params url.Values) (int, int) {
-	Page := 1
-	Size := 100
+	Page := 0
+	Size := 0
 	if v := params.Get("page"); v != "" {
 		Page, _ = strconv.Atoi(v)
 	}
