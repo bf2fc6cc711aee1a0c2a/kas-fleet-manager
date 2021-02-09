@@ -60,6 +60,7 @@ func NewAPIServer() Server {
 
 	kafkaHandler := handlers.NewKafkaHandler(services.Kafka, services.Config)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(services.CloudProviders, services.Config)
+	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(services.DataPlaneCluster, services.Config)
 	errorsHandler := handlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(services.Observatorium)
@@ -132,6 +133,13 @@ func NewAPIServer() Server {
 
 	if env().Services.Config.IsAllowListEnabled() {
 		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
+	}
+
+	///api/managed-services-api/v1/agent-clusters/{id}/status
+	if env().Services.Config.IsKasFleetshardOperatorEnabled() {
+		apiV1AgentClustersRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
+		apiV1AgentClustersRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
+		apiV1AgentClustersRouter.Use(authMiddleware.AuthenticateAccountJWT) // TODO what kind of auth middleware should we use?
 	}
 
 	//  /api/managed-services-api/v1/cloud_providers
