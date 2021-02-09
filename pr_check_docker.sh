@@ -17,13 +17,6 @@ export TEST_SUMMARY_FORMAT="standard-verbose"
 # ls -la 
 # go version
 
-# install linter
-test -f golangci-lint.sh || wget https://install.goreleaser.com/github.com/golangci/golangci-lint.sh
-sh ./golangci-lint.sh -d -b "$(go env GOPATH)/bin" v1.33.0
-
-# install gotestsum
-which gotestsum || curl -sSL "https://github.com/gotestyourself/gotestsum/releases/download/v0.3.5/gotestsum_0.3.5_linux_amd64.tar.gz" | tar -xz -C "$(go env GOPATH)/bin" gotestsum
-
 # start postgres
 which pg_ctl
 PGDATA=/var/lib/postgresql/data /usr/lib/postgresql/*/bin/pg_ctl -w stop
