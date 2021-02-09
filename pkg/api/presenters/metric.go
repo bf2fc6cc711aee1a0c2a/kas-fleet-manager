@@ -63,5 +63,5 @@ func isAllowedLabel(lable string) bool {
 }
 
 func getSupportedLables() []string {
-	return []string{"__name__", "strimzi_io_cluster", "topic", "persistentvolumeclaim"}
+	return []string{"__name__", "strimzi_io_cluster", "topic", "persistentvolumeclaim","statefulset_kubernetes_io_pod_name"}
 }
