@@ -501,7 +501,7 @@ func (helper *Helper) ResetDB() {
 	helper.MigrateDB()
 }
 
-func (helper *Helper) CreateJWTString(account *amv1.Account) string {
+func (helper *Helper) CreateJWTStringWithAdditionalClaims(account *amv1.Account, moreClaims jwt.MapClaims) string {
 	// Use an RH SSO JWT by default since we are phasing RHD out
 	claims := jwt.MapClaims{
 		"iss":        helper.Env().Config.OCM.TokenURL,
@@ -527,6 +527,9 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 		claims["clientId"] = account.Username()
 	}
 	*/
+	for k, v := range moreClaims {
+		claims[k] = v
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	// Set the token header kid to the same value we expect when validating the token
 	// The kid is an arbitrary identifier for the key
@@ -542,6 +545,10 @@ func (helper *Helper) CreateJWTString(account *amv1.Account) string {
 		return ""
 	}
 	return signedToken
+}
+
+func (helper *Helper) CreateJWTString(account *amv1.Account) string {
+	return helper.CreateJWTStringWithAdditionalClaims(account, nil)
 }
 
 func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims jwt.MapClaims) string {
