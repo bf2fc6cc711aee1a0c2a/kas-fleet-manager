@@ -9,6 +9,10 @@ import (
 	"sync"
 )
 
+var (
+	lockKasFleetshardOperatorAddonMockProvision sync.RWMutex
+)
+
 // Ensure, that KasFleetshardOperatorAddonMock does implement KasFleetshardOperatorAddon.
 // If this is not the case, regenerate this file with moq.
 var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
@@ -40,7 +44,6 @@ type KasFleetshardOperatorAddonMock struct {
 			Cluster api.Cluster
 		}
 	}
-	lockProvision sync.RWMutex
 }
 
 // Provision calls ProvisionFunc.
@@ -53,9 +56,9 @@ func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool
 	}{
 		Cluster: cluster,
 	}
-	mock.lockProvision.Lock()
+	lockKasFleetshardOperatorAddonMockProvision.Lock()
 	mock.calls.Provision = append(mock.calls.Provision, callInfo)
-	mock.lockProvision.Unlock()
+	lockKasFleetshardOperatorAddonMockProvision.Unlock()
 	return mock.ProvisionFunc(cluster)
 }
 
@@ -68,8 +71,8 @@ func (mock *KasFleetshardOperatorAddonMock) ProvisionCalls() []struct {
 	var calls []struct {
 		Cluster api.Cluster
 	}
-	mock.lockProvision.RLock()
+	lockKasFleetshardOperatorAddonMockProvision.RLock()
 	calls = mock.calls.Provision
-	mock.lockProvision.RUnlock()
+	lockKasFleetshardOperatorAddonMockProvision.RUnlock()
 	return calls
 }

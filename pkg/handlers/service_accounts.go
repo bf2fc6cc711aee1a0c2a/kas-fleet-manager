@@ -115,3 +115,23 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 
 	handleGet(w, r, cfg)
 }
+
+func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	cfg := &handlerConfig{
+		Validate: []validate{
+			validateLength(&id, "id", &minRequiredFieldLength, nil),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
+			sa, err := s.service.GetServiceAccountById(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return presenters.PresentServiceAccount(sa), nil
+		},
+		ErrorHandler: handleError,
+	}
+
+	handleGet(w, r, cfg)
+}
