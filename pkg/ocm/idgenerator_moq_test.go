@@ -7,10 +7,6 @@ import (
 	"sync"
 )
 
-var (
-	lockIDGeneratorMockGenerate sync.RWMutex
-)
-
 // Ensure, that IDGeneratorMock does implement IDGenerator.
 // If this is not the case, regenerate this file with moq.
 var _ IDGenerator = &IDGeneratorMock{}
@@ -40,6 +36,7 @@ type IDGeneratorMock struct {
 		Generate []struct {
 		}
 	}
+	lockGenerate sync.RWMutex
 }
 
 // Generate calls GenerateFunc.
@@ -49,9 +46,9 @@ func (mock *IDGeneratorMock) Generate() string {
 	}
 	callInfo := struct {
 	}{}
-	lockIDGeneratorMockGenerate.Lock()
+	mock.lockGenerate.Lock()
 	mock.calls.Generate = append(mock.calls.Generate, callInfo)
-	lockIDGeneratorMockGenerate.Unlock()
+	mock.lockGenerate.Unlock()
 	return mock.GenerateFunc()
 }
 
@@ -62,8 +59,8 @@ func (mock *IDGeneratorMock) GenerateCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockIDGeneratorMockGenerate.RLock()
+	mock.lockGenerate.RLock()
 	calls = mock.calls.Generate
-	lockIDGeneratorMockGenerate.RUnlock()
+	mock.lockGenerate.RUnlock()
 	return calls
 }

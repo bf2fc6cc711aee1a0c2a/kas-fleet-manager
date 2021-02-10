@@ -10,12 +10,6 @@ import (
 	"sync"
 )
 
-var (
-	lockConnectorTypesServiceMockDiscoverExtensions sync.RWMutex
-	lockConnectorTypesServiceMockGet                sync.RWMutex
-	lockConnectorTypesServiceMockList               sync.RWMutex
-)
-
 // Ensure, that ConnectorTypesServiceMock does implement ConnectorTypesService.
 // If this is not the case, regenerate this file with moq.
 var _ ConnectorTypesService = &ConnectorTypesServiceMock{}
@@ -69,6 +63,9 @@ type ConnectorTypesServiceMock struct {
 			ListArgs *ListArguments
 		}
 	}
+	lockDiscoverExtensions sync.RWMutex
+	lockGet                sync.RWMutex
+	lockList               sync.RWMutex
 }
 
 // DiscoverExtensions calls DiscoverExtensionsFunc.
@@ -78,9 +75,9 @@ func (mock *ConnectorTypesServiceMock) DiscoverExtensions() error {
 	}
 	callInfo := struct {
 	}{}
-	lockConnectorTypesServiceMockDiscoverExtensions.Lock()
+	mock.lockDiscoverExtensions.Lock()
 	mock.calls.DiscoverExtensions = append(mock.calls.DiscoverExtensions, callInfo)
-	lockConnectorTypesServiceMockDiscoverExtensions.Unlock()
+	mock.lockDiscoverExtensions.Unlock()
 	return mock.DiscoverExtensionsFunc()
 }
 
@@ -91,9 +88,9 @@ func (mock *ConnectorTypesServiceMock) DiscoverExtensionsCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockConnectorTypesServiceMockDiscoverExtensions.RLock()
+	mock.lockDiscoverExtensions.RLock()
 	calls = mock.calls.DiscoverExtensions
-	lockConnectorTypesServiceMockDiscoverExtensions.RUnlock()
+	mock.lockDiscoverExtensions.RUnlock()
 	return calls
 }
 
@@ -107,9 +104,9 @@ func (mock *ConnectorTypesServiceMock) Get(id string) (*api.ConnectorType, *erro
 	}{
 		ID: id,
 	}
-	lockConnectorTypesServiceMockGet.Lock()
+	mock.lockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
-	lockConnectorTypesServiceMockGet.Unlock()
+	mock.lockGet.Unlock()
 	return mock.GetFunc(id)
 }
 
@@ -122,9 +119,9 @@ func (mock *ConnectorTypesServiceMock) GetCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	lockConnectorTypesServiceMockGet.RLock()
+	mock.lockGet.RLock()
 	calls = mock.calls.Get
-	lockConnectorTypesServiceMockGet.RUnlock()
+	mock.lockGet.RUnlock()
 	return calls
 }
 
@@ -140,9 +137,9 @@ func (mock *ConnectorTypesServiceMock) List(ctx context.Context, listArgs *ListA
 		Ctx:      ctx,
 		ListArgs: listArgs,
 	}
-	lockConnectorTypesServiceMockList.Lock()
+	mock.lockList.Lock()
 	mock.calls.List = append(mock.calls.List, callInfo)
-	lockConnectorTypesServiceMockList.Unlock()
+	mock.lockList.Unlock()
 	return mock.ListFunc(ctx, listArgs)
 }
 
@@ -157,8 +154,8 @@ func (mock *ConnectorTypesServiceMock) ListCalls() []struct {
 		Ctx      context.Context
 		ListArgs *ListArguments
 	}
-	lockConnectorTypesServiceMockList.RLock()
+	mock.lockList.RLock()
 	calls = mock.calls.List
-	lockConnectorTypesServiceMockList.RUnlock()
+	mock.lockList.RUnlock()
 	return calls
 }
