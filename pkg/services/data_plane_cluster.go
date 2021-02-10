@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"strconv"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
@@ -13,6 +14,8 @@ type DataPlaneClusterService interface {
 }
 
 var _ DataPlaneClusterService = &dataPlaneClusterService{}
+
+const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
 	ocmClient      ocm.Client
@@ -27,5 +30,44 @@ func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Cli
 }
 
 func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError {
+	err := d.setClusterStatus(clusterID, status)
+	if err != nil {
+		return errors.ToServiceError(err)
+	}
 	return nil
+}
+
+func (d *dataPlaneClusterService) setClusterStatus(agentClusterID string, status *api.DataPlaneClusterStatus) error {
+	cluster, svcErr := d.clusterService.FindClusterByID(agentClusterID)
+	if svcErr != nil {
+		return svcErr
+	}
+	if cluster == nil {
+		return errors.NotFound("Cluster agent with ID '%s' not found", agentClusterID)
+	}
+
+	isReady, err := d.isClusterReady(status)
+	if err != nil {
+		return errors.ToServiceError(err)
+	}
+
+	if isReady && cluster.Status != api.ClusterReady && cluster.Status == api.AddonInstalled {
+		err := d.clusterService.UpdateStatus(*cluster, api.ClusterReady)
+		return errors.ToServiceError(err)
+	}
+
+	return nil
+}
+
+func (d *dataPlaneClusterService) isClusterReady(status *api.DataPlaneClusterStatus) (bool, error) {
+	for _, cond := range status.Conditions {
+		if cond.Type == dataPlaneClusterStatusCondReadyName {
+			condVal, err := strconv.ParseBool(cond.Status)
+			if err != nil {
+				return false, err
+			}
+			return condVal, nil
+		}
+	}
+	return false, nil
 }
