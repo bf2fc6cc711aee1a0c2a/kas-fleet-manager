@@ -10,14 +10,6 @@ import (
 	"sync"
 )
 
-var (
-	lockConnectorsServiceMockCreate sync.RWMutex
-	lockConnectorsServiceMockDelete sync.RWMutex
-	lockConnectorsServiceMockGet    sync.RWMutex
-	lockConnectorsServiceMockList   sync.RWMutex
-	lockConnectorsServiceMockUpdate sync.RWMutex
-)
-
 // Ensure, that ConnectorsServiceMock does implement ConnectorsService.
 // If this is not the case, regenerate this file with moq.
 var _ ConnectorsService = &ConnectorsServiceMock{}
@@ -113,6 +105,11 @@ type ConnectorsServiceMock struct {
 			Resource *api.Connector
 		}
 	}
+	lockCreate sync.RWMutex
+	lockDelete sync.RWMutex
+	lockGet    sync.RWMutex
+	lockList   sync.RWMutex
+	lockUpdate sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -127,9 +124,9 @@ func (mock *ConnectorsServiceMock) Create(ctx context.Context, resource *api.Con
 		Ctx:      ctx,
 		Resource: resource,
 	}
-	lockConnectorsServiceMockCreate.Lock()
+	mock.lockCreate.Lock()
 	mock.calls.Create = append(mock.calls.Create, callInfo)
-	lockConnectorsServiceMockCreate.Unlock()
+	mock.lockCreate.Unlock()
 	return mock.CreateFunc(ctx, resource)
 }
 
@@ -144,9 +141,9 @@ func (mock *ConnectorsServiceMock) CreateCalls() []struct {
 		Ctx      context.Context
 		Resource *api.Connector
 	}
-	lockConnectorsServiceMockCreate.RLock()
+	mock.lockCreate.RLock()
 	calls = mock.calls.Create
-	lockConnectorsServiceMockCreate.RUnlock()
+	mock.lockCreate.RUnlock()
 	return calls
 }
 
@@ -164,9 +161,9 @@ func (mock *ConnectorsServiceMock) Delete(ctx context.Context, kid string, id st
 		Kid: kid,
 		ID:  id,
 	}
-	lockConnectorsServiceMockDelete.Lock()
+	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
-	lockConnectorsServiceMockDelete.Unlock()
+	mock.lockDelete.Unlock()
 	return mock.DeleteFunc(ctx, kid, id)
 }
 
@@ -183,9 +180,9 @@ func (mock *ConnectorsServiceMock) DeleteCalls() []struct {
 		Kid string
 		ID  string
 	}
-	lockConnectorsServiceMockDelete.RLock()
+	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
-	lockConnectorsServiceMockDelete.RUnlock()
+	mock.lockDelete.RUnlock()
 	return calls
 }
 
@@ -205,9 +202,9 @@ func (mock *ConnectorsServiceMock) Get(ctx context.Context, kid string, id strin
 		ID:  id,
 		Tid: tid,
 	}
-	lockConnectorsServiceMockGet.Lock()
+	mock.lockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
-	lockConnectorsServiceMockGet.Unlock()
+	mock.lockGet.Unlock()
 	return mock.GetFunc(ctx, kid, id, tid)
 }
 
@@ -226,9 +223,9 @@ func (mock *ConnectorsServiceMock) GetCalls() []struct {
 		ID  string
 		Tid string
 	}
-	lockConnectorsServiceMockGet.RLock()
+	mock.lockGet.RLock()
 	calls = mock.calls.Get
-	lockConnectorsServiceMockGet.RUnlock()
+	mock.lockGet.RUnlock()
 	return calls
 }
 
@@ -248,9 +245,9 @@ func (mock *ConnectorsServiceMock) List(ctx context.Context, kid string, listArg
 		ListArgs: listArgs,
 		Tid:      tid,
 	}
-	lockConnectorsServiceMockList.Lock()
+	mock.lockList.Lock()
 	mock.calls.List = append(mock.calls.List, callInfo)
-	lockConnectorsServiceMockList.Unlock()
+	mock.lockList.Unlock()
 	return mock.ListFunc(ctx, kid, listArgs, tid)
 }
 
@@ -269,9 +266,9 @@ func (mock *ConnectorsServiceMock) ListCalls() []struct {
 		ListArgs *ListArguments
 		Tid      string
 	}
-	lockConnectorsServiceMockList.RLock()
+	mock.lockList.RLock()
 	calls = mock.calls.List
-	lockConnectorsServiceMockList.RUnlock()
+	mock.lockList.RUnlock()
 	return calls
 }
 
@@ -287,9 +284,9 @@ func (mock *ConnectorsServiceMock) Update(ctx context.Context, resource *api.Con
 		Ctx:      ctx,
 		Resource: resource,
 	}
-	lockConnectorsServiceMockUpdate.Lock()
+	mock.lockUpdate.Lock()
 	mock.calls.Update = append(mock.calls.Update, callInfo)
-	lockConnectorsServiceMockUpdate.Unlock()
+	mock.lockUpdate.Unlock()
 	return mock.UpdateFunc(ctx, resource)
 }
 
@@ -304,8 +301,8 @@ func (mock *ConnectorsServiceMock) UpdateCalls() []struct {
 		Ctx      context.Context
 		Resource *api.Connector
 	}
-	lockConnectorsServiceMockUpdate.RLock()
+	mock.lockUpdate.RLock()
 	calls = mock.calls.Update
-	lockConnectorsServiceMockUpdate.RUnlock()
+	mock.lockUpdate.RUnlock()
 	return calls
 }

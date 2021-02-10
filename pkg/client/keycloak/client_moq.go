@@ -9,28 +9,6 @@ import (
 	"sync"
 )
 
-var (
-	lockKcClientMockAddRealmRoleToUser         sync.RWMutex
-	lockKcClientMockClientConfig               sync.RWMutex
-	lockKcClientMockCreateClient               sync.RWMutex
-	lockKcClientMockCreateProtocolMapperConfig sync.RWMutex
-	lockKcClientMockCreateRealmRole            sync.RWMutex
-	lockKcClientMockDeleteClient               sync.RWMutex
-	lockKcClientMockGetClient                  sync.RWMutex
-	lockKcClientMockGetClientById              sync.RWMutex
-	lockKcClientMockGetClientSecret            sync.RWMutex
-	lockKcClientMockGetClientServiceAccount    sync.RWMutex
-	lockKcClientMockGetClients                 sync.RWMutex
-	lockKcClientMockGetConfig                  sync.RWMutex
-	lockKcClientMockGetRealmRole               sync.RWMutex
-	lockKcClientMockGetToken                   sync.RWMutex
-	lockKcClientMockIsClientExist              sync.RWMutex
-	lockKcClientMockIsSameOrg                  sync.RWMutex
-	lockKcClientMockRegenerateClientSecret     sync.RWMutex
-	lockKcClientMockUpdateServiceAccountUser   sync.RWMutex
-	lockKcClientMockUserHasRealmRole           sync.RWMutex
-)
-
 // Ensure, that KcClientMock does implement KcClient.
 // If this is not the case, regenerate this file with moq.
 var _ KcClient = &KcClientMock{}
@@ -292,6 +270,25 @@ type KcClientMock struct {
 			RoleName string
 		}
 	}
+	lockAddRealmRoleToUser         sync.RWMutex
+	lockClientConfig               sync.RWMutex
+	lockCreateClient               sync.RWMutex
+	lockCreateProtocolMapperConfig sync.RWMutex
+	lockCreateRealmRole            sync.RWMutex
+	lockDeleteClient               sync.RWMutex
+	lockGetClient                  sync.RWMutex
+	lockGetClientById              sync.RWMutex
+	lockGetClientSecret            sync.RWMutex
+	lockGetClientServiceAccount    sync.RWMutex
+	lockGetClients                 sync.RWMutex
+	lockGetConfig                  sync.RWMutex
+	lockGetRealmRole               sync.RWMutex
+	lockGetToken                   sync.RWMutex
+	lockIsClientExist              sync.RWMutex
+	lockIsSameOrg                  sync.RWMutex
+	lockRegenerateClientSecret     sync.RWMutex
+	lockUpdateServiceAccountUser   sync.RWMutex
+	lockUserHasRealmRole           sync.RWMutex
 }
 
 // AddRealmRoleToUser calls AddRealmRoleToUserFunc.
@@ -308,9 +305,9 @@ func (mock *KcClientMock) AddRealmRoleToUser(accessToken string, userId string, 
 		UserId:      userId,
 		Role:        role,
 	}
-	lockKcClientMockAddRealmRoleToUser.Lock()
+	mock.lockAddRealmRoleToUser.Lock()
 	mock.calls.AddRealmRoleToUser = append(mock.calls.AddRealmRoleToUser, callInfo)
-	lockKcClientMockAddRealmRoleToUser.Unlock()
+	mock.lockAddRealmRoleToUser.Unlock()
 	return mock.AddRealmRoleToUserFunc(accessToken, userId, role)
 }
 
@@ -327,9 +324,9 @@ func (mock *KcClientMock) AddRealmRoleToUserCalls() []struct {
 		UserId      string
 		Role        gocloak.Role
 	}
-	lockKcClientMockAddRealmRoleToUser.RLock()
+	mock.lockAddRealmRoleToUser.RLock()
 	calls = mock.calls.AddRealmRoleToUser
-	lockKcClientMockAddRealmRoleToUser.RUnlock()
+	mock.lockAddRealmRoleToUser.RUnlock()
 	return calls
 }
 
@@ -343,9 +340,9 @@ func (mock *KcClientMock) ClientConfig(client ClientRepresentation) gocloak.Clie
 	}{
 		Client: client,
 	}
-	lockKcClientMockClientConfig.Lock()
+	mock.lockClientConfig.Lock()
 	mock.calls.ClientConfig = append(mock.calls.ClientConfig, callInfo)
-	lockKcClientMockClientConfig.Unlock()
+	mock.lockClientConfig.Unlock()
 	return mock.ClientConfigFunc(client)
 }
 
@@ -358,9 +355,9 @@ func (mock *KcClientMock) ClientConfigCalls() []struct {
 	var calls []struct {
 		Client ClientRepresentation
 	}
-	lockKcClientMockClientConfig.RLock()
+	mock.lockClientConfig.RLock()
 	calls = mock.calls.ClientConfig
-	lockKcClientMockClientConfig.RUnlock()
+	mock.lockClientConfig.RUnlock()
 	return calls
 }
 
@@ -376,9 +373,9 @@ func (mock *KcClientMock) CreateClient(client gocloak.Client, accessToken string
 		Client:      client,
 		AccessToken: accessToken,
 	}
-	lockKcClientMockCreateClient.Lock()
+	mock.lockCreateClient.Lock()
 	mock.calls.CreateClient = append(mock.calls.CreateClient, callInfo)
-	lockKcClientMockCreateClient.Unlock()
+	mock.lockCreateClient.Unlock()
 	return mock.CreateClientFunc(client, accessToken)
 }
 
@@ -393,9 +390,9 @@ func (mock *KcClientMock) CreateClientCalls() []struct {
 		Client      gocloak.Client
 		AccessToken string
 	}
-	lockKcClientMockCreateClient.RLock()
+	mock.lockCreateClient.RLock()
 	calls = mock.calls.CreateClient
-	lockKcClientMockCreateClient.RUnlock()
+	mock.lockCreateClient.RUnlock()
 	return calls
 }
 
@@ -409,9 +406,9 @@ func (mock *KcClientMock) CreateProtocolMapperConfig(in1 string) []gocloak.Proto
 	}{
 		In1: in1,
 	}
-	lockKcClientMockCreateProtocolMapperConfig.Lock()
+	mock.lockCreateProtocolMapperConfig.Lock()
 	mock.calls.CreateProtocolMapperConfig = append(mock.calls.CreateProtocolMapperConfig, callInfo)
-	lockKcClientMockCreateProtocolMapperConfig.Unlock()
+	mock.lockCreateProtocolMapperConfig.Unlock()
 	return mock.CreateProtocolMapperConfigFunc(in1)
 }
 
@@ -424,9 +421,9 @@ func (mock *KcClientMock) CreateProtocolMapperConfigCalls() []struct {
 	var calls []struct {
 		In1 string
 	}
-	lockKcClientMockCreateProtocolMapperConfig.RLock()
+	mock.lockCreateProtocolMapperConfig.RLock()
 	calls = mock.calls.CreateProtocolMapperConfig
-	lockKcClientMockCreateProtocolMapperConfig.RUnlock()
+	mock.lockCreateProtocolMapperConfig.RUnlock()
 	return calls
 }
 
@@ -442,9 +439,9 @@ func (mock *KcClientMock) CreateRealmRole(accessToken string, roleName string) (
 		AccessToken: accessToken,
 		RoleName:    roleName,
 	}
-	lockKcClientMockCreateRealmRole.Lock()
+	mock.lockCreateRealmRole.Lock()
 	mock.calls.CreateRealmRole = append(mock.calls.CreateRealmRole, callInfo)
-	lockKcClientMockCreateRealmRole.Unlock()
+	mock.lockCreateRealmRole.Unlock()
 	return mock.CreateRealmRoleFunc(accessToken, roleName)
 }
 
@@ -459,9 +456,9 @@ func (mock *KcClientMock) CreateRealmRoleCalls() []struct {
 		AccessToken string
 		RoleName    string
 	}
-	lockKcClientMockCreateRealmRole.RLock()
+	mock.lockCreateRealmRole.RLock()
 	calls = mock.calls.CreateRealmRole
-	lockKcClientMockCreateRealmRole.RUnlock()
+	mock.lockCreateRealmRole.RUnlock()
 	return calls
 }
 
@@ -477,9 +474,9 @@ func (mock *KcClientMock) DeleteClient(internalClientID string, accessToken stri
 		InternalClientID: internalClientID,
 		AccessToken:      accessToken,
 	}
-	lockKcClientMockDeleteClient.Lock()
+	mock.lockDeleteClient.Lock()
 	mock.calls.DeleteClient = append(mock.calls.DeleteClient, callInfo)
-	lockKcClientMockDeleteClient.Unlock()
+	mock.lockDeleteClient.Unlock()
 	return mock.DeleteClientFunc(internalClientID, accessToken)
 }
 
@@ -494,9 +491,9 @@ func (mock *KcClientMock) DeleteClientCalls() []struct {
 		InternalClientID string
 		AccessToken      string
 	}
-	lockKcClientMockDeleteClient.RLock()
+	mock.lockDeleteClient.RLock()
 	calls = mock.calls.DeleteClient
-	lockKcClientMockDeleteClient.RUnlock()
+	mock.lockDeleteClient.RUnlock()
 	return calls
 }
 
@@ -512,9 +509,9 @@ func (mock *KcClientMock) GetClient(clientId string, accessToken string) (*goclo
 		ClientId:    clientId,
 		AccessToken: accessToken,
 	}
-	lockKcClientMockGetClient.Lock()
+	mock.lockGetClient.Lock()
 	mock.calls.GetClient = append(mock.calls.GetClient, callInfo)
-	lockKcClientMockGetClient.Unlock()
+	mock.lockGetClient.Unlock()
 	return mock.GetClientFunc(clientId, accessToken)
 }
 
@@ -529,9 +526,9 @@ func (mock *KcClientMock) GetClientCalls() []struct {
 		ClientId    string
 		AccessToken string
 	}
-	lockKcClientMockGetClient.RLock()
+	mock.lockGetClient.RLock()
 	calls = mock.calls.GetClient
-	lockKcClientMockGetClient.RUnlock()
+	mock.lockGetClient.RUnlock()
 	return calls
 }
 
@@ -547,9 +544,9 @@ func (mock *KcClientMock) GetClientById(id string, accessToken string) (*gocloak
 		ID:          id,
 		AccessToken: accessToken,
 	}
-	lockKcClientMockGetClientById.Lock()
+	mock.lockGetClientById.Lock()
 	mock.calls.GetClientById = append(mock.calls.GetClientById, callInfo)
-	lockKcClientMockGetClientById.Unlock()
+	mock.lockGetClientById.Unlock()
 	return mock.GetClientByIdFunc(id, accessToken)
 }
 
@@ -564,9 +561,9 @@ func (mock *KcClientMock) GetClientByIdCalls() []struct {
 		ID          string
 		AccessToken string
 	}
-	lockKcClientMockGetClientById.RLock()
+	mock.lockGetClientById.RLock()
 	calls = mock.calls.GetClientById
-	lockKcClientMockGetClientById.RUnlock()
+	mock.lockGetClientById.RUnlock()
 	return calls
 }
 
@@ -582,9 +579,9 @@ func (mock *KcClientMock) GetClientSecret(internalClientId string, accessToken s
 		InternalClientId: internalClientId,
 		AccessToken:      accessToken,
 	}
-	lockKcClientMockGetClientSecret.Lock()
+	mock.lockGetClientSecret.Lock()
 	mock.calls.GetClientSecret = append(mock.calls.GetClientSecret, callInfo)
-	lockKcClientMockGetClientSecret.Unlock()
+	mock.lockGetClientSecret.Unlock()
 	return mock.GetClientSecretFunc(internalClientId, accessToken)
 }
 
@@ -599,9 +596,9 @@ func (mock *KcClientMock) GetClientSecretCalls() []struct {
 		InternalClientId string
 		AccessToken      string
 	}
-	lockKcClientMockGetClientSecret.RLock()
+	mock.lockGetClientSecret.RLock()
 	calls = mock.calls.GetClientSecret
-	lockKcClientMockGetClientSecret.RUnlock()
+	mock.lockGetClientSecret.RUnlock()
 	return calls
 }
 
@@ -617,9 +614,9 @@ func (mock *KcClientMock) GetClientServiceAccount(accessToken string, internalCl
 		AccessToken:    accessToken,
 		InternalClient: internalClient,
 	}
-	lockKcClientMockGetClientServiceAccount.Lock()
+	mock.lockGetClientServiceAccount.Lock()
 	mock.calls.GetClientServiceAccount = append(mock.calls.GetClientServiceAccount, callInfo)
-	lockKcClientMockGetClientServiceAccount.Unlock()
+	mock.lockGetClientServiceAccount.Unlock()
 	return mock.GetClientServiceAccountFunc(accessToken, internalClient)
 }
 
@@ -634,9 +631,9 @@ func (mock *KcClientMock) GetClientServiceAccountCalls() []struct {
 		AccessToken    string
 		InternalClient string
 	}
-	lockKcClientMockGetClientServiceAccount.RLock()
+	mock.lockGetClientServiceAccount.RLock()
 	calls = mock.calls.GetClientServiceAccount
-	lockKcClientMockGetClientServiceAccount.RUnlock()
+	mock.lockGetClientServiceAccount.RUnlock()
 	return calls
 }
 
@@ -654,9 +651,9 @@ func (mock *KcClientMock) GetClients(accessToken string, first int, max int) ([]
 		First:       first,
 		Max:         max,
 	}
-	lockKcClientMockGetClients.Lock()
+	mock.lockGetClients.Lock()
 	mock.calls.GetClients = append(mock.calls.GetClients, callInfo)
-	lockKcClientMockGetClients.Unlock()
+	mock.lockGetClients.Unlock()
 	return mock.GetClientsFunc(accessToken, first, max)
 }
 
@@ -673,9 +670,9 @@ func (mock *KcClientMock) GetClientsCalls() []struct {
 		First       int
 		Max         int
 	}
-	lockKcClientMockGetClients.RLock()
+	mock.lockGetClients.RLock()
 	calls = mock.calls.GetClients
-	lockKcClientMockGetClients.RUnlock()
+	mock.lockGetClients.RUnlock()
 	return calls
 }
 
@@ -686,9 +683,9 @@ func (mock *KcClientMock) GetConfig() *config.KeycloakConfig {
 	}
 	callInfo := struct {
 	}{}
-	lockKcClientMockGetConfig.Lock()
+	mock.lockGetConfig.Lock()
 	mock.calls.GetConfig = append(mock.calls.GetConfig, callInfo)
-	lockKcClientMockGetConfig.Unlock()
+	mock.lockGetConfig.Unlock()
 	return mock.GetConfigFunc()
 }
 
@@ -699,9 +696,9 @@ func (mock *KcClientMock) GetConfigCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockKcClientMockGetConfig.RLock()
+	mock.lockGetConfig.RLock()
 	calls = mock.calls.GetConfig
-	lockKcClientMockGetConfig.RUnlock()
+	mock.lockGetConfig.RUnlock()
 	return calls
 }
 
@@ -717,9 +714,9 @@ func (mock *KcClientMock) GetRealmRole(accessToken string, roleName string) (*go
 		AccessToken: accessToken,
 		RoleName:    roleName,
 	}
-	lockKcClientMockGetRealmRole.Lock()
+	mock.lockGetRealmRole.Lock()
 	mock.calls.GetRealmRole = append(mock.calls.GetRealmRole, callInfo)
-	lockKcClientMockGetRealmRole.Unlock()
+	mock.lockGetRealmRole.Unlock()
 	return mock.GetRealmRoleFunc(accessToken, roleName)
 }
 
@@ -734,9 +731,9 @@ func (mock *KcClientMock) GetRealmRoleCalls() []struct {
 		AccessToken string
 		RoleName    string
 	}
-	lockKcClientMockGetRealmRole.RLock()
+	mock.lockGetRealmRole.RLock()
 	calls = mock.calls.GetRealmRole
-	lockKcClientMockGetRealmRole.RUnlock()
+	mock.lockGetRealmRole.RUnlock()
 	return calls
 }
 
@@ -747,9 +744,9 @@ func (mock *KcClientMock) GetToken() (string, error) {
 	}
 	callInfo := struct {
 	}{}
-	lockKcClientMockGetToken.Lock()
+	mock.lockGetToken.Lock()
 	mock.calls.GetToken = append(mock.calls.GetToken, callInfo)
-	lockKcClientMockGetToken.Unlock()
+	mock.lockGetToken.Unlock()
 	return mock.GetTokenFunc()
 }
 
@@ -760,9 +757,9 @@ func (mock *KcClientMock) GetTokenCalls() []struct {
 } {
 	var calls []struct {
 	}
-	lockKcClientMockGetToken.RLock()
+	mock.lockGetToken.RLock()
 	calls = mock.calls.GetToken
-	lockKcClientMockGetToken.RUnlock()
+	mock.lockGetToken.RUnlock()
 	return calls
 }
 
@@ -778,9 +775,9 @@ func (mock *KcClientMock) IsClientExist(clientId string, accessToken string) (st
 		ClientId:    clientId,
 		AccessToken: accessToken,
 	}
-	lockKcClientMockIsClientExist.Lock()
+	mock.lockIsClientExist.Lock()
 	mock.calls.IsClientExist = append(mock.calls.IsClientExist, callInfo)
-	lockKcClientMockIsClientExist.Unlock()
+	mock.lockIsClientExist.Unlock()
 	return mock.IsClientExistFunc(clientId, accessToken)
 }
 
@@ -795,9 +792,9 @@ func (mock *KcClientMock) IsClientExistCalls() []struct {
 		ClientId    string
 		AccessToken string
 	}
-	lockKcClientMockIsClientExist.RLock()
+	mock.lockIsClientExist.RLock()
 	calls = mock.calls.IsClientExist
-	lockKcClientMockIsClientExist.RUnlock()
+	mock.lockIsClientExist.RUnlock()
 	return calls
 }
 
@@ -813,9 +810,9 @@ func (mock *KcClientMock) IsSameOrg(client *gocloak.Client, orgId string) bool {
 		Client: client,
 		OrgId:  orgId,
 	}
-	lockKcClientMockIsSameOrg.Lock()
+	mock.lockIsSameOrg.Lock()
 	mock.calls.IsSameOrg = append(mock.calls.IsSameOrg, callInfo)
-	lockKcClientMockIsSameOrg.Unlock()
+	mock.lockIsSameOrg.Unlock()
 	return mock.IsSameOrgFunc(client, orgId)
 }
 
@@ -830,9 +827,9 @@ func (mock *KcClientMock) IsSameOrgCalls() []struct {
 		Client *gocloak.Client
 		OrgId  string
 	}
-	lockKcClientMockIsSameOrg.RLock()
+	mock.lockIsSameOrg.RLock()
 	calls = mock.calls.IsSameOrg
-	lockKcClientMockIsSameOrg.RUnlock()
+	mock.lockIsSameOrg.RUnlock()
 	return calls
 }
 
@@ -848,9 +845,9 @@ func (mock *KcClientMock) RegenerateClientSecret(accessToken string, id string) 
 		AccessToken: accessToken,
 		ID:          id,
 	}
-	lockKcClientMockRegenerateClientSecret.Lock()
+	mock.lockRegenerateClientSecret.Lock()
 	mock.calls.RegenerateClientSecret = append(mock.calls.RegenerateClientSecret, callInfo)
-	lockKcClientMockRegenerateClientSecret.Unlock()
+	mock.lockRegenerateClientSecret.Unlock()
 	return mock.RegenerateClientSecretFunc(accessToken, id)
 }
 
@@ -865,9 +862,9 @@ func (mock *KcClientMock) RegenerateClientSecretCalls() []struct {
 		AccessToken string
 		ID          string
 	}
-	lockKcClientMockRegenerateClientSecret.RLock()
+	mock.lockRegenerateClientSecret.RLock()
 	calls = mock.calls.RegenerateClientSecret
-	lockKcClientMockRegenerateClientSecret.RUnlock()
+	mock.lockRegenerateClientSecret.RUnlock()
 	return calls
 }
 
@@ -883,9 +880,9 @@ func (mock *KcClientMock) UpdateServiceAccountUser(accessToken string, serviceAc
 		AccessToken:        accessToken,
 		ServiceAccountUser: serviceAccountUser,
 	}
-	lockKcClientMockUpdateServiceAccountUser.Lock()
+	mock.lockUpdateServiceAccountUser.Lock()
 	mock.calls.UpdateServiceAccountUser = append(mock.calls.UpdateServiceAccountUser, callInfo)
-	lockKcClientMockUpdateServiceAccountUser.Unlock()
+	mock.lockUpdateServiceAccountUser.Unlock()
 	return mock.UpdateServiceAccountUserFunc(accessToken, serviceAccountUser)
 }
 
@@ -900,9 +897,9 @@ func (mock *KcClientMock) UpdateServiceAccountUserCalls() []struct {
 		AccessToken        string
 		ServiceAccountUser gocloak.User
 	}
-	lockKcClientMockUpdateServiceAccountUser.RLock()
+	mock.lockUpdateServiceAccountUser.RLock()
 	calls = mock.calls.UpdateServiceAccountUser
-	lockKcClientMockUpdateServiceAccountUser.RUnlock()
+	mock.lockUpdateServiceAccountUser.RUnlock()
 	return calls
 }
 
@@ -920,9 +917,9 @@ func (mock *KcClientMock) UserHasRealmRole(accessToken string, userId string, ro
 		UserId:      userId,
 		RoleName:    roleName,
 	}
-	lockKcClientMockUserHasRealmRole.Lock()
+	mock.lockUserHasRealmRole.Lock()
 	mock.calls.UserHasRealmRole = append(mock.calls.UserHasRealmRole, callInfo)
-	lockKcClientMockUserHasRealmRole.Unlock()
+	mock.lockUserHasRealmRole.Unlock()
 	return mock.UserHasRealmRoleFunc(accessToken, userId, roleName)
 }
 
@@ -939,8 +936,8 @@ func (mock *KcClientMock) UserHasRealmRoleCalls() []struct {
 		UserId      string
 		RoleName    string
 	}
-	lockKcClientMockUserHasRealmRole.RLock()
+	mock.lockUserHasRealmRole.RLock()
 	calls = mock.calls.UserHasRealmRole
-	lockKcClientMockUserHasRealmRole.RUnlock()
+	mock.lockUserHasRealmRole.RUnlock()
 	return calls
 }
