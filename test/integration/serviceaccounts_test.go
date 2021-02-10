@@ -40,7 +40,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	// verify get by id
 	id := sa.Id
-	sa, resp, err =client.DefaultApi.GetServiceAccountById(ctx, id)
+	sa, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientID).NotTo(BeEmpty())
