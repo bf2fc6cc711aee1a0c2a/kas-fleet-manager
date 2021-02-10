@@ -9,18 +9,19 @@ import (
 )
 
 var (
-	lockClientMockCreateCluster           sync.RWMutex
-	lockClientMockCreateManagedKafkaAddon sync.RWMutex
-	lockClientMockCreateSyncSet           sync.RWMutex
-	lockClientMockDeleteSyncSet           sync.RWMutex
-	lockClientMockGetCloudProviders       sync.RWMutex
-	lockClientMockGetClusterDNS           sync.RWMutex
-	lockClientMockGetClusterIngresses     sync.RWMutex
-	lockClientMockGetClusterStatus        sync.RWMutex
-	lockClientMockGetManagedKafkaAddon    sync.RWMutex
-	lockClientMockGetRegions              sync.RWMutex
-	lockClientMockScaleDownComputeNodes   sync.RWMutex
-	lockClientMockScaleUpComputeNodes     sync.RWMutex
+	lockClientMockCreateAddon           sync.RWMutex
+	lockClientMockCreateAddonWithParams sync.RWMutex
+	lockClientMockCreateCluster         sync.RWMutex
+	lockClientMockCreateSyncSet         sync.RWMutex
+	lockClientMockDeleteSyncSet         sync.RWMutex
+	lockClientMockGetAddon              sync.RWMutex
+	lockClientMockGetCloudProviders     sync.RWMutex
+	lockClientMockGetClusterDNS         sync.RWMutex
+	lockClientMockGetClusterIngresses   sync.RWMutex
+	lockClientMockGetClusterStatus      sync.RWMutex
+	lockClientMockGetRegions            sync.RWMutex
+	lockClientMockScaleDownComputeNodes sync.RWMutex
+	lockClientMockScaleUpComputeNodes   sync.RWMutex
 )
 
 // Ensure, that ClientMock does implement Client.
@@ -202,6 +203,80 @@ type ClientMock struct {
 	}
 }
 
+// CreateAddon calls CreateAddonFunc.
+func (mock *ClientMock) CreateAddon(clusterId string, addonId string) (*v1.AddOnInstallation, error) {
+	if mock.CreateAddonFunc == nil {
+		panic("ClientMock.CreateAddonFunc: method is nil but Client.CreateAddon was just called")
+	}
+	callInfo := struct {
+		ClusterId string
+		AddonId   string
+	}{
+		ClusterId: clusterId,
+		AddonId:   addonId,
+	}
+	lockClientMockCreateAddon.Lock()
+	mock.calls.CreateAddon = append(mock.calls.CreateAddon, callInfo)
+	lockClientMockCreateAddon.Unlock()
+	return mock.CreateAddonFunc(clusterId, addonId)
+}
+
+// CreateAddonCalls gets all the calls that were made to CreateAddon.
+// Check the length with:
+//     len(mockedClient.CreateAddonCalls())
+func (mock *ClientMock) CreateAddonCalls() []struct {
+	ClusterId string
+	AddonId   string
+} {
+	var calls []struct {
+		ClusterId string
+		AddonId   string
+	}
+	lockClientMockCreateAddon.RLock()
+	calls = mock.calls.CreateAddon
+	lockClientMockCreateAddon.RUnlock()
+	return calls
+}
+
+// CreateAddonWithParams calls CreateAddonWithParamsFunc.
+func (mock *ClientMock) CreateAddonWithParams(clusterId string, addonId string, parameters []AddonParameter) (*v1.AddOnInstallation, error) {
+	if mock.CreateAddonWithParamsFunc == nil {
+		panic("ClientMock.CreateAddonWithParamsFunc: method is nil but Client.CreateAddonWithParams was just called")
+	}
+	callInfo := struct {
+		ClusterId  string
+		AddonId    string
+		Parameters []AddonParameter
+	}{
+		ClusterId:  clusterId,
+		AddonId:    addonId,
+		Parameters: parameters,
+	}
+	lockClientMockCreateAddonWithParams.Lock()
+	mock.calls.CreateAddonWithParams = append(mock.calls.CreateAddonWithParams, callInfo)
+	lockClientMockCreateAddonWithParams.Unlock()
+	return mock.CreateAddonWithParamsFunc(clusterId, addonId, parameters)
+}
+
+// CreateAddonWithParamsCalls gets all the calls that were made to CreateAddonWithParams.
+// Check the length with:
+//     len(mockedClient.CreateAddonWithParamsCalls())
+func (mock *ClientMock) CreateAddonWithParamsCalls() []struct {
+	ClusterId  string
+	AddonId    string
+	Parameters []AddonParameter
+} {
+	var calls []struct {
+		ClusterId  string
+		AddonId    string
+		Parameters []AddonParameter
+	}
+	lockClientMockCreateAddonWithParams.RLock()
+	calls = mock.calls.CreateAddonWithParams
+	lockClientMockCreateAddonWithParams.RUnlock()
+	return calls
+}
+
 // CreateCluster calls CreateClusterFunc.
 func (mock *ClientMock) CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error) {
 	if mock.CreateClusterFunc == nil {
@@ -230,37 +305,6 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	lockClientMockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
 	lockClientMockCreateCluster.RUnlock()
-	return calls
-}
-
-// CreateManagedKafkaAddon calls CreateManagedKafkaAddonFunc.
-func (mock *ClientMock) CreateManagedKafkaAddon(id string) (*v1.AddOnInstallation, error) {
-	if mock.CreateManagedKafkaAddonFunc == nil {
-		panic("ClientMock.CreateManagedKafkaAddonFunc: method is nil but Client.CreateManagedKafkaAddon was just called")
-	}
-	callInfo := struct {
-		ID string
-	}{
-		ID: id,
-	}
-	lockClientMockCreateManagedKafkaAddon.Lock()
-	mock.calls.CreateManagedKafkaAddon = append(mock.calls.CreateManagedKafkaAddon, callInfo)
-	lockClientMockCreateManagedKafkaAddon.Unlock()
-	return mock.CreateManagedKafkaAddonFunc(id)
-}
-
-// CreateManagedKafkaAddonCalls gets all the calls that were made to CreateManagedKafkaAddon.
-// Check the length with:
-//     len(mockedClient.CreateManagedKafkaAddonCalls())
-func (mock *ClientMock) CreateManagedKafkaAddonCalls() []struct {
-	ID string
-} {
-	var calls []struct {
-		ID string
-	}
-	lockClientMockCreateManagedKafkaAddon.RLock()
-	calls = mock.calls.CreateManagedKafkaAddon
-	lockClientMockCreateManagedKafkaAddon.RUnlock()
 	return calls
 }
 
@@ -346,9 +390,9 @@ func (mock *ClientMock) GetAddon(clusterId string, addonId string) (*v1.AddOnIns
 		ClusterId: clusterId,
 		AddonId:   addonId,
 	}
-	mock.lockGetAddon.Lock()
+	lockClientMockGetAddon.Lock()
 	mock.calls.GetAddon = append(mock.calls.GetAddon, callInfo)
-	mock.lockGetAddon.Unlock()
+	lockClientMockGetAddon.Unlock()
 	return mock.GetAddonFunc(clusterId, addonId)
 }
 
@@ -363,9 +407,9 @@ func (mock *ClientMock) GetAddonCalls() []struct {
 		ClusterId string
 		AddonId   string
 	}
-	mock.lockGetAddon.RLock()
+	lockClientMockGetAddon.RLock()
 	calls = mock.calls.GetAddon
-	mock.lockGetAddon.RUnlock()
+	lockClientMockGetAddon.RUnlock()
 	return calls
 }
 
@@ -485,37 +529,6 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	lockClientMockGetClusterStatus.RLock()
 	calls = mock.calls.GetClusterStatus
 	lockClientMockGetClusterStatus.RUnlock()
-	return calls
-}
-
-// GetManagedKafkaAddon calls GetManagedKafkaAddonFunc.
-func (mock *ClientMock) GetManagedKafkaAddon(id string) (*v1.AddOnInstallation, error) {
-	if mock.GetManagedKafkaAddonFunc == nil {
-		panic("ClientMock.GetManagedKafkaAddonFunc: method is nil but Client.GetManagedKafkaAddon was just called")
-	}
-	callInfo := struct {
-		ID string
-	}{
-		ID: id,
-	}
-	lockClientMockGetManagedKafkaAddon.Lock()
-	mock.calls.GetManagedKafkaAddon = append(mock.calls.GetManagedKafkaAddon, callInfo)
-	lockClientMockGetManagedKafkaAddon.Unlock()
-	return mock.GetManagedKafkaAddonFunc(id)
-}
-
-// GetManagedKafkaAddonCalls gets all the calls that were made to GetManagedKafkaAddon.
-// Check the length with:
-//     len(mockedClient.GetManagedKafkaAddonCalls())
-func (mock *ClientMock) GetManagedKafkaAddonCalls() []struct {
-	ID string
-} {
-	var calls []struct {
-		ID string
-	}
-	lockClientMockGetManagedKafkaAddon.RLock()
-	calls = mock.calls.GetManagedKafkaAddon
-	lockClientMockGetManagedKafkaAddon.RUnlock()
 	return calls
 }
 
