@@ -38,8 +38,15 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
-	//verify reset
+	// verify get by id
 	id := sa.Id
+	sa, resp, err =client.DefaultApi.GetServiceAccountById(ctx, id)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(sa.ClientID).NotTo(BeEmpty())
+	Expect(sa.Id).NotTo(BeEmpty())
+
+	//verify reset
 	oldSecret := sa.ClientSecret
 	sa, _, err = client.DefaultApi.ResetServiceAccountCreds(ctx, id)
 	Expect(err).ShouldNot(HaveOccurred())
