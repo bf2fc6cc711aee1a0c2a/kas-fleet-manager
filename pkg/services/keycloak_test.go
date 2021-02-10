@@ -731,7 +731,6 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 	}
 }
 
-
 func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
@@ -781,10 +780,10 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 				ctx: auth.SetOrgIdContext(context.TODO(), "12221"),
 			},
 			want: &api.ServiceAccount{
-				ID:           "12221",
-				ClientID:     "12221",
-				Name:         "",
-				Description:  "",
+				ID:          "12221",
+				ClientID:    "12221",
+				Name:        "",
+				Description: "",
 			},
 			wantErr: false,
 		},
