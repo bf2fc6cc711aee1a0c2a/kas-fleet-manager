@@ -14,6 +14,7 @@ Method | HTTP request | Description
 [**GetConnectorTypeByID**](DefaultApi.md#GetConnectorTypeByID) | **Get** /api/managed-services-api/v1/connector-types/{id} | Get a connector type by name and version
 [**GetKafkaById**](DefaultApi.md#GetKafkaById) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
 [**GetMetricsByKafkaId**](DefaultApi.md#GetMetricsByKafkaId) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics | Get metrics by kafka id.
+[**GetServiceAccountById**](DefaultApi.md#GetServiceAccountById) | **Get** /api/managed-services-api/v1/serviceaccounts/{id} | get service account by id
 [**ListCloudProviderRegions**](DefaultApi.md#ListCloudProviderRegions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 [**ListCloudProviders**](DefaultApi.md#ListCloudProviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
 [**ListConnectorTypes**](DefaultApi.md#ListConnectorTypes) | **Get** /api/managed-services-api/v1/connector-types | Returns a list of connector types
@@ -349,6 +350,38 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**MetricsList**](MetricsList.md)
+
+### Authorization
+
+[Bearer](../README.md#Bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetServiceAccountById
+
+> ServiceAccount GetServiceAccountById(ctx, id)
+
+get service account by id
+
+### Required Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **string**| The id of record | 
+
+### Return type
+
+[**ServiceAccount**](ServiceAccount.md)
 
 ### Authorization
 

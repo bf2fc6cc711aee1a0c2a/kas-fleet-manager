@@ -8,6 +8,22 @@ import (
 	"sync"
 )
 
+var (
+	lockClientMockCreateAddon           sync.RWMutex
+	lockClientMockCreateAddonWithParams sync.RWMutex
+	lockClientMockCreateCluster         sync.RWMutex
+	lockClientMockCreateSyncSet         sync.RWMutex
+	lockClientMockDeleteSyncSet         sync.RWMutex
+	lockClientMockGetAddon              sync.RWMutex
+	lockClientMockGetCloudProviders     sync.RWMutex
+	lockClientMockGetClusterDNS         sync.RWMutex
+	lockClientMockGetClusterIngresses   sync.RWMutex
+	lockClientMockGetClusterStatus      sync.RWMutex
+	lockClientMockGetRegions            sync.RWMutex
+	lockClientMockScaleDownComputeNodes sync.RWMutex
+	lockClientMockScaleUpComputeNodes   sync.RWMutex
+)
+
 // Ensure, that ClientMock does implement Client.
 // If this is not the case, regenerate this file with moq.
 var _ Client = &ClientMock{}
@@ -185,19 +201,6 @@ type ClientMock struct {
 			Increment int
 		}
 	}
-	lockCreateAddon           sync.RWMutex
-	lockCreateAddonWithParams sync.RWMutex
-	lockCreateCluster         sync.RWMutex
-	lockCreateSyncSet         sync.RWMutex
-	lockDeleteSyncSet         sync.RWMutex
-	lockGetAddon              sync.RWMutex
-	lockGetCloudProviders     sync.RWMutex
-	lockGetClusterDNS         sync.RWMutex
-	lockGetClusterIngresses   sync.RWMutex
-	lockGetClusterStatus      sync.RWMutex
-	lockGetRegions            sync.RWMutex
-	lockScaleDownComputeNodes sync.RWMutex
-	lockScaleUpComputeNodes   sync.RWMutex
 }
 
 // CreateAddon calls CreateAddonFunc.
@@ -212,9 +215,9 @@ func (mock *ClientMock) CreateAddon(clusterId string, addonId string) (*v1.AddOn
 		ClusterId: clusterId,
 		AddonId:   addonId,
 	}
-	mock.lockCreateAddon.Lock()
+	lockClientMockCreateAddon.Lock()
 	mock.calls.CreateAddon = append(mock.calls.CreateAddon, callInfo)
-	mock.lockCreateAddon.Unlock()
+	lockClientMockCreateAddon.Unlock()
 	return mock.CreateAddonFunc(clusterId, addonId)
 }
 
@@ -229,9 +232,9 @@ func (mock *ClientMock) CreateAddonCalls() []struct {
 		ClusterId string
 		AddonId   string
 	}
-	mock.lockCreateAddon.RLock()
+	lockClientMockCreateAddon.RLock()
 	calls = mock.calls.CreateAddon
-	mock.lockCreateAddon.RUnlock()
+	lockClientMockCreateAddon.RUnlock()
 	return calls
 }
 
@@ -249,9 +252,9 @@ func (mock *ClientMock) CreateAddonWithParams(clusterId string, addonId string, 
 		AddonId:    addonId,
 		Parameters: parameters,
 	}
-	mock.lockCreateAddonWithParams.Lock()
+	lockClientMockCreateAddonWithParams.Lock()
 	mock.calls.CreateAddonWithParams = append(mock.calls.CreateAddonWithParams, callInfo)
-	mock.lockCreateAddonWithParams.Unlock()
+	lockClientMockCreateAddonWithParams.Unlock()
 	return mock.CreateAddonWithParamsFunc(clusterId, addonId, parameters)
 }
 
@@ -268,9 +271,9 @@ func (mock *ClientMock) CreateAddonWithParamsCalls() []struct {
 		AddonId    string
 		Parameters []AddonParameter
 	}
-	mock.lockCreateAddonWithParams.RLock()
+	lockClientMockCreateAddonWithParams.RLock()
 	calls = mock.calls.CreateAddonWithParams
-	mock.lockCreateAddonWithParams.RUnlock()
+	lockClientMockCreateAddonWithParams.RUnlock()
 	return calls
 }
 
@@ -284,9 +287,9 @@ func (mock *ClientMock) CreateCluster(cluster *v1.Cluster) (*v1.Cluster, error) 
 	}{
 		Cluster: cluster,
 	}
-	mock.lockCreateCluster.Lock()
+	lockClientMockCreateCluster.Lock()
 	mock.calls.CreateCluster = append(mock.calls.CreateCluster, callInfo)
-	mock.lockCreateCluster.Unlock()
+	lockClientMockCreateCluster.Unlock()
 	return mock.CreateClusterFunc(cluster)
 }
 
@@ -299,9 +302,9 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	var calls []struct {
 		Cluster *v1.Cluster
 	}
-	mock.lockCreateCluster.RLock()
+	lockClientMockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
-	mock.lockCreateCluster.RUnlock()
+	lockClientMockCreateCluster.RUnlock()
 	return calls
 }
 
@@ -317,9 +320,9 @@ func (mock *ClientMock) CreateSyncSet(clusterID string, syncset *v1.Syncset) (*v
 		ClusterID: clusterID,
 		Syncset:   syncset,
 	}
-	mock.lockCreateSyncSet.Lock()
+	lockClientMockCreateSyncSet.Lock()
 	mock.calls.CreateSyncSet = append(mock.calls.CreateSyncSet, callInfo)
-	mock.lockCreateSyncSet.Unlock()
+	lockClientMockCreateSyncSet.Unlock()
 	return mock.CreateSyncSetFunc(clusterID, syncset)
 }
 
@@ -334,9 +337,9 @@ func (mock *ClientMock) CreateSyncSetCalls() []struct {
 		ClusterID string
 		Syncset   *v1.Syncset
 	}
-	mock.lockCreateSyncSet.RLock()
+	lockClientMockCreateSyncSet.RLock()
 	calls = mock.calls.CreateSyncSet
-	mock.lockCreateSyncSet.RUnlock()
+	lockClientMockCreateSyncSet.RUnlock()
 	return calls
 }
 
@@ -352,9 +355,9 @@ func (mock *ClientMock) DeleteSyncSet(clusterID string, syncsetID string) (int, 
 		ClusterID: clusterID,
 		SyncsetID: syncsetID,
 	}
-	mock.lockDeleteSyncSet.Lock()
+	lockClientMockDeleteSyncSet.Lock()
 	mock.calls.DeleteSyncSet = append(mock.calls.DeleteSyncSet, callInfo)
-	mock.lockDeleteSyncSet.Unlock()
+	lockClientMockDeleteSyncSet.Unlock()
 	return mock.DeleteSyncSetFunc(clusterID, syncsetID)
 }
 
@@ -369,9 +372,9 @@ func (mock *ClientMock) DeleteSyncSetCalls() []struct {
 		ClusterID string
 		SyncsetID string
 	}
-	mock.lockDeleteSyncSet.RLock()
+	lockClientMockDeleteSyncSet.RLock()
 	calls = mock.calls.DeleteSyncSet
-	mock.lockDeleteSyncSet.RUnlock()
+	lockClientMockDeleteSyncSet.RUnlock()
 	return calls
 }
 
@@ -387,9 +390,9 @@ func (mock *ClientMock) GetAddon(clusterId string, addonId string) (*v1.AddOnIns
 		ClusterId: clusterId,
 		AddonId:   addonId,
 	}
-	mock.lockGetAddon.Lock()
+	lockClientMockGetAddon.Lock()
 	mock.calls.GetAddon = append(mock.calls.GetAddon, callInfo)
-	mock.lockGetAddon.Unlock()
+	lockClientMockGetAddon.Unlock()
 	return mock.GetAddonFunc(clusterId, addonId)
 }
 
@@ -404,9 +407,9 @@ func (mock *ClientMock) GetAddonCalls() []struct {
 		ClusterId string
 		AddonId   string
 	}
-	mock.lockGetAddon.RLock()
+	lockClientMockGetAddon.RLock()
 	calls = mock.calls.GetAddon
-	mock.lockGetAddon.RUnlock()
+	lockClientMockGetAddon.RUnlock()
 	return calls
 }
 
@@ -417,9 +420,9 @@ func (mock *ClientMock) GetCloudProviders() (*v1.CloudProviderList, error) {
 	}
 	callInfo := struct {
 	}{}
-	mock.lockGetCloudProviders.Lock()
+	lockClientMockGetCloudProviders.Lock()
 	mock.calls.GetCloudProviders = append(mock.calls.GetCloudProviders, callInfo)
-	mock.lockGetCloudProviders.Unlock()
+	lockClientMockGetCloudProviders.Unlock()
 	return mock.GetCloudProvidersFunc()
 }
 
@@ -430,9 +433,9 @@ func (mock *ClientMock) GetCloudProvidersCalls() []struct {
 } {
 	var calls []struct {
 	}
-	mock.lockGetCloudProviders.RLock()
+	lockClientMockGetCloudProviders.RLock()
 	calls = mock.calls.GetCloudProviders
-	mock.lockGetCloudProviders.RUnlock()
+	lockClientMockGetCloudProviders.RUnlock()
 	return calls
 }
 
@@ -446,9 +449,9 @@ func (mock *ClientMock) GetClusterDNS(clusterID string) (string, error) {
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockGetClusterDNS.Lock()
+	lockClientMockGetClusterDNS.Lock()
 	mock.calls.GetClusterDNS = append(mock.calls.GetClusterDNS, callInfo)
-	mock.lockGetClusterDNS.Unlock()
+	lockClientMockGetClusterDNS.Unlock()
 	return mock.GetClusterDNSFunc(clusterID)
 }
 
@@ -461,9 +464,9 @@ func (mock *ClientMock) GetClusterDNSCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockGetClusterDNS.RLock()
+	lockClientMockGetClusterDNS.RLock()
 	calls = mock.calls.GetClusterDNS
-	mock.lockGetClusterDNS.RUnlock()
+	lockClientMockGetClusterDNS.RUnlock()
 	return calls
 }
 
@@ -477,9 +480,9 @@ func (mock *ClientMock) GetClusterIngresses(clusterID string) (*v1.IngressesList
 	}{
 		ClusterID: clusterID,
 	}
-	mock.lockGetClusterIngresses.Lock()
+	lockClientMockGetClusterIngresses.Lock()
 	mock.calls.GetClusterIngresses = append(mock.calls.GetClusterIngresses, callInfo)
-	mock.lockGetClusterIngresses.Unlock()
+	lockClientMockGetClusterIngresses.Unlock()
 	return mock.GetClusterIngressesFunc(clusterID)
 }
 
@@ -492,9 +495,9 @@ func (mock *ClientMock) GetClusterIngressesCalls() []struct {
 	var calls []struct {
 		ClusterID string
 	}
-	mock.lockGetClusterIngresses.RLock()
+	lockClientMockGetClusterIngresses.RLock()
 	calls = mock.calls.GetClusterIngresses
-	mock.lockGetClusterIngresses.RUnlock()
+	lockClientMockGetClusterIngresses.RUnlock()
 	return calls
 }
 
@@ -508,9 +511,9 @@ func (mock *ClientMock) GetClusterStatus(id string) (*v1.ClusterStatus, error) {
 	}{
 		ID: id,
 	}
-	mock.lockGetClusterStatus.Lock()
+	lockClientMockGetClusterStatus.Lock()
 	mock.calls.GetClusterStatus = append(mock.calls.GetClusterStatus, callInfo)
-	mock.lockGetClusterStatus.Unlock()
+	lockClientMockGetClusterStatus.Unlock()
 	return mock.GetClusterStatusFunc(id)
 }
 
@@ -523,9 +526,9 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	var calls []struct {
 		ID string
 	}
-	mock.lockGetClusterStatus.RLock()
+	lockClientMockGetClusterStatus.RLock()
 	calls = mock.calls.GetClusterStatus
-	mock.lockGetClusterStatus.RUnlock()
+	lockClientMockGetClusterStatus.RUnlock()
 	return calls
 }
 
@@ -539,9 +542,9 @@ func (mock *ClientMock) GetRegions(provider *v1.CloudProvider) (*v1.CloudRegionL
 	}{
 		Provider: provider,
 	}
-	mock.lockGetRegions.Lock()
+	lockClientMockGetRegions.Lock()
 	mock.calls.GetRegions = append(mock.calls.GetRegions, callInfo)
-	mock.lockGetRegions.Unlock()
+	lockClientMockGetRegions.Unlock()
 	return mock.GetRegionsFunc(provider)
 }
 
@@ -554,9 +557,9 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 	var calls []struct {
 		Provider *v1.CloudProvider
 	}
-	mock.lockGetRegions.RLock()
+	lockClientMockGetRegions.RLock()
 	calls = mock.calls.GetRegions
-	mock.lockGetRegions.RUnlock()
+	lockClientMockGetRegions.RUnlock()
 	return calls
 }
 
@@ -572,9 +575,9 @@ func (mock *ClientMock) ScaleDownComputeNodes(clusterID string, decrement int) (
 		ClusterID: clusterID,
 		Decrement: decrement,
 	}
-	mock.lockScaleDownComputeNodes.Lock()
+	lockClientMockScaleDownComputeNodes.Lock()
 	mock.calls.ScaleDownComputeNodes = append(mock.calls.ScaleDownComputeNodes, callInfo)
-	mock.lockScaleDownComputeNodes.Unlock()
+	lockClientMockScaleDownComputeNodes.Unlock()
 	return mock.ScaleDownComputeNodesFunc(clusterID, decrement)
 }
 
@@ -589,9 +592,9 @@ func (mock *ClientMock) ScaleDownComputeNodesCalls() []struct {
 		ClusterID string
 		Decrement int
 	}
-	mock.lockScaleDownComputeNodes.RLock()
+	lockClientMockScaleDownComputeNodes.RLock()
 	calls = mock.calls.ScaleDownComputeNodes
-	mock.lockScaleDownComputeNodes.RUnlock()
+	lockClientMockScaleDownComputeNodes.RUnlock()
 	return calls
 }
 
@@ -607,9 +610,9 @@ func (mock *ClientMock) ScaleUpComputeNodes(clusterID string, increment int) (*v
 		ClusterID: clusterID,
 		Increment: increment,
 	}
-	mock.lockScaleUpComputeNodes.Lock()
+	lockClientMockScaleUpComputeNodes.Lock()
 	mock.calls.ScaleUpComputeNodes = append(mock.calls.ScaleUpComputeNodes, callInfo)
-	mock.lockScaleUpComputeNodes.Unlock()
+	lockClientMockScaleUpComputeNodes.Unlock()
 	return mock.ScaleUpComputeNodesFunc(clusterID, increment)
 }
 
@@ -624,8 +627,8 @@ func (mock *ClientMock) ScaleUpComputeNodesCalls() []struct {
 		ClusterID string
 		Increment int
 	}
-	mock.lockScaleUpComputeNodes.RLock()
+	lockClientMockScaleUpComputeNodes.RLock()
 	calls = mock.calls.ScaleUpComputeNodes
-	mock.lockScaleUpComputeNodes.RUnlock()
+	lockClientMockScaleUpComputeNodes.RUnlock()
 	return calls
 }

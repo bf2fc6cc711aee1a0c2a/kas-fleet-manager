@@ -42,6 +42,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**GetConnectorTypeByID**](docs/DefaultApi.md#getconnectortypebyid) | **Get** /api/managed-services-api/v1/connector-types/{id} | Get a connector type by name and version
 *DefaultApi* | [**GetKafkaById**](docs/DefaultApi.md#getkafkabyid) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
 *DefaultApi* | [**GetMetricsByKafkaId**](docs/DefaultApi.md#getmetricsbykafkaid) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics | Get metrics by kafka id.
+*DefaultApi* | [**GetServiceAccountById**](docs/DefaultApi.md#getserviceaccountbyid) | **Get** /api/managed-services-api/v1/serviceaccounts/{id} | get service account by id
 *DefaultApi* | [**ListCloudProviderRegions**](docs/DefaultApi.md#listcloudproviderregions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 *DefaultApi* | [**ListCloudProviders**](docs/DefaultApi.md#listcloudproviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
 *DefaultApi* | [**ListConnectorTypes**](docs/DefaultApi.md#listconnectortypes) | **Get** /api/managed-services-api/v1/connector-types | Returns a list of connector types
