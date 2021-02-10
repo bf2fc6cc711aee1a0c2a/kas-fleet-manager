@@ -25,6 +25,10 @@ const (
 	ClusterReady ClusterStatus = "ready"
 	// ClusterAddonInstalled addon is installed on the cluster
 	AddonInstalled ClusterStatus = "addon_installed"
+	// ClusterWaitingForKasFleetShardOperator the cluster is waiting for the KAS fleetshard operator to be ready
+	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
+	// ClusterFull the cluster is full and cannot accept more Kafka clusters
+	ClusterFull ClusterStatus = "full"
 	// KasFleetshardOperatorAddonId the ID of the kas-fleetshard-operator addon
 	KasFleetshardOperatorAddonId = "kas-fleetshard-operator"
 )
