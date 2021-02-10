@@ -683,51 +683,69 @@ components:
           properties:
             ingressEgressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
             connections:
               type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              nullable: true
             dataRetentionSize:
               type: string
+              nullable: true
             partitions:
               type: integer
+              nullable: true
         remaining:
           type: object
           properties:
             # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
             ingressEgressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
             connections:
               type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              nullable: true
             dataRetentionSize:
               type: string
+              nullable: true
             partitions:
               type: integer
+              nullable: true
         nodeInfo:
           type: object
           properties:
             ceiling:
               type: integer
+              nullable: true
             floor:
               type: integer
+              nullable: true
             current:
               type: integer
+              nullable: true
             currentWorkLoadMinimum:
               type: integer
+              nullable: true
         resizeInfo:
           type: object
           properties:
             nodeDelta:
               type: integer
+              nullable: true
             delta:
               type: object
+              nullable: true
               properties:
                 ingressEgressThroughputPerSec:
                   type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+                  nullable: true
                 connections:
                   type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+                  nullable: true
                 dataRetentionSize:
                   type: string
+                  nullable: true
                 maxPartitions:
                   type: integer
+                  nullable: true
       example:
         $ref: "#/components/examples/DataPlaneClusterUpdateStatusRequestExample"
 

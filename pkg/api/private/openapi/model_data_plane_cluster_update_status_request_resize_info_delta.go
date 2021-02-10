@@ -11,8 +11,8 @@ package openapi
 
 // DataPlaneClusterUpdateStatusRequestResizeInfoDelta struct for DataPlaneClusterUpdateStatusRequestResizeInfoDelta
 type DataPlaneClusterUpdateStatusRequestResizeInfoDelta struct {
-	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec,omitempty"`
-	Connections                   int32  `json:"connections,omitempty"`
-	DataRetentionSize             string `json:"dataRetentionSize,omitempty"`
-	MaxPartitions                 int32  `json:"maxPartitions,omitempty"`
+	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
+	Connections                   *int32  `json:"connections,omitempty"`
+	DataRetentionSize             *string `json:"dataRetentionSize,omitempty"`
+	MaxPartitions                 *int32  `json:"maxPartitions,omitempty"`
 }

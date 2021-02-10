@@ -11,8 +11,8 @@ package openapi
 
 // DataPlaneClusterUpdateStatusRequestNodeInfo struct for DataPlaneClusterUpdateStatusRequestNodeInfo
 type DataPlaneClusterUpdateStatusRequestNodeInfo struct {
-	Ceiling                int32 `json:"ceiling,omitempty"`
-	Floor                  int32 `json:"floor,omitempty"`
-	Current                int32 `json:"current,omitempty"`
-	CurrentWorkLoadMinimum int32 `json:"currentWorkLoadMinimum,omitempty"`
+	Ceiling                *int32 `json:"ceiling,omitempty"`
+	Floor                  *int32 `json:"floor,omitempty"`
+	Current                *int32 `json:"current,omitempty"`
+	CurrentWorkLoadMinimum *int32 `json:"currentWorkLoadMinimum,omitempty"`
 }
