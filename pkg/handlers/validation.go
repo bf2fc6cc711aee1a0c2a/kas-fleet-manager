@@ -157,24 +157,6 @@ func validateLength(value *string, field string, minVal *int, maxVal *int) valid
 	}
 }
 
-func validateConnectorSpec(connectorTypesService services.ConnectorTypesService, resource *openapi.Connector, tid string) validate {
-	return func() *errors.ServiceError {
-
-		// If a a tid was defined on the URL verify that it matches the posted resource connector type
-		if tid != "" && tid != resource.ConnectorTypeId {
-			return errors.BadRequest("resource type id should be: %s", tid)
-		}
-		ct, err := connectorTypesService.Get(resource.ConnectorTypeId)
-		if err != nil {
-			return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
-		}
-		schemaLoader := gojsonschema.NewGoLoader(ct.JsonSchema)
-		documentLoader := gojsonschema.NewGoLoader(resource.ConnectorSpec)
-
-		return validateJsonSchema("connector type schema", schemaLoader, "connector spec", documentLoader)
-	}
-}
-
 func validateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader, documentName string, documentLoader gojsonschema.JSONLoader) *errors.ServiceError {
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 	if err != nil {

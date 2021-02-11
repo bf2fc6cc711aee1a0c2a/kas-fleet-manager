@@ -21,12 +21,3 @@
 #docs/*.md
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
-
-pkg/api/openapi/docs/**AllOf.md
-pkg/api/openapi/**all_of.go
-pkg/api/openapi/go.mod
-pkg/api/openapi/go.sum
-pkg/api/private/openapi/docs/**AllOf.md
-pkg/api/private/openapi/**all_of.go
-pkg/api/private/openapi/go.mod
-pkg/api/private/openapi/go.sum
