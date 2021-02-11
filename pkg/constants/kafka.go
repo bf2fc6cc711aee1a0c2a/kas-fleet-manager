@@ -21,6 +21,8 @@ const (
 	KafkaRequestStatusFailed KafkaStatus = "failed"
 	// KafkaRequestStatusDeprovision - kafka request status when to be deleted by kafka
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
+	// KafkaRequestStatusDeleted - kafka request is deleted
+	KafkaRequestStatusDeleted KafkaStatus = "deleted"
 
 	// KafkaOperationCreate - Kafka cluster create operations
 	KafkaOperationCreate KafkaOperation = "create"
