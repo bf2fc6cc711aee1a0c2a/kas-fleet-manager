@@ -44,7 +44,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		Put(h.RestURL("/agent-clusters/" + clusterId + "/kafkas/status"))
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
 
 	clusterStatusUpdateRequest := openapi.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
@@ -54,7 +54,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		Put(h.RestURL("/agent-clusters/" + clusterId + "/status"))
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound)) //the clusterId doesn't exist
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
 }
 
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
