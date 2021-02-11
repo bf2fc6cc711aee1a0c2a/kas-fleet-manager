@@ -3,7 +3,7 @@ package integration
 import (
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/private/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/test"
 	"gitlab.cee.redhat.com/service/managed-services-api/test/mocks"
 	"gopkg.in/resty.v1"

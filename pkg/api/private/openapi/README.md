@@ -38,6 +38,8 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**GetConnectorTypeByID**](docs/DefaultApi.md#getconnectortypebyid) | **Get** /api/managed-services-api/v1/connector-types/{id} | Get a connector type by name and version
 *DefaultApi* | [**ListConnectorTypes**](docs/DefaultApi.md#listconnectortypes) | **Get** /api/managed-services-api/v1/connector-types | Returns a list of connector types
 *DefaultApi* | [**ListConnectors**](docs/DefaultApi.md#listconnectors) | **Get** /api/managed-services-api/v1/kafkas/{id}/connector-deployments | Returns a list of connector types
+*DefaultApi* | [**UpdateAgentClusterStatus**](docs/DefaultApi.md#updateagentclusterstatus) | **Put** /api/managed-services-api/v1/agent-clusters/{id}/status | Update the status of an agent cluster
+*DefaultApi* | [**UpdateKafkaClusterStatus**](docs/DefaultApi.md#updatekafkaclusterstatus) | **Put** /api/managed-services-api/v1/agent-clusters/{id}/kafkas/status | Update the status of Kafka clusters on an agent cluster
 
 
 ## Documentation For Models
@@ -58,6 +60,9 @@ Class | Method | HTTP request | Description
  - [DataPlaneClusterUpdateStatusRequestResizeInfo](docs/DataPlaneClusterUpdateStatusRequestResizeInfo.md)
  - [DataPlaneClusterUpdateStatusRequestResizeInfoDelta](docs/DataPlaneClusterUpdateStatusRequestResizeInfoDelta.md)
  - [DataPlaneClusterUpdateStatusRequestTotal](docs/DataPlaneClusterUpdateStatusRequestTotal.md)
+ - [DataPlaneKafkaStatus](docs/DataPlaneKafkaStatus.md)
+ - [DataPlaneKafkaStatusCapacity](docs/DataPlaneKafkaStatusCapacity.md)
+ - [DataPlaneKafkaStatusVersions](docs/DataPlaneKafkaStatusVersions.md)
  - [Error](docs/Error.md)
  - [ErrorAllOf](docs/ErrorAllOf.md)
  - [List](docs/List.md)
@@ -66,21 +71,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Authorization
 
-
-
-## Bearer
-
-- **Type**: HTTP basic authentication
-
-Example
-
-```golang
-auth := context.WithValue(context.Background(), sw.ContextBasicAuth, sw.BasicAuth{
-    UserName: "username",
-    Password: "password",
-})
-r, err := client.Service.Operation(auth, args)
-```
+ Endpoints do not require authorization.
 
 
 
