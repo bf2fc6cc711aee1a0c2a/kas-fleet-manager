@@ -288,6 +288,8 @@ openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
 	$(OPENAPI_GENERATOR) generate -i openapi/managed-services-api.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/managed-services-api-private.yaml -g go -o pkg/api/private/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api-private.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ ./openapi
 	$(GOFMT) -w pkg/api/openapi
 .PHONY: openapi/generate
