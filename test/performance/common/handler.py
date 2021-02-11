@@ -1,0 +1,50 @@
+from common.auth import *
+from common.tools import *
+import logging
+
+# handle post requests for specified 'url'. 
+# 'name' parameter denotes the display name in the statistics printed by locust
+# 
+# return either empty string if not successful or resource 'id'
+def handle_post(self, url, payload, name):
+  with self.client.post(url, json=payload, verify=False, catch_response=True, name=name) as response:
+    if response.status_code == 409:
+      response.success() # ignore unlike 409 errors when generated resource id is duplicated
+    if response.status_code == 401:
+      response.success()
+      get_token(self)
+    if response.status_code == 202:
+      return response.json()['id']
+    return ""
+
+# handle delete requests for specified 'url'. 
+# 'name' parameter denotes the display name in the statistics printed by locust
+#
+# return either 0 (meaning no success in deletion) or 204 if the deletion was successful
+def handle_delete_by_id(self, url, name):
+  with self.client.delete(url, verify=False, catch_response=True, name=name) as response:
+    if response.status_code == 401:
+      response.success()
+      get_token(self)
+    if response.status_code == 500 or response.status_code == 404:
+      response_output = response.json()
+      if 'reason' in response_output:
+        reason = response_output['reason']
+        # due to concurrency sometimes resources have already been deleted
+        if '404' in reason or 'failed to delete service account' in reason or 'Unable to find KafkaResource' in reason:
+          response.success()
+          return 204
+    if response.status_code == 204:
+      return response.status_code
+    return 0
+
+# handle get requests for specified 'url'. 
+# 'name' parameter denotes the display name in the statistics printed by locust. 
+def handle_get(self, url, name):
+  with self.client.get(url, verify=False, catch_response=True, name=name) as response:
+    if response.status_code == 401:
+      response.success()
+      get_token(self)
+    if response.status_code == 404: # 404 isn't a failing request
+      response.success()
+      

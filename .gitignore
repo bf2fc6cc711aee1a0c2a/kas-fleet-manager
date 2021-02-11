@@ -60,7 +60,7 @@ cmd/managed-services-api/managed-services-api
 Dockerfile_integration_tests
 
 # performance tests leftovers
-test/performance/__pycache__
+**/__pycache__
 
 # local bin directory
 bin
