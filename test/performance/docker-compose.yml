@@ -1,13 +1,23 @@
 version: '3'
 
 services:
+  api:
+    image: "quay.io/ppaszki/token_refresh:latest"
+    environment:
+      - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./token_api/:/mnt/api
+    command: go run /mnt/api/main.go
 
   primary:
     image: "quay.io/ppaszki/locust:latest"
     environment:
-      - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
-      - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER}
+      - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER}
+      - PERF_TEST_KAFKAS_PER_WORKER=${PERF_TEST_KAFKAS_PER_WORKER}
+      - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
       - ATTACKED_HOST=${PERF_TEST_ROUTE_HOST}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=master
@@ -22,9 +32,10 @@ services:
   secondary:
     image: "quay.io/ppaszki/locust:latest"
     environment:
-      - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
-      - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_USER}
+      - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER}
+      - PERF_TEST_KAFKAS_PER_WORKER=${PERF_TEST_KAFKAS_PER_WORKER}
+      - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
       - ATTACKED_HOST=${PERF_TEST_ROUTE_HOST}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=worker
@@ -32,3 +43,5 @@ services:
     volumes:
       - ./:/mnt/locust
     command: -f /mnt/locust/locustfile.py --worker --master-host primary
+    depends_on:
+      - api

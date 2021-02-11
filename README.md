@@ -364,12 +364,12 @@ To use these commands, run `make binary` to create the `./managed-services-api` 
 
 Run `./managed-services-api -h` for information on the additional commands.
 
-### Run the tests
+### Running unit tests
 ```
 make test
 ```
 
-### Run the integration tests
+### Running integration tests
 
 Integration tests can be executed against a real or "emulated" OCM environment. Executing against
 an emulated environment can be useful to get fast feedback as OpenShift clusters will not actually
@@ -413,3 +413,6 @@ To verify that the code passes lint checks, run:
 make lint
 ```
 >**NOTE**: This uses golangci-lint which needs to be installed in your `GOPATH/bin`
+
+### Running performaance tests
+See this [README](./test/performance/README.md) for more info about performance tests
