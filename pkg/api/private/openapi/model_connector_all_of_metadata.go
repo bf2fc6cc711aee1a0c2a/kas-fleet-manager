@@ -8,16 +8,14 @@
  */
 
 package openapi
-
 import (
 	"time"
 )
-
 // ConnectorAllOfMetadata struct for ConnectorAllOfMetadata
 type ConnectorAllOfMetadata struct {
-	KafkaId   string    `json:"kafka_id,omitempty"`
-	Owner     string    `json:"owner,omitempty"`
-	Name      string    `json:"name,omitempty"`
+	KafkaId string `json:"kafka_id,omitempty"`
+	Owner string `json:"owner,omitempty"`
+	Name string `json:"name,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }

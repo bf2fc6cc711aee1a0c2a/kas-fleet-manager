@@ -43,7 +43,8 @@ func (d *dataPlaneClusterService) setClusterStatus(agentClusterID string, status
 		return svcErr
 	}
 	if cluster == nil {
-		return errors.NotFound("Cluster agent with ID '%s' not found", agentClusterID)
+		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
+		return errors.BadRequest("Cluster agent with ID '%s' not found", agentClusterID)
 	}
 
 	isReady, err := d.isClusterReady(status)

@@ -933,6 +933,60 @@ components:
                   type: integer
       example:
         $ref: "#/components/examples/DataPlaneClusterUpdateStatusRequestExample"
+
+    DataPlaneKafkaStatus:
+      description: "Schema of the status object for a Kafka cluster"
+      type: object
+      properties:
+        conditions:
+          description: "The status conditions of a Kafka cluster"
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+              lastTransitionTime:
+                type: string
+        # do we need this for now?
+        capacity:
+          description: "Capacity information of the data plane cluster"
+          type: object
+          properties:
+            ingressEgressThroughputPerSec:
+              type: string #example: 4Mi
+            totalMaxConnections:
+              type: integer #example: 500
+            maxDataRetentionSize:
+              type: string #example: 100Gi
+            maxPartitions:
+              type: integer #example: 100
+            maxDataRetentionPeriod:
+              type: string #example: P14D
+        versions:
+          description: "Version information related to a Kafka cluster"
+          type: object
+          properties:
+            kafka:
+              type: string
+            strimzi:
+              type: string
+
+    DataPlaneKafkaStatusUpdateRequest:
+      description: "Schema for the request to update the statuses of Kafka clusters from data plane"
+      type: object
+      additionalProperties:
+        type: object
+        $ref: '#/components/schemas/DataPlaneKafkaStatus'
+      example:
+        $ref: '#/components/examples/DataPlaneKafkaUpdateStatusRequestExample'
+
   parameters:
     id:
       name: id
@@ -1152,6 +1206,24 @@ components:
         clientID: "SA-121212"
     DataPlaneClusterUpdateStatusRequestExample:
       value: {} # TODO fill this
+    DataPlaneKafkaUpdateStatusRequestExample:
+      value:
+        1iSY6RQ3JKI8Q0OTmjQFd3ocFRg:
+          conditions:
+            - type: Ready
+              reason: KafkaInstanceReady
+              message: installing
+              status: "False"
+              lastTransitionTime: "2018-01-01T00:00:00Z"
+          capacity:
+            ingressEgressThroughputPerSec: 4Mi
+            totalMaxConnections: 500
+            maxDataRetentionSize: 100Gi
+            maxPartitions: 100
+            maxDataRetentionPeriod: P14D
+          versions:
+            kafka: 2.4.1
+            strimzi: 0.21.2
     400DeletionExample:
       value:
         id: "103"

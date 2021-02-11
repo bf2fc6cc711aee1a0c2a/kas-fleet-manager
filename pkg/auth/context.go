@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 	"net/http"
 	"strings"
 
@@ -146,4 +147,12 @@ func GetAuthPayloadFromContext(ctx context.Context) (*AuthPayload, error) {
 
 func GetAuthPayload(r *http.Request) (*AuthPayload, error) {
 	return GetAuthPayloadFromContext(r.Context())
+}
+
+func GetClaimsFromContext(ctx context.Context) (jwt.MapClaims, error) {
+	token, err := authentication.TokenFromContext(ctx)
+	if err != nil {
+		return jwt.MapClaims{}, fmt.Errorf("failed to get jwt token from context: %s", err.Error())
+	}
+	return token.Claims.(jwt.MapClaims), nil
 }
