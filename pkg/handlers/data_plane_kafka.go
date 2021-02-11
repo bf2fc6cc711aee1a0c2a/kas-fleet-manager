@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gorilla/mux"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/presenters"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/private/openapi"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"net/http"

@@ -2,7 +2,7 @@ package presenters
 
 import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/openapi"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api/private/openapi"
 )
 
 func ConvertDataPlaneKafkaStatus(status map[string]openapi.DataPlaneKafkaStatus) []*api.DataPlaneKafkaStatus {
