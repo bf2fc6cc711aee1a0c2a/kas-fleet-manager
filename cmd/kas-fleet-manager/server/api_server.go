@@ -185,16 +185,18 @@ func NewAPIServer() Server {
 	var mainHandler http.Handler = mainRouter
 
 	if env().Config.Server.EnableJWT {
-		mainHandler = auth.SetClaimsInContextHandler(mainHandler)
 		authnLogger, err := sdk.NewGlogLoggerBuilder().
 			InfoV(glog.Level(1)).
 			DebugV(glog.Level(5)).
 			Build()
 		check(err, "Unable to create authentication logger")
 
+		masSSOJwkCertURL := fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs", env().Config.Keycloak.BaseURL, env().Config.Keycloak.Realm)
+		ocmJwkCertURL := env().Config.Server.JwkCertURL
 		mainHandler, err = authentication.NewHandler().
 			Logger(authnLogger).
-			KeysURL(env().Config.Server.JwkCertURL).
+			KeysURL(ocmJwkCertURL).
+			KeysURL(masSSOJwkCertURL).
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
 			Public(fmt.Sprintf("^%s/%s/?$", apiEndpoint, managedServicesApi)).
