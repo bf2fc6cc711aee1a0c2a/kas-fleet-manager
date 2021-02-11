@@ -34,6 +34,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addLeaderLease(),
 	addFailedReason(),
 	addConnectors(),
+	addKafkaPlacementId(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

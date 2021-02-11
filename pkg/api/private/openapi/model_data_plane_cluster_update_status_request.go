@@ -8,13 +8,12 @@
  */
 
 package openapi
-
 // DataPlaneClusterUpdateStatusRequest Schema for the request to update a data plane cluster's status
 type DataPlaneClusterUpdateStatusRequest struct {
 	// The cluster data plane conditions
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
-	Total      DataPlaneClusterUpdateStatusRequestTotal        `json:"total,omitempty"`
-	Remaining  DataPlaneClusterUpdateStatusRequestTotal        `json:"remaining,omitempty"`
-	NodeInfo   DataPlaneClusterUpdateStatusRequestNodeInfo     `json:"nodeInfo,omitempty"`
-	ResizeInfo DataPlaneClusterUpdateStatusRequestResizeInfo   `json:"resizeInfo,omitempty"`
+	Total DataPlaneClusterUpdateStatusRequestTotal `json:"total,omitempty"`
+	Remaining DataPlaneClusterUpdateStatusRequestTotal `json:"remaining,omitempty"`
+	NodeInfo DataPlaneClusterUpdateStatusRequestNodeInfo `json:"nodeInfo,omitempty"`
+	ResizeInfo DataPlaneClusterUpdateStatusRequestResizeInfo `json:"resizeInfo,omitempty"`
 }

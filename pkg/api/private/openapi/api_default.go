@@ -11,11 +11,11 @@ package openapi
 
 import (
 	_context "context"
-	"github.com/antihax/optional"
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
 	"strings"
+	"github.com/antihax/optional"
 )
 
 // Linger please
@@ -46,7 +46,7 @@ func (a *DefaultApiService) CreateConnector(ctx _context.Context, id string, asy
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -165,7 +165,7 @@ func (a *DefaultApiService) DeleteConnector(ctx _context.Context, id string) (Er
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -272,9 +272,9 @@ func (a *DefaultApiService) GetConnector(ctx _context.Context, id string, cid st
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
 
-	localVarPath = strings.Replace(localVarPath, "{"+"cid"+"}", _neturl.QueryEscape(parameterToString(cid, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cid"+"}", _neturl.QueryEscape(parameterToString(cid, "")) , -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -380,7 +380,7 @@ func (a *DefaultApiService) GetConnectorTypeByID(ctx _context.Context, id string
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/connector-types/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -470,8 +470,8 @@ func (a *DefaultApiService) GetConnectorTypeByID(ctx _context.Context, id string
 
 // ListConnectorTypesOpts Optional parameters for the method 'ListConnectorTypes'
 type ListConnectorTypesOpts struct {
-	Page optional.String
-	Size optional.String
+    Page optional.String
+    Size optional.String
 }
 
 /*
@@ -578,8 +578,8 @@ func (a *DefaultApiService) ListConnectorTypes(ctx _context.Context, localVarOpt
 
 // ListConnectorsOpts Optional parameters for the method 'ListConnectors'
 type ListConnectorsOpts struct {
-	Page optional.String
-	Size optional.String
+    Page optional.String
+    Size optional.String
 }
 
 /*
@@ -603,7 +603,7 @@ func (a *DefaultApiService) ListConnectors(ctx _context.Context, id string, loca
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")) , -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}

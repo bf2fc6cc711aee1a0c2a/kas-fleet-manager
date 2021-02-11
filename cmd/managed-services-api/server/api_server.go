@@ -60,7 +60,6 @@ func NewAPIServer() Server {
 
 	kafkaHandler := handlers.NewKafkaHandler(services.Kafka, services.Config)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(services.CloudProviders, services.Config)
-	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(services.DataPlaneCluster, services.Config)
 	errorsHandler := handlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(services.Observatorium)
@@ -135,13 +134,6 @@ func NewAPIServer() Server {
 		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
 	}
 
-	///api/managed-services-api/v1/agent-clusters/{id}/status
-	if env().Services.Config.IsKasFleetshardOperatorEnabled() {
-		apiV1AgentClustersRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
-		apiV1AgentClustersRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
-		apiV1AgentClustersRouter.Use(authMiddleware.AuthenticateAccountJWT) // TODO what kind of auth middleware should we use?
-	}
-
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
 	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
@@ -188,6 +180,20 @@ func NewAPIServer() Server {
 		apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	}
+
+	///api/managed-services-api/v1/agent-clusters/{id}
+	if env().Config.ClusterCreationConfig.EnableKasFleetshardOperator {
+		dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(services.DataPlaneCluster, services.Config)
+		dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(services.DataPlaneKafkaService, services.Config)
+		apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
+		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
+		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).Methods(http.MethodPut)
+		rolesAuthzMiddleware := auth.NewRolesAuhzMiddleware()
+		dataPlaneAuthzMiddleware := auth.NewDataPlaneAuthzMiddleware()
+		// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
+		apiV1DataPlaneRequestsRouter.Use(rolesAuthzMiddleware.RequireRealmRole("kas_fleetshard_operator", errors.ErrorNotFound), dataPlaneAuthzMiddleware.CheckClusterId)
+	}
+
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
 
