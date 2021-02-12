@@ -16,7 +16,6 @@ import (
 )
 
 //nolint
-//go:generate go-bindata -o ../../data/generated/openapi/openapi.go -pkg openapi -prefix ../../openapi/ ../../openapi
 func init() {
 }
 
