@@ -29,6 +29,7 @@ type Client interface {
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
 	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
+	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 }
 
 var _ Client = &client{}
@@ -222,6 +223,24 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 	// create a cluster object with updated number of compute nodes
 	// NOTE - there is no need to handle whether the number of nodes is valid, as this is handled by OCM
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
+		Build()
+	if err != nil {
+		return nil, err
+	}
+
+	// patch cluster with updated number of compute nodes
+	resp, err := clusterClient.Update().Body(patch).Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body(), nil
+}
+
+func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
+	clusterClient := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+
+	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
 		Build()
 	if err != nil {
 		return nil, err
