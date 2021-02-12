@@ -1,4 +1,6 @@
-include ./test/performance/Makefile.mk
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+include $(PROJECT_PATH)/test/performance/Makefile.mk
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -53,8 +55,6 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
-MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # Add the project-level bin directory into PATH. Needed in order
 # for `go generate` to use project-level bin directory binaries first
