@@ -34,6 +34,7 @@ type ClusterService interface {
 	FindClusterByID(clusterID string) (*api.Cluster, *ocmErrors.ServiceError)
 	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
+	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 }
@@ -258,6 +259,19 @@ func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (
 
 	// scale up compute nodes
 	cluster, err := c.ocmClient.ScaleDownComputeNodes(clusterID, decrement)
+	if err != nil {
+		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
+	}
+	return cluster, nil
+}
+
+func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError) {
+	if clusterID == "" {
+		return nil, ocmErrors.Validation("clusterID is undefined")
+	}
+
+	// set number of compute nodes
+	cluster, err := c.ocmClient.SetComputeNodes(clusterID, numNodes)
 	if err != nil {
 		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
