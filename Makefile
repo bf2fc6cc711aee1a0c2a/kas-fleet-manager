@@ -276,11 +276,13 @@ test/cluster/cleanup:
 generate: moq openapi/generate
 	$(GO) generate ./...
 	$(GOFMT) -w pkg/api/openapi
+	$(GOFMT) -w pkg/api/private/openapi
 .PHONY: generate
 
 # validate the openapi schema
 openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api-private.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and data/generated/openapi/openapi.go
@@ -292,6 +294,7 @@ openapi/generate: go-bindata openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/managed-services-api-private.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ ./openapi
 	$(GOFMT) -w pkg/api/openapi
+	$(GOFMT) -w pkg/api/private/openapi
 .PHONY: openapi/generate
 
 # clean up code and dependencies
