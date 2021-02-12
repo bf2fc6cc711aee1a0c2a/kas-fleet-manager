@@ -1,4 +1,6 @@
-include ./test/performance/Makefile.mk
+MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+include $(PROJECT_PATH)/test/performance/Makefile.mk
 
 .DEFAULT_GOAL := help
 SHELL = bash
@@ -53,8 +55,6 @@ else
 GOBIN=$(shell $(GO) env GOBIN)
 endif
 
-MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
 LOCAL_BIN_PATH := ${PROJECT_PATH}/bin
 # Add the project-level bin directory into PATH. Needed in order
 # for `go generate` to use project-level bin directory binaries first
@@ -126,6 +126,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p ${LOCAL_BIN_PATH} ;\
+	mkdir -p ${LOCAL_BIN_PATH}/openapi-generator-installation ;\
 	cd ${LOCAL_BIN_PATH} ;\
 	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
 	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
