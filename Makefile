@@ -126,6 +126,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
 	@{ \
 	set -e ;\
 	mkdir -p ${LOCAL_BIN_PATH} ;\
+	mkdir -p ${LOCAL_BIN_PATH}/openapi-generator-installation ;\
 	cd ${LOCAL_BIN_PATH} ;\
 	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
 	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
