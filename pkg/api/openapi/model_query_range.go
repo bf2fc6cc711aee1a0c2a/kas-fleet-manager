@@ -9,8 +9,8 @@
 
 package openapi
 
-// Metric struct for Metric
-type Metric struct {
+// QueryRange struct for QueryRange
+type QueryRange struct {
 	Metric map[string]string `json:"metric,omitempty"`
 	Values []Values          `json:"values,omitempty"`
 }

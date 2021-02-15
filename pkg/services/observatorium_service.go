@@ -22,14 +22,14 @@ func NewObservatoriumService(observatorium *observatorium.Client, kafkaService K
 
 type ObservatoriumService interface {
 	GetKafkaState(name string, namespaceName string) (observatorium.KafkaState, error)
-	GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.RangeQuery) (string, *errors.ServiceError)
+	GetMetricsByKafkaId(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError)
 }
 
 func (obs observatoriumService) GetKafkaState(name string, namespaceName string) (observatorium.KafkaState, error) {
 	return obs.observatorium.Service.GetKafkaState(name, namespaceName)
 }
 
-func (obs observatoriumService) GetMetricsByKafkaId(ctx context.Context, kafkasMetrics *observatorium.KafkaMetrics, id string, query observatorium.RangeQuery) (string, *errors.ServiceError) {
+func (obs observatoriumService) GetMetricsByKafkaId(ctx context.Context, kafkasMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
 	kafkaRequest, err := obs.kafkaService.Get(ctx, id)
 	if err != nil {
 		return "", err

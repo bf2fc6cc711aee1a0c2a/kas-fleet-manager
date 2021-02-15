@@ -8,7 +8,7 @@ import (
 
 type APIObservatoriumService interface {
 	GetKafkaState(name string, namespaceName string) (KafkaState, error)
-	GetMetrics(csMetrics *KafkaMetrics, resourceNamespace string, rq *RangeQuery) error
+	GetMetrics(csMetrics *KafkaMetrics, resourceNamespace string, rq *MetricsReqParams) error
 }
 type fetcher struct {
 	metric   string
@@ -26,12 +26,12 @@ func (obs *ServiceObservatorium) GetKafkaState(name string, resourceNamespace st
 	c := obs.client
 	metric := `strimzi_resource_state{%s}`
 	labels := fmt.Sprintf(`kind=~'Kafka', name=~'%s',resource_namespace=~'%s'`, name, resourceNamespace)
-	vec, err := c.Query(metric, labels)
-	if err != nil {
-		return KafkaState, err
+	result := c.Query(metric, labels)
+	if result.Err != nil {
+		return KafkaState, result.Err
 	}
 
-	for _, s := range *vec {
+	for _, s := range result.Vector {
 
 		if s.Value == 1 {
 			KafkaState.State = ClusterStateReady
@@ -42,8 +42,7 @@ func (obs *ServiceObservatorium) GetKafkaState(name string, resourceNamespace st
 	return KafkaState, nil
 }
 
-func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace string, rq *RangeQuery) error {
-	c := obs.client
+func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace string, rq *MetricsReqParams) error {
 	failedMetrics := []string{}
 	fetchers := map[string]fetcher{
 		//Check metrics for available disk space per broker
@@ -106,23 +105,22 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 	for msg, f := range fetchers {
 		fetchAll := len(rq.Filters) == 0
 		if fetchAll {
-			metric := c.QueryRange(f.metric, f.labels, rq.Range)
-			if metric.Err != nil {
-				glog.Error("error from metric ", metric.Err)
+			result := obs.fetchMetricsResult(rq, &f)
+			if result.Err != nil {
+				glog.Error("error from metric ", result.Err)
 				failedMetrics = append(failedMetrics, msg)
 			}
-			f.callback(metric)
+			f.callback(result)
 		}
 		if !fetchAll {
 			for _, filter := range rq.Filters {
 				if filter == msg {
-					metric := c.QueryRange(f.metric, f.labels, rq.Range)
-					if metric.Err != nil {
-						glog.Error("error from metric ", metric.Err)
+					result := obs.fetchMetricsResult(rq, &f)
+					if result.Err != nil {
+						glog.Error("error from metric ", result.Err)
 						failedMetrics = append(failedMetrics, msg)
 					}
-					f.callback(metric)
-
+					f.callback(result)
 				}
 			}
 
@@ -133,4 +131,18 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 		glog.Infof("Failed to fetch metrics data [%s]", strings.Join(failedMetrics, ","))
 	}
 	return nil
+}
+
+func (obs *ServiceObservatorium) fetchMetricsResult(rq *MetricsReqParams, f *fetcher) Metric {
+	c := obs.client
+	var result  Metric
+	switch rq.ResultType {
+	case RangeQuery:
+		result = c.QueryRange(f.metric, f.labels, rq.Range)
+	case Query:
+		result = c.Query(f.metric, f.labels)
+	default:
+		result = Metric{Err: fmt.Errorf("Unsupported Result Type %q", rq.ResultType)}
+	}
+	return result
 }

@@ -37,7 +37,8 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**DeleteKafkaById**](docs/DefaultApi.md#deletekafkabyid) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
 *DefaultApi* | [**DeleteServiceAccount**](docs/DefaultApi.md#deleteserviceaccount) | **Delete** /api/managed-services-api/v1/serviceaccounts/{id} | Delete service account
 *DefaultApi* | [**GetKafkaById**](docs/DefaultApi.md#getkafkabyid) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
-*DefaultApi* | [**GetMetricsByKafkaId**](docs/DefaultApi.md#getmetricsbykafkaid) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics | Get metrics by kafka id.
+*DefaultApi* | [**GetMetricsByQueryInstant**](docs/DefaultApi.md#getmetricsbyqueryinstant) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query | Get metrics with query instant by kafka id.
+*DefaultApi* | [**GetMetricsByQueryRange**](docs/DefaultApi.md#getmetricsbyqueryrange) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query_range | Get metrics with timeseries query range by kafka id.
 *DefaultApi* | [**GetServiceAccountById**](docs/DefaultApi.md#getserviceaccountbyid) | **Get** /api/managed-services-api/v1/serviceaccounts/{id} | get service account by id
 *DefaultApi* | [**ListCloudProviderRegions**](docs/DefaultApi.md#listcloudproviderregions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 *DefaultApi* | [**ListCloudProviders**](docs/DefaultApi.md#listcloudproviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
@@ -64,10 +65,13 @@ Class | Method | HTTP request | Description
  - [KafkaRequestListAllOf](docs/KafkaRequestListAllOf.md)
  - [KafkaRequestPayload](docs/KafkaRequestPayload.md)
  - [List](docs/List.md)
- - [Metric](docs/Metric.md)
- - [MetricsList](docs/MetricsList.md)
- - [MetricsListAllOf](docs/MetricsListAllOf.md)
+ - [MetricsQueryInstantList](docs/MetricsQueryInstantList.md)
+ - [MetricsQueryInstantListAllOf](docs/MetricsQueryInstantListAllOf.md)
+ - [MetricsQueryRangeList](docs/MetricsQueryRangeList.md)
+ - [MetricsQueryRangeListAllOf](docs/MetricsQueryRangeListAllOf.md)
  - [ObjectReference](docs/ObjectReference.md)
+ - [QueryInstant](docs/QueryInstant.md)
+ - [QueryRange](docs/QueryRange.md)
  - [ServiceAccount](docs/ServiceAccount.md)
  - [ServiceAccountAllOf](docs/ServiceAccountAllOf.md)
  - [ServiceAccountList](docs/ServiceAccountList.md)
