@@ -191,8 +191,6 @@ func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
 		}
 	}
 
-	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-
 	if err := k.kafkaService.Create(kafka); err != nil {
 		return k.handleKafkaRequestCreationError(kafka, err)
 	}
@@ -232,6 +230,8 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 		}
 
 		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
+		/**TODO if there is a creation failure, total operations needs to be incremented: this info. is not available at this time.*/
+		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
 		return nil
 	}
