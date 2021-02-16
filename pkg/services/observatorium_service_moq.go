@@ -23,7 +23,7 @@ var _ ObservatoriumService = &ObservatoriumServiceMock{}
 //             GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
 // 	               panic("mock out the GetKafkaState method")
 //             },
-//             GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.RangeQuery) (string, *errors.ServiceError) {
+//             GetMetricsByKafkaIdFunc: func(ctx context.Context, csMetrics *observatorium.KafkaMetrics, id string, query observatorium.MetricsReqParams) (string, *errors.ServiceError) {
 // 	               panic("mock out the GetMetricsByKafkaId method")
 //             },
 //         }

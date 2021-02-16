@@ -72,6 +72,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
 	metricsList := &observatorium.KafkaMetrics{}
 	q := observatorium.MetricsReqParams{}
+	q.ResultType = observatorium.RangeQuery
 	q.FillDefaults()
 	_, err = service.GetMetricsByKafkaId(ctx, metricsList, seedKafka.Id, q)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka metrics:  %v", err)
