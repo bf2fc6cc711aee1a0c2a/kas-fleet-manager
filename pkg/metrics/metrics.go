@@ -1,15 +1,16 @@
 package metrics
 
 import (
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
-	// ManagedServicesSystem - metrics prefix
-	ManagedServicesSystem = "managed_services_api"
+	// KasFleetManager - metrics prefix
+	KasFleetManager = "kas_fleet_manager"
 
 	// ClusterCreateRequestDuration - name of cluster creation duration metric
 	ClusterCreateRequestDuration = "worker_cluster_duration"
@@ -58,7 +59,7 @@ var ClusterOperationsCountMetricsLabels = []string{
 // create a new histogramVec for cluster creation duration
 var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Subsystem: ManagedServicesSystem,
+		Subsystem: KasFleetManager,
 		Name:      ClusterCreateRequestDuration,
 		Help:      "Cluster creation duration in seconds.",
 		Buckets: []float64{
@@ -84,7 +85,7 @@ func UpdateClusterCreationDurationMetric(jobType JobType, elapsed time.Duration)
 // create a new histogramVec for kafka creation duration
 var requestKafkaCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Subsystem: ManagedServicesSystem,
+		Subsystem: KasFleetManager,
 		Name:      KafkaCreateRequestDuration,
 		Help:      "Kafka creation duration in seconds.",
 		Buckets: []float64{
@@ -130,7 +131,7 @@ func UpdateKafkaCreationDurationMetric(jobType JobType, elapsed time.Duration) {
 // create a new counterVec for Kafka operations counts
 var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: ManagedServicesSystem,
+		Subsystem: KasFleetManager,
 		Name:      KafkaOperationsSuccessCount,
 		Help:      "number of successful kafka operations",
 	},
@@ -148,7 +149,7 @@ func IncreaseKafkaSuccessOperationsCountMetric(operation constants.KafkaOperatio
 // create a new counterVec for total Kafka operations counts
 var kafkaOperationsTotalCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: ManagedServicesSystem,
+		Subsystem: KasFleetManager,
 		Name:      KafkaOperationsTotalCount,
 		Help:      "number of total kafka operations",
 	},
@@ -166,7 +167,7 @@ func IncreaseKafkaTotalOperationsCountMetric(operation constants.KafkaOperation)
 // create a new counterVec for successful cluster operation counts
 var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: ManagedServicesSystem,
+		Subsystem: KasFleetManager,
 		Name:      ClusterOperationsSuccessCount,
 		Help:      "number of successful cluster operations",
 	},
@@ -184,7 +185,7 @@ func IncreaseClusterSuccessOperationsCountMetric(operation constants.ClusterOper
 // reate a new counterVec for total cluster operation counts
 var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Subsystem: ManagedServicesSystem,
+		Subsystem: KasFleetManager,
 		Name:      ClusterOperationsTotalCount,
 		Help:      "number of total cluster operations",
 	},

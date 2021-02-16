@@ -21,7 +21,7 @@
 
 apiVersion: v1
 kind: Template
-name: managed-service-api-routes
+name: name: kas-fleet-manager-routes
 metadata:
   name: route
 
@@ -30,13 +30,13 @@ objects:
 - apiVersion: route.openshift.io/v1
   kind: Route
   metadata:
-    name: managed-services-api
+    name: kas-fleet-manager
     labels:
-      app: managed-services-api
+      app: kas-fleet-manager
   spec:
     to:
       kind: Service
-      name: managed-services-api
+      name: kas-fleet-manager
     tls:
       termination: reencrypt
       insecureEdgeTerminationPolicy: Redirect
