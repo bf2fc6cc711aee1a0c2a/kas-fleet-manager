@@ -3,13 +3,14 @@ package workers
 import (
 	"bytes"
 	"fmt"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/pkg/errors"
 	ingressoperatorv1 "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/ingressoperator/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	storagev1 "k8s.io/api/storage/v1"
-	"strings"
-	"sync"
-	"time"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
@@ -23,6 +24,8 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
+
+	svcErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 
 	projectv1 "github.com/openshift/api/project/v1"
 	k8sCoreV1 "k8s.io/api/core/v1"
@@ -164,7 +167,7 @@ func (c *ClusterManager) reconcile() {
 			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ClusterID, err.Error())
 			continue
 		}
-		glog.V(5).Infof("reconciled cluster %s state", reconciledCluster.ClusterID)
+		glog.V(5).Infof("reconciled provisioning cluster %s state", reconciledCluster.ClusterID)
 	}
 
 	/*
@@ -178,15 +181,71 @@ func (c *ClusterManager) reconcile() {
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
-		addOnErr := c.reconcileAddonOperator(provisionedCluster)
-		if addOnErr != nil {
-			sentry.CaptureException(addOnErr)
-			glog.Errorf("failed to reconcile cluster %s addon operator: %s", provisionedCluster.ID, addOnErr.Error())
+		err := c.reconcileProvisionedCluster(provisionedCluster)
+		if err != nil {
+			sentry.CaptureException(err)
+			glog.Errorf("failed to reconcile provisioned cluster %s: %s", provisionedCluster.ClusterID, err.Error())
 			continue
 		}
-
-		glog.V(5).Infof("reconciled cluster %s terraforming", provisionedCluster.ClusterID)
+		glog.V(5).Infof("reconciled provisioned cluster %s terraforming", provisionedCluster.ClusterID)
 	}
+}
+
+func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
+	// TODO make syncSet and addon installation in parallel?
+
+	// SyncSet creation step
+	syncSetErr := c.reconcileClusterSyncSet(cluster)
+	if syncSetErr != nil {
+		sentry.CaptureException(syncSetErr)
+		glog.Errorf("failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
+		return syncSetErr
+	}
+
+	// Addon installation step
+	// TODO this is currently the responsible of setting the status of the cluster
+	// and it is setting it to a different value depending on the addon being
+	// installed. The logic to set the status of the cluster should probably done
+	// independently of the installation of the addon, and it should use the
+	// result of the addon/s reconciliation to set the status of the cluster
+	addOnErr := c.reconcileAddonOperator(cluster)
+	if addOnErr != nil {
+		sentry.CaptureException(addOnErr)
+		glog.Errorf("failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+		return addOnErr // TODO should this be nil? it originally was but in an outer level
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
+	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
+	if dnsErr != nil || clusterDNS == "" {
+		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
+	}
+
+	_, err := c.ocmClient.GetSyncSet(cluster.ClusterID, syncsetName)
+	syncSetFound := true
+	if err != nil {
+		svcErr := svcErrors.ToServiceError(err)
+		if !svcErr.Is404() {
+			return err
+		}
+		syncSetFound = false
+	}
+
+	if !syncSetFound {
+		glog.V(10).Infof("SyncSet for cluster %s not found. Creating it...", cluster.ClusterID)
+		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+		_, syncsetErr := c.createSyncSet(cluster.ClusterID, clusterDNS)
+		if syncsetErr != nil {
+			return errors.WithMessagef(syncsetErr, "failed to create syncset on cluster %s: %s", cluster.ClusterID, syncsetErr.Error())
+		}
+	} else {
+		glog.V(10).Infof("SyncSet for cluster %s already created", cluster.ClusterID)
+	}
+
+	return nil
 }
 
 func (c *ClusterManager) reconcileAcceptedCluster(cluster *api.Cluster) error {
@@ -282,23 +341,14 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 
 	// The cluster is ready when the state reports ready
 	if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-		clusterDNS, dnsErr := c.clusterService.GetClusterDNS(clusterId)
-		if dnsErr != nil || clusterDNS == "" {
-			return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s strimzi operator: %s", clusterId, dnsErr.Error())
-		}
-		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
-
-		_, syncsetErr := c.createSyncSet(clusterId, clusterDNS)
-		if syncsetErr != nil {
-			return errors.WithMessagef(syncsetErr, "failed to create syncset on cluster %s: %s", clusterId, syncsetErr.Error())
-		}
-
 		if err = c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
 			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", clusterId, err.Error())
 		}
 
 		// add entry for cluster creation metric
 		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
+	} else {
+		glog.V(5).Infof("%s addon on cluster %s is not ready yet. State: %s", api.ManagedKafkaAddonID, provisionedCluster.ClusterID, string(addonInstallation.State()))
 	}
 	return nil
 }

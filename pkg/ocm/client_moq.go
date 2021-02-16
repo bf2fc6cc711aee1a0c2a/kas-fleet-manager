@@ -51,6 +51,9 @@ var _ Client = &ClientMock{}
 //             GetRegionsFunc: func(provider *v1.CloudProvider) (*v1.CloudRegionList, error) {
 // 	               panic("mock out the GetRegions method")
 //             },
+//             GetSyncSetFunc: func(clusterID string, syncSetID string) (*v1.Syncset, error) {
+// 	               panic("mock out the GetSyncSet method")
+//             },
 //             ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*v1.Cluster, error) {
 // 	               panic("mock out the ScaleDownComputeNodes method")
 //             },
@@ -96,6 +99,9 @@ type ClientMock struct {
 
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *v1.CloudProvider) (*v1.CloudRegionList, error)
+
+	// GetSyncSetFunc mocks the GetSyncSet method.
+	GetSyncSetFunc func(clusterID string, syncSetID string) (*v1.Syncset, error)
 
 	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
 	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*v1.Cluster, error)
@@ -170,6 +176,13 @@ type ClientMock struct {
 			// Provider is the provider argument value.
 			Provider *v1.CloudProvider
 		}
+		// GetSyncSet holds details about calls to the GetSyncSet method.
+		GetSyncSet []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// SyncSetID is the syncSetID argument value.
+			SyncSetID string
+		}
 		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
 		ScaleDownComputeNodes []struct {
 			// ClusterID is the clusterID argument value.
@@ -196,6 +209,7 @@ type ClientMock struct {
 	lockGetClusterIngresses   sync.RWMutex
 	lockGetClusterStatus      sync.RWMutex
 	lockGetRegions            sync.RWMutex
+	lockGetSyncSet            sync.RWMutex
 	lockScaleDownComputeNodes sync.RWMutex
 	lockScaleUpComputeNodes   sync.RWMutex
 }
@@ -557,6 +571,41 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 	mock.lockGetRegions.RLock()
 	calls = mock.calls.GetRegions
 	mock.lockGetRegions.RUnlock()
+	return calls
+}
+
+// GetSyncSet calls GetSyncSetFunc.
+func (mock *ClientMock) GetSyncSet(clusterID string, syncSetID string) (*v1.Syncset, error) {
+	if mock.GetSyncSetFunc == nil {
+		panic("ClientMock.GetSyncSetFunc: method is nil but Client.GetSyncSet was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+		SyncSetID string
+	}{
+		ClusterID: clusterID,
+		SyncSetID: syncSetID,
+	}
+	mock.lockGetSyncSet.Lock()
+	mock.calls.GetSyncSet = append(mock.calls.GetSyncSet, callInfo)
+	mock.lockGetSyncSet.Unlock()
+	return mock.GetSyncSetFunc(clusterID, syncSetID)
+}
+
+// GetSyncSetCalls gets all the calls that were made to GetSyncSet.
+// Check the length with:
+//     len(mockedClient.GetSyncSetCalls())
+func (mock *ClientMock) GetSyncSetCalls() []struct {
+	ClusterID string
+	SyncSetID string
+} {
+	var calls []struct {
+		ClusterID string
+		SyncSetID string
+	}
+	mock.lockGetSyncSet.RLock()
+	calls = mock.calls.GetSyncSet
+	mock.lockGetSyncSet.RUnlock()
 	return calls
 }
 
