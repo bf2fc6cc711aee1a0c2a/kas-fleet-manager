@@ -7,19 +7,22 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
+)
+
+const (
+	JwtKeyFile = "test/support/jwt_private_key.pem"
+	JwtCAFile  = "test/support/jwt_ca.pem"
 )
 
 var (
@@ -67,6 +70,22 @@ func Test_kafkaService_Get(t *testing.T) {
 		id  string
 	}
 
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount(testUser, "", "", "")
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+	ctx := context.TODO()
+	authenticatedCtx := auth.SetTokenInContext(ctx, jwt)
+
 	// we define tests as list of structs that contain inputs and expected outputs
 	// this means we can execute the same logic on each test struct, and makes adding new tests simple as we only need
 	// to provide a new struct to the list instead of defining an entirely new test
@@ -103,7 +122,7 @@ func Test_kafkaService_Get(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				id:  testID,
 			},
 			wantErr: true,
@@ -117,7 +136,7 @@ func Test_kafkaService_Get(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				id:  testID,
 			},
 			want: buildKafkaRequest(nil),
@@ -284,7 +303,7 @@ func Test_kafkaService_Create(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
 						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
 						return syncset, nil
 					},
@@ -318,7 +337,7 @@ func Test_kafkaService_Create(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
 						return nil, errors.New(errors.ErrorBadRequest, "")
 					},
 				},
@@ -351,7 +370,7 @@ func Test_kafkaService_Create(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
 						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
 						return syncset, nil
 					},
@@ -385,7 +404,7 @@ func Test_kafkaService_Create(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
 						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
 						return syncset, nil
 					},
@@ -685,6 +704,22 @@ func Test_kafkaService_List(t *testing.T) {
 		pagingMeta *api.PagingMeta
 	}
 
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount(testUser, "", "", "")
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+	ctx := context.TODO()
+	authenticatedCtx := auth.SetTokenInContext(ctx, jwt)
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -700,7 +735,7 @@ func Test_kafkaService_List(t *testing.T) {
 				syncsetService:    nil,
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				listArgs: &ListArguments{
 					Page: 1,
 					Size: 100,
@@ -757,7 +792,7 @@ func Test_kafkaService_List(t *testing.T) {
 				syncsetService:    nil,
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				listArgs: &ListArguments{
 					Page: 1,
 					Size: 1,
@@ -805,7 +840,7 @@ func Test_kafkaService_List(t *testing.T) {
 				syncsetService:    nil,
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				listArgs: &ListArguments{
 					Page: 1,
 					Size: 100,
@@ -875,15 +910,19 @@ func Test_kafkaService_List(t *testing.T) {
 				syncsetService:    nil,
 			},
 			args: args{
-				ctx: context.TODO(),
+				ctx: authenticatedCtx,
 				listArgs: &ListArguments{
 					Page: 1,
 					Size: 100,
 				},
 			},
 			want: want{
-				kafkaList:  nil,
-				pagingMeta: nil,
+				kafkaList: api.KafkaList{},
+				pagingMeta: &api.PagingMeta{
+					Page:  1,
+					Size:  0,
+					Total: 0,
+				},
 			},
 			wantErr: true,
 			setupFn: func(kafkaList api.KafkaList) {

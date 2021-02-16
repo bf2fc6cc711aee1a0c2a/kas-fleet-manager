@@ -13,6 +13,8 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
 type AuthorizationMiddleware interface {
@@ -39,8 +41,15 @@ func NewAuthzMiddleware(ocmClient *ocm.Client, action, resourceType string) Auth
 func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		// Get username from context
-		username := GetUsernameFromContext(ctx)
+
+		claims, err := GetClaimsFromContext(ctx)
+		if err != nil {
+			shared.HandleError(ctx, w, errors.ErrorUnauthenticated, err.Error())
+			return
+		}
+
+		// Get username from claims
+		username := GetUsernameFromClaims(claims)
 		if username == "" {
 			// fmt.Errorf("Authenticated username not present in request context")
 			// TODO

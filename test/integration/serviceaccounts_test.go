@@ -1,12 +1,14 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+
 	. "github.com/onsi/gomega"
-	"net/http"
-	"testing"
 )
 
 func TestServiceAccounts_Success(t *testing.T) {
@@ -19,7 +21,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	//verify list
 	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)

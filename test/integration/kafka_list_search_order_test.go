@@ -37,7 +37,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	// setup pre-requisites to performing requests
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// get initial list (should be empty)
 	initList, resp, err := client.DefaultApi.ListKafkas(ctx, nil)

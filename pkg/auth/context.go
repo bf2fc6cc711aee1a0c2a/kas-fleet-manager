@@ -14,33 +14,25 @@ type contextKey string
 
 const (
 	// Context Keys
-	contextUsernameKey                  contextKey = "username"
-	contextOrgIdKey                     contextKey = "org_id"
 	contextIsAllowedAsServiceAccountKey contextKey = "user-is-allowed-as-service-account"
+
+	// Claims Keys
+	ocmUsernameKey string = "username"
+	ocmOrgIdKey    string = "org_id"
 )
 
-func SetUsernameContext(ctx context.Context, username string) context.Context {
-	return context.WithValue(ctx, contextUsernameKey, username)
-}
-
-func GetUsernameFromContext(ctx context.Context) string {
-	username := ctx.Value(contextUsernameKey)
-	if username == nil {
+func GetUsernameFromClaims(claims jwt.MapClaims) string {
+	if claims[ocmUsernameKey] == nil {
 		return ""
 	}
-	return fmt.Sprintf("%v", username)
+	return claims[ocmUsernameKey].(string)
 }
 
-func SetOrgIdContext(ctx context.Context, orgId string) context.Context {
-	return context.WithValue(ctx, contextOrgIdKey, orgId)
-}
-
-func GetOrgIdFromContext(ctx context.Context) string {
-	orgId := ctx.Value(contextOrgIdKey)
-	if orgId == nil {
+func GetOrgIdFromClaims(claims jwt.MapClaims) string {
+	if claims[ocmOrgIdKey] == nil {
 		return ""
 	}
-	return fmt.Sprintf("%v", orgId)
+	return claims[ocmOrgIdKey].(string)
 }
 
 func SetUserIsAllowedAsServiceAccountContext(ctx context.Context, isAllowedAsServiceAccount bool) context.Context {
@@ -53,6 +45,10 @@ func GetUserIsAllowedAsServiceAccountFromContext(ctx context.Context) bool {
 		return false
 	}
 	return isAllowedAsServiceAccount.(bool)
+}
+
+func SetTokenInContext(ctx context.Context, token *jwt.Token) context.Context {
+	return authentication.ContextWithToken(ctx, token)
 }
 
 func GetClaimsFromContext(ctx context.Context) (jwt.MapClaims, error) {

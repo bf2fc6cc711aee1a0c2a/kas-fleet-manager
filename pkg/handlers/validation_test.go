@@ -15,6 +15,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const (
+	jwtKeyFile = "test/support/jwt_private_key.pem"
+	jwtCAFile  = "test/support/jwt_ca.pem"
+)
+
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	type args struct {
 		kafkaRequest  openapi.KafkaRequestPayload
@@ -169,6 +174,21 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 
 	username := "username"
 
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile)
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount(username, "", "", "org-id")
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+	authenticatedCtx := auth.SetTokenInContext(context.TODO(), jwt)
+
 	tests := []struct {
 		name string
 		arg  args
@@ -242,7 +262,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						},
 					},
 				),
-				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
+				context: authenticatedCtx,
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -273,7 +293,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						},
 					},
 				),
-				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
+				context: authenticatedCtx,
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -303,7 +323,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						},
 					},
 				),
-				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
+				context: authenticatedCtx,
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -324,7 +344,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						EnableAllowList: true,
 					},
 				}),
-				context: auth.SetOrgIdContext(auth.SetUsernameContext(context.TODO(), username), "org-id"),
+				context: authenticatedCtx,
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,

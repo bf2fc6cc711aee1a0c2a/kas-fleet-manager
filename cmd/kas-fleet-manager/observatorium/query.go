@@ -3,12 +3,15 @@ package observatorium
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/flags"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +37,11 @@ func runGetMetricsByInstantQuery(cmd *cobra.Command, _args []string) {
 
 	env := environments.Environment()
 	kafkaMetrics := &observatorium.KafkaMetrics{}
-	ctx := auth.SetUsernameContext(context.TODO(), owner)
+	// create jwt with claims and set it in the context
+	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"username": owner,
+	})
+	ctx := auth.SetTokenInContext(context.TODO(), jwt)
 	params := observatorium.MetricsReqParams{}
 	params.ResultType = observatorium.Query
 

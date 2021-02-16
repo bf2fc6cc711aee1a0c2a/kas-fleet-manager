@@ -40,11 +40,17 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
-			convKafka.Owner = auth.GetUsernameFromContext(ctx)
-			convKafka.OrganisationId = auth.GetOrgIdFromContext(ctx)
-			err := h.service.RegisterKafkaJob(convKafka)
+
+			claims, err := auth.GetClaimsFromContext(ctx)
 			if err != nil {
-				return nil, err
+				return nil, errors.Unauthenticated("user not authenticated")
+			}
+			convKafka.Owner = auth.GetUsernameFromClaims(claims)
+			convKafka.OrganisationId = auth.GetOrgIdFromClaims(claims)
+
+			svcErr := h.service.RegisterKafkaJob(convKafka)
+			if svcErr != nil {
+				return nil, svcErr
 			}
 			return presenters.PresentKafkaRequest(convKafka), nil
 		},

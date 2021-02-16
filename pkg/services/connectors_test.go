@@ -53,6 +53,22 @@ func Test_connectorsService_Get(t *testing.T) {
 		tid string
 	}
 
+	// Create authenticated context
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount(testUser, "", "", "")
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+	authenticatedCtx := auth.SetTokenInContext(context.TODO(), jwt)
+
 	// we define tests as list of structs that contain inputs and expected outputs
 	// this means we can execute the same logic on each test struct, and makes adding new tests simple as we only need
 	// to provide a new struct to the list instead of defining an entirely new test
@@ -91,7 +107,7 @@ func Test_connectorsService_Get(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				kid: testID,
 				id:  testConnectorId,
 				tid: testConnectorTypeId,
@@ -107,7 +123,7 @@ func Test_connectorsService_Get(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				ctx: auth.SetUsernameContext(context.TODO(), testUser),
+				ctx: authenticatedCtx,
 				kid: testID,
 				id:  testConnectorId,
 				tid: testConnectorTypeId,

@@ -87,8 +87,13 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		}
 
 		var allowListItem config.AllowedListItem
-		orgId := auth.GetOrgIdFromContext(context)
-		username := auth.GetUsernameFromContext(context)
+		claims, err := auth.GetClaimsFromContext(context)
+		if err != nil {
+			return errors.Unauthenticated("user not authenticated")
+		}
+
+		orgId := auth.GetOrgIdFromClaims(claims)
+		username := auth.GetUsernameFromClaims(claims)
 
 		org, orgFound := configService.GetOrganisationById(orgId)
 		var message string
@@ -101,9 +106,9 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
 		}
 
-		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
-		if err != nil {
-			return err
+		_, pageMeta, svcErr := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
+		if svcErr != nil {
+			return svcErr
 		}
 
 		if !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total) {

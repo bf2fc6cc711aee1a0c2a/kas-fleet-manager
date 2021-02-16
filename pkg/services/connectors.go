@@ -57,7 +57,11 @@ func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid 
 		return nil, errors.Validation("connector id is undefined")
 	}
 
-	owner := auth.GetUsernameFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+	owner := auth.GetUsernameFromClaims(claims)
 	if owner == "" {
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
@@ -84,8 +88,11 @@ func (k *connectorsService) Delete(ctx context.Context, kid string, id string) *
 	if id == "" {
 		return errors.Validation("id is undefined")
 	}
-
-	owner := auth.GetUsernameFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return errors.Unauthenticated("user not authenticated")
+	}
+	owner := auth.GetUsernameFromClaims(claims)
 	if owner == "" {
 		return errors.Unauthenticated("user not authenticated")
 	}
@@ -117,8 +124,12 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 		Size: listArgs.Size,
 	}
 
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, nil, errors.Unauthenticated("user not authenticated")
+	}
 	// filter connectors requests by owner
-	owner := auth.GetUsernameFromContext(ctx)
+	owner := auth.GetUsernameFromClaims(claims)
 	if owner == "" {
 		return nil, nil, errors.Unauthenticated("user not authenticated")
 	}
@@ -151,8 +162,11 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 	if kid == "" {
 		return errors.Validation("kafka id is undefined")
 	}
-
-	owner := auth.GetUsernameFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return errors.Unauthenticated("user not authenticated")
+	}
+	owner := auth.GetUsernameFromClaims(claims)
 	if owner == "" {
 		return errors.Unauthenticated("user not authenticated")
 	}

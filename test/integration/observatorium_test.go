@@ -52,7 +52,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -66,7 +66,6 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	}
 
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
-	ctx = auth.SetUsernameContext(context.TODO(), account.Username())
 	err = h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
@@ -74,7 +73,13 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	q := observatorium.MetricsReqParams{}
 	q.ResultType = observatorium.RangeQuery
 	q.FillDefaults()
-	_, err = service.GetMetricsByKafkaId(ctx, metricsList, seedKafka.Id, q)
+
+	token, err := h.AuthHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Errorf("failed to create token: %s", err.Error())
+	}
+	context := auth.SetTokenInContext(context.Background(), token)
+	_, err = service.GetMetricsByKafkaId(context, metricsList, seedKafka.Id, q)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka metrics:  %v", err)
 	Expect(len(*metricsList)).NotTo(Equal(0), "Should return length greater then zero")
 }
@@ -96,7 +101,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	}
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -136,7 +141,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
-	context := h.NewAuthenticatedContext(acc)
+	context := h.NewAuthenticatedContext(acc, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
@@ -166,7 +171,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	}
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -206,7 +211,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
-	context := h.NewAuthenticatedContext(acc)
+	context := h.NewAuthenticatedContext(acc, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true

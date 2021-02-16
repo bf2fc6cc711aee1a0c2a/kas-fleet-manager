@@ -55,7 +55,7 @@ func TestListCloudProviders(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviders(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
@@ -63,6 +63,7 @@ func TestListCloudProviders(t *testing.T) {
 	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud providers list")
 
 }
+
 func TestListCloudProviderRegions(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
@@ -71,7 +72,7 @@ func TestListCloudProviderRegions(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
