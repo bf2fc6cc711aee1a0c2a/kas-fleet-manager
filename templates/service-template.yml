@@ -192,6 +192,11 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
+- name: ENABLE_MANAGED_KAFKA_CR
+  displayName: Enable ManagedKafka CR
+  description: Enable the usage of the ManagedKafka CR instead of the Kafka CR
+  value: "false"
+
 - name: KAFKA_CANARY_IMAGE
   displayName: Kafka Canary Image
   description: Specifies a canary image
@@ -443,6 +448,7 @@ objects:
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
+            - --enable-managed-kafka-cr=${ENABLE_MANAGED_KAFKA_CR}
             - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
             - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
