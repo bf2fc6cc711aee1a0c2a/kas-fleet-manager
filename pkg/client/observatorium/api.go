@@ -100,6 +100,23 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
+		//Check metrics for all traffic in/out
+		"haproxy_server_bytes_in_total": {
+			`haproxy_server_bytes_in_total{%s}`,
+			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		"haproxy_server_bytes_out_total": {
+			`haproxy_server_bytes_out_total{%s}`,
+			fmt.Sprintf(`exported_namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+
+
 	}
 
 	for msg, f := range fetchers {
