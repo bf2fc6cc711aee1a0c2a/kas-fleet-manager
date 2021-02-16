@@ -73,23 +73,32 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}
 
-	resources := []interface{}{
-		syncsetresources.BuildProject(namespaceName),
-		syncsetresources.BuildKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName),
-		syncsetresources.BuildCanary(kafkaRequest, kafkaConfig, sanitizedKafkaName, namespaceName),
-	}
+	var resources []interface{}
 
-	// include admin server resources
-	resources = append(resources, syncsetresources.BuildAdminServerResources(kafkaRequest, kafkaConfig, sanitizedKafkaName, namespaceName)...)
+	if kafkaConfig.EnableManagedKafkaCR {
+		resources = []interface{}{
+			syncsetresources.BuildProject(namespaceName),
+			syncsetresources.BuildManagedKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName),
+		}
+	} else {
+		resources = []interface{}{
+			syncsetresources.BuildProject(namespaceName),
+			syncsetresources.BuildKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName),
+			syncsetresources.BuildCanary(kafkaRequest, kafkaConfig, sanitizedKafkaName, namespaceName),
+		}
 
-	// include Keycloak resources if authentication is enabled
-	if keycloakConfig.EnableAuthenticationOnKafka {
-		resources = append(resources, syncsetresources.BuildKeycloakResources(kafkaRequest, keycloakConfig, clientSecretValue, namespaceName)...)
-	}
+		// include admin server resources
+		resources = append(resources, syncsetresources.BuildAdminServerResources(kafkaRequest, kafkaConfig, sanitizedKafkaName, namespaceName)...)
 
-	// include Kafka TLS secret if external certs is enabled
-	if kafkaConfig.EnableKafkaExternalCertificate {
-		resources = append(resources, syncsetresources.BuildKafkaTLSSecretResource(kafkaRequest, kafkaConfig, namespaceName))
+		// include Keycloak resources if authentication is enabled
+		if keycloakConfig.EnableAuthenticationOnKafka {
+			resources = append(resources, syncsetresources.BuildKeycloakResources(kafkaRequest, keycloakConfig, clientSecretValue, namespaceName)...)
+		}
+
+		// include Kafka TLS secret if external certs is enabled
+		if kafkaConfig.EnableKafkaExternalCertificate {
+			resources = append(resources, syncsetresources.BuildKafkaTLSSecretResource(kafkaRequest, kafkaConfig, namespaceName))
+		}
 	}
 
 	syncsetBuilder = syncsetBuilder.Resources(resources...)

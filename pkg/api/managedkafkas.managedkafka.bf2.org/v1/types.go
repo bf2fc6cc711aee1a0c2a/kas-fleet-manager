@@ -1,0 +1,77 @@
+/*
+
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+type Capacity struct {
+	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec"`
+	TotalMaxConnections           int    `json:"totalMaxConnections"`
+	MaxDataRetentionSize          string `json:"maxDataRetentionSize"`
+	MaxPartitions                 int    `json:"maxPartitions"`
+	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
+}
+
+type VersionsSpec struct {
+	Kafka   string `json:"kafka"`
+	Strimzi string `json:"strimzi"`
+}
+
+type ManagedKafkaStatus struct {
+	Conditions []metav1.Condition `json:"conditions"`
+	Capacity   Capacity           `json:"capacity"`
+	Versions   VersionsSpec       `json:"versions"`
+}
+
+// Spec
+type OAuthSpec struct {
+	ClientId               string `json:"clientId"`
+	ClientSecret           string `json:"clientSecret"`
+	TokenEndpointURI       string `json:"tokenEndpointURI"`
+	JwksEndpointURI        string `json:"jwksEndpointURI"`
+	ValidIssuerEndpointURI string `json:"validIssuerEndpointURI"`
+	UserNameClaim          string `json:"userNameClaim"`
+	TlsTrustedCertificate  string `json:"tlsTrustedCertificate"`
+}
+
+type TlsSpec struct {
+	Cert string `json:"cert"`
+	Key  string `json:"key"`
+}
+
+type EndpointSpec struct {
+	BootstrapServerHost string  `json:"bootstrapServerHost"`
+	Tls                 TlsSpec `json:"tls"`
+}
+
+type ManagedKafkaSpec struct {
+	Capacity Capacity     `json:"capacity"`
+	OAuth    OAuthSpec    `json:"oauth"`
+	Endpoint EndpointSpec `json:"endpoint"`
+	Versions VersionsSpec `json:"versions"`
+	Deleted  bool         `json:"deleted"`
+}
+
+type ManagedKafka struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   ManagedKafkaSpec   `json:"spec,omitempty"`
+	Status ManagedKafkaStatus `json:"status,omitempty"`
+}

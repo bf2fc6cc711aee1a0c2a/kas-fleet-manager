@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/api"
 	strimzi "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/kafka.strimzi.io/v1beta1"
+	managedkafka "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -64,6 +65,58 @@ var kafkaCRConfig = map[string]string{
 
 	// Limit client connections to 500 per broker
 	"max.connections": "500",
+}
+
+func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+	managedKafkaCR := &managedkafka.ManagedKafka{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "managedkafkas.managedkafka.bf2.org/v1",
+			Kind:       "ManagedKafka",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaRequest.Name,
+			Namespace: namespace,
+			Labels:    getKafkaLabels(),
+		},
+		Spec: managedkafka.ManagedKafkaSpec{
+			// Currently ignored
+			Capacity: managedkafka.Capacity{
+				IngressEgressThroughputPerSec: "",
+				TotalMaxConnections:           0,
+				MaxDataRetentionSize:          "",
+				MaxPartitions:                 0,
+				MaxDataRetentionPeriod:        "",
+			},
+			Endpoint: managedkafka.EndpointSpec{
+				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
+				Tls: managedkafka.TlsSpec{
+					Cert: kafkaConfig.KafkaTLSCert,
+					Key:  kafkaConfig.KafkaTLSKey,
+				},
+			},
+			// These values must be changed as soon as we will have the real values
+			Versions: managedkafka.VersionsSpec{
+				Kafka:   "2.6.0",
+				Strimzi: "0.21.1",
+			},
+			Deleted: false,
+		},
+		Status: managedkafka.ManagedKafkaStatus{},
+	}
+
+	if keycloakConfig.EnableAuthenticationOnKafka {
+		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
+			ClientId:               keycloakConfig.ClientID,
+			ClientSecret:           keycloakConfig.ClientSecret,
+			TokenEndpointURI:       keycloakConfig.TokenEndpointURI,
+			JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
+			ValidIssuerEndpointURI: keycloakConfig.ValidIssuerURI,
+			UserNameClaim:          keycloakConfig.UserNameClaim,
+			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
+		}
+	}
+
+	return managedKafkaCR
 }
 
 // BuildKafkaCR builds a Kafka CR
