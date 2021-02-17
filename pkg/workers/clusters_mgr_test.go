@@ -10,12 +10,10 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services/syncsetresources"
 	storagev1 "k8s.io/api/storage/v1"
 
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
-
 	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
 
@@ -30,7 +28,6 @@ import (
 
 	k8sCoreV1 "k8s.io/api/core/v1"
 
-	observability "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/observability/v1"
 	apiErrors "gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
@@ -714,12 +711,15 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 // buildObservabilityConfig builds a observability config used for testing
 func buildObservabilityConfig() config.ObservabilityConfiguration {
 	observabilityConfig := config.ObservabilityConfiguration{
-		DexUrl:               "dex-url",
-		DexPassword:          "dex-password",
-		DexUsername:          "dex-username",
-		DexSecret:            "dex-secret",
-		ObservatoriumTenant:  "tenant",
-		ObservatoriumGateway: "gateway",
+		DexUrl:                         "dex-url",
+		DexPassword:                    "dex-password",
+		DexUsername:                    "dex-username",
+		DexSecret:                      "dex-secret",
+		ObservatoriumTenant:            "tenant",
+		ObservatoriumGateway:           "gateway",
+		ObservabilityConfigRepo:        "obs-config-repo",
+		ObservabilityConfigChannel:     "obs-config-channel",
+		ObservabilityConfigAccessToken: "obs-config-token",
 	}
 	return observabilityConfig
 }
@@ -842,46 +842,27 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingress
 					CatalogSource:          observabilityCatalogSourceName,
 					Channel:                "alpha",
 					CatalogSourceNamespace: observabilityNamespace,
-					StartingCSV:            "observability-operator.v0.0.1",
+					StartingCSV:            "observability-operator.v2.0.0",
 					InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 					Package:                observabilitySubscriptionName,
 				},
 			},
-			&observability.Observability{
+			&k8sCoreV1.ConfigMap{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "observability.redhat.com/v1",
-					Kind:       "Observability",
+					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+					Kind:       "ConfigMap",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilityStackName,
+					Name:      observabilityKafkaConfiguration,
 					Namespace: observabilityNamespace,
+					Labels: map[string]string{
+						"configures": "observability-operator",
+					},
 				},
-				Spec: observability.ObservabilitySpec{
-					Grafana: observability.GrafanaConfig{
-						Managed: false,
-					},
-					KafkaNamespaceSelector: metav1.LabelSelector{
-						MatchLabels: constants.NamespaceLabels,
-					},
-					CanaryPodSelector: metav1.LabelSelector{
-						MatchLabels: observabilityCanaryPodSelector,
-					},
-					Observatorium: observability.ObservatoriumConfig{
-						Gateway:  observabilityConfig.ObservatoriumGateway,
-						Tenant:   observabilityConfig.ObservatoriumTenant,
-						AuthType: observabilityAuthType,
-						AuthDex: &observability.DexConfig{
-							Url:                       observabilityConfig.DexUrl,
-							CredentialSecretName:      observabilityDexCredentials,
-							CredentialSecretNamespace: observabilityNamespace,
-						},
-					},
-					Alertmanager: observability.AlertmanagerConfig{
-						DeadMansSnitchSecretName:      deadmanSnitchSecretName,
-						DeadMansSnitchSecretNamespace: alertManagerSecretNamespace,
-						PagerDutySecretName:           pagerDutySecretName,
-						PagerDutySecretNamespace:      alertManagerSecretNamespace,
-					},
+				Data: map[string]string{
+					"access_token": observabilityConfig.ObservabilityConfigAccessToken,
+					"channel":      observabilityConfig.ObservabilityConfigChannel,
+					"repository":   observabilityConfig.ObservabilityConfigRepo,
 				},
 			},
 		}...).

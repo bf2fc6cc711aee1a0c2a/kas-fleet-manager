@@ -25,7 +25,6 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	projectv1 "github.com/openshift/api/project/v1"
-	observability "gitlab.cee.redhat.com/service/managed-services-api/pkg/api/observability/v1"
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,23 +33,15 @@ const (
 	AWSCloudProviderID              = "aws"
 	observabilityNamespace          = "managed-application-services-observability"
 	openshiftIngressNamespace       = "openshift-ingress-operator"
-	observabilityAuthType           = "dex"
 	observabilityDexCredentials     = "observatorium-dex-credentials"
-	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:latest"
+	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v2.0.0"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
-	observabilityStackName          = "observability-stack"
 	observabilitySubscriptionName   = "observability-operator"
+	observabilityKafkaConfiguration = "kafka-observability-configuration"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	ingressReplicas                 = int32(3)
-	alertManagerSecretNamespace     = "managed-application-services-observability"
-	deadmanSnitchSecretName         = "redhat-managed-kafka-deadmanssnitch"
-	pagerDutySecretName             = "redhat-managed-kafka-pagerduty"
 )
-
-var observabilityCanaryPodSelector = map[string]string{
-	constants.ObservabilityCanaryPodLabelKey: constants.ObservabilityCanaryPodLabelValue,
-}
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
 type ClusterManager struct {
@@ -374,7 +365,7 @@ func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*cl
 				c.buildObservabilityCatalogSourceResource(),
 				c.buildObservabilityOperatorGroupResource(),
 				c.buildObservabilitySubscriptionResource(),
-				c.buildObservabilityStackResource(),
+				c.buildObservabilityExternalConfigResource(),
 			}...).
 		Build()
 
@@ -466,51 +457,9 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v0.0.1",
+			StartingCSV:            "observability-operator.v2.0.0",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
-		},
-	}
-}
-
-func (c *ClusterManager) buildObservabilityStackResource() *observability.Observability {
-	observabilityConfig := c.configService.GetObservabilityConfiguration()
-
-	return &observability.Observability{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "observability.redhat.com/v1",
-			Kind:       "Observability",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilityStackName,
-			Namespace: observabilityNamespace,
-		},
-		Spec: observability.ObservabilitySpec{
-			Grafana: observability.GrafanaConfig{
-				Managed: false,
-			},
-			KafkaNamespaceSelector: metav1.LabelSelector{
-				MatchLabels: constants.NamespaceLabels,
-			},
-			CanaryPodSelector: metav1.LabelSelector{
-				MatchLabels: observabilityCanaryPodSelector,
-			},
-			Observatorium: observability.ObservatoriumConfig{
-				Gateway:  observabilityConfig.ObservatoriumGateway,
-				Tenant:   observabilityConfig.ObservatoriumTenant,
-				AuthType: observabilityAuthType,
-				AuthDex: &observability.DexConfig{
-					Url:                       observabilityConfig.DexUrl,
-					CredentialSecretName:      observabilityDexCredentials,
-					CredentialSecretNamespace: observabilityNamespace,
-				},
-			},
-			Alertmanager: observability.AlertmanagerConfig{
-				DeadMansSnitchSecretName:      deadmanSnitchSecretName,
-				DeadMansSnitchSecretNamespace: alertManagerSecretNamespace,
-				PagerDutySecretName:           pagerDutySecretName,
-				PagerDutySecretNamespace:      alertManagerSecretNamespace,
-			},
 		},
 	}
 }
@@ -566,5 +515,27 @@ func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
 		ReclaimPolicy:        &reclaimDelete,
 		AllowVolumeExpansion: &expansion,
 		VolumeBindingMode:    &consumer,
+	}
+}
+
+func (c *ClusterManager) buildObservabilityExternalConfigResource() *k8sCoreV1.ConfigMap {
+	observabilityConfig := c.configService.GetObservabilityConfiguration()
+	return &k8sCoreV1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observabilityKafkaConfiguration,
+			Namespace: observabilityNamespace,
+			Labels: map[string]string{
+				"configures": "observability-operator",
+			},
+		},
+		Data: map[string]string{
+			"access_token": observabilityConfig.ObservabilityConfigAccessToken,
+			"channel":      observabilityConfig.ObservabilityConfigChannel,
+			"repository":   observabilityConfig.ObservabilityConfigRepo,
+		},
 	}
 }
