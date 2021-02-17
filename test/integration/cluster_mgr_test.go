@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/config"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/constants"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
@@ -25,6 +26,7 @@ const (
 	clusterIDAssignTimeout = 5 * time.Minute
 	timeout                = 2 * time.Hour
 	interval               = 10 * time.Second
+	readyWaitTime          = 30 * time.Minute
 )
 
 // Tests a successful cluster reconcile
@@ -107,6 +109,13 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("failed to get addonInstallation for cluster %s", cluster.ClusterID)
 	}
 	Expect(addonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
+
+	// observatorium needs to get ready and until we change the way kafka
+	// statuses are obtained, integration tests will fail without this wait time
+	// as their status may not be correctly scraped jut after the OSD cluster is created
+	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+		time.Sleep(readyWaitTime)
+	}
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.ClusterOperationsSuccessCount, constants.ClusterOperationCreate.String()))
