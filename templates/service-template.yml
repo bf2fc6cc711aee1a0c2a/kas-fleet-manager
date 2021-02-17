@@ -301,7 +301,7 @@ parameters:
 - name: OBSERVABILITY_CONFIG_CHANNEL
   displayName: Observability configuration channel
   description: Channel of the observability configuration
-  value: "production"
+  value: "development"
 
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service

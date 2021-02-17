@@ -86,7 +86,10 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	c.DexSecret = dexSecret
 
 	if c.AuthToken == "" && c.AuthTokenFile != "" {
-		return readFileValueString(c.AuthTokenFile, &c.AuthToken)
+		err := readFileValueString(c.AuthTokenFile, &c.AuthToken)
+		if err != nil {
+			return err
+		}
 	}
 
 	if c.ObservabilityConfigAccessToken == "" && c.ObservabilityConfigAccessTokenFile != "" {
