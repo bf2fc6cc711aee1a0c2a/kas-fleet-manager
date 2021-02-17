@@ -134,7 +134,7 @@ func (kc *kcClient) GetToken() (string, error) {
 	}
 	tokenResp, err := kc.kcClient.GetToken(kc.ctx, kc.config.Realm, options)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve the token: %s", err.Error())
+		return "", fmt.Errorf("failed to retrieve the token: %v", err.Error())
 	}
 	return tokenResp.AccessToken, nil
 }
@@ -142,7 +142,7 @@ func (kc *kcClient) GetToken() (string, error) {
 func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string) (string, error) {
 	resp, err := kc.kcClient.GetClientSecret(kc.ctx, accessToken, kc.config.Realm, internalClientId)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrive the client secret: %s", err.Error())
+		return "", fmt.Errorf("%v", err.Error())
 	}
 	value := *resp.Value
 	return value, err
@@ -151,7 +151,7 @@ func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string)
 func (kc *kcClient) DeleteClient(internalClientID string, accessToken string) error {
 	err := kc.kcClient.DeleteClient(kc.ctx, accessToken, kc.config.Realm, internalClientID)
 	if err != nil {
-		return fmt.Errorf("failed to delete the sso client: %s", err.Error())
+		return fmt.Errorf("%v", err.Error())
 	}
 	return err
 }
@@ -162,7 +162,7 @@ func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.C
 	}
 	client, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.config.Realm, params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the sso clients: %s", err.Error())
+		return nil, fmt.Errorf("%v", err.Error())
 	}
 	return client, err
 }
@@ -170,7 +170,7 @@ func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.C
 func (kc *kcClient) GetClientById(id string, accessToken string) (*gocloak.Client, error) {
 	client, err := kc.kcClient.GetClient(kc.ctx, accessToken, kc.config.Realm, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the sso client by id: %s:%s", id, err.Error())
+		return nil, fmt.Errorf("client id: %s:%v", id, err.Error())
 	}
 	return client, err
 }
@@ -183,7 +183,7 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 	client, err := kc.getClient(clientId, accessToken)
 	var internalClientID string
 	if err != nil {
-		return internalClientID, fmt.Errorf("failed to get the sso client: %s:%s", clientId, err.Error())
+		return internalClientID, fmt.Errorf("client id: %s:%v", clientId, err.Error())
 	}
 	if len(client) > 0 {
 		internalClientID = *client[0].ID
@@ -195,7 +195,7 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 func (kc *kcClient) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
 	serviceAccountUser, err := kc.kcClient.GetClientServiceAccount(kc.ctx, accessToken, kc.config.Realm, internalClient)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the service account: %s", err.Error())
+		return nil, fmt.Errorf("%v", err.Error())
 	}
 	return serviceAccountUser, err
 }
@@ -203,7 +203,7 @@ func (kc *kcClient) GetClientServiceAccount(accessToken string, internalClient s
 func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error {
 	err := kc.kcClient.UpdateUser(kc.ctx, accessToken, kc.config.Realm, serviceAccountUser)
 	if err != nil {
-		return fmt.Errorf("failed to update the service account user: %s", err.Error())
+		return fmt.Errorf("%v", err.Error())
 	}
 	return err
 }
@@ -218,7 +218,7 @@ func (kc *kcClient) GetClients(accessToken string, first int, max int) ([]*goclo
 	}
 	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.config.Realm, params)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get the sso clients: %s", err.Error())
+		return nil, fmt.Errorf("%v", err.Error())
 	}
 	return clients, err
 }
@@ -234,7 +234,7 @@ func (kc *kcClient) IsSameOrg(client *gocloak.Client, orgId string) bool {
 func (kc *kcClient) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 	credRep, err := kc.kcClient.RegenerateClientSecret(kc.ctx, accessToken, kc.config.Realm, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to regenerate client secret: %s:%s", id, err.Error())
+		return nil, fmt.Errorf("client id: %s:%s", id, err.Error())
 	}
 	return credRep, err
 }
@@ -245,7 +245,7 @@ func (kc *kcClient) GetRealmRole(accessToken string, roleName string) (*gocloak.
 		if isNotFoundError(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("failed to get realm role: %s:%s", roleName, err.Error())
+		return nil, fmt.Errorf("realm role: %s:%v", roleName, err.Error())
 	}
 	return r, err
 }
@@ -256,12 +256,12 @@ func (kc *kcClient) CreateRealmRole(accessToken string, roleName string) (*goclo
 	}
 	_, err := kc.kcClient.CreateRealmRole(kc.ctx, accessToken, kc.config.Realm, *r)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create realm role: %s:%s", roleName, err.Error())
+		return nil, fmt.Errorf("realm role: %s:%v", roleName, err.Error())
 	}
 	// for some reason, the internal id of the role is not returned by kcClient.CreateRealmRole, so we have to get the role again to get the full details
 	r, err = kc.kcClient.GetRealmRole(kc.ctx, accessToken, kc.config.Realm, roleName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create realm role: %s:%s", roleName, err.Error())
+		return nil, fmt.Errorf("failed to create realm role: %s:%v", roleName, err.Error())
 	}
 	return r, nil
 }
@@ -269,7 +269,7 @@ func (kc *kcClient) CreateRealmRole(accessToken string, roleName string) (*goclo
 func (kc *kcClient) UserHasRealmRole(accessToken string, userId string, roleName string) (*gocloak.Role, error) {
 	roles, err := kc.kcClient.GetRealmRolesByUserID(kc.ctx, accessToken, kc.config.Realm, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list realm roles for user: %s:%s", userId, err.Error())
+		return nil, fmt.Errorf("failed to list realm roles for user: %s:%v", userId, err.Error())
 	}
 	for _, r := range roles {
 		if *r.Name == roleName {
@@ -283,7 +283,7 @@ func (kc *kcClient) AddRealmRoleToUser(accessToken string, userId string, role g
 	roles := []gocloak.Role{role}
 	err := kc.kcClient.AddRealmRoleToUser(kc.ctx, accessToken, kc.config.Realm, userId, roles)
 	if err != nil {
-		return fmt.Errorf("failed to add realm role to user: %s:%s:%s", userId, *role.Name, err.Error())
+		return fmt.Errorf("failed to add realm role to user: %s:%s:%v", userId, *role.Name, err.Error())
 	}
 	return nil
 }
