@@ -33,6 +33,8 @@ import random
 
 kafkas_created = 0
 
+resources_cleaned_up = False
+
 kafkas_list = []
 service_acc_list = []
 
@@ -50,19 +52,26 @@ class QuickstartUser(HttpUser):
     current_run_time = time.monotonic() - start_time
     # create and then instantly delete kafka_requests to seed the database
     if populate_db == 'TRUE':
-      kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
-      if kafka_id != '':
-        kafkas_created = kafkas_created + 1
-        kafkas_list.append(kafka_id)
-        remove_kafka(self, kafka_id)
-        if kafkas_created >= seed_kafkas:
-          time.sleep(60) # wait for all kafkas to be deleted
-          populate_db = 'FALSE'
-          kafkas_created = 0
+      if run_time_minutes - (current_run_time / 60) > 2:
+        kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
+        if kafka_id != '':
+          kafkas_created = kafkas_created + 1
+          kafkas_list.append(kafka_id)
+          remove_kafka(self, kafka_id)
+          if kafkas_created >= seed_kafkas:
+            time.sleep(60) # wait for all kafkas to be deleted
+            populate_db = 'FALSE'
+            kafkas_created = 0
+      else:
+        populate_db = 'FALSE'
     else:
       # cleanup before the test completes
-      if run_time_minutes - (current_run_time / 60) < 1:
+      if run_time_minutes - (current_run_time / 60) < 2:
         cleanup(self)
+        # make sure that no kafka_requests or service accounts created by this test are removed
+        if run_time_minutes - (current_run_time / 60) < 1:
+          if resources_cleaned_up == False:
+            check_leftover_resources(self)
       # hit the remaining endpoints for the majority of the time that this test runs
       # between db seed stage (if 'PERF_TEST_PREPOPULATE_DB' env var set to true) and cleanup (1 minute before the end of the test execution)
       else:
@@ -71,7 +80,7 @@ class QuickstartUser(HttpUser):
 # main test execution against API endpoints
 #
 # THe distribution between the endpoints will be semi-random with the following proportions
-# kafka get + post + kafka metrics	               20%
+# kafka get + post + kafka metrics                 20%
 # kafkas get                                       30%
 # kafka search                                     30%
 # cloud providers get                              10%
@@ -88,8 +97,9 @@ def exercise_endpoints(self):
     handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
   elif endpoint_selector < 40:
     if len(kafkas_list) > 0:
-      handle_get(self, f'{url_base}/kafkas/{get_random_id(kafkas_list)}', '/kafkas/[id]')
-      handle_get(self, f'{url_base}/kafkas/{get_random_id(kafkas_list)}/metrics', '/kafkas/[id]/metrics')
+      kafka_id = get_random_id(kafkas_list)
+      handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
+      handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics', '/kafkas/[id]/metrics')
     global kafkas_created
     if len(kafkas_list) < kafkas_to_create:
       kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
@@ -115,21 +125,47 @@ def service_accounts(self):
       handle_post(self, f'{url_base}/serviceaccounts/{svc_acc_id}/reset-credentials', svc_acc_json_payload, '/serviceaccounts/[id]/reset-credentials')
       service_acc_list.append(svc_acc_id)
 
+# get the list of left over service accounts and kafka requests and delete them
+def check_leftover_resources(self):
+  time.sleep(random.uniform(1.0, 5.0))
+  global resources_cleaned_up, service_acc_list, kafkas_list
+  left_over_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
+  # delete all kafkas created by the token used in the performance test
+  if 'items' in left_over_kafkas:
+    items = left_over_kafkas['items']
+    if len(items) > 0:
+      kafkas_list = get_ids_from_list(items)
+      for kafka_id in kafkas_list:
+        remove_kafka(self, kafka_id)
+
+  time.sleep(random.uniform(1.0, 5.0))
+  left_over_svc_accs = handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts', True)
+  # delete all kafkas created by the token used in the performance test
+  if 'items' in left_over_svc_accs:
+    items = left_over_svc_accs['items']
+    if len(items) > 0:
+      for svc_acc_id in get_ids_from_list(items):
+        if created_by_perf_test(svc_acc_id, items) == True:
+          service_acc_list.append(svc_acc_id)
+          remove_svc_acc(self, svc_acc_id)
+  if (len(kafkas_list) == 0 and len(service_acc_list) == 0):
+    resources_cleaned_up = True
+
 # cleanup created kafka_requests and service accounts 1 minute before the test completion
 def cleanup(self):
   remove_svc_acc(self)
   remove_kafka(self)
 
 # delete service account and remove its' id from service_acc_list
-def remove_svc_acc(self):
+def remove_svc_acc(self, svc_acc_id = ""):
   if len(service_acc_list) > 0:
-    svc_acc_id = get_random_id(service_acc_list)
-    status_code = 0
+    if svc_acc_id == "":
+      svc_acc_id = get_random_id(service_acc_list)
+    status_code = 500
     retry_attempt = 0
-    while status_code != 204:
+    while status_code > 204 and status_code != 404:
       status_code = handle_delete_by_id(self, f'{url_base}/serviceaccounts/{svc_acc_id}', '/serviceaccounts/[id]')
       retry_attempt = retry_attempt + 1
-      time.sleep(0.05) # deleting service account is less stable than deleting kafka, hence a little timeout added here
       if retry_attempt > 5:
         sys.exit(f'Unable to delete service account with id: {svc_acc_id}. Manual cleanup required')
     safe_delete(service_acc_list, svc_acc_id)
@@ -139,9 +175,9 @@ def remove_kafka(self, kafka_id = ""):
   if len(kafkas_list) > 0:
     if kafka_id == "":
       kafka_id = get_random_id(kafkas_list)
-    status_code = 0
+    status_code = 500
     retry_attempt = 0
-    while status_code != 204:
+    while status_code > 204 and status_code != 404:
       status_code = handle_delete_by_id(self, f'{url_base}/kafkas/{kafka_id}?async=true', '/kafkas/[id]')
       retry_attempt = retry_attempt + 1
       if retry_attempt > 5:
