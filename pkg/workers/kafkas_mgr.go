@@ -274,6 +274,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 				if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed && updateErr != nil {
 					return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
 				}
+				metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 				return fmt.Errorf("reached kafka %s max attempts to register client in mas-sso", kafkaRequest.ID)
 			}
 		}
