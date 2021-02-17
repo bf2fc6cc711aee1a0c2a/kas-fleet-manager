@@ -1,6 +1,5 @@
 from common.auth import *
 from common.tools import *
-import logging
 
 # handle post requests for specified 'url'. 
 # 'name' parameter denotes the display name in the statistics printed by locust
@@ -26,25 +25,27 @@ def handle_delete_by_id(self, url, name):
     if response.status_code == 401:
       response.success()
       get_token(self)
-    if response.status_code == 500 or response.status_code == 404:
+    if response.status_code >= 500 or response.status_code == 404:
       response_output = response.json()
       if 'reason' in response_output:
         reason = response_output['reason']
         # due to concurrency sometimes resources have already been deleted
-        if '404' in reason or 'failed to delete service account' in reason or 'Unable to find KafkaResource' in reason:
+        if '404' in reason or 'failed to delete service account' in reason or 'Unable to find KafkaResource' in reason or 'not found' in reason:
           response.success()
-          return 204
-    if response.status_code == 204:
+          return 202
+    if response.status_code < 300: # success
       return response.status_code
-    return 0
+    return 500
 
 # handle get requests for specified 'url'. 
-# 'name' parameter denotes the display name in the statistics printed by locust. 
-def handle_get(self, url, name):
+# 'name' parameter denotes the display name in the statistics printed by locust.
+# 'return_json_response' set to True will return json response
+def handle_get(self, url, name, return_json_response=False):
   with self.client.get(url, verify=False, catch_response=True, name=name) as response:
     if response.status_code == 401:
       response.success()
       get_token(self)
     if response.status_code == 404: # 404 isn't a failing request
       response.success()
-      
+    if return_json_response == True:
+      return response.json()
