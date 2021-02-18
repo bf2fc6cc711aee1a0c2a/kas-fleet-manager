@@ -22,12 +22,13 @@ services:
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=master
       - LOCUST_MASTER_HOST=primary
-      - LOCUST_OPTS=--headless -u ${PERF_TEST_USERS} -r ${PERF_TEST_USER_SPAWN_RATE} --run-time ${PERF_TEST_RUN_TIME}
+      - LOCUST_OPTS=--headless --logfile=/mnt/locust/reports/perf_test_logfile --csv-full-history --csv=/mnt/locust/reports/perf_test  -u ${PERF_TEST_USERS} -r ${PERF_TEST_USER_SPAWN_RATE} --run-time ${PERF_TEST_RUN_TIME} --html /mnt/locust/reports/perf_test_report.html
     ports:
       - 8089:8089
+    working_dir: /mnt/locust
     volumes:
       - ./:/mnt/locust
-    command: -f /mnt/locust/locustfile.py --master -H http://primary:8089
+    command: -f /locustfile.py --master -H http://primary:8089
 
   secondary:
     image: "quay.io/ppaszki/locust:latest"
@@ -42,6 +43,7 @@ services:
       - LOCUST_MASTER_HOST=primary
     volumes:
       - ./:/mnt/locust
-    command: -f /mnt/locust/locustfile.py --worker --master-host primary
+    working_dir: /mnt/locust
+    command: -f /locustfile.py --worker --master-host primary
     depends_on:
       - api

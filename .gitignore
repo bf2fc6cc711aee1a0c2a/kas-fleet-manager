@@ -61,6 +61,7 @@ Dockerfile_integration_tests
 
 # performance tests leftovers
 **/__pycache__
+test/performance/reports/perf_test*
 
 # local bin directory
 bin
