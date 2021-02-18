@@ -267,13 +267,18 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 
 	if err.IsFailedToCreateSSOClient() {
 		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		// todo retry logic for kafka client creation in mas sso
 		keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
 		if keycloakErr != nil {
-			if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed && updateErr != nil {
-				return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
+			durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
+			if durationSinceCreation <= constants.KafkaMaxDurationWithProvisioningErrs {
+				if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed {
+					if updateErr != nil {
+						return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
+					}
+					metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
+				}
+				return fmt.Errorf("reached kafka %s max attempts to register client in mas-sso", kafkaRequest.ID)
 			}
-			return fmt.Errorf("failed to create mas sso client for the kafka %s on cluster %s: %w", kafkaRequest.ID, kafkaRequest.ClusterID, err)
 		}
 	}
 
