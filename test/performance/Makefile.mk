@@ -1,5 +1,5 @@
 # default performance test flags
-PERF_TEST_USERS ?= 125 # number of locust test users - more users - more load can be sent
+PERF_TEST_USERS ?= 150 # number of locust test users - more users - more load can be sent
 PERF_TEST_USER_SPAWN_RATE ?= 1 # frequency of user spawning (per second)
 PERF_TEST_RUN_TIME ?= 120m # running time (in minutes - as our locustfile expects minutes)
 PERF_TEST_WORKERS_NUMBER ?= 25 # number of running worker containers - more containers - more load can be sent
