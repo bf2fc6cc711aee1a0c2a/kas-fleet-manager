@@ -271,11 +271,10 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		if keycloakErr != nil {
 			durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
 			if durationSinceCreation <= constants.KafkaMaxDurationWithProvisioningErrs {
-				executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed);
-				if updateErr != nil{
-					return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
-				}
-				if executed {
+				if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed {
+					if updateErr != nil {
+						return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
+					}
 					metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 				}
 				return fmt.Errorf("reached kafka %s max attempts to register client in mas-sso", kafkaRequest.ID)
