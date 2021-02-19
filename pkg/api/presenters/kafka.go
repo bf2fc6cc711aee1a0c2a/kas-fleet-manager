@@ -20,6 +20,7 @@ func ConvertKafkaRequest(kafkaRequest openapi.KafkaRequestPayload) *api.KafkaReq
 // PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
 func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) openapi.KafkaRequest {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
+
 	return openapi.KafkaRequest{
 		Id:                  reference.Id,
 		Kind:                reference.Kind,

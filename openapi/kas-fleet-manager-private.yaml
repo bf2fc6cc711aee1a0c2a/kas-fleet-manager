@@ -369,7 +369,40 @@ paths:
       operationId: updateKafkaClusterStatus
       summary: Update the status of Kafka clusters on an agent cluster
 
-
+  '/api/managed-services-api/v1/agent-clusters/{id}/kafkas':
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        '200':
+          description: The list of the ManagedKafkas for the specified agent cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedKafkaList'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: '#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: getKafkas
+      summary: Get the list of ManagedaKafkas for the specified agent cluster
 
 components:
   schemas:
@@ -411,6 +444,128 @@ components:
             operation_id:
               type: string
 
+    MetaV1Condition:
+      type: object
+      properties:
+        type:
+          type: string
+        reason:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        lastTransitionTime:
+          type: string
+          #format: date-time # enable this?? or just set it as pure plain string?
+
+    ManagedKafkaCapacity:
+      type: object
+      properties:
+        IngressEgressThroughputPerSec:
+          type: string
+        TotalMaxConnections:
+          type: integer
+          format: int
+        MaxDataRetentionSize:
+          type: string
+        MaxPartitions:
+          type: integer
+          format: int
+        MaxDataRetentionPeriod:
+          type: string
+
+    ManagedKafkaVersions:
+      type: object
+      properties:
+        Kafka:
+          type: string
+        Strimzi:
+          type: string
+
+    ManagedKafka:
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          properties:
+            name:
+              type: string
+            id:
+              type: string
+            placementId:
+              type: string
+            spec:
+              type: object
+              properties:
+                Capacity:
+                  $ref: "#/components/schemas/ManagedKafkaCapacity"
+                OAuth:
+                  type: object
+                  properties:
+                    ClientId:
+                      type: string
+                    ClientSecret:
+                      type: string
+                    TokenEndpointURI:
+                      type: string
+                    JwksEndpointURI:
+                      type: string
+                    ValidIssuerEndpointURI:
+                      type: string
+                    UserNameClaim:
+                      type: string
+                    TlsTrustedCertificate:
+                      type: string
+                Endpoint:
+                  type: object
+                  properties:
+                    BootstrapServerHost:
+                      type: string
+                    Tls:
+                      type: object
+                      properties:
+                        Cert:
+                          type: string
+                        Key:
+                          type: string
+                Versions:
+                  $ref: "#/components/schemas/ManagedKafkaVersions"
+                Deleted:
+                  type: boolean
+              required:
+                - Deleted
+            status:
+              type: object
+              properties:
+                Conditions:
+                  type: array
+                  items:
+                    allOf:
+                      - $ref: "#/components/schemas/MetaV1Condition"
+                Capacity:
+                  $ref: "#/components/schemas/ManagedKafkaCapacity"
+                Versions:
+                  $ref: "#/components/schemas/ManagedKafkaVersions"
+
+    ManagedKafkaList:
+      description: >-
+        A list of ManagedKafka
+      allOf:
+        - $ref: "#/components/schemas/List"
+        - type: object
+          example:
+            kind: "ManagedKafkaList"
+            page: "1"
+            size: "1"
+            total: "1"
+            item:
+              $ref: '#/components/examples/ManagedKafkaExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/ManagedKafka"
     ConnectorType:
       description: >-
         Represents a connector type supported by the API
@@ -656,6 +811,8 @@ components:
           value: "100"
 
   examples:
+    ManagedKafkaExample:
+      value: {} # TODO fill this
     DataPlaneClusterUpdateStatusRequestExample:
       value: {} # TODO fill this
     DataPlaneKafkaUpdateStatusRequestExample:

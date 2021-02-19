@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"net/http/httptest"
 	"os"
 	"sync"
@@ -224,7 +225,11 @@ func (helper *Helper) startClusterWorker() {
 
 	// start cluster worker
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{})
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{
+			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
+				return true, nil
+			},
+		})
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -243,7 +248,11 @@ func (helper *Helper) startLeaderElectionWorker() {
 
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{})
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{
+			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
+				return true, nil
+			},
+		})
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak, helper.Env().Services.Observatorium)

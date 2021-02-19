@@ -442,8 +442,50 @@ paths:
       security:
       - Bearer: []
       summary: Update the status of Kafka clusters on an agent cluster
+  /api/managed-services-api/v1/agent-clusters/{id}/kafkas:
+    get:
+      operationId: getKafkas
+      parameters:
+      - description: The id of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedKafkaList'
+          description: The list of the ManagedKafkas for the specified agent cluster
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Get the list of ManagedaKafkas for the specified agent cluster
 components:
   examples:
+    ManagedKafkaExample:
+      value: {}
     DataPlaneClusterUpdateStatusRequestExample:
       value: {}
     DataPlaneKafkaUpdateStatusRequestExample:
@@ -630,6 +672,50 @@ components:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/Error_allOf'
+    MetaV1Condition:
+      properties:
+        type:
+          type: string
+        reason:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        lastTransitionTime:
+          type: string
+      type: object
+    ManagedKafkaCapacity:
+      properties:
+        IngressEgressThroughputPerSec:
+          type: string
+        TotalMaxConnections:
+          format: int
+          type: integer
+        MaxDataRetentionSize:
+          type: string
+        MaxPartitions:
+          format: int
+          type: integer
+        MaxDataRetentionPeriod:
+          type: string
+      type: object
+    ManagedKafkaVersions:
+      properties:
+        Kafka:
+          type: string
+        Strimzi:
+          type: string
+      type: object
+    ManagedKafka:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ManagedKafka_allOf'
+    ManagedKafkaList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ManagedKafkaList_allOf'
+      description: A list of ManagedKafka
     ConnectorType:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -722,6 +808,79 @@ components:
           type: string
         operation_id:
           type: string
+    ManagedKafka_allOf_spec_OAuth:
+      properties:
+        ClientId:
+          type: string
+        ClientSecret:
+          type: string
+        TokenEndpointURI:
+          type: string
+        JwksEndpointURI:
+          type: string
+        ValidIssuerEndpointURI:
+          type: string
+        UserNameClaim:
+          type: string
+        TlsTrustedCertificate:
+          type: string
+    ManagedKafka_allOf_spec_Endpoint_Tls:
+      properties:
+        Cert:
+          type: string
+        Key:
+          type: string
+    ManagedKafka_allOf_spec_Endpoint:
+      properties:
+        BootstrapServerHost:
+          type: string
+        Tls:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec_Endpoint_Tls'
+    ManagedKafka_allOf_spec:
+      properties:
+        Capacity:
+          $ref: '#/components/schemas/ManagedKafkaCapacity'
+        OAuth:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec_OAuth'
+        Endpoint:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec_Endpoint'
+        Versions:
+          $ref: '#/components/schemas/ManagedKafkaVersions'
+        Deleted:
+          type: boolean
+      required:
+      - Deleted
+    ManagedKafka_allOf_status:
+      properties:
+        Conditions:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+        Capacity:
+          $ref: '#/components/schemas/ManagedKafkaCapacity'
+        Versions:
+          $ref: '#/components/schemas/ManagedKafkaVersions'
+    ManagedKafka_allOf:
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+        placementId:
+          type: string
+        spec:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec'
+        status:
+          $ref: '#/components/schemas/ManagedKafka_allOf_status'
+    ManagedKafkaList_allOf:
+      example: '{"kind":"ManagedKafkaList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/ManagedKafkaExample"}}'
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ManagedKafka'
+          type: array
     ConnectorType_allOf:
       properties:
         name:

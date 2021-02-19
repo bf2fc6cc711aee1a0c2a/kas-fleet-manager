@@ -171,11 +171,13 @@ func NewAPIServer() Server {
 
 	///api/managed-services-api/v1/agent-clusters/{id}
 	if env().Config.ClusterCreationConfig.EnableKasFleetshardOperator {
+		managedKafkaHandler := handlers.NewManagedKafkaHandler(services.Kafka, services.Config)
 		dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(services.DataPlaneCluster, services.Config)
 		dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(services.DataPlaneKafkaService, services.Config)
 		apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).Methods(http.MethodPut)
+		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas", managedKafkaHandler.GetAll).Methods(http.MethodGet)
 		rolesAuthzMiddleware := auth.NewRolesAuhzMiddleware()
 		dataPlaneAuthzMiddleware := auth.NewDataPlaneAuthzMiddleware()
 		// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
