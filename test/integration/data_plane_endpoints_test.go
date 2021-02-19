@@ -30,6 +30,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss": h.AppConfig.Keycloak.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},
@@ -76,6 +77,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss":                                h.AppConfig.Keycloak.ValidIssuerURI,
 		"kas-fleetshard-operator-cluster-id": clusterId,
 	}
 	token := h.CreateJWTStringWithClaim(account, claims)
@@ -119,6 +121,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss": h.AppConfig.Keycloak.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},

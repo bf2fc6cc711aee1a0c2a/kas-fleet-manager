@@ -19,6 +19,8 @@ const (
 	// Claims Keys
 	ocmUsernameKey string = "username"
 	ocmOrgIdKey    string = "org_id"
+
+	masSsoOrgIdKey string = "rh-org-id"
 )
 
 func GetUsernameFromClaims(claims jwt.MapClaims) string {
@@ -29,10 +31,15 @@ func GetUsernameFromClaims(claims jwt.MapClaims) string {
 }
 
 func GetOrgIdFromClaims(claims jwt.MapClaims) string {
-	if claims[ocmOrgIdKey] == nil {
-		return ""
+	if claims[ocmOrgIdKey] != nil {
+		return claims[ocmOrgIdKey].(string)
 	}
-	return claims[ocmOrgIdKey].(string)
+
+	if claims[masSsoOrgIdKey] != nil {
+		return claims[masSsoOrgIdKey].(string)
+	}
+
+	return ""
 }
 
 func SetUserIsAllowedAsServiceAccountContext(ctx context.Context, isAllowedAsServiceAccount bool) context.Context {

@@ -191,12 +191,10 @@ func NewAPIServer() Server {
 			Build()
 		check(err, "Unable to create authentication logger")
 
-		masSSOJwkCertURL := fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/certs", env().Config.Keycloak.BaseURL, env().Config.Keycloak.Realm)
-		ocmJwkCertURL := env().Config.Server.JwkCertURL
 		mainHandler, err = authentication.NewHandler().
 			Logger(authnLogger).
-			KeysURL(ocmJwkCertURL).
-			KeysURL(masSSOJwkCertURL).
+			KeysURL(env().Config.Server.JwkCertURL).        //ocm JWK Cert URL
+			KeysURL(env().Config.Keycloak.JwksEndpointURI). // mas-sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
 			Public(fmt.Sprintf("^%s/%s/?$", apiEndpoint, managedServicesApi)).
