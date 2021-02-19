@@ -621,27 +621,27 @@ func (a *DefaultApiService) GetKafkaById(ctx _context.Context, id string) (Kafka
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// GetMetricsByQueryInstantOpts Optional parameters for the method 'GetMetricsByQueryInstant'
-type GetMetricsByQueryInstantOpts struct {
+// GetMetricsByInstantQueryOpts Optional parameters for the method 'GetMetricsByInstantQuery'
+type GetMetricsByInstantQueryOpts struct {
 	Filters optional.Interface
 }
 
 /*
-GetMetricsByQueryInstant Get metrics with query instant by kafka id.
+GetMetricsByInstantQuery Get metrics with instant query by kafka id.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The id of record
- * @param optional nil or *GetMetricsByQueryInstantOpts - Optional Parameters:
+ * @param optional nil or *GetMetricsByInstantQueryOpts - Optional Parameters:
  * @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are kafka internal metric names.
-@return MetricsQueryInstantList
+@return MetricsInstantQueryList
 */
-func (a *DefaultApiService) GetMetricsByQueryInstant(ctx _context.Context, id string, localVarOptionals *GetMetricsByQueryInstantOpts) (MetricsQueryInstantList, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetMetricsByInstantQuery(ctx _context.Context, id string, localVarOptionals *GetMetricsByInstantQueryOpts) (MetricsInstantQueryList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  MetricsQueryInstantList
+		localVarReturnValue  MetricsInstantQueryList
 	)
 
 	// create path and map variables
@@ -735,29 +735,29 @@ func (a *DefaultApiService) GetMetricsByQueryInstant(ctx _context.Context, id st
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// GetMetricsByQueryRangeOpts Optional parameters for the method 'GetMetricsByQueryRange'
-type GetMetricsByQueryRangeOpts struct {
+// GetMetricsByRangeQueryOpts Optional parameters for the method 'GetMetricsByRangeQuery'
+type GetMetricsByRangeQueryOpts struct {
 	Filters optional.Interface
 }
 
 /*
-GetMetricsByQueryRange Get metrics with timeseries query range by kafka id.
+GetMetricsByRangeQuery Get metrics with timeseries range query by kafka id.
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The id of record
  * @param duration The length of time in minutes over which to return the metrics.
  * @param interval The interval in seconds between data points.
- * @param optional nil or *GetMetricsByQueryRangeOpts - Optional Parameters:
+ * @param optional nil or *GetMetricsByRangeQueryOpts - Optional Parameters:
  * @param "Filters" (optional.Interface of []string) -  List of metrics to fetch. Fetch all metrics when empty. List entries are kafka internal metric names.
-@return MetricsQueryRangeList
+@return MetricsRangeQueryList
 */
-func (a *DefaultApiService) GetMetricsByQueryRange(ctx _context.Context, id string, duration int64, interval int64, localVarOptionals *GetMetricsByQueryRangeOpts) (MetricsQueryRangeList, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetMetricsByRangeQuery(ctx _context.Context, id string, duration int64, interval int64, localVarOptionals *GetMetricsByRangeQueryOpts) (MetricsRangeQueryList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  MetricsQueryRangeList
+		localVarReturnValue  MetricsRangeQueryList
 	)
 
 	// create path and map variables

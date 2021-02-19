@@ -9,8 +9,8 @@
 
 package openapi
 
-// QueryInstant struct for QueryInstant
-type QueryInstant struct {
+// InstantQuery struct for InstantQuery
+type InstantQuery struct {
 	Metric    map[string]string `json:"metric,omitempty"`
 	Timestamp int64             `json:"Timestamp,omitempty"`
 	Value     float64           `json:"Value"`

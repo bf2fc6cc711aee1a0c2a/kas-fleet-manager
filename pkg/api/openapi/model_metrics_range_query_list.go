@@ -9,9 +9,9 @@
 
 package openapi
 
-// MetricsQueryRangeList struct for MetricsQueryRangeList
-type MetricsQueryRangeList struct {
+// MetricsRangeQueryList struct for MetricsRangeQueryList
+type MetricsRangeQueryList struct {
 	Kind  string       `json:"kind,omitempty"`
 	Id    string       `json:"id,omitempty"`
-	Items []QueryRange `json:"items,omitempty"`
+	Items []RangeQuery `json:"items,omitempty"`
 }

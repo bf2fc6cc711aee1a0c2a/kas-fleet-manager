@@ -142,9 +142,8 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 	err = h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
-	filters := openapi.GetMetricsByQueryRangeOpts{}
-
-	metrics, resp, err := client.DefaultApi.GetMetricsByQueryRange(ctx, kafka.Id, 5, 30, &filters)
+	filters := openapi.GetMetricsByRangeQueryOpts{}
+	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(ctx, kafka.Id, 5, 30, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
@@ -212,9 +211,8 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 	err = h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
-	filters := openapi.GetMetricsByQueryInstantOpts{}
-
-	metrics, resp, err := client.DefaultApi.GetMetricsByQueryInstant(ctx, kafka.Id, &filters)
+	filters := openapi.GetMetricsByInstantQueryOpts{}
+	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(ctx, kafka.Id, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))

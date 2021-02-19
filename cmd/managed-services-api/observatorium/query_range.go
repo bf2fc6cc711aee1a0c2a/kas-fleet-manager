@@ -17,14 +17,14 @@ func NewRunMetricsQueryRangeCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query_range",
 		Short: "Get metrics with timeseries query range by kafka id from Observatorium",
-		Run:   runGetMetricsByQueryRange,
+		Run:   runGetMetricsByRangeQuery,
 	}
 	cmd.Flags().String(FlagID, "", "Kafka id")
 	cmd.Flags().String(FlagOwner, "", "Username")
 
 	return cmd
 }
-func runGetMetricsByQueryRange(cmd *cobra.Command, _args []string) {
+func runGetMetricsByRangeQuery(cmd *cobra.Command, _args []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 
@@ -44,11 +44,11 @@ func runGetMetricsByQueryRange(cmd *cobra.Command, _args []string) {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
-	metricsList := openapi.MetricsQueryRangeList{
-		Kind: "Metrics",
+	metricsList := openapi.MetricsRangeQueryList{
+		Kind: "MetricsRangeQueryList",
 		Id:   kafkaId,
 	}
-	metrics, err := presenters.PresentMetricsByQueryRange(kafkaMetrics)
+	metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
 	if err != nil {
 		glog.Error("An error occurred while attempting to present metrics data ", err.Error())
 		return

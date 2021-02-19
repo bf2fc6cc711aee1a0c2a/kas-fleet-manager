@@ -17,14 +17,14 @@ func NewRunMetricsQueryCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query",
 		Short: "Get metrics with query instant by kafka id from Observatorium",
-		Run:   runGetMetricsByQueryInstant,
+		Run:   runGetMetricsByInstantQuery,
 	}
 	cmd.Flags().String(FlagID, "", "Kafka id")
 	cmd.Flags().String(FlagOwner, "", "Username")
 
 	return cmd
 }
-func runGetMetricsByQueryInstant(cmd *cobra.Command, _args []string) {
+func runGetMetricsByInstantQuery(cmd *cobra.Command, _args []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 
@@ -43,11 +43,11 @@ func runGetMetricsByQueryInstant(cmd *cobra.Command, _args []string) {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
-	metricsList := openapi.MetricsQueryInstantList{
-		Kind: "Metrics",
+	metricsList := openapi.MetricsInstantQueryList{
+		Kind: "MetricsInstantQueryList",
 		Id:   kafkaId,
 	}
-	metrics, err := presenters.PresentMetricsByQueryInstant(kafkaMetrics)
+	metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
 	if err != nil {
 		glog.Error("An error occurred while attempting to present metrics data ", err.Error())
 		return

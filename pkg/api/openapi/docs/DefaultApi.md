@@ -9,8 +9,8 @@ Method | HTTP request | Description
 [**DeleteKafkaById**](DefaultApi.md#DeleteKafkaById) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
 [**DeleteServiceAccount**](DefaultApi.md#DeleteServiceAccount) | **Delete** /api/managed-services-api/v1/serviceaccounts/{id} | Delete service account
 [**GetKafkaById**](DefaultApi.md#GetKafkaById) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
-[**GetMetricsByQueryInstant**](DefaultApi.md#GetMetricsByQueryInstant) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query | Get metrics with query instant by kafka id.
-[**GetMetricsByQueryRange**](DefaultApi.md#GetMetricsByQueryRange) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query_range | Get metrics with timeseries query range by kafka id.
+[**GetMetricsByInstantQuery**](DefaultApi.md#GetMetricsByInstantQuery) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query | Get metrics with instant query by kafka id.
+[**GetMetricsByRangeQuery**](DefaultApi.md#GetMetricsByRangeQuery) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query_range | Get metrics with timeseries range query by kafka id.
 [**GetServiceAccountById**](DefaultApi.md#GetServiceAccountById) | **Get** /api/managed-services-api/v1/serviceaccounts/{id} | get service account by id
 [**ListCloudProviderRegions**](DefaultApi.md#ListCloudProviderRegions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 [**ListCloudProviders**](DefaultApi.md#ListCloudProviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
@@ -182,11 +182,11 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## GetMetricsByQueryInstant
+## GetMetricsByInstantQuery
 
-> MetricsQueryInstantList GetMetricsByQueryInstant(ctx, id, optional)
+> MetricsInstantQueryList GetMetricsByInstantQuery(ctx, id, optional)
 
-Get metrics with query instant by kafka id.
+Get metrics with instant query by kafka id.
 
 ### Required Parameters
 
@@ -195,11 +195,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 **ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
 **id** | **string**| The id of record | 
- **optional** | ***GetMetricsByQueryInstantOpts** | optional parameters | nil if no parameters
+ **optional** | ***GetMetricsByInstantQueryOpts** | optional parameters | nil if no parameters
 
 ### Optional Parameters
 
-Optional parameters are passed through a pointer to a GetMetricsByQueryInstantOpts struct
+Optional parameters are passed through a pointer to a GetMetricsByInstantQueryOpts struct
 
 
 Name | Type | Description  | Notes
@@ -209,7 +209,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**MetricsQueryInstantList**](MetricsQueryInstantList.md)
+[**MetricsInstantQueryList**](MetricsInstantQueryList.md)
 
 ### Authorization
 
@@ -225,11 +225,11 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## GetMetricsByQueryRange
+## GetMetricsByRangeQuery
 
-> MetricsQueryRangeList GetMetricsByQueryRange(ctx, id, duration, interval, optional)
+> MetricsRangeQueryList GetMetricsByRangeQuery(ctx, id, duration, interval, optional)
 
-Get metrics with timeseries query range by kafka id.
+Get metrics with timeseries range query by kafka id.
 
 ### Required Parameters
 
@@ -240,11 +240,11 @@ Name | Type | Description  | Notes
 **id** | **string**| The id of record | 
 **duration** | **int64**| The length of time in minutes over which to return the metrics. | [default to 5]
 **interval** | **int64**| The interval in seconds between data points. | [default to 30]
- **optional** | ***GetMetricsByQueryRangeOpts** | optional parameters | nil if no parameters
+ **optional** | ***GetMetricsByRangeQueryOpts** | optional parameters | nil if no parameters
 
 ### Optional Parameters
 
-Optional parameters are passed through a pointer to a GetMetricsByQueryRangeOpts struct
+Optional parameters are passed through a pointer to a GetMetricsByRangeQueryOpts struct
 
 
 Name | Type | Description  | Notes
@@ -256,7 +256,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**MetricsQueryRangeList**](MetricsQueryRangeList.md)
+[**MetricsRangeQueryList**](MetricsRangeQueryList.md)
 
 ### Authorization
 
