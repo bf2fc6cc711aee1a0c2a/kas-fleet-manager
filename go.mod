@@ -1,6 +1,6 @@
 module github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 
-go 1.12
+go 1.15
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
