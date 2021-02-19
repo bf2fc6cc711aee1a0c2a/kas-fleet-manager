@@ -74,7 +74,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	err = wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	checkReadyErr := wait.PollImmediate(interval, timeout, func() (done bool, err error) {
 		foundCluster, findClusterErr := clusterService.FindClusterByID(cluster.ClusterID)
 		if findClusterErr != nil {
 			return true, fmt.Errorf("failed to find cluster with id %s: %s", cluster.ClusterID, err)
@@ -86,15 +86,15 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		return cluster.Status == api.ClusterReady, nil
 	})
 
-	// ensure cluster is provisioned and terraformed successfully
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ID, err)
-	Expect(cluster.DeletedAt).To(BeNil(), fmt.Sprintf("Expected deleted_at property to be empty, instead got %s", cluster.DeletedAt))
-
-	// save cluster struct to be reused in subsequent tests
+	// save cluster struct to be reused in subsequent tests and cleanup script
 	err = utils.PersistClusterStruct(cluster)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
+
+	// ensure cluster is provisioned and terraformed successfully
+	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ID, checkReadyErr)
+	Expect(cluster.DeletedAt).To(BeNil(), fmt.Sprintf("Expected deleted_at property to be empty, instead got %s", cluster.DeletedAt))
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmClusterStatus, err := ocmClient.GetClusterStatus(cluster.ClusterID)
