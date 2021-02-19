@@ -9,9 +9,9 @@
 
 package openapi
 
-// MetricsQueryInstantList struct for MetricsQueryInstantList
-type MetricsQueryInstantList struct {
+// MetricsInstantQueryList struct for MetricsInstantQueryList
+type MetricsInstantQueryList struct {
 	Kind  string         `json:"kind,omitempty"`
 	Id    string         `json:"id,omitempty"`
-	Items []QueryInstant `json:"items,omitempty"`
+	Items []InstantQuery `json:"items,omitempty"`
 }

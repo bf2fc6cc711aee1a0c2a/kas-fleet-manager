@@ -7,16 +7,16 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/errors"
 )
 
-func convertMatrix(from pmod.Matrix) []openapi.QueryRange {
-	series := make([]openapi.QueryRange, len(from))
+func convertMatrix(from pmod.Matrix) []openapi.RangeQuery {
+	series := make([]openapi.RangeQuery, len(from))
 
 	for i, s := range from {
 		series[i] = convertSampleStream(s)
 	}
 	return series
 }
-func convertVector(from pmod.Vector) []openapi.QueryInstant {
-	series := make([]openapi.QueryInstant, len(from))
+func convertVector(from pmod.Vector) []openapi.InstantQuery {
+	series := make([]openapi.InstantQuery, len(from))
 
 	for i, s := range from {
 		series[i] = convertSample(s)
@@ -24,7 +24,7 @@ func convertVector(from pmod.Vector) []openapi.QueryInstant {
 	return series
 }
 
-func convertSampleStream(from *pmod.SampleStream) openapi.QueryRange {
+func convertSampleStream(from *pmod.SampleStream) openapi.RangeQuery {
 	labelSet := make(map[string]string, len(from.Metric))
 	for k, v := range from.Metric {
 		if !isAllowedLabel(string(k)) {
@@ -37,12 +37,12 @@ func convertSampleStream(from *pmod.SampleStream) openapi.QueryRange {
 	for i, v := range from.Values {
 		values[i] = convertSamplePair(&v)
 	}
-	return openapi.QueryRange{
+	return openapi.RangeQuery{
 		Metric: labelSet,
 		Values: values,
 	}
 }
-func convertSample(from *pmod.Sample) openapi.QueryInstant {
+func convertSample(from *pmod.Sample) openapi.InstantQuery {
 	labelSet := make(map[string]string, len(from.Metric))
 	for k, v := range from.Metric {
 		if !isAllowedLabel(string(k)) {
@@ -51,7 +51,7 @@ func convertSample(from *pmod.Sample) openapi.QueryInstant {
 		}
 		labelSet[string(k)] = string(v)
 	}
-	return openapi.QueryInstant{
+	return openapi.InstantQuery{
 		Metric:    labelSet,
 		Timestamp: int64(from.Timestamp),
 		Value:     float64(from.Value),
@@ -64,8 +64,8 @@ func convertSamplePair(from *pmod.SamplePair) openapi.Values {
 		Value:     float64(from.Value),
 	}
 }
-func PresentMetricsByQueryRange(metrics *observatorium.KafkaMetrics) ([]openapi.QueryRange, *errors.ServiceError) {
-	var out []openapi.QueryRange
+func PresentMetricsByRangeQuery(metrics *observatorium.KafkaMetrics) ([]openapi.RangeQuery, *errors.ServiceError) {
+	var out []openapi.RangeQuery
 	for _, m := range *metrics {
 		if m.Err != nil {
 			return nil, errors.GeneralError("error in metric %s: %v", m.Matrix, m.Err)
@@ -76,8 +76,8 @@ func PresentMetricsByQueryRange(metrics *observatorium.KafkaMetrics) ([]openapi.
 	return out, nil
 }
 
-func PresentMetricsByQueryInstant(metrics *observatorium.KafkaMetrics) ([]openapi.QueryInstant, *errors.ServiceError) {
-	var out []openapi.QueryInstant
+func PresentMetricsByInstantQuery(metrics *observatorium.KafkaMetrics) ([]openapi.InstantQuery, *errors.ServiceError) {
+	var out []openapi.InstantQuery
 	for _, m := range *metrics {
 		if m.Err != nil {
 			return nil, errors.GeneralError("error in metric %s: %v", m.Matrix, m.Err)

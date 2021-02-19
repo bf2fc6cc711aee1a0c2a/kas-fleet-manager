@@ -1,4 +1,4 @@
-# QueryInstant
+# InstantQuery
 
 ## Properties
 

@@ -22,7 +22,7 @@ func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
 	}
 }
 
-func (h metricsHandler) GetMetricsByQueryRange(w http.ResponseWriter, r *http.Request) {
+func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	query := r.URL.Query()
@@ -40,11 +40,11 @@ func (h metricsHandler) GetMetricsByQueryRange(w http.ResponseWriter, r *http.Re
 			if err != nil {
 				return nil, err
 			}
-			metricList := openapi.MetricsQueryRangeList{
-				Kind: "Metrics",
+			metricList := openapi.MetricsRangeQueryList{
+				Kind: "MetricsRangeQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetricsByQueryRange(kafkaMetrics)
+			metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -57,7 +57,7 @@ func (h metricsHandler) GetMetricsByQueryRange(w http.ResponseWriter, r *http.Re
 	handleGet(w, r, cfg)
 }
 
-func (h metricsHandler)  GetMetricsByQueryInstant(w http.ResponseWriter, r *http.Request) {
+func (h metricsHandler)  GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	cfg := &handlerConfig{
@@ -70,11 +70,11 @@ func (h metricsHandler)  GetMetricsByQueryInstant(w http.ResponseWriter, r *http
 			if err != nil {
 				return nil, err
 			}
-			metricList := openapi.MetricsQueryInstantList{
-				Kind: "Metrics",
+			metricList := openapi.MetricsInstantQueryList{
+				Kind: "MetricsInstantQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetricsByQueryInstant(kafkaMetrics)
+			metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
