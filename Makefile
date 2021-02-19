@@ -225,12 +225,12 @@ lint: golangci-lint
 
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
-binary: verify lint check-gopath
+binary: verify lint 
 	$(GO) build ./cmd/managed-services-api
 .PHONY: binary
 
 # Install
-install: verify lint check-gopath
+install: verify lint 
 	$(GO) install ./cmd/managed-services-api
 .PHONY: install
 
