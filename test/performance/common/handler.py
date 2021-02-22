@@ -13,7 +13,12 @@ def handle_post(self, url, payload, name):
       response.success()
       get_token(self)
     if response.status_code == 202:
-      return response.json()['id']
+      try:
+        response_json = response.json()
+        if 'id' in response_json:
+          return response_json['id']
+      except ValueError: # no json response
+        return ""
     return ""
 
 # handle delete requests for specified 'url'. 
@@ -26,13 +31,16 @@ def handle_delete_by_id(self, url, name):
       response.success()
       get_token(self)
     if response.status_code >= 500 or response.status_code == 404:
-      response_output = response.json()
-      if 'reason' in response_output:
-        reason = response_output['reason']
-        # due to concurrency sometimes resources have already been deleted
-        if '404' in reason or 'failed to delete service account' in reason or 'Unable to find KafkaResource' in reason or 'not found' in reason:
-          response.success()
-          return 202
+      try:
+        response_output = response.json()
+        if 'reason' in response_output:
+          reason = response_output['reason']
+          # due to concurrency sometimes resources have already been deleted
+          if '404' in reason or 'failed to delete service account' in reason or 'Unable to find KafkaResource' in reason or 'not found' in reason:
+            response.success()
+            return 202
+      except ValueError: # no json response
+        return 500
     if response.status_code < 300: # success
       return response.status_code
     return 500
@@ -48,4 +56,8 @@ def handle_get(self, url, name, return_json_response=False):
     if response.status_code == 404: # 404 isn't a failing request
       response.success()
     if return_json_response == True:
-      return response.json()
+      try:
+        response_json = response.json()
+        return response_json
+      except ValueError: # no json response
+        return []
