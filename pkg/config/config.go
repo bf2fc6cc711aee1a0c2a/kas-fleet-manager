@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
+var projectRootDirectory = GetProjectRootDir()
+
 type ApplicationConfig struct {
 	Server                     *ServerConfig               `json:"server"`
 	Metrics                    *MetricsConfig              `json:"metrics"`
@@ -175,7 +177,7 @@ func readFile(file string) (string, error) {
 	// Ensure the absolute file path is used
 	absFilePath := unquotedFile
 	if !filepath.IsAbs(unquotedFile) {
-		absFilePath = filepath.Join(GetProjectRootDir(), unquotedFile)
+		absFilePath = filepath.Join(projectRootDirectory, unquotedFile)
 	}
 
 	// Read the file
@@ -186,20 +188,30 @@ func readFile(file string) (string, error) {
 	return string(buf), nil
 }
 
-// TODO be sure to change this to the name of the root directory for this project
+// GetProjectRootDir returns the root directory of the project.
+// The root directory of the project is the directory that contains the go.mod file which contains
+// the "gitlab.cee.redhat.com/service/managed-services-api" module name.
 func GetProjectRootDir() string {
-	wd, err := os.Getwd()
+	workingDir, err := os.Getwd()
 	if err != nil {
 		glog.Fatal(err)
 	}
-	dirs := strings.Split(wd, "/")
+	dirs := strings.Split(workingDir, "/")
+	var goModPath string
 	var rootPath string
 	for _, d := range dirs {
 		rootPath = rootPath + "/" + d
-		if d == "managed-services-api" {
+		goModPath = rootPath + "/go.mod"
+		goModFile, err := ioutil.ReadFile(goModPath)
+		if err != nil { // if the file doesn't exist, continue searching
+			continue
+		}
+		// The project root directory is obtained based on the assumption that module name,
+		// "gitlab.cee.redhat.com/service/managed-services-api", is contained in the 'go.mod' file.
+		// Should the module name change in the code repo then it needs to be changed here too.
+		if strings.Contains(string(goModFile),"gitlab.cee.redhat.com/service/managed-services-api")  {
 			break
 		}
 	}
-
 	return rootPath
 }
