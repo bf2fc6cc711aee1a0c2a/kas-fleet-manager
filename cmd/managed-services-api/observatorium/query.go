@@ -13,18 +13,18 @@ import (
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/client/observatorium"
 )
 
-func NewRunListMetricsCommand() *cobra.Command {
+func NewRunMetricsQueryCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "list kafka users metrics from Prometheus",
-		Run:   runListMetrics,
+		Use:   "query",
+		Short: "Get metrics with query instant by kafka id from Observatorium",
+		Run:   runGetMetricsByInstantQuery,
 	}
 	cmd.Flags().String(FlagID, "", "Kafka id")
 	cmd.Flags().String(FlagOwner, "", "Username")
 
 	return cmd
 }
-func runListMetrics(cmd *cobra.Command, _args []string) {
+func runGetMetricsByInstantQuery(cmd *cobra.Command, _args []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 
@@ -35,19 +35,19 @@ func runListMetrics(cmd *cobra.Command, _args []string) {
 	env := environments.Environment()
 	kafkaMetrics := &observatorium.KafkaMetrics{}
 	ctx := auth.SetUsernameContext(context.TODO(), owner)
-	q := observatorium.RangeQuery{}
-	q.FillDefaults()
+	params := observatorium.MetricsReqParams{}
+	params.ResultType = observatorium.Query
 
-	kafkaId, err := env.Services.Observatorium.GetMetricsByKafkaId(ctx, kafkaMetrics, id, q)
+	kafkaId, err := env.Services.Observatorium.GetMetricsByKafkaId(ctx, kafkaMetrics, id, params)
 	if err != nil {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
-	metricsList := openapi.MetricsList{
-		Kind: "Metrics",
+	metricsList := openapi.MetricsInstantQueryList{
+		Kind: "MetricsInstantQueryList",
 		Id:   kafkaId,
 	}
-	metrics, err := presenters.PresentMetrics(kafkaMetrics)
+	metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
 	if err != nil {
 		glog.Error("An error occurred while attempting to present metrics data ", err.Error())
 		return

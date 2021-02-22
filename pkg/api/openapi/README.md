@@ -37,7 +37,8 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**DeleteKafkaById**](docs/DefaultApi.md#deletekafkabyid) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
 *DefaultApi* | [**DeleteServiceAccount**](docs/DefaultApi.md#deleteserviceaccount) | **Delete** /api/managed-services-api/v1/serviceaccounts/{id} | Delete service account
 *DefaultApi* | [**GetKafkaById**](docs/DefaultApi.md#getkafkabyid) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
-*DefaultApi* | [**GetMetricsByKafkaId**](docs/DefaultApi.md#getmetricsbykafkaid) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics | Get metrics by kafka id.
+*DefaultApi* | [**GetMetricsByInstantQuery**](docs/DefaultApi.md#getmetricsbyinstantquery) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query | Get metrics with instant query by kafka id.
+*DefaultApi* | [**GetMetricsByRangeQuery**](docs/DefaultApi.md#getmetricsbyrangequery) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query_range | Get metrics with timeseries range query by kafka id.
 *DefaultApi* | [**GetServiceAccountById**](docs/DefaultApi.md#getserviceaccountbyid) | **Get** /api/managed-services-api/v1/serviceaccounts/{id} | get service account by id
 *DefaultApi* | [**ListCloudProviderRegions**](docs/DefaultApi.md#listcloudproviderregions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 *DefaultApi* | [**ListCloudProviders**](docs/DefaultApi.md#listcloudproviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
@@ -58,16 +59,19 @@ Class | Method | HTTP request | Description
  - [ErrorAllOf](docs/ErrorAllOf.md)
  - [ErrorList](docs/ErrorList.md)
  - [ErrorListAllOf](docs/ErrorListAllOf.md)
+ - [InstantQuery](docs/InstantQuery.md)
  - [KafkaRequest](docs/KafkaRequest.md)
  - [KafkaRequestAllOf](docs/KafkaRequestAllOf.md)
  - [KafkaRequestList](docs/KafkaRequestList.md)
  - [KafkaRequestListAllOf](docs/KafkaRequestListAllOf.md)
  - [KafkaRequestPayload](docs/KafkaRequestPayload.md)
  - [List](docs/List.md)
- - [Metric](docs/Metric.md)
- - [MetricsList](docs/MetricsList.md)
- - [MetricsListAllOf](docs/MetricsListAllOf.md)
+ - [MetricsInstantQueryList](docs/MetricsInstantQueryList.md)
+ - [MetricsInstantQueryListAllOf](docs/MetricsInstantQueryListAllOf.md)
+ - [MetricsRangeQueryList](docs/MetricsRangeQueryList.md)
+ - [MetricsRangeQueryListAllOf](docs/MetricsRangeQueryListAllOf.md)
  - [ObjectReference](docs/ObjectReference.md)
+ - [RangeQuery](docs/RangeQuery.md)
  - [ServiceAccount](docs/ServiceAccount.md)
  - [ServiceAccountAllOf](docs/ServiceAccountAllOf.md)
  - [ServiceAccountList](docs/ServiceAccountList.md)

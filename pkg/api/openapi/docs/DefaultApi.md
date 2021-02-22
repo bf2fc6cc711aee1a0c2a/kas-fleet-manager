@@ -9,7 +9,8 @@ Method | HTTP request | Description
 [**DeleteKafkaById**](DefaultApi.md#DeleteKafkaById) | **Delete** /api/managed-services-api/v1/kafkas/{id} | Delete a kafka request by id
 [**DeleteServiceAccount**](DefaultApi.md#DeleteServiceAccount) | **Delete** /api/managed-services-api/v1/serviceaccounts/{id} | Delete service account
 [**GetKafkaById**](DefaultApi.md#GetKafkaById) | **Get** /api/managed-services-api/v1/kafkas/{id} | Get a kafka request by id
-[**GetMetricsByKafkaId**](DefaultApi.md#GetMetricsByKafkaId) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics | Get metrics by kafka id.
+[**GetMetricsByInstantQuery**](DefaultApi.md#GetMetricsByInstantQuery) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query | Get metrics with instant query by kafka id.
+[**GetMetricsByRangeQuery**](DefaultApi.md#GetMetricsByRangeQuery) | **Get** /api/managed-services-api/v1/kafkas/{id}/metrics/query_range | Get metrics with timeseries range query by kafka id.
 [**GetServiceAccountById**](DefaultApi.md#GetServiceAccountById) | **Get** /api/managed-services-api/v1/serviceaccounts/{id} | get service account by id
 [**ListCloudProviderRegions**](DefaultApi.md#ListCloudProviderRegions) | **Get** /api/managed-services-api/v1/cloud_providers/{id}/regions | Retrieves the list of supported regions of the supported cloud provider.
 [**ListCloudProviders**](DefaultApi.md#ListCloudProviders) | **Get** /api/managed-services-api/v1/cloud_providers | Retrieves the list of supported cloud providers.
@@ -181,11 +182,54 @@ Name | Type | Description  | Notes
 [[Back to README]](../README.md)
 
 
-## GetMetricsByKafkaId
+## GetMetricsByInstantQuery
 
-> MetricsList GetMetricsByKafkaId(ctx, id, duration, interval, optional)
+> MetricsInstantQueryList GetMetricsByInstantQuery(ctx, id, optional)
 
-Get metrics by kafka id.
+Get metrics with instant query by kafka id.
+
+### Required Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **string**| The id of record | 
+ **optional** | ***GetMetricsByInstantQueryOpts** | optional parameters | nil if no parameters
+
+### Optional Parameters
+
+Optional parameters are passed through a pointer to a GetMetricsByInstantQueryOpts struct
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+
+ **filters** | [**optional.Interface of []string**](string.md)| List of metrics to fetch. Fetch all metrics when empty. List entries are kafka internal metric names. | [default to []]
+
+### Return type
+
+[**MetricsInstantQueryList**](MetricsInstantQueryList.md)
+
+### Authorization
+
+[Bearer](../README.md#Bearer)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetMetricsByRangeQuery
+
+> MetricsRangeQueryList GetMetricsByRangeQuery(ctx, id, duration, interval, optional)
+
+Get metrics with timeseries range query by kafka id.
 
 ### Required Parameters
 
@@ -196,11 +240,11 @@ Name | Type | Description  | Notes
 **id** | **string**| The id of record | 
 **duration** | **int64**| The length of time in minutes over which to return the metrics. | [default to 5]
 **interval** | **int64**| The interval in seconds between data points. | [default to 30]
- **optional** | ***GetMetricsByKafkaIdOpts** | optional parameters | nil if no parameters
+ **optional** | ***GetMetricsByRangeQueryOpts** | optional parameters | nil if no parameters
 
 ### Optional Parameters
 
-Optional parameters are passed through a pointer to a GetMetricsByKafkaIdOpts struct
+Optional parameters are passed through a pointer to a GetMetricsByRangeQueryOpts struct
 
 
 Name | Type | Description  | Notes
@@ -212,7 +256,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**MetricsList**](MetricsList.md)
+[**MetricsRangeQueryList**](MetricsRangeQueryList.md)
 
 ### Authorization
 

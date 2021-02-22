@@ -23,7 +23,7 @@ func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pM
 	return values, []string{}, nil
 }
 
-//Query(ctx context.Context, query string, ts time.Time) (model.Value, Warnings, error)
+//QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the kafka metrics
 func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryRangeData(query)
 	return values, []string{}, nil
@@ -110,13 +110,13 @@ var rangeQuerydata = map[string]pModel.Matrix{
 		fakeMetricData("kubelet_volume_stats_available_bytes", 220792516608),
 	},
 	"kafka_server_brokertopicmetrics_messages_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 0),
+		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 3040),
 	},
 	"kafka_server_brokertopicmetrics_bytes_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 0),
+		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 293617),
 	},
 	"kafka_server_brokertopicmetrics_bytes_out_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 0),
+		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 152751),
 	},
 	"kafka_controller_kafkacontroller_offline_partitions_count": {
 		fakeMetricData("kafka_controller_kafkacontroller_offline_partitions_count", 0),
@@ -132,10 +132,9 @@ var rangeQuerydata = map[string]pModel.Matrix{
 func fakeMetricData(name string, value int) *pModel.SampleStream {
 	return &pModel.SampleStream{
 		Metric: pModel.Metric{
-			"namespace": "kafka-namespace",
-			"__name__":  pModel.LabelValue(name),
-			"tenant_id": "whatever",
-			"job":       "whatever",
+			"__name__":           pModel.LabelValue(name),
+			"pod":                "whatever",
+			"strimzi_io_cluster": "whatever",
 		},
 		Values: []pModel.SamplePair{{Timestamp: 0, Value: pModel.SampleValue(value)},
 			{Timestamp: 0, Value: pModel.SampleValue(value)}},
@@ -152,6 +151,41 @@ var queryData = map[string]pModel.Vector{
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     1,
+		},
+	},
+
+	"kafka_server_brokertopicmetrics_bytes_in_total": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_server_brokertopicmetrics_bytes_in_total",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     293617,
+		},
+	},
+	"kafka_server_brokertopicmetrics_messages_in_total": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_server_brokertopicmetrics_messages_in_total",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     1016,
+		},
+	},
+	"kubelet_volume_stats_available_bytes": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":              "kubelet_volume_stats_available_bytes",
+				"persistentvolumeclaim": "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     220792492032,
 		},
 	},
 }

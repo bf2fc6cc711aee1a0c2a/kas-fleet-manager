@@ -12,21 +12,19 @@ import (
 	"time"
 )
 
-type metricrHandler struct {
+type metricsHandler struct {
 	service services.ObservatoriumService
 }
 
-var _ RestHandler = metricrHandler{}
-
-func NewMetricsHandler(service services.ObservatoriumService) *metricrHandler {
-	return &metricrHandler{
+func NewMetricsHandler(service services.ObservatoriumService) *metricsHandler {
+	return &metricsHandler{
 		service: service,
 	}
 }
 
-func (h metricrHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	params := observatorium.RangeQuery{}
+	params := observatorium.MetricsReqParams{}
 	query := r.URL.Query()
 	cfg := &handlerConfig{
 		Validate: []validate{
@@ -35,17 +33,18 @@ func (h metricrHandler) Get(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()
+			params.ResultType = observatorium.RangeQuery
 			extractMetricsQueryParams(r, &params)
 			kafkaMetrics := &observatorium.KafkaMetrics{}
 			foundKafkaId, err := h.service.GetMetricsByKafkaId(ctx, kafkaMetrics, id, params)
 			if err != nil {
 				return nil, err
 			}
-			metricList := openapi.MetricsList{
-				Kind: "Metrics",
+			metricList := openapi.MetricsRangeQueryList{
+				Kind: "MetricsRangeQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetrics(kafkaMetrics)
+			metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -57,22 +56,38 @@ func (h metricrHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	handleGet(w, r, cfg)
 }
-func (h metricrHandler) List(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("list"))
+
+func (h metricsHandler)  GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	params := observatorium.MetricsReqParams{}
+	cfg := &handlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			ctx := r.Context()
+			params.ResultType = observatorium.Query
+			extractMetricsQueryParams(r, &params)
+			kafkaMetrics := &observatorium.KafkaMetrics{}
+			foundKafkaId, err := h.service.GetMetricsByKafkaId(ctx, kafkaMetrics, id, params)
+			if err != nil {
+				return nil, err
+			}
+			metricList := openapi.MetricsInstantQueryList{
+				Kind: "MetricsInstantQueryList",
+				Id:   foundKafkaId,
+			}
+			metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
+			if err != nil {
+				return nil, err
+			}
+			metricList.Items = metrics
+
+			return metricList, nil
+		},
+		ErrorHandler: handleError,
+	}
+	handleGet(w, r, cfg)
 }
 
-func (h metricrHandler) Create(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("create"))
-}
-
-func (h metricrHandler) Patch(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("patch"))
-}
-
-func (h metricrHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("delete"))
-}
-func extractMetricsQueryParams(r *http.Request, q *observatorium.RangeQuery) {
+func extractMetricsQueryParams(r *http.Request, q *observatorium.MetricsReqParams) {
 	q.FillDefaults()
 	queryParams := r.URL.Query()
 	if dur := queryParams.Get("duration"); dur != "" {

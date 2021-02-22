@@ -150,7 +150,8 @@ func NewAPIServer() Server {
 
 	//  /api/managed-services-api/v1/kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
-	apiV1MetricsRouter.HandleFunc("", metricsHandler.Get).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
 	apiV1MetricsRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 	if env().Config.ConnectorsConfig.Enabled {
