@@ -2,21 +2,21 @@
 kind: Template
 apiVersion: v1
 metadata:
-  name: managed-services-api-service
+  name: kas-fleet-manager-service
   annotations:
-    openshift.io/display-name: Managed Services API
-    description: Managed Services API for managed Kafka deployment
+    openshift.io/display-name: Kas Fleet Manager API
+    description: Kafka Services Fleet Manager API to managed Kafka and kafka connectors deployment
     tags: golang,uhc,service-delivery
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
     template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
 labels:
-  template: managed-services-api
+  template: kas-fleet-manager
 parameters:
 
 - name: ENVIRONMENT
   displayName: Environment
-  description: Which Managed Service API environment to use for this deployment
+  description: Which Kafka Service Fleet Manager environment to use for this deployment
   value: production
 
 - name: IMAGE_REGISTRY
@@ -346,19 +346,19 @@ objects:
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
-      name: managed-services-api
+      name: kas-fleet-manager
       labels:
-        app: managed-services-api
+        app: kas-fleet-manager
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: managed-services-api
+      name: kas-fleet-manager
       labels:
-        app: managed-services-api
+        app: kas-fleet-manager
     spec:
       selector:
         matchLabels:
-          app: managed-services-api
+          app: kas-fleet-manager
       replicas: ${{REPLICAS}}
       strategy:
         rollingUpdate:
@@ -368,23 +368,23 @@ objects:
       template:
         metadata:
           labels:
-            app: managed-services-api
+            app: kas-fleet-manager
         spec:
-          serviceAccount: managed-services-api
-          serviceAccountName: managed-services-api
+          serviceAccount: kas-fleet-manager
+          serviceAccountName: kas-fleet-manager
           volumes:
           - name: tls
             secret:
-              secretName: managed-services-api-tls
+              secretName: kas-fleet-manager-tls
           - name: service
             secret:
-              secretName: managed-services-api
+              secretName: kas-fleet-manager
           - name: dataplane-certificate
             secret:
-              secretName: managed-services-api-dataplane-certificate
+              secretName: kas-fleet-manager-dataplane-certificate
           - name: rds
             secret:
-              secretName: managed-services-api-rds
+              secretName: kas-fleet-manager-rds
           - name: ocm-managed-services-providers-config
             configMap:
               name: ocm-managed-services-providers-config
@@ -553,16 +553,16 @@ objects:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: managed-services-api
+      name: kas-fleet-manager
       labels:
-        app: managed-services-api
+        app: kas-fleet-manager
         port: api
       annotations:
-        description: Exposes and load balances the managed-services-api pods
-        service.alpha.openshift.io/serving-cert-secret-name: managed-services-api-tls
+        description: Exposes and load balances the kas-fleet-manager pods
+        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-tls
     spec:
       selector:
-        app: managed-services-api
+        app: kas-fleet-manager
       ports:
         - port: 8000
           targetPort: 8000
@@ -573,16 +573,16 @@ objects:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: managed-services-api-metrics
+      name: kas-fleet-manager-metrics
       labels:
-        app: managed-services-api
+        app: kas-fleet-manager
         port: metrics
       annotations:
         description: Exposes and load balances the ocm example service pods metrics endpoint
-        service.alpha.openshift.io/serving-cert-secret-name: managed-services-api-metrics-tls
+        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-metrics-tls
     spec:
       selector:
-        app: managed-services-api
+        app: kas-fleet-manager
       ports:
         - port: 8080
           targetPort: 8080
@@ -591,13 +591,13 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: managed-services-api-healthcheck
+      name: kas-fleet-manager-healthcheck
       labels:
-        app: managed-services-api
+        app: kas-fleet-manager
         port: healthcheck
     spec:
       selector:
-        app: managed-services-api
+        app: kas-fleet-manager
       ports:
         - port: 8083
           targetPort: 8083

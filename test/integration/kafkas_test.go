@@ -110,8 +110,8 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
 
 	// delete test kafka to free up resources on an OSD cluster
 	deleteTestKafka(ctx, client, foundKafka.Id)
@@ -547,8 +547,8 @@ func TestKafkaDelete_Success(t *testing.T) {
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "It should be possible to retrieve kafka marked for deletion")
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
 	// wait for kafka to be deleted
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
@@ -706,8 +706,8 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	kafkaList, _, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
 	// Check status of soft deleted kafka request. Status should not be 'deprovision'
 	db := h.Env().DBFactory.New()
@@ -739,8 +739,8 @@ func TestKafkaDelete_Fail(t *testing.T) {
 	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).To(HaveOccurred())
 	// The id is invalid, so the metric is not expected to exist
-	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsSuccessCount), false)
-	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.ManagedServicesSystem, metrics.KafkaOperationsTotalCount), false)
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount), false)
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount), false)
 }
 
 // TestKafkaDelete_NonOwnerDelete
