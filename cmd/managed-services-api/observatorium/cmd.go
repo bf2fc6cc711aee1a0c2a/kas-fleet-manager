@@ -8,9 +8,9 @@ import (
 
 func NewRunObservatoriumCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "observatorium",
-		Short: "Perform managed-services-api observatorium actions directly",
-		Long:  "Perform managed-services-api observatorium actions directly.",
+		Use:   "metrics",
+		Short: "Perform managed-services-api metrics actions directly",
+		Long:  "Perform managed-services-api metrics actions directly.",
 	}
 	err := environments.Environment().AddFlags(cmd.PersistentFlags())
 	if err != nil {
@@ -19,6 +19,7 @@ func NewRunObservatoriumCommand() *cobra.Command {
 
 	// add sub-commands
 	cmd.AddCommand(NewRunGetStateCommand())
-	cmd.AddCommand(NewRunListMetricsCommand())
+	cmd.AddCommand(NewRunMetricsQueryRangeCommand())
+	cmd.AddCommand(NewRunMetricsQueryCommand())
 	return cmd
 }
