@@ -11,7 +11,7 @@ set -e
 docker network create managed-services-api-network || true
 
 docker run \
-  --name=managed-services-api-db \
+  --name=kas-fleet-manager-db \
   --net managed-services-api-network \
   -e POSTGRES_PASSWORD=$(cat secrets/db.password) \
   -e POSTGRES_USER=$(cat secrets/db.user) \

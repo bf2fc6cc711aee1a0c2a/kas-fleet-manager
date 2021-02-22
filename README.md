@@ -179,7 +179,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 
 The service can be accessed by via the host of the route created by the service deployment.
 ```
-oc get route managed-services-api
+oc get route kas-fleet-manager
 ```
 
 ### Removing the Service Deployment from the OpenShift

@@ -8,8 +8,8 @@
 
 set -e
 
-docker stop managed-services-api-db
+docker stop kas-fleet-manager-db
 
-docker rm managed-services-api-db
+docker rm kas-fleet-manager-db
 
 docker network rm managed-services-api-network
