@@ -4,10 +4,11 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/dgrijalva/jwt-go"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -139,11 +140,7 @@ func (authHelper *AuthHelper) GetJWTFromSignedToken(signedToken string) (*jwt.To
 
 // Parses JWT Private and Public Keys from the given path
 func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.PublicKey, error) {
-	projectRootDir, err := getProjectRootDir()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get project root directory: %s", err.Error())
-	}
-
+	projectRootDir := shared.GetProjectRootDir()
 	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFilePath))
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to read JWT key file %s: %s", jwtKeyFilePath, err.Error())
@@ -164,22 +161,4 @@ func ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath string) (*rsa.PrivateKey, *rsa.P
 	}
 
 	return privateKey, pubKey, nil
-}
-
-// Get the root directory of the project, so the helper can be used from within tests in any subdirectory
-func getProjectRootDir() (string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	dirs := strings.Split(wd, "/")
-	var rootPath string
-	for _, d := range dirs {
-		rootPath = rootPath + "/" + d
-		if d == "managed-services-api" {
-			break
-		}
-	}
-
-	return rootPath, nil
 }
