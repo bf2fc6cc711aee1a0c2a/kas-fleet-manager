@@ -31,8 +31,8 @@ const (
 	EndpointPathCluster = "/api/clusters_mgmt/v1/clusters/{id}"
 	// EndpointPathSyncsets ocm clusters management service syncset endpoint
 	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets"
-	// EndpointPathSyncsetsDelete ocm clusters management service syncset endpoint delete
-	EndpointPathSyncsetsDelete = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID}"
+	// EndpointPathSyncset ocm clusters management service syncset endpoint
+	EndpointPathSyncset = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID}"
 	// EndpointPathIngresses ocm cluster management ingress endpoint
 	EndpointPathIngresses = "/api/clusters_mgmt/v1/clusters/{id}/ingresses"
 	// EndpointPathCloudProviders ocm cluster management cloud providers endpoint
@@ -99,11 +99,12 @@ const (
 // variables for endpoints
 var (
 	EndpointClusterGet              = Endpoint{EndpointPathCluster, http.MethodGet}
-	EndpointKafkaDelete             = Endpoint{EndpointPathSyncsetsDelete, http.MethodDelete}
+	EndpointKafkaDelete             = Endpoint{EndpointPathSyncset, http.MethodDelete}
 	EndpointClustersGet             = Endpoint{EndpointPathClusters, http.MethodGet}
 	EndpointClustersPost            = Endpoint{EndpointPathClusters, http.MethodPost}
 	EndpointClustersPatch           = Endpoint{EndpointPathCluster, http.MethodPatch}
-	EndpointClusterSyncsetPost      = Endpoint{EndpointPathSyncsets, http.MethodPost}
+	EndpointClusterSyncsetsPost     = Endpoint{EndpointPathSyncsets, http.MethodPost}
+	EndpointClusterSyncsetGet       = Endpoint{EndpointPathSyncset, http.MethodGet}
 	EndpointClusterIngressGet       = Endpoint{EndpointPathIngresses, http.MethodGet}
 	EndpointCloudProvidersGet       = Endpoint{EndpointPathCloudProviders, http.MethodGet}
 	EndpointCloudProviderGet        = Endpoint{EndpointPathCloudProvider, http.MethodGet}
@@ -208,13 +209,18 @@ func (b *MockConfigurableServerBuilder) SetClustersPatchResponse(cluster *cluste
 	b.handlerRegister[EndpointClustersPatch] = buildMockRequestHandler(cluster, err)
 }
 
+// SetClusterSyncsetGetResponse set a mock response syncset or error for the GET /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID}
+func (b *MockConfigurableServerBuilder) SetClusterSyncsetGetResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterSyncsetGet] = buildMockRequestHandler(syncset, err)
+}
+
 // SetClusterSyncsetPostResponse set a mock response syncset or error for the POST /api/clusters_mgmt/v1/clusters/{id}/syncsets endpoint
 func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClusterSyncsetPost] = buildMockRequestHandler(syncset, err)
+	b.handlerRegister[EndpointClusterSyncsetsPost] = buildMockRequestHandler(syncset, err)
 }
 
 func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostRequestHandler(customMockRequestHandler func() func(w http.ResponseWriter, r *http.Request)) {
-	b.handlerRegister[EndpointClusterSyncsetPost] = customMockRequestHandler()
+	b.handlerRegister[EndpointClusterSyncsetsPost] = customMockRequestHandler()
 }
 
 // SetClusterIngressGetResponse set a mock response ingress or error for the GET /api/clusters_mgmt/v1/clusters/{id}/ingresses endpoint
@@ -333,7 +339,8 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointClustersGet:             buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPatch:           buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterSyncsetPost:      buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetsPost:     buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetGet:       buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterIngressGet:       buildMockRequestHandler(MockIngressList, nil),
 		EndpointCloudProvidersGet:       buildMockRequestHandler(MockCloudProviderList, nil),
 		EndpointCloudProviderGet:        buildMockRequestHandler(MockCloudProvider, nil),
