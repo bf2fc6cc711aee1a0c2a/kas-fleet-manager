@@ -135,18 +135,19 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
-	account = h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(account)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	acc := h.NewRandAccount()
+	context := h.NewAuthenticatedContext(acc)
+	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 	err = h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	filters := openapi.GetMetricsByRangeQueryOpts{}
-	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(ctx, kafka.Id, 5, 30, &filters)
+	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(context, kafka.Id, 5, 30, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
+	deleteTestKafka(ctx, client, foundKafka.Id)
 }
 func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -204,16 +205,17 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
-	account = h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(account)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	acc := h.NewRandAccount()
+	context := h.NewAuthenticatedContext(acc)
+	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 	err = h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	filters := openapi.GetMetricsByInstantQueryOpts{}
-	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(ctx, kafka.Id, &filters)
+	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(context, kafka.Id, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
+	deleteTestKafka(ctx, client, foundKafka.Id)
 }
