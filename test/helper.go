@@ -5,9 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 	"io/ioutil"
-	"log"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
@@ -15,6 +13,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"gitlab.cee.redhat.com/service/managed-services-api/pkg/services"
 
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/metrics"
 	"gitlab.cee.redhat.com/service/managed-services-api/pkg/ocm"
@@ -605,7 +605,7 @@ func (helper *Helper) OpenapiError(err error) openapi.Error {
 }
 
 func parseJWTKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
-	projectRootDir := getProjectRootDir()
+	projectRootDir := config.GetProjectRootDir()
 	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFile))
 	if err != nil {
 		err = fmt.Errorf("Unable to read JWT key file %s: %s", jwtKeyFile, err)
@@ -630,22 +630,4 @@ func parseJWTKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
 	}
 
 	return privateKey, pubKey, nil
-}
-
-// Get the root directory of the project, so the helper can be used from within tests in any subdirectory
-func getProjectRootDir() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	dirs := strings.Split(wd, "/")
-	var rootPath string
-	for _, d := range dirs {
-		rootPath = rootPath + "/" + d
-		if d == "managed-services-api" {
-			break
-		}
-	}
-
-	return rootPath
 }
