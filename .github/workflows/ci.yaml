@@ -98,23 +98,17 @@ jobs:
           go-version: "1.13"
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
-        with:
-          # This will be used to determine Project root directory.
-          # The heuristic to do so will need improvement and there is a separate issue for that. 
-          path: managed-services-api
       - name: Cache go module
         uses: actions/cache@v2
         with:
           path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('managed-services-api/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Setup tests secrets
-        working-directory: managed-services-api
         run: |
           make ocm/setup aws/setup keycloak/setup kafkacert/setup
       - name: Lint & Test
-        working-directory: managed-services-api
         run: |
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin
