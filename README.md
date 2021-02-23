@@ -47,6 +47,21 @@ $ git checkout master
 $ make binary
 $ ./managed-services-api -h
 ```
+
+## Configuring Observability
+The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization. 
+For development cycles, you will need to generate a personal token for your own GitHub user (with bf2 access) and place it within
+the `secrets/observability-config-access.token` file.
+
+To generate a new token:
+1. Follow the steps [found here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token), 
+making sure to check **ONLY** the `repo` box at the top of the scopes/permissions list (which will check the 3 subcategory boxes beneath it).
+2. Copy the value of your Personal Access Token to a secure private location. Once you leave the page, you cannot access the value
+again & you will be forced to reset the token to receive a new value should you lose the original.
+3. Paste the token value in the `secrets/observability-config-access.token` file.
+4. Take care not to push your PAT to any repository as if you do, GitHub will automatically revoke your token as soon as you push and you'll need to 
+follow this process again to generate a new token.
+
 ## Running the Service locally
 
 1. Set one of the OCM Env (See `Environments` section for list of environments)
