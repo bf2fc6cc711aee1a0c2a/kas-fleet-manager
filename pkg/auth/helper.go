@@ -14,27 +14,34 @@ import (
 )
 
 const (
-	ocmTokenIssuer = "https://sso.redhat.com/auth/realms/redhat-external"
-	tokenClaimType = "Bearer"
-	TokenExpMin    = 30
-	JwkKID         = "kastestkey"
+	defaultOcmTokenIssuer = "https://sso.redhat.com/auth/realms/redhat-external"
+	tokenClaimType        = "Bearer"
+	TokenExpMin           = 30
+	JwkKID                = "kastestkey"
 )
 
 type AuthHelper struct {
-	JWTPrivateKey *rsa.PrivateKey
-	JWTCA         *rsa.PublicKey
+	JWTPrivateKey  *rsa.PrivateKey
+	JWTCA          *rsa.PublicKey
+	ocmTokenIssuer string
 }
 
 // Creates an auth helper to be used for creating new accounts and jwt.
-func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath string) (*AuthHelper, error) {
+func NewAuthHelper(jwtKeyFilePath, jwtCAFilePath, ocmTokenIssuer string) (*AuthHelper, error) {
 	jwtKey, jwtCA, err := ParseJWTKeys(jwtKeyFilePath, jwtCAFilePath)
 	if err != nil {
 		return nil, err
 	}
 
+	ocmTokenIss := ocmTokenIssuer
+	if ocmTokenIssuer == "" {
+		ocmTokenIss = defaultOcmTokenIssuer
+	}
+
 	return &AuthHelper{
-		JWTPrivateKey: jwtKey,
-		JWTCA:         jwtCA,
+		JWTPrivateKey:  jwtKey,
+		JWTCA:          jwtCA,
+		ocmTokenIssuer: ocmTokenIss,
 	}, nil
 }
 
@@ -86,8 +93,9 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		"exp": time.Now().Add(time.Minute * time.Duration(TokenExpMin)).Unix(),
 	}
 
-	if jwtClaims == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == ocmTokenIssuer {
+	if jwtClaims == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.ocmTokenIssuer {
 		// Set default claim values for ocm tokens
+		claims["iss"] = authHelper.ocmTokenIssuer
 		claims[ocmUsernameKey] = account.Username()
 		claims["first_name"] = account.FirstName()
 		claims["last_name"] = account.LastName()

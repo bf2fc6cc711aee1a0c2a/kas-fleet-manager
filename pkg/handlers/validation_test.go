@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -174,7 +175,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 
 	username := "username"
 
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}

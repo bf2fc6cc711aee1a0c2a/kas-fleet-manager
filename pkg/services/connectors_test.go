@@ -54,7 +54,7 @@ func Test_connectorsService_Get(t *testing.T) {
 	}
 
 	// Create authenticated context
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}

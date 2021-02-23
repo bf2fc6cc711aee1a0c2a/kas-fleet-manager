@@ -107,7 +107,7 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 			glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 		}
 
-		authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile)
+		authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 		if err != nil {
 			helper.T.Errorf("failed to create a new auth helper %s", err.Error())
 		}

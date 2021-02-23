@@ -70,7 +70,7 @@ func Test_kafkaService_Get(t *testing.T) {
 		id  string
 	}
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
@@ -704,7 +704,7 @@ func Test_kafkaService_List(t *testing.T) {
 		pagingMeta *api.PagingMeta
 	}
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}

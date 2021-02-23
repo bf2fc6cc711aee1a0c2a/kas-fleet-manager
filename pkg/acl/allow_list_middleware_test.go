@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -44,7 +45,7 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 }
 
 func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +190,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 }
 
 func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}

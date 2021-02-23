@@ -277,7 +277,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 		ctx                   context.Context
 	}
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
@@ -385,7 +385,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 		ctx context.Context
 	}
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
@@ -470,7 +470,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 
 	var testServiceAcc []api.ServiceAccount
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
@@ -551,7 +551,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 		ctx context.Context
 	}
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
@@ -798,7 +798,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 		ctx context.Context
 	}
 
-	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile)
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
