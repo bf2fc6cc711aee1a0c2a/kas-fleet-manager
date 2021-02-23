@@ -25,7 +25,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaDomainName:                "kafka.devshift.org",
 		NumOfBrokers:                   3,
 		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1-1",
-		KafkaAdminServerImage:          "quay.io/sknot/strimzi-admin:0.0.3",
+		KafkaAdminServerImage:          "quay.io/sknot/kafka-admin-api:0.0.1",
 	}
 }
 
