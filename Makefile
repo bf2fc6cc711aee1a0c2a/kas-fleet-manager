@@ -207,7 +207,8 @@ endif
 .PHONY: check-gopath
 
 # Verifies that source passes standard checks.
-verify: check-gopath
+# Also verifies that the OpenAPI spec is correct.
+verify: check-gopath openapi/validate
 	$(GO) vet \
 		./cmd/... \
 		./pkg/... \
