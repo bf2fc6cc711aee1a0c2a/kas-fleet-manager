@@ -40,9 +40,7 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			validateLength(&resource.Metadata.Name, "name", &minRequiredFieldLength, &maxKafkaNameLength),
 			validateLength(&resource.Metadata.KafkaId, "kafka id", &minRequiredFieldLength, &maxKafkaNameLength),
 			validateLength(&resource.ConnectorTypeId, "connector type id", &minRequiredFieldLength, &maxKafkaNameLength),
-
 			//validateCloudProvider(&resource, h.config, "creating connector"),
-			validateMultiAZEnabled(&resource.DeploymentLocation.MultiAz, "creating connector"),
 			validateConnectorSpec(h.connectorTypesService, &resource, tid),
 		},
 
@@ -68,6 +66,75 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 			return presenters.PresentConnector(convResource)
+		},
+		ErrorHandler: handleError,
+	}
+
+	// return 202 status accepted
+	handle(w, r, cfg, http.StatusAccepted)
+}
+
+func (h connectorsHandler) Update(w http.ResponseWriter, r *http.Request) {
+	var patch openapi.Connector
+	kid := mux.Vars(r)["id"]
+	cid := mux.Vars(r)["cid"]
+	tid := mux.Vars(r)["tid"]
+
+	cfg := &handlerConfig{
+		MarshalInto: &patch,
+		Action: func() (interface{}, *errors.ServiceError) {
+
+			dbresource, err := h.connectorsService.Get(r.Context(), kid, cid, tid)
+			if err != nil {
+				return nil, err
+			}
+
+			resource, err := presenters.PresentConnector(dbresource)
+			if err != nil {
+				return nil, err
+			}
+
+			// Apply the patch...
+			if patch.Metadata.Name != "" {
+				resource.Metadata.Name = patch.Metadata.Name
+			}
+			if patch.ConnectorTypeId != "" {
+				resource.ConnectorTypeId = patch.ConnectorTypeId
+			}
+			if patch.ConnectorSpec != nil {
+				resource.ConnectorSpec = patch.ConnectorSpec
+			}
+			if patch.Metadata.ResourceVersion != 0 {
+				resource.Metadata.ResourceVersion = patch.Metadata.ResourceVersion
+			}
+
+			validates := []validate{
+				validateAsyncEnabled(r, "creating connector"),
+				validateLength(&resource.Metadata.Name, "name", &minRequiredFieldLength, &maxKafkaNameLength),
+				validateLength(&resource.Metadata.KafkaId, "kafka id", &minRequiredFieldLength, &maxKafkaNameLength),
+				validateLength(&resource.ConnectorTypeId, "connector type id", &minRequiredFieldLength, &maxKafkaNameLength),
+
+				//validateCloudProvider(&resource, h.config, "creating connector"),
+				validateConnectorSpec(h.connectorTypesService, &resource, tid),
+			}
+
+			for _, v := range validates {
+				err := v()
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			p, svcErr := presenters.ConvertConnector(resource)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+
+			err = h.connectorsService.Update(r.Context(), p)
+			if err != nil {
+				return nil, err
+			}
+			return presenters.PresentConnector(p)
 		},
 		ErrorHandler: handleError,
 	}

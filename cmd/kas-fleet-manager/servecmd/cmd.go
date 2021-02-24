@@ -74,6 +74,14 @@ func runServe(cmd *cobra.Command, args []string) {
 	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService, observatoriumService)
 	workerList = append(workerList, kafkaManager)
 
+	// add the connector manager worker
+	workerList = append(workerList, workers.NewConnectorManager(
+		uuid.New().String(),
+		environments.Environment().Services.Connectors,
+		environments.Environment().Services.ConnectorCluster,
+		environments.Environment().Services.Observatorium,
+	))
+
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
 	leaderElectionManager := workers.NewLeaderElectionManager(workerList, environments.Environment().DBFactory)
 	leaderElectionManager.Start()

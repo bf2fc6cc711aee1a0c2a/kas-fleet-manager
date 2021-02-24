@@ -4,8 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/url"
 	"regexp"
+	"strings"
+
+	"github.com/xeipuuv/gojsonschema"
+
+	"net/url"
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
@@ -13,8 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-
-	"github.com/xeipuuv/gojsonschema"
 )
 
 var (
@@ -192,4 +194,18 @@ func validatQueryParam(queryParams url.Values, field string) validate {
 		return nil
 	}
 
+}
+
+func validateIsOneOf(field string, value *string, options ...string) validate {
+	return func() *errors.ServiceError {
+		if value == nil {
+			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, 0)
+		}
+		for _, option := range options {
+			if *value == option {
+				return nil
+			}
+		}
+		return errors.MinimumFieldLengthNotReached("%s is not valid. Must be one of: %s", field, strings.Join(options, ","))
+	}
 }

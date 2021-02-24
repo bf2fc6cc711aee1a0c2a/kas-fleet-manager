@@ -25,6 +25,8 @@ func path(i interface{}) string {
 		return fmt.Sprintf("kafkas/%s/connector-deployments", i.KafkaID)
 	case api.ConnectorType, *api.ConnectorType:
 		return "connector-types"
+	case api.ConnectorCluster, *api.ConnectorCluster:
+		return "kafka-connector-clusters"
 	case errors.ServiceError, *errors.ServiceError:
 		return "errors"
 	case api.ServiceAccount, *api.ServiceAccount:
