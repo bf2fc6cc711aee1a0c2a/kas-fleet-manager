@@ -3,6 +3,8 @@ name: Lint & Test
 
 on:
   push:
+    branches:
+      - main
     paths-ignore:
       - '*.md'
       - 'build_deploy.sh'
