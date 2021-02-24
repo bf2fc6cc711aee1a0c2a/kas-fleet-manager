@@ -57,7 +57,7 @@ class QuickstartUser(HttpUser):
         if kafka_id != '':
           kafkas_created = kafkas_created + 1
           kafkas_list.append(kafka_id)
-          remove_kafka(self, kafka_id)
+          remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
           if kafkas_created >= seed_kafkas:
             time.sleep(60) # wait for all kafkas to be deleted
             populate_db = 'FALSE'
@@ -115,7 +115,7 @@ def exercise_endpoints(self):
 def service_accounts(self):
   handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
   if len(service_acc_list) > 0:
-    remove_svc_acc(self)
+    remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
     handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
   else:
     svc_acc_json_payload = svc_acc_json(url_base)
@@ -136,7 +136,7 @@ def check_leftover_resources(self):
     if len(items) > 0:
       kafkas_list = get_ids_from_list(items)
       for kafka_id in kafkas_list:
-        remove_kafka(self, kafka_id)
+        remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
 
   time.sleep(random.uniform(1.0, 5.0))
   left_over_svc_accs = handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts', True)
@@ -147,39 +147,29 @@ def check_leftover_resources(self):
       for svc_acc_id in get_ids_from_list(items):
         if created_by_perf_test(svc_acc_id, items) == True:
           service_acc_list.append(svc_acc_id)
-          remove_svc_acc(self, svc_acc_id)
+          remove_resource(self, service_acc_list, '/serviceaccounts/[id]', svc_acc_id)
   if (len(kafkas_list) == 0 and len(service_acc_list) == 0):
     resources_cleaned_up = True
 
 # cleanup created kafka_requests and service accounts 1 minute before the test completion
 def cleanup(self):
-  remove_svc_acc(self)
-  remove_kafka(self)
+  remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
+  remove_resource(self, kafkas_list, '/kafkas/[id]')
 
-# delete service account and remove its' id from service_acc_list
-def remove_svc_acc(self, svc_acc_id = ""):
-  if len(service_acc_list) > 0:
-    if svc_acc_id == "":
-      svc_acc_id = get_random_id(service_acc_list)
+# delete resource from a list
+def remove_resource(self, list, name, resource_id = ""):
+  if len(list) > 0:
+    if resource_id == "":
+      resource_id = get_random_id(list)
+    if 'kafka' in name:
+      url = f'{url_base}/kafkas/{resource_id}?async=true'
+    elif 'serviceaccounts' in name:
+      url = f'{url_base}/serviceaccounts/{resource_id}'
     status_code = 500
     retry_attempt = 0
     while status_code > 204 and status_code != 404:
-      status_code = handle_delete_by_id(self, f'{url_base}/serviceaccounts/{svc_acc_id}', '/serviceaccounts/[id]')
+      status_code = handle_delete_by_id(self, url, name)
       retry_attempt = retry_attempt + 1
-      if retry_attempt > 5:
-        sys.exit(f'Unable to delete service account with id: {svc_acc_id}. Manual cleanup required')
-    safe_delete(service_acc_list, svc_acc_id)
-
-# delete kafka and remove its' id from kafkas_list
-def remove_kafka(self, kafka_id = ""):
-  if len(kafkas_list) > 0:
-    if kafka_id == "":
-      kafka_id = get_random_id(kafkas_list)
-    status_code = 500
-    retry_attempt = 0
-    while status_code > 204 and status_code != 404:
-      status_code = handle_delete_by_id(self, f'{url_base}/kafkas/{kafka_id}?async=true', '/kafkas/[id]')
-      retry_attempt = retry_attempt + 1
-      if retry_attempt > 5:
-        sys.exit(f'Unable to delete kafka_request with id: {kafka_id}. Manual cleanup required')
-    safe_delete(kafkas_list, kafka_id)
+      if status_code != 204 or status_code != 404:
+        time.sleep(retry_attempt * random.uniform(0.05, 0.1))
+    safe_delete(list, resource_id)
