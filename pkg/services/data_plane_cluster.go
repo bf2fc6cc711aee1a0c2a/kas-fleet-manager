@@ -30,20 +30,10 @@ var singleKafkaClusterComputeNodesCapacityAttributes dataPlaneComputeNodesKafkaC
 // kafkaCluster*ScaleUpThreshold constants define the scale up thresholds
 // for each of the Kafka Capacity attributes reported by KAS Fleet Operator
 // They are defined as multiples of the values defined in the singleKafkaCluster*
-// constants
+// constants. Currently set to exactly one Kafka Cluster of size model T
 // TODO move this to make it configurable or variable
-const kafkaClusterConnectionsCapacityScaleUpThreshold = 50
-const kafkaClusterPartitionsCapacityScaleUpThreshold = 50
-
-// kafkaCluster*ScaleDownThreshold constants define the scale down thresholds
-// for each of the Kafka Capacity attributes reported by KAS Fleet Operator
-// Their values are defined as multiples of the values defined in the
-// singleKafkaCluster* constants
-// Their values are currently defined as the triple of the values for the
-// corresponding ScaleUpThresholds.
-// TODO move this to make it configurable or variable
-const kafkaClusterConnectionsCapacityScaleDownThreshold = 150
-const kafkaClusterPartitionsCapacityScaleDownThreshold = 150
+const kafkaClusterConnectionsCapacityScaleUpThreshold = singleKafkaClusterConnectionsCapacity
+const kafkaClusterPartitionsCapacityScaleUpThreshold = singleKafkaClusterPartitionsCapacity
 
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError
@@ -54,9 +44,8 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	ocmClient                     ocm.Client
-	clusterService                ClusterService
-	computeNodesScalingThresholds *computeNodesScalingThresholds
+	ocmClient      ocm.Client
+	clusterService ClusterService
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -64,28 +53,10 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 	Partitions  int
 }
 
-type computeNodesScalingThresholds struct {
-	scaleUpThresholds   *dataPlaneComputeNodesKafkaCapacityAttributes
-	scaleDownThresholds *dataPlaneComputeNodesKafkaCapacityAttributes
-}
-
 func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client) *dataPlaneClusterService {
-	// TODO make this configurable and/or dynamic depending on the cluster node type
-	scalingThresholds := &computeNodesScalingThresholds{
-		scaleUpThresholds: &dataPlaneComputeNodesKafkaCapacityAttributes{
-			Connections: kafkaClusterConnectionsCapacityScaleUpThreshold,
-			Partitions:  kafkaClusterPartitionsCapacityScaleUpThreshold,
-		},
-		scaleDownThresholds: &dataPlaneComputeNodesKafkaCapacityAttributes{
-			Connections: kafkaClusterConnectionsCapacityScaleDownThreshold,
-			Partitions:  kafkaClusterPartitionsCapacityScaleDownThreshold,
-		},
-	}
-
 	return &dataPlaneClusterService{
-		ocmClient:                     ocmClient,
-		clusterService:                clusterService,
-		computeNodesScalingThresholds: scalingThresholds,
+		ocmClient:      ocmClient,
+		clusterService: clusterService,
 	}
 }
 
@@ -358,8 +329,9 @@ func (d *dataPlaneClusterService) getRestrictedFloor(cluster *api.Cluster, statu
 // reported remaining kafka attributes is smaller than its corresponding
 // scale-up capacity threshold
 func (d *dataPlaneClusterService) anyComputeNodesScaleUpThresholdsCrossed(status *api.DataPlaneClusterStatus) (bool, error) {
-	connectionsThresholdCrossed := status.Remaining.Connections < d.computeNodesScalingThresholds.scaleUpThresholds.Connections
-	partitionsThresholdCrossed := status.Remaining.Partitions < d.computeNodesScalingThresholds.scaleUpThresholds.Partitions
+	scaleUpThresholds := d.scaleUpThresholds(status)
+	connectionsThresholdCrossed := status.Remaining.Connections < scaleUpThresholds.Connections
+	partitionsThresholdCrossed := status.Remaining.Partitions < scaleUpThresholds.Partitions
 
 	return connectionsThresholdCrossed || partitionsThresholdCrossed, nil
 }
@@ -367,8 +339,9 @@ func (d *dataPlaneClusterService) anyComputeNodesScaleUpThresholdsCrossed(status
 // allComputeNodesScaleDownThresholdsCrossed returns true when all of the reported remaining
 // kafka attributes is higher than its corresponding scale-down capacity threshold
 func (d *dataPlaneClusterService) allComputeNodesScaleDownThresholdsCrossed(status *api.DataPlaneClusterStatus) (bool, error) {
-	connectionsThresholdCrossed := status.Remaining.Connections > d.computeNodesScalingThresholds.scaleDownThresholds.Connections
-	partitionsThresholdCrossed := status.Remaining.Partitions > d.computeNodesScalingThresholds.scaleDownThresholds.Partitions
+	scaleDownThresholds := d.scaleDownThresholds(status)
+	connectionsThresholdCrossed := status.Remaining.Connections > scaleDownThresholds.Connections
+	partitionsThresholdCrossed := status.Remaining.Partitions > scaleDownThresholds.Partitions
 
 	return connectionsThresholdCrossed && partitionsThresholdCrossed, nil
 }
@@ -386,4 +359,22 @@ func (d *dataPlaneClusterService) kafkaClustersCapacityAvailable(status *api.Dat
 	partitionsCapacityAvailable := remainingPartitionsCapacity >= minPartitionsCapacity
 
 	return connectionsCapacityAvailable && partitionsCapacityAvailable, nil
+}
+
+func (d *dataPlaneClusterService) scaleDownThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
+	var res *dataPlaneComputeNodesKafkaCapacityAttributes
+
+	res.Connections = status.ResizeInfo.Delta.Connections
+	res.Partitions = status.ResizeInfo.Delta.Partitions
+
+	return res
+}
+
+func (d *dataPlaneClusterService) scaleUpThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
+	var res *dataPlaneComputeNodesKafkaCapacityAttributes
+
+	res.Connections = kafkaClusterConnectionsCapacityScaleUpThreshold
+	res.Partitions = kafkaClusterPartitionsCapacityScaleUpThreshold
+
+	return res
 }
