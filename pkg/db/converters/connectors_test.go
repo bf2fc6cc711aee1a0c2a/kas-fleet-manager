@@ -27,6 +27,9 @@ func Test_ConvertConnectors(t *testing.T) {
 		Status:          "h",
 		Owner:           "i",
 		KafkaID:         "j",
+		Version:         7,
+		TargetKind:      "k",
+		AddonGroup:      "l",
 	}
 	Expect([]map[string]interface{}{
 		map[string]interface{}{
@@ -44,6 +47,9 @@ func Test_ConvertConnectors(t *testing.T) {
 			"owner":             "i",
 			"kafka_id":          "j",
 			"multi_az":          false,
+			"version":           float64(7),
+			"target_kind":       "k",
+			"addon_group":       "l",
 		},
 	}).Should(Equal(ConvertConnectors(request)))
 }

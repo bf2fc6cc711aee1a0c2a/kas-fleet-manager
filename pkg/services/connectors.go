@@ -2,10 +2,11 @@ package services
 
 import (
 	"context"
+	goerrors "errors"
+	"github.com/jinzhu/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -17,6 +18,7 @@ type ConnectorsService interface {
 	List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *api.Connector) *errors.ServiceError
 	Delete(ctx context.Context, kid string, id string) *errors.ServiceError
+	ForEachInStatus(statuses []api.ConnectorStatus, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError
 }
 
 var _ ConnectorsService = &connectorsService{}
@@ -39,10 +41,17 @@ func (k *connectorsService) Create(ctx context.Context, resource *api.Connector)
 	}
 
 	dbConn := k.connectionFactory.New()
-	resource.Status = constants.KafkaRequestStatusAccepted.String()
+	resource.Status = api.ConnectorStatusAssigning
 	if err := dbConn.Save(resource).Error; err != nil {
 		return errors.GeneralError("failed to create connector: %v", err)
 	}
+
+	// read it back.... to get the updated version...
+	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
+	if err := dbConn.First(&resource).Error; err != nil {
+		return handleGetError("Connector", "id", resource.ID, err)
+	}
+
 	// TODO: increment connector metrics
 	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
@@ -158,23 +167,64 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 }
 
 func (k connectorsService) Update(ctx context.Context, resource *api.Connector) *errors.ServiceError {
-	kid := resource.KafkaID
-	if kid == "" {
-		return errors.Validation("kafka id is undefined")
-	}
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return errors.Unauthenticated("user not authenticated")
+
+	// If the version is set, then lets verify that the version has not changed...
+	if resource.Version != 0 {
+		dbConn := k.connectionFactory.New()
+		dbConn = dbConn.Where("id = ? AND version = ?", resource.ID, resource.Version)
+		t := api.Connector{}
+		if err := dbConn.First(&t).Error; err != nil {
+			return errors.BadRequest("resource version changed")
+		}
 	}
 
 	dbConn := k.connectionFactory.New()
-
-	if err := dbConn.Where("owner = ? AND id = ? AND kafka_id = ?", owner, resource.ID, kid).Model(resource).Update(resource).Error; err != nil {
+	if err := dbConn.Model(resource).Update(resource).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
+	}
+
+	// read it back.... to get the updated version...
+	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
+	if err := dbConn.First(&resource).Error; err != nil {
+		return handleGetError("Connector", "id", resource.ID, err)
+	}
+
+	return nil
+}
+
+func (k connectorsService) ForEachInStatus(statuses []api.ConnectorStatus, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError {
+
+	dbConn := k.connectionFactory.New().Model(&api.Connector{})
+
+	// wish you could just do:
+	dbConn = dbConn.Where("status IN (?)", statuses)
+	//for i, s := range statuses {
+	//	if i ==0 {
+	//		dbConn = dbConn.Where("status", s)
+	//	} else {
+	//		dbConn = dbConn.Or("status", s)
+	//	}
+	//}
+
+	rows, err := dbConn.Order("version").Rows()
+	if err != nil {
+		if goerrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return errors.GeneralError("Unable to list connectors: %s", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		resource := api.Connector{}
+		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
+		err := dbConn.ScanRows(rows, &resource)
+		if err != nil {
+			return errors.GeneralError("Unable to scan connector: %s", err)
+		}
+		if serr := f(&resource); serr != nil {
+			return serr
+		}
 	}
 	return nil
 }

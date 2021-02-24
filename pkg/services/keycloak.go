@@ -17,8 +17,9 @@ import (
 )
 
 const (
-	rhOrgId   = "rh-org-id"
-	clusterId = "kas-fleetshard-operator-cluster-id"
+	rhOrgId            = "rh-org-id"
+	clusterId          = "kas-fleetshard-operator-cluster-id"
+	connectorClusterId = "connector-fleetshard-operator-cluster-id"
 )
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
@@ -34,6 +35,7 @@ type KeycloakService interface {
 	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
 	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
 	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
+	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
 }
 
 type keycloakService struct {
@@ -281,6 +283,16 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 
 func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
+	return kc.registerAgentServiceAccount(clusterId, serviceAccountId, agentClusterId, roleName)
+}
+
+func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+	serviceAccountId := fmt.Sprintf("connector-fleetshard-agent-%s", agentClusterId)
+	return kc.registerAgentServiceAccount(connectorClusterId, serviceAccountId, agentClusterId, roleName)
+}
+
+func (kc *keycloakService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+
 	accessToken, _ := kc.kcClient.GetToken()
 	role, err := kc.createRealmRoleIfNotExists(accessToken, roleName)
 	if err != nil {

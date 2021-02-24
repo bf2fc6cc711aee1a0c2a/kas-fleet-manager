@@ -158,6 +158,7 @@ func NewAPIServer() Server {
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes)
 		apiV1ConnectorsRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments").Subrouter()
 		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Update).Methods(http.MethodPut)
 		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Delete).Methods(http.MethodDelete)
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
@@ -165,8 +166,30 @@ func NewAPIServer() Server {
 		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments-of/{tid}
 		apiV1ConnectorsTypedRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments-of/{tid}").Subrouter()
 		apiV1ConnectorsTypedRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Update).Methods(http.MethodPut)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
+		//apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+		//  /api/managed-services-api/v1/kafka-connector-clusters/
+		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.ConnectorCluster, services.Config, services.Keycloak)
+		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
+		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
+		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.List).Methods(http.MethodGet)
+		apiV1ConnectorClustersRouter.HandleFunc("/{id}", connectorClusterHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorClustersRouter.HandleFunc("/{id}", connectorClusterHandler.Delete).Methods(http.MethodDelete)
+		apiV1ConnectorClustersRouter.HandleFunc("/{id}/addon-parameters", connectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
+		//apiV1ConnectorClustersRouter.Use(authMiddleware.AuthenticateAccountJWT)
+
+		// This section adds the API's accessed by the connector agent...
+		{
+			//  /api/managed-services-api/v1/kafka-connector-agent-clusters/{id}
+			agentRouter := apiV1Router.PathPrefix("/kafka-connector-clusters/{id}").Subrouter()
+			agentRouter.HandleFunc("/status", connectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
+			agentRouter.HandleFunc("/connectors", connectorClusterHandler.ListConnectors).Methods(http.MethodGet)
+			agentRouter.HandleFunc("/connectors/{cid}/status", connectorClusterHandler.UpdateConnectorStatus).Methods(http.MethodPut)
+			auth.UseConnectorClusterAuthorisationMiddleware(agentRouter)
+		}
 	}
 
 	///api/managed-services-api/v1/agent-clusters/{id}
