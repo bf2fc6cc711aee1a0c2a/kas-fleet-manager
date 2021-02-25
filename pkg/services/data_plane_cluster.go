@@ -18,14 +18,14 @@ const multiAZClusterNodeScalingMultiple = 3
 // singleKafkaCluster*Capacity constants define the mapping
 // between a Kafka Cluster of size model T and Kafka capacity attributes
 // TODO move this to make it configurable or variable
-const singleKafkaClusterConnectionsCapacity = 100
-const singleKafkaClusterPartitionsCapacity = 100
+const SingleKafkaClusterConnectionsCapacity = 100
+const SingleKafkaClusterPartitionsCapacity = 100
 
 // The Kafka Capacity attributes of a Kafka Cluster size model T
 // TODO move this to make it configurable or variable
 var singleKafkaClusterComputeNodesCapacityAttributes dataPlaneComputeNodesKafkaCapacityAttributes = dataPlaneComputeNodesKafkaCapacityAttributes{
-	Connections: singleKafkaClusterConnectionsCapacity,
-	Partitions:  singleKafkaClusterPartitionsCapacity,
+	Connections: SingleKafkaClusterConnectionsCapacity,
+	Partitions:  SingleKafkaClusterPartitionsCapacity,
 }
 
 // kafkaCluster*ScaleUpThreshold constants define the scale up thresholds
@@ -33,8 +33,8 @@ var singleKafkaClusterComputeNodesCapacityAttributes dataPlaneComputeNodesKafkaC
 // They are defined as multiples of the values defined in the singleKafkaCluster*
 // constants. Currently set to exactly one Kafka Cluster of size model T
 // TODO move this to make it configurable or variable
-const kafkaClusterConnectionsCapacityScaleUpThreshold = singleKafkaClusterConnectionsCapacity
-const kafkaClusterPartitionsCapacityScaleUpThreshold = singleKafkaClusterPartitionsCapacity
+const kafkaClusterConnectionsCapacityScaleUpThreshold = SingleKafkaClusterConnectionsCapacity
+const kafkaClusterPartitionsCapacityScaleUpThreshold = SingleKafkaClusterPartitionsCapacity
 
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError

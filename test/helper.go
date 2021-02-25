@@ -24,7 +24,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -224,7 +227,9 @@ func (helper *Helper) startClusterWorker() {
 
 	// start cluster worker
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{})
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(),
+		&services.KasFleetshardOperatorAddonMock{ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) { return true, nil }},
+	)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -243,7 +248,8 @@ func (helper *Helper) startLeaderElectionWorker() {
 
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{})
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(),
+		&services.KasFleetshardOperatorAddonMock{ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) { return true, nil }})
 
 	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
 	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak, helper.Env().Services.Observatorium)
@@ -373,6 +379,13 @@ func (helper *Helper) NewApiClient() *openapi.APIClient {
 	config := openapi.NewConfiguration()
 	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
 	client := openapi.NewAPIClient(config)
+	return client
+}
+
+func (helper *Helper) NewPrivateAPIClient() *privateopenapi.APIClient {
+	config := privateopenapi.NewConfiguration()
+	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
+	client := privateopenapi.NewAPIClient(config)
 	return client
 }
 

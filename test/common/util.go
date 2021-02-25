@@ -25,11 +25,29 @@ const (
 	testClusterPath = "test_cluster.json"
 )
 
+func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.ClusterStatus) error {
+	err := wait.PollImmediate(10*time.Second, 120*time.Minute, func() (bool, error) {
+		foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
+		if err != nil {
+			return true, err
+		}
+		if foundCluster == nil {
+			return false, nil
+		}
+		return foundCluster.Status.String() == expectedStatus.String(), nil
+	})
+	return err
+}
+
 // GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster.
 // If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
 // If no such file is present, new cluster is created and its clusterID is retrieved.
 func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.ServiceError) {
+	return GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
+}
+
+func GetOSDClusterIDAndWaitForStatus(h *test.Helper, t *testing.T, expectedStatus api.ClusterStatus) (string, *ocmErrors.ServiceError) {
 	var clusterID string
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
 		clusterID, _ = readClusterDetailsFromFile(h, t)
@@ -58,18 +76,12 @@ func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.Se
 		} else {
 			clusterID = foundCluster.ClusterID
 		}
-		if err := wait.PollImmediate(10*time.Second, 120*time.Minute, func() (bool, error) {
-			foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
-			if err != nil {
-				return true, err
-			}
-			if foundCluster == nil {
-				return false, nil
-			}
-			return foundCluster.Status.String() == api.ClusterReady.String(), nil
-		}); err != nil {
+
+		err := waitForClusterStatus(h, clusterID, expectedStatus)
+		if err != nil {
 			return "", ocmErrors.GeneralError("Unable to get OSD cluster")
 		}
+
 		if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
 			err := PersistClusterStruct(*foundCluster)
 			if err != nil {
