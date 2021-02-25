@@ -95,7 +95,7 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 		}
 		if logLevel := os.Getenv("LOGLEVEL"); logLevel != "" {
 			glog.Infof("Using custom loglevel: %s", logLevel)
-			err = pflag.CommandLine.Set("-v", logLevel)
+			err = pflag.CommandLine.Set("v", logLevel)
 			if err != nil {
 				glog.Warningf("Unable to set custom logLevel: %s", err.Error())
 			}
