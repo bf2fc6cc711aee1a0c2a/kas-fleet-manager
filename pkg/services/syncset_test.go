@@ -154,7 +154,7 @@ func buildAdminServer(modifyFn func(adminServer *appsv1.Deployment)) *appsv1.Dep
 					Containers: []corev1.Container{
 						{
 							Name:  testAdminServerName,
-							Image: "quay.io/sknot/kafka-admin-api:0.0.1",
+							Image: "quay.io/sknot/kafka-admin-api:0.0.4",
 							Env: []corev1.EnvVar{
 								{
 									Name:  "KAFKA_ADMIN_BOOTSTRAP_SERVERS",
