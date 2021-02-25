@@ -18,7 +18,7 @@ on:
       - 'pkg/api/openapi/.openapi-generator-ignore'
       
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
     paths-ignore:
       - '*.md'
       - 'build_deploy.sh'
