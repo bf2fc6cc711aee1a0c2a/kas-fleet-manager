@@ -3,6 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
@@ -14,9 +18,6 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"gopkg.in/resty.v1"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 type TestServer struct {
@@ -42,7 +43,7 @@ func setup(t *testing.T, claims claimsFunc) TestServer {
 	}
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 
-	clusterId, getClusterErr := utils.GetOsdClusterID(h, t, false)
+	clusterId, getClusterErr := utils.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
 	}
