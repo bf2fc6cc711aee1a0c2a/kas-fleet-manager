@@ -225,4 +225,8 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	Expect(searchLike.Size).To(Equal(int32(1)), "Expected Size == 1")
 	Expect(searchLike.Total).To(Equal(int32(1)), "Expected Total == 1")
 	Expect(searchNameInv.Items[0].Name).NotTo(Equal(mockKafkaName1))
+
+	for _, kafkaReq := range populatedKafkaList.Items {
+		deleteTestKafka(ctx, client, kafkaReq.Id)
+	}
 }

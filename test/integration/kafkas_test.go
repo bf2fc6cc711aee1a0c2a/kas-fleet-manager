@@ -430,7 +430,7 @@ func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {
 	Expect(list1.Total).To(Equal(int32(1)))
 
 	// check the list of kafkas size for the second service account to equal one
-	list2, list2Resp, list2Err := client.DefaultApi.ListKafkas(ctx1, nil)
+	list2, list2Resp, list2Err := client.DefaultApi.ListKafkas(ctx2, nil)
 	Expect(list2Err).NotTo(HaveOccurred())
 	Expect(list2Resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list2.Size).To(Equal(int32(1)))

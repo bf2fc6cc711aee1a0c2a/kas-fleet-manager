@@ -82,6 +82,9 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	_, err = service.GetMetricsByKafkaId(context, metricsList, seedKafka.Id, q)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka metrics:  %v", err)
 	Expect(len(*metricsList)).NotTo(Equal(0), "Should return length greater then zero")
+
+	// Delete created kafkas
+	deleteTestKafka(ctx, client, seedKafka.Id)
 }
 
 func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
