@@ -25,9 +25,9 @@ type KafkaMetrics []Metric
 
 // Metric holds the Prometheus Matrix or Vector model, which contains instant vector or range vector with time series (depending on result type)
 type Metric struct {
-	Matrix     pModel.Matrix    `json:"matrix"`
-	Vector     pModel.Vector    `json:"vector"`
-	Err        error            `json:"-"`
+	Matrix pModel.Matrix `json:"matrix"`
+	Vector pModel.Vector `json:"vector"`
+	Err    error         `json:"-"`
 }
 
 // MetricsReqParams holds common parameters for all kinds of range queries and instant quries

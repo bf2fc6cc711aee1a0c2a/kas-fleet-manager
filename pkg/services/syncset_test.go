@@ -161,8 +161,8 @@ func buildAdminServer(modifyFn func(adminServer *appsv1.Deployment)) *appsv1.Dep
 									Value: testKafkaRequestName + "-kafka-bootstrap:9095",
 								},
 								{
-									Name:      "CORS_ALLOW_LIST_REGEX",
-									Value:     "(https?:\\/\\/localhost(:\\d*)?)|(https:\\/\\/(qaprodauth\\.)?cloud\\.redhat\\.com)|(https:\\/\\/(prod|qa|ci|stage)\\.foo\\.redhat\\.com:1337)",
+									Name:  "CORS_ALLOW_LIST_REGEX",
+									Value: "(https?:\\/\\/localhost(:\\d*)?)|(https:\\/\\/(qaprodauth\\.)?cloud\\.redhat\\.com)|(https:\\/\\/(prod|qa|ci|stage)\\.foo\\.redhat\\.com:1337)",
 								},
 							},
 							Ports: []corev1.ContainerPort{
