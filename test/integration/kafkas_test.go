@@ -60,7 +60,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	}
 	// setup pre-requisites to performing requests
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// POST responses per openapi spec: 201, 409, 500
 	k := openapi.KafkaRequestPayload{
@@ -128,7 +128,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	tests := []struct {
 		name     string
@@ -214,17 +214,17 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 
 	// create two random accounts in same organisation
 	account1 := h.NewRandAccount()
-	ctx1 := h.NewAuthenticatedContext(account1)
+	ctx1 := h.NewAuthenticatedContext(account1, nil)
 
 	account2 := h.NewRandAccount()
-	ctx2 := h.NewAuthenticatedContext(account2)
+	ctx2 := h.NewAuthenticatedContext(account2, nil)
 
 	// this value if taken from config/allow-list-configuration.yaml
 	anotherOrgID := "12147054"
 
 	// create a third account in a different organisation
 	accountFromAnotherOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
-	ctx3 := h.NewAuthenticatedContext(accountFromAnotherOrg)
+	ctx3 := h.NewAuthenticatedContext(accountFromAnotherOrg, nil)
 
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -259,9 +259,9 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	// create an account with a random organisation id. This is different than the control plance team organisation id which is used by default
+	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
 	account := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), h.NewUUID())
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	tests := []struct {
 		name      string
@@ -326,7 +326,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	// this value if taken from config/allow-list-configuration.yaml
 	orgIdWithLimitOfOne := "12147054"
 	ownerAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
-	ctx := h.NewAuthenticatedContext(ownerAccount)
+	ctx := h.NewAuthenticatedContext(ownerAccount, nil)
 
 	kafka1 := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -357,7 +357,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 
 	// verify that user of the same org cannot create a new kafka since limit has been reached
 	accountInSameOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
-	ctx = h.NewAuthenticatedContext(accountInSameOrg)
+	ctx = h.NewAuthenticatedContext(accountInSameOrg, nil)
 
 	// attempt to create kafka for this user account
 	_, resp3, _ := client.DefaultApi.CreateKafka(ctx, true, kafka2)
@@ -368,7 +368,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 
 	// verify that user of a different organisation can still create kafka instances
 	accountInDifferentOrg := h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(accountInDifferentOrg)
+	ctx = h.NewAuthenticatedContext(accountInDifferentOrg, nil)
 
 	// attempt to create kafka for this user account
 	_, resp4, _ := client.DefaultApi.CreateKafka(ctx, true, kafka1)
@@ -394,8 +394,8 @@ func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {
 	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, orgId)
 	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, orgId)
 
-	ctx1 := h.NewAuthenticatedContext(serviceAccount1)
-	ctx2 := h.NewAuthenticatedContext(serviceAccount2)
+	ctx1 := h.NewAuthenticatedContext(serviceAccount1, nil)
+	ctx2 := h.NewAuthenticatedContext(serviceAccount2, nil)
 
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -430,7 +430,7 @@ func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {
 	Expect(list1.Total).To(Equal(int32(1)))
 
 	// check the list of kafkas size for the second service account to equal one
-	list2, list2Resp, list2Err := client.DefaultApi.ListKafkas(ctx1, nil)
+	list2, list2Resp, list2Err := client.DefaultApi.ListKafkas(ctx2, nil)
 	Expect(list2Err).NotTo(HaveOccurred())
 	Expect(list2Resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list2.Size).To(Equal(int32(1)))
@@ -446,7 +446,7 @@ func TestKafkaGet(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -477,13 +477,13 @@ func TestKafkaGet(t *testing.T) {
 
 	// different account but same org, should be able to read the Kafka cluster
 	account = h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(account)
+	ctx = h.NewAuthenticatedContext(account, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 
 	// a serviceaccount that doesn't have orgId, and owner field is different too so it should get 404
 	account = h.NewAllowedServiceAccount()
-	ctx = h.NewAuthenticatedContext(account)
+	ctx = h.NewAuthenticatedContext(account, nil)
 	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 }
@@ -504,7 +504,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 		panic("No cluster found")
 	}
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -580,7 +580,7 @@ func TestKafkaDelete_FailSync(t *testing.T) {
 		panic("No cluster found")
 	}
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -618,7 +618,7 @@ func TestKafkaDelete_WithoutID(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, "", true)
 	Expect(err).To(HaveOccurred(), "Error should be thrown if no ID is provided: %v", err)
@@ -659,7 +659,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 		panic("No cluster found")
 	}
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -727,7 +727,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 	defer teardown()
 
 	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	kafka := openapi.KafkaRequest{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -761,7 +761,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	}
 
 	account := h.NewRandAccount()
-	initCtx := h.NewAuthenticatedContext(account)
+	initCtx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
@@ -795,7 +795,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 
 	// attempt to delete kafka not created by the owner (should result in an error)
 	account = h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).To(HaveOccurred())
 
@@ -817,7 +817,7 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// setup pre-requisites to performing requests
 	account := h.NewRandAccount()
-	initCtx := h.NewAuthenticatedContext(account)
+	initCtx := h.NewAuthenticatedContext(account, nil)
 
 	// get initial list (should be empty)
 	initList, resp, err := client.DefaultApi.ListKafkas(initCtx, nil)
@@ -883,7 +883,7 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account)
+	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// get populated list of kafka requests
 
@@ -914,7 +914,7 @@ func TestKafkaList_Success(t *testing.T) {
 	// this value if taken from config/allow-list-configuration.yaml
 	anotherOrgID := "13639843"
 	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
-	ctx = h.NewAuthenticatedContext(account)
+	ctx = h.NewAuthenticatedContext(account, nil)
 
 	// expecting empty list for user that hasn't created any kafkas yet
 	newUserList, _, err := client.DefaultApi.ListKafkas(ctx, nil)

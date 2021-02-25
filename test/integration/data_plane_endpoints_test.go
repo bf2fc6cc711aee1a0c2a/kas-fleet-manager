@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	"gopkg.in/resty.v1"
@@ -29,12 +30,13 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss": h.AppConfig.Keycloak.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},
 		"kas-fleetshard-operator-cluster-id": clusterId,
 	}
-	token := h.CreateJWTStringWithAdditionalClaims(account, claims)
+	token := h.CreateJWTStringWithClaim(account, claims)
 	body := map[string]openapi.DataPlaneKafkaStatus{
 		"test-cluster-id": {},
 	}
@@ -75,9 +77,10 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss":                                h.AppConfig.Keycloak.ValidIssuerURI,
 		"kas-fleetshard-operator-cluster-id": clusterId,
 	}
-	token := h.CreateJWTStringWithAdditionalClaims(account, claims)
+	token := h.CreateJWTStringWithClaim(account, claims)
 	body := map[string]openapi.DataPlaneKafkaStatus{
 		"test-cluster-id": {},
 	}
@@ -118,12 +121,13 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss": h.AppConfig.Keycloak.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},
 		"kas-fleetshard-operator-cluster-id": "different-cluster-id",
 	}
-	token := h.CreateJWTStringWithAdditionalClaims(account, claims)
+	token := h.CreateJWTStringWithClaim(account, claims)
 	body := map[string]openapi.DataPlaneKafkaStatus{
 		"test-cluster-id": {},
 	}

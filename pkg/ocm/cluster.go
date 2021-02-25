@@ -65,8 +65,9 @@ func (r clusterBuilder) NewOCMClusterFromCluster(cluster *api.Cluster) (*cluster
 	if r.clusterCreationConfig.OpenshiftVersion != "" {
 		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.clusterCreationConfig.OpenshiftVersion))
 	}
-	// setting BYOC to always be true for now as this is the only available cluster type within our quota.
-	clusterBuilder.BYOC(true)
+	// setting CCS to always be true for now as this is the only available cluster type within our quota.
+	clusterBuilder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
+
 	clusterBuilder.Managed(true)
 
 	// AWS config read from the secrets/aws.* files

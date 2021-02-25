@@ -10,6 +10,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +37,11 @@ func runGetMetricsByRangeQuery(cmd *cobra.Command, _args []string) {
 
 	env := environments.Environment()
 	kafkaMetrics := &observatorium.KafkaMetrics{}
-	ctx := auth.SetUsernameContext(context.TODO(), owner)
+	// create jwt with claims and set it in the context
+	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"username": owner,
+	})
+	ctx := auth.SetTokenInContext(context.TODO(), jwt)
 	params := observatorium.MetricsReqParams{}
 	params.ResultType = observatorium.RangeQuery
 	params.FillDefaults()

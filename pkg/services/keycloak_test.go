@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	gocloak "github.com/Nerzal/gocloak/v8"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -276,6 +277,20 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 		ctx                   context.Context
 	}
 
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount("", "", "", testClientID)
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+
 	testServiceAccount := api.ServiceAccount{
 		ID:           testClientID,
 		ClientSecret: secret,
@@ -335,7 +350,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					Name:        "test-svc",
 					Description: "desc",
 				},
-				ctx: auth.SetOrgIdContext(context.TODO(), testClientID),
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want:    &testServiceAccount,
 			wantErr: false,
@@ -368,6 +383,20 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 
 	type args struct {
 		ctx context.Context
+	}
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount("", "", "", testClientID)
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
 	}
 
 	tests := []struct {
@@ -410,7 +439,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx: auth.SetOrgIdContext(context.TODO(), testClientID),
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			wantErr: false,
 		},
@@ -440,6 +469,20 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 	}
 
 	var testServiceAcc []api.ServiceAccount
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount("", "", "", testClientID)
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
 
 	tests := []struct {
 		name    string
@@ -477,7 +520,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx: auth.SetOrgIdContext(context.TODO(), "12221"),
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want:    testServiceAcc,
 			wantErr: false,
@@ -507,6 +550,21 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount("", "", "", testClientID)
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -554,7 +612,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx: auth.SetOrgIdContext(context.TODO(), "12221"),
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
 				ID:           "12221",
@@ -739,6 +797,21 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 	type args struct {
 		ctx context.Context
 	}
+
+	authHelper, err := auth.NewAuthHelper(JwtKeyFile, JwtCAFile, "")
+	if err != nil {
+		t.Fatalf("failed to create auth helper: %s", err.Error())
+	}
+	account, err := authHelper.NewAccount("", "", "", testClientID)
+	if err != nil {
+		t.Fatal("failed to build a new account")
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	if err != nil {
+		t.Fatalf("failed to create jwt: %s", err.Error())
+	}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -778,7 +851,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 				},
 			},
 			args: args{
-				ctx: auth.SetOrgIdContext(context.TODO(), "12221"),
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
 				ID:          "12221",

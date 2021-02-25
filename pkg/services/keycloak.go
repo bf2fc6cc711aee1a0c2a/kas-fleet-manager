@@ -125,9 +125,13 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	var serviceAcc api.ServiceAccount
 	accessToken, _ := kc.kcClient.GetToken()
-	orgId := auth.GetOrgIdFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+	orgId := auth.GetOrgIdFromClaims(claims)
 	rhAccountID := map[string][]string{
-		"rh-ord-id": {orgId},
+		"rh-org-id": {orgId},
 	}
 	rhOrgIdAttributes := map[string]string{
 		rhOrgId: orgId,
@@ -176,7 +180,11 @@ func (kc *keycloakService) buildServiceAccountIdentifier() string {
 
 func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	accessToken, _ := kc.kcClient.GetToken()
-	orgId := auth.GetOrgIdFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+	orgId := auth.GetOrgIdFromClaims(claims)
 	var sa []api.ServiceAccount
 	clients, err := kc.kcClient.GetClients(accessToken, first, max)
 	if err != nil {
@@ -199,7 +207,11 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 
 func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) *errors.ServiceError {
 	accessToken, _ := kc.kcClient.GetToken()
-	orgId := auth.GetOrgIdFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return errors.Unauthenticated("user not authenticated")
+	}
+	orgId := auth.GetOrgIdFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
 		return errors.GeneralError("failed to check the sso client exists: %v", err)
@@ -217,7 +229,11 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 
 func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	accessToken, _ := kc.kcClient.GetToken()
-	orgId := auth.GetOrgIdFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+	orgId := auth.GetOrgIdFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
 		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
@@ -242,7 +258,11 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 
 func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	accessToken, _ := kc.kcClient.GetToken()
-	orgId := auth.GetOrgIdFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated")
+	}
+	orgId := auth.GetOrgIdFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
 		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)

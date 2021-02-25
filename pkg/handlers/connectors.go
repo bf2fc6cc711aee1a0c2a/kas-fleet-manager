@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/golang/glog"
-
 	"github.com/gorilla/mux"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -29,9 +28,7 @@ func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService 
 }
 
 func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
-
 	var resource openapi.Connector
-	resource.Metadata.Owner = auth.GetUsernameFromContext(r.Context())
 	resource.Metadata.KafkaId = mux.Vars(r)["id"]
 	tid := mux.Vars(r)["tid"]
 
@@ -40,7 +37,6 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &resource,
 		Validate: []validate{
 			validateAsyncEnabled(r, "creating connector"),
-			validateLength(&resource.Metadata.Owner, "owner", &minRequiredFieldLength, nil),
 			validateLength(&resource.Metadata.Name, "name", &minRequiredFieldLength, &maxKafkaNameLength),
 			validateLength(&resource.Metadata.KafkaId, "kafka id", &minRequiredFieldLength, &maxKafkaNameLength),
 			validateLength(&resource.ConnectorTypeId, "connector type id", &minRequiredFieldLength, &maxKafkaNameLength),
@@ -51,19 +47,25 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 
 		Action: func() (interface{}, *errors.ServiceError) {
+			// Get username from claims
+			claims, err := auth.GetClaimsFromContext(r.Context())
+			if err != nil {
+				return nil, errors.Unauthenticated("user not authenticated")
+			}
+			resource.Metadata.Owner = auth.GetUsernameFromClaims(claims)
 
 			// Get the Kafka to assert the user can access that kafka instance.
-			_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
-			if err != nil {
-				return nil, err
+			_, svcErr := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
+			if svcErr != nil {
+				return nil, svcErr
 			}
 
-			convResource, err := presenters.ConvertConnector(resource)
-			if err != nil {
-				return nil, err
+			convResource, svcErr := presenters.ConvertConnector(resource)
+			if svcErr != nil {
+				return nil, svcErr
 			}
-			if err := h.connectorsService.Create(r.Context(), convResource); err != nil {
-				return nil, err
+			if svcErr := h.connectorsService.Create(r.Context(), convResource); svcErr != nil {
+				return nil, svcErr
 			}
 			return presenters.PresentConnector(convResource)
 		},

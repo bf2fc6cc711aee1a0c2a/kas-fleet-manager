@@ -2,16 +2,21 @@ package integration
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	"gopkg.in/resty.v1"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestAuth_success(t *testing.T) {
@@ -59,7 +64,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -72,13 +77,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"iss":        h.Env().Config.OCM.TokenURL,
-		"username":   serviceAccount.Username(),
-		"first_name": serviceAccount.FirstName(),
-		"last_name":  serviceAccount.LastName(),
-		"typ":        "",
-		"iat":        time.Now().Unix(),
-		"exp":        time.Now().Add(time.Minute * time.Duration(15)).Unix(),
+		"typ": nil,
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
@@ -89,8 +88,8 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
-	Expect(re.Reason).To(Equal("Bearer token type '' isn't supported"))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
+	Expect(re.Reason).To(Equal("Bearer token doesn't contain required claim 'typ'"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
@@ -102,13 +101,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"iss":        h.Env().Config.OCM.TokenURL,
-		"username":   serviceAccount.Username(),
-		"first_name": serviceAccount.FirstName(),
-		"last_name":  serviceAccount.LastName(),
-		"typ":        "Bearer",
-		"iat":        time.Now().Unix(),
-		"exp":        time.Now().Add(time.Duration(-15) * time.Minute).Unix(),
+		"exp": time.Now().Add(time.Duration(-15) * time.Minute).Unix(),
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
@@ -118,7 +111,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token is expired"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -131,12 +124,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"iss":        h.Env().Config.OCM.TokenURL,
-		"username":   serviceAccount.Username(),
-		"first_name": serviceAccount.FirstName(),
-		"last_name":  serviceAccount.LastName(),
-		"typ":        "Bearer",
-		"exp":        time.Now().Add(time.Duration(15) * time.Minute).Unix(),
+		"iat": nil,
 	}
 
 	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
@@ -146,7 +134,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token doesn't contain required claim 'iat'"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -159,16 +147,15 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"iss":        h.Env().Config.OCM.TokenURL,
 		"username":   serviceAccount.Username(),
 		"first_name": serviceAccount.FirstName(),
 		"last_name":  serviceAccount.LastName(),
 		"typ":        "Bearer",
 		"iat":        time.Now().Unix(),
-		"exp":        time.Now().Add(time.Minute * time.Duration(15)).Unix(),
+		"exp":        time.Now().Add(time.Minute * time.Duration(auth.TokenExpMin)).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = "uhctestkey"
+	token.Header["kid"] = auth.JwkKID
 	token.Header["alg"] = ""
 	strToken, _ := token.SignedString(h.JWTPrivateKey)
 
@@ -179,7 +166,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	Expect(err).To(BeNil())
 
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Bearer token can't be verified"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
@@ -192,16 +179,15 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
-		"iss":        h.Env().Config.OCM.TokenURL,
 		"username":   serviceAccount.Username(),
 		"first_name": serviceAccount.FirstName(),
 		"last_name":  serviceAccount.LastName(),
 		"typ":        "Bearer",
 		"iat":        time.Now().Unix(),
-		"exp":        time.Now().Add(time.Minute * time.Duration(15)).Unix(),
+		"exp":        time.Now().Add(time.Minute * time.Duration(auth.TokenExpMin)).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	token.Header["kid"] = "uhctestkey"
+	token.Header["kid"] = auth.JwkKID
 	strToken := token.Raw
 
 	restyResp, err := resty.R().
@@ -210,7 +196,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 		Get(h.RestURL("/kafkas"))
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
-	Expect(re.Code).To(Equal("MANAGED-SERVICES-API-401"))
+	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
 	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
