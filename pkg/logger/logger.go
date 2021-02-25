@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
+	"github.com/openshift-online/ocm-sdk-go/authentication"
 )
 
 type UHCLogger interface {
@@ -32,7 +34,7 @@ func NewUHCLogger(ctx context.Context) UHCLogger {
 	logger := &logger{
 		context:   ctx,
 		level:     1,
-		username:  getUsernameFromContext(ctx),
+		username:  getUsernameFromClaims(ctx),
 		sentryHub: sentry.GetHubFromContext(ctx),
 	}
 	return logger
@@ -103,10 +105,24 @@ func (l *logger) captureSentryEvent(level sentry.Level, format string, args ...i
 	l.sentryHub.CaptureEvent(event)
 }
 
-func getUsernameFromContext(ctx context.Context) string {
-	username := ctx.Value("username")
-	if username == nil {
+func getUsernameFromClaims(ctx context.Context) string {
+	var claims jwt.MapClaims
+	token, err := authentication.TokenFromContext(ctx)
+	if err != nil {
 		return ""
 	}
-	return fmt.Sprintf("%v", username)
+
+	if token != nil && token.Claims != nil {
+		claims = token.Claims.(jwt.MapClaims)
+	}
+
+	if claims["username"] != nil {
+		// return username from ocm token
+		return claims["username"].(string)
+	} else if claims["preferred_username"] != nil {
+		// return username from mas-sso token
+		return claims["preferred_username"].(string)
+	}
+
+	return ""
 }

@@ -8,11 +8,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	. "github.com/onsi/gomega"
+)
+
+const (
+	jwtKeyFile = "test/support/jwt_private_key.pem"
+	jwtCAFile  = "test/support/jwt_ca.pem"
 )
 
 func Test_AllowListMiddleware_Disabled(t *testing.T) {
@@ -39,6 +45,11 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 }
 
 func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
 		name string
 		arg  services.ConfigService
@@ -141,11 +152,19 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			middleware := NewAllowListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
-			// set username and organisation id within the current context
+			// create a jwt and set it in the context
 			ctx := req.Context()
-			ctx = auth.SetUsernameContext(ctx, "username")
-			ctx = auth.SetOrgIdContext(ctx, "org-id-0")
+			acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
+			if err != nil {
+				t.Fatal(err)
+			}
 
+			token, err := authHelper.CreateJWTWithClaims(acc, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			ctx = auth.SetTokenInContext(ctx, token)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(rr, req)
 
@@ -171,6 +190,11 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 }
 
 func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
 		name                          string
 		arg                           services.ConfigService
@@ -255,11 +279,19 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			middleware := NewAllowListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
-			// set username and organisation id within the current context
+			// create a jwt and set it in the context
 			ctx := req.Context()
-			ctx = auth.SetUsernameContext(ctx, "username")
-			ctx = auth.SetOrgIdContext(ctx, "org-id-0")
+			acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
+			if err != nil {
+				t.Fatal(err)
+			}
 
+			token, err := authHelper.CreateJWTWithClaims(acc, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			ctx = auth.SetTokenInContext(ctx, token)
 			req = req.WithContext(ctx)
 			handler.ServeHTTP(rr, req)
 

@@ -1,12 +1,15 @@
 package serviceaccounts
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/flags"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -38,8 +41,13 @@ func runResetCreds(cmd *cobra.Command, args []string) {
 	env := environments.Environment()
 	// setup required services
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
-	ctx := cmd.Context()
-	ctx = auth.SetOrgIdContext(ctx, orgId)
+
+	// create jwt with claims and set it in the context
+	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"org_id": orgId,
+	})
+	ctx := auth.SetTokenInContext(context.TODO(), jwt)
+
 	sa, err := keycloakService.ResetServiceAccountCredentials(ctx, id)
 	if err != nil {
 		glog.Fatalf("Unable to reset credentials of a service account: %s", err.Error())

@@ -27,7 +27,14 @@ func (middleware *AllowListMiddleware) Authorize(next http.Handler) http.Handler
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if middleware.configService.IsAllowListEnabled() {
 			context := r.Context()
-			username, orgId := auth.GetUsernameFromContext(context), auth.GetOrgIdFromContext(context)
+			claims, err := auth.GetClaimsFromContext(context)
+			if err != nil {
+				shared.HandleError(r.Context(), w, errors.ErrorForbidden, err.Error())
+				return
+			}
+
+			username := auth.GetUsernameFromClaims(claims)
+			orgId := auth.GetOrgIdFromClaims(claims)
 			org, _ := middleware.configService.GetOrganisationById(orgId)
 			var userIsAllowed, userIsAllowedAsServiceAccount bool
 

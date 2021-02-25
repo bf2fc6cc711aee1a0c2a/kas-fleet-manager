@@ -116,7 +116,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				cluster, err := clusterservicetest.NewMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
 					// these values will be ignored by the conversion as they're unsupported. so expect different
 					// values than we provide.
-					builder.BYOC(true)
+					builder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
 					builder.Managed(true)
 					builder.Name("")
 					builder.AWS(clusterAWS)

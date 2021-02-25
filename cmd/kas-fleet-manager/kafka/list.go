@@ -12,6 +12,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -60,7 +62,11 @@ func runList(cmd *cobra.Command, _ []string) {
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
 
-	ctx := auth.SetUsernameContext(context.TODO(), owner)
+	// create jwt with claims and set it in the context
+	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"username": owner,
+	})
+	ctx := auth.SetTokenInContext(context.TODO(), jwt)
 
 	// build list arguments
 	url := url.URL{}

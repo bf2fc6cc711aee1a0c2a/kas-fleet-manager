@@ -14,7 +14,7 @@ func ConvertCluster(cluster *clustersmgmtv1.Cluster) *api.Cluster {
 		ExternalID:    cluster.ExternalID(),
 		MultiAZ:       cluster.MultiAZ(),
 		Region:        cluster.Region().ID(),
-		BYOC:          cluster.BYOC(),
+		BYOC:          cluster.CCS().Enabled(),
 		Managed:       cluster.Managed(),
 	}
 }

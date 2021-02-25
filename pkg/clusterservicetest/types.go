@@ -22,7 +22,7 @@ func NewMockCluster(modifyFn func(*clustersmgmtv1.ClusterBuilder)) (*clustersmgm
 	mock := clustersmgmtv1.NewCluster()
 	mock.CloudProvider(clustersmgmtv1.NewCloudProvider().ID(MockClusterCloudProvider))
 	mock.Region(clustersmgmtv1.NewCloudRegion().ID(MockClusterRegion))
-	mock.BYOC(MockClusterBYOC)
+	mock.CCS(clustersmgmtv1.NewCCS().Enabled(MockClusterBYOC))
 	mock.Managed(MockClusterManaged)
 	if modifyFn != nil {
 		modifyFn(mock)

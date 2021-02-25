@@ -11,10 +11,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/xeipuuv/gojsonschema"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+
+	"github.com/xeipuuv/gojsonschema"
 )
 
 var (
@@ -87,9 +87,13 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		}
 
 		var allowListItem config.AllowedListItem
+		claims, err := auth.GetClaimsFromContext(context)
+		if err != nil {
+			return errors.Unauthenticated("user not authenticated")
+		}
 
-		orgId := auth.GetOrgIdFromContext(context)
-		username := auth.GetUsernameFromContext(context)
+		orgId := auth.GetOrgIdFromClaims(claims)
+		username := auth.GetUsernameFromClaims(claims)
 
 		org, orgFound := configService.GetOrganisationById(orgId)
 		var message string
@@ -102,9 +106,9 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
 		}
 
-		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
-		if err != nil {
-			return err
+		_, pageMeta, svcErr := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
+		if svcErr != nil {
+			return svcErr
 		}
 
 		if !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total) {

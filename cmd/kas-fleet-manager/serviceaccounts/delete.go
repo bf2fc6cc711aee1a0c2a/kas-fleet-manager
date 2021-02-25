@@ -5,6 +5,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/flags"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+
+	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -38,7 +40,12 @@ func runDelete(cmd *cobra.Command, args []string) {
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
 
 	ctx := cmd.Context()
-	ctx = auth.SetOrgIdContext(ctx, orgId)
+	// create jwt with claims and set it in the context
+	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
+		"org_id": orgId,
+	})
+	ctx = auth.SetTokenInContext(ctx, jwt)
+
 	err := keycloakService.DeleteServiceAccount(ctx, id)
 	if err != nil {
 		glog.Fatalf("Unable to delete service account: %s", err.Error())

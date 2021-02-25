@@ -5,19 +5,11 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -32,17 +24,19 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 )
 
 const (
-	jwtKeyFile     = "test/support/jwt_private_key.pem"
-	jwtCAFile      = "test/support/jwt_ca.pem"
-	jwkKID         = "uhctestkey"
-	tokenClaimType = "Bearer"
-	tokenExpMin    = 15
+	jwtKeyFile = "test/support/jwt_private_key.pem"
+	jwtCAFile  = "test/support/jwt_ca.pem"
 )
 
 var helper *Helper
@@ -65,6 +59,7 @@ type Helper struct {
 	KafkaWorker       *workers.KafkaManager
 	ClusterWorker     *workers.ClusterManager
 	LeaderEleWorker   *workers.LeaderElectionManager
+	AuthHelper        *auth.AuthHelper
 	TimeFunc          TimeFunc
 	JWTPrivateKey     *rsa.PrivateKey
 	JWTCA             *rsa.PublicKey
@@ -74,11 +69,6 @@ type Helper struct {
 
 func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 	once.Do(func() {
-		jwtKey, jwtCA, err := parseJWTKeys()
-		if err != nil {
-			fmt.Println("Unable to read JWT keys - this may affect tests that make authenticated server requests")
-		}
-
 		env := environments.Environment()
 
 		// Set server if provided
@@ -99,7 +89,7 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 			fmt.Println("OCM_ENV environment variable not set to a valid test environment, using default testing environment")
 			env.Name = environments.TestingEnv
 		}
-		err = env.AddFlags(pflag.CommandLine)
+		err := env.AddFlags(pflag.CommandLine)
 		if err != nil {
 			glog.Fatalf("Unable to add environment flags: %s", err.Error())
 		}
@@ -117,11 +107,17 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 			glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 		}
 
+		authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
+		if err != nil {
+			helper.T.Errorf("failed to create a new auth helper %s", err.Error())
+		}
+
 		helper = &Helper{
 			AppConfig:     environments.Environment().Config,
 			DBFactory:     environments.Environment().DBFactory,
-			JWTPrivateKey: jwtKey,
-			JWTCA:         jwtCA,
+			JWTPrivateKey: authHelper.JWTPrivateKey,
+			JWTCA:         authHelper.JWTCA,
+			AuthHelper:    authHelper,
 		}
 
 		// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
@@ -385,48 +381,45 @@ func (helper *Helper) NewApiClient() *openapi.APIClient {
 func (helper *Helper) NewRandAccount() *amv1.Account {
 	// this value if taken from config/allow-list-configuration.yaml
 	orgId := "13640203"
-	return helper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), orgId)
+
+	account, err := helper.AuthHelper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), orgId)
+	if err != nil {
+		helper.T.Errorf("failed to create a new random account: %s", err.Error())
+	}
+
+	return account
 }
 
 func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
 	// this value if taken from config/allow-list-configuration.yaml
 	allowedSA := "testuser1@example.com"
-	return helper.NewAccount(allowedSA, allowedSA, allowedSA, "")
+	account, err := helper.AuthHelper.NewAccount(allowedSA, allowedSA, allowedSA, "")
+	if err != nil {
+		helper.T.Errorf("failed to create a new service account: %s", err.Error())
+	}
+	return account
 }
 
 func (helper *Helper) NewAccount(username, name, email string, orgId string) *amv1.Account {
-	var firstName string
-	var lastName string
-	names := strings.SplitN(name, " ", 2)
-	if len(names) < 2 {
-		firstName = name
-		lastName = ""
-	} else {
-		firstName = names[0]
-		lastName = names[1]
-	}
-
-	builder := amv1.NewAccount().
-		Username(username).
-		FirstName(firstName).
-		LastName(lastName).
-		Email(email).
-		Organization(amv1.NewOrganization().ExternalID(orgId))
-
-	acct, err := builder.Build()
+	account, err := helper.AuthHelper.NewAccount(username, name, email, orgId)
 	if err != nil {
-		helper.T.Errorf(fmt.Sprintf("Unable to build account: %s", err))
+		helper.T.Errorf(fmt.Sprintf("Unable to create a new account: %s", err.Error()))
 	}
-	return acct
+	return account
 }
 
-func (helper *Helper) NewAuthenticatedContext(account *amv1.Account) context.Context {
-	tokenString := helper.CreateJWTString(account)
-	return context.WithValue(context.Background(), openapi.ContextAccessToken, tokenString)
+// Returns an authenticated context that can be used with openapi functions
+func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.MapClaims) context.Context {
+	token, err := helper.AuthHelper.CreateSignedJWT(account, claims)
+	if err != nil {
+		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+	}
+
+	return context.WithValue(context.Background(), openapi.ContextAccessToken, token)
 }
 
 func (helper *Helper) StartJWKCertServerMock() (teardown func()) {
-	jwkURL, teardown = mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, jwkKID)
+	jwkURL, teardown = mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
 	helper.Env().Config.Server.JwkCertURL = jwkURL
 	return teardown
 }
@@ -500,94 +493,26 @@ func (helper *Helper) ResetDB() {
 	helper.MigrateDB()
 }
 
-func (helper *Helper) CreateJWTStringWithAdditionalClaims(account *amv1.Account, moreClaims jwt.MapClaims) string {
-	// Use an RH SSO JWT by default since we are phasing RHD out
-	claims := jwt.MapClaims{
-		"iss":        helper.Env().Config.OCM.TokenURL,
-		"username":   account.Username(),
-		"first_name": account.FirstName(),
-		"last_name":  account.LastName(),
-		"typ":        tokenClaimType,
-		"iat":        time.Now().Unix(),
-		"exp":        time.Now().Add(time.Minute * time.Duration(tokenExpMin)).Unix(),
-	}
-
-	org, ok := account.GetOrganization()
-
-	if ok {
-		claims["org_id"] = org.ExternalID()
-	}
-
-	if account.Email() != "" {
-		claims["email"] = account.Email()
-	}
-	/* TODO the ocm api model needs to be updated to expose this
-	if account.ServiceAccount {
-		claims["clientId"] = account.Username()
-	}
-	*/
-	for k, v := range moreClaims {
-		claims[k] = v
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	// Set the token header kid to the same value we expect when validating the token
-	// The kid is an arbitrary identifier for the key
-	// See https://tools.ietf.org/html/rfc7517#section-4.5
-	token.Header["kid"] = jwkKID
-	token.Header["alg"] = jwt.SigningMethodRS256.Alg()
-
-	// private key and public key taken from http://kjur.github.io/jsjws/tool_jwt.html
-	// the go-jwt-middleware pkg we use does the same for their tests
-	signedToken, err := token.SignedString(helper.JWTPrivateKey)
-	if err != nil {
-		helper.T.Errorf("Unable to sign test jwt: %s", err)
-		return ""
-	}
-	return signedToken
-}
-
 func (helper *Helper) CreateJWTString(account *amv1.Account) string {
-	return helper.CreateJWTStringWithAdditionalClaims(account, nil)
+	token, err := helper.AuthHelper.CreateSignedJWT(account, nil)
+	if err != nil {
+		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
+	}
+	return token
 }
 
 func (helper *Helper) CreateJWTStringWithClaim(account *amv1.Account, jwtClaims jwt.MapClaims) string {
-	// Use an RH SSO JWT by default since we are phasing RHD out
-	claims := jwtClaims
-	if account.Email() != "" {
-		claims["email"] = account.Email()
-	}
-	/* TODO the ocm api model needs to be updated to expose this
-	if account.ServiceAccount {
-		claims["clientId"] = account.Username()
-	}
-	*/
-
-	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-	// Set the token header kid to the same value we expect when validating the token
-	// The kid is an arbitrary identifier for the key
-	// See https://tools.ietf.org/html/rfc7517#section-4.5
-	token.Header["kid"] = jwkKID
-	token.Header["alg"] = jwt.SigningMethodRS256.Alg()
-
-	// private key and public key taken from http://kjur.github.io/jsjws/tool_jwt.html
-	// the go-jwt-middleware pkg we use does the same for their tests
-	signedToken, err := token.SignedString(helper.JWTPrivateKey)
+	token, err := helper.AuthHelper.CreateSignedJWT(account, jwtClaims)
 	if err != nil {
-		helper.T.Errorf("Unable to sign test jwt: %s", err)
-		return ""
+		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token with the given claims: %s", err.Error()))
 	}
-	return signedToken
+	return token
 }
 
-func (helper *Helper) CreateJWTToken(account *amv1.Account) *jwt.Token {
-	tokenString := helper.CreateJWTString(account)
-
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return helper.JWTCA, nil
-	})
+func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapClaims) *jwt.Token {
+	token, err := helper.AuthHelper.CreateJWTWithClaims(account, jwtClaims)
 	if err != nil {
-		helper.T.Errorf("Unable to parse signed jwt: %s", err)
-		return nil
+		helper.T.Errorf("Failed to create jwt token: %s", err.Error())
 	}
 	return token
 }
@@ -601,32 +526,4 @@ func (helper *Helper) OpenapiError(err error) openapi.Error {
 		helper.T.Errorf("Unable to convert error response to openapi error: %s", jsonErr)
 	}
 	return exErr
-}
-
-func parseJWTKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
-	projectRootDir := config.GetProjectRootDir()
-	privateBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtKeyFile))
-	if err != nil {
-		err = fmt.Errorf("Unable to read JWT key file %s: %s", jwtKeyFile, err)
-		return nil, nil, err
-	}
-	pubBytes, err := ioutil.ReadFile(filepath.Join(projectRootDir, jwtCAFile))
-	if err != nil {
-		err = fmt.Errorf("Unable to read JWT ca file %s: %s", jwtKeyFile, err)
-		return nil, nil, err
-	}
-
-	// Parse keys
-	privateKey, err := jwt.ParseRSAPrivateKeyFromPEMWithPassword(privateBytes, "passwd")
-	if err != nil {
-		err = fmt.Errorf("Unable to parse JWT private key: %s", err)
-		return nil, nil, err
-	}
-	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubBytes)
-	if err != nil {
-		err = fmt.Errorf("Unable to parse JWT ca: %s", err)
-		return nil, nil, err
-	}
-
-	return privateKey, pubKey, nil
 }

@@ -5,7 +5,7 @@
 ### On OSX
 
 ```sh
-brew install go@1.13
+brew install go@1.15
 
 export GOPATH=$HOME/go
 export PATH=$PATH:$GOPATH/bin  # our binaries compile here
@@ -14,8 +14,8 @@ export PATH=$PATH:$GOPATH/bin  # our binaries compile here
 ### On Other Linux Platforms
 
 ```sh
-wget https://golang.org/dl/go1.13.15.linux-amd64.tar.gz # for latest versions check https://golang.org/dl/
-tar -xzf go1.13.15.linux-amd64.tar.gz
+wget https://golang.org/dl/go1.15.8.linux-amd64.tar.gz # for latest versions check https://golang.org/dl/
+tar -xzf go1.15.8.linux-amd64.tar.gz
 mv go /usr/local
 
 export GOPATH=$HOME/go

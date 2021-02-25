@@ -164,12 +164,17 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 		return nil, errors.Validation("id is undefined")
 	}
 
-	user := auth.GetUsernameFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, errors.Unauthenticated("user not authenticated: %s", err.Error())
+	}
+
+	user := auth.GetUsernameFromClaims(claims)
 	if user == "" {
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
 
-	orgId := auth.GetOrgIdFromContext(ctx)
+	orgId := auth.GetOrgIdFromClaims(claims)
 	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
 
 	dbConn := k.connectionFactory.New().Where("id = ?", id)
@@ -209,7 +214,11 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	}
 
 	// filter kafka request by owner to only retrieve request of the current authenticated user
-	user := auth.GetUsernameFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return errors.Unauthenticated("user not authenticated")
+	}
+	user := auth.GetUsernameFromClaims(claims)
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 
@@ -292,12 +301,17 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 		Size: listArgs.Size,
 	}
 
-	user := auth.GetUsernameFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return nil, nil, errors.Unauthenticated("user not authenticated")
+	}
+
+	user := auth.GetUsernameFromClaims(claims)
 	if user == "" {
 		return nil, nil, errors.Unauthenticated("user not authenticated")
 	}
 
-	orgId := auth.GetOrgIdFromContext(ctx)
+	orgId := auth.GetOrgIdFromClaims(claims)
 	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
 	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
 	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
