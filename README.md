@@ -191,6 +191,8 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `KAFKA_TLS_CERT`: Kafka TLS external certificate.
 - `KAFKA_TLS_KEY`: Kakfa TLS external certificate private key.
 - `OBSERVATORIUM_SERVICE_TOKEN`: Token for observatorium service.
+- `MAS_SSO_BASE_URL`: MAS SSO base url.
+- `MAS_SSO_REALM`: MAS SSO realm url.
 
 The service can be accessed by via the host of the route created by the service deployment.
 ```
