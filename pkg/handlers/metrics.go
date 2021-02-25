@@ -57,7 +57,7 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 	handleGet(w, r, cfg)
 }
 
-func (h metricsHandler)  GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
+func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	cfg := &handlerConfig{
