@@ -362,7 +362,7 @@ func (d *dataPlaneClusterService) kafkaClustersCapacityAvailable(status *api.Dat
 }
 
 func (d *dataPlaneClusterService) scaleDownThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
-	var res *dataPlaneComputeNodesKafkaCapacityAttributes
+	var res *dataPlaneComputeNodesKafkaCapacityAttributes = &dataPlaneComputeNodesKafkaCapacityAttributes{}
 
 	res.Connections = status.ResizeInfo.Delta.Connections
 	res.Partitions = status.ResizeInfo.Delta.Partitions
@@ -371,7 +371,7 @@ func (d *dataPlaneClusterService) scaleDownThresholds(status *api.DataPlaneClust
 }
 
 func (d *dataPlaneClusterService) scaleUpThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
-	var res *dataPlaneComputeNodesKafkaCapacityAttributes
+	var res *dataPlaneComputeNodesKafkaCapacityAttributes = &dataPlaneComputeNodesKafkaCapacityAttributes{}
 
 	res.Connections = kafkaClusterConnectionsCapacityScaleUpThreshold
 	res.Partitions = kafkaClusterPartitionsCapacityScaleUpThreshold
