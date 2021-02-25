@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
+	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
 
@@ -67,4 +68,45 @@ func TestServiceAccounts_Success(t *testing.T) {
 		}
 	}
 	Expect(f).To(BeFalse())
+}
+
+func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewAccount(faker.Username(), faker.Name(), faker.Email(), faker.ID)
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	//verify list
+	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+
+	//verify create
+	r := openapi.ServiceAccountRequest{
+		Name:        "managed-service-integration-test-account",
+		Description: "created by the managed service integration tests",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+
+	// verify get by id
+	id := faker.ID
+	_, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(err).Should(HaveOccurred())
+
+	//verify reset
+	_, _, err = client.DefaultApi.ResetServiceAccountCreds(ctx, id)
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(err).Should(HaveOccurred())
+
+	//verify delete
+	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(err).Should(HaveOccurred())
 }

@@ -123,10 +123,6 @@ func NewAPIServer() Server {
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 
-	if env().Services.Config.IsAllowListEnabled() {
-		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
-	}
-
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
 	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
@@ -140,6 +136,7 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 
 	if env().Services.Config.IsAllowListEnabled() {
+		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
 		apiV1ServiceAccountsRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
 	}
 
