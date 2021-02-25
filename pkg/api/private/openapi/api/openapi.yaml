@@ -806,36 +806,50 @@ components:
     DataPlaneClusterUpdateStatusRequest_total:
       properties:
         ingressEgressThroughputPerSec:
+          nullable: true
           type: string
         connections:
+          nullable: true
           type: integer
         dataRetentionSize:
+          nullable: true
           type: string
         partitions:
+          nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_nodeInfo:
       properties:
         ceiling:
+          nullable: true
           type: integer
         floor:
+          nullable: true
           type: integer
         current:
+          nullable: true
           type: integer
         currentWorkLoadMinimum:
+          nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_resizeInfo_delta:
+      nullable: true
       properties:
         ingressEgressThroughputPerSec:
+          nullable: true
           type: string
         connections:
+          nullable: true
           type: integer
         dataRetentionSize:
+          nullable: true
           type: string
         maxPartitions:
+          nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_resizeInfo:
       properties:
         nodeDelta:
+          nullable: true
           type: integer
         delta:
           $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resizeInfo_delta'
