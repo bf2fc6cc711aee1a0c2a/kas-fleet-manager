@@ -115,8 +115,6 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
-
-
 	}
 
 	for msg, f := range fetchers {
@@ -152,7 +150,7 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 
 func (obs *ServiceObservatorium) fetchMetricsResult(rq *MetricsReqParams, f *fetcher) Metric {
 	c := obs.client
-	var result  Metric
+	var result Metric
 	switch rq.ResultType {
 	case RangeQuery:
 		result = c.QueryRange(f.metric, f.labels, rq.Range)
