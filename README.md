@@ -55,7 +55,7 @@ the `secrets/observability-config-access.token` file.
 
 To generate a new token:
 1. Follow the steps [found here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token), 
-making sure to check **ONLY** the `repo` box at the top of the scopes/permissions list (which will check the 3 subcategory boxes beneath it).
+making sure to check **ONLY** the `repo` box at the top of the scopes/permissions list (which will check each of the subcategory boxes beneath it).
 2. Copy the value of your Personal Access Token to a secure private location. Once you leave the page, you cannot access the value
 again & you will be forced to reset the token to receive a new value should you lose the original.
 3. Paste the token value in the `secrets/observability-config-access.token` file.
