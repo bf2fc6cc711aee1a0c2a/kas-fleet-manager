@@ -162,6 +162,10 @@ ifndef SERVER_URL
 	SERVER_URL:=http://localhost:8000
 endif
 
+ifndef TEST_TIMEOUT
+	TEST_TIMEOUT=5h
+endif
+
 # Prints a list of useful targets.
 help:
 	@echo ""
@@ -264,7 +268,7 @@ test/prepare: install
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout 5h -count=1 $(TESTFLAGS) \
+	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 			./test/integration
 .PHONY: test/integration
 
