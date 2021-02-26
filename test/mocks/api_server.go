@@ -106,6 +106,7 @@ var (
 	EndpointClustersPatch           = Endpoint{EndpointPathCluster, http.MethodPatch}
 	EndpointClusterSyncsetsPost     = Endpoint{EndpointPathSyncsets, http.MethodPost}
 	EndpointClusterSyncsetGet       = Endpoint{EndpointPathSyncset, http.MethodGet}
+	EndpointClusterSyncsetPatch     = Endpoint{EndpointPathSyncset, http.MethodPatch}
 	EndpointClusterIngressGet       = Endpoint{EndpointPathIngresses, http.MethodGet}
 	EndpointCloudProvidersGet       = Endpoint{EndpointPathCloudProviders, http.MethodGet}
 	EndpointCloudProviderGet        = Endpoint{EndpointPathCloudProvider, http.MethodGet}
@@ -218,6 +219,11 @@ func (b *MockConfigurableServerBuilder) SetClusterSyncsetGetResponse(syncset *cl
 // SetClusterSyncsetPostResponse set a mock response syncset or error for the POST /api/clusters_mgmt/v1/clusters/{id}/syncsets endpoint
 func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClusterSyncsetsPost] = buildMockRequestHandler(syncset, err)
+}
+
+// SetClusterSyncsetPatchResponse set a mock response syncset or error for the Patch /api/clusters_mgmt/v1/clusters/{id}/syncsets endpoint
+func (b *MockConfigurableServerBuilder) SetClusterSyncsetPatchResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterSyncsetPatch] = buildMockRequestHandler(syncset, err)
 }
 
 func (b *MockConfigurableServerBuilder) SetClusterSyncsetPostRequestHandler(customMockRequestHandler func() func(w http.ResponseWriter, r *http.Request)) {
@@ -342,6 +348,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterSyncsetsPost:     buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetGet:       buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetPatch:     buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterIngressGet:       buildMockRequestHandler(MockIngressList, nil),
 		EndpointCloudProvidersGet:       buildMockRequestHandler(MockCloudProviderList, nil),
 		EndpointCloudProviderGet:        buildMockRequestHandler(MockCloudProvider, nil),

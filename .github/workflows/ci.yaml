@@ -58,6 +58,7 @@ env:
   KAFKA_TLS_KEY: kafka_tls_key
   # So that OCM secrets are initialised
   DOCKER_PR_CHECK: true
+  TEST_TIMEOUT: 30m
 
 jobs:
   lint-test:
