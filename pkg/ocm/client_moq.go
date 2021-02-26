@@ -60,6 +60,9 @@ var _ Client = &ClientMock{}
 //             ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*v1.Cluster, error) {
 // 	               panic("mock out the ScaleUpComputeNodes method")
 //             },
+//             UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *v1.Syncset) (*v1.Syncset, error) {
+// 	               panic("mock out the UpdateSyncSet method")
+//             },
 //         }
 //
 //         // use mockedClient in code that requires Client
@@ -108,6 +111,9 @@ type ClientMock struct {
 
 	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
 	ScaleUpComputeNodesFunc func(clusterID string, increment int) (*v1.Cluster, error)
+
+	// UpdateSyncSetFunc mocks the UpdateSyncSet method.
+	UpdateSyncSetFunc func(clusterID string, syncSetID string, syncset *v1.Syncset) (*v1.Syncset, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -197,6 +203,15 @@ type ClientMock struct {
 			// Increment is the increment argument value.
 			Increment int
 		}
+		// UpdateSyncSet holds details about calls to the UpdateSyncSet method.
+		UpdateSyncSet []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// SyncSetID is the syncSetID argument value.
+			SyncSetID string
+			// Syncset is the syncset argument value.
+			Syncset *v1.Syncset
+		}
 	}
 	lockCreateAddon           sync.RWMutex
 	lockCreateAddonWithParams sync.RWMutex
@@ -212,6 +227,7 @@ type ClientMock struct {
 	lockGetSyncSet            sync.RWMutex
 	lockScaleDownComputeNodes sync.RWMutex
 	lockScaleUpComputeNodes   sync.RWMutex
+	lockUpdateSyncSet         sync.RWMutex
 }
 
 // CreateAddon calls CreateAddonFunc.
@@ -676,5 +692,44 @@ func (mock *ClientMock) ScaleUpComputeNodesCalls() []struct {
 	mock.lockScaleUpComputeNodes.RLock()
 	calls = mock.calls.ScaleUpComputeNodes
 	mock.lockScaleUpComputeNodes.RUnlock()
+	return calls
+}
+
+// UpdateSyncSet calls UpdateSyncSetFunc.
+func (mock *ClientMock) UpdateSyncSet(clusterID string, syncSetID string, syncset *v1.Syncset) (*v1.Syncset, error) {
+	if mock.UpdateSyncSetFunc == nil {
+		panic("ClientMock.UpdateSyncSetFunc: method is nil but Client.UpdateSyncSet was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+		SyncSetID string
+		Syncset   *v1.Syncset
+	}{
+		ClusterID: clusterID,
+		SyncSetID: syncSetID,
+		Syncset:   syncset,
+	}
+	mock.lockUpdateSyncSet.Lock()
+	mock.calls.UpdateSyncSet = append(mock.calls.UpdateSyncSet, callInfo)
+	mock.lockUpdateSyncSet.Unlock()
+	return mock.UpdateSyncSetFunc(clusterID, syncSetID, syncset)
+}
+
+// UpdateSyncSetCalls gets all the calls that were made to UpdateSyncSet.
+// Check the length with:
+//     len(mockedClient.UpdateSyncSetCalls())
+func (mock *ClientMock) UpdateSyncSetCalls() []struct {
+	ClusterID string
+	SyncSetID string
+	Syncset   *v1.Syncset
+} {
+	var calls []struct {
+		ClusterID string
+		SyncSetID string
+		Syncset   *v1.Syncset
+	}
+	mock.lockUpdateSyncSet.RLock()
+	calls = mock.calls.UpdateSyncSet
+	mock.lockUpdateSyncSet.RUnlock()
 	return calls
 }

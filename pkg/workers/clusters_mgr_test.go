@@ -709,6 +709,307 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 	}
 }
 
+func TestClusterManager_reconcileReadyClusters(t *testing.T) {
+	observabilityConfig := buildObservabilityConfig()
+	type fields struct {
+		ocmClient      ocm.Client
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "test should pass and syncset should be created",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
+						return nil, apiErrors.NotFound("not found")
+					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						if syncset.ID() == "" {
+							return nil, errors.New("syncset ID is empty")
+						}
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+					// set to nil deliberately as it should not be called
+					UpdateSyncSetFunc: nil,
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+			},
+		},
+		{
+			name: "test should pass and syncset should be updated",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
+						syncset, _ := clustersmgmtv1.NewSyncset().Resources(observabilityConfig).Build()
+						return syncset, nil
+					},
+					// set to nil deliberately as it should not be called
+					CreateSyncSetFunc: nil,
+					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						if syncset.ID() != "" {
+							return nil, errors.New("syncset ID is not empty")
+						}
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+			},
+		},
+		{
+			name: "should receive error when GetClusterDNSFunc returns error",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetSyncSetFunc:    nil,
+					CreateSyncSetFunc: nil,
+					UpdateSyncSetFunc: nil,
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive error when CreateSyncSetFunc returns error",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
+						return nil, apiErrors.NotFound("not found")
+					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return nil, apiErrors.GeneralError("failed")
+					},
+					// set to nil deliberately as it should not be called
+					UpdateSyncSetFunc: nil,
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive error when UpdateSyncSetFunc returns error",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
+						return nil, nil
+					},
+					// set to nil deliberately as it should not be called
+					CreateSyncSetFunc: nil,
+					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return nil, apiErrors.GeneralError("failed")
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				ocmClient:      tt.fields.ocmClient,
+				clusterService: tt.fields.clusterService,
+				configService: services.NewConfigService(config.ApplicationConfig{
+					SupportedProviders:         &config.ProviderConfig{},
+					AllowList:                  &config.AllowListConfig{},
+					ObservabilityConfiguration: &observabilityConfig,
+					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+				}),
+			}
+
+			err := c.reconcileClusterSyncSet(api.Cluster{ClusterID: "test-cluster-id"})
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestSyncsetResourcesChanged(t *testing.T) {
+	tests := []struct {
+		name              string
+		existingResources []interface{}
+		newResources      []interface{}
+		changed           bool
+	}{
+		{
+			name: "resources should match",
+			existingResources: []interface{}{
+				map[string]interface{}{
+					"kind":       "Project",
+					"apiVersion": "project.openshift.io/v1",
+					"metadata": map[string]string{
+						"name": observabilityNamespace,
+					},
+				},
+				map[string]interface{}{
+					"kind":       "OperatorGroup",
+					"apiVersion": "operators.coreos.com/v1alpha2",
+					"metadata": map[string]string{
+						"name":      observabilityOperatorGroupName,
+						"namespace": observabilityNamespace,
+					},
+					"spec": map[string]interface{}{
+						"targetNamespaces": []string{observabilityNamespace},
+					},
+				},
+			},
+			newResources: []interface{}{
+				&projectv1.Project{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "project.openshift.io/v1",
+						Kind:       "Project",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: observabilityNamespace,
+					},
+				},
+				&v1alpha2.OperatorGroup{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "operators.coreos.com/v1alpha2",
+						Kind:       "OperatorGroup",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      observabilityOperatorGroupName,
+						Namespace: observabilityNamespace,
+					},
+					Spec: v1alpha2.OperatorGroupSpec{
+						TargetNamespaces: []string{observabilityNamespace},
+					},
+				},
+			},
+			changed: false,
+		},
+		{
+			name: "resources should not match as lengths of resources are different",
+			existingResources: []interface{}{
+				map[string]interface{}{
+					"kind":       "Project",
+					"apiVersion": "project.openshift.io/v1",
+					"metadata": map[string]string{
+						"name": observabilityNamespace,
+					},
+				},
+			},
+			newResources: []interface{}{
+				&projectv1.Project{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "project.openshift.io/v1",
+						Kind:       "Project",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: observabilityNamespace,
+					},
+				},
+				&v1alpha2.OperatorGroup{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "operators.coreos.com/v1alpha2",
+						Kind:       "OperatorGroup",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      observabilityOperatorGroupName,
+						Namespace: observabilityNamespace,
+					},
+					Spec: v1alpha2.OperatorGroupSpec{
+						TargetNamespaces: []string{observabilityNamespace},
+					},
+				},
+			},
+			changed: true,
+		},
+		{
+			name: "resources should not match as some field values are changed",
+			existingResources: []interface{}{
+				map[string]interface{}{
+					"kind":       "OperatorGroup",
+					"apiVersion": "operators.coreos.com/v1alpha2",
+					"metadata": map[string]string{
+						"name":      observabilityOperatorGroupName + "updated",
+						"namespace": observabilityNamespace,
+					},
+					"spec": map[string]interface{}{
+						"targetNamespaces": []string{observabilityNamespace},
+					},
+				},
+			},
+			newResources: []interface{}{
+				&v1alpha2.OperatorGroup{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "operators.coreos.com/v1alpha2",
+						Kind:       "OperatorGroup",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      observabilityOperatorGroupName,
+						Namespace: observabilityNamespace,
+					},
+					Spec: v1alpha2.OperatorGroupSpec{
+						TargetNamespaces: []string{observabilityNamespace},
+					},
+				},
+			},
+			changed: true,
+		},
+		{
+			name: "resources should not match as type can not be converted",
+			existingResources: []interface{}{
+				map[string]interface{}{
+					"kind":       "TestProject",
+					"apiVersion": "testproject.openshift.io/v1",
+					"metadata": map[string]string{
+						"name": observabilityNamespace,
+					},
+				},
+			},
+			newResources: []interface{}{
+				&projectv1.Project{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: "project.openshift.io/v1",
+						Kind:       "Project",
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: observabilityNamespace,
+					},
+				},
+			},
+			changed: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			existingSyncset, _ := clustersmgmtv1.NewSyncset().Resources(tt.existingResources...).Build()
+			newSyncset, _ := clustersmgmtv1.NewSyncset().Resources(tt.newResources...).Build()
+			result := syncsetResourcesChanged(existingSyncset, newSyncset)
+			if result != tt.changed {
+				t.Errorf("result does not match expected value. result = %v and expected = %v", result, tt.changed)
+			}
+		})
+	}
+}
+
 // buildObservabilityConfig builds a observability config used for testing
 func buildObservabilityConfig() config.ObservabilityConfiguration {
 	observabilityConfig := config.ObservabilityConfiguration{

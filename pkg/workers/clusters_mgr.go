@@ -3,6 +3,9 @@ package workers
 import (
 	"bytes"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"k8s.io/apimachinery/pkg/runtime"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -11,8 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/pkg/errors"
 	storagev1 "k8s.io/api/storage/v1"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
@@ -189,6 +190,31 @@ func (c *ClusterManager) reconcile() {
 		}
 		glog.V(5).Infof("reconciled provisioned cluster %s terraforming", provisionedCluster.ClusterID)
 	}
+
+	// Keep SyncSet up to date for clusters that are ready
+	readyClusters, listErr := c.clusterService.ListByStatus(api.ClusterReady)
+	if listErr != nil {
+		sentry.CaptureException(listErr)
+		glog.Errorf("failed to list ready clusters: %s", listErr.Error())
+	}
+
+	for _, readyCluster := range readyClusters {
+		err := c.reconcileReadyCluster(readyCluster)
+		if err != nil {
+			sentry.CaptureException(err)
+			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, err.Error())
+			continue
+		}
+		glog.V(5).Infof("reconciled ready cluster %s", readyCluster.ClusterID)
+	}
+}
+
+func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
+	err := c.reconcileClusterSyncSet(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+	return nil
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
@@ -197,9 +223,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// SyncSet creation step
 	syncSetErr := c.reconcileClusterSyncSet(cluster)
 	if syncSetErr != nil {
-		sentry.CaptureException(syncSetErr)
-		glog.Errorf("failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
-		return syncSetErr
+		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	}
 
 	// Addon installation step
@@ -210,9 +234,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// result of the addon/s reconciliation to set the status of the cluster
 	addOnErr := c.reconcileAddonOperator(cluster)
 	if addOnErr != nil {
-		sentry.CaptureException(addOnErr)
-		glog.Errorf("failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
-		return addOnErr // TODO should this be nil? it originally was but in an outer level
+		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
 	}
 
 	return nil
@@ -224,7 +246,7 @@ func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
 	}
 
-	_, err := c.ocmClient.GetSyncSet(cluster.ClusterID, syncsetName)
+	existingSyncset, err := c.ocmClient.GetSyncSet(cluster.ClusterID, syncsetName)
 	syncSetFound := true
 	if err != nil {
 		svcErr := svcErrors.ToServiceError(err)
@@ -234,15 +256,19 @@ func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
 		syncSetFound = false
 	}
 
+	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 	if !syncSetFound {
 		glog.V(10).Infof("SyncSet for cluster %s not found. Creating it...", cluster.ClusterID)
-		clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 		_, syncsetErr := c.createSyncSet(cluster.ClusterID, clusterDNS)
 		if syncsetErr != nil {
 			return errors.WithMessagef(syncsetErr, "failed to create syncset on cluster %s: %s", cluster.ClusterID, syncsetErr.Error())
 		}
 	} else {
 		glog.V(10).Infof("SyncSet for cluster %s already created", cluster.ClusterID)
+		_, syncsetErr := c.updateSyncSet(cluster.ClusterID, clusterDNS, existingSyncset)
+		if syncsetErr != nil {
+			return errors.WithMessagef(syncsetErr, "failed to update syncset on cluster %s: %s", cluster.ClusterID, syncsetErr.Error())
+		}
 	}
 
 	return nil
@@ -401,11 +427,8 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 	return nil
 }
 
-// createSyncSet creates the syncset during cluster terraforming
-func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
-	// terraforming phase
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().
-		ID(syncsetName).
+func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clustersmgmtv1.Syncset, error) {
+	b := clustersmgmtv1.NewSyncset().
 		Resources(
 			[]interface{}{
 				c.buildStorageClass(),
@@ -416,14 +439,61 @@ func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*cl
 				c.buildObservabilityOperatorGroupResource(),
 				c.buildObservabilitySubscriptionResource(),
 				c.buildObservabilityExternalConfigResource(),
-			}...).
-		Build()
+			}...)
+	if withId {
+		b = b.ID(syncsetName)
+	}
+	return b.Build()
+}
+
+// createSyncSet creates the syncset during cluster terraforming
+func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
+	// terraforming phase
+	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, true)
 
 	if sysnsetBuilderErr != nil {
 		return nil, fmt.Errorf("failed to create cluster terraforming sysncset: %s", sysnsetBuilderErr.Error())
 	}
 
 	return c.ocmClient.CreateSyncSet(clusterID, syncset)
+}
+
+func (c *ClusterManager) updateSyncSet(clusterID string, ingressDNS string, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, false)
+	if sysnsetBuilderErr != nil {
+		return nil, fmt.Errorf("failed to build cluster sysncset: %s", sysnsetBuilderErr.Error())
+	}
+	if syncsetResourcesChanged(existingSyncset, syncset) {
+		glog.V(10).Infof("SyncSet for cluster %s is changed, will update", clusterID)
+		return c.ocmClient.UpdateSyncSet(clusterID, syncsetName, syncset)
+	}
+	glog.V(10).Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
+	return syncset, nil
+}
+
+func syncsetResourcesChanged(existing *clustersmgmtv1.Syncset, new *clustersmgmtv1.Syncset) bool {
+	if len(existing.Resources()) != len(new.Resources()) {
+		return true
+	}
+	// Here we will convert values in the Resources slice to the same type, and then compare the values.
+	// This is needed because when you use ocm.GetSyncset(), the Resources in the returned object only contains a slice of map[string]interface{} objects, because it can't convert them to concrete typed objects.
+	// So the compare if there changes, we need to make sure they are the same type first.
+	// If the type conversion doesn't work, or the converted values doesn't match, then they are not equal.
+	// This assumes that the order of objects in the Resources slice are the same in the exiting and new Syncset (which is the case as the OCM API returns the syncset resources in the same order as they posted)
+	for i, r := range new.Resources() {
+		obj := reflect.New(reflect.TypeOf(r).Elem()).Interface()
+		// Here we convert the unstructured type to the concrete type, as there is a bug in OperatorGroup type to convert it to the unstructured type
+		err := runtime.DefaultUnstructuredConverter.FromUnstructured(existing.Resources()[i].(map[string]interface{}), obj)
+		// if we can't do the type conversion, it likely means the resource has changed
+		if err != nil {
+			return true
+		}
+		if !reflect.DeepEqual(obj, r) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Project {

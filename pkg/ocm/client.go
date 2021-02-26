@@ -25,6 +25,7 @@ type Client interface {
 	CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
+	UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
 	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
@@ -165,6 +166,23 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 	var err error
 	if syncsetErr != nil {
 		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create syncset: %s", syncsetErr)
+	}
+	return response.Body(), err
+}
+
+func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, syncsetErr := clustersResource.Cluster(clusterID).
+		ExternalConfiguration().
+		Syncsets().
+		Syncset(syncSetID).
+		Update().
+		Body(syncset).
+		Send()
+
+	var err error
+	if syncsetErr != nil {
+		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update syncset '%s': %s", syncSetID, syncsetErr)
 	}
 	return response.Body(), err
 }
