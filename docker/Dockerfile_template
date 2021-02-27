@@ -23,6 +23,7 @@ ENV MAS_SSO_CLIENT_ID test-managed-services-api
 ENV MAS_SSO_CLIENT_SECRET c1a79f76-272d-4b2b-ad27-2740fc81a508
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
 ENV KAFKA_TLS_KEY <kafka_tls_key>
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update
 RUN apt-get install -y make sudo git wget curl ca-certificates
@@ -46,6 +47,10 @@ COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
 # install go 1.15.8
 RUN curl -O -J https://dl.google.com/go/go1.15.8.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.15.8.linux-amd64.tar.gz
+
+# install NPM and java for openapi-generator
+RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash - 
+RUN apt install -y nodejs build-essential default-jre
 
 ENV PATH="/uhc/bin:/usr/local/go/bin:${PATH}"
 ENV GOPATH="/uhc"
