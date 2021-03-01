@@ -216,7 +216,7 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 	orgId := auth.GetOrgIdFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
-		return errors.GeneralError("failed to check the sso client exists: %v", err)
+		return errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
 	}
 	if kc.kcClient.IsSameOrg(c, orgId) {
 		err = kc.kcClient.DeleteClient(id, accessToken)

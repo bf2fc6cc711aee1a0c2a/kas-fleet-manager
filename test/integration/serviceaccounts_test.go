@@ -60,6 +60,10 @@ func TestServiceAccounts_Success(t *testing.T) {
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
 	Expect(err).ShouldNot(HaveOccurred())
 
+	// verify deletion of non-existent service account throws http status code 404
+	_, resp, _ = client.DefaultApi.DeleteServiceAccount(ctx, id)
+	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+
 	f := false
 	accounts, _, _ := client.DefaultApi.ListServiceAccounts(ctx)
 	for _, a := range accounts.Items {
