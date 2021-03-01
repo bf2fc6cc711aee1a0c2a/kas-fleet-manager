@@ -19,7 +19,7 @@ seed_kafkas = int(os.environ['PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER'])
 kafkas_to_create = int(os.environ['PERF_TEST_KAFKAS_PER_WORKER'])
 # number of kafkas to create by each locust worker
 run_time_string = os.environ['PERF_TEST_RUN_TIME']
-run_time_minutes = int(run_time_string[0:len(run_time_string)-1])
+run_time_seconds = int(run_time_string[0:len(run_time_string)-1]) * 60
 
 # set base url for the endpoints
 url_base = '/api/managed-services-api/v1'
@@ -52,7 +52,7 @@ class QuickstartUser(HttpUser):
     current_run_time = time.monotonic() - start_time
     # create and then instantly delete kafka_requests to seed the database
     if populate_db == 'TRUE':
-      if run_time_minutes - (current_run_time / 60) > 2:
+      if run_time_seconds - current_run_time > 120:
         kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
         if kafka_id != '':
           kafkas_created = kafkas_created + 1
@@ -66,10 +66,10 @@ class QuickstartUser(HttpUser):
         populate_db = 'FALSE'
     else:
       # cleanup before the test completes
-      if run_time_minutes - (current_run_time / 60) < 2:
+      if run_time_seconds - current_run_time < 60:
         cleanup(self)
         # make sure that no kafka_requests or service accounts created by this test are removed
-        if run_time_minutes - (current_run_time / 60) < 1:
+        if run_time_seconds - current_run_time < 30:
           if resources_cleaned_up == False:
             check_leftover_resources(self)
       # hit the remaining endpoints for the majority of the time that this test runs
@@ -99,7 +99,8 @@ def exercise_endpoints(self):
     if len(kafkas_list) > 0:
       kafka_id = get_random_id(kafkas_list)
       handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
-      handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics', '/kafkas/[id]/metrics')
+      handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
+      handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
     global kafkas_created
     if len(kafkas_list) < kafkas_to_create:
       kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
