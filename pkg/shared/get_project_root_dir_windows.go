@@ -1,10 +1,11 @@
-// +build !windows
+// +build windows
 
 package shared
 
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/golang/glog"
@@ -18,12 +19,18 @@ func GetProjectRootDir() string {
 	if err != nil {
 		glog.Fatal(err)
 	}
-	dirs := strings.Split(workingDir, "/")
+
+	dirs := strings.Split(workingDir, `\`)
+
 	var goModPath string
 	var rootPath string
-	for _, d := range dirs {
-		rootPath = rootPath + "/" + d
-		goModPath = rootPath + "/go.mod"
+	for i, d := range dirs {
+		if i == 0 {
+			rootPath = d + `\`
+		} else {
+			rootPath = filepath.Join(rootPath, d)
+		}
+		goModPath = filepath.Join(rootPath, "go.mod")
 		goModFile, err := ioutil.ReadFile(goModPath)
 		if err != nil { // if the file doesn't exist, continue searching
 			continue
