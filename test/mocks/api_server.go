@@ -100,10 +100,10 @@ const (
 // variables for endpoints
 var (
 	EndpointClusterGet              = Endpoint{EndpointPathCluster, http.MethodGet}
+	EndpointClusterPatch            = Endpoint{EndpointPathCluster, http.MethodPatch}
 	EndpointKafkaDelete             = Endpoint{EndpointPathSyncset, http.MethodDelete}
 	EndpointClustersGet             = Endpoint{EndpointPathClusters, http.MethodGet}
 	EndpointClustersPost            = Endpoint{EndpointPathClusters, http.MethodPost}
-	EndpointClustersPatch           = Endpoint{EndpointPathCluster, http.MethodPatch}
 	EndpointClusterSyncsetsPost     = Endpoint{EndpointPathSyncsets, http.MethodPost}
 	EndpointClusterSyncsetGet       = Endpoint{EndpointPathSyncset, http.MethodGet}
 	EndpointClusterSyncsetPatch     = Endpoint{EndpointPathSyncset, http.MethodPatch}
@@ -196,6 +196,11 @@ func (b *MockConfigurableServerBuilder) SetKafkaDeleteResponse(syncset *clusters
 	b.handlerRegister[EndpointKafkaDelete] = buildMockRequestHandler(syncset, err)
 }
 
+// SetClusterPatchResponse set a mock response cluster or error for the PATCH /api/clusters_mgmt/v1/clusters/{id} endpoint
+func (b *MockConfigurableServerBuilder) SetClusterPatchResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterPatch] = buildMockRequestHandler(cluster, err)
+}
+
 // SetClustersPostResponse set a mock response cluster or error for the POST /api/clusters_mgmt/v1/clusters endpoint
 func (b *MockConfigurableServerBuilder) SetClustersPostResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClustersPost] = buildMockRequestHandler(cluster, err)
@@ -204,11 +209,6 @@ func (b *MockConfigurableServerBuilder) SetClustersPostResponse(cluster *cluster
 // SetClustersGetResponse set a mock response cluster or error for the GET /api/clusters_mgmt/v1/clusters endpoint
 func (b *MockConfigurableServerBuilder) SetClustersGetResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClustersGet] = buildMockRequestHandler(cluster, err)
-}
-
-// SetClustersPatchResponse set a mock response cluster or error for the GET /api/clusters_mgmt/v1/clusters endpoint
-func (b *MockConfigurableServerBuilder) SetClustersPatchResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointClustersPatch] = buildMockRequestHandler(cluster, err)
 }
 
 // SetClusterSyncsetGetResponse set a mock response syncset or error for the GET /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID}
@@ -342,9 +342,9 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 	// managed-services-api service, a default ocm response should also be added here
 	return HandlerRegister{
 		EndpointClusterGet:              buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterPatch:            buildMockRequestHandler(MockCluster, nil),
 		EndpointKafkaDelete:             buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:             buildMockRequestHandler(MockCluster, nil),
-		EndpointClustersPatch:           buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterSyncsetsPost:     buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetGet:       buildMockRequestHandler(MockSyncset, nil),
