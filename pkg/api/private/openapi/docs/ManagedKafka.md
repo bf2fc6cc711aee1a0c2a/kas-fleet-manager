@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 **Kind** | **string** |  | [optional] 
 **Href** | **string** |  | [optional] 
 **Name** | **string** |  | [optional] 
-**PlacementId** | **string** |  | [optional] 
+**Annotation** | [**ManagedKafkaAllOfAnnotation**](ManagedKafka_allOf_annotation.md) |  | [optional] 
 **Spec** | [**ManagedKafkaAllOfSpec**](ManagedKafka_allOf_spec.md) |  | [optional] 
 **Status** | [**ManagedKafkaAllOfStatus**](ManagedKafka_allOf_status.md) |  | [optional] 
 

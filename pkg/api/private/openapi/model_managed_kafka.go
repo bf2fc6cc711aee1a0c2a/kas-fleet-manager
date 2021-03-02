@@ -11,11 +11,11 @@ package openapi
 
 // ManagedKafka struct for ManagedKafka
 type ManagedKafka struct {
-	Id          string                  `json:"id,omitempty"`
-	Kind        string                  `json:"kind,omitempty"`
-	Href        string                  `json:"href,omitempty"`
-	Name        string                  `json:"name,omitempty"`
-	PlacementId string                  `json:"placementId,omitempty"`
-	Spec        ManagedKafkaAllOfSpec   `json:"spec,omitempty"`
-	Status      ManagedKafkaAllOfStatus `json:"status,omitempty"`
+	Id         string                      `json:"id,omitempty"`
+	Kind       string                      `json:"kind,omitempty"`
+	Href       string                      `json:"href,omitempty"`
+	Name       string                      `json:"name,omitempty"`
+	Annotation ManagedKafkaAllOfAnnotation `json:"annotation,omitempty"`
+	Spec       ManagedKafkaAllOfSpec       `json:"spec,omitempty"`
+	Status     ManagedKafkaAllOfStatus     `json:"status,omitempty"`
 }

@@ -69,6 +69,7 @@ Class | Method | HTTP request | Description
  - [List](docs/List.md)
  - [ManagedKafka](docs/ManagedKafka.md)
  - [ManagedKafkaAllOf](docs/ManagedKafkaAllOf.md)
+ - [ManagedKafkaAllOfAnnotation](docs/ManagedKafkaAllOfAnnotation.md)
  - [ManagedKafkaAllOfSpec](docs/ManagedKafkaAllOfSpec.md)
  - [ManagedKafkaAllOfSpecEndpoint](docs/ManagedKafkaAllOfSpecEndpoint.md)
  - [ManagedKafkaAllOfSpecEndpointTls](docs/ManagedKafkaAllOfSpecEndpointTls.md)

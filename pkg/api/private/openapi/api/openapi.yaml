@@ -808,6 +808,12 @@ components:
           type: string
         operation_id:
           type: string
+    ManagedKafka_allOf_annotation:
+      properties:
+        id:
+          type: string
+        placementId:
+          type: string
     ManagedKafka_allOf_spec_OAuth:
       properties:
         ClientId:
@@ -865,10 +871,8 @@ components:
       properties:
         name:
           type: string
-        id:
-          type: string
-        placementId:
-          type: string
+        annotation:
+          $ref: '#/components/schemas/ManagedKafka_allOf_annotation'
         spec:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec'
         status:
