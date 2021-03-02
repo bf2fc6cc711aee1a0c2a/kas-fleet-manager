@@ -191,6 +191,7 @@ help:
 	@echo "make setup/git/hooks      	setup git hooks"
 	@echo "make keycloak/setup     	    setup mas sso clientId, clientSecret & crt"
 	@echo "make kafkacert/setup     	    setup the kafka certificate used for Kafka Brokers"
+	@echo "observatorium/setup"       setup observatorium secret used by CI  
 	@echo "make docker/login/internal	login to an openshift cluster image registry"
 	@echo "make image/build/push/internal  build and push image to an openshift cluster image registry."
 	@echo "make deploy               	deploy the service via templates to an openshift cluster"
@@ -230,12 +231,12 @@ lint: golangci-lint
 
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
-binary: verify lint 
+binary: verify lint
 	$(GO) build ./cmd/kas-fleet-manager
 .PHONY: binary
 
 # Install
-install: verify lint 
+install: verify lint
 	$(GO) install ./cmd/kas-fleet-manager
 .PHONY: install
 
@@ -414,6 +415,12 @@ kafkacert/setup:
 	@echo -n "$(KAFKA_TLS_CERT)" > secrets/kafka-tls.crt
 	@echo -n "$(KAFKA_TLS_KEY)" > secrets/kafka-tls.key
 .PHONY:kafkacert/setup
+
+observatorium/setup:
+ifeq ($(OCM_ENV), development)
+	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
+endif
+.PHONY:observatorium/setup
 
 # OCM login
 ocm/login:
