@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"net/http/httptest"
 	"os"
 	"sync"
@@ -25,7 +24,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -382,6 +384,13 @@ func (helper *Helper) NewApiClient() *openapi.APIClient {
 	config := openapi.NewConfiguration()
 	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
 	client := openapi.NewAPIClient(config)
+	return client
+}
+
+func (helper *Helper) NewPrivateAPIClient() *privateopenapi.APIClient {
+	config := privateopenapi.NewConfiguration()
+	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
+	client := privateopenapi.NewAPIClient(config)
 	return client
 }
 

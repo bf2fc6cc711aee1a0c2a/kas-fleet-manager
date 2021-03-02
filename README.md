@@ -433,3 +433,7 @@ make lint
 
 ### Running performaance tests
 See this [README](./test/performance/README.md) for more info about performance tests
+
+## Additional documentation:
+
+* [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling)

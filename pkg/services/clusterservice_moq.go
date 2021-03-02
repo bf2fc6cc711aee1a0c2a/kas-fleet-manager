@@ -47,6 +47,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //             ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ScaleUpComputeNodes method")
 //             },
+//             SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+// 	               panic("mock out the SetComputeNodes method")
+//             },
 //             UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 // 	               panic("mock out the UpdateStatus method")
 //             },
@@ -83,6 +86,9 @@ type ClusterServiceMock struct {
 
 	// ScaleUpComputeNodesFunc mocks the ScaleUpComputeNodes method.
 	ScaleUpComputeNodesFunc func(clusterID string, increment int) (*v1.Cluster, *errors.ServiceError)
+
+	// SetComputeNodesFunc mocks the SetComputeNodes method.
+	SetComputeNodesFunc func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError)
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
@@ -142,6 +148,13 @@ type ClusterServiceMock struct {
 			// Increment is the increment argument value.
 			Increment int
 		}
+		// SetComputeNodes holds details about calls to the SetComputeNodes method.
+		SetComputeNodes []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// NumNodes is the numNodes argument value.
+			NumNodes int
+		}
 		// UpdateStatus holds details about calls to the UpdateStatus method.
 		UpdateStatus []struct {
 			// Cluster is the cluster argument value.
@@ -159,6 +172,7 @@ type ClusterServiceMock struct {
 	lockRegisterClusterJob           sync.RWMutex
 	lockScaleDownComputeNodes        sync.RWMutex
 	lockScaleUpComputeNodes          sync.RWMutex
+	lockSetComputeNodes              sync.RWMutex
 	lockUpdateStatus                 sync.RWMutex
 }
 
@@ -454,6 +468,41 @@ func (mock *ClusterServiceMock) ScaleUpComputeNodesCalls() []struct {
 	mock.lockScaleUpComputeNodes.RLock()
 	calls = mock.calls.ScaleUpComputeNodes
 	mock.lockScaleUpComputeNodes.RUnlock()
+	return calls
+}
+
+// SetComputeNodes calls SetComputeNodesFunc.
+func (mock *ClusterServiceMock) SetComputeNodes(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+	if mock.SetComputeNodesFunc == nil {
+		panic("ClusterServiceMock.SetComputeNodesFunc: method is nil but ClusterService.SetComputeNodes was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+		NumNodes  int
+	}{
+		ClusterID: clusterID,
+		NumNodes:  numNodes,
+	}
+	mock.lockSetComputeNodes.Lock()
+	mock.calls.SetComputeNodes = append(mock.calls.SetComputeNodes, callInfo)
+	mock.lockSetComputeNodes.Unlock()
+	return mock.SetComputeNodesFunc(clusterID, numNodes)
+}
+
+// SetComputeNodesCalls gets all the calls that were made to SetComputeNodes.
+// Check the length with:
+//     len(mockedClusterService.SetComputeNodesCalls())
+func (mock *ClusterServiceMock) SetComputeNodesCalls() []struct {
+	ClusterID string
+	NumNodes  int
+} {
+	var calls []struct {
+		ClusterID string
+		NumNodes  int
+	}
+	mock.lockSetComputeNodes.RLock()
+	calls = mock.calls.SetComputeNodes
+	mock.lockSetComputeNodes.RUnlock()
 	return calls
 }
 
