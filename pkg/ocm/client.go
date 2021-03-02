@@ -17,6 +17,7 @@ type AddonParameter struct {
 type Client interface {
 	CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)
 	GetClusterIngresses(clusterID string) (*clustersmgmtv1.IngressesListResponse, error)
+	GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error)
 	GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error)
 	GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error)
 	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
@@ -30,6 +31,7 @@ type Client interface {
 	DeleteSyncSet(clusterID string, syncsetID string) (int, error)
 	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
+	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 }
 
 var _ Client = &client{}
@@ -64,6 +66,14 @@ func (c *client) GetClusterIngresses(clusterID string) (*clustersmgmtv1.Ingresse
 	}
 
 	return ingressList, nil
+}
+
+func (c client) GetCluster(clusterID string) (*clustersmgmtv1.Cluster, error) {
+	resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID).Get().Send()
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body(), nil
 }
 
 func (c client) GetClusterStatus(id string) (*clustersmgmtv1.ClusterStatus, error) {
@@ -240,6 +250,24 @@ func (c client) scaleComputeNodes(clusterID string, numNodes int) (*clustersmgmt
 	// create a cluster object with updated number of compute nodes
 	// NOTE - there is no need to handle whether the number of nodes is valid, as this is handled by OCM
 	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(currentNumOfNodes + numNodes)).
+		Build()
+	if err != nil {
+		return nil, err
+	}
+
+	// patch cluster with updated number of compute nodes
+	resp, err := clusterClient.Update().Body(patch).Send()
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Body(), nil
+}
+
+func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
+	clusterClient := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterID)
+
+	patch, err := clustersmgmtv1.NewCluster().Nodes(clustersmgmtv1.NewClusterNodes().Compute(numNodes)).
 		Build()
 	if err != nil {
 		return nil, err

@@ -124,6 +124,10 @@ const (
 	ErrorDuplicateKafkaClusterName       ServiceErrorCode = 36
 	ErrorDuplicateKafkaClusterNameReason string           = "Kafka cluster name is already used"
 
+	// A generic field validation error when validating API requests input
+	ErrorFieldValidationError       ServiceErrorCode = 37
+	ErrorFieldValidationErrorReason string           = "Field validation failed"
+
 	// Failure to send an error response (i.e. unable to send error response as the error can't be converted to JSON.)
 	ErrorUnableToSendErrorResponse       ServiceErrorCode = 1000
 	ErrorUnableToSendErrorResponseReason string           = "An unexpected error happened, please check the log of the service for details"
@@ -172,6 +176,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest},
 		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict},
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError},
+		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest},
 	}
 }
 
@@ -434,4 +439,10 @@ func UnableToSendErrorResponse() *ServiceError {
 func FailedToParseQueryParms(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorBadRequest, reason, values...)
 
+}
+
+func FieldValidationError(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("%s: %s", ErrorFieldValidationErrorReason, reason)
+
+	return New(ErrorFieldValidationError, message, values...)
 }
