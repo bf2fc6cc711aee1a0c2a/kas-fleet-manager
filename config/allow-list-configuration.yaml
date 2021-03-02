@@ -8,7 +8,7 @@
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
 allowed_service_accounts:
   - username: testuser1@example.com
-    max_allowed_instances: 3
+    max_allowed_instances: 1
   - username: testuser2@example.com
     max_allowed_instances: 1
   - username: testuser3@example.com

@@ -3,8 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -190,32 +192,61 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	})
 	defer testServer.TearDown()
 
-	k := publicOpenapi.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName1,
-		MultiAz:       true,
+	var testKafkas = []api.KafkaRequest{
+		{
+			ClusterID: testServer.ClusterID,
+			MultiAZ:   false,
+			Name:      mockKafkaName1,
+			Status:    constants.KafkaRequestStatusDeprovision.String(),
+		},
+		{
+			ClusterID: testServer.ClusterID,
+			MultiAZ:   false,
+			Name:      mockKafkaName2,
+			Status:    constants.KafkaRequestStatusDeprovision.String(),
+		},
+		{
+			ClusterID: testServer.ClusterID,
+			MultiAZ:   false,
+			Name:      mockKafkaName3,
+			Status:    constants.KafkaRequestStatusReady.String(),
+		},
 	}
 
-	_, _, err := testServer.Client.DefaultApi.CreateKafka(testServer.Ctx, true, k)
-	if err != nil {
-		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
-	}
+	db := testServer.Helper.Env().DBFactory.New()
 
-	k.Name = mockKafkaName2
-	_, _, err = testServer.Client.DefaultApi.CreateKafka(testServer.Ctx, true, k)
-	if err != nil {
-		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
-	}
-
-	k.Name = mockKafkaName3
-	_, _, err = testServer.Client.DefaultApi.CreateKafka(testServer.Ctx, true, k)
-	if err != nil {
-		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
+	// create dummy kafkas
+	for i, k := range testKafkas {
+		if err := db.Save(&k).Error; err != nil {
+			t.Error("failed to create a dummy kafka request")
+			break
+		}
+		testKafkas[i] = k
 	}
 
 	list, resp, err := testServer.PrivateClient.DefaultApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list.Total).To(Equal(int32(3)))
+	Expect(int(list.Total)).To(Equal(len(testKafkas)))
+
+	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+		for _, item := range slice {
+			if match(item) {
+				return &item
+			}
+		}
+		return nil
+	}
+
+	for _, k := range testKafkas {
+		if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Annotation.Id == k.ID }); mk != nil {
+			Expect(mk.Name).To(Equal(k.Name))
+			Expect(mk.Annotation.PlacementId).To(Equal(k.PlacementId))
+			Expect(mk.Annotation.Id).To(Equal(k.ID))
+			Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
+		} else {
+			t.Error("failed matching managedkafka id with kafkarequest id")
+			break
+		}
+	}
 }

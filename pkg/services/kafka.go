@@ -13,17 +13,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/getsentry/sentry-go"
-)
-
-const (
-	IngressLabelName  = "ingressType"
-	IngressLabelValue = "sharded"
 )
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
@@ -370,7 +365,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 }
 
 func (k *kafkaService) GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New() //.Where("cluster_id = ?", clusterID)
+	dbConn := k.connectionFactory.New().Where("cluster_id = ?", clusterID)
 
 	var kafkaRequestList api.KafkaList
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
@@ -458,7 +453,6 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
 			Namespace: namespace,
-			Labels:    getKafkaLabels(),
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
 			// Currently ignored
@@ -539,10 +533,4 @@ func buildResourceRecordChange(recordName string, clusterIngress string, action 
 	}
 
 	return resourceRecordChange
-}
-
-func getKafkaLabels() map[string]string {
-	labels := make(map[string]string)
-	labels[IngressLabelName] = IngressLabelValue // signal detected by the shared ingress controller
-	return labels
 }
