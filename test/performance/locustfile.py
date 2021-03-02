@@ -1,4 +1,3 @@
-import logging
 import locust
 from locust import task, HttpUser, constant_pacing
 
@@ -151,7 +150,7 @@ def check_leftover_resources(self):
   left_over_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
   # delete all kafkas created by the token used in the performance test
   items = get_items_from_json_response(left_over_kafkas)
-  if len(items) > 0:
+  if len(items) > 0 and kafkas_to_create > 0: # only cleanup if any kafkas were created by this test
     kafkas_list = get_ids_from_list(items)
     for kafka_id in kafkas_list:
       remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
@@ -171,7 +170,8 @@ def check_leftover_resources(self):
 # cleanup created kafka_requests and service accounts 1 minute before the test completion
 def cleanup(self):
   remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
-  remove_resource(self, kafkas_list, '/kafkas/[id]')
+  if kafkas_to_create > 0: # only delete kafkas, if some were created
+    remove_resource(self, kafkas_list, '/kafkas/[id]')
 
 # delete resource from a list
 def remove_resource(self, list, name, resource_id = ""):
