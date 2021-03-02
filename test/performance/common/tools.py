@@ -8,6 +8,14 @@ def get_ids_from_list(list):
       ids.append(item['id'])
   return ids
 
+# returns items, if in data structure, otherwise return an empty array
+def get_items_from_json_response(json_response):
+  if 'items' in json_response:
+    return json_response['items']
+  
+  return []
+
+# generates description for service account
 def svc_acc_description():
   return 'Created by the performance test suite of the API'
 

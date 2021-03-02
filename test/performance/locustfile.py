@@ -11,10 +11,14 @@ from common.handler import *
 import urllib3
 urllib3.disable_warnings()
 
+# if set to 'TRUE' - only get endpoints will be attacked
+get_only = os.environ['PERF_TEST_GET_ONLY']
 # if set to 'TRUE' - db will be seeded with kafkas
 populate_db = os.environ['PERF_TEST_PREPOPULATE_DB']
 # if PERF_TEST_PREPOPULATE_DB == 'TRUE' - this number determines the number of seed kafkas per locust worker
 seed_kafkas = int(os.environ['PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER'])
+# PERF_TEST_KAFKA_POST_WAIT_TIME specifies number of seconds to wait before creating another kafka_request (default is 1)
+kafka_post_wait_time = int(os.environ['PERF_TEST_KAFKA_POST_WAIT_TIME'])
 # number of kafkas to create by each locust worker
 kafkas_to_create = int(os.environ['PERF_TEST_KAFKAS_PER_WORKER'])
 # number of kafkas to create by each locust worker
@@ -51,7 +55,7 @@ class QuickstartUser(HttpUser):
     global kafkas_created
     current_run_time = time.monotonic() - start_time
     # create and then instantly delete kafka_requests to seed the database
-    if populate_db == 'TRUE':
+    if populate_db == 'TRUE' and get_only != 'TRUE':
       if run_time_seconds - current_run_time > 120:
         kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
         if kafka_id != '':
@@ -66,65 +70,78 @@ class QuickstartUser(HttpUser):
         populate_db = 'FALSE'
     else:
       # cleanup before the test completes
-      if run_time_seconds - current_run_time < 60:
+      if run_time_seconds - current_run_time < 90:
         cleanup(self)
         # make sure that no kafka_requests or service accounts created by this test are removed
-        if run_time_seconds - current_run_time < 30:
+        if run_time_seconds - current_run_time < 60:
           if resources_cleaned_up == False:
             check_leftover_resources(self)
       # hit the remaining endpoints for the majority of the time that this test runs
       # between db seed stage (if 'PERF_TEST_PREPOPULATE_DB' env var set to true) and cleanup (1 minute before the end of the test execution)
       else:
-        exercise_endpoints(self)
+        exercise_endpoints(self, get_only)
 
 # main test execution against API endpoints
 #
+# if get-only is set to 'TRUE', only GET endpoints will be attacked
+# otherwise all public API endpoints (where applicable) will be attacked:
+#
 # THe distribution between the endpoints will be semi-random with the following proportions
-# kafka get + post + kafka metrics                 20%
-# kafkas get                                       30%
-# kafka search                                     30%
+# kafkas get                                       40%
+# kafka search                                     35%
 # cloud providers get                              10%
 # cloud provider get                                5%
 # service accounts + service account password reset	5%
-#
-def exercise_endpoints(self):
-  endpoint_selector = random.randrange(0,99)
-  if endpoint_selector < 5:
-    service_accounts(self)
-  elif endpoint_selector < 15:
-    handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
-  elif endpoint_selector < 20:
-    handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
-  elif endpoint_selector < 40:
-    if len(kafkas_list) > 0:
-      kafka_id = get_random_id(kafkas_list)
-      handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
-      handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
-      handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
-    global kafkas_created
-    if len(kafkas_list) < kafkas_to_create:
-      kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
-      if kafka_id != '':
-        kafkas_list.append(kafka_id)
-        kafkas_created = kafkas_created + 1
-  elif endpoint_selector < 70:
-    handle_get(self, f'{url_base}/kafkas', '/kafkas')
+# kafka get + kafka metrics                         5%
+def exercise_endpoints(self, get_only):
+  global kafkas_created
+  if len(kafkas_list) < kafkas_to_create:
+    kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
+    if kafka_id != '':
+      kafkas_list.append(kafka_id)
+      kafkas_created = kafkas_created + 1
+      time.sleep(kafka_post_wait_time) # sleep after creating kafka
   else:
-    handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
+    endpoint_selector = random.randrange(0,99)
+    if endpoint_selector < 5:
+      service_accounts(self, get_only)
+    elif endpoint_selector < 15:
+      handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
+    elif endpoint_selector < 20:
+      handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
+    elif endpoint_selector < 25:
+      kafka_id = ""
+      if len(kafkas_list) == 0:
+        org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
+        # delete all kafkas created by the token used in the performance test
+        items = get_items_from_json_response(org_kafkas)
+        if len(items) > 0:
+          kafka_id = get_random_id(get_ids_from_list(items))
+      else:
+        kafka_id = get_random_id(kafkas_list)
+      if kafka_id != "":
+        handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
+        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
+        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
+    elif endpoint_selector < 65:
+      handle_get(self, f'{url_base}/kafkas', '/kafkas')
+    else:
+      handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
 
 # perf tests against service account endpoints
-def service_accounts(self):
+def service_accounts(self, get_only):
   handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
-  if len(service_acc_list) > 0:
-    remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
-    handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
-  else:
-    svc_acc_json_payload = svc_acc_json(url_base)
-    svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
-    if svc_acc_id != '':
-      svc_acc_json_payload['clientSecret'] = generate_random_svc_acc_secret()
-      handle_post(self, f'{url_base}/serviceaccounts/{svc_acc_id}/reset-credentials', svc_acc_json_payload, '/serviceaccounts/[id]/reset-credentials')
-      service_acc_list.append(svc_acc_id)
+  if get_only != 'TRUE':
+    if len(service_acc_list) > 0:
+      remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
+      handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
+    else:
+      svc_acc_json_payload = svc_acc_json(url_base)
+      svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
+      if svc_acc_id != '':
+        svc_acc_json_payload['clientSecret'] = generate_random_svc_acc_secret()
+        handle_post(self, f'{url_base}/serviceaccounts/{svc_acc_id}/reset-credentials', svc_acc_json_payload, '/serviceaccounts/[id]/reset-credentials')
+        service_acc_list.append(svc_acc_id)
 
 # get the list of left over service accounts and kafka requests and delete them
 def check_leftover_resources(self):
@@ -132,30 +149,29 @@ def check_leftover_resources(self):
   global resources_cleaned_up, service_acc_list, kafkas_list
   left_over_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
   # delete all kafkas created by the token used in the performance test
-  if 'items' in left_over_kafkas:
-    items = left_over_kafkas['items']
-    if len(items) > 0:
-      kafkas_list = get_ids_from_list(items)
-      for kafka_id in kafkas_list:
-        remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
+  items = get_items_from_json_response(left_over_kafkas)
+  if len(items) > 0 and kafkas_to_create > 0: # only cleanup if any kafkas were created by this test
+    kafkas_list = get_ids_from_list(items)
+    for kafka_id in kafkas_list:
+      remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
 
   time.sleep(random.uniform(1.0, 5.0))
   left_over_svc_accs = handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts', True)
   # delete all kafkas created by the token used in the performance test
-  if 'items' in left_over_svc_accs:
-    items = left_over_svc_accs['items']
-    if len(items) > 0:
-      for svc_acc_id in get_ids_from_list(items):
-        if created_by_perf_test(svc_acc_id, items) == True:
-          service_acc_list.append(svc_acc_id)
-          remove_resource(self, service_acc_list, '/serviceaccounts/[id]', svc_acc_id)
+  items = get_items_from_json_response(left_over_svc_accs)
+  if len(items) > 0:
+    for svc_acc_id in get_ids_from_list(items):
+      if created_by_perf_test(svc_acc_id, items) == True:
+        service_acc_list.append(svc_acc_id)
+        remove_resource(self, service_acc_list, '/serviceaccounts/[id]', svc_acc_id)
   if (len(kafkas_list) == 0 and len(service_acc_list) == 0):
     resources_cleaned_up = True
 
 # cleanup created kafka_requests and service accounts 1 minute before the test completion
 def cleanup(self):
   remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
-  remove_resource(self, kafkas_list, '/kafkas/[id]')
+  if kafkas_to_create > 0: # only delete kafkas, if some were created
+    remove_resource(self, kafkas_list, '/kafkas/[id]')
 
 # delete resource from a list
 def remove_resource(self, list, name, resource_id = ""):
