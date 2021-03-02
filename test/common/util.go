@@ -30,6 +30,10 @@ const (
 // to determine if there is a cluster running and new entry is added to the clusters table.
 // If no such file is present, new cluster is created and its clusterID is retrieved.
 func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.ServiceError) {
+	return GetOsdClusterID(h, t, true)
+}
+
+func GetOsdClusterID(h *test.Helper, t *testing.T, waitForReadiness bool) (string, *ocmErrors.ServiceError) {
 	var clusterID string
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
 		clusterID, _ = readClusterDetailsFromFile(h, t)
@@ -66,7 +70,7 @@ func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.Se
 			if foundCluster == nil {
 				return false, nil
 			}
-			return foundCluster.Status.String() == api.ClusterReady.String(), nil
+			return !waitForReadiness || foundCluster.Status.String() == api.ClusterReady.String(), nil
 		}); err != nil {
 			return "", ocmErrors.GeneralError("Unable to get OSD cluster")
 		}
