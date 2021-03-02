@@ -19,6 +19,7 @@ ENV AWS_SECRET_ACCESS_KEY <aws_secret_access_key>
 ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
 ENV OCM_OFFLINE_TOKEN <ocm_offline_token>
+ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
 ENV MAS_SSO_CLIENT_ID test-managed-services-api
 ENV MAS_SSO_CLIENT_SECRET c1a79f76-272d-4b2b-ad27-2740fc81a508
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
@@ -66,6 +67,7 @@ RUN make aws/setup
 RUN make ocm/setup
 RUN make keycloak/setup
 RUN make kafkacert/setup
+RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /uhc /usr/local/go
