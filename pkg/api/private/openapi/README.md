@@ -36,6 +36,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**DeleteConnector**](docs/DefaultApi.md#deleteconnector) | **Delete** /api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid} | Delete a connector
 *DefaultApi* | [**GetConnector**](docs/DefaultApi.md#getconnector) | **Get** /api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid} | Get a connector deployment
 *DefaultApi* | [**GetConnectorTypeByID**](docs/DefaultApi.md#getconnectortypebyid) | **Get** /api/managed-services-api/v1/connector-types/{id} | Get a connector type by name and version
+*DefaultApi* | [**GetKafkas**](docs/DefaultApi.md#getkafkas) | **Get** /api/managed-services-api/v1/agent-clusters/{id}/kafkas | Get the list of ManagedaKafkas for the specified agent cluster
 *DefaultApi* | [**ListConnectorTypes**](docs/DefaultApi.md#listconnectortypes) | **Get** /api/managed-services-api/v1/connector-types | Returns a list of connector types
 *DefaultApi* | [**ListConnectors**](docs/DefaultApi.md#listconnectors) | **Get** /api/managed-services-api/v1/kafkas/{id}/connector-deployments | Returns a list of connector types
 *DefaultApi* | [**UpdateAgentClusterStatus**](docs/DefaultApi.md#updateagentclusterstatus) | **Put** /api/managed-services-api/v1/agent-clusters/{id}/status | Update the status of an agent cluster
@@ -66,6 +67,19 @@ Class | Method | HTTP request | Description
  - [Error](docs/Error.md)
  - [ErrorAllOf](docs/ErrorAllOf.md)
  - [List](docs/List.md)
+ - [ManagedKafka](docs/ManagedKafka.md)
+ - [ManagedKafkaAllOf](docs/ManagedKafkaAllOf.md)
+ - [ManagedKafkaAllOfAnnotation](docs/ManagedKafkaAllOfAnnotation.md)
+ - [ManagedKafkaAllOfSpec](docs/ManagedKafkaAllOfSpec.md)
+ - [ManagedKafkaAllOfSpecEndpoint](docs/ManagedKafkaAllOfSpecEndpoint.md)
+ - [ManagedKafkaAllOfSpecEndpointTls](docs/ManagedKafkaAllOfSpecEndpointTls.md)
+ - [ManagedKafkaAllOfSpecOAuth](docs/ManagedKafkaAllOfSpecOAuth.md)
+ - [ManagedKafkaAllOfStatus](docs/ManagedKafkaAllOfStatus.md)
+ - [ManagedKafkaCapacity](docs/ManagedKafkaCapacity.md)
+ - [ManagedKafkaList](docs/ManagedKafkaList.md)
+ - [ManagedKafkaListAllOf](docs/ManagedKafkaListAllOf.md)
+ - [ManagedKafkaVersions](docs/ManagedKafkaVersions.md)
+ - [MetaV1Condition](docs/MetaV1Condition.md)
  - [ObjectReference](docs/ObjectReference.md)
 
 
