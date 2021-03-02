@@ -8,6 +8,7 @@ Method | HTTP request | Description
 [**DeleteConnector**](DefaultApi.md#DeleteConnector) | **Delete** /api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid} | Delete a connector
 [**GetConnector**](DefaultApi.md#GetConnector) | **Get** /api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid} | Get a connector deployment
 [**GetConnectorTypeByID**](DefaultApi.md#GetConnectorTypeByID) | **Get** /api/managed-services-api/v1/connector-types/{id} | Get a connector type by name and version
+[**GetKafkas**](DefaultApi.md#GetKafkas) | **Get** /api/managed-services-api/v1/agent-clusters/{id}/kafkas | Get the list of ManagedaKafkas for the specified agent cluster
 [**ListConnectorTypes**](DefaultApi.md#ListConnectorTypes) | **Get** /api/managed-services-api/v1/connector-types | Returns a list of connector types
 [**ListConnectors**](DefaultApi.md#ListConnectors) | **Get** /api/managed-services-api/v1/kafkas/{id}/connector-deployments | Returns a list of connector types
 [**UpdateAgentClusterStatus**](DefaultApi.md#UpdateAgentClusterStatus) | **Put** /api/managed-services-api/v1/agent-clusters/{id}/status | Update the status of an agent cluster
@@ -131,6 +132,38 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ConnectorType**](ConnectorType.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## GetKafkas
+
+> ManagedKafkaList GetKafkas(ctx, id)
+
+Get the list of ManagedaKafkas for the specified agent cluster
+
+### Required Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+**ctx** | **context.Context** | context for authentication, logging, cancellation, deadlines, tracing, etc.
+**id** | **string**| The id of record | 
+
+### Return type
+
+[**ManagedKafkaList**](ManagedKafkaList.md)
 
 ### Authorization
 

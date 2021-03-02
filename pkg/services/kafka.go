@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	"fmt"
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strings"
 
@@ -11,7 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -30,6 +32,9 @@ type KafkaService interface {
 	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
 	Delete(*api.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
+	// Returns all the requests for a given user (no paging)
+	GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError)
+	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Kafka cluster
@@ -359,6 +364,32 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	return kafkaRequestList, pagingMeta, nil
 }
 
+func (k *kafkaService) GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New().Where("cluster_id = ?", clusterID)
+
+	var kafkaRequestList api.KafkaList
+	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
+		return kafkaRequestList, errors.GeneralError("Unable to list kafka requests %s", err)
+	}
+	return kafkaRequestList, nil
+}
+
+func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError) {
+	kafkaRequestList, err := k.GetByClusterID(clusterID)
+	if err != nil {
+		return nil, err
+	}
+
+	var res []managedkafka.ManagedKafka
+	// convert kafka requests to managed kafka
+	for _, kafkaRequest := range kafkaRequestList {
+		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), buildKafkaNamespaceIdentifier(kafkaRequest))
+		res = append(res, *mk)
+	}
+
+	return res, nil
+}
+
 func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
@@ -412,6 +443,56 @@ func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, cl
 	}
 
 	return changeRecordsOutput, nil
+}
+
+func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+	managedKafkaCR := &managedkafka.ManagedKafka{
+		Name:        kafkaRequest.Name,
+		Id:          kafkaRequest.ID,
+		PlacementId: kafkaRequest.PlacementId,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaRequest.Name,
+			Namespace: namespace,
+		},
+		Spec: managedkafka.ManagedKafkaSpec{
+			// Currently ignored
+			Capacity: managedkafka.Capacity{
+				IngressEgressThroughputPerSec: "",
+				TotalMaxConnections:           0,
+				MaxDataRetentionSize:          "",
+				MaxPartitions:                 0,
+				MaxDataRetentionPeriod:        "",
+			},
+			Endpoint: managedkafka.EndpointSpec{
+				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
+				Tls: managedkafka.TlsSpec{
+					Cert: kafkaConfig.KafkaTLSCert,
+					Key:  kafkaConfig.KafkaTLSKey,
+				},
+			},
+			// These values must be changed as soon as we will have the real values
+			Versions: managedkafka.VersionsSpec{
+				Kafka:   "2.6.0",
+				Strimzi: "0.21.1",
+			},
+			Deleted: kafkaRequest.Status == constants.KafkaRequestStatusDeprovision.String(),
+		},
+		Status: managedkafka.ManagedKafkaStatus{},
+	}
+
+	if keycloakConfig.EnableAuthenticationOnKafka {
+		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
+			ClientId:               keycloakConfig.ClientID,
+			ClientSecret:           keycloakConfig.ClientSecret,
+			TokenEndpointURI:       keycloakConfig.TokenEndpointURI,
+			JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
+			ValidIssuerEndpointURI: keycloakConfig.ValidIssuerURI,
+			UserNameClaim:          keycloakConfig.UserNameClaim,
+			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
+		}
+	}
+
+	return managedKafkaCR
 }
 
 func buildKafkaClusterCNAMESRecordBatch(recordName string, clusterIngress string, action string, kafkaConfig *config.KafkaConfig) *route53.ChangeBatch {
