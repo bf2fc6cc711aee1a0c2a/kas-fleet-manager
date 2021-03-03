@@ -78,9 +78,9 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(_ context.Context, c
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *errors.ServiceError {
-	if ok, err := d.kafkaService.UpdateStatus(kafka.ClusterID, constants.KafkaRequestStatusReady); ok {
+	if ok, err := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusReady); ok {
 		if err != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusReady, kafka.ClusterID, err)
+			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusReady, kafka.ID, err)
 			return err
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
@@ -90,9 +90,9 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *e
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *errors.ServiceError {
-	if ok, err := d.kafkaService.UpdateStatus(kafka.ClusterID, constants.KafkaRequestStatusFailed); ok {
+	if ok, err := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); ok {
 		if err != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusFailed, kafka.ClusterID, err)
+			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusFailed, kafka.ID, err)
 			return err
 		}
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
@@ -101,9 +101,9 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterDeleted(kafka *api.KafkaRequest) *errors.ServiceError {
-	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ClusterID, constants.KafkaRequestStatusDeleted); ok {
+	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleted); ok {
 		if updateErr != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleted, kafka.ClusterID, updateErr)
+			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleted, kafka.ID, updateErr)
 			return updateErr
 		}
 	}
