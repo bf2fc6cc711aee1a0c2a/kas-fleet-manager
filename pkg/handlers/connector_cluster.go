@@ -18,6 +18,10 @@ import (
 	"github.com/gorilla/mux"
 )
 
+var (
+	maxConnectorClusterIdLength = 32
+)
+
 type connectorClusterHandler struct {
 	service         services.ConnectorClusterService
 	configService   services.ConfigService
@@ -36,19 +40,27 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 	var resource openapi.ConnectorCluster
 	cfg := &handlerConfig{
 		MarshalInto: &resource,
+		Validate: []validate{
+			validation("name", &resource.Metadata.Name,
+				withDefault("New Cluster"), minLen(1), maxLen(100)),
+			validation("group", &resource.Metadata.Group,
+				withDefault("default"), minLen(1), maxLen(100)),
+		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			// Get username from claims
-			claims, perr := auth.GetClaimsFromContext(r.Context())
-			if perr != nil {
+			convResource, serr := presenters.ConvertConnectorCluster(resource)
+			if serr != nil {
+				return nil, serr
+			}
+
+			claims, err := auth.GetClaimsFromContext(r.Context())
+			if err != nil {
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
-			resource.Metadata.Owner = auth.GetUsernameFromClaims(claims)
+			convResource.Owner = auth.GetUsernameFromClaims(claims)
+			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
+			convResource.Status = api.ConnectorClusterStatusUnconnected
 
-			convResource, err := presenters.ConvertConnectorCluster(resource)
-			if err != nil {
-				return nil, err
-			}
 			if err := h.service.Create(r.Context(), convResource); err != nil {
 				return nil, err
 			}
@@ -62,9 +74,12 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
+		Validate: []validate{
+			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
 			resource, err := h.service.Get(r.Context(), id)
 			if err != nil {
 				return nil, err
@@ -77,9 +92,12 @@ func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *connectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
+		Validate: []validate{
+			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
 			err := h.service.Delete(r.Context(), id)
 			return nil, err
 		},
@@ -108,7 +126,7 @@ func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			for _, resource := range resources {
 				converted, err := presenters.PresentConnectorCluster(resource)
 				if err != nil {
-					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
+					glog.Errorf("connector cluster id='%s' presentation failed: %v", resource.ID, err)
 					return nil, errors.GeneralError("internal error")
 				}
 				resourceList.Items = append(resourceList.Items, converted)
@@ -124,11 +142,14 @@ func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *connectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
+		Validate: []validate{
+			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			// To make sure the user can access the cluster....
-			id := mux.Vars(r)["id"]
 			_, err := h.service.Get(r.Context(), id)
 			if err != nil {
 				return nil, err
@@ -211,8 +232,8 @@ func (h *connectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 	cfg := &handlerConfig{
 		MarshalInto: &resource,
 		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
-			validateIsOneOf("status", &resource.Status, api.AllConnectorClusterStatus...),
+			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("status", &resource.Status, isOneOf(api.AllConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -230,7 +251,7 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
+			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -280,8 +301,9 @@ func (h *connectorClusterHandler) UpdateConnectorStatus(w http.ResponseWriter, r
 	cfg := &handlerConfig{
 		MarshalInto: &resource,
 		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
-			validateIsOneOf("status", &resource.Status, api.AgentSetConnectorStatus...),
+			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("cid", &id, minLen(1), maxLen(maxConnectorIdLength)),
+			validation("status", &resource.Status, isOneOf(api.AllConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()

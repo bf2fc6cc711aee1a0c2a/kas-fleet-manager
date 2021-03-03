@@ -76,7 +76,7 @@ func (k *ConnectorManager) reconcile() {
 
 	statuses := []api.ConnectorStatus{
 		api.ConnectorStatusAssigning,
-		api.ConnectorClusterStatusDeleted,
+		api.ConnectorStatusDeleted,
 	}
 	serviceErr := k.connectorService.ForEachInStatus(statuses, func(connector *api.Connector) *errors.ServiceError {
 		switch connector.Status {
@@ -103,7 +103,7 @@ func (k *ConnectorManager) reconcileAccepted(connector *api.Connector) error {
 	switch connector.TargetKind {
 	case api.AddonTargetKind:
 
-		cluster, err := k.connectorClusterService.FindReadyCluster(connector.Owner, connector.AddonGroup)
+		cluster, err := k.connectorClusterService.FindReadyCluster(connector.Owner, connector.OrganisationId, connector.AddonGroup)
 		if err != nil {
 			return fmt.Errorf("failed to find cluster for connector request %s: %w", connector.ID, err)
 		}

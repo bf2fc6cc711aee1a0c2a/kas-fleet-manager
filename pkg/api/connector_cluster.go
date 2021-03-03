@@ -29,10 +29,11 @@ var AllConnectorClusterStatus = []ConnectorClusterStatus{
 
 type ConnectorCluster struct {
 	Meta
-	Owner      string                 `json:"owner"`
-	Name       string                 `json:"name"`
-	AddonGroup string                 `json:"addon_group"`
-	Status     ConnectorClusterStatus `json:"status"`
+	Owner          string                 `json:"owner"`
+	OrganisationId string                 `json:"organisation_id"`
+	Name           string                 `json:"name"`
+	AddonGroup     string                 `json:"addon_group"`
+	Status         ConnectorClusterStatus `json:"status"`
 }
 
 func (org *ConnectorCluster) BeforeCreate(scope *gorm.Scope) error {

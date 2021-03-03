@@ -3,11 +3,9 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/xeipuuv/gojsonschema"
 	"net/http"
 	"regexp"
-	"strings"
-
-	"github.com/xeipuuv/gojsonschema"
 
 	"net/url"
 	"strconv"
@@ -194,18 +192,4 @@ func validatQueryParam(queryParams url.Values, field string) validate {
 		return nil
 	}
 
-}
-
-func validateIsOneOf(field string, value *string, options ...string) validate {
-	return func() *errors.ServiceError {
-		if value == nil {
-			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, 0)
-		}
-		for _, option := range options {
-			if *value == option {
-				return nil
-			}
-		}
-		return errors.MinimumFieldLengthNotReached("%s is not valid. Must be one of: %s", field, strings.Join(options, ","))
-	}
 }

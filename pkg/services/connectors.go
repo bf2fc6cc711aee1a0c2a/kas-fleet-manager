@@ -66,18 +66,15 @@ func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid 
 		return nil, errors.Validation("connector id is undefined")
 	}
 
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return nil, errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return nil, errors.Unauthenticated("user not authenticated")
-	}
-
 	dbConn := k.connectionFactory.New()
 	var resource api.Connector
-	dbConn = dbConn.Where("owner = ? AND id = ? AND kafka_id = ?", owner, id, kid)
+	dbConn = dbConn.Where("AND id = ? AND kafka_id = ?", id, kid)
+
+	var err *errors.ServiceError
+	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+	if err != nil {
+		return nil, err
+	}
 
 	if tid != "" {
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
@@ -87,6 +84,29 @@ func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid 
 		return nil, handleGetError("Connector", "id", id, err)
 	}
 	return &resource, nil
+}
+
+func filterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors.ServiceError) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return dbConn, errors.Unauthenticated("user not authenticated")
+	}
+	owner := auth.GetUsernameFromClaims(claims)
+	if owner == "" {
+		return dbConn, errors.Unauthenticated("user not authenticated")
+	}
+
+	orgId := auth.GetOrgIdFromClaims(claims)
+	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
+
+	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
+	if filterByOrganisationId {
+		dbConn = dbConn.Where("organisation_id = ?", orgId)
+	} else {
+		dbConn = dbConn.Where("owner = ?", owner)
+	}
+	return dbConn, nil
 }
 
 // Delete deletes a connector from the database.
@@ -122,10 +142,6 @@ func (k *connectorsService) Delete(ctx context.Context, kid string, id string) *
 
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
-	if kid == "" {
-		return nil, nil, errors.Validation("kafka id is undefined")
-	}
-
 	var resourceList api.ConnectorList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
@@ -133,16 +149,13 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 		Size: listArgs.Size,
 	}
 
-	claims, err := auth.GetClaimsFromContext(ctx)
+	dbConn = dbConn.Where("kafka_id = ?", kid)
+
+	var err *errors.ServiceError
+	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
 	if err != nil {
-		return nil, nil, errors.Unauthenticated("user not authenticated")
+		return nil, nil, err
 	}
-	// filter connectors requests by owner
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return nil, nil, errors.Unauthenticated("user not authenticated")
-	}
-	dbConn = dbConn.Where("owner = ? AND kafka_id = ?", owner, kid)
 
 	if tid != "" {
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
@@ -160,7 +173,7 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
-		return resourceList, pagingMeta, errors.GeneralError("Unable to list connectors for %s: %s", owner, err)
+		return resourceList, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
 	}
 
 	return resourceList, pagingMeta, nil
@@ -193,19 +206,8 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 }
 
 func (k connectorsService) ForEachInStatus(statuses []api.ConnectorStatus, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError {
-
 	dbConn := k.connectionFactory.New().Model(&api.Connector{})
-
-	// wish you could just do:
 	dbConn = dbConn.Where("status IN (?)", statuses)
-	//for i, s := range statuses {
-	//	if i ==0 {
-	//		dbConn = dbConn.Where("status", s)
-	//	} else {
-	//		dbConn = dbConn.Or("status", s)
-	//	}
-	//}
-
 	rows, err := dbConn.Order("version").Rows()
 	if err != nil {
 		if goerrors.Is(err, gorm.ErrRecordNotFound) {
