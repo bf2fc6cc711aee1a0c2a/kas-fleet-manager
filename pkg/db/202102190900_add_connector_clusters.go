@@ -69,7 +69,7 @@ func addConnectorClusters() *gormigrate.Migration {
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Where("lease_type", "connector").Delete(&api.LeaderLease{}).Error; err != nil {
+			if err := tx.Where("lease_type = ?", "connector").Delete(&api.LeaderLease{}).Error; err != nil {
 				return err
 			}
 			if err := tx.Exec(`DROP TRIGGER connector_version_trigger ON connectors`).Error; err != nil {
