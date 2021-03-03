@@ -108,6 +108,14 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 		cfg.ErrorHandler = handleError
 	}
 
+	for _, v := range cfg.Validate {
+		err := v()
+		if err != nil {
+			cfg.ErrorHandler(r.Context(), w, err)
+			return
+		}
+	}
+
 	result, serviceErr := cfg.Action()
 	switch {
 	case serviceErr == nil:
@@ -120,6 +128,14 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = handleError
+	}
+
+	for _, v := range cfg.Validate {
+		err := v()
+		if err != nil {
+			cfg.ErrorHandler(r.Context(), w, err)
+			return
+		}
 	}
 
 	results, serviceError := cfg.Action()

@@ -44,6 +44,7 @@ type Connector struct {
 	Name            string          `json:"name"`
 	Status          ConnectorStatus `json:"status"`
 	Owner           string          `json:"owner"`
+	OrganisationId  string          `json:"organisation_id"`
 	KafkaID         string          `json:"kafka_id"`
 	Version         int64           `json:"version"`
 	TargetKind      TargetKind      `json:"target_kind"`

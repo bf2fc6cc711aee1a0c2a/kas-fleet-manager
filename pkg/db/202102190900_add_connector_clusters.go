@@ -15,16 +15,18 @@ import (
 func addConnectorClusters() *gormigrate.Migration {
 	type ConnectorClusters struct {
 		Model
-		Owner  string `json:"owner"`
-		Name   string `json:"name"`
-		Group  string `json:"group"`
-		Status string `json:"status"`
+		Owner          string
+		OrganisationId string
+		Name           string
+		AddonGroup     string
+		Status         string
 	}
 
 	type Connectors struct {
-		Version    int64  `gorm:"type:bigserial;index:"`
-		TargetKind string `json:"target_kind"`
-		AddonGroup string `json:"addon_group"`
+		Version        int64 `gorm:"type:bigserial;index:"`
+		TargetKind     string
+		AddonGroup     string
+		OrganisationId string
 	}
 
 	return &gormigrate.Migration{
@@ -80,6 +82,9 @@ func addConnectorClusters() *gormigrate.Migration {
 				return err
 			}
 			if err := tx.Table("connectors").DropColumn("addon_group").Error; err != nil {
+				return err
+			}
+			if err := tx.Table("connectors").DropColumn("organisation_id").Error; err != nil {
 				return err
 			}
 
