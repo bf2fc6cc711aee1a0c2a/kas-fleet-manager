@@ -33,18 +33,13 @@ func addConnectorClusters() *gormigrate.Migration {
 			if err := tx.AutoMigrate(&ConnectorClusters{}).Error; err != nil {
 				return err
 			}
-
 			if err := tx.AutoMigrate(&Connectors{}).Error; err != nil {
 				return err
 			}
-
-			if err := tx.Exec(`CREATE SEQUENCE connector_version_seq OWNED BY connectors.version`).Error; err != nil {
-				return err
-			}
 			if err := tx.Exec(`
-                CREATE FUNCTION connector_version_trigger() RETURNS TRIGGER LANGUAGE plpgsql AS '
+                CREATE FUNCTION connectors_version_trigger() RETURNS TRIGGER LANGUAGE plpgsql AS '
 					BEGIN
-					NEW.version := nextval(''connector_version_seq'');
+					NEW.version := nextval(''connectors_version_seq'');
 					RETURN NEW;
 					END;
 				'
@@ -52,8 +47,8 @@ func addConnectorClusters() *gormigrate.Migration {
 				return err
 			}
 			if err := tx.Exec(`
-				CREATE TRIGGER connector_version_trigger BEFORE INSERT OR UPDATE ON connectors
-				FOR EACH ROW EXECUTE PROCEDURE connector_version_trigger();
+				CREATE TRIGGER connectors_version_trigger BEFORE INSERT OR UPDATE ON connectors
+				FOR EACH ROW EXECUTE PROCEDURE connectors_version_trigger();
 			`).Error; err != nil {
 				return err
 			}
@@ -72,10 +67,10 @@ func addConnectorClusters() *gormigrate.Migration {
 			if err := tx.Where("lease_type = ?", "connector").Delete(&api.LeaderLease{}).Error; err != nil {
 				return err
 			}
-			if err := tx.Exec(`DROP TRIGGER connector_version_trigger ON connectors`).Error; err != nil {
+			if err := tx.Exec(`DROP TRIGGER connectors_version_trigger ON connectors`).Error; err != nil {
 				return err
 			}
-			if err := tx.Exec(`DROP FUNCTION connector_version_trigger`).Error; err != nil {
+			if err := tx.Exec(`DROP FUNCTION connectors_version_trigger`).Error; err != nil {
 				return err
 			}
 			if err := tx.Table("connectors").DropColumn("version").Error; err != nil {
