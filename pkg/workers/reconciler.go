@@ -7,7 +7,7 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
+var (
 	RepeatInterval = 30 * time.Second
 )
 

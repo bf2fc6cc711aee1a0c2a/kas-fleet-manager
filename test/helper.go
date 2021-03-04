@@ -73,6 +73,10 @@ type Helper struct {
 func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 	once.Do(func() {
 		env := environments.Environment()
+		if env.Name == environments.IntegrationEnv {
+			// Lets reduce the polling interval to get the tests to complete faster!
+			workers.RepeatInterval = 1 * time.Second
+		}
 
 		// Set server if provided
 		if server != nil {
