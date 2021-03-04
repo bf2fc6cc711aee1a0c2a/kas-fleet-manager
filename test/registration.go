@@ -1,9 +1,12 @@
 package test
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	gm "github.com/onsi/gomega"
 
@@ -31,6 +34,7 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, startHo
 	}
 	if server != nil && helper.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		helper.SetServer(server)
+		workers.RepeatInterval = 1 * time.Second
 	}
 	helper.Env().Config.ObservabilityConfiguration.EnableMock = true
 	helper.StartServer()

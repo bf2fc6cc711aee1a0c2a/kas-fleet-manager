@@ -632,7 +632,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	// Set a custom request handler for POST /syncsets with a delay so we can trigger the deletion during Kafka creation
 	ocmServerBuilder.SetClusterSyncsetPostRequestHandler(func() func(w http.ResponseWriter, r *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
-			time.Sleep(30 * time.Second)
+			time.Sleep(time.Second * 10)
 			w.Header().Set("Content-Type", "application/json")
 			if err := clustersmgmtv1.MarshalSyncset(mocks.MockSyncset, w); err != nil {
 				t.Error(err)
