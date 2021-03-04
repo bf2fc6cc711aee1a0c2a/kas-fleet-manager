@@ -331,8 +331,8 @@ db/setup:
 	./scripts/local_db_setup.sh
 .PHONY: db/setup
 
-db/migrate: install
-	OCM_ENV=integration kas-fleet-manager migrate
+db/migrate:
+	OCM_ENV=integration $(GO) run ./cmd/kas-fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:

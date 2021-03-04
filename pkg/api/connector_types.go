@@ -1,23 +1,62 @@
 package api
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+)
+
+type ConnectorStatus = string
+
+const (
+	ConnectorStatusAssigning ConnectorStatus = "assigning" // set by kas-fleet-manager - user request
+	ConnectorStatusAssigned  ConnectorStatus = "assigned"  // set by kas-fleet-manager - worker
+	ConnectorStatusReady     ConnectorStatus = "ready"     // set by the agent
+	ConnectorStatusFailed    ConnectorStatus = "failed"    // set by the agent
+	ConnectorStatusDeleting  ConnectorStatus = "deleting"  // set by the kas-fleet-manager - user request
+	ConnectorStatusDeleted   ConnectorStatus = "deleted"   // set by the agent
+)
+
+var AgentSetConnectorStatus = []ConnectorStatus{
+	ConnectorStatusReady,
+	ConnectorStatusFailed,
+	ConnectorStatusDeleted,
+}
+
+type TargetKind = string
+
+const (
+	AddonTargetKind         TargetKind = "addon"
+	CloudProviderTargetKind TargetKind = "cloud_provider"
+)
+
+var AllTargetKind = []TargetKind{
+	AddonTargetKind,
+	CloudProviderTargetKind,
+}
 
 type Connector struct {
 	Meta
-	ConnectorTypeId string `json:"connector_type_id,omitempty"`
-	ConnectorSpec   string `json:"connector_spec"`
-	Region          string `json:"region"`
-	ClusterID       string `json:"cluster_id"`
-	CloudProvider   string `json:"cloud_provider"`
-	MultiAZ         bool   `json:"multi_az"`
-	Name            string `json:"name"`
-	Status          string `json:"status"`
-	Owner           string `json:"owner"`
-	KafkaID         string `json:"kafka_id"`
+	ConnectorTypeId string          `json:"connector_type_id,omitempty"`
+	ConnectorSpec   string          `json:"connector_spec"`
+	Region          string          `json:"region"`
+	ClusterID       string          `json:"cluster_id"`
+	CloudProvider   string          `json:"cloud_provider"`
+	MultiAZ         bool            `json:"multi_az"`
+	Name            string          `json:"name"`
+	Status          ConnectorStatus `json:"status"`
+	Owner           string          `json:"owner"`
+	OrganisationId  string          `json:"organisation_id"`
+	KafkaID         string          `json:"kafka_id"`
+	Version         int64           `json:"version"`
+	TargetKind      TargetKind      `json:"target_kind"`
+	AddonGroup      string          `json:"addon_group"`
 }
 
-func (org *Connector) BeforeCreate(scope *gorm.Scope) error {
-	return scope.SetColumn("ID", NewID())
+func (c *Connector) BeforeCreate(scope *gorm.Scope) error {
+	err := scope.SetColumn("ID", NewID())
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type ConnectorList []*Connector

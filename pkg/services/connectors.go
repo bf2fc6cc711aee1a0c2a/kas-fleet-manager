@@ -2,10 +2,11 @@ package services
 
 import (
 	"context"
+	goerrors "errors"
+	"github.com/jinzhu/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -17,6 +18,7 @@ type ConnectorsService interface {
 	List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *api.Connector) *errors.ServiceError
 	Delete(ctx context.Context, kid string, id string) *errors.ServiceError
+	ForEachInStatus(statuses []api.ConnectorStatus, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError
 }
 
 var _ ConnectorsService = &connectorsService{}
@@ -39,10 +41,17 @@ func (k *connectorsService) Create(ctx context.Context, resource *api.Connector)
 	}
 
 	dbConn := k.connectionFactory.New()
-	resource.Status = constants.KafkaRequestStatusAccepted.String()
+	resource.Status = api.ConnectorStatusAssigning
 	if err := dbConn.Save(resource).Error; err != nil {
 		return errors.GeneralError("failed to create connector: %v", err)
 	}
+
+	// read it back.... to get the updated version...
+	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
+	if err := dbConn.First(&resource).Error; err != nil {
+		return handleGetError("Connector", "id", resource.ID, err)
+	}
+
 	// TODO: increment connector metrics
 	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
 	return nil
@@ -57,18 +66,15 @@ func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid 
 		return nil, errors.Validation("connector id is undefined")
 	}
 
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return nil, errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return nil, errors.Unauthenticated("user not authenticated")
-	}
-
 	dbConn := k.connectionFactory.New()
 	var resource api.Connector
-	dbConn = dbConn.Where("owner = ? AND id = ? AND kafka_id = ?", owner, id, kid)
+	dbConn = dbConn.Where("AND id = ? AND kafka_id = ?", id, kid)
+
+	var err *errors.ServiceError
+	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
+	if err != nil {
+		return nil, err
+	}
 
 	if tid != "" {
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
@@ -78,6 +84,29 @@ func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid 
 		return nil, handleGetError("Connector", "id", id, err)
 	}
 	return &resource, nil
+}
+
+func filterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors.ServiceError) {
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return dbConn, errors.Unauthenticated("user not authenticated")
+	}
+	owner := auth.GetUsernameFromClaims(claims)
+	if owner == "" {
+		return dbConn, errors.Unauthenticated("user not authenticated")
+	}
+
+	orgId := auth.GetOrgIdFromClaims(claims)
+	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
+
+	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
+	if filterByOrganisationId {
+		dbConn = dbConn.Where("organisation_id = ?", orgId)
+	} else {
+		dbConn = dbConn.Where("owner = ?", owner)
+	}
+	return dbConn, nil
 }
 
 // Delete deletes a connector from the database.
@@ -113,10 +142,6 @@ func (k *connectorsService) Delete(ctx context.Context, kid string, id string) *
 
 // List returns all connectors visible to the user within the requested paging window.
 func (k *connectorsService) List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
-	if kid == "" {
-		return nil, nil, errors.Validation("kafka id is undefined")
-	}
-
 	var resourceList api.ConnectorList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
@@ -124,16 +149,13 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 		Size: listArgs.Size,
 	}
 
-	claims, err := auth.GetClaimsFromContext(ctx)
+	dbConn = dbConn.Where("kafka_id = ?", kid)
+
+	var err *errors.ServiceError
+	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
 	if err != nil {
-		return nil, nil, errors.Unauthenticated("user not authenticated")
+		return nil, nil, err
 	}
-	// filter connectors requests by owner
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return nil, nil, errors.Unauthenticated("user not authenticated")
-	}
-	dbConn = dbConn.Where("owner = ? AND kafka_id = ?", owner, kid)
 
 	if tid != "" {
 		dbConn = dbConn.Where("connector_type_id = ?", tid)
@@ -151,30 +173,60 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 
 	// execute query
 	if err := dbConn.Find(&resourceList).Error; err != nil {
-		return resourceList, pagingMeta, errors.GeneralError("Unable to list connectors for %s: %s", owner, err)
+		return resourceList, pagingMeta, errors.GeneralError("Unable to list connectors: %s", err)
 	}
 
 	return resourceList, pagingMeta, nil
 }
 
 func (k connectorsService) Update(ctx context.Context, resource *api.Connector) *errors.ServiceError {
-	kid := resource.KafkaID
-	if kid == "" {
-		return errors.Validation("kafka id is undefined")
-	}
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return errors.Unauthenticated("user not authenticated")
+
+	// If the version is set, then lets verify that the version has not changed...
+	if resource.Version != 0 {
+		dbConn := k.connectionFactory.New()
+		dbConn = dbConn.Where("id = ? AND version = ?", resource.ID, resource.Version)
+		t := api.Connector{}
+		if err := dbConn.First(&t).Error; err != nil {
+			return errors.BadRequest("resource version changed")
+		}
 	}
 
 	dbConn := k.connectionFactory.New()
-
-	if err := dbConn.Where("owner = ? AND id = ? AND kafka_id = ?", owner, resource.ID, kid).Model(resource).Update(resource).Error; err != nil {
+	if err := dbConn.Model(resource).Update(resource).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
+	}
+
+	// read it back.... to get the updated version...
+	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
+	if err := dbConn.First(&resource).Error; err != nil {
+		return handleGetError("Connector", "id", resource.ID, err)
+	}
+
+	return nil
+}
+
+func (k connectorsService) ForEachInStatus(statuses []api.ConnectorStatus, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError {
+	dbConn := k.connectionFactory.New().Model(&api.Connector{})
+	dbConn = dbConn.Where("status IN (?)", statuses)
+	rows, err := dbConn.Order("version").Rows()
+	if err != nil {
+		if goerrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return errors.GeneralError("Unable to list connectors: %s", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		resource := api.Connector{}
+		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
+		err := dbConn.ScanRows(rows, &resource)
+		if err != nil {
+			return errors.GeneralError("Unable to scan connector: %s", err)
+		}
+		if serr := f(&resource); serr != nil {
+			return serr
+		}
 	}
 	return nil
 }

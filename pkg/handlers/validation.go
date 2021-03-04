@@ -3,9 +3,11 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/xeipuuv/gojsonschema"
 	"net/http"
-	"net/url"
 	"regexp"
+
+	"net/url"
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
@@ -13,8 +15,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-
-	"github.com/xeipuuv/gojsonschema"
 )
 
 var (

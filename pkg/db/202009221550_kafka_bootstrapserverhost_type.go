@@ -25,7 +25,7 @@ func addKafkabootstrapServerHostType() *gormigrate.Migration {
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.DropColumn(KafkaRequest{}.BootstrapServerHost).Error; err != nil {
+			if err := tx.Table("kafka_requests").DropColumn("bootstrap_server_host").Error; err != nil {
 				return err
 			}
 			return nil

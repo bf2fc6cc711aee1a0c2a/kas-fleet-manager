@@ -189,7 +189,9 @@ func Test_connectorsService_Create(t *testing.T) {
 				connector: buildConnector(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().
+					WithQuery("INSERT").WithReply(nil).
+					WithQuery("SELECT").WithReply(dbConverters.ConvertConnectors(buildConnector(nil)))
 			},
 			wantErr: false,
 		},
