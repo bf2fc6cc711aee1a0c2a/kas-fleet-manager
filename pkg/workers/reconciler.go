@@ -12,9 +12,21 @@ const (
 )
 
 type Reconciler struct {
+	wakeup chan bool
+}
+
+// Wakeup is a non blocking and will cause a worker reconcile to be performed as soon as possible.
+func (r *Reconciler) Wakeup() {
+	select {
+	case r.wakeup <- true:
+		// wakeup channel accepted the message
+	default:
+		// wakeup channel was full..
+	}
 }
 
 func (r *Reconciler) Start(worker Worker) {
+	r.wakeup = make(chan bool, 1)
 	*worker.GetStopChan() = make(chan struct{})
 	worker.GetSyncGroup().Add(1)
 	worker.SetIsRunning(true)
@@ -26,6 +38,9 @@ func (r *Reconciler) Start(worker Worker) {
 	go func() {
 		for {
 			select {
+			case <-r.wakeup: //we were asked to wake up...
+				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
+				worker.reconcile()
 			case <-ticker.C: //time out
 				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
 				worker.reconcile()
