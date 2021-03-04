@@ -26,6 +26,9 @@ var _ ConnectorsService = &ConnectorsServiceMock{}
 //             DeleteFunc: func(ctx context.Context, kid string, id string) *errors.ServiceError {
 // 	               panic("mock out the Delete method")
 //             },
+//             ForEachInStatusFunc: func(statuses []string, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError {
+// 	               panic("mock out the ForEachInStatus method")
+//             },
 //             GetFunc: func(ctx context.Context, kid string, id string, tid string) (*api.Connector, *errors.ServiceError) {
 // 	               panic("mock out the Get method")
 //             },
@@ -47,6 +50,9 @@ type ConnectorsServiceMock struct {
 
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(ctx context.Context, kid string, id string) *errors.ServiceError
+
+	// ForEachInStatusFunc mocks the ForEachInStatus method.
+	ForEachInStatusFunc func(statuses []string, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, kid string, id string, tid string) (*api.Connector, *errors.ServiceError)
@@ -74,6 +80,13 @@ type ConnectorsServiceMock struct {
 			Kid string
 			// ID is the id argument value.
 			ID string
+		}
+		// ForEachInStatus holds details about calls to the ForEachInStatus method.
+		ForEachInStatus []struct {
+			// Statuses is the statuses argument value.
+			Statuses []string
+			// F is the f argument value.
+			F func(*api.Connector) *errors.ServiceError
 		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
@@ -105,11 +118,12 @@ type ConnectorsServiceMock struct {
 			Resource *api.Connector
 		}
 	}
-	lockCreate sync.RWMutex
-	lockDelete sync.RWMutex
-	lockGet    sync.RWMutex
-	lockList   sync.RWMutex
-	lockUpdate sync.RWMutex
+	lockCreate          sync.RWMutex
+	lockDelete          sync.RWMutex
+	lockForEachInStatus sync.RWMutex
+	lockGet             sync.RWMutex
+	lockList            sync.RWMutex
+	lockUpdate          sync.RWMutex
 }
 
 // Create calls CreateFunc.
@@ -183,6 +197,41 @@ func (mock *ConnectorsServiceMock) DeleteCalls() []struct {
 	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
 	mock.lockDelete.RUnlock()
+	return calls
+}
+
+// ForEachInStatus calls ForEachInStatusFunc.
+func (mock *ConnectorsServiceMock) ForEachInStatus(statuses []string, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError {
+	if mock.ForEachInStatusFunc == nil {
+		panic("ConnectorsServiceMock.ForEachInStatusFunc: method is nil but ConnectorsService.ForEachInStatus was just called")
+	}
+	callInfo := struct {
+		Statuses []string
+		F        func(*api.Connector) *errors.ServiceError
+	}{
+		Statuses: statuses,
+		F:        f,
+	}
+	mock.lockForEachInStatus.Lock()
+	mock.calls.ForEachInStatus = append(mock.calls.ForEachInStatus, callInfo)
+	mock.lockForEachInStatus.Unlock()
+	return mock.ForEachInStatusFunc(statuses, f)
+}
+
+// ForEachInStatusCalls gets all the calls that were made to ForEachInStatus.
+// Check the length with:
+//     len(mockedConnectorsService.ForEachInStatusCalls())
+func (mock *ConnectorsServiceMock) ForEachInStatusCalls() []struct {
+	Statuses []string
+	F        func(*api.Connector) *errors.ServiceError
+} {
+	var calls []struct {
+		Statuses []string
+		F        func(*api.Connector) *errors.ServiceError
+	}
+	mock.lockForEachInStatus.RLock()
+	calls = mock.calls.ForEachInStatus
+	mock.lockForEachInStatus.RUnlock()
 	return calls
 }
 

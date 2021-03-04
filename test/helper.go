@@ -487,23 +487,7 @@ func (helper *Helper) ClearAllTables() {
 }
 
 func (helper *Helper) CleanDB() {
-	gorm := helper.DBFactory.New()
-
-	for _, table := range []string{
-		"clusters",
-		"kafka_requests",
-		"migrations",
-		"leader_leases",
-	} {
-		if gorm.HasTable(table) {
-			err := gorm.DropTable(table).Error
-			if err != nil {
-				helper.T.Errorf("error dropping table %s: %v", table, err)
-			}
-		} else {
-			helper.T.Errorf("Unable to drop table %q, it does not exist", table)
-		}
-	}
+	db.RollbackAll(helper.DBFactory)
 }
 
 func (helper *Helper) ResetDB() {

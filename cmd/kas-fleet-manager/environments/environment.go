@@ -41,6 +41,7 @@ type Services struct {
 	Kafka                 services.KafkaService
 	Connectors            services.ConnectorsService
 	ConnectorTypes        services.ConnectorTypesService
+	ConnectorCluster      services.ConnectorClusterService
 	Cluster               services.ClusterService
 	CloudProviders        services.CloudProvidersService
 	Config                services.ConfigService
@@ -166,6 +167,7 @@ func (env *Env) LoadServices() error {
 
 	env.Services.Connectors = services.NewConnectorsService(env.DBFactory)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
+	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory)
 	if env.Config.ConnectorsConfig.Enabled {
 		err := env.Services.ConnectorTypes.DiscoverExtensions()
 		if err != nil {

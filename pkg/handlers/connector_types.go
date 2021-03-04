@@ -16,15 +16,22 @@ type connectorTypesHandler struct {
 	service services.ConnectorTypesService
 }
 
+var (
+	maxConnectorTypeIdLength = 50
+)
+
 func NewConnectorTypesHandler(service services.ConnectorTypesService) *connectorTypesHandler {
 	return &connectorTypesHandler{
 		service: service,
 	}
 }
 func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
+		Validate: []validate{
+			validation("id", &id, minLen(1), maxLen(maxConnectorTypeIdLength)),
+		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			id := mux.Vars(r)["id"]
 			resource, err := h.service.Get(id)
 			if err != nil {
 				return nil, err
@@ -39,6 +46,12 @@ func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h connectorTypesHandler) ProxyToExtensionService(w http.ResponseWriter, r *http.Request) {
 	glog.Info("proxying to extension")
 	id := mux.Vars(r)["id"]
+
+	err := validation("id", &id, minLen(1), maxLen(maxConnectorTypeIdLength))()
+	if err != nil {
+		handleError(r.Context(), w, err)
+		return
+	}
 
 	resource, err := h.service.Get(id)
 	if err != nil {

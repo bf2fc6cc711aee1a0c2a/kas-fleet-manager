@@ -35,6 +35,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addFailedReason(),
 	addConnectors(),
 	addKafkaPlacementId(),
+	addConnectorClusters(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {
@@ -53,10 +54,30 @@ func Migrate(conFactory *ConnectionFactory) {
 func MigrateTo(conFactory *ConnectionFactory, migrationID string) {
 	gorm := conFactory.New()
 	m := newGormigrate(gorm)
-
 	if err := m.MigrateTo(migrationID); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
 	}
+}
+
+// Rolls back all migrations..
+func RollbackAll(conFactory *ConnectionFactory) {
+	gorm := conFactory.New()
+	m := newGormigrate(gorm)
+
+	type Migration struct {
+		ID string
+	}
+	var result Migration
+	for {
+		err := gorm.First(&result).Error
+		if err != nil {
+			return
+		}
+		if err := m.RollbackLast(); err != nil {
+			glog.Fatalf("Could not rollback: %v", err)
+		}
+	}
+
 }
 
 func newGormigrate(db *gorm.DB) *gormigrate.Gormigrate {
