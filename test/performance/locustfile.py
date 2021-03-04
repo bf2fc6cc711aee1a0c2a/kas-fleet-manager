@@ -87,12 +87,14 @@ class QuickstartUser(HttpUser):
 # otherwise all public API endpoints (where applicable) will be attacked:
 #
 # THe distribution between the endpoints will be semi-random with the following proportions
-# kafkas get                                       40%
+# kafkas get                                       50%
 # kafka search                                     35%
-# cloud providers get                              10%
-# cloud provider get                                5%
-# service accounts + service account password reset	5%
-# kafka get + kafka metrics                         5%
+# kafka get                                        10%
+# kafka metrics                                     1%
+# cloud provider(s) get                             1%
+# openapi get                                       1%
+# service accounts + service account password reset	1%
+# kafka get metrics                      	        0.5%
 def exercise_endpoints(self, get_only):
   global kafkas_created
   if len(kafkas_list) < kafkas_to_create:
@@ -103,16 +105,21 @@ def exercise_endpoints(self, get_only):
       time.sleep(kafka_post_wait_time) # sleep after creating kafka
   else:
     endpoint_selector = random.randrange(0,99)
-    if endpoint_selector < 5:
+    if endpoint_selector < 1:
       service_accounts(self, get_only)
-    elif endpoint_selector < 15:
+    elif endpoint_selector < 2:
       handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
-    elif endpoint_selector < 20:
       handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
-    elif endpoint_selector < 25:
+    elif endpoint_selector < 3:
+      handle_get(self, f'{url_base}/openapi', '/openapi')
+    elif endpoint_selector < 53:
+      handle_get(self, f'{url_base}/kafkas', '/kafkas')
+    elif endpoint_selector < 88:
+      handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
+    else:
       kafka_id = ""
       if len(kafkas_list) == 0:
-        org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
+        org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)  
         # delete all kafkas created by the token used in the performance test
         items = get_items_from_json_response(org_kafkas)
         if len(items) > 0:
@@ -121,12 +128,9 @@ def exercise_endpoints(self, get_only):
         kafka_id = get_random_id(kafkas_list)
       if kafka_id != "":
         handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
-        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
-        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
-    elif endpoint_selector < 65:
-      handle_get(self, f'{url_base}/kafkas', '/kafkas')
-    else:
-      handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
+        if (random.randrange(0,19) < 1): 
+          handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
+          handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
 
 # perf tests against service account endpoints
 def service_accounts(self, get_only):
