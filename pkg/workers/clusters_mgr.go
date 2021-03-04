@@ -3,12 +3,13 @@ package workers
 import (
 	"bytes"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"k8s.io/apimachinery/pkg/runtime"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
@@ -44,7 +45,7 @@ const (
 	observabilitySubscriptionName   = "observability-operator"
 	observabilityKafkaConfiguration = "kafka-observability-configuration"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
-	ingressReplicas                 = int32(3)
+	ingressReplicas                 = int32(6)
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -592,7 +593,7 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 			Kind:       "IngressController",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "sharded",
+			Name:      "sharded-nlb",
 			Namespace: openshiftIngressNamespace,
 		},
 		Spec: ingressoperatorv1.IngressControllerSpec{
@@ -601,6 +602,18 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 				MatchLabels: map[string]string{
 					syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
 				},
+			},
+			EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
+				LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
+					ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
+						AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
+							Type: ingressoperatorv1.AWSNetworkLoadBalancer,
+						},
+						Type: ingressoperatorv1.AWSLoadBalancerProvider,
+					},
+					Scope: ingressoperatorv1.ExternalLoadBalancer,
+				},
+				Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
 			},
 			Replicas: &r,
 			NodePlacement: &ingressoperatorv1.NodePlacement{
