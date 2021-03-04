@@ -115,6 +115,24 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
+OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
+NPM ?= "$(shell which npm)"
+openapi-generator:
+ifeq (, $(shell which ${NPM} 2> /dev/null))
+	@echo "npm is not available please install it to be able to install openapi-generator"
+	exit 1
+endif
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	mkdir -p ${LOCAL_BIN_PATH}/openapi-generator-installation ;\
+	cd ${LOCAL_BIN_PATH} ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
+	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
+	}
+endif
+
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
 else
@@ -161,9 +179,8 @@ help:
 	@echo "make run/docs             	run swagger and host the api spec"
 	@echo "make test                 	run unit tests"
 	@echo "make test/integration     	run integration tests"
-	@echo "make test/performance        run performance tests"
+	@echo "make test/performance      run performance tests"
 	@echo "make code/fix             	format files"
-	@echo "make install-openapi-gen     install openapi generator"
 	@echo "make generate             	generate go and openapi modules"
 	@echo "make openapi/generate     	generate openapi modules"
 	@echo "make openapi/validate     	validate openapi schema"
@@ -261,25 +278,6 @@ test/integration: test/prepare gotestsum
 test/cluster/cleanup:
 	./scripts/cleanup_test_cluster.sh
 .PHONY: test/cluster/cleanup
-
-install-openapi-gen:
-OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
-NPM ?= "$(shell which npm)"
-ifeq (, $(shell which ${NPM} 2> /dev/null))
-	@echo "npm is not available please install it to be able to install openapi-generator"
-	exit 1
-endif
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
-	@{ \
-	set -e ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	mkdir -p ${LOCAL_BIN_PATH}/openapi-generator-installation ;\
-	cd ${LOCAL_BIN_PATH} ;\
-	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
-	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
-	}
-endif
-.PHONY: install-openapi-gen
 
 # generate files
 generate: moq openapi/generate
