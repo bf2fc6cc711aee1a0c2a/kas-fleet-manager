@@ -1,14 +1,11 @@
-import locust
+import locust, os, random, sys, time, urllib3
 from locust import task, HttpUser, constant_pacing
-
-import os, sys
 
 from common.auth import *
 from common.tools import *
 from common.handler import *
 
 # disable ssl check on workers
-import urllib3
 urllib3.disable_warnings()
 
 # if set to 'TRUE' - only get endpoints will be attacked
@@ -21,28 +18,35 @@ seed_kafkas = int(os.environ['PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER'])
 kafka_post_wait_time = int(os.environ['PERF_TEST_KAFKA_POST_WAIT_TIME'])
 # number of kafkas to create by each locust worker
 kafkas_to_create = int(os.environ['PERF_TEST_KAFKAS_PER_WORKER'])
-# number of kafkas to create by each locust worker
+# Runtime in minutes
 run_time_string = os.environ['PERF_TEST_RUN_TIME']
 run_time_seconds = int(run_time_string[0:len(run_time_string)-1]) * 60
 
-# set base url for the endpoints
+# set base url for the endpoints (if set via ENV var)
 url_base = '/api/managed-services-api/v1'
 BASE_API_URL = os.getenv('BASE_API_URL')
 if str(BASE_API_URL) != 'None':
   url_base = BASE_API_URL
 
-import time
-
-import random
-
+# tracks how many kafkas were created already (per locust worker)
 kafkas_created = 0
 
+# boolean flag driving cleanup stage
 resources_cleaned_up = False
 
 kafkas_list = []
 service_acc_list = []
 
 start_time = time.monotonic()
+
+remove_res_created_start = 90
+
+cleanup_stage_start = 60
+
+# only running GET requests - no need to run cleanup
+if kafkas_to_create == 0 and get_only == 'TRUE':
+  remove_res_created_start = 0
+  cleanup_stage_start = 0
 
 class QuickstartUser(HttpUser):
   def on_start(self):
@@ -70,10 +74,10 @@ class QuickstartUser(HttpUser):
         populate_db = 'FALSE'
     else:
       # cleanup before the test completes
-      if run_time_seconds - current_run_time < 90:
+      if run_time_seconds - current_run_time < remove_res_created_start:
         cleanup(self)
         # make sure that no kafka_requests or service accounts created by this test are removed
-        if run_time_seconds - current_run_time < 60:
+        if run_time_seconds - current_run_time < cleanup_stage_start:
           if resources_cleaned_up == False:
             check_leftover_resources(self)
       # hit the remaining endpoints for the majority of the time that this test runs
