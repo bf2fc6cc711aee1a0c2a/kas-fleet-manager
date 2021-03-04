@@ -279,7 +279,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
 	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
 	}
 endif
-.PHONY: openapi-generator
+.PHONY: install-openapi-gen
 
 # generate files
 generate: moq openapi/generate
