@@ -7,9 +7,7 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
-	RepeatInterval = 30 * time.Second
-)
+var RepeatInterval time.Duration = 30 * time.Second
 
 type Reconciler struct {
 }
