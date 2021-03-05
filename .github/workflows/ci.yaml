@@ -117,4 +117,4 @@ jobs:
         run: |
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin
-          make openapi/validate test test/integration
+          make test test/integration
