@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func TestDataPlaneAuthzMiddleware_CheckClusterId(t *testing.T) {
+func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 	tests := []struct {
 		name      string
 		token     *jwt.Token
@@ -49,7 +49,6 @@ func TestDataPlaneAuthzMiddleware_CheckClusterId(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mw := NewDataPlaneAuthzMiddleware()
 			// we need to use mux here to parse the id in the request url
 			route := mux.NewRouter().PathPrefix("/agent-cluster/{id}").Subrouter()
 			route.HandleFunc("", func(writer http.ResponseWriter, request *http.Request) {
@@ -58,7 +57,7 @@ func TestDataPlaneAuthzMiddleware_CheckClusterId(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			route.Use(mw.CheckClusterId)
+			route.Use(checkClusterId(Kas))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
@@ -70,7 +69,7 @@ func TestDataPlaneAuthzMiddleware_CheckClusterId(t *testing.T) {
 	}
 }
 
-func TestDataPlaneAuthzMiddleware_CheckOCMToken(t *testing.T) {
+func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 	const JWKSEndpoint = "http://localhost"
 
 	tests := []struct {
@@ -115,7 +114,6 @@ func TestDataPlaneAuthzMiddleware_CheckOCMToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mw := NewDataPlaneAuthzMiddleware()
 			// we need to use mux here to parse the id in the request url
 			route := mux.NewRouter().PathPrefix("/agent-cluster/{id}").Subrouter()
 			route.HandleFunc("", func(writer http.ResponseWriter, request *http.Request) {
@@ -124,7 +122,7 @@ func TestDataPlaneAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			route.Use(mw.CheckOCMToken(JWKSEndpoint))
+			route.Use(checkIssuer(JWKSEndpoint))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
