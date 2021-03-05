@@ -49,6 +49,10 @@ ENV PATH="/uhc/bin:/usr/local/go/bin:${PATH}"
 ENV GOPATH="/uhc"
 ENV CGO_ENABLED=0
 
+# install NPM and java for openapi-generator
+RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash -
+RUN apt install -y nodejs build-essential default-jre
+
 # copy over the kas-fleet-manager workdir
 RUN mkdir -p /uhc/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 COPY . /uhc/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
