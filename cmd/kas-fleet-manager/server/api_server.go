@@ -204,7 +204,9 @@ func NewAPIServer() Server {
 		rolesAuthzMiddleware := auth.NewRolesAuhzMiddleware()
 		dataPlaneAuthzMiddleware := auth.NewDataPlaneAuthzMiddleware()
 		// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
-		apiV1DataPlaneRequestsRouter.Use(rolesAuthzMiddleware.RequireRealmRole("kas_fleetshard_operator", errors.ErrorNotFound), dataPlaneAuthzMiddleware.CheckClusterId)
+		apiV1DataPlaneRequestsRouter.Use(rolesAuthzMiddleware.RequireRealmRole("kas_fleetshard_operator", errors.ErrorNotFound),
+			dataPlaneAuthzMiddleware.CheckClusterId,
+			dataPlaneAuthzMiddleware.CheckOCMToken(env().Services.Keycloak.GetConfig().ValidIssuerURI))
 	}
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
