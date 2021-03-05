@@ -639,16 +639,6 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "When cluster is in state addon installed then status reports can be processed",
-			apiCluster: &api.Cluster{
-				Status: api.AddonInstalled,
-			},
-			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil)
-			},
-			want: true,
-		},
-		{
 			name: "When cluster is in state provisioning  then status reports cannot be processed",
 			apiCluster: &api.Cluster{
 				Status: api.ClusterProvisioning,
