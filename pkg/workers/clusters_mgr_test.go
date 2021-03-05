@@ -1059,7 +1059,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingress
 					Kind:       "IngressController",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "sharded",
+					Name:      "sharded-nlb",
 					Namespace: openshiftIngressNamespace,
 				},
 				Spec: ingressoperatorv1.IngressControllerSpec{
@@ -1068,6 +1068,18 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingress
 						MatchLabels: map[string]string{
 							syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
 						},
+					},
+					EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
+						LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
+							ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
+								AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
+									Type: ingressoperatorv1.AWSNetworkLoadBalancer,
+								},
+								Type: ingressoperatorv1.AWSLoadBalancerProvider,
+							},
+							Scope: ingressoperatorv1.ExternalLoadBalancer,
+						},
+						Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
 					},
 					Replicas: &r,
 					NodePlacement: &ingressoperatorv1.NodePlacement{
