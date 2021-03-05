@@ -447,21 +447,27 @@ func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, cl
 
 func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
-		Name:        kafkaRequest.Name,
-		Id:          kafkaRequest.ID,
-		PlacementId: kafkaRequest.PlacementId,
+		Id: kafkaRequest.ID,
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ManagedKafka",
+			APIVersion: "managedkafka.bf2.org/v1alpha1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
 			Namespace: namespace,
+			Annotations: map[string]string{
+				"id":          kafkaRequest.ID,
+				"placementId": kafkaRequest.PlacementId,
+			},
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
 			// Currently ignored
 			Capacity: managedkafka.Capacity{
-				IngressEgressThroughputPerSec: "",
-				TotalMaxConnections:           0,
-				MaxDataRetentionSize:          "",
-				MaxPartitions:                 0,
-				MaxDataRetentionPeriod:        "",
+				IngressEgressThroughputPerSec: kafkaConfig.KafkaCapacity.IngressEgressThroughputPerSec,
+				TotalMaxConnections:           kafkaConfig.KafkaCapacity.TotalMaxConnections,
+				MaxDataRetentionSize:          kafkaConfig.KafkaCapacity.MaxDataRetentionSize,
+				MaxPartitions:                 kafkaConfig.KafkaCapacity.MaxPartitions,
+				MaxDataRetentionPeriod:        kafkaConfig.KafkaCapacity.MaxDataRetentionPeriod,
 			},
 			Endpoint: managedkafka.EndpointSpec{
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,

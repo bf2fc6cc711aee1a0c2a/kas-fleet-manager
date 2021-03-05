@@ -49,6 +49,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/keycloak-service.*
 /secrets/dx.*
 /secrets/observatorium.*
+/secrets/observability-config-access.token
 
 # cluster details (used for testing)
 /test/integration/test_cluster.json

@@ -313,6 +313,31 @@ parameters:
   description: The version of the Strimzi operator to install
   value: "v0.21.3"
 
+- name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
+  displayName: Kafka ingress throughput
+  description: Ingress throughput configuration for the default Kafka instance type
+  value: "2Mi"
+
+- name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
+  displayName: Kafka total max connections
+  description: Totoal max connections configuration for the default Kafka instance type
+  value: "100"
+
+- name: KAFKA_CAPACITY_MAX_DATA_RENTENTION_SIZE
+  displayName: Kafka max data retention size
+  description: Data retention size configuration for the default Kafka instance type
+  value: "100Gi"
+
+- name: KAFKA_CAPACITY_MAX_PARTITIONS
+  displayName: Kafka max partitions
+  description: Max partitions configuration for the default Kafka instance type
+  value: "100"
+
+- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD
+  displayName: Kafka max data retention period
+  description: Data retention period configuration for the default Kafka instance type
+  value: "P14D"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -342,6 +367,19 @@ objects:
     data:
       camelv1: http://camelv1-type-service:9090
       camelv2: http://camelv2-type-service:9090
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-kafka-capacity-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      kafka-capacity-config.yaml: |-
+        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
+        totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
+        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RENTENTION_SIZE}
+        maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
+        maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
 
   - kind: ServiceAccount
     apiVersion: v1
@@ -394,6 +432,9 @@ objects:
           - name: ocm-managed-services-connector-types-config
             configMap:
               name: ocm-managed-services-connector-types-config
+          - name: ocm-managed-services-kafka-capacity-config
+            configMap:
+              name: ocm-managed-services-kafka-capacity-config
           initContainers:
           - name: id
             image: quay.io/centos/centos:8
@@ -439,6 +480,9 @@ objects:
               subPath: allow-list-configuration.yaml
             - name: ocm-managed-services-connector-types-config
               mountPath: /config/connector-types
+            - name: ocm-managed-services-kafka-capacity-config
+              mountPath: /config/kafka-capacity-config.yaml
+              subPath: kafka-capacity-config.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -453,6 +497,7 @@ objects:
             - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
+            - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
