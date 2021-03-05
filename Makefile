@@ -275,7 +275,7 @@ generate: moq openapi/generate
 # validate the openapi schema
 openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and data/generated/openapi/openapi.go
