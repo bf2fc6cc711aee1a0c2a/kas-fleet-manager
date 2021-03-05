@@ -209,7 +209,7 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 	}
 	kafkaState, err := k.observatoriumService.GetKafkaState(kafka.Name, namespace)
 	if err != nil {
-		sentry.CaptureException(err)
+		sentry.CaptureException(fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err))
 		return fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err)
 	}
 	if kafkaState.State == observatorium.ClusterStateReady {
