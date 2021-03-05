@@ -116,7 +116,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 endif
 
 openapi-generator:
- OPENAPI_GENERATOR=docker run --rm -v ${PROJECT_PATH}/openapi:/openapi openapitools/openapi-generator-cli:v4.3.1
+ OPENAPI_GENERATOR=docker run -u $(shell id -u) --rm -v ${PROJECT_PATH}/openapi:/openapi openapitools/openapi-generator-cli:v4.3.1
 .PHONY: openapi-generator
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -304,7 +304,7 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager.yaml-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
+	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager.yaml-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
@@ -326,7 +326,7 @@ db/teardown:
 .PHONY: db/teardown
 
 db/login:
-	docker exec -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+	docker exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
 .PHONY: db/login
 
 db/generate/insert/cluster:
@@ -357,7 +357,7 @@ image/push: image/build
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
 image/build/internal: binary
-	docker build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
+	docker build -u $(shell id -u) -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
 # push the image to the OpenShift internal registry
@@ -373,12 +373,12 @@ image/build/push/internal: image/build/internal image/push/internal
 
 # Build the binary and test image 
 image/build/test: binary
-	docker build -t "$(test_image)" -f Dockerfile.integration.test .
+	docker build -u $(shell id -u) -t "$(test_image)" -f Dockerfile.integration.test .
 .PHONY: image/build/test
 
 # Run the test container
 test/run: image/build/test
-	docker run --net=host -p 9876:9876 -i "$(test_image)"
+	docker run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
 # Setup for AWS credentials
