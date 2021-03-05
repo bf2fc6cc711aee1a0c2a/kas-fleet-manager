@@ -20,8 +20,6 @@ type KeycloakConfig struct {
 	TLSTrustedCertificatesKey   string `json:"tls_trusted_certificates_key"`
 	TLSTrustedCertificatesValue string `json:"tls_trusted_certificates_value"`
 	TLSTrustedCertificatesFile  string `json:"tls_trusted_certificates_file"`
-	MASClientSecretKey          string `json:"mas_client_secret_key"`
-	MASClientSecretValue        string `json:"mas_client_secret_value"`
 	EnablePlain                 bool   `json:"enable_plain"`
 	EnableOauthBearer           bool   `json:"enable_oauth_bearer"`
 }
@@ -37,7 +35,6 @@ func NewKeycloakConfig() *KeycloakConfig {
 		GrantType:                   "client_credentials",
 		UserNameClaim:               "preferred_username",
 		TLSTrustedCertificatesKey:   "keycloak.crt",
-		MASClientSecretKey:          "ssoClientSecret",
 		EnablePlain:                 true,
 		EnableOauthBearer:           false,
 	}
