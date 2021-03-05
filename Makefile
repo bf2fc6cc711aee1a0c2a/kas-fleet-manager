@@ -357,7 +357,7 @@ image/push: image/build
 # build binary and image for OpenShift deployment
 image/build/internal: IMAGE_TAG ?= $(image_tag)
 image/build/internal: binary
-	docker build -u $(shell id -u) -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
+	docker build -t "$(shell oc get route default-route -n openshift-image-registry -o jsonpath="{.spec.host}")/$(image_repository):$(IMAGE_TAG)" .
 .PHONY: image/build/internal
 
 # push the image to the OpenShift internal registry
@@ -373,7 +373,7 @@ image/build/push/internal: image/build/internal image/push/internal
 
 # Build the binary and test image 
 image/build/test: binary
-	docker build -u $(shell id -u) -t "$(test_image)" -f Dockerfile.integration.test .
+	docker build -t "$(test_image)" -f Dockerfile.integration.test .
 .PHONY: image/build/test
 
 # Run the test container
