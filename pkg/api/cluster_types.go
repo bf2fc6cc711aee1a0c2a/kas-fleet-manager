@@ -23,8 +23,6 @@ const (
 	ManagedKafkaAddonID = "managed-kafka"
 	// ClusterReady the cluster is terraformed and ready for kafka instances
 	ClusterReady ClusterStatus = "ready"
-	// ClusterAddonInstalled addon is installed on the cluster
-	AddonInstalled ClusterStatus = "addon_installed"
 	// ClusterWaitingForKasFleetShardOperator the cluster is waiting for the KAS fleetshard operator to be ready
 	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
 	// ClusterFull the cluster is full and cannot accept more Kafka clusters
