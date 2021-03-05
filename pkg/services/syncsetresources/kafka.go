@@ -2,9 +2,11 @@ package syncsetresources
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -245,7 +247,7 @@ func getKafkaListener(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaC
 			},
 		}
 		secretSource := strimzi.GenericSecretSource{
-			Key:        config.NewKeycloakConfig().MASClientSecretKey,
+			Key:        constants.MASClientSecretKey,
 			SecretName: kafkaRequest.Name + "-sso-secret",
 		}
 		plainOverOauthAuthenticationListener = &strimzi.KafkaListenerAuthentication{
