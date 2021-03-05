@@ -6,6 +6,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +34,7 @@ func buildKeycloakClientSecret(keycloakConfig *config.KeycloakConfig, kafkaName,
 		},
 		Type: corev1.SecretType("Opaque"),
 		Data: map[string][]byte{
-			keycloakConfig.MASClientSecretKey: []byte(clientSecretValue),
+			constants.MASClientSecretKey: []byte(clientSecretValue),
 		},
 	}
 }
