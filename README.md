@@ -12,7 +12,6 @@ For more information on how the service works, see [the implementation documenta
 * [go-bindata (3.1.2+)](https://github.com/go-bindata/go-bindata) - for code generation
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 * [moq](https://github.com/matryer/moq) - for mock generation
-* [npm](https://www.npmjs.com/) - for some Makefile targets
 
 ## User Account & Organization Setup
 
