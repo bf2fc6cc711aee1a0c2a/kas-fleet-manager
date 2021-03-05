@@ -68,7 +68,7 @@ func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid 
 
 	dbConn := k.connectionFactory.New()
 	var resource api.Connector
-	dbConn = dbConn.Where("AND id = ? AND kafka_id = ?", id, kid)
+	dbConn = dbConn.Where("id = ? AND kafka_id = ?", id, kid)
 
 	var err *errors.ServiceError
 	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)

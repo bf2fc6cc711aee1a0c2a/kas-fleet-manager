@@ -59,6 +59,7 @@ type Helper struct {
 	APIServer         server.Server
 	MetricsServer     server.Server
 	HealthCheckServer server.Server
+	ConnectorWorker   *workers.ConnectorManager
 	KafkaWorker       *workers.KafkaManager
 	ClusterWorker     *workers.ClusterManager
 	LeaderEleWorker   *workers.LeaderElectionManager
@@ -246,22 +247,42 @@ func (helper *Helper) stopClusterWorker() {
 	helper.ClusterWorker.Stop()
 }
 
+func (helper *Helper) startConnectorWorker() {
+	env := helper.Env()
+	helper.ConnectorWorker = workers.NewConnectorManager(uuid.New().String(), env.Services.Connectors, env.Services.ConnectorCluster, env.Services.Observatorium)
+	go func() {
+		glog.V(10).Info("Test Metrics server started")
+		helper.ConnectorWorker.Start()
+		glog.V(10).Info("Test Metrics server stopped")
+	}()
+}
+
+func (helper *Helper) stopConnectorWorker() {
+	if helper.ConnectorWorker == nil {
+		return
+	}
+	helper.ConnectorWorker.Stop()
+}
 func (helper *Helper) startLeaderElectionWorker() {
 
-	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{
+	env := helper.Env()
+	ocmClient := ocm.NewClient(env.Clients.OCM.Connection)
+	helper.ClusterWorker = workers.NewClusterManager(env.Services.Cluster, env.Services.CloudProviders,
+		ocmClient, env.Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{
 			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
 				return true, nil
 			},
 		})
 
-	ocmClient = ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak, helper.Env().Services.Observatorium)
+	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
+
+	helper.KafkaWorker = workers.NewKafkaManager(env.Services.Kafka, env.Services.Cluster, ocmClient, uuid.New().String(), env.Services.Keycloak, env.Services.Observatorium)
+	helper.ConnectorWorker = workers.NewConnectorManager(uuid.New().String(), env.Services.Connectors, env.Services.ConnectorCluster, env.Services.Observatorium)
 
 	var workerLst []workers.Worker
 	workerLst = append(workerLst, helper.ClusterWorker)
 	workerLst = append(workerLst, helper.KafkaWorker)
+	workerLst = append(workerLst, helper.ConnectorWorker)
 
 	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerLst, helper.DBFactory)
 	helper.LeaderEleWorker.Start()
@@ -307,6 +328,15 @@ func (helper *Helper) StartKafkaWorker() {
 
 func (helper *Helper) StopKafkaWorker() {
 	helper.stopKafkaWorker()
+}
+
+func (helper *Helper) StartConnectorWorker() {
+	helper.stopConnectorWorker()
+	helper.startConnectorWorker()
+}
+
+func (helper *Helper) StopConnectorWorker() {
+	helper.stopConnectorWorker()
 }
 
 func (helper *Helper) StartClusterWorker() {
@@ -399,12 +429,14 @@ func (helper *Helper) NewPrivateAPIClient() *privateopenapi.APIClient {
 func (helper *Helper) NewRandAccount() *amv1.Account {
 	// this value if taken from config/allow-list-configuration.yaml
 	orgId := "13640203"
+	return helper.NewAccountWithNameAndOrg(faker.Name(), orgId)
+}
 
-	account, err := helper.AuthHelper.NewAccount(helper.NewID(), faker.Name(), faker.Email(), orgId)
+func (helper *Helper) NewAccountWithNameAndOrg(name string, orgId string) *amv1.Account {
+	account, err := helper.AuthHelper.NewAccount(helper.NewID(), name, faker.Email(), orgId)
 	if err != nil {
-		helper.T.Errorf("failed to create a new random account: %s", err.Error())
+		helper.T.Errorf("failed to create a new account: %s", err.Error())
 	}
-
 	return account
 }
 
