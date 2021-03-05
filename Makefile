@@ -115,23 +115,9 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
-OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
-NPM ?= "$(shell which npm)"
 openapi-generator:
-ifeq (, $(shell which ${NPM} 2> /dev/null))
-	@echo "npm is not available please install it to be able to install openapi-generator"
-	exit 1
-endif
-ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
-	@{ \
-	set -e ;\
-	mkdir -p ${LOCAL_BIN_PATH} ;\
-	mkdir -p ${LOCAL_BIN_PATH}/openapi-generator-installation ;\
-	cd ${LOCAL_BIN_PATH} ;\
-	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
-	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
-	}
-endif
+ OPENAPI_GENERATOR=docker run -u $(shell id -u) --rm -v ${PROJECT_PATH}/openapi:/openapi openapitools/openapi-generator-cli:v4.3.1
+.PHONY: openapi-generator
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
@@ -318,7 +304,7 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager.yaml-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
+	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager.yaml-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
@@ -340,7 +326,7 @@ db/teardown:
 .PHONY: db/teardown
 
 db/login:
-	docker exec -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+	docker exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
 .PHONY: db/login
 
 db/generate/insert/cluster:
@@ -392,7 +378,7 @@ image/build/test: binary
 
 # Run the test container
 test/run: image/build/test
-	docker run --net=host -p 9876:9876 -i "$(test_image)"
+	docker run -u $(shell id -u) --net=host -p 9876:9876 -i "$(test_image)"
 .PHONY: test/run
 
 # Setup for AWS credentials
