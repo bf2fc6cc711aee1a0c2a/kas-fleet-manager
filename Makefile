@@ -115,9 +115,23 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 	}
 endif
 
+OPENAPI_GENERATOR ?= ${LOCAL_BIN_PATH}/openapi-generator
+NPM ?= "$(shell which npm)"
 openapi-generator:
- OPENAPI_GENERATOR=docker run -u $(shell id -u) --rm -v ${PROJECT_PATH}/openapi:/openapi openapitools/openapi-generator-cli:v4.3.1
-.PHONY: openapi-generator
+ifeq (, $(shell which ${NPM} 2> /dev/null))
+	@echo "npm is not available please install it to be able to install openapi-generator"
+	exit 1
+endif
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	mkdir -p ${LOCAL_BIN_PATH}/openapi-generator-installation ;\
+	cd ${LOCAL_BIN_PATH} ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/openapi-generator-installation @openapitools/openapi-generator-cli@cli-4.3.1 ;\
+	ln -s openapi-generator-installation/node_modules/.bin/openapi-generator openapi-generator ;\
+	}
+endif
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
