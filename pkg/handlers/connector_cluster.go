@@ -193,7 +193,7 @@ func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 		},
 		{
 			Id:    connectorFleetshardOperatorParamMasSSORealm,
-			Value: o.configService.GetConfig().Keycloak.Realm,
+			Value: o.configService.GetConfig().Keycloak.KafkaRealm.Realm,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamServiceAccountId,
@@ -216,8 +216,7 @@ func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 }
 
 func (o *connectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
-
-	u, err := url.Parse(fmt.Sprintf("%s/auth/realms/%s/protocol/openid-connect/token", o.configService.GetConfig().Keycloak.BaseURL, o.configService.GetConfig().Keycloak.Realm))
+	u, err := url.Parse(o.configService.GetConfig().Keycloak.KafkaRealm.TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}

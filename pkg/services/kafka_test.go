@@ -319,7 +319,9 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
 						return &config.KeycloakConfig{
-							ClientID: "test",
+							KafkaRealm: &config.KeycloakRealmConfig{
+								ClientID: "test",
+							},
 						}
 					},
 				},
@@ -352,7 +354,9 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
 						return &config.KeycloakConfig{
-							ClientID: "test",
+							KafkaRealm: &config.KeycloakRealmConfig{
+								ClientID: "test",
+							},
 						}
 					},
 				},
@@ -386,7 +390,9 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
 						return &config.KeycloakConfig{
-							ClientID: "test",
+							KafkaRealm: &config.KeycloakRealmConfig{
+								ClientID: "test",
+							},
 						}
 					},
 				},
@@ -420,7 +426,9 @@ func Test_kafkaService_Create(t *testing.T) {
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
 						return &config.KeycloakConfig{
-							ClientID: "test",
+							KafkaRealm: &config.KeycloakRealmConfig{
+								ClientID: "test",
+							},
 						}
 					},
 				},

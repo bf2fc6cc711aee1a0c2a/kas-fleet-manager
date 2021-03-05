@@ -87,7 +87,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 		},
 		{
 			Id:    kasFleetshardOperatorParamMasSSORealm,
-			Value: o.configService.GetConfig().Keycloak.Realm,
+			Value: o.configService.GetConfig().Keycloak.KafkaRealm.Realm,
 		},
 		{
 			Id:    kasFleetshardOperatorParamServiceAccountId,

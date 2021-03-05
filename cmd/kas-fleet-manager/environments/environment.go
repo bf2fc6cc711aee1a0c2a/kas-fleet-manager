@@ -147,9 +147,9 @@ func (e *Env) Initialize() error {
 func (env *Env) LoadServices() error {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
+	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	syncsetService := services.NewSyncsetService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(*env.Config)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
@@ -158,7 +158,7 @@ func (env *Env) LoadServices() error {
 	env.Services.Cluster = clusterService
 	env.Services.CloudProviders = cloudProviderService
 	env.Services.Observatorium = ObservatoriumService
-	env.Services.Keycloak = keycloakService
+	env.Services.Keycloak = kafkaKeycloakService
 
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)

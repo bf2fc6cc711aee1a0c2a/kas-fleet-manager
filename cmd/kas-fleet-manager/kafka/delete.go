@@ -45,7 +45,7 @@ func runDelete(cmd *cobra.Command, _ []string) {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 	syncsetService := services.NewSyncsetService(ocmClient)
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
+	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
 
 	// create jwt with claims and set it in the context

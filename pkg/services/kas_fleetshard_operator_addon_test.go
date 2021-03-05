@@ -68,8 +68,10 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 				ssoService: tt.fields.ssoService,
 				ocm:        tt.fields.ocm,
 				configService: NewConfigService(config.ApplicationConfig{
-					Server:                     &config.ServerConfig{},
-					Keycloak:                   &config.KeycloakConfig{},
+					Server: &config.ServerConfig{},
+					Keycloak: &config.KeycloakConfig{
+						KafkaRealm: &config.KeycloakRealmConfig{},
+					},
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
 				}),
