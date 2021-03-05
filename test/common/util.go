@@ -26,7 +26,7 @@ const (
 )
 
 func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.ClusterStatus) error {
-	err := wait.PollImmediate(10*time.Second, 120*time.Minute, func() (bool, error) {
+	err := wait.PollImmediate(1*time.Second, 120*time.Minute, func() (bool, error) {
 		foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
 		if err != nil {
 			return true, err
