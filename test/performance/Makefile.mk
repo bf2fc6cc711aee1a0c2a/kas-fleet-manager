@@ -1,4 +1,10 @@
 # default performance test flags
+REGISTRY=quay.io/rhoas
+IMAGE_LOCUST=kas-fleet-manager-locust
+TAG_LOCUST=latest
+IMAGE_TOKEN_REFRESH=kas-fleet-manager-token-refresh
+TAG_TOKEN_REFRESH=latest
+
 PERF_TEST_USERS ?= 150 # number of locust test users - more users - more load can be sent
 PERF_TEST_USER_SPAWN_RATE ?= 1 # frequency of user spawning (per second)
 PERF_TEST_RUN_TIME ?= 120m # running time (in minutes - as our locustfile expects minutes)
@@ -29,3 +35,14 @@ else
 			  	docker-compose --file test/performance/docker-compose.yml up --scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
 endif
 .PHONY: test/performance
+
+.PHONY: test/performance/image/build
+test/performance/image/build:
+	docker build -t ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST}  -f $(PWD)/test/performance/Dockerfile .
+	docker build -t ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH}  -f $(PWD)/test/performance/token_api/Dockerfile .
+
+
+.PHONY: test/performance/image/push
+test/performance/image/push:
+	docker push  ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST}
+	docker push  ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH}
