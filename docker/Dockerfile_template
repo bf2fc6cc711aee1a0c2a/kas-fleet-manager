@@ -49,6 +49,10 @@ COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
 RUN curl -O -J https://dl.google.com/go/go1.15.8.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.15.8.linux-amd64.tar.gz
 
+# install NPM and java for openapi-generator
+RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash -
+RUN apt install -y nodejs build-essential default-jre
+
 ENV PATH="/uhc/bin:/usr/local/go/bin:${PATH}"
 ENV GOPATH="/uhc"
 ENV CGO_ENABLED=0
