@@ -116,7 +116,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/go-bindata 2> /dev/null))
 endif
 
 openapi-generator:
- OPENAPI_GENERATOR=docker run --rm -v ${PWD}/openapi:/openapi openapitools/openapi-generator-cli
+ OPENAPI_GENERATOR=docker run --rm -v ${PWD}/openapi:/openapi openapitools/openapi-generator-cli:v5.0.1
 .PHONY: openapi-generator
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
