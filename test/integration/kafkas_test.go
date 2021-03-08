@@ -20,6 +20,7 @@ import (
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
+	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -964,4 +965,50 @@ func deleteTestKafka(ctx context.Context, client *openapi.APIClient, kafkaID str
 		return false, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+}
+
+func TestKafkaList_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	claims := jwt.MapClaims{
+		"iss":      "invalidiss",
+		"org_id":   account.Organization().ExternalID(),
+		"username": account.Username(),
+	}
+
+	ctx := h.NewAuthenticatedContext(account, claims)
+
+	_, resp, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+}
+
+func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	claims := jwt.MapClaims{
+		"iss":      h.Env().Config.OCM.TokenIssuerURL,
+		"org_id":   account.Organization().ExternalID(),
+		"username": account.Username(),
+	}
+
+	ctx := h.NewAuthenticatedContext(account, claims)
+
+	_, resp, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
