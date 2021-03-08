@@ -1341,9 +1341,9 @@ components:
           type: string
     ManagedKafka_allOf_metadata_annotation:
       properties:
-        id:
+        bf2.org/id:
           type: string
-        placementId:
+        bf2.org/placementId:
           type: string
     ManagedKafka_allOf_metadata:
       properties:
