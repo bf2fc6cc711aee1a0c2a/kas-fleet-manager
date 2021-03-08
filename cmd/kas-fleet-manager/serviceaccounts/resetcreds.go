@@ -40,7 +40,7 @@ func runResetCreds(cmd *cobra.Command, args []string) {
 	}
 	env := environments.Environment()
 	// setup required services
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
+	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

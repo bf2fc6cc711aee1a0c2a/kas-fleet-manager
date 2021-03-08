@@ -254,13 +254,13 @@ func getKafkaListener(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaC
 			Type: strimzi.OAuth,
 			KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
 				ClientID:               ssoClientID,
-				JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
+				JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 				UserNameClaim:          keycloakConfig.UserNameClaim,
-				ValidIssuerURI:         keycloakConfig.ValidIssuerURI,
+				ValidIssuerURI:         keycloakConfig.KafkaRealm.ValidIssuerURI,
 				TLSTrustedCertificates: secretSources,
 				ClientSecret:           secretSource,
 				EnablePlain:            true,
-				TokenEndpointURI:       keycloakConfig.TokenEndpointURI,
+				TokenEndpointURI:       keycloakConfig.KafkaRealm.TokenEndpointURI,
 			},
 		}
 
@@ -268,9 +268,9 @@ func getKafkaListener(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaC
 			Type: strimzi.OAuth,
 			KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
 				ClientID:               ssoClientID,
-				JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
+				JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 				UserNameClaim:          keycloakConfig.UserNameClaim,
-				ValidIssuerURI:         keycloakConfig.ValidIssuerURI,
+				ValidIssuerURI:         keycloakConfig.KafkaRealm.ValidIssuerURI,
 				TLSTrustedCertificates: secretSources,
 				ClientSecret:           secretSource,
 			},

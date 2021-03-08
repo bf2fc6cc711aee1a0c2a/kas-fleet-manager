@@ -45,7 +45,7 @@ func runCreate(cmd *cobra.Command, args []string) {
 	env := environments.Environment()
 
 	// setup required services
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak)
+	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 
 	sa := &api.ServiceAccountRequest{
 		Name:        name,
