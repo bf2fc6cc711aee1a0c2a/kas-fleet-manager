@@ -357,7 +357,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 					},
 				),
 			}
-			err := c.reconcileStrimziOperator(api.Cluster{
+			_, err := c.reconcileStrimziOperator(api.Cluster{
 				ClusterID: "clusterId",
 			})
 			if (err != nil) != tt.wantErr {
@@ -649,6 +649,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 
 func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 	type fields struct {
+		ocmClient      ocm.Client
 		agentOperator  services.KasFleetshardOperatorAddon
 		clusterService services.ClusterService
 	}
@@ -660,6 +661,14 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		{
 			name: "agent operator is ready",
 			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+						return clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+				},
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
 					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
@@ -676,6 +685,14 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		{
 			name: "agent operator is not ready",
 			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+						return clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+				},
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
 					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
@@ -689,12 +706,10 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
+				ocmClient:      tt.fields.ocmClient,
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
-					SupportedProviders:         &config.ProviderConfig{},
-					AllowList:                  &config.AllowListConfig{},
-					ClusterCreationConfig:      &config.ClusterCreationConfig{EnableKasFleetshardOperator: true},
-					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					Kafka: &config.KafkaConfig{EnableManagedKafkaCR: true},
 				}),
 				kasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}

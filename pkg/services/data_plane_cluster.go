@@ -256,8 +256,7 @@ func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *api.DataPlan
 func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
 	return cluster.Status == api.ClusterReady ||
 		cluster.Status == api.ClusterFull ||
-		cluster.Status == api.ClusterWaitingForKasFleetShardOperator ||
-		cluster.Status == api.AddonInstalled
+		cluster.Status == api.ClusterWaitingForKasFleetShardOperator
 }
 
 // calculateDesiredNodesToScaleUp returns the desired number of nodes to scale
