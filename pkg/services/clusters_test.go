@@ -2,8 +2,11 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
+
+	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -888,6 +891,66 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ListGroupByProviderAndRegion got = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_AddIdentityProviderID(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		id                 string
+		identityProviderId string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail: database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id:                 "12345",
+				identityProviderId: "foobar",
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithError(fmt.Errorf("some error"))
+			},
+		},
+		{
+			name: "successfully adds an identity provider ID",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				id:                 "12345",
+				identityProviderId: "foobar",
+			},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (id =").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			err := k.AddIdentityProviderID(tt.args.id, tt.args.identityProviderId)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }

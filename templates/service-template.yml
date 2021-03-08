@@ -281,6 +281,7 @@ parameters:
 - name: OSD_IDP_MAS_SSO_REALM
   displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients 
   description: MAS SSO realm for OSD Cluster Identity Provider Clients
+  value: "interim-test-realm"
   
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift

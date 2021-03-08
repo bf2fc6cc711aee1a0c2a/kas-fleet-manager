@@ -25,9 +25,11 @@ const (
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
 type KeycloakService interface {
 	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
+	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 	DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError
 	GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError)
 	GetConfig() *config.KeycloakConfig
+	GetRealmConfig() *config.KeycloakRealmConfig
 	IsKafkaClientExist(clientId string) *errors.ServiceError
 	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
@@ -87,13 +89,11 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 
 func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
-
 	if tokenErr != nil {
 		return "", errors.GeneralError("failed to get token for the sso client: %v", tokenErr)
 	}
 
 	internalClientId, err := kc.kcClient.IsClientExist(clusterId, accessToken)
-
 	if err != nil {
 		return "", errors.GeneralError("failed to check the sso client exists: %v", err)
 	}
@@ -106,8 +106,8 @@ func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clust
 	c := keycloak.ClientRepresentation{
 		ClientID:                     clusterId,
 		Name:                         clusterId,
-		ServiceAccountsEnabled:       true,
-		AuthorizationServicesEnabled: true,
+		ServiceAccountsEnabled:       false,
+		AuthorizationServicesEnabled: false,
 		StandardFlowEnabled:          true,
 		RedirectURIs:                 &[]string{clusterOathCallbackURI},
 	}
@@ -153,6 +153,10 @@ func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *
 
 func (kc *keycloakService) GetConfig() *config.KeycloakConfig {
 	return kc.kcClient.GetConfig()
+}
+
+func (kc *keycloakService) GetRealmConfig() *config.KeycloakRealmConfig {
+	return kc.kcClient.GetRealmConfig()
 }
 
 func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceError {
