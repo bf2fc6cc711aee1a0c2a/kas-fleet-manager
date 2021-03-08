@@ -3,10 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
-	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"net/http"
 	"strings"
+
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -488,11 +489,11 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 
 	if keycloakConfig.EnableAuthenticationOnKafka {
 		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
-			ClientId:               keycloakConfig.ClientID,
-			ClientSecret:           keycloakConfig.ClientSecret,
-			TokenEndpointURI:       keycloakConfig.TokenEndpointURI,
-			JwksEndpointURI:        keycloakConfig.JwksEndpointURI,
-			ValidIssuerEndpointURI: keycloakConfig.ValidIssuerURI,
+			ClientId:               keycloakConfig.KafkaRealm.ClientID,
+			ClientSecret:           keycloakConfig.KafkaRealm.ClientSecret,
+			TokenEndpointURI:       keycloakConfig.KafkaRealm.TokenEndpointURI,
+			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
+			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
 			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
 		}

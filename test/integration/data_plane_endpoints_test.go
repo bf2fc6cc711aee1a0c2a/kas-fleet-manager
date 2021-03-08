@@ -78,7 +78,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 	clusterId := "test-cluster-id"
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": h.AppConfig.Keycloak.ValidIssuerURI,
+			"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -114,7 +114,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss":                                h.AppConfig.Keycloak.ValidIssuerURI,
+			"iss":                                h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"kas-fleetshard-operator-cluster-id": "test-cluster-id",
 		}
 	})
@@ -147,7 +147,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": h.AppConfig.Keycloak.ValidIssuerURI,
+			"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -184,7 +184,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      h.AppConfig.Keycloak.ValidIssuerURI,
+			"iss":      h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},

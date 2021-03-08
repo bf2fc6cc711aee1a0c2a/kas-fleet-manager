@@ -3,10 +3,11 @@ package services
 import (
 	"errors"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
@@ -549,7 +550,9 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			keycloakConfig := config.KeycloakConfig{}
+			keycloakConfig := config.KeycloakConfig{
+				KafkaRealm: &config.KeycloakRealmConfig{},
+			}
 			keycloakConfig.EnableAuthenticationOnKafka = true
 
 			kafkaConfig := config.NewKafkaConfig()

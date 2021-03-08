@@ -44,8 +44,8 @@ type keycloakService struct {
 
 var _ KeycloakService = &keycloakService{}
 
-func NewKeycloakService(config *config.KeycloakConfig) *keycloakService {
-	client := keycloak.NewClient(config)
+func NewKeycloakService(config *config.KeycloakConfig, realmConfig *config.KeycloakRealmConfig) *keycloakService {
+	client := keycloak.NewClient(config, realmConfig)
 	return &keycloakService{
 		kcClient: client,
 	}
