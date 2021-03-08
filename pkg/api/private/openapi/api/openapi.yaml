@@ -1194,12 +1194,12 @@ components:
       - $ref: '#/components/schemas/ConnectorTypeList_allOf'
     ConnectorList:
       allOf:
-        - $ref: '#/components/schemas/List'
-        - $ref: '#/components/schemas/ConnectorList_allOf'
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorList_allOf'
     Connector:
       allOf:
-        - $ref: '#/components/schemas/ObjectReference'
-        - $ref: '#/components/schemas/Connector_allOf'
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Connector_allOf'
       description: A connector holds the configuration to connect a Kafka topic to
         another system.
     ClusterTarget:
@@ -1209,8 +1209,8 @@ components:
           cloud_provider: '#/components/schemas/CloudProviderClusterTarget'
         propertyName: kind
       oneOf:
-        - $ref: '#/components/schemas/AddonClusterTarget'
-        - $ref: '#/components/schemas/CloudProviderClusterTarget'
+      - $ref: '#/components/schemas/AddonClusterTarget'
+      - $ref: '#/components/schemas/CloudProviderClusterTarget'
     AddonClusterTarget:
       description: Targets workloads to an addon cluster
       properties:
@@ -1235,7 +1235,7 @@ components:
       description: A list of addon parameters
       items:
         allOf:
-          - $ref: '#/components/schemas/AddonParameter'
+        - $ref: '#/components/schemas/AddonParameter'
       type: array
     AddonParameter:
       description: A addon parameter
@@ -1339,12 +1339,18 @@ components:
           type: string
         operation_id:
           type: string
-    ManagedKafka_allOf_annotation:
+    ManagedKafka_allOf_metadata_annotation:
       properties:
         id:
           type: string
         placementId:
           type: string
+    ManagedKafka_allOf_metadata:
+      properties:
+        name:
+          type: string
+        annotation:
+          $ref: '#/components/schemas/ManagedKafka_allOf_metadata_annotation'
     ManagedKafka_allOf_spec_OAuth:
       properties:
         ClientId:
@@ -1400,10 +1406,8 @@ components:
           $ref: '#/components/schemas/ManagedKafkaVersions'
     ManagedKafka_allOf:
       properties:
-        name:
-          type: string
-        annotation:
-          $ref: '#/components/schemas/ManagedKafka_allOf_annotation'
+        metadata:
+          $ref: '#/components/schemas/ManagedKafka_allOf_metadata'
         spec:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec'
         status:

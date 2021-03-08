@@ -9,8 +9,8 @@
 
 package openapi
 
-// ManagedKafkaAllOfAnnotation struct for ManagedKafkaAllOfAnnotation
-type ManagedKafkaAllOfAnnotation struct {
+// ManagedKafkaAllOfMetadataAnnotation struct for ManagedKafkaAllOfMetadataAnnotation
+type ManagedKafkaAllOfMetadataAnnotation struct {
 	Id          string `json:"id,omitempty"`
 	PlacementId string `json:"placementId,omitempty"`
 }
