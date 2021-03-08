@@ -16,18 +16,27 @@ const (
 	// Context Keys
 	contextIsAllowedAsServiceAccountKey contextKey = "user-is-allowed-as-service-account"
 
-	// Claims Keys
+	// ocm token claim keys
 	ocmUsernameKey string = "username"
 	ocmOrgIdKey    string = "org_id"
 
+	// sso.redhat.com token claim keys
+	ssoRHUsernameKey string = "preferred_username"
+
+	// mas sso token claim keys
 	masSsoOrgIdKey string = "rh-org-id"
 )
 
 func GetUsernameFromClaims(claims jwt.MapClaims) string {
-	if claims[ocmUsernameKey] == nil {
-		return ""
+	if claims[ocmUsernameKey] != nil {
+		return claims[ocmUsernameKey].(string)
 	}
-	return claims[ocmUsernameKey].(string)
+
+	if claims[ssoRHUsernameKey] != nil {
+		return claims[ssoRHUsernameKey].(string)
+	}
+
+	return ""
 }
 
 func GetOrgIdFromClaims(claims jwt.MapClaims) string {
