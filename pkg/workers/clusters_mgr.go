@@ -222,7 +222,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	// TODO make syncSet and addon installation in parallel?
 
 	// SyncSet creation step
-	syncSetErr := c.reconcileClusterSyncSet(cluster)
+	syncSetErr := c.reconcileClusterSyncSet(cluster) //OSD cluster itself
 	if syncSetErr != nil {
 		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	}
@@ -326,35 +326,39 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	if c.configService.IsKasFleetshardOperatorEnabled() {
+	isStrimziReady, err := c.reconcileStrimziOperator(provisionedCluster)
+	if err != nil {
+		return err
+	}
+	isFleetShardReady := true
+	if c.configService.GetConfig().Kafka.EnableManagedKafkaCR {
 		if c.kasFleetshardOperatorAddon != nil {
 			glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
-			ready, err := c.kasFleetshardOperatorAddon.Provision(provisionedCluster)
-			if err != nil {
-				return err
-			}
-			if ready {
-				glog.V(5).Infof("kas-fleetshard-operator is ready for cluster %s", provisionedCluster.ClusterID)
-				if err := c.clusterService.UpdateStatus(provisionedCluster, api.AddonInstalled); err != nil {
-					return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-				}
-				// add entry for cluster creation metric
-				metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
+			if ready, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
+				return errs
+			} else {
+				isFleetShardReady = ready
 			}
 		}
-	} else {
-		//TODO: remove this function once we switch to use agent operators
-		return c.reconcileStrimziOperator(provisionedCluster)
+	} //
+	if isStrimziReady && isFleetShardReady {
+		glog.V(5).Infof("Operator(s) is ready for cluster %s", provisionedCluster.ClusterID)
+		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
+			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+		}
+
+		// add entry for cluster creation metric
+		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
 	}
 	return nil
 }
 
 // reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
-func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) error {
+func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) (bool, error) {
 	clusterId := provisionedCluster.ClusterID
 	addonInstallation, err := c.ocmClient.GetAddon(clusterId, api.ManagedKafkaAddonID)
 	if err != nil {
-		return errors.WithMessagef(err, "failed to get cluster %s addon: %s", clusterId, err.Error())
+		return false, errors.WithMessagef(err, "failed to get cluster %s addon: %s", clusterId, err.Error())
 	}
 
 	// Addon needs to be installed if addonInstallation doesn't exist
@@ -362,22 +366,17 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 		// Install the Stimzi operator
 		addonInstallation, err = c.ocmClient.CreateAddon(clusterId, api.ManagedKafkaAddonID)
 		if err != nil {
-			return errors.WithMessagef(err, "failed to create cluster %s addon: %s", clusterId, err.Error())
+			return false, errors.WithMessagef(err, "failed to create cluster %s addon: %s", clusterId, err.Error())
 		}
 	}
 
 	// The cluster is ready when the state reports ready
 	if addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-		if err = c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
-			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", clusterId, err.Error())
-		}
-
-		// add entry for cluster creation metric
-		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
-	} else {
-		glog.V(5).Infof("%s addon on cluster %s is not ready yet. State: %s", api.ManagedKafkaAddonID, provisionedCluster.ClusterID, string(addonInstallation.State()))
+		return true, nil
 	}
-	return nil
+
+	glog.V(5).Infof("%s addon on cluster %s is not ready yet. State: %s", api.ManagedKafkaAddonID, provisionedCluster.ClusterID, string(addonInstallation.State()))
+	return false, nil
 }
 
 // reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
