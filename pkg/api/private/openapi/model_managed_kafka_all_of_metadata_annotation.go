@@ -11,6 +11,6 @@ package openapi
 
 // ManagedKafkaAllOfMetadataAnnotation struct for ManagedKafkaAllOfMetadataAnnotation
 type ManagedKafkaAllOfMetadataAnnotation struct {
-	Id          string `json:"id,omitempty"`
-	PlacementId string `json:"placementId,omitempty"`
+	Bf2OrgId          string `json:"bf2.org/id,omitempty"`
+	Bf2OrgPlacementId string `json:"bf2.org/placementId,omitempty"`
 }
