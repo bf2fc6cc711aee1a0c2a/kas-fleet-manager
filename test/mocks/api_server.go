@@ -30,6 +30,12 @@ const (
 	EndpointPathClusters = "/api/clusters_mgmt/v1/clusters"
 	// EndpointPathCluster ocm clusters management service clusters endpoint
 	EndpointPathCluster = "/api/clusters_mgmt/v1/clusters/{id}"
+
+	// EndpointPathClusterIdentityProviders ocm clusters management service clusters identity provider create endpoint
+	EndpointPathClusterIdentityProviders = "/api/clusters_mgmt/v1/clusters/{id}/identity_providers"
+	// EndpointPathClusterIdentityProvider ocm clusters management service clusters identity provider update endpoint
+	EndpointPathClusterIdentityProvider = "/api/clusters_mgmt/v1/clusters/{id}/identity_providers/{idp_id}"
+
 	// EndpointPathSyncsets ocm clusters management service syncset endpoint
 	EndpointPathSyncsets = "/api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets"
 	// EndpointPathSyncset ocm clusters management service syncset endpoint
@@ -95,6 +101,8 @@ const (
 	MockMultiAZ = true
 	//MockClusterComputeNodes default nodes
 	MockClusterComputeNodes = 3
+	// MockIdentityProviderID default identity provider ID
+	MockIdentityProviderID = "identity-provider-id"
 )
 
 // variables for endpoints
@@ -119,6 +127,8 @@ var (
 	EndpointMachinePoolPost         = Endpoint{EndpointPathMachinePools, http.MethodPost}
 	EndpointMachinePoolPatch        = Endpoint{EndpointPathMachinePool, http.MethodPatch}
 	EndpointMachinePoolGet          = Endpoint{EndpointPathMachinePool, http.MethodGet}
+	EndpointIdentityProviderPost    = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
+	EndpointIdentityProviderPatch   = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
 )
 
 // variables for mocked ocm types
@@ -127,6 +137,7 @@ var (
 // to override these values, do not set them directly e.g. mocks.MockSyncset = ...
 // instead use the Set*Response functions provided by MockConfigurableServerBuilder e.g. SetClusterGetResponse(...)
 var (
+	MockIdentityProvider             *clustersmgmtv1.IdentityProvider
 	MockSyncset                      *clustersmgmtv1.Syncset
 	MockIngressList                  *clustersmgmtv1.IngressList
 	MockCloudProvider                *clustersmgmtv1.CloudProvider
@@ -285,6 +296,16 @@ func (b *MockConfigurableServerBuilder) SetMachinePoolPatchResponse(mp *clusters
 	b.handlerRegister[EndpointMachinePoolPatch] = buildMockRequestHandler(mp, err)
 }
 
+// SetIdentityProviderPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/identity_providers
+func (b *MockConfigurableServerBuilder) SetIdentityProviderPostResponse(idp *clustersmgmtv1.IdentityProvider, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointIdentityProviderPost] = buildMockRequestHandler(idp, err)
+}
+
+// SetIdentityProviderPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/identity_providers/{idp_id}
+func (b *MockConfigurableServerBuilder) SetIdentityProviderPatchResponse(idp *clustersmgmtv1.IdentityProvider, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointIdentityProviderPatch] = buildMockRequestHandler(idp, err)
+}
+
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
 func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	router = mux.NewRouter()
@@ -361,6 +382,8 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointMachinePoolGet:          buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPatch:        buildMockRequestHandler(MockMachinePool, nil),
 		EndpointMachinePoolPost:         buildMockRequestHandler(MockMachinePool, nil),
+		EndpointIdentityProviderPatch:   buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointIdentityProviderPost:    buildMockRequestHandler(MockIdentityProvider, nil),
 	}, nil
 }
 
@@ -398,6 +421,9 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	// handle syncset types
 	case *clustersmgmtv1.Syncset:
 		return clustersmgmtv1.MarshalSyncset(t.(*clustersmgmtv1.Syncset), w)
+	// handle identiy provider types
+	case *clustersmgmtv1.IdentityProvider:
+		return clustersmgmtv1.MarshalIdentityProvider(t.(*clustersmgmtv1.IdentityProvider), w)
 	// handle ingress types
 	case *clustersmgmtv1.Ingress:
 		return clustersmgmtv1.MarshalIngress(t.(*clustersmgmtv1.Ingress), w)
@@ -558,6 +584,12 @@ func init() {
 		panic(err)
 	}
 	MockMachinePool, err = GetMockMachinePool(nil)
+	if err != nil {
+		panic(err)
+	}
+
+	// Identity provider
+	MockIdentityProvider, err = GetMockIdentityProvider(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -791,4 +823,25 @@ func GetMockOpenshiftVersionBuilder(modifyFn func(*clustersmgmtv1.VersionBuilder
 		modifyFn(builder)
 	}
 	return builder
+}
+
+// GetMockIdentityProviderBuilder for emulated OCM server
+func GetMockIdentityProviderBuilder(modifyFn func(*clustersmgmtv1.IdentityProviderBuilder)) *clustersmgmtv1.IdentityProviderBuilder {
+	builder := clustersmgmtv1.NewIdentityProvider().
+		ID(MockIdentityProviderID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/identity_providers/%s", MockClusterID, MockIdentityProviderID)).
+		OpenID(clustersmgmtv1.NewOpenIDIdentityProvider())
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
+}
+
+// GetMockIdentityProvider for emulated OCM server
+func GetMockIdentityProvider(modifyFn func(*clustersmgmtv1.IdentityProvider, error)) (*clustersmgmtv1.IdentityProvider, error) {
+	identityProvider, err := GetMockIdentityProviderBuilder(nil).Build()
+	if modifyFn != nil {
+		modifyFn(identityProvider, err)
+	}
+	return identityProvider, err
 }

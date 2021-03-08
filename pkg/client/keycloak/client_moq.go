@@ -55,6 +55,9 @@ var _ KcClient = &KcClientMock{}
 //             GetConfigFunc: func() *config.KeycloakConfig {
 // 	               panic("mock out the GetConfig method")
 //             },
+//             GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+// 	               panic("mock out the GetRealmConfig method")
+//             },
 //             GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
 // 	               panic("mock out the GetRealmRole method")
 //             },
@@ -118,6 +121,9 @@ type KcClientMock struct {
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *config.KeycloakConfig
+
+	// GetRealmConfigFunc mocks the GetRealmConfig method.
+	GetRealmConfigFunc func() *config.KeycloakRealmConfig
 
 	// GetRealmRoleFunc mocks the GetRealmRole method.
 	GetRealmRoleFunc func(accessToken string, roleName string) (*gocloak.Role, error)
@@ -222,6 +228,9 @@ type KcClientMock struct {
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
 		}
+		// GetRealmConfig holds details about calls to the GetRealmConfig method.
+		GetRealmConfig []struct {
+		}
 		// GetRealmRole holds details about calls to the GetRealmRole method.
 		GetRealmRole []struct {
 			// AccessToken is the accessToken argument value.
@@ -282,6 +291,7 @@ type KcClientMock struct {
 	lockGetClientServiceAccount    sync.RWMutex
 	lockGetClients                 sync.RWMutex
 	lockGetConfig                  sync.RWMutex
+	lockGetRealmConfig             sync.RWMutex
 	lockGetRealmRole               sync.RWMutex
 	lockGetToken                   sync.RWMutex
 	lockIsClientExist              sync.RWMutex
@@ -699,6 +709,32 @@ func (mock *KcClientMock) GetConfigCalls() []struct {
 	mock.lockGetConfig.RLock()
 	calls = mock.calls.GetConfig
 	mock.lockGetConfig.RUnlock()
+	return calls
+}
+
+// GetRealmConfig calls GetRealmConfigFunc.
+func (mock *KcClientMock) GetRealmConfig() *config.KeycloakRealmConfig {
+	if mock.GetRealmConfigFunc == nil {
+		panic("KcClientMock.GetRealmConfigFunc: method is nil but KcClient.GetRealmConfig was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetRealmConfig.Lock()
+	mock.calls.GetRealmConfig = append(mock.calls.GetRealmConfig, callInfo)
+	mock.lockGetRealmConfig.Unlock()
+	return mock.GetRealmConfigFunc()
+}
+
+// GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
+// Check the length with:
+//     len(mockedKcClient.GetRealmConfigCalls())
+func (mock *KcClientMock) GetRealmConfigCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetRealmConfig.RLock()
+	calls = mock.calls.GetRealmConfig
+	mock.lockGetRealmConfig.RUnlock()
 	return calls
 }
 

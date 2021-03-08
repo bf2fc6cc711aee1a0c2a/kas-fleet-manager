@@ -27,6 +27,9 @@ var _ Client = &ClientMock{}
 //             CreateClusterFunc: func(cluster *v1.Cluster) (*v1.Cluster, error) {
 // 	               panic("mock out the CreateCluster method")
 //             },
+//             CreateIdentityProviderFunc: func(clusterID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error) {
+// 	               panic("mock out the CreateIdentityProvider method")
+//             },
 //             CreateSyncSetFunc: func(clusterID string, syncset *v1.Syncset) (*v1.Syncset, error) {
 // 	               panic("mock out the CreateSyncSet method")
 //             },
@@ -66,6 +69,9 @@ var _ Client = &ClientMock{}
 //             SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, error) {
 // 	               panic("mock out the SetComputeNodes method")
 //             },
+//             UpdateIdentityProviderFunc: func(clusterID string, identityProviderID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error) {
+// 	               panic("mock out the UpdateIdentityProvider method")
+//             },
 //             UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *v1.Syncset) (*v1.Syncset, error) {
 // 	               panic("mock out the UpdateSyncSet method")
 //             },
@@ -84,6 +90,9 @@ type ClientMock struct {
 
 	// CreateClusterFunc mocks the CreateCluster method.
 	CreateClusterFunc func(cluster *v1.Cluster) (*v1.Cluster, error)
+
+	// CreateIdentityProviderFunc mocks the CreateIdentityProvider method.
+	CreateIdentityProviderFunc func(clusterID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error)
 
 	// CreateSyncSetFunc mocks the CreateSyncSet method.
 	CreateSyncSetFunc func(clusterID string, syncset *v1.Syncset) (*v1.Syncset, error)
@@ -124,6 +133,9 @@ type ClientMock struct {
 	// SetComputeNodesFunc mocks the SetComputeNodes method.
 	SetComputeNodesFunc func(clusterID string, numNodes int) (*v1.Cluster, error)
 
+	// UpdateIdentityProviderFunc mocks the UpdateIdentityProvider method.
+	UpdateIdentityProviderFunc func(clusterID string, identityProviderID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error)
+
 	// UpdateSyncSetFunc mocks the UpdateSyncSet method.
 	UpdateSyncSetFunc func(clusterID string, syncSetID string, syncset *v1.Syncset) (*v1.Syncset, error)
 
@@ -149,6 +161,13 @@ type ClientMock struct {
 		CreateCluster []struct {
 			// Cluster is the cluster argument value.
 			Cluster *v1.Cluster
+		}
+		// CreateIdentityProvider holds details about calls to the CreateIdentityProvider method.
+		CreateIdentityProvider []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// IdentityProvider is the identityProvider argument value.
+			IdentityProvider *v1.IdentityProvider
 		}
 		// CreateSyncSet holds details about calls to the CreateSyncSet method.
 		CreateSyncSet []struct {
@@ -227,6 +246,15 @@ type ClientMock struct {
 			// NumNodes is the numNodes argument value.
 			NumNodes int
 		}
+		// UpdateIdentityProvider holds details about calls to the UpdateIdentityProvider method.
+		UpdateIdentityProvider []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+			// IdentityProviderID is the identityProviderID argument value.
+			IdentityProviderID string
+			// IdentityProvider is the identityProvider argument value.
+			IdentityProvider *v1.IdentityProvider
+		}
 		// UpdateSyncSet holds details about calls to the UpdateSyncSet method.
 		UpdateSyncSet []struct {
 			// ClusterID is the clusterID argument value.
@@ -237,23 +265,25 @@ type ClientMock struct {
 			Syncset *v1.Syncset
 		}
 	}
-	lockCreateAddon           sync.RWMutex
-	lockCreateAddonWithParams sync.RWMutex
-	lockCreateCluster         sync.RWMutex
-	lockCreateSyncSet         sync.RWMutex
-	lockDeleteSyncSet         sync.RWMutex
-	lockGetAddon              sync.RWMutex
-	lockGetCloudProviders     sync.RWMutex
-	lockGetCluster            sync.RWMutex
-	lockGetClusterDNS         sync.RWMutex
-	lockGetClusterIngresses   sync.RWMutex
-	lockGetClusterStatus      sync.RWMutex
-	lockGetRegions            sync.RWMutex
-	lockGetSyncSet            sync.RWMutex
-	lockScaleDownComputeNodes sync.RWMutex
-	lockScaleUpComputeNodes   sync.RWMutex
-	lockSetComputeNodes       sync.RWMutex
-	lockUpdateSyncSet         sync.RWMutex
+	lockCreateAddon            sync.RWMutex
+	lockCreateAddonWithParams  sync.RWMutex
+	lockCreateCluster          sync.RWMutex
+	lockCreateIdentityProvider sync.RWMutex
+	lockCreateSyncSet          sync.RWMutex
+	lockDeleteSyncSet          sync.RWMutex
+	lockGetAddon               sync.RWMutex
+	lockGetCloudProviders      sync.RWMutex
+	lockGetCluster             sync.RWMutex
+	lockGetClusterDNS          sync.RWMutex
+	lockGetClusterIngresses    sync.RWMutex
+	lockGetClusterStatus       sync.RWMutex
+	lockGetRegions             sync.RWMutex
+	lockGetSyncSet             sync.RWMutex
+	lockScaleDownComputeNodes  sync.RWMutex
+	lockScaleUpComputeNodes    sync.RWMutex
+	lockSetComputeNodes        sync.RWMutex
+	lockUpdateIdentityProvider sync.RWMutex
+	lockUpdateSyncSet          sync.RWMutex
 }
 
 // CreateAddon calls CreateAddonFunc.
@@ -358,6 +388,41 @@ func (mock *ClientMock) CreateClusterCalls() []struct {
 	mock.lockCreateCluster.RLock()
 	calls = mock.calls.CreateCluster
 	mock.lockCreateCluster.RUnlock()
+	return calls
+}
+
+// CreateIdentityProvider calls CreateIdentityProviderFunc.
+func (mock *ClientMock) CreateIdentityProvider(clusterID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error) {
+	if mock.CreateIdentityProviderFunc == nil {
+		panic("ClientMock.CreateIdentityProviderFunc: method is nil but Client.CreateIdentityProvider was just called")
+	}
+	callInfo := struct {
+		ClusterID        string
+		IdentityProvider *v1.IdentityProvider
+	}{
+		ClusterID:        clusterID,
+		IdentityProvider: identityProvider,
+	}
+	mock.lockCreateIdentityProvider.Lock()
+	mock.calls.CreateIdentityProvider = append(mock.calls.CreateIdentityProvider, callInfo)
+	mock.lockCreateIdentityProvider.Unlock()
+	return mock.CreateIdentityProviderFunc(clusterID, identityProvider)
+}
+
+// CreateIdentityProviderCalls gets all the calls that were made to CreateIdentityProvider.
+// Check the length with:
+//     len(mockedClient.CreateIdentityProviderCalls())
+func (mock *ClientMock) CreateIdentityProviderCalls() []struct {
+	ClusterID        string
+	IdentityProvider *v1.IdentityProvider
+} {
+	var calls []struct {
+		ClusterID        string
+		IdentityProvider *v1.IdentityProvider
+	}
+	mock.lockCreateIdentityProvider.RLock()
+	calls = mock.calls.CreateIdentityProvider
+	mock.lockCreateIdentityProvider.RUnlock()
 	return calls
 }
 
@@ -784,6 +849,45 @@ func (mock *ClientMock) SetComputeNodesCalls() []struct {
 	mock.lockSetComputeNodes.RLock()
 	calls = mock.calls.SetComputeNodes
 	mock.lockSetComputeNodes.RUnlock()
+	return calls
+}
+
+// UpdateIdentityProvider calls UpdateIdentityProviderFunc.
+func (mock *ClientMock) UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error) {
+	if mock.UpdateIdentityProviderFunc == nil {
+		panic("ClientMock.UpdateIdentityProviderFunc: method is nil but Client.UpdateIdentityProvider was just called")
+	}
+	callInfo := struct {
+		ClusterID          string
+		IdentityProviderID string
+		IdentityProvider   *v1.IdentityProvider
+	}{
+		ClusterID:          clusterID,
+		IdentityProviderID: identityProviderID,
+		IdentityProvider:   identityProvider,
+	}
+	mock.lockUpdateIdentityProvider.Lock()
+	mock.calls.UpdateIdentityProvider = append(mock.calls.UpdateIdentityProvider, callInfo)
+	mock.lockUpdateIdentityProvider.Unlock()
+	return mock.UpdateIdentityProviderFunc(clusterID, identityProviderID, identityProvider)
+}
+
+// UpdateIdentityProviderCalls gets all the calls that were made to UpdateIdentityProvider.
+// Check the length with:
+//     len(mockedClient.UpdateIdentityProviderCalls())
+func (mock *ClientMock) UpdateIdentityProviderCalls() []struct {
+	ClusterID          string
+	IdentityProviderID string
+	IdentityProvider   *v1.IdentityProvider
+} {
+	var calls []struct {
+		ClusterID          string
+		IdentityProviderID string
+		IdentityProvider   *v1.IdentityProvider
+	}
+	mock.lockUpdateIdentityProvider.RLock()
+	calls = mock.calls.UpdateIdentityProvider
+	mock.lockUpdateIdentityProvider.RUnlock()
 	return calls
 }
 

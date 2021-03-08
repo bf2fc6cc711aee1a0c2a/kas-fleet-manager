@@ -18,6 +18,7 @@ type KcClient interface {
 	GetClient(clientId string, accessToken string) (*gocloak.Client, error)
 	IsClientExist(clientId string, accessToken string) (string, error)
 	GetConfig() *config.KeycloakConfig
+	GetRealmConfig() *config.KeycloakRealmConfig
 	GetClientById(id string, accessToken string) (*gocloak.Client, error)
 	ClientConfig(client ClientRepresentation) gocloak.Client
 	CreateProtocolMapperConfig(string) []gocloak.ProtocolMapperRepresentation
@@ -182,6 +183,10 @@ func (kc *kcClient) GetClientById(id string, accessToken string) (*gocloak.Clien
 
 func (kc *kcClient) GetConfig() *config.KeycloakConfig {
 	return kc.config
+}
+
+func (kc *kcClient) GetRealmConfig() *config.KeycloakRealmConfig {
+	return kc.realmConfig
 }
 
 func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, error) {

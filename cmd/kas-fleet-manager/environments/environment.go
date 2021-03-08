@@ -47,6 +47,7 @@ type Services struct {
 	Config                services.ConfigService
 	Observatorium         services.ObservatoriumService
 	Keycloak              services.KeycloakService
+	OsdIdpKeycloak        services.KeycloakService
 	DataPlaneCluster      services.DataPlaneClusterService
 	DataPlaneKafkaService services.DataPlaneKafkaService
 }
@@ -148,6 +149,7 @@ func (env *Env) LoadServices() error {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
+	OsdIdpKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
 	syncsetService := services.NewSyncsetService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
@@ -159,6 +161,7 @@ func (env *Env) LoadServices() error {
 	env.Services.CloudProviders = cloudProviderService
 	env.Services.Observatorium = ObservatoriumService
 	env.Services.Keycloak = kafkaKeycloakService
+	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
 
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
