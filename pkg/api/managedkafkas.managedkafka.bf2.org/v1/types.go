@@ -72,9 +72,7 @@ type ManagedKafka struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Name        string             `json:"name,omitempty"`
-	Id          string             `json:"id,omitempty"`
-	PlacementId string             `json:"placementId,omitempty"`
-	Spec        ManagedKafkaSpec   `json:"spec,omitempty"`
-	Status      ManagedKafkaStatus `json:"status,omitempty"`
+	Id     string             `json:"id,omitempty"`
+	Spec   ManagedKafkaSpec   `json:"spec,omitempty"`
+	Status ManagedKafkaStatus `json:"status,omitempty"`
 }
