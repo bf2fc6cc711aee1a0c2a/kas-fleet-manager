@@ -1,6 +1,7 @@
 package acl
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -12,6 +13,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/dgrijalva/jwt-go"
+	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
 	. "github.com/onsi/gomega"
 )
@@ -195,9 +198,15 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
 		name                          string
 		arg                           services.ConfigService
+		ctx                           context.Context
 		userIsAllowedAsServiceAccount bool
 	}{
 		{
@@ -218,6 +227,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 				},
 			),
 			userIsAllowedAsServiceAccount: false,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
@@ -238,6 +248,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 				},
 			),
 			userIsAllowedAsServiceAccount: false,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
@@ -262,6 +273,30 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 				},
 			),
 			userIsAllowedAsServiceAccount: true,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
+		},
+		{
+			name: "returns 200 Ok response when token used is retrieved from sso.redhat.com and user is allowed access to the service",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AllowList: &config.AllowListConfig{
+						EnableAllowList: true,
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+								},
+							},
+						},
+					},
+				},
+			),
+			userIsAllowedAsServiceAccount: false,
+			ctx: getAuthenticatedContext(authHelper, t, acc, jwt.MapClaims{
+				"username":           nil,
+				"preferred_username": acc.Username(),
+			}),
 		},
 	}
 
@@ -279,20 +314,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			middleware := NewAllowListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
-			// create a jwt and set it in the context
-			ctx := req.Context()
-			acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			token, err := authHelper.CreateJWTWithClaims(acc, nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			ctx = auth.SetTokenInContext(ctx, token)
-			req = req.WithContext(ctx)
+			req = req.WithContext(tt.ctx)
 			handler.ServeHTTP(rr, req)
 
 			Expect(rr.Code).To(Equal(http.StatusOK))
@@ -312,4 +334,14 @@ func NextHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func getAuthenticatedContext(authHelper *auth.AuthHelper, t *testing.T, acc *v1.Account, claims jwt.MapClaims) context.Context {
+	// create a jwt and set it in the context
+	token, err := authHelper.CreateJWTWithClaims(acc, claims)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return auth.SetTokenInContext(context.Background(), token)
 }
