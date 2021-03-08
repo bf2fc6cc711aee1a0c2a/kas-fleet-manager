@@ -408,6 +408,8 @@ aws/setup:
 keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
+	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
+	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
 
 # Setup for the kafka broker certificate
@@ -458,6 +460,7 @@ deploy: IMAGE_TAG ?= $(image_tag)
 deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
 deploy: MAS_SSO_BASE_URL ?= "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
 deploy: MAS_SSO_REALM ?= "mas-sso-playground"
+deploy: OSD_IDP_MAS_SSO_REALM ?= "mas-sso-playground"
 deploy: deploy/db
 	@oc process -f ./templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="$(OCM_SERVICE_CLIENT_ID)" \
@@ -489,6 +492,7 @@ deploy: deploy/db
 		-p JWKS_URL="$(JWKS_URL)" \
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
+		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy
