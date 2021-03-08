@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/glog"
@@ -10,9 +11,29 @@ import (
 var RepeatInterval time.Duration = 30 * time.Second
 
 type Reconciler struct {
+	wakeup chan *sync.WaitGroup
+}
+
+// Wakeup causes the worker reconcile to be performed as soon as possible.  If wait is true, the this
+// function blocks until the reconcile is completed, otherwise this function does not block.
+func (r *Reconciler) Wakeup(wait bool) {
+	if wait {
+		wg := &sync.WaitGroup{}
+		wg.Add(1)
+		r.wakeup <- wg
+		wg.Wait()
+	} else {
+		select {
+		case r.wakeup <- nil:
+			// wakeup channel accepted the message
+		default:
+			// wakeup channel was full..
+		}
+	}
 }
 
 func (r *Reconciler) Start(worker Worker) {
+	r.wakeup = make(chan *sync.WaitGroup, 1)
 	*worker.GetStopChan() = make(chan struct{})
 	worker.GetSyncGroup().Add(1)
 	worker.SetIsRunning(true)
@@ -24,6 +45,12 @@ func (r *Reconciler) Start(worker Worker) {
 	go func() {
 		for {
 			select {
+			case wg := <-r.wakeup: //we were asked to wake up...
+				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
+				worker.reconcile()
+				if wg != nil {
+					wg.Done()
+				}
 			case <-ticker.C: //time out
 				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
 				worker.reconcile()
