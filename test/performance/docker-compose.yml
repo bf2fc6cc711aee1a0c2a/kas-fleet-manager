@@ -2,7 +2,7 @@ version: '3'
 
 services:
   api:
-    image: "quay.io/ppaszki/token_refresh:latest"
+    image: "quay.io/rhoas/kas-fleet-manager-token-refresh:latest"
     environment:
       - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
     ports:
@@ -12,7 +12,7 @@ services:
     command: go run /mnt/api/main.go
 
   primary:
-    image: "quay.io/ppaszki/locust:latest"
+    image: "quay.io/rhoas/kas-fleet-manager-locust:latest"
     environment:
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
       - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER}
@@ -33,7 +33,7 @@ services:
     command: -f /locustfile.py --master -H http://primary:8089
 
   secondary:
-    image: "quay.io/ppaszki/locust:latest"
+    image: "quay.io/rhoas/kas-fleet-manager-locust:latest"
     environment:
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
       - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER}
