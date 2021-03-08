@@ -52,6 +52,28 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
 }
 
+func TestAuthSuccess_usingSSORHToken(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
+	defer teardown()
+	claims := jwt.MapClaims{
+		"username":           nil,
+		"preferred_username": serviceAccount.Username(),
+	}
+
+	token := h.CreateJWTStringWithClaim(serviceAccount, claims)
+
+	restyResp, err := resty.R().
+		SetHeader("Content-Type", "application/json").
+		SetAuthToken(token).
+		Get(h.RestURL("/kafkas"))
+	Expect(err).NotTo(HaveOccurred())
+	Expect(restyResp.StatusCode()).To(Equal(http.StatusOK))
+}
+
 func TestAuthFailure_withoutToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
