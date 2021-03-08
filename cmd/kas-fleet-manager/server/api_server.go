@@ -188,7 +188,7 @@ func NewAPIServer() Server {
 			agentRouter.HandleFunc("/status", connectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
 			agentRouter.HandleFunc("/connectors", connectorClusterHandler.ListConnectors).Methods(http.MethodGet)
 			agentRouter.HandleFunc("/connectors/{cid}/status", connectorClusterHandler.UpdateConnectorStatus).Methods(http.MethodPut)
-			auth.UseConnectorClusterAuthorisationMiddleware(agentRouter)
+			auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI)
 		}
 	}
 
@@ -201,10 +201,8 @@ func NewAPIServer() Server {
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).Methods(http.MethodPut)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas", managedKafkaHandler.GetAll).Methods(http.MethodGet)
-		rolesAuthzMiddleware := auth.NewRolesAuhzMiddleware()
-		dataPlaneAuthzMiddleware := auth.NewDataPlaneAuthzMiddleware()
 		// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
-		apiV1DataPlaneRequestsRouter.Use(rolesAuthzMiddleware.RequireRealmRole("kas_fleetshard_operator", errors.ErrorNotFound), dataPlaneAuthzMiddleware.CheckClusterId)
+		auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI)
 	}
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers

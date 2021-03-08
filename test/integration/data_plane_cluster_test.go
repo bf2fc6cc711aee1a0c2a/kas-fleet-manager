@@ -299,6 +299,7 @@ func TestDataPlaneCluster_TestScaleUpTriggered(t *testing.T) {
 func newAuthenticatedContexForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
+		"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},
