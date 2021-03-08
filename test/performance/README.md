@@ -1,3 +1,5 @@
+#### Performance tests for Managed Service API for Kafka
+
 Performance tests utilize [locust](https://docs.locust.io/en/stable/api.html) and all the relevant code is available in `./test/performance` folder. Additionally, short living tokens are obtained with help of a small http server running from `test/performance/token_api/main.go`
 
 The docker containers (locust workers, master locust runner and http server) required to run the test can be instantiated using: `test/performance/docker-compose.yml`. 
@@ -20,8 +22,20 @@ Optional parameters (if not provided, they will default to sensible and tested v
 | PERF_TEST_RUN_TIME                        | String  | PERF_TEST_RUN_TIME=120m                       | runtime of the performance test. Must be in minutes                                                                                                                                                                                                                                        |
 | PERF_TEST_USER_SPAWN_RATE                 | Integer | PERF_TEST_USER_SPAWN_RATE=1                   | The rate per second in which locust users are spawned
 
+#### Run the performance tests
+
 To trigger the test (executed from the root of this repo), run:
 
 ```
 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> make test/performance
+```
+
+#### Build and push the images
+
+Make sure login quay.io using a robot account. The credentail are saved under rhoas/robots/ inisde vault. 
+
+```
+ make test/performance/image/build 
+
+ make test/performance/image/push
 ```
