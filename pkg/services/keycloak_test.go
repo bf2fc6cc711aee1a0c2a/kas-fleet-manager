@@ -452,9 +452,8 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 			}
 			err := keycloakService.DeleteServiceAccount(tt.args.ctx, testClientID)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("failed to DeleteServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
-
 		})
 	}
 }
