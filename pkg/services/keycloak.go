@@ -85,6 +85,46 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	return secretValue, nil
 }
 
+func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+	accessToken, tokenErr := kc.kcClient.GetToken()
+
+	if tokenErr != nil {
+		return "", errors.GeneralError("failed to get token for the sso client: %v", tokenErr)
+	}
+
+	internalClientId, err := kc.kcClient.IsClientExist(clusterId, accessToken)
+
+	if err != nil {
+		return "", errors.GeneralError("failed to check the sso client exists: %v", err)
+	}
+
+	if internalClientId != "" {
+		secretValue, _ := kc.kcClient.GetClientSecret(internalClientId, accessToken)
+		return secretValue, nil
+	}
+
+	c := keycloak.ClientRepresentation{
+		ClientID:                     clusterId,
+		Name:                         clusterId,
+		ServiceAccountsEnabled:       true,
+		AuthorizationServicesEnabled: true,
+		StandardFlowEnabled:          true,
+		RedirectURIs:                 &[]string{clusterOathCallbackURI},
+	}
+
+	clientConfig := kc.kcClient.ClientConfig(c)
+	internalClient, err := kc.kcClient.CreateClient(clientConfig, accessToken)
+	if err != nil {
+		return "", errors.FailedToCreateSSOClient("failed to create the sso client: %v", err)
+	}
+	secretValue, err := kc.kcClient.GetClientSecret(internalClient, accessToken)
+	if err != nil {
+		return "", errors.FailedToGetSSOClientSecret("failed to get the sso client secret: %v", err)
+	}
+
+	return secretValue, nil
+}
+
 func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
 	accessToken, _ := kc.kcClient.GetToken()
 	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)

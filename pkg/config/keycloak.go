@@ -14,6 +14,7 @@ type KeycloakConfig struct {
 	EnablePlain                 bool                 `json:"enable_plain"`
 	EnableOauthBearer           bool                 `json:"enable_oauth_bearer"`
 	KafkaRealm                  *KeycloakRealmConfig `json:"kafka_realm"`
+	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
 }
 
 type KeycloakRealmConfig struct {
@@ -36,6 +37,11 @@ func NewKeycloakConfig() *KeycloakConfig {
 			ClientSecretFile: "secrets/keycloak-service.clientSecret",
 			GrantType:        "client_credentials",
 		},
+		OSDClusterIDPRealm: &KeycloakRealmConfig{
+			ClientIDFile:     "secrets/osd-idp-keycloak-service.clientId",
+			ClientSecretFile: "secrets/osd-idp-keycloak-service.clientSecret",
+			GrantType:        "client_credentials",
+		},
 		TLSTrustedCertificatesFile: "secrets/keycloak-service.crt",
 		Debug:                      false,
 		InsecureSkipVerify:         false,
@@ -56,6 +62,9 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&kc.TLSTrustedCertificatesFile, "mas-sso-cert-file", kc.TLSTrustedCertificatesFile, "File containing tls cert for the mas-sso")
 	fs.BoolVar(&kc.Debug, "mas-sso-debug", kc.Debug, "Debug flag for Keycloak API")
 	fs.BoolVar(&kc.InsecureSkipVerify, "mas-sso-insecure", kc.InsecureSkipVerify, "Disable tls verification with mas-sso")
+	fs.StringVar(&kc.OSDClusterIDPRealm.ClientIDFile, "osd-idp-mas-sso-client-id-file", kc.OSDClusterIDPRealm.ClientIDFile, "File containing Keycloak privileged account client-id that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.OSDClusterIDPRealm.ClientSecretFile, "osd-idp-mas-sso-client-secret-file", kc.OSDClusterIDPRealm.ClientSecretFile, "File containing Keycloak privileged account client-secret that has access to the OSD Cluster IDP realm")
+	fs.StringVar(&kc.OSDClusterIDPRealm.Realm, "osd-idp-mas-sso-realm", kc.OSDClusterIDPRealm.Realm, "Realm for OSD cluster IDP clients in the mas-sso")
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
@@ -64,6 +73,14 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		return err
 	}
 	err = readFileValueString(kc.KafkaRealm.ClientSecretFile, &kc.KafkaRealm.ClientSecret)
+	if err != nil {
+		return err
+	}
+	err = readFileValueString(kc.OSDClusterIDPRealm.ClientIDFile, &kc.OSDClusterIDPRealm.ClientID)
+	if err != nil {
+		return err
+	}
+	err = readFileValueString(kc.OSDClusterIDPRealm.ClientSecretFile, &kc.OSDClusterIDPRealm.ClientSecret)
 	if err != nil {
 		return err
 	}
