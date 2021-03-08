@@ -32,6 +32,8 @@ type Client interface {
 	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, error)
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
+	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
+	UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 }
 
 var _ Client = &client{}
@@ -193,6 +195,36 @@ func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clust
 	var err error
 	if syncsetErr != nil {
 		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update syncset '%s': %s", syncSetID, syncsetErr)
+	}
+	return response.Body(), err
+}
+
+func (c client) CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, identityProviderErr := clustersResource.Cluster(clusterID).
+		IdentityProviders().
+		Add().
+		Body(identityProvider).
+		Send()
+	var err error
+	if identityProviderErr != nil {
+		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create identity provider: %s", identityProviderErr)
+	}
+	return response.Body(), err
+}
+
+func (c client) UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, identityProviderErr := clustersResource.Cluster(clusterID).
+		IdentityProviders().
+		IdentityProvider(identityProviderID).
+		Update().
+		Body(identityProvider).
+		Send()
+
+	var err error
+	if identityProviderErr != nil {
+		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update identity provider '%s': %s", identityProviderID, identityProviderErr)
 	}
 	return response.Body(), err
 }

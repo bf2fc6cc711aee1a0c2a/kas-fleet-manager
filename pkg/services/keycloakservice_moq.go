@@ -33,6 +33,9 @@ var _ KeycloakService = &KeycloakServiceMock{}
 //             GetConfigFunc: func() *config.KeycloakConfig {
 // 	               panic("mock out the GetConfig method")
 //             },
+//             GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+// 	               panic("mock out the GetRealmConfig method")
+//             },
 //             GetSecretForRegisteredKafkaClientFunc: func(kafkaClusterName string) (string, *errors.ServiceError) {
 // 	               panic("mock out the GetSecretForRegisteredKafkaClient method")
 //             },
@@ -53,6 +56,9 @@ var _ KeycloakService = &KeycloakServiceMock{}
 //             },
 //             RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 // 	               panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
+//             },
+//             RegisterOSDClusterClientInSSOFunc: func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+// 	               panic("mock out the RegisterOSDClusterClientInSSO method")
 //             },
 //             ResetServiceAccountCredentialsFunc: func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
 // 	               panic("mock out the ResetServiceAccountCredentials method")
@@ -76,6 +82,9 @@ type KeycloakServiceMock struct {
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *config.KeycloakConfig
 
+	// GetRealmConfigFunc mocks the GetRealmConfig method.
+	GetRealmConfigFunc func() *config.KeycloakRealmConfig
+
 	// GetSecretForRegisteredKafkaClientFunc mocks the GetSecretForRegisteredKafkaClient method.
 	GetSecretForRegisteredKafkaClientFunc func(kafkaClusterName string) (string, *errors.ServiceError)
 
@@ -96,6 +105,9 @@ type KeycloakServiceMock struct {
 
 	// RegisterKasFleetshardOperatorServiceAccountFunc mocks the RegisterKasFleetshardOperatorServiceAccount method.
 	RegisterKasFleetshardOperatorServiceAccountFunc func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+
+	// RegisterOSDClusterClientInSSOFunc mocks the RegisterOSDClusterClientInSSO method.
+	RegisterOSDClusterClientInSSOFunc func(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 
 	// ResetServiceAccountCredentialsFunc mocks the ResetServiceAccountCredentials method.
 	ResetServiceAccountCredentialsFunc func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
@@ -123,6 +135,9 @@ type KeycloakServiceMock struct {
 		}
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
+		}
+		// GetRealmConfig holds details about calls to the GetRealmConfig method.
+		GetRealmConfig []struct {
 		}
 		// GetSecretForRegisteredKafkaClient holds details about calls to the GetSecretForRegisteredKafkaClient method.
 		GetSecretForRegisteredKafkaClient []struct {
@@ -171,6 +186,13 @@ type KeycloakServiceMock struct {
 			// RoleName is the roleName argument value.
 			RoleName string
 		}
+		// RegisterOSDClusterClientInSSO holds details about calls to the RegisterOSDClusterClientInSSO method.
+		RegisterOSDClusterClientInSSO []struct {
+			// ClusterId is the clusterId argument value.
+			ClusterId string
+			// ClusterOathCallbackURI is the clusterOathCallbackURI argument value.
+			ClusterOathCallbackURI string
+		}
 		// ResetServiceAccountCredentials holds details about calls to the ResetServiceAccountCredentials method.
 		ResetServiceAccountCredentials []struct {
 			// Ctx is the ctx argument value.
@@ -183,6 +205,7 @@ type KeycloakServiceMock struct {
 	lockDeRegisterKafkaClientInSSO                        sync.RWMutex
 	lockDeleteServiceAccount                              sync.RWMutex
 	lockGetConfig                                         sync.RWMutex
+	lockGetRealmConfig                                    sync.RWMutex
 	lockGetSecretForRegisteredKafkaClient                 sync.RWMutex
 	lockGetServiceAccountById                             sync.RWMutex
 	lockIsKafkaClientExist                                sync.RWMutex
@@ -190,6 +213,7 @@ type KeycloakServiceMock struct {
 	lockRegisterConnectorFleetshardOperatorServiceAccount sync.RWMutex
 	lockRegisterKafkaClientInSSO                          sync.RWMutex
 	lockRegisterKasFleetshardOperatorServiceAccount       sync.RWMutex
+	lockRegisterOSDClusterClientInSSO                     sync.RWMutex
 	lockResetServiceAccountCredentials                    sync.RWMutex
 }
 
@@ -317,6 +341,32 @@ func (mock *KeycloakServiceMock) GetConfigCalls() []struct {
 	mock.lockGetConfig.RLock()
 	calls = mock.calls.GetConfig
 	mock.lockGetConfig.RUnlock()
+	return calls
+}
+
+// GetRealmConfig calls GetRealmConfigFunc.
+func (mock *KeycloakServiceMock) GetRealmConfig() *config.KeycloakRealmConfig {
+	if mock.GetRealmConfigFunc == nil {
+		panic("KeycloakServiceMock.GetRealmConfigFunc: method is nil but KeycloakService.GetRealmConfig was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetRealmConfig.Lock()
+	mock.calls.GetRealmConfig = append(mock.calls.GetRealmConfig, callInfo)
+	mock.lockGetRealmConfig.Unlock()
+	return mock.GetRealmConfigFunc()
+}
+
+// GetRealmConfigCalls gets all the calls that were made to GetRealmConfig.
+// Check the length with:
+//     len(mockedKeycloakService.GetRealmConfigCalls())
+func (mock *KeycloakServiceMock) GetRealmConfigCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetRealmConfig.RLock()
+	calls = mock.calls.GetRealmConfig
+	mock.lockGetRealmConfig.RUnlock()
 	return calls
 }
 
@@ -558,6 +608,41 @@ func (mock *KeycloakServiceMock) RegisterKasFleetshardOperatorServiceAccountCall
 	mock.lockRegisterKasFleetshardOperatorServiceAccount.RLock()
 	calls = mock.calls.RegisterKasFleetshardOperatorServiceAccount
 	mock.lockRegisterKasFleetshardOperatorServiceAccount.RUnlock()
+	return calls
+}
+
+// RegisterOSDClusterClientInSSO calls RegisterOSDClusterClientInSSOFunc.
+func (mock *KeycloakServiceMock) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
+	if mock.RegisterOSDClusterClientInSSOFunc == nil {
+		panic("KeycloakServiceMock.RegisterOSDClusterClientInSSOFunc: method is nil but KeycloakService.RegisterOSDClusterClientInSSO was just called")
+	}
+	callInfo := struct {
+		ClusterId              string
+		ClusterOathCallbackURI string
+	}{
+		ClusterId:              clusterId,
+		ClusterOathCallbackURI: clusterOathCallbackURI,
+	}
+	mock.lockRegisterOSDClusterClientInSSO.Lock()
+	mock.calls.RegisterOSDClusterClientInSSO = append(mock.calls.RegisterOSDClusterClientInSSO, callInfo)
+	mock.lockRegisterOSDClusterClientInSSO.Unlock()
+	return mock.RegisterOSDClusterClientInSSOFunc(clusterId, clusterOathCallbackURI)
+}
+
+// RegisterOSDClusterClientInSSOCalls gets all the calls that were made to RegisterOSDClusterClientInSSO.
+// Check the length with:
+//     len(mockedKeycloakService.RegisterOSDClusterClientInSSOCalls())
+func (mock *KeycloakServiceMock) RegisterOSDClusterClientInSSOCalls() []struct {
+	ClusterId              string
+	ClusterOathCallbackURI string
+} {
+	var calls []struct {
+		ClusterId              string
+		ClusterOathCallbackURI string
+	}
+	mock.lockRegisterOSDClusterClientInSSO.RLock()
+	calls = mock.calls.RegisterOSDClusterClientInSSO
+	mock.lockRegisterOSDClusterClientInSSO.RUnlock()
 	return calls
 }
 

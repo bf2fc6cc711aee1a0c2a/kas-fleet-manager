@@ -2,6 +2,7 @@ package workers
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 
@@ -752,7 +754,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 	}
 }
 
-func TestClusterManager_reconcileReadyClusters(t *testing.T) {
+func TestClusterManager_reconcileClusterSyncSet(t *testing.T) {
 	observabilityConfig := buildObservabilityConfig()
 	type fields struct {
 		ocmClient      ocm.Client
@@ -887,6 +889,203 @@ func TestClusterManager_reconcileReadyClusters(t *testing.T) {
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
+		})
+	}
+}
+
+func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
+	type fields struct {
+		ocmClient             ocm.Client
+		clusterService        services.ClusterService
+		osdIdpKeycloakService services.KeycloakService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should receive error when GetClusterDNSFunc returns error",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetSyncSetFunc:    nil,
+					CreateSyncSetFunc: nil,
+					UpdateSyncSetFunc: nil,
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive an error when creating the the OSD cluster IDP in keycloak fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateIdentityProviderFunc: nil, // setting it to nil because it should be called
+					UpdateIdentityProviderFunc: nil, // setting it to nil as it must not be called
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+				osdIdpKeycloakService: &services.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.FailedToCreateSSOClient("failure")
+					},
+					GetRealmConfigFunc: nil, // setting it to nill so that it is not called
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive error when creating the identity provider throws an error during creation",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+						return identityProvider, fmt.Errorf("some error")
+					},
+					UpdateIdentityProviderFunc: nil, // setting to nil because it won't be called
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+				osdIdpKeycloakService: &services.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+						return &config.KeycloakRealmConfig{
+							ValidIssuerURI: "https://foo.bar",
+						}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should create an identity provider when cluster identity provider has not been set",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+						return identityProvider, nil
+					},
+					UpdateIdentityProviderFunc: nil, // setting it to nil as it must not be called
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+					AddIdentityProviderIDFunc: func(clusterId, identityProviderId string) *apiErrors.ServiceError {
+						return nil // do not return nil since the cluster details will be updated to include the newly created identity provider
+					},
+				},
+				osdIdpKeycloakService: &services.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+						return &config.KeycloakRealmConfig{
+							ValidIssuerURI: "https://foo.bar",
+						}
+					},
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			},
+		},
+		{
+			name: "should update identity provider when the identity provider has already been already created",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateIdentityProviderFunc: nil, // setting it to nil to make sure it not called
+					UpdateIdentityProviderFunc: func(clusterID, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+						return identityProvider, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+				osdIdpKeycloakService: &services.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+						return &config.KeycloakRealmConfig{
+							ValidIssuerURI: "https://foo.bar",
+						}
+					},
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+				IdentityProviderID: "some-cluster-identityy-provider-id",
+			},
+		},
+		{
+			name: "should receive an error when updating identity provider throws an error",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateIdentityProviderFunc: nil, // setting it to nil to make sure it not called
+					UpdateIdentityProviderFunc: func(clusterID, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+						return nil, fmt.Errorf("some error during update")
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+				osdIdpKeycloakService: &services.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+						return &config.KeycloakRealmConfig{
+							ValidIssuerURI: "https://foo.bar",
+						}
+					},
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+				IdentityProviderID: "some-cluster-identityy-provider-id",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				ocmClient:             tt.fields.ocmClient,
+				clusterService:        tt.fields.clusterService,
+				osdIdpKeycloakService: tt.fields.osdIdpKeycloakService,
+			}
+
+			err := c.reconcileClusterIdentityProvider(tt.arg)
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

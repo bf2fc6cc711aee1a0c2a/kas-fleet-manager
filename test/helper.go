@@ -232,7 +232,7 @@ func (helper *Helper) startClusterWorker() {
 			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
 				return true, nil
 			},
-		})
+		}, environments.Environment().Services.OsdIdpKeycloak)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -272,7 +272,7 @@ func (helper *Helper) startLeaderElectionWorker() {
 			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
 				return true, nil
 			},
-		})
+		}, environments.Environment().Services.OsdIdpKeycloak)
 
 	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
 

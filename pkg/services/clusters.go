@@ -37,6 +37,7 @@ type ClusterService interface {
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *ocmErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *ocmErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
+	AddIdentityProviderID(clusterId string, identityProviderId string) *apiErrors.ServiceError
 }
 
 type clusterService struct {
@@ -276,4 +277,13 @@ func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*cluste
 		return nil, ocmErrors.New(ocmErrors.ErrorGeneral, err.Error())
 	}
 	return cluster, nil
+}
+
+func (c clusterService) AddIdentityProviderID(id string, identityProviderId string) *apiErrors.ServiceError {
+	dbConn := c.connectionFactory.New()
+	if err := dbConn.Model(&api.Cluster{Meta: api.Meta{ID: id}}).Update("identity_provider_id", identityProviderId).Error; err != nil {
+		return apiErrors.GeneralError("failed to update identity_provider_id for cluster %s: %s", id, err.Error())
+	}
+
+	return nil
 }

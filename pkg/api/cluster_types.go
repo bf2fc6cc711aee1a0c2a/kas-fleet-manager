@@ -36,14 +36,15 @@ var StatusForValidCluster = []string{string(ClusterProvisioning), string(Cluster
 
 type Cluster struct {
 	Meta
-	CloudProvider string        `json:"cloud_provider"`
-	ClusterID     string        `json:"cluster_id"`
-	ExternalID    string        `json:"external_id"`
-	MultiAZ       bool          `json:"multi_az"`
-	Region        string        `json:"region"`
-	BYOC          bool          `json:"byoc"`
-	Managed       bool          `json:"managed"`
-	Status        ClusterStatus `json:"status"`
+	CloudProvider      string        `json:"cloud_provider"`
+	ClusterID          string        `json:"cluster_id"`
+	ExternalID         string        `json:"external_id"`
+	MultiAZ            bool          `json:"multi_az"`
+	Region             string        `json:"region"`
+	BYOC               bool          `json:"byoc"`
+	Managed            bool          `json:"managed"`
+	Status             ClusterStatus `json:"status"`
+	IdentityProviderID string        `json:"identity_provider_id"`
 }
 
 type ClusterList []*Cluster

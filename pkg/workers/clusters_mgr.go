@@ -49,6 +49,7 @@ const (
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
+	openIDIdentityProviderName      = "Kafka_SRE"
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -65,11 +66,12 @@ type ClusterManager struct {
 	reconciler                 Reconciler
 	configService              services.ConfigService
 	kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	osdIdpKeycloakService      services.KeycloakService
 }
 
 // NewClusterManager creates a new cluster manager
 func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, ocmClient ocm.Client,
-	configService services.ConfigService, id string, agentOperatorAddon services.KasFleetshardOperatorAddon) *ClusterManager {
+	configService services.ConfigService, id string, agentOperatorAddon services.KasFleetshardOperatorAddon, osdIdpKeycloakService services.KeycloakService) *ClusterManager {
 	return &ClusterManager{
 		id:                         id,
 		workerType:                 "cluster",
@@ -78,6 +80,7 @@ func NewClusterManager(clusterService services.ClusterService, cloudProvidersSer
 		cloudProvidersService:      cloudProvidersService,
 		configService:              configService,
 		kasFleetshardOperatorAddon: agentOperatorAddon,
+		osdIdpKeycloakService:      osdIdpKeycloakService,
 	}
 }
 
@@ -215,6 +218,10 @@ func (c *ClusterManager) reconcile() {
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	err := c.reconcileClusterSyncSet(cluster)
+	if err == nil {
+		err = c.reconcileClusterIdentityProvider(cluster)
+	}
+
 	if err != nil {
 		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
@@ -703,4 +710,70 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 		Type: k8sCoreV1.SecretTypeDockercfg,
 		Data: dataMap,
 	}
+}
+
+func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
+	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
+	if dnsErr != nil || clusterDNS == "" {
+		return errors.WithMessagef(dnsErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, dnsErr.Error())
+	}
+
+	callbackUri := fmt.Sprintf("https://oauth-openshift.%s/oauth2callback/%s", clusterDNS, openIDIdentityProviderName)
+	clientSecret, ssoErr := c.osdIdpKeycloakService.RegisterOSDClusterClientInSSO(cluster.Meta.ID, callbackUri)
+	if ssoErr != nil {
+		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
+	}
+
+	if cluster.IdentityProviderID == "" { // identity provider not yet created, let's create a new one
+		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, true)
+		if buildErr != nil {
+			return buildErr
+		}
+		createdIdentyProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
+		if createIdentityProviderErr != nil {
+			return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
+		}
+		addIdpErr := c.clusterService.AddIdentityProviderID(cluster.Meta.ID, createdIdentyProvider.ID())
+		if addIdpErr != nil {
+			return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
+		}
+		return nil
+	} else { // identity provider created, let's update it
+		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, false)
+		if buildErr != nil {
+			return buildErr
+		}
+		_, updateIdentityProviderErr := c.ocmClient.UpdateIdentityProvider(cluster.ClusterID, cluster.IdentityProviderID, identityProvider)
+		if updateIdentityProviderErr != nil {
+			return errors.WithMessagef(updateIdentityProviderErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, updateIdentityProviderErr.Error())
+		}
+		return nil
+	}
+}
+
+func (c *ClusterManager) buildIdentityProvider(cluster api.Cluster, clientSecret string, withName bool) (*clustersmgmtv1.IdentityProvider, error) {
+	openIdentityBuilder := clustersmgmtv1.NewOpenIDIdentityProvider().
+		ClientID(cluster.Meta.ID).
+		ClientSecret(clientSecret).
+		Claims(clustersmgmtv1.NewOpenIDClaims().
+			Email("email").
+			PreferredUsername("preferred_username").
+			Name("last_name", "preferred_username")).
+		Issuer(c.osdIdpKeycloakService.GetRealmConfig().ValidIssuerURI)
+
+	identityProviderBuilder := clustersmgmtv1.NewIdentityProvider().
+		Type("OpenIDIdentityProvider").
+		MappingMethod(clustersmgmtv1.IdentityProviderMappingMethodClaim).
+		OpenID(openIdentityBuilder)
+
+	if withName {
+		identityProviderBuilder.Name(openIDIdentityProviderName)
+	}
+
+	identityProvider, idpBuildErr := identityProviderBuilder.Build()
+	if idpBuildErr != nil {
+		return nil, errors.WithMessagef(idpBuildErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, idpBuildErr.Error())
+	}
+
+	return identityProvider, nil
 }

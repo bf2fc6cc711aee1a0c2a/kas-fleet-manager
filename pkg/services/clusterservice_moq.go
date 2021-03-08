@@ -20,6 +20,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //
 //         // make and configure a mocked ClusterService
 //         mockedClusterService := &ClusterServiceMock{
+//             AddIdentityProviderIDFunc: func(clusterId string, identityProviderId string) *errors.ServiceError {
+// 	               panic("mock out the AddIdentityProviderID method")
+//             },
 //             CreateFunc: func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the Create method")
 //             },
@@ -60,6 +63,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //
 //     }
 type ClusterServiceMock struct {
+	// AddIdentityProviderIDFunc mocks the AddIdentityProviderID method.
+	AddIdentityProviderIDFunc func(clusterId string, identityProviderId string) *errors.ServiceError
+
 	// CreateFunc mocks the Create method.
 	CreateFunc func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError)
 
@@ -95,6 +101,13 @@ type ClusterServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// AddIdentityProviderID holds details about calls to the AddIdentityProviderID method.
+		AddIdentityProviderID []struct {
+			// ClusterId is the clusterId argument value.
+			ClusterId string
+			// IdentityProviderId is the identityProviderId argument value.
+			IdentityProviderId string
+		}
 		// Create holds details about calls to the Create method.
 		Create []struct {
 			// Cluster is the cluster argument value.
@@ -163,6 +176,7 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
+	lockAddIdentityProviderID        sync.RWMutex
 	lockCreate                       sync.RWMutex
 	lockFindCluster                  sync.RWMutex
 	lockFindClusterByID              sync.RWMutex
@@ -174,6 +188,41 @@ type ClusterServiceMock struct {
 	lockScaleUpComputeNodes          sync.RWMutex
 	lockSetComputeNodes              sync.RWMutex
 	lockUpdateStatus                 sync.RWMutex
+}
+
+// AddIdentityProviderID calls AddIdentityProviderIDFunc.
+func (mock *ClusterServiceMock) AddIdentityProviderID(clusterId string, identityProviderId string) *errors.ServiceError {
+	if mock.AddIdentityProviderIDFunc == nil {
+		panic("ClusterServiceMock.AddIdentityProviderIDFunc: method is nil but ClusterService.AddIdentityProviderID was just called")
+	}
+	callInfo := struct {
+		ClusterId          string
+		IdentityProviderId string
+	}{
+		ClusterId:          clusterId,
+		IdentityProviderId: identityProviderId,
+	}
+	mock.lockAddIdentityProviderID.Lock()
+	mock.calls.AddIdentityProviderID = append(mock.calls.AddIdentityProviderID, callInfo)
+	mock.lockAddIdentityProviderID.Unlock()
+	return mock.AddIdentityProviderIDFunc(clusterId, identityProviderId)
+}
+
+// AddIdentityProviderIDCalls gets all the calls that were made to AddIdentityProviderID.
+// Check the length with:
+//     len(mockedClusterService.AddIdentityProviderIDCalls())
+func (mock *ClusterServiceMock) AddIdentityProviderIDCalls() []struct {
+	ClusterId          string
+	IdentityProviderId string
+} {
+	var calls []struct {
+		ClusterId          string
+		IdentityProviderId string
+	}
+	mock.lockAddIdentityProviderID.RLock()
+	calls = mock.calls.AddIdentityProviderID
+	mock.lockAddIdentityProviderID.RUnlock()
+	return calls
 }
 
 // Create calls CreateFunc.
