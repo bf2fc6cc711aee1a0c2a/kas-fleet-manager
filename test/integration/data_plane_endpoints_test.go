@@ -240,10 +240,10 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	}
 
 	for _, k := range testKafkas {
-		if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotation.Id == k.ID }); mk != nil {
+		if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotation.Bf2OrgId == k.ID }); mk != nil {
 			Expect(mk.Metadata.Name).To(Equal(k.Name))
-			Expect(mk.Metadata.Annotation.PlacementId).To(Equal(k.PlacementId))
-			Expect(mk.Metadata.Annotation.Id).To(Equal(k.ID))
+			Expect(mk.Metadata.Annotation.Bf2OrgPlacementId).To(Equal(k.PlacementId))
+			Expect(mk.Metadata.Annotation.Bf2OrgId).To(Equal(k.ID))
 			Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
 		} else {
 			t.Error("failed matching managedkafka id with kafkarequest id")

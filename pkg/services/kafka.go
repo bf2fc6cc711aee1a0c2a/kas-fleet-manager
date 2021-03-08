@@ -457,8 +457,8 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			Name:      kafkaRequest.Name,
 			Namespace: namespace,
 			Annotations: map[string]string{
-				"id":          kafkaRequest.ID,
-				"placementId": kafkaRequest.PlacementId,
+				"bf2.org/id":          kafkaRequest.ID,
+				"bf2.org/placementId": kafkaRequest.PlacementId,
 			},
 		},
 		Spec: managedkafka.ManagedKafkaSpec{
