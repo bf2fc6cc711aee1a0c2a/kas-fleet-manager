@@ -42,6 +42,7 @@ type ClientRepresentation struct {
 	AuthorizationServicesEnabled bool
 	ProtocolMappers              []gocloak.ProtocolMapperRepresentation
 	Description                  string
+	RedirectURIs                 *[]string
 }
 
 type kcClient struct {
@@ -76,6 +77,7 @@ func (kc *kcClient) ClientConfig(client ClientRepresentation) gocloak.Client {
 		AuthorizationServicesEnabled: &client.AuthorizationServicesEnabled,
 		ProtocolMappers:              &client.ProtocolMappers,
 		Description:                  &client.Description,
+		RedirectURIs:                 client.RedirectURIs,
 	}
 }
 

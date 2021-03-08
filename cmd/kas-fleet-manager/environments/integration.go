@@ -23,6 +23,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"auto-osd-creation":                 "false",
 	"mas-sso-base-url":                  "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
 	"mas-sso-realm":                     "mas-sso-playground",
+	"osd-idp-mas-sso-realm":             "mas-sso-playground",
 	"enable-kafka-external-certificate": "false",
 	"cluster-compute-machine-type":      "m5.xlarge",
 }

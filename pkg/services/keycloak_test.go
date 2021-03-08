@@ -2,10 +2,12 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
 	gocloak "github.com/Nerzal/gocloak/v8"
+	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -125,6 +127,126 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("RegisterKafkaClientInSSO() got = %+v, want %+v", got, tt.want)
 			}
+		})
+	}
+
+}
+
+func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    string
+		wantErr *errors.ServiceError
+	}{
+		{
+			name: "throws error when failed to fetch token",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", fmt.Errorf("token error")
+					},
+				},
+			},
+			want:    "",
+			wantErr: errors.GeneralError("failed to get token for the sso client: token error"),
+		},
+		{
+			name: "fetch osd client secret from sso when client already exists",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return secret, nil
+					},
+				},
+			},
+			want:    secret,
+			wantErr: nil,
+		},
+		{
+			name: "successfully register a new sso client for the kafka cluster",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return secret, nil
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						return gocloak.Client{
+							ClientID: &testID,
+						}
+					},
+				},
+			},
+			want:    secret,
+			wantErr: nil,
+		},
+		{
+			name: "failed to register sso client for the osd cluster",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return secret, nil
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return "", fmt.Errorf("some errors")
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						return gocloak.Client{
+							ClientID: &testID,
+						}
+					},
+				},
+			},
+			want:    "",
+			wantErr: errors.FailedToCreateSSOClient("failed to create the sso client: some errors"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			keycloakService := keycloakService{
+				tt.fields.kcClient,
+			}
+			got, err := keycloakService.RegisterOSDClusterClientInSSO("osd-cluster-12212", "https://oauth-openshift-cluster.fr")
+			gomega.Expect(got).To(gomega.Equal(tt.want))
+			gomega.Expect(err).To(gomega.Equal(tt.wantErr))
 		})
 	}
 
