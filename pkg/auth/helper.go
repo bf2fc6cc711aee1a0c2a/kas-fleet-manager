@@ -94,7 +94,7 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		"exp": time.Now().Add(time.Minute * time.Duration(TokenExpMin)).Unix(),
 	}
 
-	if jwtClaims == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.ocmTokenIssuer {
+	if jwtClaims == nil || jwtClaims["iss"] == nil || jwtClaims["iss"] == "" || jwtClaims["iss"] == authHelper.ocmTokenIssuer {
 		// Set default claim values for ocm tokens
 		claims["iss"] = authHelper.ocmTokenIssuer
 		claims[ocmUsernameKey] = account.Username()
