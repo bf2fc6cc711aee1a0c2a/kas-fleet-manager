@@ -33,12 +33,20 @@ func TestReconciler_Wakeup(t *testing.T) {
 	}
 
 	waitForReconcile := func(d time.Duration) (timeout bool) {
-		ctx, cancel := context.WithTimeout(context.Background(), d)
-		defer cancel()
-		select {
-		case <-reconcileChan:
-		case <-ctx.Done():
-			timeout = true
+		if d == 0 {
+			select {
+			case <-reconcileChan:
+			default:
+				timeout = true
+			}
+		} else {
+			ctx, cancel := context.WithTimeout(context.Background(), d)
+			defer cancel()
+			select {
+			case <-reconcileChan:
+			case <-ctx.Done():
+				timeout = true
+			}
 		}
 		return
 	}
@@ -53,6 +61,10 @@ func TestReconciler_Wakeup(t *testing.T) {
 	Expect(waitForReconcile(3 * time.Second)).Should(Equal(true))
 
 	// Now lets try to wake it up before those 30 seconds have passed...
-	r.Wakeup()
+	r.Wakeup(false)
 	Expect(waitForReconcile(1 * time.Second)).Should(Equal(false))
+
+	r.Wakeup(true)
+	// We can use a 0 timeout here because Wakeup will wait for the reconcile to occur first.
+	Expect(waitForReconcile(0)).Should(Equal(false))
 }
