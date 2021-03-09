@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
@@ -122,7 +123,8 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			route.Use(checkIssuer(JWKSEndpoint))
+			ocmAuthMiddleware := NewOCMAuthorizationMiddleware()
+			route.Use(ocmAuthMiddleware.RequireIssuer(JWKSEndpoint, errors.ErrorNotFound))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)

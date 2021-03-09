@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/dgrijalva/jwt-go"
 
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
@@ -113,4 +114,50 @@ func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(err).Should(HaveOccurred())
+}
+
+func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	claims := jwt.MapClaims{
+		"iss":      "invalidiss",
+		"org_id":   account.Organization().ExternalID(),
+		"username": account.Username(),
+	}
+
+	ctx := h.NewAuthenticatedContext(account, claims)
+
+	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+}
+
+func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	claims := jwt.MapClaims{
+		"iss":      h.Env().Config.OCM.TokenIssuerURL,
+		"org_id":   account.Organization().ExternalID(),
+		"username": account.Username(),
+	}
+
+	ctx := h.NewAuthenticatedContext(account, claims)
+
+	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }

@@ -71,6 +71,9 @@ func NewAPIServer() Server {
 	}
 	*/
 
+	ocmAuthzMiddleware := auth.NewOCMAuthorizationMiddleware()
+	ocmAuthzMiddlewareRequireIssuer := ocmAuthzMiddleware.RequireIssuer(env().Config.OCM.TokenIssuerURL, errors.ErrorUnauthenticated)
+
 	// mainRouter is top level "/"
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
@@ -122,6 +125,7 @@ func NewAPIServer() Server {
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
+	apiV1KafkasRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
@@ -134,6 +138,7 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
+	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 
 	if env().Services.Config.IsAllowListEnabled() {
 		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
