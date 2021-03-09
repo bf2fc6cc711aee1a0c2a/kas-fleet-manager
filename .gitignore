@@ -50,6 +50,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/dx.*
 /secrets/observatorium.*
 /secrets/observability-config-access.token
+/secrets/image-pull.dockerconfigjson
 
 # cluster details (used for testing)
 /test/integration/test_cluster.json
