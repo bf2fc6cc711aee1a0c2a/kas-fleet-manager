@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.36.5
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
+	github.com/cucumber/godog v0.11.0
 	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
@@ -22,6 +23,7 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.3
 	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
+	github.com/itchyny/gojq v0.12.2
 	github.com/jinzhu/gorm v1.9.8
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.1 // indirect
@@ -39,7 +41,7 @@ require (
 	github.com/rs/xid v1.2.1
 	github.com/segmentio/ksuid v1.0.3
 	github.com/selvatico/go-mocket v1.0.7
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
@@ -47,7 +49,6 @@ require (
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a // indirect
 	golang.org/x/net v0.0.0-20201209123823-ac852fbbde11 // indirect
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
-	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	golang.org/x/text v0.3.4 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -55,7 +56,6 @@ require (
 	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.3.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	k8s.io/api v0.19.3
 	k8s.io/apimachinery v0.19.3
 )

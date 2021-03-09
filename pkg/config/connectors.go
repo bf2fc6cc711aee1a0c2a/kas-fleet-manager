@@ -28,6 +28,10 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
+	if c.ConnectorTypesDir == "" {
+		return nil
+	}
+
 	files, err := ioutil.ReadDir(c.ConnectorTypesDir)
 	if err != nil {
 		return err

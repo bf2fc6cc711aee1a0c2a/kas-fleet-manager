@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -54,7 +53,6 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 		return
 	}
 
-	fmt.Println(string(bytes))
 	err = json.Unmarshal(bytes, &cfg.MarshalInto)
 	if err != nil {
 		handleError(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
