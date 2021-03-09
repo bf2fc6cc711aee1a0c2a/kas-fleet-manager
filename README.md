@@ -81,11 +81,14 @@ follow this process again to generate a new token.
     # List all the tables
     serviceapitests# \dt
                        List of relations
-     Schema |      Name      | Type  |        Owner         
-    --------+----------------+-------+----------------------
-     public | clusters       | table | kas_fleet_manager
-     public | kafka_requests | table | kas_fleet_manager
-     public | migrations     | table | kas_fleet_manager
+    Schema |        Name        | Type  |       Owner       
+    --------+--------------------+-------+-------------------
+    public | clusters           | table | kas_fleet_manager
+    public | connector_clusters | table | kas_fleet_manager
+    public | connectors         | table | kas_fleet_manager
+    public | kafka_requests     | table | kas_fleet_manager
+    public | leader_leases      | table | kas_fleet_manager
+    public | migrations         | table | kas_fleet_manager
     ```
 
 3.  Setup AWS credentials 
@@ -136,6 +139,12 @@ follow this process again to generate a new token.
 6. Running the service locally
     ```
     $ ./kas-fleet-manager serve  (default: http://localhost:8000)
+    ```
+    
+7. Verify the local service is working
+    ```
+    $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas
+   {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
     ```
 
 ## Running the Service on an OpenShift cluster
