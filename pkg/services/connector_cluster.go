@@ -60,7 +60,7 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (*api.Conn
 	}
 
 	if err := dbConn.First(&resource).Error; err != nil {
-		return nil, handleGetError("Connector", "id", id, err)
+		return nil, handleGetError("Connector cluster", "id", id, err)
 	}
 	return &resource, nil
 }
@@ -79,7 +79,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 	dbConn := k.connectionFactory.New()
 	var resource api.ConnectorCluster
 	if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
-		return handleGetError("Connector", "id", id, err)
+		return handleGetError("Connector cluster", "id", id, err)
 	}
 
 	// TODO: implement soft delete instead?

@@ -270,7 +270,7 @@ test/prepare: install
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration: test/prepare gotestsum
 	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-			./test/integration
+			./test/integration/...
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
