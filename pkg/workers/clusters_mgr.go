@@ -46,6 +46,9 @@ const (
 	observabilityKafkaConfiguration = "kafka-observability-configuration"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	ingressReplicas                 = int32(6)
+	imagePullSecretName             = "rhoas-image-pull-secret"
+	strimziAddonNamespace           = "redhat-managed-kafka-operator"
+	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -428,18 +431,24 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 }
 
 func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clustersmgmtv1.Syncset, error) {
+	r := []interface{}{
+		c.buildStorageClass(),
+		c.buildIngressController(ingressDNS),
+		c.buildObservabilityNamespaceResource(),
+		c.buildObservabilityDexSecretResource(),
+		c.buildObservabilityCatalogSourceResource(),
+		c.buildObservabilityOperatorGroupResource(),
+		c.buildObservabilitySubscriptionResource(),
+		c.buildObservabilityExternalConfigResource(),
+	}
+	if s := c.buildImagePullSecret(strimziAddonNamespace); s != nil {
+		r = append(r, s)
+	}
+	if s := c.buildImagePullSecret(kasFleetshardAddonNamespace); s != nil {
+		r = append(r, s)
+	}
 	b := clustersmgmtv1.NewSyncset().
-		Resources(
-			[]interface{}{
-				c.buildStorageClass(),
-				c.buildIngressController(ingressDNS),
-				c.buildObservabilityNamespaceResource(),
-				c.buildObservabilityDexSecretResource(),
-				c.buildObservabilityCatalogSourceResource(),
-				c.buildObservabilityOperatorGroupResource(),
-				c.buildObservabilitySubscriptionResource(),
-				c.buildObservabilityExternalConfigResource(),
-			}...)
+		Resources(r...)
 	if withId {
 		b = b.ID(syncsetName)
 	}
@@ -669,5 +678,29 @@ func (c *ClusterManager) buildObservabilityExternalConfigResource() *k8sCoreV1.C
 			"channel":      observabilityConfig.ObservabilityConfigChannel,
 			"repository":   observabilityConfig.ObservabilityConfigRepo,
 		},
+	}
+}
+
+func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secret {
+	content := c.configService.GetConfig().ClusterCreationConfig.ImagePullDockerConfigContent
+	if strings.TrimSpace(content) == "" {
+		return nil
+	}
+
+	dataMap := map[string][]byte{
+		k8sCoreV1.DockerConfigKey: []byte(content),
+	}
+
+	return &k8sCoreV1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: metav1.SchemeGroupVersion.Version,
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      imagePullSecretName,
+			Namespace: namespace,
+		},
+		Type: k8sCoreV1.SecretTypeDockercfg,
+		Data: dataMap,
 	}
 }
