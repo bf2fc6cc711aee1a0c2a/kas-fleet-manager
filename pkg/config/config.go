@@ -125,6 +125,10 @@ func (c *ApplicationConfig) ReadFiles() error {
 			return err
 		}
 	}
+	err = c.ClusterCreationConfig.ReadFiles()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

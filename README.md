@@ -135,13 +135,16 @@ follow this process again to generate a new token.
     ```
     $ make ocm/setup OCM_OFFLINE_TOKEN="$(ocm token)" OCM_ENV=development
     ```
-   
-6. Running the service locally
+6. Setup the image pull secret
+    Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull),
+    copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
+       
+7. Running the service locally
     ```
     $ ./kas-fleet-manager serve  (default: http://localhost:8000)
     ```
     
-7. Verify the local service is working
+8. Verify the local service is working
     ```
     $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas
    {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
