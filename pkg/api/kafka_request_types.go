@@ -10,6 +10,7 @@ type KafkaRequest struct {
 	MultiAZ             bool   `json:"multi_az"`
 	Name                string `json:"name"`
 	Status              string `json:"status"`
+	SubscriptionId      string `json:"subscription_id"`
 	Owner               string `json:"owner"` // TODO: ocm owner?
 	BootstrapServerHost string `json:"bootstrap_server_host"`
 	OrganisationId      string `json:"organisation_id"`
