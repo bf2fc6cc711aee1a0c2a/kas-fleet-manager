@@ -574,21 +574,19 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 func TestClusterManager_createSyncSet(t *testing.T) {
 	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
-	syncset, err := buildSyncSet(observabilityConfig, ingressDNS)
-
-	if err != nil {
-		t.Fatal("Unable to create test syncset")
-		return
+	clusterCreateConfig := config.ClusterCreationConfig{
+		ImagePullDockerConfigContent: "image-pull-secret-test",
 	}
 
 	type fields struct {
-		ocmClient ocm.Client
-		timer     *time.Timer
+		ocmClient           ocm.Client
+		timer               *time.Timer
+		clusterCreateConfig config.ClusterCreationConfig
 	}
 
 	type result struct {
 		err     error
-		syncset *clustersmgmtv1.Syncset
+		syncset func() *clustersmgmtv1.Syncset
 	}
 	tests := []struct {
 		name   string
@@ -603,10 +601,13 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 						return nil, errors.New("error when creating syncset")
 					},
 				},
+				clusterCreateConfig: clusterCreateConfig,
 			},
 			want: result{
-				err:     errors.New("error when creating syncset"),
-				syncset: nil,
+				err: errors.New("error when creating syncset"),
+				syncset: func() *clustersmgmtv1.Syncset {
+					return nil
+				},
 			},
 		},
 		{
@@ -617,10 +618,36 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 						return syncset, nil
 					},
 				},
+				clusterCreateConfig: clusterCreateConfig,
 			},
 			want: result{
-				err:     nil,
-				syncset: syncset,
+				err: nil,
+				syncset: func() *clustersmgmtv1.Syncset {
+					s, _ := buildSyncSet(observabilityConfig, clusterCreateConfig, ingressDNS)
+					return s
+				},
+			},
+		},
+		{
+			name: "check when imagePullSecret is empty",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateSyncSetFunc: func(clusterId string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return syncset, nil
+					},
+				},
+				clusterCreateConfig: config.ClusterCreationConfig{
+					ImagePullDockerConfigContent: "",
+				},
+			},
+			want: result{
+				err: nil,
+				syncset: func() *clustersmgmtv1.Syncset {
+					s, _ := buildSyncSet(observabilityConfig, config.ClusterCreationConfig{
+						ImagePullDockerConfigContent: "",
+					}, ingressDNS)
+					return s
+				},
 			},
 		},
 	}
@@ -635,11 +662,12 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 					SupportedProviders:         &config.ProviderConfig{},
 					AllowList:                  &config.AllowListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
-					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					ClusterCreationConfig:      &tt.fields.clusterCreateConfig,
 				}),
 			}
+			wantSyncSet := tt.want.syncset()
 			got, err := c.createSyncSet("clusterId", ingressDNS)
-			Expect(got).To(Equal(tt.want.syncset))
+			Expect(got).To(Equal(wantSyncSet))
 			if err != nil {
 				Expect(err).To(MatchError(tt.want.err))
 			}
@@ -1042,159 +1070,190 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 }
 
 // buildSyncSet builds a syncset used for testing
-func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
+func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.ClusterCreationConfig, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
 	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
 	expansion := true
 	consumer := storagev1.VolumeBindingWaitForFirstConsumer
 	r := ingressReplicas
-
-	syncset, err := clustersmgmtv1.NewSyncset().
-		ID(syncsetName).
-		Resources([]interface{}{
-			&storagev1.StorageClass{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "storage.k8s.io/v1",
-					Kind:       "StorageClass",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: syncsetresources.KafkaStorageClass,
-				},
-				Parameters: map[string]string{
-					"encrypted": "false",
-					"type":      "gp2",
-				},
-				Provisioner:          "kubernetes.io/aws-ebs",
-				ReclaimPolicy:        &reclaimDelete,
-				AllowVolumeExpansion: &expansion,
-				VolumeBindingMode:    &consumer,
+	resources := []interface{}{
+		&storagev1.StorageClass{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "storage.k8s.io/v1",
+				Kind:       "StorageClass",
 			},
-			&ingressoperatorv1.IngressController{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "operator.openshift.io/v1",
-					Kind:       "IngressController",
+			ObjectMeta: metav1.ObjectMeta{
+				Name: syncsetresources.KafkaStorageClass,
+			},
+			Parameters: map[string]string{
+				"encrypted": "false",
+				"type":      "gp2",
+			},
+			Provisioner:          "kubernetes.io/aws-ebs",
+			ReclaimPolicy:        &reclaimDelete,
+			AllowVolumeExpansion: &expansion,
+			VolumeBindingMode:    &consumer,
+		},
+		&ingressoperatorv1.IngressController{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operator.openshift.io/v1",
+				Kind:       "IngressController",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sharded-nlb",
+				Namespace: openshiftIngressNamespace,
+			},
+			Spec: ingressoperatorv1.IngressControllerSpec{
+				Domain: ingressDNS,
+				RouteSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+					},
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "sharded-nlb",
-					Namespace: openshiftIngressNamespace,
+				EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
+					LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
+						ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
+							AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
+								Type: ingressoperatorv1.AWSNetworkLoadBalancer,
+							},
+							Type: ingressoperatorv1.AWSLoadBalancerProvider,
+						},
+						Scope: ingressoperatorv1.ExternalLoadBalancer,
+					},
+					Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
 				},
-				Spec: ingressoperatorv1.IngressControllerSpec{
-					Domain: ingressDNS,
-					RouteSelector: &metav1.LabelSelector{
+				Replicas: &r,
+				NodePlacement: &ingressoperatorv1.NodePlacement{
+					NodeSelector: &metav1.LabelSelector{
 						MatchLabels: map[string]string{
-							syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
-						},
-					},
-					EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
-						LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
-							ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
-								AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
-									Type: ingressoperatorv1.AWSNetworkLoadBalancer,
-								},
-								Type: ingressoperatorv1.AWSLoadBalancerProvider,
-							},
-							Scope: ingressoperatorv1.ExternalLoadBalancer,
-						},
-						Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
-					},
-					Replicas: &r,
-					NodePlacement: &ingressoperatorv1.NodePlacement{
-						NodeSelector: &metav1.LabelSelector{
-							MatchLabels: map[string]string{
-								"node-role.kubernetes.io/worker": "",
-							},
+							"node-role.kubernetes.io/worker": "",
 						},
 					},
 				},
 			},
-			&projectv1.Project{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "project.openshift.io/v1",
-					Kind:       "Project",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: observabilityNamespace,
+		},
+		&projectv1.Project{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "project.openshift.io/v1",
+				Kind:       "Project",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: observabilityNamespace,
+			},
+		},
+		&k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: metav1.SchemeGroupVersion.Version,
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityDexCredentials,
+				Namespace: observabilityNamespace,
+			},
+			Type: k8sCoreV1.SecretTypeOpaque,
+			StringData: map[string]string{
+				"password": observabilityConfig.DexPassword,
+				"secret":   observabilityConfig.DexSecret,
+				"username": observabilityConfig.DexUsername,
+			},
+		},
+		&v1alpha1.CatalogSource{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha1",
+				Kind:       "CatalogSource",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityCatalogSourceName,
+				Namespace: observabilityNamespace,
+			},
+			Spec: v1alpha1.CatalogSourceSpec{
+				SourceType: v1alpha1.SourceTypeGrpc,
+				Image:      observabilityCatalogSourceImage,
+			},
+		},
+		&v1alpha2.OperatorGroup{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha2",
+				Kind:       "OperatorGroup",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityOperatorGroupName,
+				Namespace: observabilityNamespace,
+			},
+			Spec: v1alpha2.OperatorGroupSpec{
+				TargetNamespaces: []string{observabilityNamespace},
+			},
+		},
+		&v1alpha1.Subscription{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha1",
+				Kind:       "Subscription",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilitySubscriptionName,
+				Namespace: observabilityNamespace,
+			},
+			Spec: &v1alpha1.SubscriptionSpec{
+				CatalogSource:          observabilityCatalogSourceName,
+				Channel:                "alpha",
+				CatalogSourceNamespace: observabilityNamespace,
+				StartingCSV:            "observability-operator.v2.0.0",
+				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
+				Package:                observabilitySubscriptionName,
+			},
+		},
+		&k8sCoreV1.ConfigMap{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+				Kind:       "ConfigMap",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityKafkaConfiguration,
+				Namespace: observabilityNamespace,
+				Labels: map[string]string{
+					"configures": "observability-operator",
 				},
 			},
+			Data: map[string]string{
+				"access_token": observabilityConfig.ObservabilityConfigAccessToken,
+				"channel":      observabilityConfig.ObservabilityConfigChannel,
+				"repository":   observabilityConfig.ObservabilityConfigRepo,
+			},
+		},
+	}
+	if clusterCreateConfig.ImagePullDockerConfigContent != "" {
+		resources = append(resources, &k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: metav1.SchemeGroupVersion.Version,
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      imagePullSecretName,
+				Namespace: strimziAddonNamespace,
+			},
+			Type: k8sCoreV1.SecretTypeDockercfg,
+			Data: map[string][]byte{
+				k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
+			},
+		},
 			&k8sCoreV1.Secret{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: metav1.SchemeGroupVersion.Version,
 					Kind:       "Secret",
 				},
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilityDexCredentials,
-					Namespace: observabilityNamespace,
+					Name:      imagePullSecretName,
+					Namespace: kasFleetshardAddonNamespace,
 				},
-				Type: k8sCoreV1.SecretTypeOpaque,
-				StringData: map[string]string{
-					"password": observabilityConfig.DexPassword,
-					"secret":   observabilityConfig.DexSecret,
-					"username": observabilityConfig.DexUsername,
+				Type: k8sCoreV1.SecretTypeDockercfg,
+				Data: map[string][]byte{
+					k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
 				},
-			},
-			&v1alpha1.CatalogSource{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "operators.coreos.com/v1alpha1",
-					Kind:       "CatalogSource",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilityCatalogSourceName,
-					Namespace: observabilityNamespace,
-				},
-				Spec: v1alpha1.CatalogSourceSpec{
-					SourceType: v1alpha1.SourceTypeGrpc,
-					Image:      observabilityCatalogSourceImage,
-				},
-			},
-			&v1alpha2.OperatorGroup{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "operators.coreos.com/v1alpha2",
-					Kind:       "OperatorGroup",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilityOperatorGroupName,
-					Namespace: observabilityNamespace,
-				},
-				Spec: v1alpha2.OperatorGroupSpec{
-					TargetNamespaces: []string{observabilityNamespace},
-				},
-			},
-			&v1alpha1.Subscription{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: "operators.coreos.com/v1alpha1",
-					Kind:       "Subscription",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilitySubscriptionName,
-					Namespace: observabilityNamespace,
-				},
-				Spec: &v1alpha1.SubscriptionSpec{
-					CatalogSource:          observabilityCatalogSourceName,
-					Channel:                "alpha",
-					CatalogSourceNamespace: observabilityNamespace,
-					StartingCSV:            "observability-operator.v2.0.0",
-					InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
-					Package:                observabilitySubscriptionName,
-				},
-			},
-			&k8sCoreV1.ConfigMap{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-					Kind:       "ConfigMap",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      observabilityKafkaConfiguration,
-					Namespace: observabilityNamespace,
-					Labels: map[string]string{
-						"configures": "observability-operator",
-					},
-				},
-				Data: map[string]string{
-					"access_token": observabilityConfig.ObservabilityConfigAccessToken,
-					"channel":      observabilityConfig.ObservabilityConfigChannel,
-					"repository":   observabilityConfig.ObservabilityConfigRepo,
-				},
-			},
-		}...).
+			})
+	}
+
+	syncset, err := clustersmgmtv1.NewSyncset().
+		ID(syncsetName).
+		Resources(resources...).
 		Build()
 	return syncset, err
 }
