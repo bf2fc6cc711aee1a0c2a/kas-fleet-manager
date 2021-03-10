@@ -1,4 +1,4 @@
-#### Performance tests for Managed Service API for Kafka
+# Performance tests for Managed Service API for Kafka
 
 Performance tests utilize [locust](https://docs.locust.io/en/stable/api.html) and all the relevant code is available in `./test/performance` folder. Additionally, short living tokens are obtained with help of a small http server running from `test/performance/token_api/main.go`
 
@@ -22,7 +22,7 @@ Optional parameters (if not provided, they will default to sensible and tested v
 | PERF_TEST_RUN_TIME                        | String  | PERF_TEST_RUN_TIME=120m                       | runtime of the performance test. Must be in minutes                                                                                                                                                                                                                                        |
 | PERF_TEST_USER_SPAWN_RATE                 | Integer | PERF_TEST_USER_SPAWN_RATE=1                   | The rate per second in which locust users are spawned
 
-#### Run the performance tests
+## Run the performance tests
 
 To trigger the test (executed from the root of this repo), run:
 
@@ -30,7 +30,7 @@ To trigger the test (executed from the root of this repo), run:
 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> make test/performance
 ```
 
-#### Build and push the images
+## Build and push the images
 
 Make sure login quay.io using a robot account. The credentail are saved under rhoas/robots/ inisde vault. 
 
@@ -39,3 +39,44 @@ Make sure login quay.io using a robot account. The credentail are saved under rh
 
  make test/performance/image/push
 ```
+
+## Troubleshooting
+Very rarely, after stopping the tests manually and starting them again error similar to one below may appear:
+
+```
+secondary_1  | Traceback (most recent call last):
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/connection.py", line 159, in _new_conn
+secondary_1  |     conn = connection.create_connection(
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/util/connection.py", line 84, in create_connection
+secondary_1  |     raise err
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/util/connection.py", line 74, in create_connection
+secondary_1  |     sock.connect(sa)
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/gevent/_socket3.py", line 407, in connect
+secondary_1  |     raise error(err, strerror(err))
+secondary_1  | ConnectionRefusedError: [Errno 111] Connection refused
+secondary_1  | 
+secondary_1  | During handling of the above exception, another exception occurred:
+secondary_1  | 
+secondary_1  | Traceback (most recent call last):
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/connectionpool.py", line 670, in urlopen
+secondary_1  |     httplib_response = self._make_request(
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/connectionpool.py", line 392, in _make_request
+secondary_1  |     conn.request(method, url, **httplib_request_kw)
+secondary_1  |   File "/usr/local/lib/python3.9/http/client.py", line 1255, in request
+secondary_1  |     self._send_request(method, url, body, headers, encode_chunked)
+secondary_1  |   File "/usr/local/lib/python3.9/http/client.py", line 1301, in _send_request
+secondary_1  |     self.endheaders(body, encode_chunked=encode_chunked)
+secondary_1  |   File "/usr/local/lib/python3.9/http/client.py", line 1250, in endheaders
+secondary_1  |     self._send_output(message_body, encode_chunked=encode_chunked)
+secondary_1  |   File "/usr/local/lib/python3.9/http/client.py", line 1010, in _send_output
+secondary_1  |     self.send(msg)
+secondary_1  |   File "/usr/local/lib/python3.9/http/client.py", line 950, in send
+secondary_1  |     self.connect()
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/connection.py", line 187, in connect
+secondary_1  |     conn = self._new_conn()
+secondary_1  |   File "/usr/local/lib/python3.9/site-packages/urllib3/connection.py", line 171, in _new_conn
+secondary_1  |     raise NewConnectionError(
+secondary_1  | urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPConnection object at 0x7fd16826b4f0>: Failed to establish a new connection: [Errno 111] Connection refused
+```
+
+This will prevent from hitting the endpoints and to resolve this stop the tests manually again and restart the test
