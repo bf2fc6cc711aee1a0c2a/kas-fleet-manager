@@ -188,7 +188,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 		nodesToScaleUp := d.calculateDesiredNodesToScaleUp(cluster, status)
 		desiredNodesAfterScaleActions = currentNodes + nodesToScaleUp
 		glog.V(10).Infof("Increasing reported current number of nodes '%v' by '%v'", currentNodes, nodesToScaleUp)
-		_, err := d.clusterService.SetComputeNodes(cluster.ID, desiredNodesAfterScaleActions)
+		_, err := d.clusterService.SetComputeNodes(cluster.ClusterID, desiredNodesAfterScaleActions)
 		if err != nil {
 			return currentNodes, err
 		}
@@ -207,7 +207,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 		desiredNodesAfterScaleActions = currentNodes - nodesToScaleDown
 		if desiredNodesAfterScaleActions > 0 {
 			glog.V(10).Infof("Decreasing reported current number of nodes '%v' by '%v'", currentNodes, nodesToScaleDown)
-			_, err := d.clusterService.SetComputeNodes(cluster.ID, desiredNodesAfterScaleActions)
+			_, err := d.clusterService.SetComputeNodes(cluster.ClusterID, desiredNodesAfterScaleActions)
 			if err != nil {
 				return currentNodes, err
 			}
