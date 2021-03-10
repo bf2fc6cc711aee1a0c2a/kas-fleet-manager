@@ -16,6 +16,7 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
+      - 'test/performance/**'
       
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, edited]
@@ -30,7 +31,7 @@ on:
       - 'docs/**'
       - 'pkg/api/openapi/docs/**'
       - 'pkg/api/openapi/.openapi-generator-ignore'
-
+      - 'test/performance/**'
 
 env:
   # set ocm env to integration
