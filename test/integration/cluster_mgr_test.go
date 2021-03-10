@@ -24,7 +24,7 @@ import (
 
 const (
 	clusterIDAssignTimeout = 5 * time.Minute
-	timeout                = 2 * time.Hour
+	timeout                = 3 * time.Hour
 	interval               = 10 * time.Second
 	readyWaitTime          = 30 * time.Minute
 )
