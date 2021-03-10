@@ -5,7 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -15,22 +15,22 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 
 // KasFleetshardOperatorAddonMock is a mock implementation of KasFleetshardOperatorAddon.
 //
-//     func TestSomethingThatUsesKasFleetshardOperatorAddon(t *testing.T) {
+// 	func TestSomethingThatUsesKasFleetshardOperatorAddon(t *testing.T) {
 //
-//         // make and configure a mocked KasFleetshardOperatorAddon
-//         mockedKasFleetshardOperatorAddon := &KasFleetshardOperatorAddonMock{
-//             ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
-// 	               panic("mock out the Provision method")
-//             },
-//         }
+// 		// make and configure a mocked KasFleetshardOperatorAddon
+// 		mockedKasFleetshardOperatorAddon := &KasFleetshardOperatorAddonMock{
+// 			ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the Provision method")
+// 			},
+// 		}
 //
-//         // use mockedKasFleetshardOperatorAddon in code that requires KasFleetshardOperatorAddon
-//         // and then make assertions.
+// 		// use mockedKasFleetshardOperatorAddon in code that requires KasFleetshardOperatorAddon
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type KasFleetshardOperatorAddonMock struct {
 	// ProvisionFunc mocks the Provision method.
-	ProvisionFunc func(cluster api.Cluster) (bool, *errors.ServiceError)
+	ProvisionFunc func(cluster api.Cluster) (bool, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -44,7 +44,7 @@ type KasFleetshardOperatorAddonMock struct {
 }
 
 // Provision calls ProvisionFunc.
-func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
+func (mock *KasFleetshardOperatorAddonMock) Provision(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
 	if mock.ProvisionFunc == nil {
 		panic("KasFleetshardOperatorAddonMock.ProvisionFunc: method is nil but KasFleetshardOperatorAddon.Provision was just called")
 	}

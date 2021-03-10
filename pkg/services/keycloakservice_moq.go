@@ -7,7 +7,7 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -17,88 +17,88 @@ var _ KeycloakService = &KeycloakServiceMock{}
 
 // KeycloakServiceMock is a mock implementation of KeycloakService.
 //
-//     func TestSomethingThatUsesKeycloakService(t *testing.T) {
+// 	func TestSomethingThatUsesKeycloakService(t *testing.T) {
 //
-//         // make and configure a mocked KeycloakService
-//         mockedKeycloakService := &KeycloakServiceMock{
-//             CreateServiceAccountFunc: func(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the CreateServiceAccount method")
-//             },
-//             DeRegisterKafkaClientInSSOFunc: func(kafkaNamespace string) *errors.ServiceError {
-// 	               panic("mock out the DeRegisterKafkaClientInSSO method")
-//             },
-//             DeleteServiceAccountFunc: func(ctx context.Context, clientId string) *errors.ServiceError {
-// 	               panic("mock out the DeleteServiceAccount method")
-//             },
-//             GetConfigFunc: func() *config.KeycloakConfig {
-// 	               panic("mock out the GetConfig method")
-//             },
-//             GetSecretForRegisteredKafkaClientFunc: func(kafkaClusterName string) (string, *errors.ServiceError) {
-// 	               panic("mock out the GetSecretForRegisteredKafkaClient method")
-//             },
-//             GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the GetServiceAccountById method")
-//             },
-//             IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
-// 	               panic("mock out the IsKafkaClientExist method")
-//             },
-//             ListServiceAccFunc: func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the ListServiceAcc method")
-//             },
-//             RegisterConnectorFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the RegisterConnectorFleetshardOperatorServiceAccount method")
-//             },
-//             RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-// 	               panic("mock out the RegisterKafkaClientInSSO method")
-//             },
-//             RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
-//             },
-//             ResetServiceAccountCredentialsFunc: func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
-// 	               panic("mock out the ResetServiceAccountCredentials method")
-//             },
-//         }
+// 		// make and configure a mocked KeycloakService
+// 		mockedKeycloakService := &KeycloakServiceMock{
+// 			CreateServiceAccountFunc: func(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *apiErrors.ServiceError) {
+// 				panic("mock out the CreateServiceAccount method")
+// 			},
+// 			DeRegisterKafkaClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+// 				panic("mock out the DeRegisterKafkaClientInSSO method")
+// 			},
+// 			DeleteServiceAccountFunc: func(ctx context.Context, clientId string) *apiErrors.ServiceError {
+// 				panic("mock out the DeleteServiceAccount method")
+// 			},
+// 			GetConfigFunc: func() *config.KeycloakConfig {
+// 				panic("mock out the GetConfig method")
+// 			},
+// 			GetSecretForRegisteredKafkaClientFunc: func(kafkaClusterName string) (string, *apiErrors.ServiceError) {
+// 				panic("mock out the GetSecretForRegisteredKafkaClient method")
+// 			},
+// 			GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *apiErrors.ServiceError) {
+// 				panic("mock out the GetServiceAccountById method")
+// 			},
+// 			IsKafkaClientExistFunc: func(clientId string) *apiErrors.ServiceError {
+// 				panic("mock out the IsKafkaClientExist method")
+// 			},
+// 			ListServiceAccFunc: func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *apiErrors.ServiceError) {
+// 				panic("mock out the ListServiceAcc method")
+// 			},
+// 			RegisterConnectorFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *apiErrors.ServiceError) {
+// 				panic("mock out the RegisterConnectorFleetshardOperatorServiceAccount method")
+// 			},
+// 			RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *apiErrors.ServiceError) {
+// 				panic("mock out the RegisterKafkaClientInSSO method")
+// 			},
+// 			RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *apiErrors.ServiceError) {
+// 				panic("mock out the RegisterKasFleetshardOperatorServiceAccount method")
+// 			},
+// 			ResetServiceAccountCredentialsFunc: func(ctx context.Context, clientId string) (*api.ServiceAccount, *apiErrors.ServiceError) {
+// 				panic("mock out the ResetServiceAccountCredentials method")
+// 			},
+// 		}
 //
-//         // use mockedKeycloakService in code that requires KeycloakService
-//         // and then make assertions.
+// 		// use mockedKeycloakService in code that requires KeycloakService
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type KeycloakServiceMock struct {
 	// CreateServiceAccountFunc mocks the CreateServiceAccount method.
-	CreateServiceAccountFunc func(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
+	CreateServiceAccountFunc func(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *apiErrors.ServiceError)
 
 	// DeRegisterKafkaClientInSSOFunc mocks the DeRegisterKafkaClientInSSO method.
-	DeRegisterKafkaClientInSSOFunc func(kafkaNamespace string) *errors.ServiceError
+	DeRegisterKafkaClientInSSOFunc func(kafkaNamespace string) *apiErrors.ServiceError
 
 	// DeleteServiceAccountFunc mocks the DeleteServiceAccount method.
-	DeleteServiceAccountFunc func(ctx context.Context, clientId string) *errors.ServiceError
+	DeleteServiceAccountFunc func(ctx context.Context, clientId string) *apiErrors.ServiceError
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *config.KeycloakConfig
 
 	// GetSecretForRegisteredKafkaClientFunc mocks the GetSecretForRegisteredKafkaClient method.
-	GetSecretForRegisteredKafkaClientFunc func(kafkaClusterName string) (string, *errors.ServiceError)
+	GetSecretForRegisteredKafkaClientFunc func(kafkaClusterName string) (string, *apiErrors.ServiceError)
 
 	// GetServiceAccountByIdFunc mocks the GetServiceAccountById method.
-	GetServiceAccountByIdFunc func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
+	GetServiceAccountByIdFunc func(ctx context.Context, id string) (*api.ServiceAccount, *apiErrors.ServiceError)
 
 	// IsKafkaClientExistFunc mocks the IsKafkaClientExist method.
-	IsKafkaClientExistFunc func(clientId string) *errors.ServiceError
+	IsKafkaClientExistFunc func(clientId string) *apiErrors.ServiceError
 
 	// ListServiceAccFunc mocks the ListServiceAcc method.
-	ListServiceAccFunc func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
+	ListServiceAccFunc func(ctx context.Context, first int, max int) ([]api.ServiceAccount, *apiErrors.ServiceError)
 
 	// RegisterConnectorFleetshardOperatorServiceAccountFunc mocks the RegisterConnectorFleetshardOperatorServiceAccount method.
-	RegisterConnectorFleetshardOperatorServiceAccountFunc func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	RegisterConnectorFleetshardOperatorServiceAccountFunc func(agentClusterId string, roleName string) (*api.ServiceAccount, *apiErrors.ServiceError)
 
 	// RegisterKafkaClientInSSOFunc mocks the RegisterKafkaClientInSSO method.
-	RegisterKafkaClientInSSOFunc func(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
+	RegisterKafkaClientInSSOFunc func(kafkaNamespace string, orgId string) (string, *apiErrors.ServiceError)
 
 	// RegisterKasFleetshardOperatorServiceAccountFunc mocks the RegisterKasFleetshardOperatorServiceAccount method.
-	RegisterKasFleetshardOperatorServiceAccountFunc func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	RegisterKasFleetshardOperatorServiceAccountFunc func(agentClusterId string, roleName string) (*api.ServiceAccount, *apiErrors.ServiceError)
 
 	// ResetServiceAccountCredentialsFunc mocks the ResetServiceAccountCredentials method.
-	ResetServiceAccountCredentialsFunc func(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
+	ResetServiceAccountCredentialsFunc func(ctx context.Context, clientId string) (*api.ServiceAccount, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -194,7 +194,7 @@ type KeycloakServiceMock struct {
 }
 
 // CreateServiceAccount calls CreateServiceAccountFunc.
-func (mock *KeycloakServiceMock) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *apiErrors.ServiceError) {
 	if mock.CreateServiceAccountFunc == nil {
 		panic("KeycloakServiceMock.CreateServiceAccountFunc: method is nil but KeycloakService.CreateServiceAccount was just called")
 	}
@@ -229,7 +229,7 @@ func (mock *KeycloakServiceMock) CreateServiceAccountCalls() []struct {
 }
 
 // DeRegisterKafkaClientInSSO calls DeRegisterKafkaClientInSSOFunc.
-func (mock *KeycloakServiceMock) DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError {
+func (mock *KeycloakServiceMock) DeRegisterKafkaClientInSSO(kafkaNamespace string) *apiErrors.ServiceError {
 	if mock.DeRegisterKafkaClientInSSOFunc == nil {
 		panic("KeycloakServiceMock.DeRegisterKafkaClientInSSOFunc: method is nil but KeycloakService.DeRegisterKafkaClientInSSO was just called")
 	}
@@ -260,7 +260,7 @@ func (mock *KeycloakServiceMock) DeRegisterKafkaClientInSSOCalls() []struct {
 }
 
 // DeleteServiceAccount calls DeleteServiceAccountFunc.
-func (mock *KeycloakServiceMock) DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError {
+func (mock *KeycloakServiceMock) DeleteServiceAccount(ctx context.Context, clientId string) *apiErrors.ServiceError {
 	if mock.DeleteServiceAccountFunc == nil {
 		panic("KeycloakServiceMock.DeleteServiceAccountFunc: method is nil but KeycloakService.DeleteServiceAccount was just called")
 	}
@@ -321,7 +321,7 @@ func (mock *KeycloakServiceMock) GetConfigCalls() []struct {
 }
 
 // GetSecretForRegisteredKafkaClient calls GetSecretForRegisteredKafkaClientFunc.
-func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *apiErrors.ServiceError) {
 	if mock.GetSecretForRegisteredKafkaClientFunc == nil {
 		panic("KeycloakServiceMock.GetSecretForRegisteredKafkaClientFunc: method is nil but KeycloakService.GetSecretForRegisteredKafkaClient was just called")
 	}
@@ -352,7 +352,7 @@ func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClientCalls() []stru
 }
 
 // GetServiceAccountById calls GetServiceAccountByIdFunc.
-func (mock *KeycloakServiceMock) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *apiErrors.ServiceError) {
 	if mock.GetServiceAccountByIdFunc == nil {
 		panic("KeycloakServiceMock.GetServiceAccountByIdFunc: method is nil but KeycloakService.GetServiceAccountById was just called")
 	}
@@ -387,7 +387,7 @@ func (mock *KeycloakServiceMock) GetServiceAccountByIdCalls() []struct {
 }
 
 // IsKafkaClientExist calls IsKafkaClientExistFunc.
-func (mock *KeycloakServiceMock) IsKafkaClientExist(clientId string) *errors.ServiceError {
+func (mock *KeycloakServiceMock) IsKafkaClientExist(clientId string) *apiErrors.ServiceError {
 	if mock.IsKafkaClientExistFunc == nil {
 		panic("KeycloakServiceMock.IsKafkaClientExistFunc: method is nil but KeycloakService.IsKafkaClientExist was just called")
 	}
@@ -418,7 +418,7 @@ func (mock *KeycloakServiceMock) IsKafkaClientExistCalls() []struct {
 }
 
 // ListServiceAcc calls ListServiceAccFunc.
-func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *apiErrors.ServiceError) {
 	if mock.ListServiceAccFunc == nil {
 		panic("KeycloakServiceMock.ListServiceAccFunc: method is nil but KeycloakService.ListServiceAcc was just called")
 	}
@@ -457,7 +457,7 @@ func (mock *KeycloakServiceMock) ListServiceAccCalls() []struct {
 }
 
 // RegisterConnectorFleetshardOperatorServiceAccount calls RegisterConnectorFleetshardOperatorServiceAccountFunc.
-func (mock *KeycloakServiceMock) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *apiErrors.ServiceError) {
 	if mock.RegisterConnectorFleetshardOperatorServiceAccountFunc == nil {
 		panic("KeycloakServiceMock.RegisterConnectorFleetshardOperatorServiceAccountFunc: method is nil but KeycloakService.RegisterConnectorFleetshardOperatorServiceAccount was just called")
 	}
@@ -492,7 +492,7 @@ func (mock *KeycloakServiceMock) RegisterConnectorFleetshardOperatorServiceAccou
 }
 
 // RegisterKafkaClientInSSO calls RegisterKafkaClientInSSOFunc.
-func (mock *KeycloakServiceMock) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *apiErrors.ServiceError) {
 	if mock.RegisterKafkaClientInSSOFunc == nil {
 		panic("KeycloakServiceMock.RegisterKafkaClientInSSOFunc: method is nil but KeycloakService.RegisterKafkaClientInSSO was just called")
 	}
@@ -527,7 +527,7 @@ func (mock *KeycloakServiceMock) RegisterKafkaClientInSSOCalls() []struct {
 }
 
 // RegisterKasFleetshardOperatorServiceAccount calls RegisterKasFleetshardOperatorServiceAccountFunc.
-func (mock *KeycloakServiceMock) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *apiErrors.ServiceError) {
 	if mock.RegisterKasFleetshardOperatorServiceAccountFunc == nil {
 		panic("KeycloakServiceMock.RegisterKasFleetshardOperatorServiceAccountFunc: method is nil but KeycloakService.RegisterKasFleetshardOperatorServiceAccount was just called")
 	}
@@ -562,7 +562,7 @@ func (mock *KeycloakServiceMock) RegisterKasFleetshardOperatorServiceAccountCall
 }
 
 // ResetServiceAccountCredentials calls ResetServiceAccountCredentialsFunc.
-func (mock *KeycloakServiceMock) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError) {
+func (mock *KeycloakServiceMock) ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *apiErrors.ServiceError) {
 	if mock.ResetServiceAccountCredentialsFunc == nil {
 		panic("KeycloakServiceMock.ResetServiceAccountCredentialsFunc: method is nil but KeycloakService.ResetServiceAccountCredentials was just called")
 	}

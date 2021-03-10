@@ -7,9 +7,9 @@ import (
 	"context"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
+	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -19,94 +19,94 @@ var _ KafkaService = &KafkaServiceMock{}
 
 // KafkaServiceMock is a mock implementation of KafkaService.
 //
-//     func TestSomethingThatUsesKafkaService(t *testing.T) {
+// 	func TestSomethingThatUsesKafkaService(t *testing.T) {
 //
-//         // make and configure a mocked KafkaService
-//         mockedKafkaService := &KafkaServiceMock{
-//             ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
-// 	               panic("mock out the ChangeKafkaCNAMErecords method")
-//             },
-//             CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-// 	               panic("mock out the Create method")
-//             },
-//             DeleteFunc: func(in1 *api.KafkaRequest) *errors.ServiceError {
-// 	               panic("mock out the Delete method")
-//             },
-//             GetFunc: func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
-// 	               panic("mock out the Get method")
-//             },
-//             GetByClusterIDFunc: func(clusterID string) (api.KafkaList, *errors.ServiceError) {
-// 	               panic("mock out the GetByClusterID method")
-//             },
-//             GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-// 	               panic("mock out the GetById method")
-//             },
-//             GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError) {
-// 	               panic("mock out the GetManagedKafkaByClusterID method")
-//             },
-//             ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
-// 	               panic("mock out the List method")
-//             },
-//             ListByStatusFunc: func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
-// 	               panic("mock out the ListByStatus method")
-//             },
-//             RegisterKafkaDeprovisionJobFunc: func(ctx context.Context, id string) *errors.ServiceError {
-// 	               panic("mock out the RegisterKafkaDeprovisionJob method")
-//             },
-//             RegisterKafkaJobFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-// 	               panic("mock out the RegisterKafkaJob method")
-//             },
-//             UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-// 	               panic("mock out the Update method")
-//             },
-//             UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-// 	               panic("mock out the UpdateStatus method")
-//             },
-//         }
+// 		// make and configure a mocked KafkaService
+// 		mockedKafkaService := &KafkaServiceMock{
+// 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
+// 				panic("mock out the ChangeKafkaCNAMErecords method")
+// 			},
+// 			CreateFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
+// 				panic("mock out the Create method")
+// 			},
+// 			DeleteFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
+// 				panic("mock out the Delete method")
+// 			},
+// 			GetFunc: func(ctx context.Context, id string) (*api.KafkaRequest, *apiErrors.ServiceError) {
+// 				panic("mock out the Get method")
+// 			},
+// 			GetByClusterIDFunc: func(clusterID string) (api.KafkaList, *apiErrors.ServiceError) {
+// 				panic("mock out the GetByClusterID method")
+// 			},
+// 			GetByIdFunc: func(id string) (*api.KafkaRequest, *apiErrors.ServiceError) {
+// 				panic("mock out the GetById method")
+// 			},
+// 			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
+// 				panic("mock out the GetManagedKafkaByClusterID method")
+// 			},
+// 			ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
+// 				panic("mock out the List method")
+// 			},
+// 			ListByStatusFunc: func(status constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
+// 				panic("mock out the ListByStatus method")
+// 			},
+// 			RegisterKafkaDeprovisionJobFunc: func(ctx context.Context, id string) *apiErrors.ServiceError {
+// 				panic("mock out the RegisterKafkaDeprovisionJob method")
+// 			},
+// 			RegisterKafkaJobFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
+// 				panic("mock out the RegisterKafkaJob method")
+// 			},
+// 			UpdateFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
+// 				panic("mock out the Update method")
+// 			},
+// 			UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the UpdateStatus method")
+// 			},
+// 		}
 //
-//         // use mockedKafkaService in code that requires KafkaService
-//         // and then make assertions.
+// 		// use mockedKafkaService in code that requires KafkaService
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type KafkaServiceMock struct {
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
-	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError)
 
 	// CreateFunc mocks the Create method.
-	CreateFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	CreateFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(in1 *api.KafkaRequest) *errors.ServiceError
+	DeleteFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
 
 	// GetFunc mocks the Get method.
-	GetFunc func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
+	GetFunc func(ctx context.Context, id string) (*api.KafkaRequest, *apiErrors.ServiceError)
 
 	// GetByClusterIDFunc mocks the GetByClusterID method.
-	GetByClusterIDFunc func(clusterID string) (api.KafkaList, *errors.ServiceError)
+	GetByClusterIDFunc func(clusterID string) (api.KafkaList, *apiErrors.ServiceError)
 
 	// GetByIdFunc mocks the GetById method.
-	GetByIdFunc func(id string) (*api.KafkaRequest, *errors.ServiceError)
+	GetByIdFunc func(id string) (*api.KafkaRequest, *apiErrors.ServiceError)
 
 	// GetManagedKafkaByClusterIDFunc mocks the GetManagedKafkaByClusterID method.
-	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError)
+	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError)
 
 	// ListFunc mocks the List method.
-	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
+	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
-	ListByStatusFunc func(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+	ListByStatusFunc func(status constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError)
 
 	// RegisterKafkaDeprovisionJobFunc mocks the RegisterKafkaDeprovisionJob method.
-	RegisterKafkaDeprovisionJobFunc func(ctx context.Context, id string) *errors.ServiceError
+	RegisterKafkaDeprovisionJobFunc func(ctx context.Context, id string) *apiErrors.ServiceError
 
 	// RegisterKafkaJobFunc mocks the RegisterKafkaJob method.
-	RegisterKafkaJobFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	RegisterKafkaJobFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
 
 	// UpdateFunc mocks the Update method.
-	UpdateFunc func(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	UpdateFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
-	UpdateStatusFunc func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError)
+	UpdateStatusFunc func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -126,8 +126,8 @@ type KafkaServiceMock struct {
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
-			// In1 is the in1 argument value.
-			In1 *api.KafkaRequest
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *api.KafkaRequest
 		}
 		// Get holds details about calls to the Get method.
 		Get []struct {
@@ -204,7 +204,7 @@ type KafkaServiceMock struct {
 }
 
 // ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
-func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
 	if mock.ChangeKafkaCNAMErecordsFunc == nil {
 		panic("KafkaServiceMock.ChangeKafkaCNAMErecordsFunc: method is nil but KafkaService.ChangeKafkaCNAMErecords was just called")
 	}
@@ -243,7 +243,7 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
 }
 
 // Create calls CreateFunc.
-func (mock *KafkaServiceMock) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (mock *KafkaServiceMock) Create(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
 	if mock.CreateFunc == nil {
 		panic("KafkaServiceMock.CreateFunc: method is nil but KafkaService.Create was just called")
 	}
@@ -274,29 +274,29 @@ func (mock *KafkaServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *KafkaServiceMock) Delete(in1 *api.KafkaRequest) *errors.ServiceError {
+func (mock *KafkaServiceMock) Delete(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
 	if mock.DeleteFunc == nil {
 		panic("KafkaServiceMock.DeleteFunc: method is nil but KafkaService.Delete was just called")
 	}
 	callInfo := struct {
-		In1 *api.KafkaRequest
+		KafkaRequest *api.KafkaRequest
 	}{
-		In1: in1,
+		KafkaRequest: kafkaRequest,
 	}
 	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
 	mock.lockDelete.Unlock()
-	return mock.DeleteFunc(in1)
+	return mock.DeleteFunc(kafkaRequest)
 }
 
 // DeleteCalls gets all the calls that were made to Delete.
 // Check the length with:
 //     len(mockedKafkaService.DeleteCalls())
 func (mock *KafkaServiceMock) DeleteCalls() []struct {
-	In1 *api.KafkaRequest
+	KafkaRequest *api.KafkaRequest
 } {
 	var calls []struct {
-		In1 *api.KafkaRequest
+		KafkaRequest *api.KafkaRequest
 	}
 	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
@@ -305,7 +305,7 @@ func (mock *KafkaServiceMock) DeleteCalls() []struct {
 }
 
 // Get calls GetFunc.
-func (mock *KafkaServiceMock) Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
+func (mock *KafkaServiceMock) Get(ctx context.Context, id string) (*api.KafkaRequest, *apiErrors.ServiceError) {
 	if mock.GetFunc == nil {
 		panic("KafkaServiceMock.GetFunc: method is nil but KafkaService.Get was just called")
 	}
@@ -340,7 +340,7 @@ func (mock *KafkaServiceMock) GetCalls() []struct {
 }
 
 // GetByClusterID calls GetByClusterIDFunc.
-func (mock *KafkaServiceMock) GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError) {
+func (mock *KafkaServiceMock) GetByClusterID(clusterID string) (api.KafkaList, *apiErrors.ServiceError) {
 	if mock.GetByClusterIDFunc == nil {
 		panic("KafkaServiceMock.GetByClusterIDFunc: method is nil but KafkaService.GetByClusterID was just called")
 	}
@@ -371,7 +371,7 @@ func (mock *KafkaServiceMock) GetByClusterIDCalls() []struct {
 }
 
 // GetById calls GetByIdFunc.
-func (mock *KafkaServiceMock) GetById(id string) (*api.KafkaRequest, *errors.ServiceError) {
+func (mock *KafkaServiceMock) GetById(id string) (*api.KafkaRequest, *apiErrors.ServiceError) {
 	if mock.GetByIdFunc == nil {
 		panic("KafkaServiceMock.GetByIdFunc: method is nil but KafkaService.GetById was just called")
 	}
@@ -402,7 +402,7 @@ func (mock *KafkaServiceMock) GetByIdCalls() []struct {
 }
 
 // GetManagedKafkaByClusterID calls GetManagedKafkaByClusterIDFunc.
-func (mock *KafkaServiceMock) GetManagedKafkaByClusterID(clusterID string) ([]v1.ManagedKafka, *errors.ServiceError) {
+func (mock *KafkaServiceMock) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 	if mock.GetManagedKafkaByClusterIDFunc == nil {
 		panic("KafkaServiceMock.GetManagedKafkaByClusterIDFunc: method is nil but KafkaService.GetManagedKafkaByClusterID was just called")
 	}
@@ -433,7 +433,7 @@ func (mock *KafkaServiceMock) GetManagedKafkaByClusterIDCalls() []struct {
 }
 
 // List calls ListFunc.
-func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 	if mock.ListFunc == nil {
 		panic("KafkaServiceMock.ListFunc: method is nil but KafkaService.List was just called")
 	}
@@ -468,7 +468,7 @@ func (mock *KafkaServiceMock) ListCalls() []struct {
 }
 
 // ListByStatus calls ListByStatusFunc.
-func (mock *KafkaServiceMock) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
+func (mock *KafkaServiceMock) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
 	if mock.ListByStatusFunc == nil {
 		panic("KafkaServiceMock.ListByStatusFunc: method is nil but KafkaService.ListByStatus was just called")
 	}
@@ -499,7 +499,7 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 }
 
 // RegisterKafkaDeprovisionJob calls RegisterKafkaDeprovisionJobFunc.
-func (mock *KafkaServiceMock) RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
+func (mock *KafkaServiceMock) RegisterKafkaDeprovisionJob(ctx context.Context, id string) *apiErrors.ServiceError {
 	if mock.RegisterKafkaDeprovisionJobFunc == nil {
 		panic("KafkaServiceMock.RegisterKafkaDeprovisionJobFunc: method is nil but KafkaService.RegisterKafkaDeprovisionJob was just called")
 	}
@@ -534,7 +534,7 @@ func (mock *KafkaServiceMock) RegisterKafkaDeprovisionJobCalls() []struct {
 }
 
 // RegisterKafkaJob calls RegisterKafkaJobFunc.
-func (mock *KafkaServiceMock) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (mock *KafkaServiceMock) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
 	if mock.RegisterKafkaJobFunc == nil {
 		panic("KafkaServiceMock.RegisterKafkaJobFunc: method is nil but KafkaService.RegisterKafkaJob was just called")
 	}
@@ -565,7 +565,7 @@ func (mock *KafkaServiceMock) RegisterKafkaJobCalls() []struct {
 }
 
 // Update calls UpdateFunc.
-func (mock *KafkaServiceMock) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (mock *KafkaServiceMock) Update(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
 	if mock.UpdateFunc == nil {
 		panic("KafkaServiceMock.UpdateFunc: method is nil but KafkaService.Update was just called")
 	}
@@ -596,7 +596,7 @@ func (mock *KafkaServiceMock) UpdateCalls() []struct {
 }
 
 // UpdateStatus calls UpdateStatusFunc.
-func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError) {
 	if mock.UpdateStatusFunc == nil {
 		panic("KafkaServiceMock.UpdateStatusFunc: method is nil but KafkaService.UpdateStatus was just called")
 	}

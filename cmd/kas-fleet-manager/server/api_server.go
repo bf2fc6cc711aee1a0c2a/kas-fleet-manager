@@ -64,12 +64,11 @@ func NewAPIServer() Server {
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(services.Observatorium)
 
-	/* TODO
-	var authzMiddleware auth.AuthorizationMiddleware = auth.NewAuthzMiddlewareMock()
-	if env().Config.Server.EnableAuthz {
-		authzMiddleware = auth.NewAuthzMiddleware(services.AccessReview, env().Config.Authz.AuthzRules)
-	}
-	*/
+	//var authzMiddleware auth.AuthorizationMiddleware =  auth.NewAuthzMiddleware(env().Clients.OCM)
+	//if env().Config.Server.EnableAuthz {
+	//	authzMiddleware = auth.NewAuthzMiddleware(env().Clients.OCM)
+	//}
+
 
 	ocmAuthzMiddleware := auth.NewOCMAuthorizationMiddleware()
 	ocmAuthzMiddlewareRequireIssuer := ocmAuthzMiddleware.RequireIssuer(env().Config.OCM.TokenIssuerURL, errors.ErrorUnauthenticated)

@@ -51,7 +51,7 @@ func NewIntegrationClientMock(config Config) (*Client, error) {
 	if err := client.newConnection(); err != nil {
 		return nil, err
 	}
-	client.Authorization = &authorizationMock{client: client}
+	client.Authorization = &authorizationMock{}
 	return client, nil
 }
 
@@ -59,7 +59,7 @@ func NewClientMock(config Config) (*Client, error) {
 	client := &Client{
 		config: &config,
 	}
-	client.Authorization = &authorizationMock{client: client}
+	client.Authorization = &authorizationMock{}
 	return client, nil
 }
 
@@ -83,6 +83,26 @@ func (c *Client) newConnection() error {
 	}
 	c.Connection = connection
 	return nil
+}
+
+func (c *Client) NewConnWithUserToken(token string) (*sdkClient.Connection, error) {
+	builder := sdkClient.NewConnectionBuilder().
+		Logger(c.logger).
+		URL(c.config.BaseURL).
+		MetricsSubsystem("api_outbound")
+
+	if token != "" {
+		builder = builder.Tokens(token)
+	} else {
+		return nil, fmt.Errorf("Can't build OCM client connection. No Client/Secret or Token has been provided.")
+	}
+
+	connection, err := builder.Build()
+	if err != nil {
+		return nil, fmt.Errorf("Can't build OCM client connection: %s", err.Error())
+	}
+	c.Connection = connection
+	return c.Connection, nil
 }
 
 func (c *Client) Close() {
