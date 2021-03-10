@@ -128,6 +128,9 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
 					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
 						return nil, nil
 					},
 				}
@@ -157,6 +160,9 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
 					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
 						return nil, nil
 					},
 				}
@@ -185,6 +191,9 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
 					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
 						return nil, nil
 					},
 				}
@@ -220,6 +229,9 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
 					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
 						return nil, nil
 					},
 				}
