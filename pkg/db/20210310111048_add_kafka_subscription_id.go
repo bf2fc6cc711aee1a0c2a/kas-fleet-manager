@@ -5,7 +5,7 @@ import (
 	"gopkg.in/gormigrate.v1"
 )
 
-func addSubscriptionId() *gormigrate.Migration {
+func addKafkaSubscriptionId() *gormigrate.Migration {
 	type KafkaRequest struct {
 		SubscriptionId string
 	}
