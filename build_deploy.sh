@@ -72,3 +72,17 @@ make \
   image_repository="app-sre/managed-services-api" \
   docker/login \
   image/push
+
+if [[ ! -z "${RHOAS_QUAY_USER}" ]] && [[ ! -z "${RHOAS_QUAY_TOKEN}" ]]; then
+  echo "RHOAS Quay.io user and token is set, will push images to RHOAS org"
+  make \
+    DOCKER_CONFIG="${DOCKER_CONFIG}" \
+    QUAY_USER="${RHOAS_QUAY_USER}" \
+    QUAY_TOKEN="${RHOAS_QUAY_TOKEN}" \
+    version="${VERSION}" \
+    external_image_registry="quay.io" \
+    internal_image_registry="quay.io" \
+    image_repository="rhoas/kas-fleet-manager" \
+    docker/login \
+    image/push
+fi
