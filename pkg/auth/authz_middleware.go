@@ -10,6 +10,7 @@ package auth
 */
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -22,58 +23,39 @@ type AuthorizationMiddleware interface {
 }
 
 type authzMiddleware struct {
-	action       string
-	resourceType string
-
 	ocmClient *ocm.Client
 }
 
 var _ AuthorizationMiddleware = &authzMiddleware{}
 
-func NewAuthzMiddleware(ocmClient *ocm.Client, action, resourceType string) AuthorizationMiddleware {
+func NewAuthzMiddleware(ocmClient *ocm.Client) AuthorizationMiddleware {
 	return &authzMiddleware{
 		ocmClient:    ocmClient,
-		action:       action,
-		resourceType: resourceType,
 	}
 }
 
 func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
 		claims, err := GetClaimsFromContext(ctx)
 		if err != nil {
-			shared.HandleError(ctx, w, errors.ErrorUnauthenticated, err.Error())
+			shared.HandleError(r.Context(), w, errors.ErrorForbidden, err.Error())
 			return
 		}
-
-		// Get username from claims
 		username := GetUsernameFromClaims(claims)
-		if username == "" {
-			// fmt.Errorf("Authenticated username not present in request context")
-			// TODO
-			//body := api.E500.Format(r, "Authentication details not present in context")
-			//api.SendError(w, r, &body)
-			return
-		}
+		allowed, err := a.ocmClient.Authorization.IsUserHasValidSubs(ctx)
 
-		allowed, err := a.ocmClient.Authorization.AccessReview(
-			ctx, username, a.action, a.resourceType, "", "", "")
 		if err != nil {
-			// fmt.Errorf("Unable to make authorization request: %s", err)
-			// TODO
-			//body := api.E500.Format(r, "Unable to make authorization request")
-			//api.SendError(w, r, &body)
+			shared.HandleError(r.Context(), w, errors.ErrorForbidden, err.Error())
 			return
 		}
-
 		if allowed {
 			next.ServeHTTP(w, r)
 		}
 
-		// TODO
-		//body := api.E403.Format(r, "")
-		//api.SendError(w, r, &body)
+		if !allowed {
+			shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User '%s' is not authorized to access the service.", username))
+			return
+		}
 	})
 }
