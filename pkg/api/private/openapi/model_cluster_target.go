@@ -11,7 +11,7 @@ package openapi
 
 // ClusterTarget struct for ClusterTarget
 type ClusterTarget struct {
-	Kind          string `json:"kind,omitempty"`
+	Kind          string `json:"kind"`
 	Group         string `json:"group,omitempty"`
 	CloudProvider string `json:"cloud_provider,omitempty"`
 	Region        string `json:"region,omitempty"`

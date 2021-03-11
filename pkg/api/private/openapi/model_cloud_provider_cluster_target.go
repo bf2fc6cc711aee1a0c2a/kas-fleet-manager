@@ -11,7 +11,7 @@ package openapi
 
 // CloudProviderClusterTarget Targets workloads to a cloud provider
 type CloudProviderClusterTarget struct {
-	Kind          string `json:"kind,omitempty"`
+	Kind          string `json:"kind"`
 	CloudProvider string `json:"cloud_provider,omitempty"`
 	Region        string `json:"region,omitempty"`
 	MultiAz       bool   `json:"multi_az,omitempty"`

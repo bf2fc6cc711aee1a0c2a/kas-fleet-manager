@@ -740,12 +740,24 @@ paths:
           format: int64
           type: integer
         style: form
+      - description: watch for changes to the resources and return them as a stream
+          of watch events. Specify gt_version to specify the starting point.
+        explode: true
+        in: query
+        name: watch
+        required: false
+        schema:
+          type: boolean
+        style: form
       responses:
         "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConnectorList'
+            application/json;stream=watch:
+              schema:
+                $ref: '#/components/schemas/ConnectorWatchEvent'
           description: A list of connector deployments
         "401":
           content:
@@ -1196,6 +1208,22 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorList_allOf'
+    WatchEvent:
+      properties:
+        type:
+          type: string
+        error:
+          $ref: '#/components/schemas/Error'
+        object:
+          nullable: true
+          type: object
+      required:
+      - type
+      type: object
+    ConnectorWatchEvent:
+      allOf:
+      - $ref: '#/components/schemas/WatchEvent'
+      - $ref: '#/components/schemas/ConnectorWatchEvent_allOf'
     Connector:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1218,6 +1246,8 @@ components:
           type: string
         group:
           type: string
+      required:
+      - kind
       type: object
     CloudProviderClusterTarget:
       description: Targets workloads to a cloud provider
@@ -1230,6 +1260,8 @@ components:
           type: string
         multi_az:
           type: boolean
+      required:
+      - kind
       type: object
     AddonParameterList:
       description: A list of addon parameters
@@ -1449,6 +1481,10 @@ components:
             allOf:
             - $ref: '#/components/schemas/Connector'
           type: array
+    ConnectorWatchEvent_allOf:
+      properties:
+        object:
+          $ref: '#/components/schemas/Connector'
     Connector_allOf_metadata:
       properties:
         kafka_id:

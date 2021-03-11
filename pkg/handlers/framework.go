@@ -3,6 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -24,6 +28,13 @@ type handlerConfig struct {
 	Validate     []validate
 	Action       httpAction
 	ErrorHandler errorHandlerFunc
+}
+
+type eventStream struct {
+	ContentType string
+	// GetNextEvent should block until there is an event to return.  GetNextEvent should unblock and return io.EOF when if context is canceled.
+	GetNextEvent httpAction
+	Close        func()
 }
 
 type validate func() *errors.ServiceError
@@ -128,18 +139,70 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 		cfg.ErrorHandler = handleError
 	}
 
+	ctx := r.Context()
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r.Context(), w, err)
+			cfg.ErrorHandler(ctx, w, err)
 			return
 		}
 	}
 
 	results, serviceError := cfg.Action()
 	if serviceError != nil {
-		cfg.ErrorHandler(r.Context(), w, serviceError)
+		cfg.ErrorHandler(ctx, w, serviceError)
 		return
 	}
-	shared.WriteJSONResponse(w, http.StatusOK, results)
+
+	if stream, ok := results.(eventStream); ok {
+		if stream.Close != nil {
+			defer stream.Close()
+		}
+		flusher, ok := w.(http.Flusher)
+		if !ok {
+			cfg.ErrorHandler(ctx, w, errors.BadRequest("streaming unsupported"))
+			return
+		}
+
+		shared.WriteStreamJSONResponseWithContentType(w, http.StatusOK, nil, stream.ContentType)
+		for {
+			result, err := stream.GetNextEvent()
+			if result == io.EOF {
+				// the GetNextEvent should unblock and return io.EOF when the context is canceled.
+				return
+			} else if err != nil {
+				ulog := logger.NewUHCLogger(ctx)
+				operationID := logger.GetOperationID(ctx)
+				// If this is a 400 error, its the user's issue, log as info rather than error
+				if err.HttpCode >= 400 && err.HttpCode <= 499 {
+					ulog.Infof(err.Error())
+				} else {
+					ulog.Errorf(err.Error())
+				}
+				result := openapi.WatchEvent{
+					Type:  "error",
+					Error: convertToPrivateError(err.AsOpenapiError(operationID)),
+				}
+				_ = json.NewEncoder(w).Encode(result)
+				return
+			} else {
+				_ = json.NewEncoder(w).Encode(result)
+				_, _ = fmt.Fprint(w, "\n")
+				flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)
+			}
+		}
+	} else {
+		shared.WriteJSONResponse(w, http.StatusOK, results)
+	}
+
+}
+func convertToPrivateError(e publicOpenapi.Error) openapi.Error {
+	return openapi.Error{
+		Id:          e.Id,
+		Kind:        e.Kind,
+		Href:        e.Href,
+		Code:        e.Code,
+		Reason:      e.Reason,
+		OperationId: e.OperationId,
+	}
 }
