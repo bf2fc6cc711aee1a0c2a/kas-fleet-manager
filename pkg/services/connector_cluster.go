@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	goerrors "errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/jinzhu/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -152,6 +153,12 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 	if err := dbConn.Model(&m).Update("status", status).Error; err != nil {
 		return errors.GeneralError("failed to update status: %s", err.Error())
 	}
+
+	_ = db.AddPostCommitAction(ctx, func() {
+		// Wake up the reconcile loop...
+		signalbus.Default.Notify("reconcile:connector")
+	})
+
 	return nil
 }
 

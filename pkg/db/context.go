@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -36,26 +37,56 @@ func TxContext() (ctx context.Context, err error) {
 }
 
 // Resolve resolves the current transaction according to the rollback flag.
-func Resolve(ctx context.Context) {
-	ulog := logger.NewUHCLogger(ctx)
+func Resolve(ctx context.Context) error {
 	tx, ok := ctx.Value(transactionKey).(*txFactory)
 	if !ok {
-		ulog.Errorf("Could not retrieve transaction from context")
-		return
+		return fmt.Errorf("Could not retrieve transaction from context")
 	}
-
+	if tx.resolved {
+		return nil
+	}
+	tx.resolved = true
+	postCommitActions := tx.postCommitActions
+	tx.postCommitActions = nil
 	if tx.markedForRollback() {
-		if err := rollback(ctx); err != nil {
-			ulog.Errorf("Could not rollback transaction: %v", err)
+		if err := tx.tx.Rollback(); err != nil {
+			return fmt.Errorf("Could not rollback transaction: %v", err)
 		}
+		ulog := logger.NewUHCLogger(ctx)
 		ulog.Infof("Rolled back transaction")
 	} else {
-		if err := commit(ctx); err != nil {
+		if err := tx.tx.Commit(); err != nil {
 			// TODO:  what does the user see when this occurs? seems like they will get a false positive
-			ulog.Errorf("Could not commit transaction: %v", err)
-			return
+			return fmt.Errorf("Could not commit transaction: %v", err)
+		}
+		for _, f := range postCommitActions {
+			f()
 		}
 	}
+	return nil
+}
+
+func Begin(ctx context.Context) error {
+	tx, ok := ctx.Value(transactionKey).(*txFactory)
+	if !ok {
+		return fmt.Errorf("Could not retrieve transaction from context")
+	}
+
+	err := tx.begin()
+	if err != nil {
+		return fmt.Errorf("Could not begin transaction: %v", err)
+	}
+	return nil
+}
+
+func AddPostCommitAction(ctx context.Context, f func()) error {
+	tx, ok := ctx.Value(transactionKey).(*txFactory)
+	if !ok {
+		return fmt.Errorf("Could not retrieve transaction from context")
+	}
+
+	tx.postCommitActions = append(tx.postCommitActions, f)
+	return nil
 }
 
 // FromContext Retrieves the transaction from the context.
@@ -76,23 +107,5 @@ func MarkForRollback(ctx context.Context, err error) {
 		return
 	}
 	ulog.Infof("Marked transaction for rollback, err: %v", err)
-	transaction.rollbackFlag.val = true
-}
-
-// commit commits the transaction stored in context or returns an err if one occurred.
-func commit(ctx context.Context) error {
-	tx, err := FromContext(ctx)
-	if err != nil {
-		return err
-	}
-	return tx.Commit()
-}
-
-// rollback rollbacks the transaction stored in context or returns an err if one occurred..
-func rollback(ctx context.Context) error {
-	tx, err := FromContext(ctx)
-	if err != nil {
-		return err
-	}
-	return tx.Rollback()
+	transaction.rollbackFlag = true
 }

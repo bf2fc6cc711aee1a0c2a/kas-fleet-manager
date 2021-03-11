@@ -3,6 +3,8 @@ package services
 import (
 	"context"
 	goerrors "errors"
+	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/jinzhu/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -200,6 +202,12 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
 	if err := dbConn.First(&resource).Error; err != nil {
 		return handleGetError("Connector", "id", resource.ID, err)
+	}
+
+	if resource.ClusterID != "" {
+		_ = db.AddPostCommitAction(ctx, func() {
+			signalbus.Default.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", resource.ClusterID))
+		})
 	}
 
 	return nil

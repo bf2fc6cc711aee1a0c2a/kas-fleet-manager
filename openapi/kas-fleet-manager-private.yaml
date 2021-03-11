@@ -588,6 +588,11 @@ paths:
           schema:
             type: integer
             format: int64
+        - in: query
+          name: watch
+          description: watch for changes to the resources and return them as a stream of watch events. Specify gt_version to specify the starting point.
+          schema:
+            type: boolean
 
       responses:
         '200':
@@ -595,6 +600,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConnectorList'
+            application/json;stream=watch:
+              schema:
+                $ref: '#/components/schemas/ConnectorWatchEvent'
           description: A list of connector deployments
         '401':
           content:
@@ -803,6 +811,7 @@ components:
           type: integer
         total:
           type: integer
+
     Error:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -990,6 +999,30 @@ components:
               items:
                 allOf:
                   - $ref: '#/components/schemas/Connector'
+
+    WatchEvent:
+      required:
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+        error:
+          nullable: true
+          $ref: "#/components/schemas/Error"
+        object:
+          type: object
+          nullable: true
+
+    ConnectorWatchEvent:
+      allOf:
+        - $ref: '#/components/schemas/WatchEvent'
+        - type: object
+          properties:
+            object:
+              nullable: true
+              $ref: '#/components/schemas/Connector'
+
     Connector:
       description: A connector holds the configuration to connect a Kafka topic to another system.
       allOf:
@@ -1037,6 +1070,8 @@ components:
     AddonClusterTarget:
       description: "Targets workloads to an addon cluster"
       type: object
+      required:
+        - kind
       properties:
         kind:
           type: string
@@ -1046,6 +1081,8 @@ components:
     CloudProviderClusterTarget:
       description: "Targets workloads to a cloud provider"
       type: object
+      required:
+        - kind
       properties:
         kind:
           type: string

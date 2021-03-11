@@ -84,21 +84,23 @@ const defaultRollbackPolicy = false
 
 // TxFactory represents an sql transaction
 type txFactory struct {
-	rollbackFlag *rollbackFlag
-	tx           *sql.Tx
-	txid         int64
-}
-
-// rollbackFlag represents wether a transaction should be rolled back.
-type rollbackFlag struct {
-	val bool
+	resolved          bool
+	rollbackFlag      bool
+	tx                *sql.Tx
+	txid              int64
+	postCommitActions []func()
 }
 
 // newTransaction constructs a new Transaction object.
 func newTransaction() (*txFactory, error) {
+	f := &txFactory{}
+	return f, f.begin()
+}
+
+func (f *txFactory) begin() error {
 	tx, err := singleton.DB.DB().Begin()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var txid int64 = 0
@@ -109,20 +111,18 @@ func newTransaction() (*txFactory, error) {
 	if row != nil {
 		err := row.Scan(&txid)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return &txFactory{
-		tx:   tx,
-		txid: txid,
-		rollbackFlag: &rollbackFlag{
-			val: defaultRollbackPolicy,
-		},
-	}, nil
+	f.tx = tx
+	f.txid = txid
+	f.resolved = false
+	f.rollbackFlag = defaultRollbackPolicy
+	return nil
 }
 
 // markedForRollback returns true if a transaction is flagged for rollback and false otherwise.
 func (tx *txFactory) markedForRollback() bool {
-	return tx.rollbackFlag.val
+	return tx.rollbackFlag
 }

@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"sync"
 	"time"
 
@@ -38,11 +39,14 @@ func (r *Reconciler) Start(worker Worker) {
 	worker.GetSyncGroup().Add(1)
 	worker.SetIsRunning(true)
 
+	sub := signalbus.Default.Subscribe("reconcile:" + worker.GetWorkerType())
+
 	glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
 	//starts reconcile immediately and then on every repeat interval
 	worker.reconcile()
 	ticker := time.NewTicker(RepeatInterval)
 	go func() {
+		defer sub.Close()
 		for {
 			select {
 			case wg := <-r.wakeup: //we were asked to wake up...
@@ -52,6 +56,9 @@ func (r *Reconciler) Start(worker Worker) {
 					wg.Done()
 				}
 			case <-ticker.C: //time out
+				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
+				worker.reconcile()
+			case <-sub.Signal():
 				glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
 				worker.reconcile()
 			case <-*worker.GetStopChan():

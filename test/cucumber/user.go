@@ -1,4 +1,4 @@
-// Creating a user in the default organization:
+// Creating a user in a random organization:
 //      Given a user named "Bob"
 // Creating a user in a given organization:
 //      Given a user named "Jimmy" in organization "13639843"
@@ -10,6 +10,7 @@ package cucumber
 
 import (
 	"context"
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/cucumber/godog"
 )
@@ -25,8 +26,11 @@ func init() {
 
 func (s *TestSuite) createUserNamed(name string) error {
 	// this value if taken from config/allow-list-configuration.yaml
-	orgId := "13640203"
-	return s.createUserNamedInOrganization(name, orgId)
+	s.Mu.Lock()
+	orgId := s.nextOrgId
+	s.nextOrgId += 1
+	s.Mu.Unlock()
+	return s.createUserNamedInOrganization(name, fmt.Sprintf("%d", orgId))
 }
 
 func (s *TestSuite) createUserNamedInOrganization(name string, orgid string) error {

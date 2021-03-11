@@ -9,8 +9,9 @@
 
 package openapi
 
-// AddonClusterTarget Targets workloads to an addon cluster
-type AddonClusterTarget struct {
-	Kind  string `json:"kind"`
-	Group string `json:"group,omitempty"`
+// ConnectorWatchEvent struct for ConnectorWatchEvent
+type ConnectorWatchEvent struct {
+	Type   string    `json:"type"`
+	Error  Error     `json:"error,omitempty"`
+	Object Connector `json:"object,omitempty"`
 }

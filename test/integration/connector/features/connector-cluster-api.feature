@@ -5,9 +5,9 @@ Feature: create a a connector
 
   Background:
     Given the path prefix is "/api/managed-services-api"
-    Given a user named "Greg"
-    Given a user named "Coworker Sally"
-    Given a user named "Evil Bob" in organization "12147054"
+    Given a user named "Greg" in organization "13640203"
+    Given a user named "Coworker Sally" in organization "13640203"
+    Given a user named "Evil Bob"
 
   Scenario: Greg creates lists and deletes a connector addon cluster
     Given I am logged in as "Greg"

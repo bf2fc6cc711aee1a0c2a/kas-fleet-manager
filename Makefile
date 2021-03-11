@@ -295,6 +295,7 @@ openapi/validate: openapi-generator
 # generate the openapi schema and data/generated/openapi/openapi.go
 openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
+	rm -rf pkg/api/private/openapi
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi --ignore-file-override ./.openapi-generator-ignore

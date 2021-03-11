@@ -40,6 +40,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
@@ -55,10 +56,11 @@ import (
 // TestSuite holds the sate global to all the test scenarios.
 // It is accessed concurrently from all test scenarios.
 type TestSuite struct {
-	ApiURL string
-	Helper *test.Helper
-	Mu     sync.Mutex
-	users  map[string]*TestUser
+	ApiURL    string
+	Helper    *test.Helper
+	Mu        sync.Mutex
+	users     map[string]*TestUser
+	nextOrgId uint32
 }
 
 // TestUser represents a user that can login to the system.  The same users are shared by
@@ -143,6 +145,8 @@ type TestSession struct {
 	RespBytes           []byte
 	respJson            interface{}
 	AuthorizationHeader string
+	EventStream         bool
+	EventStreamEvents   chan interface{}
 }
 
 // RespJson returns the last http response body as json
@@ -188,9 +192,23 @@ func init() {
 func TestMain(m *testing.M, helper *test.Helper) {
 	helper.NewApiClient()
 	s := &TestSuite{
-		Helper: helper,
-		ApiURL: helper.NewApiClient().GetConfig().BasePath,
-		users:  map[string]*TestUser{},
+		Helper:    helper,
+		ApiURL:    helper.NewApiClient().GetConfig().BasePath,
+		users:     map[string]*TestUser{},
+		nextOrgId: 20000000,
+	}
+
+	// Generate lots of org id's that scenarios can use to avoid
+	// conflicting with each other..
+	allow := helper.Env().Config.AllowList
+	if allow != nil {
+		for i := 0; i < 1000; i++ {
+			allow.AllowList.Organisations = append(allow.AllowList.Organisations, config.Organisation{
+				Id:                  fmt.Sprintf("%d", 20000000+i),
+				AllowAll:            true,
+				MaxAllowedInstances: 1,
+			})
+		}
 	}
 
 	for _, arg := range os.Args[1:] {

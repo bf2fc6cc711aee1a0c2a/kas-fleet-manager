@@ -38,7 +38,13 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Returned from handlers and resolve transactions.
-		defer func() { Resolve(r.Context()) }()
+		defer func() {
+			err := Resolve(r.Context())
+			if err != nil {
+				ulog := logger.NewUHCLogger(ctx)
+				ulog.Errorf("%s", err)
+			}
+		}()
 
 		// Continue handling requests.
 		next.ServeHTTP(w, r)

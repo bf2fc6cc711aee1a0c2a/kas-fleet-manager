@@ -27,6 +27,9 @@ func TestReconciler_Wakeup(t *testing.T) {
 		GetIDFunc: func() string {
 			return "test"
 		},
+		GetWorkerTypeFunc: func() string {
+			return "test"
+		},
 		reconcileFunc: func() {
 			reconcileChan <- time.Now()
 		},
