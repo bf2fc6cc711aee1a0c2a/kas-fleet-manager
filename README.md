@@ -40,8 +40,8 @@ To get the org id:
 ## Compile from master branch
 ```
 # Change current directory to your source code folder (ie: cd <any_your_source_code_folder>)
-$ git clone https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git managed-services-api
-$ cd managed-services-api
+$ git clone https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git
+$ cd kas-fleet-manager
 $ git checkout master
 $ make binary
 $ ./kas-fleet-manager -h
