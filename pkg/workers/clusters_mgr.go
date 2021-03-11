@@ -45,7 +45,7 @@ const (
 	observabilitySubscriptionName   = "observability-operator"
 	observabilityKafkaConfiguration = "kafka-observability-configuration"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
-	ingressReplicas                 = int32(6)
+	ingressReplicas                 = int32(9)
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
