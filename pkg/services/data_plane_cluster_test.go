@@ -622,7 +622,6 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 }
 
 func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
-
 	tests := []struct {
 		name                           string
 		apiCluster                     *api.Cluster
@@ -660,7 +659,17 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "When cluster is in state provisioning  then status reports cannot be processed",
+			name: "When cluster is in state scaling up then status reports cannot be processed",
+			apiCluster: &api.Cluster{
+				Status: api.ClusterComputeNodeScalingUp,
+			},
+			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
+				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+			},
+			want: true,
+		},
+		{
+			name: "When cluster is in state provisioning then status reports cannot be processed",
 			apiCluster: &api.Cluster{
 				Status: api.ClusterProvisioning,
 			},
@@ -785,6 +794,172 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 			}
 			if !reflect.DeepEqual(config, tt.want) {
 				t.Fatalf("result doesn't match. want: %v got: %v", tt.want, config)
+			}
+		})
+	}
+}
+
+func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
+	type input struct {
+		status                  *api.DataPlaneClusterStatus
+		cluster                 *api.Cluster
+		dataPlaneClusterService *dataPlaneClusterService
+	}
+	cases := []struct {
+		name         string
+		inputFactory func() (*input, *api.ClusterStatus)
+		wantErr      bool
+		want         api.ClusterStatus
+	}{
+		{
+			name: "when there is capacity remaining and cluster is not ready then it is set as ready",
+			inputFactory: func() (*input, *api.ClusterStatus) {
+				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
+				applicationConfig := sampleValidConfig()
+				kafkaConfig := applicationConfig.Kafka
+				testStatus.NodeInfo.Current = 3
+				testStatus.NodeInfo.Ceiling = 10000
+				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
+				testStatus.Remaining.Connections = kafkaConfig.KafkaCapacity.TotalMaxConnections + 1
+				testStatus.Remaining.Partitions = kafkaConfig.KafkaCapacity.MaxPartitions + 1
+				apiCluster := &api.Cluster{
+					ClusterID: testClusterID,
+					MultiAZ:   true,
+					Status:    api.ClusterFull,
+				}
+				ocmClient := &ocm.ClientMock{}
+				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
+
+				clusterService := &ClusterServiceMock{
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if cluster.ClusterID != apiCluster.ClusterID {
+							return errors.GeneralError("unexpected test error")
+						}
+						*spyReceivedUpdateStatus = status
+						return nil
+					},
+				}
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				return &input{
+					status:                  testStatus,
+					cluster:                 apiCluster,
+					dataPlaneClusterService: dataPlaneClusterService,
+				}, spyReceivedUpdateStatus
+			},
+			want:    api.ClusterReady,
+			wantErr: false,
+		},
+
+		{
+			name: "when there is no capacity remaining and current number of nodes is less than restricted ceiling then state is set as scaling in progress",
+			inputFactory: func() (*input, *api.ClusterStatus) {
+				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
+				applicationConfig := sampleValidConfig()
+				testStatus.NodeInfo.Current = 3
+				testStatus.NodeInfo.Ceiling = 10000
+				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
+				testStatus.Remaining.Connections = 0
+				testStatus.Remaining.Partitions = 0
+				apiCluster := &api.Cluster{
+					ClusterID: testClusterID,
+					MultiAZ:   true,
+					Status:    api.ClusterReady,
+				}
+				ocmClient := &ocm.ClientMock{}
+				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
+
+				clusterService := &ClusterServiceMock{
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if cluster.ClusterID != apiCluster.ClusterID {
+							return errors.GeneralError("unexpected test error")
+						}
+						*spyReceivedUpdateStatus = status
+						return nil
+					},
+				}
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				return &input{
+					status:                  testStatus,
+					cluster:                 apiCluster,
+					dataPlaneClusterService: dataPlaneClusterService,
+				}, spyReceivedUpdateStatus
+			},
+			want:    api.ClusterComputeNodeScalingUp,
+			wantErr: false,
+		},
+		{
+			name: "when there is no capacity remaining and current number of nodes is higher or equal than restricted ceiling then state is set to full",
+			inputFactory: func() (*input, *api.ClusterStatus) {
+				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
+				applicationConfig := sampleValidConfig()
+				testStatus.NodeInfo.Current = 10
+				testStatus.NodeInfo.Ceiling = 11
+				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
+				testStatus.Remaining.Connections = 0
+				testStatus.Remaining.Partitions = 0
+				apiCluster := &api.Cluster{
+					ClusterID: testClusterID,
+					MultiAZ:   true,
+					Status:    api.ClusterReady,
+				}
+				ocmClient := &ocm.ClientMock{}
+				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
+
+				clusterService := &ClusterServiceMock{
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if cluster.ClusterID != apiCluster.ClusterID {
+							return errors.GeneralError("unexpected test error")
+						}
+						*spyReceivedUpdateStatus = status
+						return nil
+					},
+				}
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				return &input{
+					status:                  testStatus,
+					cluster:                 apiCluster,
+					dataPlaneClusterService: dataPlaneClusterService,
+				}, spyReceivedUpdateStatus
+			},
+			want:    api.ClusterFull,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			f, spyReceivedStatus := tt.inputFactory()
+			if f == nil {
+				t.Fatalf("dataPlaneClusterService is nil")
+			}
+
+			res := f.dataPlaneClusterService.setClusterStatus(f.cluster, f.status)
+			if !reflect.DeepEqual(res != nil, tt.wantErr) {
+				t.Errorf("setClusterStatus() got = %+v, expected %+v", res, tt.wantErr)
+			}
+			if spyReceivedStatus == nil {
+				t.Fatalf("spyStatus is nil")
+			}
+			if !reflect.DeepEqual(*spyReceivedStatus, tt.want) {
+				t.Errorf("setClusterStatus() got = %+v, expected %+v", spyReceivedStatus, tt.want)
 			}
 		})
 	}
