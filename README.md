@@ -15,26 +15,26 @@ For more information on how the service works, see [the implementation documenta
 
 ## User Account & Organization Setup
 
-- Setup your account in stage OCM: 
+- Setup your account in stage OCM:
 [Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812) (Skip this step if you have a service account)
     - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
     - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
 
-- Ensure that the organization's `external_id` appears in the [Allow List Configurations](config/allow-list-configuration.yaml). Follow the guide in [Allow List Configurations](#allow-list-configurations). 
+- Ensure that the organization's `external_id` appears in the [Allow List Configurations](config/allow-list-configuration.yaml). Follow the guide in [Allow List Configurations](#allow-list-configurations).
 
 - Ensure the organization your personal OCM account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
     - Find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs).
 
 ## Allow List Configurations
 
-The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). To configure this list, you'll need to have username and or the organisation id. 
+The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). To configure this list, you'll need to have username and or the organisation id.
 
-The username is the account in question. 
+The username is the account in question.
 
-To get the org id: 
-- Login to `cloud.redhat.com/openshift/token` with the account in question. 
-- Use the supplied command to login to `ocm`, 
-- Then run `ocm whoami` and get the organisations id from `external_id` field. 
+To get the org id:
+- Login to `cloud.redhat.com/openshift/token` with the account in question.
+- Use the supplied command to login to `ocm`,
+- Then run `ocm whoami` and get the organisations id from `external_id` field.
 
 
 ## Compile from master branch
@@ -48,17 +48,17 @@ $ ./kas-fleet-manager -h
 ```
 
 ## Configuring Observability
-The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization. 
+The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization.
 For development cycles, you will need to generate a personal token for your own GitHub user (with bf2 access) and place it within
 the `secrets/observability-config-access.token` file.
 
 To generate a new token:
-1. Follow the steps [found here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token), 
+1. Follow the steps [found here](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token),
 making sure to check **ONLY** the `repo` box at the top of the scopes/permissions list (which will check each of the subcategory boxes beneath it).
 2. Copy the value of your Personal Access Token to a secure private location. Once you leave the page, you cannot access the value
 again & you will be forced to reset the token to receive a new value should you lose the original.
 3. Paste the token value in the `secrets/observability-config-access.token` file.
-4. Take care not to push your PAT to any repository as if you do, GitHub will automatically revoke your token as soon as you push and you'll need to 
+4. Take care not to push your PAT to any repository as if you do, GitHub will automatically revoke your token as soon as you push and you'll need to
 follow this process again to generate a new token.
 
 ## Running the Service locally
@@ -67,7 +67,7 @@ follow this process again to generate a new token.
     ```
     OCM_ENV=development
     ```
-2. Clean up and Creating a database 
+2. Clean up and Creating a database
 
     ```
     # If you have db already created execute
@@ -75,13 +75,13 @@ follow this process again to generate a new token.
     # Create database tables
     $ make db/setup
     $ make db/migrate
-    # Verify tables and records are created 
+    # Verify tables and records are created
     # Login to the database
     $ make db/login
     # List all the tables
     serviceapitests# \dt
                        List of relations
-    Schema |        Name        | Type  |       Owner       
+    Schema |        Name        | Type  |       Owner
     --------+--------------------+-------+-------------------
     public | clusters           | table | kas_fleet_manager
     public | connector_clusters | table | kas_fleet_manager
@@ -91,14 +91,14 @@ follow this process again to generate a new token.
     public | migrations         | table | kas_fleet_manager
     ```
 
-3.  Setup AWS credentials 
-    
+3.  Setup AWS credentials
+
     #### Option A)
     Needed when ENV != (testing|integration)
     ```
     $ make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
     ```
-    
+
     #### Option B)
     Works when ENV == (testing|integration)
     ```
@@ -121,7 +121,7 @@ follow this process again to generate a new token.
     ```
     $ make kafkacert/setup
     ```
-    
+
     #### Option B)
     Works when ENV == (stage|production)
     The certificate and private key can be retrieved from Vault
@@ -138,12 +138,12 @@ follow this process again to generate a new token.
 6. Setup the image pull secret
     Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull),
     copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
-       
+
 7. Running the service locally
     ```
     $ ./kas-fleet-manager serve  (default: http://localhost:8000)
     ```
-    
+
 8. Verify the local service is working
     ```
     $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas
@@ -168,7 +168,7 @@ Build and push the image
 # Create a namespace where the image will be pushed to.
 $ make deploy/project
 
-# Build and push the image to the OpenShift image registry. 
+# Build and push the image to the OpenShift image registry.
 $ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 ```
 
@@ -222,11 +222,11 @@ $ make undeploy
 ## Using the Service
 #### Creating an OSD Cluster
 ```
-# Create a new cluster (OSD). 
+# Create a new cluster (OSD).
 # The following command will register a cluster request which will be reconciled by the cluster worker
 $ ./kas-fleet-manager cluster create
 
-# Verify cluster record is created 
+# Verify cluster record is created
 # Login to the database
 $ make db/login
 # Ensure the cluster exists in clusters table and monitor the status. It should change to 'ready' after provisioned.
@@ -248,8 +248,8 @@ Any OSD cluster can be used by the service, it does not have to be created with 
 cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.  The cluster must have been created with multizone availability.
 
 1. Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`). There are two ways of getting this:
-   - From the cluster overview URL. 
-        - Go to the `OpenShift Cluster Management Dashboard` > `Clusters`. 
+   - From the cluster overview URL.
+        - Go to the `OpenShift Cluster Management Dashboard` > `Clusters`.
         - Select your cluster from the cluster list to go to the overview page.
         - The ID should be located in the URL:
           `https://cloud.redhat.com/openshift/details/<cluster-id>#overview`
@@ -260,7 +260,7 @@ cluster, you will need to register it in the database so that it can be used by 
 2. Register the cluster to the service
     - Run the following command to generate an **INSERT** command:
       ```
-      make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id> 
+      make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id>
       ```
     - Run the command generated above in your local database.
         - Login to the local database using `make db/login`
@@ -299,7 +299,7 @@ $ curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:800
 
 #### Listing Connector Types
 ```
-# (optional) Adjust the curl command so it renders results a little nicer (shows response headers and formats results with jq). 
+# (optional) Adjust the curl command so it renders results a little nicer (shows response headers and formats results with jq).
 $ function curl { `which curl` -S -s -D /dev/stderr "$@" | jq; }
 
 # Lists all connector Types
@@ -309,7 +309,7 @@ $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed
 #### Creating a Connector Deployment
 
 ```
-# set KAFKA_ID to the ID of a Kafka cluster to do connector operations against 
+# set KAFKA_ID to the ID of a Kafka cluster to do connector operations against
 $ KAFKA_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas | jq -r '.items[0].id')
 
 # create a new connector
@@ -336,7 +336,7 @@ $ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/
 # list all connector deployments
 $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/${KAFKA_ID}/connector-deployments
 
-# set CONNECTOR_ID to the ID of the first connector delployment found 
+# set CONNECTOR_ID to the ID of the first connector delployment found
 $ CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
 
 # get a single connector deployment
@@ -442,7 +442,7 @@ make lint
 ```
 >**NOTE**: This uses golangci-lint which needs to be installed in your `GOPATH/bin`
 
-### Running performaance tests
+### Running performance tests
 See this [README](./test/performance/README.md) for more info about performance tests
 
 ## Additional documentation:
