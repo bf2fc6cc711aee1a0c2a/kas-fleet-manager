@@ -36,10 +36,10 @@ type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.
 func setup(t *testing.T, claims claimsFunc) TestServer {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 
@@ -210,7 +210,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName3,
-			Status:    constants.KafkaRequestStatusReady.String(),
+			Status:    constants.KafkaRequestStatusProvisioning.String(),
 		},
 	}
 

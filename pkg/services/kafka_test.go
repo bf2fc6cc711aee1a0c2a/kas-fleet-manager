@@ -283,6 +283,7 @@ func Test_kafkaService_Create(t *testing.T) {
 		syncsetService    SyncsetService
 		clusterService    ClusterService
 		keycloakService   KeycloakService
+		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -325,6 +326,7 @@ func Test_kafkaService_Create(t *testing.T) {
 						}
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -360,6 +362,7 @@ func Test_kafkaService_Create(t *testing.T) {
 						}
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -396,6 +399,7 @@ func Test_kafkaService_Create(t *testing.T) {
 						}
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -432,6 +436,7 @@ func Test_kafkaService_Create(t *testing.T) {
 						}
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
@@ -443,6 +448,44 @@ func Test_kafkaService_Create(t *testing.T) {
 			},
 			wantErr:                 false,
 			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
+		},
+		{
+			name: "should not create sync set if EnableKasFleetshardSync is true",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
+						panic("this should not be called")
+					},
+				},
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
+						return "clusterDNS", nil
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
+						return "secret", nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							KafkaRealm: &config.KeycloakRealmConfig{
+								ClientID: "test",
+							},
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKasFleetshardSync: true,
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -456,7 +499,7 @@ func Test_kafkaService_Create(t *testing.T) {
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				keycloakService:   tt.fields.keycloakService,
-				kafkaConfig:       config.NewKafkaConfig(),
+				kafkaConfig:       tt.fields.kafkaConfig,
 				awsConfig:         config.NewAWSConfig(),
 			}
 
@@ -474,8 +517,6 @@ func Test_kafkaService_Create(t *testing.T) {
 func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
-		keycloakService   KeycloakService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -514,6 +555,43 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
 			},
 		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
+			}
+			err := k.RegisterKafkaDeprovisionJob(context.TODO(), tt.args.kafkaRequest.ID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func Test_kafkaService_Delete(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+		keycloakService   KeycloakService
+		kafkaConfig       *config.KafkaConfig
+	}
+	type args struct {
+		kafkaRequest *api.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
 		{
 			name: "error when syncset deletion fails",
 			fields: fields{
@@ -528,9 +606,12 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{}
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
@@ -553,9 +634,12 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{}
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
@@ -563,7 +647,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("DELETE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
@@ -585,8 +669,52 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{}
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
 					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("DELETE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					MultiAZ:       false,
+					Status:        constants.KafkaRequestStatusPreparing.String(),
+				}))
+			},
+		},
+		{
+			name: "syncset delete should not be called when EnableKasFleetshardSync is enabled",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService: &SyncsetServiceMock{
+					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
+						panic("this should not be called")
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKasFleetshardSync: true,
 				},
 			},
 			args: args{
@@ -595,7 +723,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("DELETE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
@@ -617,10 +745,10 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				keycloakService:   tt.fields.keycloakService,
-				kafkaConfig:       config.NewKafkaConfig(),
+				kafkaConfig:       tt.fields.kafkaConfig,
 				awsConfig:         config.NewAWSConfig(),
 			}
-			err := k.RegisterKafkaDeprovisionJob(context.TODO(), tt.args.kafkaRequest.ID)
+			err := k.Delete(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return

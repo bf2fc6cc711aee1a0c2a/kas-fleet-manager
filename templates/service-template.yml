@@ -293,9 +293,9 @@ parameters:
   description: The compute machine type of each node on a new created cluster.
   value: "m5.4xlarge"
 
-- name: ENABLE_KAS_FLEETSHARD_OPERATOR
-  displayName: Enable support for kas-fleetshard-operator
-  description: Install the kas-fleetshard-operator when terraform the OSD clusters
+- name: ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC
+  displayName: Enable direct data synchronisation with kas-fleetshard-operator
+  description: Enable direct data synchronisation with kas-fleetshard-operator
   value: "false"
 
 - name: OBSERVABILITY_CONFIG_REPO
@@ -570,7 +570,7 @@ objects:
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
-            - --enable-kas-fleetshard-operator=${ENABLE_KAS_FLEETSHARD_OPERATOR}
+            - --enable-kas-fleetshard-sync=${ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
             - --observability-config-access-token-file=/secrets/service/observability-config-access.token

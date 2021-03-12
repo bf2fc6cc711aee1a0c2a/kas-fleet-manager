@@ -666,6 +666,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 					AllowList:                  &config.AllowListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
 					ClusterCreationConfig:      &tt.fields.clusterCreateConfig,
+					Kafka:                      &config.KafkaConfig{},
 				}),
 			}
 			wantSyncSet := tt.want.syncset()
@@ -683,6 +684,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		ocmClient      ocm.Client
 		agentOperator  services.KasFleetshardOperatorAddon
 		clusterService services.ClusterService
+		kafkaConfig    *config.KafkaConfig
 	}
 	tests := []struct {
 		name    string
@@ -707,9 +709,13 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				},
 				clusterService: &services.ClusterServiceMock{
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if status != api.ClusterReady {
+							t.Errorf("expect status to be ready but got %s", status)
+						}
 						return nil
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{EnableManagedKafkaCR: true},
 			},
 			wantErr: false,
 		},
@@ -729,6 +735,35 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 						return false, nil
 					},
 				},
+				kafkaConfig: &config.KafkaConfig{EnableManagedKafkaCR: true},
+			},
+			wantErr: false,
+		},
+		{
+			name: "check cluster state to be waiting_for_kas_fleetshard_operator when EnableKasFleetshardSync is enabled",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+						return clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
+						return true, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if status != api.ClusterWaitingForKasFleetShardOperator {
+							t.Errorf("expect status to be %s but got %s", api.ClusterWaitingForKasFleetShardOperator.String(), status)
+						}
+						return nil
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{EnableKasFleetshardSync: true},
 			},
 			wantErr: false,
 		},
@@ -740,7 +775,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				ocmClient:      tt.fields.ocmClient,
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: &config.KafkaConfig{EnableManagedKafkaCR: true},
+					Kafka: tt.fields.kafkaConfig,
 				}),
 				kasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}
@@ -883,6 +918,7 @@ func TestClusterManager_reconcileClusterSyncSet(t *testing.T) {
 					AllowList:                  &config.AllowListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					Kafka:                      &config.KafkaConfig{},
 				}),
 			}
 

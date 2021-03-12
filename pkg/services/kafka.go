@@ -33,8 +33,6 @@ type KafkaService interface {
 	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
 	Delete(*api.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
-	// Returns all the requests for a given user (no paging)
-	GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
@@ -115,23 +113,28 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	var clientSecretValue string
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		clientSecretValue, err = k.keycloakService.GetSecretForRegisteredKafkaClient(clientName)
+		clientSecretValue, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, kafkaRequest.OrganisationId)
 		if err != nil || clientSecretValue == "" {
-			return errors.FailedToCreateSSOClient("Failed to create sso client: %v", err)
+			sentry.CaptureException(err)
+			return errors.FailedToCreateSSOClient("failed to create sso client %s: %v", kafkaRequest.ID, err)
 		}
 	}
-	// create the syncset builder
-	syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), clientSecretValue)
-	if err != nil {
-		sentry.CaptureException(err)
-		return errors.GeneralError("error creating kafka syncset builder: %v", err)
-	}
 
-	// create the syncset
-	_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
-	if err != nil {
-		sentry.CaptureException(err)
-		return err
+	// only use sync set if EnableKasFleetshardSync is set to false
+	if !k.kafkaConfig.EnableKasFleetshardSync {
+		// create the syncset builder
+		syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), clientSecretValue)
+		if err != nil {
+			sentry.CaptureException(err)
+			return errors.GeneralError("error creating kafka syncset builder: %v", err)
+		}
+
+		// create the syncset
+		_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
+		if err != nil {
+			sentry.CaptureException(err)
+			return err
+		}
 	}
 
 	// Update the Kafka Request record in the database
@@ -277,13 +280,17 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 			}
 		}
 
-		// delete the syncset
-		syncsetId := buildSyncsetIdentifier(kafkaRequest)
-		statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
+		// only delete the sync set if kas-fleetshard sync is not enabled
+		// otherwise the kas-fleetshard will get the information through the endpoints
+		if !k.kafkaConfig.EnableKasFleetshardSync {
+			// delete the syncset
+			syncsetId := buildSyncsetIdentifier(kafkaRequest)
+			statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 
-		if err != nil && statucCode != http.StatusNotFound {
-			sentry.CaptureException(err)
-			return errors.GeneralError("error deleting syncset: %v", err)
+			if err != nil && statucCode != http.StatusNotFound {
+				sentry.CaptureException(err)
+				return errors.GeneralError("error deleting syncset: %v", err)
+			}
 		}
 	}
 
@@ -365,20 +372,11 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	return kafkaRequestList, pagingMeta, nil
 }
 
-func (k *kafkaService) GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New().Where("cluster_id = ?", clusterID)
-
+func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New().Where("cluster_id = ? AND status IN (?)", clusterID, []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String()})
 	var kafkaRequestList api.KafkaList
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
-		return kafkaRequestList, errors.GeneralError("Unable to list kafka requests %s", err)
-	}
-	return kafkaRequestList, nil
-}
-
-func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError) {
-	kafkaRequestList, err := k.GetByClusterID(clusterID)
-	if err != nil {
-		return nil, err
+		return nil, errors.GeneralError("Unable to list kafka requests %s", err)
 	}
 
 	var res []managedkafka.ManagedKafka

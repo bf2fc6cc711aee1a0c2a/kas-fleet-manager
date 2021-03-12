@@ -35,9 +35,6 @@ var _ KafkaService = &KafkaServiceMock{}
 //             GetFunc: func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
 // 	               panic("mock out the Get method")
 //             },
-//             GetByClusterIDFunc: func(clusterID string) (api.KafkaList, *errors.ServiceError) {
-// 	               panic("mock out the GetByClusterID method")
-//             },
 //             GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 // 	               panic("mock out the GetById method")
 //             },
@@ -80,9 +77,6 @@ type KafkaServiceMock struct {
 
 	// GetFunc mocks the Get method.
 	GetFunc func(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
-
-	// GetByClusterIDFunc mocks the GetByClusterID method.
-	GetByClusterIDFunc func(clusterID string) (api.KafkaList, *errors.ServiceError)
 
 	// GetByIdFunc mocks the GetById method.
 	GetByIdFunc func(id string) (*api.KafkaRequest, *errors.ServiceError)
@@ -136,11 +130,6 @@ type KafkaServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// GetByClusterID holds details about calls to the GetByClusterID method.
-		GetByClusterID []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-		}
 		// GetById holds details about calls to the GetById method.
 		GetById []struct {
 			// ID is the id argument value.
@@ -192,7 +181,6 @@ type KafkaServiceMock struct {
 	lockCreate                      sync.RWMutex
 	lockDelete                      sync.RWMutex
 	lockGet                         sync.RWMutex
-	lockGetByClusterID              sync.RWMutex
 	lockGetById                     sync.RWMutex
 	lockGetManagedKafkaByClusterID  sync.RWMutex
 	lockList                        sync.RWMutex
@@ -336,37 +324,6 @@ func (mock *KafkaServiceMock) GetCalls() []struct {
 	mock.lockGet.RLock()
 	calls = mock.calls.Get
 	mock.lockGet.RUnlock()
-	return calls
-}
-
-// GetByClusterID calls GetByClusterIDFunc.
-func (mock *KafkaServiceMock) GetByClusterID(clusterID string) (api.KafkaList, *errors.ServiceError) {
-	if mock.GetByClusterIDFunc == nil {
-		panic("KafkaServiceMock.GetByClusterIDFunc: method is nil but KafkaService.GetByClusterID was just called")
-	}
-	callInfo := struct {
-		ClusterID string
-	}{
-		ClusterID: clusterID,
-	}
-	mock.lockGetByClusterID.Lock()
-	mock.calls.GetByClusterID = append(mock.calls.GetByClusterID, callInfo)
-	mock.lockGetByClusterID.Unlock()
-	return mock.GetByClusterIDFunc(clusterID)
-}
-
-// GetByClusterIDCalls gets all the calls that were made to GetByClusterID.
-// Check the length with:
-//     len(mockedKafkaService.GetByClusterIDCalls())
-func (mock *KafkaServiceMock) GetByClusterIDCalls() []struct {
-	ClusterID string
-} {
-	var calls []struct {
-		ClusterID string
-	}
-	mock.lockGetByClusterID.RLock()
-	calls = mock.calls.GetByClusterID
-	mock.lockGetByClusterID.RUnlock()
 	return calls
 }
 
