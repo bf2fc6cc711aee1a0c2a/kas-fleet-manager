@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/golang/glog"
@@ -14,27 +15,6 @@ import (
 // Number of compute nodes in a Multi-AZ must be a multiple of
 // this number
 const multiAZClusterNodeScalingMultiple = 3
-
-// singleKafkaCluster*Capacity constants define the mapping
-// between a Kafka Cluster of size model T and Kafka capacity attributes
-// TODO move this to make it configurable or variable
-const SingleKafkaClusterConnectionsCapacity = 100
-const SingleKafkaClusterPartitionsCapacity = 100
-
-// The Kafka Capacity attributes of a Kafka Cluster size model T
-// TODO move this to make it configurable or variable
-var singleKafkaClusterComputeNodesCapacityAttributes dataPlaneComputeNodesKafkaCapacityAttributes = dataPlaneComputeNodesKafkaCapacityAttributes{
-	Connections: SingleKafkaClusterConnectionsCapacity,
-	Partitions:  SingleKafkaClusterPartitionsCapacity,
-}
-
-// kafkaCluster*ScaleUpThreshold constants define the scale up thresholds
-// for each of the Kafka Capacity attributes reported by KAS Fleet Operator
-// They are defined as multiples of the values defined in the singleKafkaCluster*
-// constants. Currently set to exactly one Kafka Cluster of size model T
-// TODO move this to make it configurable or variable
-const kafkaClusterConnectionsCapacityScaleUpThreshold = SingleKafkaClusterConnectionsCapacity
-const kafkaClusterPartitionsCapacityScaleUpThreshold = SingleKafkaClusterPartitionsCapacity
 
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError
@@ -47,6 +27,7 @@ const dataPlaneClusterStatusCondReadyName = "Ready"
 type dataPlaneClusterService struct {
 	ocmClient      ocm.Client
 	clusterService ClusterService
+	kafkaConfig    *config.KafkaConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -54,10 +35,11 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 	Partitions  int
 }
 
-func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client) *dataPlaneClusterService {
+func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client, kafkaConfig *config.KafkaConfig) *dataPlaneClusterService {
 	return &dataPlaneClusterService{
 		ocmClient:      ocmClient,
 		clusterService: clusterService,
+		kafkaConfig:    kafkaConfig,
 	}
 }
 
@@ -218,7 +200,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *api.DataPlaneClusterStatus) error {
-	remainingCapacity, err := d.kafkaClustersCapacityAvailable(status, &singleKafkaClusterComputeNodesCapacityAttributes)
+	remainingCapacity, err := d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
 	if err != nil {
 		return err
 	}
@@ -416,10 +398,14 @@ func (d *dataPlaneClusterService) scaleDownThresholds(status *api.DataPlaneClust
 }
 
 func (d *dataPlaneClusterService) scaleUpThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
-	var res *dataPlaneComputeNodesKafkaCapacityAttributes = &dataPlaneComputeNodesKafkaCapacityAttributes{}
+	return d.minimumKafkaCapacity()
+}
 
-	res.Connections = kafkaClusterConnectionsCapacityScaleUpThreshold
-	res.Partitions = kafkaClusterPartitionsCapacityScaleUpThreshold
-
-	return res
+// minimumKafkaCapacity returns the minimum Kafka Capacity attributes needed
+// to consider that a kafka cluster has capacity available
+func (d *dataPlaneClusterService) minimumKafkaCapacity() *dataPlaneComputeNodesKafkaCapacityAttributes {
+	return &dataPlaneComputeNodesKafkaCapacityAttributes{
+		Connections: d.kafkaConfig.KafkaCapacity.TotalMaxConnections,
+		Partitions:  d.kafkaConfig.KafkaCapacity.MaxPartitions,
+	}
 }
