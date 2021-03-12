@@ -10,24 +10,18 @@ import (
 
 const (
 	KasFleetshardOperatorRoleName = "kas_fleetshard_operator"
-	//TODO: update them to be the right parameter names once they are decided
 
-	// parameter names for the kas-fleetshard-operator service account
-	//TODO review later when kas-fleetshard-operator is accepting parameters
-	//kasFleetshardOperatorParamMasSSOBaseUrl        = "mas-sso-base-url"
-	//kasFleetshardOperatorParamMasSSORealm          = "mas-sso-realm"
-	//kasFleetshardOperatorParamServiceAccountId     = "client-id"
-	//kasFleetshardOperatorParamServiceAccountSecret = "client-secret"
-	//// parameter names for the observability stack
-	//kasFleetshardOperatorParamObservabilityRepo        = "observability-repo"
-	//kasFleetshardOperatorParamObservabilityAccessToken = "observability-access-token"
-	//kasFleetshardOperatorParamObservabilityChannel     = "observability-channel"
-	//// parameter names for the cluster id
-	//kasFleetshardOperatorParamClusterId = "cluster-id"
-	//// parameter names for the control plane url
-	//kasFleetshardOperatorParamControlPlaneBaseURL = "control-plane-base-url"
-	//// parameter names for the strimzi operator version
-	//kasFleetshardOperatorParamStrimziVersion = "strimzi-version"
+	//parameter names for the kas-fleetshard-operator service account
+	kasFleetshardOperatorParamMasSSOBaseUrl        = "sso.auth-server-url"
+	kasFleetshardOperatorParamServiceAccountId     = "sso.client-id"
+	kasFleetshardOperatorParamServiceAccountSecret = "sso.secret"
+	// parameter names for the cluster id
+	kasFleetshardOperatorParamClusterId = "cluster.id"
+	// parameter names for the control plane url
+	kasFleetshardOperatorParamControlPlaneBaseURL = "control-plane.url"
+	//parameter names for fleetshardoperator synchronizer
+	kasFleetshardOperatorParamPollinterval   = "poll.interval"
+	kasFleetshardOperatorParamResyncInterval = "resync.interval"
 )
 
 //go:generate moq -out kas_fleetshard_operator_addon_moq.go . KasFleetshardOperatorAddon
@@ -108,47 +102,35 @@ func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (
 
 func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.AddonParameter {
 	p := []ocm.AddonParameter{
-		//TODO review later when kas-fleetshard-operator is accepting parameters
-		//{
-		//	Id:    kasFleetshardOperatorParamMasSSOBaseUrl,
-		//	Value: o.configService.GetConfig().Keycloak.BaseURL,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamMasSSORealm,
-		//	Value: o.configService.GetConfig().Keycloak.KafkaRealm.Realm,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamServiceAccountId,
-		//	Value: serviceAccount.ClientID,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamServiceAccountSecret,
-		//	Value: serviceAccount.ClientSecret,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamControlPlaneBaseURL,
-		//	Value: o.configService.GetConfig().Server.PublicHostURL,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamClusterId,
-		//	Value: clusterId,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamStrimziVersion,
-		//	Value: o.configService.GetConfig().ClusterCreationConfig.StrimziOperatorVersion,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamObservabilityRepo,
-		//	Value: o.configService.GetObservabilityConfiguration().ObservabilityConfigRepo,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamObservabilityChannel,
-		//	Value: o.configService.GetObservabilityConfiguration().ObservabilityConfigChannel,
-		//},
-		//{
-		//	Id:    kasFleetshardOperatorParamObservabilityAccessToken,
-		//	Value: o.configService.GetObservabilityConfiguration().ObservabilityConfigAccessToken,
-		//},
+
+		{
+			Id:    kasFleetshardOperatorParamMasSSOBaseUrl,
+			Value: o.configService.GetConfig().Keycloak.BaseURL,
+		},
+		{
+			Id:    kasFleetshardOperatorParamServiceAccountId,
+			Value: serviceAccount.ClientID,
+		},
+		{
+			Id:    kasFleetshardOperatorParamServiceAccountSecret,
+			Value: serviceAccount.ClientSecret,
+		},
+		{
+			Id:    kasFleetshardOperatorParamControlPlaneBaseURL,
+			Value: o.configService.GetConfig().Server.PublicHostURL,
+		},
+		{
+			Id:    kasFleetshardOperatorParamClusterId,
+			Value: clusterId,
+		},
+		{
+			Id:    kasFleetshardOperatorParamPollinterval,
+			Value: o.configService.GetConfig().KasFleetShardConfig.PollInterval,
+		},
+		{
+			Id:    kasFleetshardOperatorParamResyncInterval,
+			Value: o.configService.GetConfig().KasFleetShardConfig.ResyncInterval,
+		},
 	}
 	return p
 }

@@ -29,6 +29,7 @@ type ApplicationConfig struct {
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
 	ClusterCreationConfig      *ClusterCreationConfig      `json:"cluster_creation"`
 	ConnectorsConfig           *ConnectorsConfig           `json:"connectors"`
+	KasFleetShardConfig        *KasFleetshardConfig        `json:"kas-fleetshard"`
 	Vault                      *VaultConfig                `json:"vault"`
 }
 
@@ -48,6 +49,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		Kafka:                      NewKafkaConfig(),
 		ClusterCreationConfig:      NewClusterCreationConfig(),
 		ConnectorsConfig:           NewConnectorsConfig(),
+		KasFleetShardConfig:        NewKasFleetshardConfig(),
 		Vault:                      NewVaultConfig(),
 	}
 }
@@ -68,6 +70,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Kafka.AddFlags(flagset)
 	c.ClusterCreationConfig.AddFlags(flagset)
 	c.ConnectorsConfig.AddFlags(flagset)
+	c.KasFleetShardConfig.AddFlags(flagset)
 	c.Vault.AddFlags(flagset)
 }
 
@@ -136,6 +139,11 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
+	err = c.KasFleetShardConfig.ReadFiles()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
