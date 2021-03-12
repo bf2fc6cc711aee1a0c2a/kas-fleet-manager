@@ -27,7 +27,6 @@ type KeycloakService interface {
 	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
 	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 	DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError
-	GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError)
 	GetConfig() *config.KeycloakConfig
 	GetRealmConfig() *config.KeycloakRealmConfig
 	IsKafkaClientExist(clientId string) *errors.ServiceError
@@ -123,19 +122,6 @@ func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clust
 	}
 
 	return secretValue, nil
-}
-
-func (kc *keycloakService) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
-	accessToken, _ := kc.kcClient.GetToken()
-	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
-	if err != nil {
-		return "", errors.FailedToGetSSOClient("failed to get the sso client: %v", err)
-	}
-	if internalClientId != "" {
-		secretValue, _ := kc.kcClient.GetClientSecret(internalClientId, accessToken)
-		return secretValue, nil
-	}
-	return "", nil
 }
 
 func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *errors.ServiceError {

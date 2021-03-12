@@ -22,10 +22,10 @@ import (
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -41,7 +41,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
-	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
+	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
@@ -67,10 +67,10 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 
 func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -90,10 +90,10 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 
 func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -113,10 +113,10 @@ func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 
 func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -136,10 +136,10 @@ func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 
 func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -159,10 +159,10 @@ func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -177,7 +177,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
-	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
+	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
@@ -205,10 +205,10 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 }
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -217,7 +217,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
-	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
+	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
@@ -245,10 +245,10 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 
 func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedCluster, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
@@ -268,7 +268,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 		t.SkipNow()
 	}
 
-	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
+	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}

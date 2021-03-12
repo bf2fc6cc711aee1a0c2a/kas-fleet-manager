@@ -46,9 +46,6 @@ type ConfigService interface {
 	// GetObservabilityConfiguration returns ObservabilityConfiguration.
 	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
 	GetObservabilityConfiguration() config.ObservabilityConfiguration
-	// IsKasFleetshardOperatorEnabled returns if the agent operator should be used when creating a new OSD cluster
-	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
-	IsKasFleetshardOperatorEnabled() bool
 	// GetConfig returns ApplicationConfig, which can then be used to access configurations
 	GetConfig() config.ApplicationConfig
 }
@@ -178,11 +175,6 @@ func (c configService) IsAutoCreateOSDEnabled() bool {
 // GetObservabilityConfiguration returns ObservabilityConfiguration.
 func (c configService) GetObservabilityConfiguration() config.ObservabilityConfiguration {
 	return *c.appConfig.ObservabilityConfiguration
-}
-
-//TODO: move this to ClusterCreationConfig
-func (c configService) IsKasFleetshardOperatorEnabled() bool {
-	return c.appConfig.ClusterCreationConfig.EnableKasFleetshardOperator
 }
 
 func (c configService) GetConfig() config.ApplicationConfig {
