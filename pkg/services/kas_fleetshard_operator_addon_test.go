@@ -74,8 +74,8 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 					Keycloak: &config.KeycloakConfig{
 						KafkaRealm: &config.KeycloakRealmConfig{},
 					},
-					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					KasFleetShardConfig: &config.KasFleetshardConfig{},
 				}),
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
