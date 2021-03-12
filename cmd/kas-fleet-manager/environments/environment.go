@@ -163,7 +163,7 @@ func (env *Env) LoadServices() error {
 	env.Services.Keycloak = kafkaKeycloakService
 	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
 
-	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient)
+	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config.Kafka)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
 	env.Services.DataPlaneCluster = dataPlaneClusterService
 	env.Services.DataPlaneKafkaService = dataPlaneKafkaService

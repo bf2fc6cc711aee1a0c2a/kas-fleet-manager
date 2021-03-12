@@ -272,12 +272,14 @@ func TestDataPlaneCluster_TestScaleUpTriggered(t *testing.T) {
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
+	kafkaCapacityConfig := h.Env().Config.Kafka.KafkaCapacity
+
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{services.SingleKafkaClusterConnectionsCapacity * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions = &[]int32{services.SingleKafkaClusterPartitionsCapacity * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{services.SingleKafkaClusterConnectionsCapacity * 10}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{services.SingleKafkaClusterPartitionsCapacity * 10}[0]
+	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
+	clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
+	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 10}[0]
+	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 10}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{6}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{mocks.MockClusterComputeNodes}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
