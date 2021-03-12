@@ -28,16 +28,20 @@ var (
 )
 
 type connectorClusterHandler struct {
-	service         services.ConnectorClusterService
-	configService   services.ConfigService
-	keycloakService services.KeycloakService
+	service        services.ConnectorClusterService
+	config         services.ConfigService
+	keycloak       services.KeycloakService
+	connectorTypes services.ConnectorTypesService
+	vault          services.VaultService
 }
 
-func NewConnectorClusterHandler(service services.ConnectorClusterService, configService services.ConfigService, keycloakService services.KeycloakService) *connectorClusterHandler {
+func NewConnectorClusterHandler(service services.ConnectorClusterService, config services.ConfigService, keycloak services.KeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *connectorClusterHandler {
 	return &connectorClusterHandler{
-		service:         service,
-		configService:   configService,
-		keycloakService: keycloakService,
+		service:        service,
+		config:         config,
+		keycloak:       keycloak,
+		connectorTypes: connectorTypes,
+		vault:          vault,
 	}
 }
 
@@ -160,7 +164,7 @@ func (h *connectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 				return nil, err
 			}
 
-			acc, err := h.keycloakService.RegisterConnectorFleetshardOperatorServiceAccount(id, connectorFleetshardOperatorRoleName)
+			acc, err := h.keycloak.RegisterConnectorFleetshardOperatorServiceAccount(id, connectorFleetshardOperatorRoleName)
 			if err != nil {
 				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", id, err)
 			}
@@ -194,11 +198,11 @@ func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 	p := []ocm.AddonParameter{
 		{
 			Id:    connectorFleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.configService.GetConfig().Keycloak.BaseURL,
+			Value: o.config.GetConfig().Keycloak.BaseURL,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamMasSSORealm,
-			Value: o.configService.GetConfig().Keycloak.KafkaRealm.Realm,
+			Value: o.config.GetConfig().Keycloak.KafkaRealm.Realm,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamServiceAccountId,
@@ -210,7 +214,7 @@ func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 		},
 		{
 			Id:    connectorFleetshardOperatorParamControlPlaneBaseURL,
-			Value: o.configService.GetConfig().Server.PublicHostURL,
+			Value: o.config.GetConfig().Server.PublicHostURL,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamClusterId,
@@ -221,7 +225,7 @@ func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 }
 
 func (o *connectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
-	u, err := url.Parse(o.configService.GetConfig().Keycloak.KafkaRealm.TokenEndpointURI)
+	u, err := url.Parse(o.config.GetConfig().Keycloak.KafkaRealm.TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}
@@ -283,6 +287,10 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 
 				var converted openapi.Connector
 				for _, resource := range resources {
+					err = getSecretsFromVaultAsBase64(resource, h.connectorTypes, h.vault)
+					if err != nil {
+						return
+					}
 					converted, err = presenters.PresentConnector(resource)
 					if err != nil {
 						glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
