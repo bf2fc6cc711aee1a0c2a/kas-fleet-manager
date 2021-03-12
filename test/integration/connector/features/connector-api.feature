@@ -16,7 +16,78 @@ Feature: create a a connector
     Then the response code should be 200
     And the response should match json:
       """
-      {"kind":"ConnectorTypeList","page":1,"size":1,"total":1,"items":[{"id":"aws-sqs-source-v1alpha1","kind":"ConnectorType","href":"/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1","name":"aws-sqs-source","version":"v1alpha1","description":"Receive data from AWS SQS","json_schema":{"description":"Receive data from AWS SQS.","properties":{"accessKey":{"description":"The access key obtained from AWS","title":"Access Key","type":"string","x-descriptors":["urn:alm:descriptor:com.tectonic.ui:password"]},"deleteAfterRead":{"default":true,"description":"Delete messages after consuming them","title":"Auto-delete messages","type":"boolean","x-descriptors":["urn:alm:descriptor:com.tectonic.ui:checkbox"]},"queueNameOrArn":{"description":"The SQS Queue name or ARN","title":"Queue Name","type":"string"},"region":{"description":"The AWS region to connect to","example":"eu-west-1","title":"AWS Region","type":"string"},"secretKey":{"description":"The secret key obtained from AWS","title":"Secret Key","type":"string","x-descriptors":["urn:alm:descriptor:com.tectonic.ui:password"]}},"required":["queueNameOrArn","accessKey","secretKey","region"],"title":"AWS SQS Source"}}]}
+      {
+        "items": [
+          {
+            "description": "Receive data from AWS SQS",
+            "href": "/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1",
+            "id": "aws-sqs-source-v1alpha1",
+            "json_schema": {
+              "description": "Receive data from AWS SQS.",
+              "properties": {
+                "accessKey": {
+                  "description": "The access key obtained from AWS",
+                  "title": "Access Key",
+                  "type": "string"
+                },
+                "deleteAfterRead": {
+                  "default": true,
+                  "description": "Delete messages after consuming them",
+                  "title": "Auto-delete messages",
+                  "type": "boolean",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:checkbox"
+                  ]
+                },
+                "queueNameOrArn": {
+                  "description": "The SQS Queue name or ARN",
+                  "title": "Queue Name",
+                  "type": "string"
+                },
+                "region": {
+                  "description": "The AWS region to connect to",
+                  "example": "eu-west-1",
+                  "title": "AWS Region",
+                  "type": "string"
+                },
+                "secretKey": {
+                  "description": "The secret key obtained from AWS",
+                  "oneOf": [
+                    {
+                      "description": "the secret value",
+                      "format": "password",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the secret",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Secret Key",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:password"
+                  ]
+                }
+              },
+              "required": [
+                "queueNameOrArn",
+                "accessKey",
+                "secretKey",
+                "region"
+              ],
+              "title": "AWS SQS Source"
+            },
+            "kind": "ConnectorType",
+            "name": "aws-sqs-source",
+            "version": "v1alpha1"
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
       """
 
   Scenario: Greg tries to create a connector with an invalid configuration spec
@@ -84,10 +155,42 @@ Feature: create a a connector
     Given I store the ".id" selection from the response as ${cid}
     When I GET path "/v1/kafkas/${kid}/connector-deployments"
     Then the response code should be 200
-    And the ".kind" selection from the response should match "ConnectorList"
-    And the ".page" selection from the response should match "1"
-    And the ".size" selection from the response should match "1"
-    And the ".total" selection from the response should match "1"
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "connector_spec": {
+              "accessKey": "test",
+              "queueNameOrArn": "test",
+              "region": "east",
+              "secretKey": {}
+            },
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "deployment_location": {
+              "group": "default",
+              "kind": "addon"
+            },
+            "href": "/api/managed-services-api/v1/kafkas/${kid}/connector-deployments/${cid}",
+            "id": "${cid}",
+            "kind": "Connector",
+            "metadata": {
+              "created_at": "${response.items[0].metadata.created_at}",
+              "kafka_id": "${kid}",
+              "name": "example 1",
+              "owner": "${response.items[0].metadata.owner}",
+              "resource_version": ${response.items[0].metadata.resource_version},
+              "updated_at": "${response.items[0].metadata.updated_at}"
+            },
+            "status": "assigning"
+          }
+        ],
+        "kind": "ConnectorList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
 
     When I GET path "/v1/kafkas/${kid}/connector-deployments/${cid}"
     Then the response code should be 200
@@ -116,7 +219,7 @@ Feature: create a a connector
               "accessKey": "test",
               "queueNameOrArn": "test",
               "region": "east",
-              "secretKey": "test"
+              "secretKey": {}
           },
           "status": "assigning"
       }

@@ -160,7 +160,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
 
 		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments
-		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes)
+		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorsRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments").Subrouter()
 		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Update).Methods(http.MethodPut)
@@ -177,7 +177,7 @@ func NewAPIServer() Server {
 		//apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 		//  /api/managed-services-api/v1/kafka-connector-clusters/
-		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.ConnectorCluster, services.Config, services.Keycloak)
+		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.List).Methods(http.MethodGet)

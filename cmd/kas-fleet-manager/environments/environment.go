@@ -51,6 +51,7 @@ type Services struct {
 	DataPlaneCluster          services.DataPlaneClusterService
 	DataPlaneKafkaService     services.DataPlaneKafkaService
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
+	Vault                 services.VaultService
 }
 
 type Clients struct {
@@ -180,6 +181,12 @@ func (env *Env) LoadServices() error {
 			return err
 		}
 	}
+
+	vaultService, err := services.NewVaultService(env.Config.Vault)
+	if err != nil {
+		return err
+	}
+	env.Services.Vault = vaultService
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
 	env.Services.Config = configService

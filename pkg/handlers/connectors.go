@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"net/http"
 
 	"github.com/golang/glog"
@@ -21,13 +22,15 @@ type connectorsHandler struct {
 	connectorsService     services.ConnectorsService
 	connectorTypesService services.ConnectorTypesService
 	kafkaService          services.KafkaService
+	vaultService          services.VaultService
 }
 
-func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService) *connectorsHandler {
+func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService services.VaultService) *connectorsHandler {
 	return &connectorsHandler{
 		kafkaService:          kafkaService,
 		connectorsService:     connectorsService,
 		connectorTypesService: connectorTypesService,
+		vaultService:          vaultService,
 	}
 }
 
@@ -51,26 +54,38 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 
 			// Get the Kafka to assert the user can access that kafka instance.
-			_, svcErr := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-
-			convResource, svcErr := presenters.ConvertConnector(resource)
-			if svcErr != nil {
-				return nil, svcErr
-			}
-
-			claims, err := auth.GetClaimsFromContext(r.Context())
+			_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
 			if err != nil {
+				return nil, err
+			}
+
+			convResource, err := presenters.ConvertConnector(resource)
+			if err != nil {
+				return nil, err
+			}
+
+			claims, goerr := auth.GetClaimsFromContext(r.Context())
+			if goerr != nil {
 				return nil, errors.Unauthenticated("user not authenticated")
 			}
+
+			convResource.ID = api.NewID()
 			convResource.Owner = auth.GetUsernameFromClaims(claims)
 			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
+
+			err = moveSecretsToVault(convResource, h.connectorTypesService, h.vaultService)
+			if err != nil {
+				return nil, err
+			}
 
 			if svcErr := h.connectorsService.Create(r.Context(), convResource); svcErr != nil {
 				return nil, svcErr
 			}
+
+			if err := stripSecretReferences(convResource, h.connectorTypesService); err != nil {
+				return nil, err
+			}
+
 			return presenters.PresentConnector(convResource)
 		},
 		ErrorHandler: handleError,
@@ -166,6 +181,11 @@ func (h connectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
+
+			if err := stripSecretReferences(resource, h.connectorTypesService); err != nil {
+				return nil, err
+			}
+
 			return presenters.PresentConnector(resource)
 		},
 		ErrorHandler: handleError,
@@ -215,6 +235,9 @@ func (h connectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
+				if err := stripSecretReferences(resource, h.connectorTypesService); err != nil {
+					return nil, err
+				}
 				converted, err := presenters.PresentConnector(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)

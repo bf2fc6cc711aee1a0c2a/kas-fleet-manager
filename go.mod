@@ -8,6 +8,7 @@ require (
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/aws/aws-sdk-go v1.36.5
+	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/cucumber/godog v0.11.0
@@ -35,14 +36,17 @@ require (
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/api v0.3.25
 	github.com/pkg/errors v0.9.1
+	github.com/pmezard/go-difflib v1.0.0
 	github.com/prometheus/client_golang v1.9.0
 	github.com/prometheus/common v0.15.0
 	github.com/prometheus/procfs v0.3.0 // indirect
 	github.com/rs/xid v1.2.1
+	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
 	github.com/segmentio/ksuid v1.0.3
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
+	github.com/spyzhov/ajson v0.4.2
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yaacov/tree-search-language v0.0.0-20190923184055-1c2dad2e354b
 	github.com/zgalor/weberr v0.6.0
