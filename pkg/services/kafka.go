@@ -260,7 +260,7 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-			keycloakErr := k.keycloakService.DeRegisterKafkaClientInSSO(clientName)
+			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientName)
 			if keycloakErr != nil {
 				return errors.GeneralError("error deleting sso client: %v", keycloakErr)
 			}

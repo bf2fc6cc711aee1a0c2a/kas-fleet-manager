@@ -25,6 +25,9 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 //             ReconcileParametersFunc: func(cluster api.Cluster) *errors.ServiceError {
 // 	               panic("mock out the ReconcileParameters method")
 //             },
+//             RemoveServiceAccountFunc: func(cluster api.Cluster) *errors.ServiceError {
+// 	               panic("mock out the RemoveServiceAccount method")
+//             },
 //         }
 //
 //         // use mockedKasFleetshardOperatorAddon in code that requires KasFleetshardOperatorAddon
@@ -38,6 +41,9 @@ type KasFleetshardOperatorAddonMock struct {
 	// ReconcileParametersFunc mocks the ReconcileParameters method.
 	ReconcileParametersFunc func(cluster api.Cluster) *errors.ServiceError
 
+	// RemoveServiceAccountFunc mocks the RemoveServiceAccount method.
+	RemoveServiceAccountFunc func(cluster api.Cluster) *errors.ServiceError
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Provision holds details about calls to the Provision method.
@@ -50,9 +56,15 @@ type KasFleetshardOperatorAddonMock struct {
 			// Cluster is the cluster argument value.
 			Cluster api.Cluster
 		}
+		// RemoveServiceAccount holds details about calls to the RemoveServiceAccount method.
+		RemoveServiceAccount []struct {
+			// Cluster is the cluster argument value.
+			Cluster api.Cluster
+		}
 	}
-	lockProvision           sync.RWMutex
-	lockReconcileParameters sync.RWMutex
+	lockProvision            sync.RWMutex
+	lockReconcileParameters  sync.RWMutex
+	lockRemoveServiceAccount sync.RWMutex
 }
 
 // Provision calls ProvisionFunc.
@@ -114,5 +126,36 @@ func (mock *KasFleetshardOperatorAddonMock) ReconcileParametersCalls() []struct 
 	mock.lockReconcileParameters.RLock()
 	calls = mock.calls.ReconcileParameters
 	mock.lockReconcileParameters.RUnlock()
+	return calls
+}
+
+// RemoveServiceAccount calls RemoveServiceAccountFunc.
+func (mock *KasFleetshardOperatorAddonMock) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
+	if mock.RemoveServiceAccountFunc == nil {
+		panic("KasFleetshardOperatorAddonMock.RemoveServiceAccountFunc: method is nil but KasFleetshardOperatorAddon.RemoveServiceAccount was just called")
+	}
+	callInfo := struct {
+		Cluster api.Cluster
+	}{
+		Cluster: cluster,
+	}
+	mock.lockRemoveServiceAccount.Lock()
+	mock.calls.RemoveServiceAccount = append(mock.calls.RemoveServiceAccount, callInfo)
+	mock.lockRemoveServiceAccount.Unlock()
+	return mock.RemoveServiceAccountFunc(cluster)
+}
+
+// RemoveServiceAccountCalls gets all the calls that were made to RemoveServiceAccount.
+// Check the length with:
+//     len(mockedKasFleetshardOperatorAddon.RemoveServiceAccountCalls())
+func (mock *KasFleetshardOperatorAddonMock) RemoveServiceAccountCalls() []struct {
+	Cluster api.Cluster
+} {
+	var calls []struct {
+		Cluster api.Cluster
+	}
+	mock.lockRemoveServiceAccount.RLock()
+	calls = mock.calls.RemoveServiceAccount
+	mock.lockRemoveServiceAccount.RUnlock()
 	return calls
 }

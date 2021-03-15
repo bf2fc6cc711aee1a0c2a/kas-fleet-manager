@@ -5,6 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 
@@ -84,6 +85,71 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
 			}
 			Expect(ready).To(Equal(tt.result))
+		})
+	}
+}
+
+func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
+	type fields struct {
+		ssoService                KeycloakService
+		fleetshardOperatorEnabled bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "does not error when fleetshard operator feature is turned off",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					DeRegisterKasFleetshardOperatorServiceAccountFunc: nil, // set to nil as it not called
+				},
+				fleetshardOperatorEnabled: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "receives error during removal of the service account fails when fleetshard operator is turned on",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
+						return &errors.ServiceError{} // an error is returned
+					},
+				},
+				fleetshardOperatorEnabled: true,
+			},
+			wantErr: true,
+		},
+		{
+			name: "succesful removes the service account when fleetshard operator is turned on",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					DeRegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string) *errors.ServiceError {
+						return nil
+					},
+				},
+				fleetshardOperatorEnabled: true,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			agentOperatorAddon := &kasFleetshardOperatorAddon{
+				ssoService: tt.fields.ssoService,
+				configService: NewConfigService(config.ApplicationConfig{
+					Kafka: &config.KafkaConfig{
+						EnableKasFleetshardSync: tt.fields.fleetshardOperatorEnabled,
+						EnableManagedKafkaCR:    tt.fields.fleetshardOperatorEnabled,
+					},
+				}),
+			}
+			err := agentOperatorAddon.RemoveServiceAccount(api.Cluster{
+				ClusterID: "test-cluster-id",
+			})
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
 }

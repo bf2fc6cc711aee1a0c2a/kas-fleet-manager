@@ -119,3 +119,24 @@ only the specified nodeDelta  value anyway. Then, on subsequent calls to the
 agent status report endpoint it will continue scaling down until the threshold
 or currentWorkLoadMin is reached. In this way it will scale in a more
 controlled way
+
+## Removal of an empty cluster when demand decreases
+
+The system will delete an OSD cluster, let's call it `clusterA`, from the pool of 
+available clusters when the following conditions are met:
+
+  * `clusterA` is empty i.e there are no longer any Kafka instances on `clusterA`
+  * `clusterA` is in a ready state
+  * `clusterA` has at least one sibling cluster that satisfies these conditions:
+    * Has the same Cloud Provider as `clusterA`
+    * In the same region as `clusterA`
+    * That sibling is also in a 'ready' state
+
+Once all of these conditions are met, it is safe to assume that deletion 
+of `clusterA` shall not lead to any disruption of service and subsequently it's 
+status is changed to *deprovisioning*. 
+
+A call is then made to OCM to delete it. 
+`clusterA` is then *soft deleted* from from the database.
+`clusterA`'s external dependencies are then removed: 
+This step consists of removing the keycloak client created for this cluster's IDP along with removing the kas-fleetshard-operator service account.

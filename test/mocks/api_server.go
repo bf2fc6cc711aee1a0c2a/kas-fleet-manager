@@ -115,6 +115,7 @@ var (
 	EndpointClusterPatch            = Endpoint{EndpointPathCluster, http.MethodPatch}
 	EndpointKafkaDelete             = Endpoint{EndpointPathSyncset, http.MethodDelete}
 	EndpointClustersGet             = Endpoint{EndpointPathClusters, http.MethodGet}
+	EndpointClusterDelete           = Endpoint{EndpointPathCluster, http.MethodDelete}
 	EndpointClustersPost            = Endpoint{EndpointPathClusters, http.MethodPost}
 	EndpointClusterSyncsetsPost     = Endpoint{EndpointPathSyncsets, http.MethodPost}
 	EndpointClusterSyncsetGet       = Endpoint{EndpointPathSyncset, http.MethodGet}
@@ -227,6 +228,11 @@ func (b *MockConfigurableServerBuilder) SetClustersPostResponse(cluster *cluster
 // SetClustersGetResponse set a mock response cluster or error for the GET /api/clusters_mgmt/v1/clusters endpoint
 func (b *MockConfigurableServerBuilder) SetClustersGetResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointClustersGet] = buildMockRequestHandler(cluster, err)
+}
+
+// SetClusterDeleteResponse set a mock response cluster or error for the DELETE /api/clusters_mgmt/v1/clusters/{id} endpoint
+func (b *MockConfigurableServerBuilder) SetClusterDeleteResponse(cluster *clustersmgmtv1.Cluster, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterDelete] = buildMockRequestHandler(cluster, err)
 }
 
 // SetClusterSyncsetGetResponse set a mock response syncset or error for the GET /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID}
@@ -388,6 +394,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointClusterPatch:            buildMockRequestHandler(MockCluster, nil),
 		EndpointKafkaDelete:             buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:             buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterDelete:           buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterSyncsetsPost:     buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetGet:       buildMockRequestHandler(MockSyncset, nil),
