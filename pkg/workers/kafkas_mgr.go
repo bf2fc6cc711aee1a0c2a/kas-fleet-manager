@@ -29,6 +29,7 @@ type KafkaManager struct {
 	keycloakService      services.KeycloakService
 	observatoriumService services.ObservatoriumService
 	configService        services.ConfigService
+	quotaService         services.QuotaService
 	timer                *time.Timer
 	imStop               chan struct{}
 	syncTeardown         sync.WaitGroup
@@ -36,7 +37,7 @@ type KafkaManager struct {
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService, configService services.ConfigService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService, configService services.ConfigService, quotaService services.QuotaService) *KafkaManager {
 	return &KafkaManager{
 		id:                   id,
 		workerType:           "kafka",
@@ -46,6 +47,7 @@ func NewKafkaManager(kafkaService services.KafkaService, clusterService services
 		keycloakService:      keycloakService,
 		observatoriumService: observatoriumService,
 		configService:        configService,
+		quotaService:         quotaService,
 	}
 }
 
@@ -115,10 +117,21 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	for _, kafka := range acceptedKafkas {
-		if err := k.reconcileAcceptedKafka(kafka); err != nil {
-			sentry.CaptureException(err)
-			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
-			continue
+		isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
+		if err != nil {
+			glog.Errorf("not quota allowed %s: %s", kafka.ID, err.Error())
+		}
+		if isAllowed {
+			kafka.SubscriptionId = subscriptionId
+			if err := k.reconcileAcceptedKafka(kafka); err != nil {
+				sentry.CaptureException(err)
+				glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
+				continue
+			}
+		} else {
+			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
+				glog.Errorf("failed to update kafka %s to status provisioning: %s", kafka.ID, err)
+			}
 		}
 	}
 
@@ -178,10 +191,12 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 }
 
 func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
+	if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
+		return fmt.Errorf("failed to subscription id %s: %w", kafka.SubscriptionId, err)
+	}
 	if err := k.kafkaService.Delete(kafka); err != nil {
 		return fmt.Errorf("failed to delete kafka %s: %w", kafka.ID, err)
 	}
-
 	return nil
 }
 

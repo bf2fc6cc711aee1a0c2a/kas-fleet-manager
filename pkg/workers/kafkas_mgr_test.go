@@ -250,6 +250,7 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
+		quotaService         services.QuotaService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -272,6 +273,11 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 						return nil
 					},
 				},
+				quotaService: &services.QuotaServiceMock{
+					DeleteQuotaFunc: func(id string) *errors.ServiceError {
+						return nil
+					},
+				},
 			},
 		},
 		{
@@ -283,6 +289,11 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 				kafkaService: &services.KafkaServiceMock{
 					DeleteFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
+					},
+				},
+				quotaService: &services.QuotaServiceMock{
+					DeleteQuotaFunc: func(id string) *errors.ServiceError {
+						return nil
 					},
 				},
 			},
@@ -298,6 +309,7 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
+				quotaService:         tt.fields.quotaService,
 			}
 			if err := k.reconcileDeprovisioningRequest(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileDeprovisioningRequest() error = %v, wantErr %v", err, tt.wantErr)

@@ -517,6 +517,9 @@ func Test_kafkaService_Create(t *testing.T) {
 func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
+		syncsetService    SyncsetService
+		keycloakService   KeycloakService
+		quotaService      QuotaService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -532,6 +535,11 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			name: "error when id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				quotaService: &QuotaServiceMock{
+					DeleteQuotaFunc: func(id string) *errors.ServiceError {
+						return nil
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
@@ -544,6 +552,11 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			name: "error when sql where query fails",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				quotaService: &QuotaServiceMock{
+					DeleteQuotaFunc: func(id string) *errors.ServiceError {
+						return nil
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
@@ -581,6 +594,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 		syncsetService    SyncsetService
 		keycloakService   KeycloakService
 		kafkaConfig       *config.KafkaConfig
+		quotaService      QuotaService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -747,6 +761,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
 				awsConfig:         config.NewAWSConfig(),
+				quotaService:      tt.fields.quotaService,
 			}
 			err := k.Delete(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
@@ -762,6 +777,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
 		clusterService    ClusterService
+		quotaService      QuotaService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -779,6 +795,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService:    nil,
 				clusterService:    nil,
+				quotaService: &QuotaServiceMock{
+					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
+						return true, "", nil
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -794,6 +815,31 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				syncsetService:    nil,
 				clusterService:    nil,
+				quotaService: &QuotaServiceMock{
+					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
+						return true, "", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
+			},
+			wantErr: true,
+		},
+		{
+			name: "registering kafka job fails: quota error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+				clusterService:    nil,
+				quotaService: &QuotaServiceMock{
+					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
+						return false, "", nil
+					},
+				},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -816,6 +862,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
+				quotaService:      tt.fields.quotaService,
 			}
 
 			if err := k.RegisterKafkaJob(tt.args.kafkaRequest); (err != nil) != tt.wantErr {

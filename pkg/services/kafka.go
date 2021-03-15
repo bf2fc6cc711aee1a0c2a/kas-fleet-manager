@@ -22,6 +22,8 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+const productId = "RHOSAKTrial"
+
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
@@ -56,9 +58,10 @@ type kafkaService struct {
 	keycloakService   KeycloakService
 	kafkaConfig       *config.KafkaConfig
 	awsConfig         *config.AWSConfig
+	quotaService      QuotaService
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
 		syncsetService:    syncsetService,
@@ -66,15 +69,24 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 		keycloakService:   keycloakService,
 		kafkaConfig:       kafkaConfig,
 		awsConfig:         awsConfig,
+		quotaService:      quotaService,
 	}
 }
 
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
-	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
-	if err := dbConn.Save(kafkaRequest).Error; err != nil {
-		return errors.GeneralError("failed to create kafka job: %v", err)
+	isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, kafkaRequest.ID, kafkaRequest.Owner, false, "single")
+	if err != nil {
+		return err
+	}
+	if isAllowed {
+		dbConn := k.connectionFactory.New()
+		kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
+		if err := dbConn.Save(kafkaRequest).Error; err != nil {
+			return errors.GeneralError("failed to create kafka job: %v", err)
+		}
+	} else {
+		return errors.GeneralError("failed to reserve quota: %v", err)
 	}
 	return nil
 }
