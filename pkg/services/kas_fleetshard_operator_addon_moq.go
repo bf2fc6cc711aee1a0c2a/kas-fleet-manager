@@ -22,6 +22,9 @@ var _ KasFleetshardOperatorAddon = &KasFleetshardOperatorAddonMock{}
 //             ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
 // 	               panic("mock out the Provision method")
 //             },
+//             ReconcileParametersFunc: func(cluster api.Cluster) *errors.ServiceError {
+// 	               panic("mock out the ReconcileParameters method")
+//             },
 //         }
 //
 //         // use mockedKasFleetshardOperatorAddon in code that requires KasFleetshardOperatorAddon
@@ -32,6 +35,9 @@ type KasFleetshardOperatorAddonMock struct {
 	// ProvisionFunc mocks the Provision method.
 	ProvisionFunc func(cluster api.Cluster) (bool, *errors.ServiceError)
 
+	// ReconcileParametersFunc mocks the ReconcileParameters method.
+	ReconcileParametersFunc func(cluster api.Cluster) *errors.ServiceError
+
 	// calls tracks calls to the methods.
 	calls struct {
 		// Provision holds details about calls to the Provision method.
@@ -39,8 +45,14 @@ type KasFleetshardOperatorAddonMock struct {
 			// Cluster is the cluster argument value.
 			Cluster api.Cluster
 		}
+		// ReconcileParameters holds details about calls to the ReconcileParameters method.
+		ReconcileParameters []struct {
+			// Cluster is the cluster argument value.
+			Cluster api.Cluster
+		}
 	}
-	lockProvision sync.RWMutex
+	lockProvision           sync.RWMutex
+	lockReconcileParameters sync.RWMutex
 }
 
 // Provision calls ProvisionFunc.
@@ -71,5 +83,36 @@ func (mock *KasFleetshardOperatorAddonMock) ProvisionCalls() []struct {
 	mock.lockProvision.RLock()
 	calls = mock.calls.Provision
 	mock.lockProvision.RUnlock()
+	return calls
+}
+
+// ReconcileParameters calls ReconcileParametersFunc.
+func (mock *KasFleetshardOperatorAddonMock) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
+	if mock.ReconcileParametersFunc == nil {
+		panic("KasFleetshardOperatorAddonMock.ReconcileParametersFunc: method is nil but KasFleetshardOperatorAddon.ReconcileParameters was just called")
+	}
+	callInfo := struct {
+		Cluster api.Cluster
+	}{
+		Cluster: cluster,
+	}
+	mock.lockReconcileParameters.Lock()
+	mock.calls.ReconcileParameters = append(mock.calls.ReconcileParameters, callInfo)
+	mock.lockReconcileParameters.Unlock()
+	return mock.ReconcileParametersFunc(cluster)
+}
+
+// ReconcileParametersCalls gets all the calls that were made to ReconcileParameters.
+// Check the length with:
+//     len(mockedKasFleetshardOperatorAddon.ReconcileParametersCalls())
+func (mock *KasFleetshardOperatorAddonMock) ReconcileParametersCalls() []struct {
+	Cluster api.Cluster
+} {
+	var calls []struct {
+		Cluster api.Cluster
+	}
+	mock.lockReconcileParameters.RLock()
+	calls = mock.calls.ReconcileParameters
+	mock.lockReconcileParameters.RUnlock()
 	return calls
 }

@@ -12,6 +12,7 @@ import (
 )
 
 func TestAgentOperatorAddon_Provision(t *testing.T) {
+	addon, _ := clustersmgmtv1.NewAddOnInstallation().ID("test-id").Build()
 	type fields struct {
 		ocm        ocm.Client
 		ssoService KeycloakService
@@ -32,7 +33,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 				},
 				ocm: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						return &clustersmgmtv1.AddOnInstallation{}, nil
+						return addon, nil
 					},
 					CreateAddonWithParamsFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
 						return &clustersmgmtv1.AddOnInstallation{}, nil
@@ -83,6 +84,97 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
 			}
 			Expect(ready).To(Equal(tt.result))
+		})
+	}
+}
+
+func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
+	addon, _ := clustersmgmtv1.NewAddOnInstallation().ID("test-id").Build()
+	type fields struct {
+		ocm        ocm.Client
+		ssoService KeycloakService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "ReconcileParameters is finished successfully",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+						return &api.ServiceAccount{}, nil
+					},
+				},
+				ocm: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						return addon, nil
+					},
+					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+						return &clustersmgmtv1.AddOnInstallation{}, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "ReconcileParameters is failed because addon id is not valid",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+						return &api.ServiceAccount{}, nil
+					},
+				},
+				ocm: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						return nil, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "ReconcileParameters is failed because UpdateAddonParameters failed",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+						return &api.ServiceAccount{}, nil
+					},
+				},
+				ocm: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						return addon, nil
+					},
+					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+						return nil, errors.GeneralError("test error")
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			agentOperatorAddon := &kasFleetshardOperatorAddon{
+				ssoService: tt.fields.ssoService,
+				ocm:        tt.fields.ocm,
+				configService: NewConfigService(config.ApplicationConfig{
+					Server: &config.ServerConfig{},
+					Keycloak: &config.KeycloakConfig{
+						KafkaRealm: &config.KeycloakRealmConfig{},
+					},
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+				}),
+			}
+			err := agentOperatorAddon.ReconcileParameters(api.Cluster{
+				ClusterID: "test-cluster-id",
+			})
+			if err != nil && !tt.wantErr {
+				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
+			}
 		})
 	}
 }

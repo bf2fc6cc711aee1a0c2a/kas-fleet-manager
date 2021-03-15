@@ -461,6 +461,8 @@ deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
 deploy: MAS_SSO_BASE_URL ?= "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
 deploy: MAS_SSO_REALM ?= "mas-sso-playground"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "mas-sso-playground"
+deploy: ENABLE_MANAGED_KAFKA_CR ?= "true"
+deploy: ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC ?= "false"
 deploy: deploy/db
 	@oc process -f ./templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="$(OCM_SERVICE_CLIENT_ID)" \
@@ -493,6 +495,8 @@ deploy: deploy/db
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
+		-p ENABLE_MANAGED_KAFKA_CR="$(ENABLE_MANAGED_KAFKA_CR)" \
+		-p ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC="$(ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC)" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy

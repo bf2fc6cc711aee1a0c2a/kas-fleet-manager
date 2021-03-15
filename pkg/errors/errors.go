@@ -304,6 +304,10 @@ func (e *ServiceError) IsFailedToDeleteServiceAccount() bool {
 	return e.Code == FailedToDeleteServiceAccount("").Code
 }
 
+func (e *ServiceError) IsBadRequest() bool {
+	return e.Code == BadRequest("").Code
+}
+
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
 	return openapi.Error{
 		Kind:        "Error",
