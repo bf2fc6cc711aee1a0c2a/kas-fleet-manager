@@ -26,6 +26,12 @@ var _ ClusterService = &ClusterServiceMock{}
 //             CreateFunc: func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the Create method")
 //             },
+//             DeleteByClusterIDFunc: func(clusterID string) *errors.ServiceError {
+// 	               panic("mock out the DeleteByClusterID method")
+//             },
+//             FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *errors.ServiceError) {
+// 	               panic("mock out the FindNonEmptyClusterById method")
+//             },
 //             FindClusterFunc: func(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the FindCluster method")
 //             },
@@ -68,6 +74,12 @@ type ClusterServiceMock struct {
 
 	// CreateFunc mocks the Create method.
 	CreateFunc func(cluster *api.Cluster) (*v1.Cluster, *errors.ServiceError)
+
+	// DeleteByClusterIDFunc mocks the DeleteByClusterID method.
+	DeleteByClusterIDFunc func(clusterID string) *errors.ServiceError
+
+	// FindNonEmptyClusterByIdFunc mocks the FindNonEmptyClusterById method.
+	FindNonEmptyClusterByIdFunc func(clusterId string) (*api.Cluster, *errors.ServiceError)
 
 	// FindClusterFunc mocks the FindCluster method.
 	FindClusterFunc func(criteria FindClusterCriteria) (*api.Cluster, *errors.ServiceError)
@@ -112,6 +124,16 @@ type ClusterServiceMock struct {
 		Create []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
+		}
+		// DeleteByClusterID holds details about calls to the DeleteByClusterID method.
+		DeleteByClusterID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
+		// FindNonEmptyClusterById holds details about calls to the FindNonEmptyClusterById method.
+		FindNonEmptyClusterById []struct {
+			// ClusterId is the clusterId argument value.
+			ClusterId string
 		}
 		// FindCluster holds details about calls to the FindCluster method.
 		FindCluster []struct {
@@ -178,6 +200,8 @@ type ClusterServiceMock struct {
 	}
 	lockAddIdentityProviderID        sync.RWMutex
 	lockCreate                       sync.RWMutex
+	lockDeleteByClusterID            sync.RWMutex
+	lockFindNonEmptyClusterById      sync.RWMutex
 	lockFindCluster                  sync.RWMutex
 	lockFindClusterByID              sync.RWMutex
 	lockGetClusterDNS                sync.RWMutex
@@ -253,6 +277,68 @@ func (mock *ClusterServiceMock) CreateCalls() []struct {
 	mock.lockCreate.RLock()
 	calls = mock.calls.Create
 	mock.lockCreate.RUnlock()
+	return calls
+}
+
+// DeleteByClusterID calls DeleteByClusterIDFunc.
+func (mock *ClusterServiceMock) DeleteByClusterID(clusterID string) *errors.ServiceError {
+	if mock.DeleteByClusterIDFunc == nil {
+		panic("ClusterServiceMock.DeleteByClusterIDFunc: method is nil but ClusterService.DeleteByClusterID was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockDeleteByClusterID.Lock()
+	mock.calls.DeleteByClusterID = append(mock.calls.DeleteByClusterID, callInfo)
+	mock.lockDeleteByClusterID.Unlock()
+	return mock.DeleteByClusterIDFunc(clusterID)
+}
+
+// DeleteByClusterIDCalls gets all the calls that were made to DeleteByClusterID.
+// Check the length with:
+//     len(mockedClusterService.DeleteByClusterIDCalls())
+func (mock *ClusterServiceMock) DeleteByClusterIDCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockDeleteByClusterID.RLock()
+	calls = mock.calls.DeleteByClusterID
+	mock.lockDeleteByClusterID.RUnlock()
+	return calls
+}
+
+// FindNonEmptyClusterById calls FindNonEmptyClusterByIdFunc.
+func (mock *ClusterServiceMock) FindNonEmptyClusterById(clusterId string) (*api.Cluster, *errors.ServiceError) {
+	if mock.FindNonEmptyClusterByIdFunc == nil {
+		panic("ClusterServiceMock.FindNonEmptyClusterByIdFunc: method is nil but ClusterService.FindNonEmptyClusterById was just called")
+	}
+	callInfo := struct {
+		ClusterId string
+	}{
+		ClusterId: clusterId,
+	}
+	mock.lockFindNonEmptyClusterById.Lock()
+	mock.calls.FindNonEmptyClusterById = append(mock.calls.FindNonEmptyClusterById, callInfo)
+	mock.lockFindNonEmptyClusterById.Unlock()
+	return mock.FindNonEmptyClusterByIdFunc(clusterId)
+}
+
+// FindNonEmptyClusterByIdCalls gets all the calls that were made to FindNonEmptyClusterById.
+// Check the length with:
+//     len(mockedClusterService.FindNonEmptyClusterByIdCalls())
+func (mock *ClusterServiceMock) FindNonEmptyClusterByIdCalls() []struct {
+	ClusterId string
+} {
+	var calls []struct {
+		ClusterId string
+	}
+	mock.lockFindNonEmptyClusterById.RLock()
+	calls = mock.calls.FindNonEmptyClusterById
+	mock.lockFindNonEmptyClusterById.RUnlock()
 	return calls
 }
 

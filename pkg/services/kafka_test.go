@@ -602,7 +602,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -630,7 +630,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -665,7 +665,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
@@ -704,7 +704,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					},
 				},
 				keycloakService: &KeycloakServiceMock{
-					DeRegisterKafkaClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {

@@ -478,7 +478,7 @@ func Test_FindCluster(t *testing.T) {
 
 func Test_ListByStatus(t *testing.T) {
 	var nonEmptyClusterList = []api.Cluster{
-		api.Cluster{
+		{
 			CloudProvider: testProvider,
 			MultiAZ:       testMultiAZ,
 			Region:        testRegion,
@@ -950,6 +950,134 @@ func Test_AddIdentityProviderID(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			err := k.AddIdentityProviderID(tt.args.id, tt.args.identityProviderId)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_DeleteByClusterId(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		clusterID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    error
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail: database returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithError(fmt.Errorf("database error"))
+			},
+		},
+		{
+			name: "successful soft delete cluster by id",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				clusterID: "123",
+			},
+			wantErr: false,
+			want:    nil,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (cluster_id =").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			err := k.DeleteByClusterID(tt.args.clusterID)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		clusterId string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    *api.Cluster
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "nil and no error when id is not found",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				clusterId: "non-existentID",
+			},
+			wantErr: false,
+			want:    nil,
+		},
+		{
+			name: "error when sql where query fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				clusterId: testClusterID,
+			},
+			wantErr: true,
+			want:    nil,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithError(fmt.Errorf("some database error"))
+			},
+		},
+		{
+			name: "successful find the cluster",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				clusterId: testClusterID,
+			},
+			want: &api.Cluster{ClusterID: testClusterID},
+			setupFn: func() {
+				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID}}
+				query := `SELECT * FROM "clusters"  WHERE "clusters"."deleted_at" IS NULL AND (("clusters"."cluster_id" = test-cluster-id) AND (cluster_id IN (SELECT "kafka_requests"."cluster_id" FROM kafka_requests WHERE "kafka_requests"."status" != 'failed' AND "kafka_requests"."deleted_at" IS NULL AND "kafka_requests"."cluster_id" != ''))) ORDER BY "clusters"."id" ASC LIMIT 1`
+				mocket.Catcher.Reset().NewMock().WithQuery(query).WithReply(mockedResponse)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			got, err := k.FindNonEmptyClusterById(tt.args.clusterId)
+			gomega.Expect(got).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
