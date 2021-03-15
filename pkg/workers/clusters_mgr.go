@@ -220,6 +220,15 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	if err == nil {
 		err = c.reconcileClusterIdentityProvider(cluster)
 	}
+	if err == nil && c.kasFleetshardOperatorAddon != nil {
+		if e := c.kasFleetshardOperatorAddon.ReconcileParameters(cluster); e != nil {
+			if e.IsBadRequest() {
+				glog.Infof("kas-fleetshard operator is not found on cluster %s", cluster.ClusterID)
+			} else {
+				err = e
+			}
+		}
+	}
 
 	if err != nil {
 		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())

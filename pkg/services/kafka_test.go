@@ -647,7 +647,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("DELETE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
@@ -682,7 +682,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("DELETE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
@@ -723,7 +723,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("DELETE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
@@ -1209,6 +1209,24 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			args: args{
 				id:     testID,
 				status: constants.KafkaRequestStatusPreparing,
+			},
+		},
+		{
+			name: "success when because cluster in deprovisioning state but status to update is deleted ",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr:      false,
+			wantExecuted: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
+				})))
+			},
+			args: args{
+				id:     testID,
+				status: constants.KafkaRequestStatusDeleted,
 			},
 		},
 		{

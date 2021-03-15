@@ -58,6 +58,10 @@ const (
 	EndpointPathMachinePools = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools"
 	// EndpointPathMachinePool ocm cluster management machine pool endpoint
 	EndpointPathMachinePool = "/api/clusters_mgmt/v1/clusters/{id}/machine_pools/{machinePoolId}"
+	// EndpointPathAddonInstallations ocm cluster addon installations endpoint
+	EndpointPathAddonInstallations = "/api/clusters_mgmt/v1/clusters/{id}/addons"
+	// EndpointPathAddonInstallation ocm cluster addon installation endpoint
+	EndpointPathAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}"
 
 	// Default values for getX functions
 
@@ -129,6 +133,9 @@ var (
 	EndpointMachinePoolGet          = Endpoint{EndpointPathMachinePool, http.MethodGet}
 	EndpointIdentityProviderPost    = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
 	EndpointIdentityProviderPatch   = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
+	EndpointAddonInstallationsPost  = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
+	EndpointAddonInstallationGet    = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
+	EndpointAddonInstallationPatch  = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
 )
 
 // variables for mocked ocm types
@@ -306,6 +313,21 @@ func (b *MockConfigurableServerBuilder) SetIdentityProviderPatchResponse(idp *cl
 	b.handlerRegister[EndpointIdentityProviderPatch] = buildMockRequestHandler(idp, err)
 }
 
+// SetAddonInstallationsPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/addons
+func (b *MockConfigurableServerBuilder) SetAddonInstallationsPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointAddonInstallationsPost] = buildMockRequestHandler(ai, err)
+}
+
+// SetAddonInstallationGetResponse set a mock response for Get /api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}
+func (b *MockConfigurableServerBuilder) SetAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointAddonInstallationGet] = buildMockRequestHandler(ai, err)
+}
+
+// SetAddonInstallationPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}
+func (b *MockConfigurableServerBuilder) SetAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointAddonInstallationPatch] = buildMockRequestHandler(ai, err)
+}
+
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
 func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	router = mux.NewRouter()
@@ -384,6 +406,9 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointMachinePoolPost:         buildMockRequestHandler(MockMachinePool, nil),
 		EndpointIdentityProviderPatch:   buildMockRequestHandler(MockIdentityProvider, nil),
 		EndpointIdentityProviderPost:    buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointAddonInstallationsPost:  buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationGet:    buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationPatch:  buildMockRequestHandler(MockClusterAddonInstallation, nil),
 	}, nil
 }
 

@@ -405,7 +405,10 @@ func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (boo
 		return true, errors.GeneralError("failed to update status: %s", err.Error())
 	} else {
 		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
-			return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
+			// only allow to chnage the status to "deleted" if the cluster is already in "deprovision" status
+			if status != constants.KafkaRequestStatusDeleted {
+				return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
+			}
 		}
 
 		if kafka.Status == status.String() {
