@@ -21,11 +21,11 @@ var _ QuotaService = &QuotaServiceMock{}
 // 			DeleteQuotaFunc: func(id string) *apiErrors.ServiceError {
 // 				panic("mock out the DeleteQuota method")
 // 			},
-// 			IsQuotaAvailableFunc: func(productID string, orgID string) (bool, *apiErrors.ServiceError) {
-// 				panic("mock out the IsQuotaAvailable method")
+// 			IsQuotaReservedFunc: func(productID string, orgID string) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the IsQuotaReserved method")
 // 			},
-// 			ListClustersWithValidQuotaFunc: func(productID string, orgID string) ([]string, *apiErrors.ServiceError) {
-// 				panic("mock out the ListClustersWithValidQuota method")
+// 			ListReservedKafkaQuotaFunc: func(productID string, orgID string) ([]string, *apiErrors.ServiceError) {
+// 				panic("mock out the ListReservedKafkaQuota method")
 // 			},
 // 			ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *apiErrors.ServiceError) {
 // 				panic("mock out the ReserveQuota method")
@@ -40,11 +40,11 @@ type QuotaServiceMock struct {
 	// DeleteQuotaFunc mocks the DeleteQuota method.
 	DeleteQuotaFunc func(id string) *apiErrors.ServiceError
 
-	// IsQuotaAvailableFunc mocks the IsQuotaAvailable method.
-	IsQuotaAvailableFunc func(productID string, orgID string) (bool, *apiErrors.ServiceError)
+	// IsQuotaReservedFunc mocks the IsQuotaReserved method.
+	IsQuotaReservedFunc func(productID string, orgID string) (bool, *apiErrors.ServiceError)
 
-	// ListClustersWithValidQuotaFunc mocks the ListClustersWithValidQuota method.
-	ListClustersWithValidQuotaFunc func(productID string, orgID string) ([]string, *apiErrors.ServiceError)
+	// ListReservedKafkaQuotaFunc mocks the ListReservedKafkaQuota method.
+	ListReservedKafkaQuotaFunc func(productID string, orgID string) ([]string, *apiErrors.ServiceError)
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
 	ReserveQuotaFunc func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *apiErrors.ServiceError)
@@ -56,15 +56,15 @@ type QuotaServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
-		// IsQuotaAvailable holds details about calls to the IsQuotaAvailable method.
-		IsQuotaAvailable []struct {
+		// IsQuotaReserved holds details about calls to the IsQuotaReserved method.
+		IsQuotaReserved []struct {
 			// ProductID is the productID argument value.
 			ProductID string
 			// OrgID is the orgID argument value.
 			OrgID string
 		}
-		// ListClustersWithValidQuota holds details about calls to the ListClustersWithValidQuota method.
-		ListClustersWithValidQuota []struct {
+		// ListReservedKafkaQuota holds details about calls to the ListReservedKafkaQuota method.
+		ListReservedKafkaQuota []struct {
 			// ProductID is the productID argument value.
 			ProductID string
 			// OrgID is the orgID argument value.
@@ -86,10 +86,10 @@ type QuotaServiceMock struct {
 			Availability string
 		}
 	}
-	lockDeleteQuota                sync.RWMutex
-	lockIsQuotaAvailable           sync.RWMutex
-	lockListClustersWithValidQuota sync.RWMutex
-	lockReserveQuota               sync.RWMutex
+	lockDeleteQuota            sync.RWMutex
+	lockIsQuotaReserved        sync.RWMutex
+	lockListReservedKafkaQuota sync.RWMutex
+	lockReserveQuota           sync.RWMutex
 }
 
 // DeleteQuota calls DeleteQuotaFunc.
@@ -123,10 +123,10 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 	return calls
 }
 
-// IsQuotaAvailable calls IsQuotaAvailableFunc.
-func (mock *QuotaServiceMock) IsQuotaAvailable(productID string, orgID string) (bool, *apiErrors.ServiceError) {
-	if mock.IsQuotaAvailableFunc == nil {
-		panic("QuotaServiceMock.IsQuotaAvailableFunc: method is nil but QuotaService.IsQuotaAvailable was just called")
+// IsQuotaReserved calls IsQuotaReservedFunc.
+func (mock *QuotaServiceMock) IsQuotaReserved(productID string, orgID string) (bool, *apiErrors.ServiceError) {
+	if mock.IsQuotaReservedFunc == nil {
+		panic("QuotaServiceMock.IsQuotaReservedFunc: method is nil but QuotaService.IsQuotaReserved was just called")
 	}
 	callInfo := struct {
 		ProductID string
@@ -135,16 +135,16 @@ func (mock *QuotaServiceMock) IsQuotaAvailable(productID string, orgID string) (
 		ProductID: productID,
 		OrgID:     orgID,
 	}
-	mock.lockIsQuotaAvailable.Lock()
-	mock.calls.IsQuotaAvailable = append(mock.calls.IsQuotaAvailable, callInfo)
-	mock.lockIsQuotaAvailable.Unlock()
-	return mock.IsQuotaAvailableFunc(productID, orgID)
+	mock.lockIsQuotaReserved.Lock()
+	mock.calls.IsQuotaReserved = append(mock.calls.IsQuotaReserved, callInfo)
+	mock.lockIsQuotaReserved.Unlock()
+	return mock.IsQuotaReservedFunc(productID, orgID)
 }
 
-// IsQuotaAvailableCalls gets all the calls that were made to IsQuotaAvailable.
+// IsQuotaReservedCalls gets all the calls that were made to IsQuotaReserved.
 // Check the length with:
-//     len(mockedQuotaService.IsQuotaAvailableCalls())
-func (mock *QuotaServiceMock) IsQuotaAvailableCalls() []struct {
+//     len(mockedQuotaService.IsQuotaReservedCalls())
+func (mock *QuotaServiceMock) IsQuotaReservedCalls() []struct {
 	ProductID string
 	OrgID     string
 } {
@@ -152,16 +152,16 @@ func (mock *QuotaServiceMock) IsQuotaAvailableCalls() []struct {
 		ProductID string
 		OrgID     string
 	}
-	mock.lockIsQuotaAvailable.RLock()
-	calls = mock.calls.IsQuotaAvailable
-	mock.lockIsQuotaAvailable.RUnlock()
+	mock.lockIsQuotaReserved.RLock()
+	calls = mock.calls.IsQuotaReserved
+	mock.lockIsQuotaReserved.RUnlock()
 	return calls
 }
 
-// ListClustersWithValidQuota calls ListClustersWithValidQuotaFunc.
-func (mock *QuotaServiceMock) ListClustersWithValidQuota(productID string, orgID string) ([]string, *apiErrors.ServiceError) {
-	if mock.ListClustersWithValidQuotaFunc == nil {
-		panic("QuotaServiceMock.ListClustersWithValidQuotaFunc: method is nil but QuotaService.ListClustersWithValidQuota was just called")
+// ListReservedKafkaQuota calls ListReservedKafkaQuotaFunc.
+func (mock *QuotaServiceMock) ListReservedKafkaQuota(productID string, orgID string) ([]string, *apiErrors.ServiceError) {
+	if mock.ListReservedKafkaQuotaFunc == nil {
+		panic("QuotaServiceMock.ListReservedKafkaQuotaFunc: method is nil but QuotaService.ListReservedKafkaQuota was just called")
 	}
 	callInfo := struct {
 		ProductID string
@@ -170,16 +170,16 @@ func (mock *QuotaServiceMock) ListClustersWithValidQuota(productID string, orgID
 		ProductID: productID,
 		OrgID:     orgID,
 	}
-	mock.lockListClustersWithValidQuota.Lock()
-	mock.calls.ListClustersWithValidQuota = append(mock.calls.ListClustersWithValidQuota, callInfo)
-	mock.lockListClustersWithValidQuota.Unlock()
-	return mock.ListClustersWithValidQuotaFunc(productID, orgID)
+	mock.lockListReservedKafkaQuota.Lock()
+	mock.calls.ListReservedKafkaQuota = append(mock.calls.ListReservedKafkaQuota, callInfo)
+	mock.lockListReservedKafkaQuota.Unlock()
+	return mock.ListReservedKafkaQuotaFunc(productID, orgID)
 }
 
-// ListClustersWithValidQuotaCalls gets all the calls that were made to ListClustersWithValidQuota.
+// ListReservedKafkaQuotaCalls gets all the calls that were made to ListReservedKafkaQuota.
 // Check the length with:
-//     len(mockedQuotaService.ListClustersWithValidQuotaCalls())
-func (mock *QuotaServiceMock) ListClustersWithValidQuotaCalls() []struct {
+//     len(mockedQuotaService.ListReservedKafkaQuotaCalls())
+func (mock *QuotaServiceMock) ListReservedKafkaQuotaCalls() []struct {
 	ProductID string
 	OrgID     string
 } {
@@ -187,9 +187,9 @@ func (mock *QuotaServiceMock) ListClustersWithValidQuotaCalls() []struct {
 		ProductID string
 		OrgID     string
 	}
-	mock.lockListClustersWithValidQuota.RLock()
-	calls = mock.calls.ListClustersWithValidQuota
-	mock.lockListClustersWithValidQuota.RUnlock()
+	mock.lockListReservedKafkaQuota.RLock()
+	calls = mock.calls.ListReservedKafkaQuota
+	mock.lockListReservedKafkaQuota.RUnlock()
 	return calls
 }
 
