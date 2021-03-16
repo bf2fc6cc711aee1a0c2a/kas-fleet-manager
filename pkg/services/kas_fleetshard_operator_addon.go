@@ -12,16 +12,16 @@ const (
 	KasFleetshardOperatorRoleName = "kas_fleetshard_operator"
 
 	//parameter names for the kas-fleetshard-operator service account
-	kasFleetshardOperatorParamMasSSOBaseUrl        = "sso.auth-server-url"
-	kasFleetshardOperatorParamServiceAccountId     = "sso.client-id"
-	kasFleetshardOperatorParamServiceAccountSecret = "sso.secret"
+	kasFleetshardOperatorParamMasSSOBaseUrl        = "sso-auth-server-url"
+	kasFleetshardOperatorParamServiceAccountId     = "sso-client-id"
+	kasFleetshardOperatorParamServiceAccountSecret = "sso-secret"
 	// parameter names for the cluster id
-	kasFleetshardOperatorParamClusterId = "cluster.id"
+	kasFleetshardOperatorParamClusterId = "cluster-id"
 	// parameter names for the control plane url
-	kasFleetshardOperatorParamControlPlaneBaseURL = "control-plane.url"
+	kasFleetshardOperatorParamControlPlaneBaseURL = "control-plane-url"
 	//parameter names for fleetshardoperator synchronizer
-	kasFleetshardOperatorParamPollinterval   = "poll.interval"
-	kasFleetshardOperatorParamResyncInterval = "resync.interval"
+	kasFleetshardOperatorParamPollinterval   = "poll-interval"
+	kasFleetshardOperatorParamResyncInterval = "resync-interval"
 )
 
 //go:generate moq -out kas_fleetshard_operator_addon_moq.go . KasFleetshardOperatorAddon

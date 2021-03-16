@@ -233,6 +233,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 					},
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					KasFleetShardConfig: &config.KasFleetshardConfig{},
 				}),
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{
