@@ -40,3 +40,15 @@ func ConvertDataPlaneClusterStatus(status openapi.DataPlaneClusterUpdateStatusRe
 		},
 	}
 }
+
+func PresentDataPlaneClusterConfig(config *api.DataPlaneClusterConfig) openapi.DataplaneClusterAgentConfig {
+	return openapi.DataplaneClusterAgentConfig{
+		Spec: openapi.DataplaneClusterAgentConfigSpec{
+			Observability: openapi.DataplaneClusterAgentConfigSpecObservability{
+				AccessToken: config.Observability.AccessToken,
+				Channel:     config.Observability.Channel,
+				Repository:  config.Observability.Repository,
+			},
+		},
+	}
+}
