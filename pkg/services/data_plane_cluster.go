@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 )
 
@@ -250,7 +251,7 @@ func (d *dataPlaneClusterService) calculateDesiredNodesToScaleUp(cluster *api.Cl
 	nodesToScaleUp := status.ResizeInfo.NodeDelta
 	if cluster.MultiAZ {
 		// We round-up to the nearest Multi-AZ node multiple
-		nodesToScaleUp = d.roundUp(nodesToScaleUp, multiAZClusterNodeScalingMultiple)
+		nodesToScaleUp = shared.RoundUp(nodesToScaleUp, multiAZClusterNodeScalingMultiple)
 	}
 	return nodesToScaleUp
 }
@@ -264,7 +265,7 @@ func (d *dataPlaneClusterService) calculateDesiredNodesToScaleDown(cluster *api.
 	nodesToScaleDown := status.ResizeInfo.NodeDelta
 	// We round-up to the nearest Multi-AZ node multiple
 	if cluster.MultiAZ {
-		nodesToScaleDown = d.roundUp(nodesToScaleDown, multiAZClusterNodeScalingMultiple)
+		nodesToScaleDown = shared.RoundUp(nodesToScaleDown, multiAZClusterNodeScalingMultiple)
 	}
 
 	return nodesToScaleDown
@@ -287,21 +288,6 @@ func (d *dataPlaneClusterService) scaleUpNeeded(cluster *api.Cluster, status *ap
 	// less than the ceiling and at least one of the scale up thresholds has
 	// been crossed
 	return anyScaleUpthresholdCrossed && status.NodeInfo.Current < restrictedCeiling && nodesToScaleUpIsWithinLimits, nil
-}
-
-// roundUp rounds up number to the nearest multiple. Input has to be positive
-func (d *dataPlaneClusterService) roundUp(number int, multiple int) int {
-	remainder := number % multiple
-	if remainder == 0 {
-		return number
-	}
-
-	return number + (multiple - remainder)
-}
-
-// roundDown rounds up number to the nearest multiple. Input has to be positive
-func (d *dataPlaneClusterService) roundDown(number int, multiple int) int {
-	return number - (number % multiple)
 }
 
 // scaleDownNeeded returns whether the cluster needs to be scaled down based
@@ -336,7 +322,7 @@ func (d *dataPlaneClusterService) scaleDownNeeded(cluster *api.Cluster, status *
 func (d *dataPlaneClusterService) getRestrictedCeiling(cluster *api.Cluster, status *api.DataPlaneClusterStatus) int {
 	restrictedCeiling := status.NodeInfo.Ceiling
 	if cluster.MultiAZ {
-		restrictedCeiling = d.roundDown(restrictedCeiling, multiAZClusterNodeScalingMultiple)
+		restrictedCeiling = shared.RoundDown(restrictedCeiling, multiAZClusterNodeScalingMultiple)
 	}
 	return restrictedCeiling
 }
@@ -347,7 +333,7 @@ func (d *dataPlaneClusterService) getRestrictedCeiling(cluster *api.Cluster, sta
 func (d *dataPlaneClusterService) getRestrictedFloor(cluster *api.Cluster, status *api.DataPlaneClusterStatus) int {
 	restrictedFloor := status.NodeInfo.Floor
 	if cluster.MultiAZ {
-		restrictedFloor = d.roundUp(restrictedFloor, multiAZClusterNodeScalingMultiple)
+		restrictedFloor = shared.RoundUp(restrictedFloor, multiAZClusterNodeScalingMultiple)
 	}
 	return restrictedFloor
 }
