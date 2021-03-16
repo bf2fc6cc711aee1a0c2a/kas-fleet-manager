@@ -1014,6 +1014,7 @@ type ListClusterAsignedConnectorsOpts struct {
 	Page      optional.String
 	Size      optional.String
 	GtVersion optional.Int64
+	Watch     optional.Bool
 }
 
 /*
@@ -1024,6 +1025,7 @@ ListClusterAsignedConnectors Returns a list of connector types
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
+ * @param "Watch" (optional.Bool) -  watch for changes to the resources and return them as a stream of watch events. Specify gt_version to specify the starting point.
 @return ConnectorList
 */
 func (a *DefaultApiService) ListClusterAsignedConnectors(ctx _context.Context, id string, localVarOptionals *ListClusterAsignedConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
@@ -1053,6 +1055,9 @@ func (a *DefaultApiService) ListClusterAsignedConnectors(ctx _context.Context, i
 	if localVarOptionals != nil && localVarOptionals.GtVersion.IsSet() {
 		localVarQueryParams.Add("gt_version", parameterToString(localVarOptionals.GtVersion.Value(), ""))
 	}
+	if localVarOptionals != nil && localVarOptionals.Watch.IsSet() {
+		localVarQueryParams.Add("watch", parameterToString(localVarOptionals.Watch.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -1063,7 +1068,7 @@ func (a *DefaultApiService) ListClusterAsignedConnectors(ctx _context.Context, i
 	}
 
 	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
+	localVarHTTPHeaderAccepts := []string{"application/json", "application/json;stream=watch"}
 
 	// set Accept header
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/getsentry/sentry-go"
@@ -13,7 +14,6 @@ import (
 
 // ConnectorManager represents a connector manager that periodically reconciles connector requests
 type ConnectorManager struct {
-	ctx                     context.Context
 	id                      string
 	workerType              string
 	isRunning               bool
@@ -28,7 +28,6 @@ type ConnectorManager struct {
 // NewConnectorManager creates a new connector manager
 func NewConnectorManager(id string, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService services.ObservatoriumService) *ConnectorManager {
 	return &ConnectorManager{
-		ctx:                     context.Background(),
 		id:                      id,
 		workerType:              "connector",
 		connectorService:        connectorService,
@@ -79,14 +78,31 @@ func (k *ConnectorManager) reconcile() {
 		api.ConnectorStatusDeleted,
 	}
 	serviceErr := k.connectorService.ForEachInStatus(statuses, func(connector *api.Connector) *errors.ServiceError {
+
+		ctx, err := db.NewContext(context.Background())
+		if err != nil {
+			return errors.GeneralError("failed to create tx: %v", err)
+		}
+		err = db.Begin(ctx)
+		if err != nil {
+			return errors.GeneralError("failed to create tx: %v", err)
+		}
+		defer func() {
+			err := db.Resolve(ctx)
+			if err != nil {
+				sentry.CaptureException(err)
+				glog.Errorf("failed to resolve tx: %s", err.Error())
+			}
+		}()
+
 		switch connector.Status {
 		case api.ConnectorStatusAssigning:
-			if err := k.reconcileAccepted(connector); err != nil {
+			if err := k.reconcileAccepted(ctx, connector); err != nil {
 				sentry.CaptureException(err)
 				glog.Errorf("failed to reconcile accepted connector %s: %s", connector.ID, err.Error())
 			}
 		case api.ConnectorClusterStatusDeleted:
-			if err := k.reconcileDeleted(connector); err != nil {
+			if err := k.reconcileDeleted(ctx, connector); err != nil {
 				sentry.CaptureException(err)
 				glog.Errorf("failed to reconcile accepted connector %s: %s", connector.ID, err.Error())
 			}
@@ -99,7 +115,7 @@ func (k *ConnectorManager) reconcile() {
 	}
 }
 
-func (k *ConnectorManager) reconcileAccepted(connector *api.Connector) error {
+func (k *ConnectorManager) reconcileAccepted(ctx context.Context, connector *api.Connector) error {
 	switch connector.TargetKind {
 	case api.AddonTargetKind:
 
@@ -110,7 +126,7 @@ func (k *ConnectorManager) reconcileAccepted(connector *api.Connector) error {
 		if cluster != nil {
 			connector.ClusterID = cluster.ID
 			connector.Status = api.ConnectorStatusAssigned
-			if err = k.connectorService.Update(k.ctx, connector); err != nil {
+			if err = k.connectorService.Update(ctx, connector); err != nil {
 				return fmt.Errorf("failed to update connector %s with cluster details: %w", connector.ID, err)
 			}
 		}
@@ -121,8 +137,8 @@ func (k *ConnectorManager) reconcileAccepted(connector *api.Connector) error {
 	return nil
 }
 
-func (k *ConnectorManager) reconcileDeleted(connector *api.Connector) error {
-	if err := k.connectorService.Delete(k.ctx, connector.KafkaID, connector.ID); err != nil {
+func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *api.Connector) error {
+	if err := k.connectorService.Delete(ctx, connector.KafkaID, connector.ID); err != nil {
 		return fmt.Errorf("failed to delete connector %s: %w", connector.ID, err)
 	}
 	return nil

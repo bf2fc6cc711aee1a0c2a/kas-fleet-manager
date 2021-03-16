@@ -14,7 +14,8 @@
 //      """
 // Stores a json field of the response body in a scenario variable:
 //    Given I store the ".id" selection from the response as ${cid}
-//
+// Assert that a response header matches the provided text:
+//    Then the response header "Content-Type" should match "application/json;stream=watch"
 package cucumber
 
 import (
@@ -32,6 +33,7 @@ func init() {
 		ctx.Step(`^the response should match "([^"]*)"$`, s.theResponseShouldMatchText)
 		ctx.Step(`^I store the "([^"]*)" selection from the response as \${([^"]*)}$`, s.iStoreTheSelectionFromTheResponseAs)
 		ctx.Step(`^the "([^"]*)" selection from the response should match "([^"]*)"$`, s.theSelectionFromTheResponseShouldMatch)
+		ctx.Step(`^the response header "([^"]*)" should match "([^"]*)"$`, s.theResponseHeaderShouldMatch)
 	})
 }
 
@@ -49,17 +51,21 @@ func (s *TestScenario) theResponseShouldMatchJsonDoc(expected *godog.DocString) 
 
 func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 	session := s.Session()
-	var expectedParsed interface{}
 
-	expanded := s.Expand(expected)
-	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
-		return fmt.Errorf("expected JSON is not valid json: %v, expected: %s", err, expanded)
+	if len(session.RespBytes) == 0 {
+		return fmt.Errorf("got an empty response from server, expected a json body")
 	}
 
 	// parse both so we can deep compare...
 	actualParsed, err := session.RespJson()
 	if err != nil {
 		return err
+	}
+
+	var expectedParsed interface{}
+	expanded := s.Expand(expected)
+	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
+		return fmt.Errorf("expected JSON is not valid json: %v, expected: %s", err, expanded)
 	}
 
 	if !reflect.DeepEqual(expectedParsed, actualParsed) {
@@ -77,6 +83,17 @@ func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 
 	if expanded != string(session.RespBytes) {
 		return fmt.Errorf("reponse does not match expected: %v, actual: %v", expanded, string(session.RespBytes))
+	}
+	return nil
+}
+
+func (s *TestScenario) theResponseHeaderShouldMatch(header, expected string) error {
+	session := s.Session()
+	expanded := s.Expand(expected)
+
+	actual := session.Resp.Header.Get(header)
+	if expanded != actual {
+		return fmt.Errorf("reponse header '%s' does not match expected: %v, actual: %v", header, expanded, actual)
 	}
 	return nil
 }
