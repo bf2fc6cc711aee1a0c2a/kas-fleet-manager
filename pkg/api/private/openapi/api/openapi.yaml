@@ -957,6 +957,46 @@ paths:
       security:
       - Bearer: []
       summary: Get the list of ManagedaKafkas for the specified agent cluster
+  /api/managed-services-api/v1/agent-clusters/{id}:
+    get:
+      operationId: getKafkaAgent
+      parameters:
+      - description: The id of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataplaneClusterAgentConfig'
+          description: The ManagedKafkaAgent CR Spec
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Get the spec of the ManagedKafkaAgent CR spec
 components:
   examples:
     ManagedKafkaExample:
@@ -1363,6 +1403,18 @@ components:
       example:
         $ref: '#/components/examples/DataPlaneKafkaUpdateStatusRequestExample'
       type: object
+    DataplaneClusterAgentConfig:
+      description: Configuration for the data plane cluster agent
+      example:
+        spec:
+          observability:
+            channel: channel
+            accessToken: accessToken
+            repository: repository
+      properties:
+        spec:
+          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec'
+      type: object
     Error_allOf:
       properties:
         code:
@@ -1640,3 +1692,26 @@ components:
           type: string
         strimzi:
           type: string
+    DataplaneClusterAgentConfig_spec_observability:
+      description: Observability configurations
+      example:
+        channel: channel
+        accessToken: accessToken
+        repository: repository
+      properties:
+        accessToken:
+          type: string
+        channel:
+          type: string
+        repository:
+          type: string
+    DataplaneClusterAgentConfig_spec:
+      description: Data plane cluster agent spec
+      example:
+        observability:
+          channel: channel
+          accessToken: accessToken
+          repository: repository
+      properties:
+        observability:
+          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_observability'

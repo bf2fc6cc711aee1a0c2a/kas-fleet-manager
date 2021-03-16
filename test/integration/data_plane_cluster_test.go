@@ -86,6 +86,10 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	resp, err := privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
+
+	_, resp, err = privateAPIClient.DefaultApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
+	Expect(err).To(HaveOccurred())
 }
 
 func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
@@ -107,6 +111,10 @@ func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 	testDataPlaneclusterID := "test-cluster-id"
 
 	resp, err := privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
+	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	Expect(err).To(HaveOccurred())
+
+	_, resp, err = privateAPIClient.DefaultApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(err).To(HaveOccurred())
 }
@@ -132,6 +140,10 @@ func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 	resp, err := privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
+
+	_, resp, err = privateAPIClient.DefaultApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
+	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	Expect(err).To(HaveOccurred())
 }
 
 func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
@@ -155,6 +167,40 @@ func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 	resp, err := privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
+
+	_, resp, err = privateAPIClient.DefaultApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
+	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+	Expect(err).To(HaveOccurred())
+}
+
+func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
+	startHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
+	}
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := h.NewPrivateAPIClient()
+	config, resp, err := privateAPIClient.DefaultApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(err).NotTo(HaveOccurred())
+	Expect(config.Spec.Observability.Repository).ShouldNot(BeEmpty())
+	Expect(config.Spec.Observability.Channel).ShouldNot(BeEmpty())
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(t *testing.T) {
