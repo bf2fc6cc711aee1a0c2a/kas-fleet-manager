@@ -26,6 +26,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"osd-idp-mas-sso-realm":             "mas-sso-playground",
 	"enable-kafka-external-certificate": "false",
 	"cluster-compute-machine-type":      "m5.xlarge",
+	"ingress-controller-replicas":       "3",
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server
