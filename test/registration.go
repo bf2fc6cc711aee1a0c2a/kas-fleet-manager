@@ -42,8 +42,8 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, startHo
 	helper.ResetDB()
 	// Start Leader Election Manager
 	helper.StartLeaderElectionWorker()
-
 	helper.ResetMetrics()
+	helper.startSignalBusWorker()
 	// Create an api client
 	client := helper.NewApiClient()
 	return helper, client, buildTeardownHelperFn(helper, teardownHook)
@@ -54,6 +54,7 @@ func buildTeardownHelperFn(h *Helper, teardownHook Hook) func() {
 		if teardownHook != nil {
 			teardownHook(h)
 		}
+		h.stopSignalBusWorker()
 		h.StopServer()
 		h.StopLeaderElectionWorker()
 	}
