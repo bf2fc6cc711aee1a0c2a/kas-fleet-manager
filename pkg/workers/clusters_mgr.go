@@ -45,7 +45,6 @@ const (
 	observabilitySubscriptionName   = "observability-operator"
 	observabilityKafkaConfiguration = "kafka-observability-configuration"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
-	ingressReplicas                 = int32(9)
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
@@ -601,7 +600,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 }
 
 func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressoperatorv1.IngressController {
-	r := ingressReplicas
+	r := int32(c.configService.GetConfig().ClusterCreationConfig.IngressControllerReplicas)
 	return &ingressoperatorv1.IngressController{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "operator.openshift.io/v1",

@@ -578,6 +578,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 	observabilityConfig := buildObservabilityConfig()
 	clusterCreateConfig := config.ClusterCreationConfig{
 		ImagePullDockerConfigContent: "image-pull-secret-test",
+		IngressControllerReplicas:    12,
 	}
 
 	type fields struct {
@@ -1273,7 +1274,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
 	expansion := true
 	consumer := storagev1.VolumeBindingWaitForFirstConsumer
-	r := ingressReplicas
+	r := int32(clusterCreateConfig.IngressControllerReplicas)
 	resources := []interface{}{
 		&storagev1.StorageClass{
 			TypeMeta: metav1.TypeMeta{

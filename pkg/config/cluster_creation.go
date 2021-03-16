@@ -6,6 +6,7 @@ import (
 
 type ClusterCreationConfig struct {
 	AutoOSDCreation              bool   `json:"auto_osd_creation"`
+	IngressControllerReplicas    int    `json:"ingress_controller_replicas"`
 	OpenshiftVersion             string `json:"cluster_openshift_version"`
 	ComputeMachineType           string `json:"cluster_compute_machine_type"`
 	EnableKasFleetshardOperator  bool   `json:"enable_kas_fleetshard_operator"`
@@ -23,6 +24,7 @@ func NewClusterCreationConfig() *ClusterCreationConfig {
 		StrimziOperatorVersion:       "v0.21.3",
 		ImagePullDockerConfigContent: "",
 		ImagePullDockerConfigFile:    "secrets/image-pull.dockerconfigjson",
+		IngressControllerReplicas:    9,
 	}
 }
 
@@ -33,6 +35,7 @@ func (s *ClusterCreationConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&s.EnableKasFleetshardOperator, "enable-kas-fleetshard-operator", s.EnableKasFleetshardOperator, "Enable kas-fleetshard-operator when creating an OSD cluster")
 	fs.StringVar(&s.StrimziOperatorVersion, "strimzi-operator-version", s.StrimziOperatorVersion, "The version of the Strimzi operator to install")
 	fs.StringVar(&s.ImagePullDockerConfigFile, "image-pull-docker-config-file", s.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
+	fs.IntVar(&s.IngressControllerReplicas, "ingress-controller-replicas", s.IngressControllerReplicas, "The number of replicas for the IngressController")
 }
 
 func (s *ClusterCreationConfig) ReadFiles() error {
