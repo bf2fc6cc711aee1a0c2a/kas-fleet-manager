@@ -44,7 +44,7 @@ func (q quotaService) ReserveQuota(productID string, clusterID string, kafkaID s
 		AccountUsername(owner).
 		ProductID(productID).
 		Managed(false).
-		ClusterID(kafkaID).
+		ClusterID(kafkaID). //cluster can't be nil
 		ExternalClusterID(clusterID).
 		Disconnected(false).
 		BYOC(false).
@@ -55,7 +55,7 @@ func (q quotaService) ReserveQuota(productID string, clusterID string, kafkaID s
 
 	resp, err := q.ocmClient.ClusterAuthorization(cb)
 	if err != nil {
-		return false, "", errors.GeneralError("failed to reverse the quota: %v", err)
+		return false, "", errors.InsufficientQuotaError("%v", err)
 	}
 
 	if resp.Allowed() {

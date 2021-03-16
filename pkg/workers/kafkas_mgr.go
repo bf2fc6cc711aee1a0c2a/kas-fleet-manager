@@ -119,18 +119,18 @@ func (k *KafkaManager) reconcile() {
 	for _, kafka := range acceptedKafkas {
 		isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
 		if err != nil {
-			glog.Errorf("not quota allowed %s: %s", kafka.ID, err.Error())
+			glog.Errorf("Failed to check quota for %s: %s", kafka.ID, err.Error())
 		}
-		if isAllowed {
+		if !isAllowed {
+			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusInsufficientQuotaFailed); executed && err != nil {
+				glog.Errorf("failed to update kafka %s to status insufficient quota: %s", kafka.ID, err)
+			}
+		} else {
 			kafka.SubscriptionId = subscriptionId
 			if err := k.reconcileAcceptedKafka(kafka); err != nil {
 				sentry.CaptureException(err)
 				glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 				continue
-			}
-		} else {
-			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
-				glog.Errorf("failed to update kafka %s to status provisioning: %s", kafka.ID, err)
 			}
 		}
 	}

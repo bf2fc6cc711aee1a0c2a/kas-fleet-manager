@@ -19,6 +19,8 @@ const (
 	KafkaRequestStatusReady KafkaStatus = "ready"
 	// KafkaRequestStatusFailed - kafka request failed
 	KafkaRequestStatusFailed KafkaStatus = "failed"
+	// KafkaRequestStatusInsufficientQuotaFailed- kafka request failed due to insufficient quota
+	KafkaRequestStatusInsufficientQuotaFailed KafkaStatus = "insufficient quota"
 	// KafkaRequestStatusDeprovision - kafka request status when to be deleted by kafka
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
 	// KafkaRequestStatusDeleted - kafka request is deleted

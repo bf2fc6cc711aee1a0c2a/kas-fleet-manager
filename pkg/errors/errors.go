@@ -95,7 +95,9 @@ const (
 	// Failed to delete service account
 	ErrorFailedToDeleteServiceAccount       ServiceErrorCode = 112
 	ErrorFailedToDeleteServiceAccountReason string           = "Failed to delete service account"
-
+	// Insufficient quota
+	ErrorInsufficientQuota       ServiceErrorCode = 120
+	ErrorInsufficientQuotaReason string           = "Insufficient quota"
 	// Provider not supported
 	ErrorProviderNotSupported       ServiceErrorCode = 30
 	ErrorProviderNotSupportedReason string           = "Provider not supported"
@@ -177,6 +179,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict},
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest},
+		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusBadRequest},
 	}
 }
 
@@ -306,6 +309,9 @@ func (e *ServiceError) IsFailedToDeleteServiceAccount() bool {
 
 func (e *ServiceError) IsBadRequest() bool {
 	return e.Code == BadRequest("").Code
+}
+func (e *ServiceError) InSufficientQuota() bool {
+	return e.Code == InsufficientQuotaError("").Code
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
@@ -449,4 +455,9 @@ func FieldValidationError(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorFieldValidationErrorReason, reason)
 
 	return New(ErrorFieldValidationError, message, values...)
+}
+
+func InsufficientQuotaError(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("%s: %s", ErrorInsufficientQuotaReason, reason)
+	return New(ErrorInsufficientQuota, message, values...)
 }
