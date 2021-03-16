@@ -122,17 +122,18 @@ func (k *KafkaManager) reconcile() {
 			glog.Errorf("Failed to check quota for %s: %s", kafka.ID, err.Error())
 		}
 		if !isAllowed {
-			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusInsufficientQuotaFailed); executed && err != nil {
-				glog.Errorf("failed to update kafka %s to status insufficient quota: %s", kafka.ID, err)
-			}
-		} else {
-			kafka.SubscriptionId = subscriptionId
-			if err := k.reconcileAcceptedKafka(kafka); err != nil {
-				sentry.CaptureException(err)
-				glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
-				continue
+			kafka.FailedReason = "Insufficient quota"
+			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
+				glog.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
 			}
 		}
+		kafka.SubscriptionId = subscriptionId
+		if err := k.reconcileAcceptedKafka(kafka); err != nil {
+			sentry.CaptureException(err)
+			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
+			continue
+		}
+
 	}
 
 	// handle preparing kafkas
