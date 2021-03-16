@@ -28,11 +28,13 @@ var _ ConnectorClusterService = &connectorClusterService{}
 
 type connectorClusterService struct {
 	connectionFactory *db.ConnectionFactory
+	bus               signalbus.SignalBus
 }
 
-func NewConnectorClusterService(connectionFactory *db.ConnectionFactory) *connectorClusterService {
+func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus) *connectorClusterService {
 	return &connectorClusterService{
 		connectionFactory: connectionFactory,
+		bus:               bus,
 	}
 }
 
@@ -156,7 +158,7 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 
 	_ = db.AddPostCommitAction(ctx, func() {
 		// Wake up the reconcile loop...
-		signalbus.Default.Notify("reconcile:connector")
+		k.bus.Notify("reconcile:connector")
 	})
 
 	return nil

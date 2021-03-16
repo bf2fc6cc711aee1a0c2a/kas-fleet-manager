@@ -27,11 +27,13 @@ var _ ConnectorsService = &connectorsService{}
 
 type connectorsService struct {
 	connectionFactory *db.ConnectionFactory
+	bus               signalbus.SignalBus
 }
 
-func NewConnectorsService(connectionFactory *db.ConnectionFactory) *connectorsService {
+func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus) *connectorsService {
 	return &connectorsService{
 		connectionFactory: connectionFactory,
+		bus:               bus,
 	}
 }
 
@@ -206,7 +208,7 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 
 	if resource.ClusterID != "" {
 		_ = db.AddPostCommitAction(ctx, func() {
-			signalbus.Default.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", resource.ClusterID))
+			k.bus.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", resource.ClusterID))
 		})
 	}
 
