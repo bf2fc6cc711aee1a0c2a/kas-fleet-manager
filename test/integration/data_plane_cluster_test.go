@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -241,7 +243,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(cluster.Status).To(Equal(api.ClusterWaitingForKasFleetShardOperator))
 }
 
-func TestDataPlaneCluster_TestScaleUpTriggered(t *testing.T) {
+func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	startHook := func(h *test.Helper) {
 		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
 	}
@@ -261,6 +263,11 @@ func TestDataPlaneCluster_TestScaleUpTriggered(t *testing.T) {
 	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
+	// only run this test when real OCM API is being used
+	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
+		t.SkipNow()
+	}
+
 	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterReady)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
@@ -272,16 +279,22 @@ func TestDataPlaneCluster_TestScaleUpTriggered(t *testing.T) {
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
-	kafkaCapacityConfig := h.Env().Config.Kafka.KafkaCapacity
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
+	initialComputeNodes := ocmCluster.Nodes().Compute()
+	Expect(initialComputeNodes).NotTo(BeNil())
+	Expect(err).ToNot(HaveOccurred())
+	expectedNodesAfterScaleUp := initialComputeNodes + 3
 
+	kafkaCapacityConfig := h.Env().Config.Kafka.KafkaCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
 	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
 	clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 10}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 10}[0]
-	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{6}[0]
-	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{mocks.MockClusterComputeNodes}[0]
+	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) - 1}[0]
+	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) - 1}[0]
+	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
+	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
 	clusterStatusUpdateRequest.NodeInfo.Floor = &[]int32{3}[0]
 
@@ -289,13 +302,51 @@ func TestDataPlaneCluster_TestScaleUpTriggered(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterFull))
 
+	checkComputeNodesFunc := func(clusterID string, expectedNodes int) func() bool {
+		return func() bool {
+			currOcmCluster, err := ocmClient.GetCluster(clusterID)
+			if err != nil {
+				return false
+			}
+
+			if currOcmCluster.Nodes().Compute() != expectedNodes {
+				return false
+			}
+
+			if currOcmCluster.Metrics().Nodes().Compute() != expectedNodes {
+				return false
+			}
+
+			return true
+		}
+	}
+
+	// Check that desired and existing compute nodes end being the
+	// expected ones
+	Eventually(checkComputeNodesFunc(testDataPlaneclusterID, expectedNodesAfterScaleUp), 60*time.Minute, 5*time.Second).Should(BeTrue())
+
+	// We force a scale-down by setting one of the remaining fields to be
+	// higher than the scale-down threshold.
+	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{*clusterStatusUpdateRequest.ResizeInfo.Delta.Connections + 1}[0]
+	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(*clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions) + 1}[0]
+	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
+	resp, err = privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+	cluster, err = clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterReady))
+
+	// Check that desired and existing compute nodes end being the
+	// expected ones
+	Eventually(checkComputeNodesFunc(testDataPlaneclusterID, initialComputeNodes), 60*time.Minute, 5*time.Second).Should(BeTrue())
 }
 
 func newAuthenticatedContexForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
