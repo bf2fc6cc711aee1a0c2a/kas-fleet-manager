@@ -175,6 +175,10 @@ type metricsResponseWrapper struct {
 	code    int
 }
 
+func (w *metricsResponseWrapper) Flush() {
+	w.wrapped.(http.Flusher).Flush()
+}
+
 func (w *metricsResponseWrapper) Header() http.Header {
 	return w.wrapped.Header()
 }

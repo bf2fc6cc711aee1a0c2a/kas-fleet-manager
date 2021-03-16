@@ -18,6 +18,10 @@ type loggingWriter struct {
 	responseBody   []byte
 }
 
+func (writer *loggingWriter) Flush() {
+	writer.ResponseWriter.(http.Flusher).Flush()
+}
+
 func (writer *loggingWriter) Write(body []byte) (int, error) {
 	writer.responseBody = body
 	return writer.ResponseWriter.Write(body)
