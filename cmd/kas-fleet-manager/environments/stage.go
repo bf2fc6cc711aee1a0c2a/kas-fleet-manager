@@ -14,6 +14,7 @@ var stageConfigDefaults map[string]string = map[string]string{
 	"mas-sso-realm":                     "mas-sso-staging",
 	"enable-kafka-external-certificate": "true",
 	"cluster-compute-machine-type":      "m5.4xlarge",
+	"ingress-controller-replicas":       "9",
 }
 
 func loadStage(env *Env) error {

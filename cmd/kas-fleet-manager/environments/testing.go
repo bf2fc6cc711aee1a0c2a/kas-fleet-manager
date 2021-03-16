@@ -24,6 +24,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"osd-idp-mas-sso-realm":             "mas-sso-playground",
 	"enable-kafka-external-certificate": "false",
 	"cluster-compute-machine-type":      "m5.xlarge",
+	"ingress-controller-replicas":       "3",
 }
 
 // The testing environment is specifically for automated testing
