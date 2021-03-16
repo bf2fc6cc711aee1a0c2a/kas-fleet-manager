@@ -26,6 +26,7 @@ type KafkaConfig struct {
 	EnableManagedKafkaCR           bool                `json:"enable_managedkafka_cr"`
 	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
+	EnableKasFleetshardSync        bool                `json:"enable_kas_fleetshard_sync"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -38,6 +39,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1-1",
 		KafkaAdminServerImage:          "quay.io/sknot/kafka-admin-api:0.0.4",
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
+		EnableKasFleetshardSync:        false,
 	}
 }
 
@@ -49,6 +51,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaAdminServerImage, "kafka-admin-server-image", c.KafkaAdminServerImage, "Specifies an admin server image")
 	fs.BoolVar(&c.EnableManagedKafkaCR, "enable-managed-kafka-cr", c.EnableManagedKafkaCR, "Enable usage of the ManagedKafkaCR instead of the KafkaCR")
 	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
+	fs.BoolVar(&c.EnableKasFleetshardSync, "enable-kas-fleetshard-sync", c.EnableKasFleetshardSync, "Enable direct data synchronisation with kas-fleetshard-operator")
 }
 
 func (c *KafkaConfig) ReadFiles() error {

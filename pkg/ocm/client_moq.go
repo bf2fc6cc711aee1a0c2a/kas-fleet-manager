@@ -69,6 +69,9 @@ var _ Client = &ClientMock{}
 //             SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, error) {
 // 	               panic("mock out the SetComputeNodes method")
 //             },
+//             UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []AddonParameter) (*v1.AddOnInstallation, error) {
+// 	               panic("mock out the UpdateAddonParameters method")
+//             },
 //             UpdateIdentityProviderFunc: func(clusterID string, identityProviderID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error) {
 // 	               panic("mock out the UpdateIdentityProvider method")
 //             },
@@ -132,6 +135,9 @@ type ClientMock struct {
 
 	// SetComputeNodesFunc mocks the SetComputeNodes method.
 	SetComputeNodesFunc func(clusterID string, numNodes int) (*v1.Cluster, error)
+
+	// UpdateAddonParametersFunc mocks the UpdateAddonParameters method.
+	UpdateAddonParametersFunc func(clusterId string, addonId string, parameters []AddonParameter) (*v1.AddOnInstallation, error)
 
 	// UpdateIdentityProviderFunc mocks the UpdateIdentityProvider method.
 	UpdateIdentityProviderFunc func(clusterID string, identityProviderID string, identityProvider *v1.IdentityProvider) (*v1.IdentityProvider, error)
@@ -246,6 +252,15 @@ type ClientMock struct {
 			// NumNodes is the numNodes argument value.
 			NumNodes int
 		}
+		// UpdateAddonParameters holds details about calls to the UpdateAddonParameters method.
+		UpdateAddonParameters []struct {
+			// ClusterId is the clusterId argument value.
+			ClusterId string
+			// AddonId is the addonId argument value.
+			AddonId string
+			// Parameters is the parameters argument value.
+			Parameters []AddonParameter
+		}
 		// UpdateIdentityProvider holds details about calls to the UpdateIdentityProvider method.
 		UpdateIdentityProvider []struct {
 			// ClusterID is the clusterID argument value.
@@ -282,6 +297,7 @@ type ClientMock struct {
 	lockScaleDownComputeNodes  sync.RWMutex
 	lockScaleUpComputeNodes    sync.RWMutex
 	lockSetComputeNodes        sync.RWMutex
+	lockUpdateAddonParameters  sync.RWMutex
 	lockUpdateIdentityProvider sync.RWMutex
 	lockUpdateSyncSet          sync.RWMutex
 }
@@ -849,6 +865,45 @@ func (mock *ClientMock) SetComputeNodesCalls() []struct {
 	mock.lockSetComputeNodes.RLock()
 	calls = mock.calls.SetComputeNodes
 	mock.lockSetComputeNodes.RUnlock()
+	return calls
+}
+
+// UpdateAddonParameters calls UpdateAddonParametersFunc.
+func (mock *ClientMock) UpdateAddonParameters(clusterId string, addonId string, parameters []AddonParameter) (*v1.AddOnInstallation, error) {
+	if mock.UpdateAddonParametersFunc == nil {
+		panic("ClientMock.UpdateAddonParametersFunc: method is nil but Client.UpdateAddonParameters was just called")
+	}
+	callInfo := struct {
+		ClusterId  string
+		AddonId    string
+		Parameters []AddonParameter
+	}{
+		ClusterId:  clusterId,
+		AddonId:    addonId,
+		Parameters: parameters,
+	}
+	mock.lockUpdateAddonParameters.Lock()
+	mock.calls.UpdateAddonParameters = append(mock.calls.UpdateAddonParameters, callInfo)
+	mock.lockUpdateAddonParameters.Unlock()
+	return mock.UpdateAddonParametersFunc(clusterId, addonId, parameters)
+}
+
+// UpdateAddonParametersCalls gets all the calls that were made to UpdateAddonParameters.
+// Check the length with:
+//     len(mockedClient.UpdateAddonParametersCalls())
+func (mock *ClientMock) UpdateAddonParametersCalls() []struct {
+	ClusterId  string
+	AddonId    string
+	Parameters []AddonParameter
+} {
+	var calls []struct {
+		ClusterId  string
+		AddonId    string
+		Parameters []AddonParameter
+	}
+	mock.lockUpdateAddonParameters.RLock()
+	calls = mock.calls.UpdateAddonParameters
+	mock.lockUpdateAddonParameters.RUnlock()
 	return calls
 }
 

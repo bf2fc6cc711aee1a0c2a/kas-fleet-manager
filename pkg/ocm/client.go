@@ -24,6 +24,7 @@ type Client interface {
 	GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
 	CreateAddonWithParams(clusterId string, addonId string, parameters []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error)
 	CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
+	UpdateAddonParameters(clusterId string, addonId string, parameters []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
@@ -145,6 +146,32 @@ func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddO
 	})
 
 	return addon, nil
+}
+
+func (c client) UpdateAddonParameters(clusterId string, addonInstallationId string, parameters []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+	addonInstallationResp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Addoninstallation(addonInstallationId).Get().Send()
+	if err != nil {
+		return nil, err
+	}
+	if existingParameters, ok := addonInstallationResp.Body().GetParameters(); ok {
+		if sameParameters(existingParameters, parameters) {
+			return addonInstallationResp.Body(), nil
+		}
+	}
+	addonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation()
+	updatedParamsListBuilder := newAddonParameterListBuilder(parameters)
+	if updatedParamsListBuilder != nil {
+		addonInstallation, err := addonInstallationBuilder.Parameters(updatedParamsListBuilder).Build()
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ocmClient.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Addoninstallation(addonInstallationId).Update().Body(addonInstallation).Send()
+		if err != nil {
+			return nil, err
+		}
+		return resp.Body(), nil
+	}
+	return addonInstallationResp.Body(), nil
 }
 
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
@@ -324,4 +351,23 @@ func newAddonParameterListBuilder(params []AddonParameter) *clustersmgmtv1.AddOn
 		return clustersmgmtv1.NewAddOnInstallationParameterList().Items(items...)
 	}
 	return nil
+}
+
+func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList, params []AddonParameter) bool {
+	if parameterList.Len() != len(params) {
+		return false
+	}
+	paramsMap := map[string]string{}
+	for _, p := range params {
+		paramsMap[p.Id] = p.Value
+	}
+	match := true
+	parameterList.Each(func(item *clustersmgmtv1.AddOnInstallationParameter) bool {
+		if paramsMap[item.ID()] != item.Value() {
+			match = false
+			return false
+		}
+		return true
+	})
+	return match
 }
