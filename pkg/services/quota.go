@@ -55,7 +55,7 @@ func (q quotaService) ReserveQuota(productID string, clusterID string, kafkaID s
 
 	resp, err := q.ocmClient.ClusterAuthorization(cb)
 	if err != nil {
-		return false, "", errors.InsufficientQuotaError("%v", err)
+		return false, "", errors.GeneralError("%v", err)
 	}
 
 	if resp.Allowed() {

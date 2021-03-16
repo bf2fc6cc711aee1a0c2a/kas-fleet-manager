@@ -98,6 +98,9 @@ const (
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
+	// Failed to check Quota
+	ErrorFailedToCheckQuota       ServiceErrorCode = 121
+	ErrorFailedToCheckQuotaReason string           = "Failed to check quota"
 	// Provider not supported
 	ErrorProviderNotSupported       ServiceErrorCode = 30
 	ErrorProviderNotSupportedReason string           = "Provider not supported"
@@ -180,6 +183,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusBadRequest},
+		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusBadRequest},
 	}
 }
 
@@ -312,6 +316,10 @@ func (e *ServiceError) IsBadRequest() bool {
 }
 func (e *ServiceError) InSufficientQuota() bool {
 	return e.Code == InsufficientQuotaError("").Code
+}
+
+func (e *ServiceError) IsFailedToCheckQuota() bool {
+	return e.Code == FailedToCheckQuota("").Code
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
@@ -460,4 +468,9 @@ func FieldValidationError(reason string, values ...interface{}) *ServiceError {
 func InsufficientQuotaError(reason string, values ...interface{}) *ServiceError {
 	message := fmt.Sprintf("%s: %s", ErrorInsufficientQuotaReason, reason)
 	return New(ErrorInsufficientQuota, message, values...)
+}
+
+func FailedToCheckQuota(reason string, values ...interface{}) *ServiceError {
+	message := fmt.Sprintf("%s: %s", ErrorFailedToCheckQuotaReason, reason)
+	return New(ErrorFailedToCheckQuota, message, values...)
 }

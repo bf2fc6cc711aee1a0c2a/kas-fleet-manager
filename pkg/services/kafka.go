@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"strings"
 
@@ -75,10 +76,10 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	//cluster id can't be nil. using cluster id in place of kafka id.
-	isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ID, kafkaRequest.ClusterID, kafkaRequest.Owner, false, "single")
+	//cluster id can't be nil. generating random temporary id.
+	isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
 	if err != nil {
-		return errors.InsufficientQuotaError("failed to check quota: %v", err)
+		return errors.FailedToCheckQuota("%v", err)
 	}
 	if !isAllowed {
 		return errors.InsufficientQuotaError("failed to reserve quota")
