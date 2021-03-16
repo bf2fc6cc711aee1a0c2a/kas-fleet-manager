@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -83,6 +84,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *e
 			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusReady, kafka.ID, err)
 			return err
 		}
+		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	}
@@ -101,15 +103,12 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterDeleted(kafka *api.KafkaRequest) *errors.ServiceError {
+	// If the Kafka cluster is deleted from the data plane cluster, we will make it as "deleted" in db and the reconcilier will ensure it is cleaned up properly
 	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleted); ok {
 		if updateErr != nil {
 			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleted, kafka.ID, updateErr)
 			return updateErr
 		}
-	}
-	if deleteErr := d.kafkaService.Delete(kafka); deleteErr != nil {
-		glog.Errorf("failed to delete kafka cluster %s due to error: %v", kafka.ClusterID, deleteErr)
-		return deleteErr
 	}
 	return nil
 }

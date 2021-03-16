@@ -11,14 +11,16 @@ import (
 )
 
 type dataPlaneKafkaHandler struct {
-	service services.DataPlaneKafkaService
-	config  services.ConfigService
+	service      services.DataPlaneKafkaService
+	config       services.ConfigService
+	kafkaService services.KafkaService
 }
 
-func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService services.ConfigService) *dataPlaneKafkaHandler {
+func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService services.ConfigService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
 	return &dataPlaneKafkaHandler{
-		service: service,
-		config:  configService,
+		service:      service,
+		config:       configService,
+		kafkaService: kafkaService,
 	}
 }
 
@@ -39,4 +41,38 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 	}
 
 	handle(w, r, cfg, http.StatusOK)
+}
+
+func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	clusterID := mux.Vars(r)["id"]
+	cfg := &handlerConfig{
+		Validate: []validate{
+			validateLength(&clusterID, "id", &minRequiredFieldLength, nil),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			managedKafkas, err := h.kafkaService.GetManagedKafkaByClusterID(clusterID)
+			if err != nil {
+				return nil, err
+			}
+
+			managedKafkaList := openapi.ManagedKafkaList{
+				Kind:  "ManagedKafkaList",
+				Page:  1,
+				Size:  1,
+				Total: 1,
+				Items: []openapi.ManagedKafka{},
+			}
+
+			for _, mk := range managedKafkas {
+				converted := presenters.PresentManagedKafka(&mk)
+				managedKafkaList.Items = append(managedKafkaList.Items, converted)
+			}
+			managedKafkaList.Size = int32(len(managedKafkaList.Items))
+			managedKafkaList.Total = managedKafkaList.Size
+			return managedKafkaList, nil
+		},
+		ErrorHandler: handleError,
+	}
+
+	handleGet(w, r, cfg)
 }

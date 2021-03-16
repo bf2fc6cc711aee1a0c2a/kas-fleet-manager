@@ -26,13 +26,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 )
@@ -208,7 +205,7 @@ func (helper *Helper) startHealthCheckServer() {
 
 func (helper *Helper) startKafkaWorker() {
 	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak, helper.Env().Services.Observatorium)
+	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, helper.Env().Services.Cluster, ocmClient, uuid.New().String(), helper.Env().Services.Keycloak, helper.Env().Services.Observatorium, helper.Env().Services.Config)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.KafkaWorker.Start()
@@ -228,11 +225,7 @@ func (helper *Helper) startClusterWorker() {
 
 	// start cluster worker
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{
-			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
-				return true, nil
-			},
-		}, environments.Environment().Services.OsdIdpKeycloak)
+		ocmClient, environments.Environment().Services.Config, uuid.New().String(), helper.Env().Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -268,15 +261,11 @@ func (helper *Helper) startLeaderElectionWorker() {
 	env := helper.Env()
 	ocmClient := ocm.NewClient(env.Clients.OCM.Connection)
 	helper.ClusterWorker = workers.NewClusterManager(env.Services.Cluster, env.Services.CloudProviders,
-		ocmClient, env.Services.Config, uuid.New().String(), &services.KasFleetshardOperatorAddonMock{
-			ProvisionFunc: func(cluster api.Cluster) (bool, *errors.ServiceError) {
-				return true, nil
-			},
-		}, environments.Environment().Services.OsdIdpKeycloak)
+		ocmClient, env.Services.Config, uuid.New().String(), env.Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
 
 	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
 
-	helper.KafkaWorker = workers.NewKafkaManager(env.Services.Kafka, env.Services.Cluster, ocmClient, uuid.New().String(), env.Services.Keycloak, env.Services.Observatorium)
+	helper.KafkaWorker = workers.NewKafkaManager(env.Services.Kafka, env.Services.Cluster, ocmClient, uuid.New().String(), env.Services.Keycloak, env.Services.Observatorium, env.Services.Config)
 	helper.ConnectorWorker = workers.NewConnectorManager(uuid.New().String(), env.Services.Connectors, env.Services.ConnectorCluster, env.Services.Observatorium)
 
 	var workerLst []workers.Worker

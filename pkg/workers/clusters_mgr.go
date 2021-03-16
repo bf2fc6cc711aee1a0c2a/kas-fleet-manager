@@ -220,6 +220,15 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	if err == nil {
 		err = c.reconcileClusterIdentityProvider(cluster)
 	}
+	if err == nil && c.kasFleetshardOperatorAddon != nil {
+		if e := c.kasFleetshardOperatorAddon.ReconcileParameters(cluster); e != nil {
+			if e.IsBadRequest() {
+				glog.Infof("kas-fleetshard operator is not found on cluster %s", cluster.ClusterID)
+			} else {
+				err = e
+			}
+		}
+	}
 
 	if err != nil {
 		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
@@ -340,7 +349,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		return err
 	}
 	isFleetShardReady := true
-	if c.configService.GetConfig().Kafka.EnableManagedKafkaCR {
+	if c.configService.GetConfig().Kafka.EnableManagedKafkaCR || c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
 		if c.kasFleetshardOperatorAddon != nil {
 			glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
 			if ready, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
@@ -349,10 +358,15 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 				isFleetShardReady = ready
 			}
 		}
-	} //
+	}
 	if isStrimziReady && isFleetShardReady {
-		glog.V(5).Infof("Operator(s) is ready for cluster %s", provisionedCluster.ClusterID)
-		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterReady); err != nil {
+		status := api.ClusterReady
+		if c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+			// if kas-fleetshard sync is enabled, the cluster status will be reported by the kas-fleetshard
+			status = api.ClusterWaitingForKasFleetShardOperator
+		}
+		glog.V(5).Infof("Set cluster status to %s for cluster %s", status, provisionedCluster.ClusterID)
+		if err := c.clusterService.UpdateStatus(provisionedCluster, status); err != nil {
 			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 		}
 
@@ -445,7 +459,10 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clusters
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
-		c.buildObservabilityExternalConfigResource(),
+	}
+	// If kas-fleetshard sync is enabled, the external config for the observability will be delivered to the kas-fleetshard directly
+	if !c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+		r = append(r, c.buildObservabilityExternalConfigResource())
 	}
 	if s := c.buildImagePullSecret(strimziAddonNamespace); s != nil {
 		r = append(r, s)

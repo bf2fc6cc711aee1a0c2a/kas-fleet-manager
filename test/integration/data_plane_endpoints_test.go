@@ -36,10 +36,10 @@ type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.
 func setup(t *testing.T, claims claimsFunc) TestServer {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	startHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = true
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.ClusterCreationConfig.EnableKasFleetshardOperator = false
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 	}
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 
@@ -179,7 +179,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
 }
 
-func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
+func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
@@ -204,13 +204,13 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName2,
-			Status:    constants.KafkaRequestStatusDeprovision.String(),
+			Status:    constants.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName3,
-			Status:    constants.KafkaRequestStatusReady.String(),
+			Status:    constants.KafkaRequestStatusPreparing.String(),
 		},
 	}
 
@@ -228,7 +228,7 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	list, resp, err := testServer.PrivateClient.DefaultApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(int(list.Total)).To(Equal(len(testKafkas)))
+	Expect(int(list.Total)).To(Equal(2))
 
 	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
 		for _, item := range slice {
@@ -240,14 +240,58 @@ func TestDataPlaneEndpoints_GetManagedKafkas(t *testing.T) {
 	}
 
 	for _, k := range testKafkas {
-		if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotation.Bf2OrgId == k.ID }); mk != nil {
-			Expect(mk.Metadata.Name).To(Equal(k.Name))
-			Expect(mk.Metadata.Annotation.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-			Expect(mk.Metadata.Annotation.Bf2OrgId).To(Equal(k.ID))
-			Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
-		} else {
-			t.Error("failed matching managedkafka id with kafkarequest id")
-			break
+		if k.Status == constants.KafkaRequestStatusProvisioning.String() || k.Status == constants.KafkaRequestStatusDeprovision.String() {
+			if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotation.Bf2OrgId == k.ID }); mk != nil {
+				Expect(mk.Metadata.Name).To(Equal(k.Name))
+				Expect(mk.Metadata.Annotation.Bf2OrgPlacementId).To(Equal(k.PlacementId))
+				Expect(mk.Metadata.Annotation.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
+			} else {
+				t.Error("failed matching managedkafka id with kafkarequest id")
+				break
+			}
 		}
+	}
+
+	var readyClusters, deletedClusters []string
+	updates := map[string]openapi.DataPlaneKafkaStatus{}
+	for _, item := range list.Items {
+		if !item.Spec.Deleted {
+			updates[item.Metadata.Annotation.Bf2OrgId] = openapi.DataPlaneKafkaStatus{
+				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{{
+					Type:   "Ready",
+					Status: "True",
+				}},
+			}
+			readyClusters = append(readyClusters, item.Metadata.Annotation.Bf2OrgId)
+		} else {
+			updates[item.Metadata.Annotation.Bf2OrgId] = openapi.DataPlaneKafkaStatus{
+				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{{
+					Type:   "Deleted",
+					Status: "True",
+				}},
+			}
+			deletedClusters = append(deletedClusters, item.Metadata.Annotation.Bf2OrgId)
+		}
+	}
+
+	_, err = testServer.PrivateClient.DefaultApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	Expect(err).NotTo(HaveOccurred())
+
+	for _, cid := range readyClusters {
+		c := &api.KafkaRequest{}
+		if err := db.First(c, "id = ?", cid).Error; err != nil {
+			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
+		}
+		Expect(c.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+	}
+
+	for _, cid := range deletedClusters {
+		c := &api.KafkaRequest{}
+		// need to use Unscoped here as there is a chance the entry is soft deleted already
+		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
+			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
+		}
+		Expect(c.Status).To(Equal(constants.KafkaRequestStatusDeleted.String()))
 	}
 }

@@ -30,6 +30,7 @@ type KafkaManager struct {
 	kafkaService         services.KafkaService
 	keycloakService      services.KeycloakService
 	observatoriumService services.ObservatoriumService
+	configService        services.ConfigService
 	timer                *time.Timer
 	imStop               chan struct{}
 	syncTeardown         sync.WaitGroup
@@ -37,7 +38,7 @@ type KafkaManager struct {
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService, configService services.ConfigService) *KafkaManager {
 	return &KafkaManager{
 		id:                   id,
 		workerType:           "kafka",
@@ -46,6 +47,7 @@ func NewKafkaManager(kafkaService services.KafkaService, clusterService services
 		kafkaService:         kafkaService,
 		keycloakService:      keycloakService,
 		observatoriumService: observatoriumService,
+		configService:        configService,
 	}
 }
 
@@ -87,7 +89,13 @@ func (k *KafkaManager) reconcile() {
 	glog.V(5).Infoln("reconciling kafkas")
 
 	// handle deprovisioning requests
-	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
+	// if kas-fleetshard sync is not enabled, the status we should check is constants.KafkaRequestStatusDeprovision as control plane is responsible for deleting the data
+	// otherwise the status should be constants.KafkaRequestStatusDeleted as only at that point the control plane should clean it up
+	deprovisionStatus := constants.KafkaRequestStatusDeprovision
+	if k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+		deprovisionStatus = constants.KafkaRequestStatusDeleted
+	}
+	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deprovisionStatus)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
@@ -132,20 +140,23 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	// handle provisioning kafkas state
-	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
-	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
-		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
-	}
+	if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+		// only need to check if Kafka clusters are ready if kas-fleetshard sync is not enabled
+		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
+		provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
+		if serviceErr != nil {
+			sentry.CaptureException(serviceErr)
+			glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
+		}
 
-	for _, kafka := range provisioningKafkas {
-		if err := k.reconcileProvisioningKafka(kafka); err != nil {
-			sentry.CaptureException(err)
-			glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
-			continue
+		for _, kafka := range provisioningKafkas {
+			if err := k.reconcileProvisioningKafka(kafka); err != nil {
+				sentry.CaptureException(err)
+				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
+				continue
+			}
 		}
 	}
-
 }
 
 func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
@@ -181,14 +192,6 @@ func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
 	if err != nil {
 		sentry.CaptureException(err)
 		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
-	}
-
-	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafka.ID)
-		keycloakSecret, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, kafka.OrganisationId)
-		if err != nil || keycloakSecret == "" {
-			return fmt.Errorf("failed to create sso client %s: %w", kafka.ID, err)
-		}
 	}
 
 	if err := k.kafkaService.Create(kafka); err != nil {

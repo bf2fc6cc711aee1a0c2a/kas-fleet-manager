@@ -4,7 +4,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -58,7 +57,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	keycloakService := environments.Environment().Services.Keycloak
 	osdIdpKeycloakService := environments.Environment().Services.OsdIdpKeycloak
 	var workerList []workers.Worker
-	kasFleetshardOperatorAddon := services.NewKasFleetshardOperatorAddon(keycloakService, ocmClient, configService)
+	kasFleetshardOperatorAddon := environments.Environment().Services.KasFleetshardAddonService
 	//set Unique Id for each work to facilitate Leader Election process
 	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
 	workerList = append(workerList, clusterManager)
@@ -71,7 +70,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	observatoriumService := environments.Environment().Services.Observatorium
 
 	//set Unique Id for each work to facilitate Leader Election process
-	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService, observatoriumService)
+	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService, observatoriumService, configService)
 	workerList = append(workerList, kafkaManager)
 
 	// add the connector manager worker

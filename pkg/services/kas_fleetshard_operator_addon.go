@@ -33,6 +33,7 @@ const (
 //go:generate moq -out kas_fleetshard_operator_addon_moq.go . KasFleetshardOperatorAddon
 type KasFleetshardOperatorAddon interface {
 	Provision(cluster api.Cluster) (bool, *errors.ServiceError)
+	ReconcileParameters(cluster api.Cluster) *errors.ServiceError
 }
 
 func NewKasFleetshardOperatorAddon(ssoService KeycloakService, ocm ocm.Client, configService ConfigService) KasFleetshardOperatorAddon {
@@ -73,6 +74,30 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 	}
 
 	return false, nil
+}
+
+func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
+	glog.V(5).Infof("Reconcile parameters for kas-fleetshard operator on cluster %s", cluster.ClusterID)
+	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, api.KasFleetshardOperatorAddonId)
+	if addonErr != nil {
+		return errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
+	}
+	if addonInstallation == nil || addonInstallation.ID() == "" {
+		glog.Warningf("no valid installation for kas-fleetshard operator found on cluster %s", cluster.ClusterID)
+		return errors.BadRequest("no valid kas-fleetshard addon for cluster %s", cluster.ClusterID)
+	}
+	glog.V(5).Infof("Found existing addon %s, updating parameters", addonInstallation.ID())
+	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
+	if pErr != nil {
+		return errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
+	}
+	params := o.buildAddonParams(acc, cluster.ClusterID)
+	addonInstallation, addonErr = o.ocm.UpdateAddonParameters(cluster.ClusterID, addonInstallation.ID(), params)
+	if addonErr != nil {
+		return errors.GeneralError("failed to update parameters for addon %s on cluster %s due to error: %v", addonInstallation.ID(), cluster.ClusterID, addonErr)
+	}
+	glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", addonInstallation.ID(), cluster.ClusterID)
+	return nil
 }
 
 func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {

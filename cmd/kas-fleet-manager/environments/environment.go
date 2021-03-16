@@ -38,18 +38,19 @@ type Env struct {
 }
 
 type Services struct {
-	Kafka                 services.KafkaService
-	Connectors            services.ConnectorsService
-	ConnectorTypes        services.ConnectorTypesService
-	ConnectorCluster      services.ConnectorClusterService
-	Cluster               services.ClusterService
-	CloudProviders        services.CloudProvidersService
-	Config                services.ConfigService
-	Observatorium         services.ObservatoriumService
-	Keycloak              services.KeycloakService
-	OsdIdpKeycloak        services.KeycloakService
-	DataPlaneCluster      services.DataPlaneClusterService
-	DataPlaneKafkaService services.DataPlaneKafkaService
+	Kafka                     services.KafkaService
+	Connectors                services.ConnectorsService
+	ConnectorTypes            services.ConnectorTypesService
+	ConnectorCluster          services.ConnectorClusterService
+	Cluster                   services.ClusterService
+	CloudProviders            services.CloudProvidersService
+	Config                    services.ConfigService
+	Observatorium             services.ObservatoriumService
+	Keycloak                  services.KeycloakService
+	OsdIdpKeycloak            services.KeycloakService
+	DataPlaneCluster          services.DataPlaneClusterService
+	DataPlaneKafkaService     services.DataPlaneKafkaService
+	KasFleetshardAddonService services.KasFleetshardOperatorAddon
 }
 
 type Clients struct {
@@ -155,6 +156,7 @@ func (env *Env) LoadServices() error {
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(*env.Config)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
+	kasFleetshardAddonService := services.NewKasFleetshardOperatorAddon(kafkaKeycloakService, ocmClient, configService)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
@@ -162,6 +164,7 @@ func (env *Env) LoadServices() error {
 	env.Services.Observatorium = ObservatoriumService
 	env.Services.Keycloak = kafkaKeycloakService
 	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
+	env.Services.KasFleetshardAddonService = kasFleetshardAddonService
 
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config.Kafka)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)

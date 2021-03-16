@@ -36,9 +36,6 @@ var _ KeycloakService = &KeycloakServiceMock{}
 //             GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
 // 	               panic("mock out the GetRealmConfig method")
 //             },
-//             GetSecretForRegisteredKafkaClientFunc: func(kafkaClusterName string) (string, *errors.ServiceError) {
-// 	               panic("mock out the GetSecretForRegisteredKafkaClient method")
-//             },
 //             GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 // 	               panic("mock out the GetServiceAccountById method")
 //             },
@@ -84,9 +81,6 @@ type KeycloakServiceMock struct {
 
 	// GetRealmConfigFunc mocks the GetRealmConfig method.
 	GetRealmConfigFunc func() *config.KeycloakRealmConfig
-
-	// GetSecretForRegisteredKafkaClientFunc mocks the GetSecretForRegisteredKafkaClient method.
-	GetSecretForRegisteredKafkaClientFunc func(kafkaClusterName string) (string, *errors.ServiceError)
 
 	// GetServiceAccountByIdFunc mocks the GetServiceAccountById method.
 	GetServiceAccountByIdFunc func(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
@@ -138,11 +132,6 @@ type KeycloakServiceMock struct {
 		}
 		// GetRealmConfig holds details about calls to the GetRealmConfig method.
 		GetRealmConfig []struct {
-		}
-		// GetSecretForRegisteredKafkaClient holds details about calls to the GetSecretForRegisteredKafkaClient method.
-		GetSecretForRegisteredKafkaClient []struct {
-			// KafkaClusterName is the kafkaClusterName argument value.
-			KafkaClusterName string
 		}
 		// GetServiceAccountById holds details about calls to the GetServiceAccountById method.
 		GetServiceAccountById []struct {
@@ -206,7 +195,6 @@ type KeycloakServiceMock struct {
 	lockDeleteServiceAccount                              sync.RWMutex
 	lockGetConfig                                         sync.RWMutex
 	lockGetRealmConfig                                    sync.RWMutex
-	lockGetSecretForRegisteredKafkaClient                 sync.RWMutex
 	lockGetServiceAccountById                             sync.RWMutex
 	lockIsKafkaClientExist                                sync.RWMutex
 	lockListServiceAcc                                    sync.RWMutex
@@ -367,37 +355,6 @@ func (mock *KeycloakServiceMock) GetRealmConfigCalls() []struct {
 	mock.lockGetRealmConfig.RLock()
 	calls = mock.calls.GetRealmConfig
 	mock.lockGetRealmConfig.RUnlock()
-	return calls
-}
-
-// GetSecretForRegisteredKafkaClient calls GetSecretForRegisteredKafkaClientFunc.
-func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClient(kafkaClusterName string) (string, *errors.ServiceError) {
-	if mock.GetSecretForRegisteredKafkaClientFunc == nil {
-		panic("KeycloakServiceMock.GetSecretForRegisteredKafkaClientFunc: method is nil but KeycloakService.GetSecretForRegisteredKafkaClient was just called")
-	}
-	callInfo := struct {
-		KafkaClusterName string
-	}{
-		KafkaClusterName: kafkaClusterName,
-	}
-	mock.lockGetSecretForRegisteredKafkaClient.Lock()
-	mock.calls.GetSecretForRegisteredKafkaClient = append(mock.calls.GetSecretForRegisteredKafkaClient, callInfo)
-	mock.lockGetSecretForRegisteredKafkaClient.Unlock()
-	return mock.GetSecretForRegisteredKafkaClientFunc(kafkaClusterName)
-}
-
-// GetSecretForRegisteredKafkaClientCalls gets all the calls that were made to GetSecretForRegisteredKafkaClient.
-// Check the length with:
-//     len(mockedKeycloakService.GetSecretForRegisteredKafkaClientCalls())
-func (mock *KeycloakServiceMock) GetSecretForRegisteredKafkaClientCalls() []struct {
-	KafkaClusterName string
-} {
-	var calls []struct {
-		KafkaClusterName string
-	}
-	mock.lockGetSecretForRegisteredKafkaClient.RLock()
-	calls = mock.calls.GetSecretForRegisteredKafkaClient
-	mock.lockGetSecretForRegisteredKafkaClient.RUnlock()
 	return calls
 }
 
