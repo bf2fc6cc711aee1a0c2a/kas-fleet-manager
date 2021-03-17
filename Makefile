@@ -319,7 +319,7 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager.yaml-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
+	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
