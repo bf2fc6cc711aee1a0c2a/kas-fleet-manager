@@ -82,9 +82,11 @@ func runServe(cmd *cobra.Command, args []string) {
 	// add the connector manager worker
 	workerList = append(workerList, workers.NewConnectorManager(
 		uuid.New().String(),
+		env.Services.ConnectorTypes,
 		env.Services.Connectors,
 		env.Services.ConnectorCluster,
 		env.Services.Observatorium,
+		env.Services.Vault,
 	))
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting

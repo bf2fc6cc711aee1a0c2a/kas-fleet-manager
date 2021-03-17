@@ -149,7 +149,7 @@ func Test_connectorsService_Get(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			// we're testing the connectorsService.Get function so use the 'args' to provide arguments to the function
-			got, err := k.Get(tt.args.ctx, tt.args.kid, tt.args.id, tt.args.tid)
+			got, err := k.Get(tt.args.ctx, tt.args.id, tt.args.tid)
 			// in our test case we used 'wantErr' to define if we expect and error to be returned from the function or
 			// not, now we test that expectation
 			if (err != nil) != tt.wantErr {

@@ -14,14 +14,14 @@ servers:
 - description: current domain
   url: /
 paths:
-  /api/managed-services-api/v1/connector-types/{id}:
+  /api/managed-services-api/v1/kafka-connector-types/{connector_type_id}:
     get:
       operationId: getConnectorTypeByID
       parameters:
-      - description: The id of record
+      - description: The id of the connector type
         explode: false
         in: path
-        name: id
+        name: connector_type_id
         required: true
         schema:
           type: string
@@ -63,7 +63,7 @@ paths:
       security:
       - Bearer: []
       summary: Get a connector type by name and version
-  /api/managed-services-api/v1/connector-types:
+  /api/managed-services-api/v1/kafka-connector-types:
     get:
       operationId: listConnectorTypes
       parameters:
@@ -117,18 +117,18 @@ paths:
       security:
       - Bearer: []
       summary: Returns a list of connector types
-  /api/managed-services-api/v1/kafkas/{id}/connector-deployments:
+  /api/managed-services-api/v1/kafka-connectors:
     get:
       operationId: listConnectors
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
+      - description: The kafka cluster id
+        explode: true
+        in: query
+        name: kafka_id
+        required: false
         schema:
           type: string
-        style: simple
+        style: form
       - description: Page index
         examples:
           page:
@@ -157,7 +157,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConnectorList'
-          description: A list of connector deployments
+          description: A list of connectors
         "401":
           content:
             application/json:
@@ -182,14 +182,14 @@ paths:
     post:
       operationId: createConnector
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
+      - description: The kafka cluster id
+        explode: true
+        in: query
+        name: kafka_id
+        required: false
         schema:
           type: string
-        style: simple
+        style: form
       - description: Perform the action in an asynchronous manner
         explode: true
         in: query
@@ -251,14 +251,22 @@ paths:
       security:
       - Bearer: []
       summary: Create a new connector
-  /api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid}:
+  /api/managed-services-api/v1/kafkas-connectors/{connector_id}:
     delete:
       operationId: deleteConnector
       parameters:
-      - description: The id of record
+      - description: The kafka cluster id
+        explode: true
+        in: query
+        name: kafka_id
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The id of the connector
         explode: false
         in: path
-        name: id
+        name: connector_id
         required: true
         schema:
           type: string
@@ -303,18 +311,18 @@ paths:
     get:
       operationId: getConnector
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
+      - description: The kafka cluster id
+        explode: true
+        in: query
+        name: kafka_id
+        required: false
         schema:
           type: string
-        style: simple
+        style: form
       - description: The id of the connector
         explode: false
         in: path
-        name: cid
+        name: connector_id
         required: true
         schema:
           type: string
@@ -325,7 +333,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Connector'
-          description: The connector deployment matching the request
+          description: The connector matching the request
         "401":
           content:
             application/json:
@@ -355,19 +363,11 @@ paths:
           description: Unexpected error occurred
       security:
       - Bearer: []
-      summary: Get a connector deployment
+      summary: Get a connector
   /api/managed-services-api/v1/kafka-connector-clusters:
     get:
       operationId: listConnectorClusters
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
       - description: Page index
         examples:
           page:
@@ -421,14 +421,6 @@ paths:
     post:
       operationId: createConnectorCluster
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
       - description: Perform the action in an asynchronous manner
         explode: true
         in: query
@@ -490,14 +482,14 @@ paths:
       security:
       - Bearer: []
       summary: Create a new connector cluster
-  /api/managed-services-api/v1/kafka-connector-clusters/{id}:
+  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}:
     delete:
       operationId: deleteConnectorCluster
       parameters:
-      - description: The id of record
+      - description: The id of the connector cluster
         explode: false
         in: path
-        name: id
+        name: connector_cluster_id
         required: true
         schema:
           type: string
@@ -542,18 +534,10 @@ paths:
     get:
       operationId: getConnectorCluster
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
       - description: The id of the connector cluster
         explode: false
         in: path
-        name: cid
+        name: connector_cluster_id
         required: true
         schema:
           type: string
@@ -595,22 +579,14 @@ paths:
       security:
       - Bearer: []
       summary: Get a connector cluster
-  /api/managed-services-api/v1/kafka-connector-clusters/{id}/addon-parameters:
+  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/addon-parameters:
     get:
       operationId: getConnectorClusterAddonParameters
       parameters:
-      - description: The id of record
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
       - description: The id of the connector cluster
         explode: false
         in: path
-        name: cid
+        name: connector_cluster_id
         required: true
         schema:
           type: string
@@ -653,14 +629,14 @@ paths:
       security:
       - Bearer: []
       summary: Get a connector cluster's addon parameters
-  /api/managed-services-api/v1/kafka-connector-clusters/{id}/status:
+  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/status:
     put:
       operationId: updateKafkaConnectorAgentClusterStatus
       parameters:
-      - description: The id of record
+      - description: The id of the connector cluster
         explode: false
         in: path
-        name: id
+        name: connector_cluster_id
         required: true
         schema:
           type: string
@@ -669,7 +645,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectorClusterUpdateStatus'
+              $ref: '#/components/schemas/ConnectorClusterStatus'
         description: Cluster status update data
         required: true
       responses:
@@ -696,14 +672,14 @@ paths:
       security:
       - Bearer: []
       summary: Update the status of a connector agent cluster
-  /api/managed-services-api/v1/kafka-connector-clusters/{id}/connectors:
+  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/deployments:
     get:
-      operationId: listClusterAsignedConnectors
+      operationId: listClusterAsignedConnectorDeployments
       parameters:
-      - description: The id of record
+      - description: The id of the connector cluster
         explode: false
         in: path
-        name: id
+        name: connector_cluster_id
         required: true
         schema:
           type: string
@@ -754,11 +730,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorList'
+                $ref: '#/components/schemas/ConnectorDeploymentList'
             application/json;stream=watch:
               schema:
-                $ref: '#/components/schemas/ConnectorWatchEvent'
-          description: A list of connector deployments
+                $ref: '#/components/schemas/ConnectorDeploymentWatchEvent'
+          description: A list of connector
         "401":
           content:
             application/json:
@@ -780,14 +756,14 @@ paths:
       security:
       - Bearer: []
       summary: Returns a list of connector types
-  /api/managed-services-api/v1/kafka-connector-clusters/{id}/connectors/{cid}/status:
+  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{connector_id}/status:
     put:
-      operationId: updateKafkaConnectorStatus
+      operationId: updateConnectorDeploymentStatus
       parameters:
-      - description: The id of record
+      - description: The id of the connector cluster
         explode: false
         in: path
-        name: id
+        name: connector_cluster_id
         required: true
         schema:
           type: string
@@ -795,7 +771,7 @@ paths:
       - description: The id of the connector
         explode: false
         in: path
-        name: cid
+        name: connector_id
         required: true
         schema:
           type: string
@@ -804,8 +780,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectorUpdateStatus'
-        description: Cluster status update data
+              $ref: '#/components/schemas/ConnectorDeploymentStatus'
         required: true
       responses:
         "200":
@@ -830,7 +805,7 @@ paths:
           description: Auth token is not valid.
       security:
       - Bearer: []
-      summary: Update the status of a connector agent cluster
+      summary: update the connector deployment status
   /api/managed-services-api/v1/agent-clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
@@ -1203,6 +1178,12 @@ components:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/Error_allOf'
     MetaV1Condition:
+      example:
+        reason: reason
+        type: type
+        message: message
+        lastTransitionTime: lastTransitionTime
+        status: status
       properties:
         type:
           type: string
@@ -1252,17 +1233,13 @@ components:
       - $ref: '#/components/schemas/ConnectorType_allOf'
       description: Represents a connector type supported by the API
       required:
+      - json_schema
       - name
-      - openAPIV3Schema
       - version
     ConnectorTypeList:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorTypeList_allOf'
-    ConnectorList:
-      allOf:
-      - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/ConnectorList_allOf'
     WatchEvent:
       properties:
         type:
@@ -1275,16 +1252,88 @@ components:
       required:
       - type
       type: object
-    ConnectorWatchEvent:
+    ConnectorList:
       allOf:
-      - $ref: '#/components/schemas/WatchEvent'
-      - $ref: '#/components/schemas/ConnectorWatchEvent_allOf'
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorList_allOf'
     Connector:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
       - $ref: '#/components/schemas/Connector_allOf'
       description: A connector holds the configuration to connect a Kafka topic to
         another system.
+    ConnectorReifyRequest:
+      description: ConnectorReifyRequest is used to create ConnectorDeploymentSpec
+        objects
+      properties:
+        connector_id:
+          type: string
+        resource_version:
+          format: int64
+          type: integer
+        kafka_id:
+          type: string
+        cluster_id:
+          type: string
+        cluster_status:
+          $ref: '#/components/schemas/ConnectorClusterStatus'
+        connector_spec:
+          type: object
+      type: object
+    ConnectorDeployment:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorDeployment_allOf'
+      description: Holds the deployment configuration of a connector
+    ConnectorDeploymentSpec:
+      description: Holds the deployment specification of a connector
+      properties:
+        connector_id:
+          type: string
+        operator_ids:
+          items:
+            type: string
+          type: array
+        resources:
+          items:
+            type: object
+          type: array
+        status_extractors:
+          items:
+            $ref: '#/components/schemas/ConnectorDeploymentSpec_status_extractors'
+          type: array
+      type: object
+    ConnectorDeploymentStatus:
+      description: The status of connector deployment
+      example:
+        phase: phase
+        conditions:
+        - reason: reason
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        - reason: reason
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+      properties:
+        phase:
+          type: string
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+      type: object
+    ConnectorDeploymentList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorDeploymentList_allOf'
+    ConnectorDeploymentWatchEvent:
+      allOf:
+      - $ref: '#/components/schemas/WatchEvent'
+      - $ref: '#/components/schemas/ConnectorDeploymentWatchEvent_allOf'
     ClusterTarget:
       discriminator:
         mapping:
@@ -1299,7 +1348,7 @@ components:
       properties:
         kind:
           type: string
-        group:
+        cluster_id:
           type: string
       required:
       - kind
@@ -1341,21 +1390,45 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ConnectorClusterList_allOf'
-    ConnectorClusterUpdateStatus:
+    ConnectorClusterStatus:
       description: Schema for the request to update a data plane cluster's status
       example:
-        status: status
+        phase: phase
+        operators:
+        - namespace: namespace
+          id: id
+          version: version
+          status: status
+        - namespace: namespace
+          id: id
+          version: version
+          status: status
+        conditions:
+        - reason: reason
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        - reason: reason
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        version: version
       properties:
-        status:
+        phase:
           type: string
-      type: object
-    ConnectorUpdateStatus:
-      description: Schema for the request to update a data plane cluster's status
-      example:
-        status: status
-      properties:
-        status:
+        version:
           type: string
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+        operators:
+          description: the list of installed operators
+          items:
+            $ref: '#/components/schemas/ConnectorClusterStatus_operators'
+          type: array
       type: object
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
@@ -1520,6 +1593,17 @@ components:
         description:
           description: A description of the connector.
           type: string
+        icon_href:
+          description: URL to an icon of the connector.
+          type: string
+        labels:
+          description: labels used to categorize the connector
+          items:
+            enum:
+            - sink
+            - source
+            type: string
+          type: array
         json_schema:
           description: A json schema that can be used to validate a connectors connector_spec
             field.
@@ -1538,10 +1622,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/Connector'
           type: array
-    ConnectorWatchEvent_allOf:
-      properties:
-        object:
-          $ref: '#/components/schemas/Connector'
     Connector_allOf_metadata:
       properties:
         kafka_id:
@@ -1569,15 +1649,57 @@ components:
           type: string
         connector_spec:
           type: object
+        desired_state:
+          type: string
         status:
           type: string
+    ConnectorDeployment_allOf_metadata:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        resource_version:
+          format: int64
+          type: integer
+    ConnectorDeployment_allOf:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ConnectorDeployment_allOf_metadata'
+        spec:
+          $ref: '#/components/schemas/ConnectorDeploymentSpec'
+        status:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus'
+    ConnectorDeploymentSpec_status_extractors:
+      properties:
+        apiVersion:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        jsonPath:
+          type: string
+        conditionType:
+          type: string
+    ConnectorDeploymentList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ConnectorDeployment'
+          type: array
+    ConnectorDeploymentWatchEvent_allOf:
+      properties:
+        object:
+          $ref: '#/components/schemas/ConnectorDeployment'
     ConnectorCluster_allOf_metadata:
       properties:
         owner:
           type: string
         name:
-          type: string
-        group:
           type: string
         created_at:
           format: date-time
@@ -1589,8 +1711,6 @@ components:
       properties:
         metadata:
           $ref: '#/components/schemas/ConnectorCluster_allOf_metadata'
-        service_account:
-          type: string
         status:
           type: string
     ConnectorClusterList_allOf:
@@ -1600,6 +1720,25 @@ components:
             allOf:
             - $ref: '#/components/schemas/ConnectorCluster'
           type: array
+    ConnectorClusterStatus_operators:
+      example:
+        namespace: namespace
+        id: id
+        version: version
+        status: status
+      properties:
+        id:
+          description: the id of the operator
+          type: string
+        version:
+          description: the version of the operator
+          type: string
+        namespace:
+          description: the namespace to which the operator has been installed
+          type: string
+        status:
+          description: the status of the operator
+          type: string
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason

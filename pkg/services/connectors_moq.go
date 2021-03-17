@@ -23,13 +23,13 @@ var _ ConnectorsService = &ConnectorsServiceMock{}
 // 			CreateFunc: func(ctx context.Context, resource *api.Connector) *apiErrors.ServiceError {
 // 				panic("mock out the Create method")
 // 			},
-// 			DeleteFunc: func(ctx context.Context, kid string, id string) *apiErrors.ServiceError {
+// 			DeleteFunc: func(ctx context.Context, id string) *apiErrors.ServiceError {
 // 				panic("mock out the Delete method")
 // 			},
 // 			ForEachInStatusFunc: func(statuses []string, f func(*api.Connector) *apiErrors.ServiceError) *apiErrors.ServiceError {
 // 				panic("mock out the ForEachInStatus method")
 // 			},
-// 			GetFunc: func(ctx context.Context, kid string, id string, tid string) (*api.Connector, *apiErrors.ServiceError) {
+// 			GetFunc: func(ctx context.Context, id string, tid string) (*api.Connector, *apiErrors.ServiceError) {
 // 				panic("mock out the Get method")
 // 			},
 // 			ListFunc: func(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *apiErrors.ServiceError) {
@@ -49,13 +49,13 @@ type ConnectorsServiceMock struct {
 	CreateFunc func(ctx context.Context, resource *api.Connector) *apiErrors.ServiceError
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(ctx context.Context, kid string, id string) *apiErrors.ServiceError
+	DeleteFunc func(ctx context.Context, id string) *apiErrors.ServiceError
 
 	// ForEachInStatusFunc mocks the ForEachInStatus method.
 	ForEachInStatusFunc func(statuses []string, f func(*api.Connector) *apiErrors.ServiceError) *apiErrors.ServiceError
 
 	// GetFunc mocks the Get method.
-	GetFunc func(ctx context.Context, kid string, id string, tid string) (*api.Connector, *apiErrors.ServiceError)
+	GetFunc func(ctx context.Context, id string, tid string) (*api.Connector, *apiErrors.ServiceError)
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *apiErrors.ServiceError)
@@ -76,8 +76,6 @@ type ConnectorsServiceMock struct {
 		Delete []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Kid is the kid argument value.
-			Kid string
 			// ID is the id argument value.
 			ID string
 		}
@@ -92,8 +90,6 @@ type ConnectorsServiceMock struct {
 		Get []struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
-			// Kid is the kid argument value.
-			Kid string
 			// ID is the id argument value.
 			ID string
 			// Tid is the tid argument value.
@@ -162,23 +158,21 @@ func (mock *ConnectorsServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *ConnectorsServiceMock) Delete(ctx context.Context, kid string, id string) *apiErrors.ServiceError {
+func (mock *ConnectorsServiceMock) Delete(ctx context.Context, id string) *apiErrors.ServiceError {
 	if mock.DeleteFunc == nil {
 		panic("ConnectorsServiceMock.DeleteFunc: method is nil but ConnectorsService.Delete was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Kid string
 		ID  string
 	}{
 		Ctx: ctx,
-		Kid: kid,
 		ID:  id,
 	}
 	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
 	mock.lockDelete.Unlock()
-	return mock.DeleteFunc(ctx, kid, id)
+	return mock.DeleteFunc(ctx, id)
 }
 
 // DeleteCalls gets all the calls that were made to Delete.
@@ -186,12 +180,10 @@ func (mock *ConnectorsServiceMock) Delete(ctx context.Context, kid string, id st
 //     len(mockedConnectorsService.DeleteCalls())
 func (mock *ConnectorsServiceMock) DeleteCalls() []struct {
 	Ctx context.Context
-	Kid string
 	ID  string
 } {
 	var calls []struct {
 		Ctx context.Context
-		Kid string
 		ID  string
 	}
 	mock.lockDelete.RLock()
@@ -236,25 +228,23 @@ func (mock *ConnectorsServiceMock) ForEachInStatusCalls() []struct {
 }
 
 // Get calls GetFunc.
-func (mock *ConnectorsServiceMock) Get(ctx context.Context, kid string, id string, tid string) (*api.Connector, *apiErrors.ServiceError) {
+func (mock *ConnectorsServiceMock) Get(ctx context.Context, id string, tid string) (*api.Connector, *apiErrors.ServiceError) {
 	if mock.GetFunc == nil {
 		panic("ConnectorsServiceMock.GetFunc: method is nil but ConnectorsService.Get was just called")
 	}
 	callInfo := struct {
 		Ctx context.Context
-		Kid string
 		ID  string
 		Tid string
 	}{
 		Ctx: ctx,
-		Kid: kid,
 		ID:  id,
 		Tid: tid,
 	}
 	mock.lockGet.Lock()
 	mock.calls.Get = append(mock.calls.Get, callInfo)
 	mock.lockGet.Unlock()
-	return mock.GetFunc(ctx, kid, id, tid)
+	return mock.GetFunc(ctx, id, tid)
 }
 
 // GetCalls gets all the calls that were made to Get.
@@ -262,13 +252,11 @@ func (mock *ConnectorsServiceMock) Get(ctx context.Context, kid string, id strin
 //     len(mockedConnectorsService.GetCalls())
 func (mock *ConnectorsServiceMock) GetCalls() []struct {
 	Ctx context.Context
-	Kid string
 	ID  string
 	Tid string
 } {
 	var calls []struct {
 		Ctx context.Context
-		Kid string
 		ID  string
 		Tid string
 	}

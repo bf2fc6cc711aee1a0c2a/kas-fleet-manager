@@ -26,6 +26,9 @@ var _ ConnectorTypesService = &ConnectorTypesServiceMock{}
 // 			GetFunc: func(id string) (*api.ConnectorType, *apiErrors.ServiceError) {
 // 				panic("mock out the Get method")
 // 			},
+// 			GetServiceAddressFunc: func(id string) (string, *apiErrors.ServiceError) {
+// 				panic("mock out the GetServiceAddress method")
+// 			},
 // 			ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *apiErrors.ServiceError) {
 // 				panic("mock out the List method")
 // 			},
@@ -42,6 +45,9 @@ type ConnectorTypesServiceMock struct {
 	// GetFunc mocks the Get method.
 	GetFunc func(id string) (*api.ConnectorType, *apiErrors.ServiceError)
 
+	// GetServiceAddressFunc mocks the GetServiceAddress method.
+	GetServiceAddressFunc func(id string) (string, *apiErrors.ServiceError)
+
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *apiErrors.ServiceError)
 
@@ -55,6 +61,11 @@ type ConnectorTypesServiceMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetServiceAddress holds details about calls to the GetServiceAddress method.
+		GetServiceAddress []struct {
+			// ID is the id argument value.
+			ID string
+		}
 		// List holds details about calls to the List method.
 		List []struct {
 			// Ctx is the ctx argument value.
@@ -65,6 +76,7 @@ type ConnectorTypesServiceMock struct {
 	}
 	lockDiscoverExtensions sync.RWMutex
 	lockGet                sync.RWMutex
+	lockGetServiceAddress  sync.RWMutex
 	lockList               sync.RWMutex
 }
 
@@ -122,6 +134,37 @@ func (mock *ConnectorTypesServiceMock) GetCalls() []struct {
 	mock.lockGet.RLock()
 	calls = mock.calls.Get
 	mock.lockGet.RUnlock()
+	return calls
+}
+
+// GetServiceAddress calls GetServiceAddressFunc.
+func (mock *ConnectorTypesServiceMock) GetServiceAddress(id string) (string, *apiErrors.ServiceError) {
+	if mock.GetServiceAddressFunc == nil {
+		panic("ConnectorTypesServiceMock.GetServiceAddressFunc: method is nil but ConnectorTypesService.GetServiceAddress was just called")
+	}
+	callInfo := struct {
+		ID string
+	}{
+		ID: id,
+	}
+	mock.lockGetServiceAddress.Lock()
+	mock.calls.GetServiceAddress = append(mock.calls.GetServiceAddress, callInfo)
+	mock.lockGetServiceAddress.Unlock()
+	return mock.GetServiceAddressFunc(id)
+}
+
+// GetServiceAddressCalls gets all the calls that were made to GetServiceAddress.
+// Check the length with:
+//     len(mockedConnectorTypesService.GetServiceAddressCalls())
+func (mock *ConnectorTypesServiceMock) GetServiceAddressCalls() []struct {
+	ID string
+} {
+	var calls []struct {
+		ID string
+	}
+	mock.lockGetServiceAddress.RLock()
+	calls = mock.calls.GetServiceAddress
+	mock.lockGetServiceAddress.RUnlock()
 	return calls
 }
 

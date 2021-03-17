@@ -12,13 +12,11 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/golang/glog"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
@@ -54,15 +52,10 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 		Validate: []validate{
 			validation("name", &resource.Metadata.Name,
 				withDefault("New Cluster"), minLen(1), maxLen(100)),
-			validation("group", &resource.Metadata.Group,
-				withDefault("default"), minLen(1), maxLen(100)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource, serr := presenters.ConvertConnectorCluster(resource)
-			if serr != nil {
-				return nil, serr
-			}
+			convResource := presenters.ConvertConnectorCluster(resource)
 
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
@@ -70,12 +63,12 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			}
 			convResource.Owner = auth.GetUsernameFromClaims(claims)
 			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
-			convResource.Status = api.ConnectorClusterStatusUnconnected
+			convResource.Status.Phase = api.ConnectorClusterPhaseUnconnected
 
-			if err := h.service.Create(r.Context(), convResource); err != nil {
+			if err := h.service.Create(r.Context(), &convResource); err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorCluster(convResource)
+			return presenters.PresentConnectorCluster(convResource), nil
 		},
 		ErrorHandler: handleError,
 	}
@@ -85,17 +78,17 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			resource, err := h.service.Get(r.Context(), id)
+			resource, err := h.service.Get(r.Context(), connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorCluster(resource)
+			return presenters.PresentConnectorCluster(resource), nil
 		},
 		ErrorHandler: handleError,
 	}
@@ -103,13 +96,13 @@ func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *connectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			err := h.service.Delete(r.Context(), id)
+			err := h.service.Delete(r.Context(), connectorClusterId)
 			return nil, err
 		},
 		ErrorHandler: handleError,
@@ -135,13 +128,8 @@ func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted, err := presenters.PresentConnectorCluster(resource)
-				if err != nil {
-					glog.Errorf("connector cluster id='%s' presentation failed: %v", resource.ID, err)
-					return nil, errors.GeneralError("internal error")
-				}
+				converted := presenters.PresentConnectorCluster(resource)
 				resourceList.Items = append(resourceList.Items, converted)
-
 			}
 
 			return resourceList, nil
@@ -153,24 +141,24 @@ func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *connectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			// To make sure the user can access the cluster....
-			_, err := h.service.Get(r.Context(), id)
+			_, err := h.service.Get(r.Context(), connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
 
-			acc, err := h.keycloak.RegisterConnectorFleetshardOperatorServiceAccount(id, connectorFleetshardOperatorRoleName)
+			acc, err := h.keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId, connectorFleetshardOperatorRoleName)
 			if err != nil {
-				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", id, err)
+				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
 			}
-			params := h.buildAddonParams(acc, id)
+			params := h.buildAddonParams(acc, connectorClusterId)
 			result := make([]openapi.AddonParameter, len(params))
 			for i, p := range params {
 				result[i] = presenters.PresentAddonParameter(p)
@@ -236,18 +224,19 @@ func (o *connectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccou
 }
 
 func (h *connectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	var resource openapi.ConnectorClusterUpdateStatus
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
+	var resource openapi.ConnectorClusterStatus
 
 	cfg := &handlerConfig{
 		MarshalInto: &resource,
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
-			validation("status", &resource.Status, isOneOf(api.AllConnectorClusterStatus...)),
+			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("phase", &resource.Phase, isOneOf(api.AllConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			err := h.service.UpdateConnectorClusterStatus(ctx, id, resource.Status)
+			convResource := presenters.ConvertConnectorClusterStatus(resource)
+			err := h.service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			return nil, err
 		},
 		ErrorHandler: handleError,
@@ -255,15 +244,15 @@ func (h *connectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 	handle(w, r, cfg, http.StatusNoContent)
 }
 
-func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.Request) {
+func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http.Request) {
 	// h.service.ListConnectors()
 	ctx := r.Context()
 	query := r.URL.Query()
-	id := mux.Vars(r)["id"]
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -274,30 +263,24 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 
 			listArgs := services.NewListArguments(query)
 
-			getList := func() (list openapi.ConnectorList, err *errors.ServiceError) {
-				resources, paging, err := h.service.ListConnectors(ctx, id, listArgs, gtVersion)
+			getList := func() (list openapi.ConnectorDeploymentList, err *errors.ServiceError) {
+
+				resources, paging, err := h.service.ListConnectorDeployments(ctx, connectorClusterId, listArgs, gtVersion)
 				if err != nil {
 					return
 				}
 
-				list = openapi.ConnectorList{
-					Kind:  "ConnectorList",
+				list = openapi.ConnectorDeploymentList{
+					Kind:  "ConnectorDeploymentList",
 					Page:  int32(paging.Page),
 					Size:  int32(paging.Size),
 					Total: int32(paging.Total),
 				}
 
-				var converted openapi.Connector
 				for _, resource := range resources {
-					err = getSecretsFromVaultAsBase64(resource, h.connectorTypes, h.vault)
+					converted, err := presenters.PresentConnectorDeployment(resource)
 					if err != nil {
-						return
-					}
-					converted, err = presenters.PresentConnector(resource)
-					if err != nil {
-						glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
-						err = errors.GeneralError("internal error")
-						return
+						return list, err
 					}
 					list.Items = append(list.Items, converted)
 				}
@@ -309,7 +292,7 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 				list, err := getList()
 				firstPoll := true
 
-				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", id))
+				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", connectorClusterId))
 				return eventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,
@@ -322,7 +305,7 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 								result := list.Items[idx]
 								gtVersion = result.Metadata.ResourceVersion
 								idx += 1
-								return openapi.ConnectorWatchEvent{
+								return openapi.ConnectorDeploymentWatchEvent{
 									Type:   "CHANGE",
 									Object: result,
 								}, nil
@@ -331,7 +314,7 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 								if firstPoll {
 									firstPoll = false
 									// bookmark idea taken from: https://kubernetes.io/docs/reference/using-api/api-concepts/#watch-bookmarks
-									return openapi.ConnectorWatchEvent{
+									return openapi.ConnectorDeploymentWatchEvent{
 										Type: "BOOKMARK",
 									}, nil
 								}
@@ -390,21 +373,21 @@ func waitForCancelOrTimeoutOrNotification(ctx context.Context, timeout time.Dura
 	}
 }
 
-func (h *connectorClusterHandler) UpdateConnectorStatus(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
-	cid := mux.Vars(r)["cid"]
-	var resource openapi.ConnectorUpdateStatus
+func (h *connectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
+	connectorId := mux.Vars(r)["connector_id"]
+	var resource api.ConnectorDeploymentStatus
 
 	cfg := &handlerConfig{
 		MarshalInto: &resource,
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorClusterIdLength)),
-			validation("cid", &id, minLen(1), maxLen(maxConnectorIdLength)),
-			validation("status", &resource.Status, isOneOf(api.AllConnectorClusterStatus...)),
+			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
+			validation("connector_id", &connectorClusterId, minLen(1), maxLen(maxConnectorIdLength)),
+			validation("phase", &resource.Phase, isOneOf(api.AllConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			err := h.service.UpdateConnectorStatus(ctx, id, cid, resource.Status)
+			err := h.service.UpdateConnectorDeploymentStatus(ctx, connectorClusterId, connectorId, resource)
 			return nil, err
 		},
 		ErrorHandler: handleError,

@@ -243,7 +243,14 @@ func (helper *Helper) stopClusterWorker() {
 
 func (helper *Helper) startConnectorWorker() {
 	env := helper.Env()
-	helper.ConnectorWorker = workers.NewConnectorManager(uuid.New().String(), env.Services.Connectors, env.Services.ConnectorCluster, env.Services.Observatorium)
+	helper.ConnectorWorker = workers.NewConnectorManager(
+		uuid.New().String(),
+		env.Services.ConnectorTypes,
+		env.Services.Connectors,
+		env.Services.ConnectorCluster,
+		env.Services.Observatorium,
+		env.Services.Vault,
+	)
 	go func() {
 		glog.V(10).Info("Connector worker started")
 		helper.ConnectorWorker.Start()
@@ -280,7 +287,14 @@ func (helper *Helper) startLeaderElectionWorker() {
 	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
 
 	helper.KafkaWorker = workers.NewKafkaManager(env.Services.Kafka, env.Services.Cluster, ocmClient, uuid.New().String(), env.Services.Keycloak, env.Services.Observatorium, env.Services.Config, env.Services.Quota)
-	helper.ConnectorWorker = workers.NewConnectorManager(uuid.New().String(), env.Services.Connectors, env.Services.ConnectorCluster, env.Services.Observatorium)
+	helper.ConnectorWorker = workers.NewConnectorManager(
+		uuid.New().String(),
+		env.Services.ConnectorTypes,
+		env.Services.Connectors,
+		env.Services.ConnectorCluster,
+		env.Services.Observatorium,
+		env.Services.Vault,
+	)
 
 	var workerLst []workers.Worker
 	workerLst = append(workerLst, helper.ClusterWorker)

@@ -11,6 +11,6 @@ package openapi
 
 // AddonClusterTarget Targets workloads to an addon cluster
 type AddonClusterTarget struct {
-	Kind  string `json:"kind"`
-	Group string `json:"group,omitempty"`
+	Kind      string `json:"kind"`
+	ClusterId string `json:"cluster_id,omitempty"`
 }

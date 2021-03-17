@@ -9,7 +9,8 @@
 
 package openapi
 
-// ConnectorUpdateStatus Schema for the request to update a data plane cluster's status
-type ConnectorUpdateStatus struct {
-	Status string `json:"status,omitempty"`
+// ConnectorDeploymentStatus The status of connector deployment
+type ConnectorDeploymentStatus struct {
+	Phase      string            `json:"phase,omitempty"`
+	Conditions []MetaV1Condition `json:"conditions,omitempty"`
 }

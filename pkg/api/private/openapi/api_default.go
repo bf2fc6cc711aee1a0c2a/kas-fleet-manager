@@ -26,15 +26,21 @@ var (
 // DefaultApiService DefaultApi service
 type DefaultApiService service
 
+// CreateConnectorOpts Optional parameters for the method 'CreateConnector'
+type CreateConnectorOpts struct {
+	KafkaId optional.String
+}
+
 /*
 CreateConnector Create a new connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
  * @param async Perform the action in an asynchronous manner
  * @param connector Connector data
+ * @param optional nil or *CreateConnectorOpts - Optional Parameters:
+ * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Connector
 */
-func (a *DefaultApiService) CreateConnector(ctx _context.Context, id string, async bool, connector Connector) (Connector, *_nethttp.Response, error) {
+func (a *DefaultApiService) CreateConnector(ctx _context.Context, async bool, connector Connector, localVarOptionals *CreateConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -45,13 +51,14 @@ func (a *DefaultApiService) CreateConnector(ctx _context.Context, id string, asy
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connectors"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
+		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	}
 	localVarQueryParams.Add("async", parameterToString(async, ""))
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
@@ -150,12 +157,11 @@ func (a *DefaultApiService) CreateConnector(ctx _context.Context, id string, asy
 /*
 CreateConnectorCluster Create a new connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
  * @param async Perform the action in an asynchronous manner
  * @param connectorCluster Connector cluster data
 @return ConnectorCluster
 */
-func (a *DefaultApiService) CreateConnectorCluster(ctx _context.Context, id string, async bool, connectorCluster ConnectorCluster) (ConnectorCluster, *_nethttp.Response, error) {
+func (a *DefaultApiService) CreateConnectorCluster(ctx _context.Context, async bool, connectorCluster ConnectorCluster) (ConnectorCluster, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
@@ -167,8 +173,6 @@ func (a *DefaultApiService) CreateConnectorCluster(ctx _context.Context, id stri
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -268,13 +272,20 @@ func (a *DefaultApiService) CreateConnectorCluster(ctx _context.Context, id stri
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// DeleteConnectorOpts Optional parameters for the method 'DeleteConnector'
+type DeleteConnectorOpts struct {
+	KafkaId optional.String
+}
+
 /*
 DeleteConnector Delete a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param connectorId The id of the connector
+ * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
+ * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Error
 */
-func (a *DefaultApiService) DeleteConnector(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
+func (a *DefaultApiService) DeleteConnector(ctx _context.Context, connectorId string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -285,13 +296,16 @@ func (a *DefaultApiService) DeleteConnector(ctx _context.Context, id string) (Er
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas-connectors/{connector_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_id"+"}", _neturl.QueryEscape(parameterToString(connectorId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
+		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -377,10 +391,10 @@ func (a *DefaultApiService) DeleteConnector(ctx _context.Context, id string) (Er
 /*
 DeleteConnectorCluster Delete a connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param connectorClusterId The id of the connector cluster
 @return Error
 */
-func (a *DefaultApiService) DeleteConnectorCluster(ctx _context.Context, id string) (Error, *_nethttp.Response, error) {
+func (a *DefaultApiService) DeleteConnectorCluster(ctx _context.Context, connectorClusterId string) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -391,8 +405,8 @@ func (a *DefaultApiService) DeleteConnectorCluster(ctx _context.Context, id stri
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -480,14 +494,20 @@ func (a *DefaultApiService) DeleteConnectorCluster(ctx _context.Context, id stri
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// GetConnectorOpts Optional parameters for the method 'GetConnector'
+type GetConnectorOpts struct {
+	KafkaId optional.String
+}
+
 /*
-GetConnector Get a connector deployment
+GetConnector Get a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
- * @param cid The id of the connector
+ * @param connectorId The id of the connector
+ * @param optional nil or *GetConnectorOpts - Optional Parameters:
+ * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Connector
 */
-func (a *DefaultApiService) GetConnector(ctx _context.Context, id string, cid string) (Connector, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetConnector(ctx _context.Context, connectorId string, localVarOptionals *GetConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -498,15 +518,16 @@ func (a *DefaultApiService) GetConnector(ctx _context.Context, id string, cid st
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments/{cid}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
-	localVarPath = strings.Replace(localVarPath, "{"+"cid"+"}", _neturl.QueryEscape(parameterToString(cid, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas-connectors/{connector_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_id"+"}", _neturl.QueryEscape(parameterToString(connectorId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
+		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -592,11 +613,10 @@ func (a *DefaultApiService) GetConnector(ctx _context.Context, id string, cid st
 /*
 GetConnectorCluster Get a connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
- * @param cid The id of the connector cluster
+ * @param connectorClusterId The id of the connector cluster
 @return ConnectorCluster
 */
-func (a *DefaultApiService) GetConnectorCluster(ctx _context.Context, id string, cid string) (ConnectorCluster, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetConnectorCluster(ctx _context.Context, connectorClusterId string) (ConnectorCluster, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -607,10 +627,8 @@ func (a *DefaultApiService) GetConnectorCluster(ctx _context.Context, id string,
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
-	localVarPath = strings.Replace(localVarPath, "{"+"cid"+"}", _neturl.QueryEscape(parameterToString(cid, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -701,11 +719,10 @@ func (a *DefaultApiService) GetConnectorCluster(ctx _context.Context, id string,
 /*
 GetConnectorClusterAddonParameters Get a connector cluster's addon parameters
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
- * @param cid The id of the connector cluster
+ * @param connectorClusterId The id of the connector cluster
 @return []AddonParameter
 */
-func (a *DefaultApiService) GetConnectorClusterAddonParameters(ctx _context.Context, id string, cid string) ([]AddonParameter, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetConnectorClusterAddonParameters(ctx _context.Context, connectorClusterId string) ([]AddonParameter, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -716,10 +733,8 @@ func (a *DefaultApiService) GetConnectorClusterAddonParameters(ctx _context.Cont
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{id}/addon-parameters"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
-	localVarPath = strings.Replace(localVarPath, "{"+"cid"+"}", _neturl.QueryEscape(parameterToString(cid, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/addon-parameters"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -810,10 +825,10 @@ func (a *DefaultApiService) GetConnectorClusterAddonParameters(ctx _context.Cont
 /*
 GetConnectorTypeByID Get a connector type by name and version
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param connectorTypeId The id of the connector type
 @return ConnectorType
 */
-func (a *DefaultApiService) GetConnectorTypeByID(ctx _context.Context, id string) (ConnectorType, *_nethttp.Response, error) {
+func (a *DefaultApiService) GetConnectorTypeByID(ctx _context.Context, connectorTypeId string) (ConnectorType, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -824,8 +839,8 @@ func (a *DefaultApiService) GetConnectorTypeByID(ctx _context.Context, id string
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/connector-types/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-types/{connector_type_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_type_id"+"}", _neturl.QueryEscape(parameterToString(connectorTypeId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -1105,8 +1120,8 @@ func (a *DefaultApiService) GetKafkas(ctx _context.Context, id string) (ManagedK
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// ListClusterAsignedConnectorsOpts Optional parameters for the method 'ListClusterAsignedConnectors'
-type ListClusterAsignedConnectorsOpts struct {
+// ListClusterAsignedConnectorDeploymentsOpts Optional parameters for the method 'ListClusterAsignedConnectorDeployments'
+type ListClusterAsignedConnectorDeploymentsOpts struct {
 	Page      optional.String
 	Size      optional.String
 	GtVersion optional.Int64
@@ -1114,29 +1129,29 @@ type ListClusterAsignedConnectorsOpts struct {
 }
 
 /*
-ListClusterAsignedConnectors Returns a list of connector types
+ListClusterAsignedConnectorDeployments Returns a list of connector types
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
- * @param optional nil or *ListClusterAsignedConnectorsOpts - Optional Parameters:
+ * @param connectorClusterId The id of the connector cluster
+ * @param optional nil or *ListClusterAsignedConnectorDeploymentsOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
  * @param "GtVersion" (optional.Int64) -  filters the connectors to those with a version greater than the given value
  * @param "Watch" (optional.Bool) -  watch for changes to the resources and return them as a stream of watch events. Specify gt_version to specify the starting point.
-@return ConnectorList
+@return ConnectorDeploymentList
 */
-func (a *DefaultApiService) ListClusterAsignedConnectors(ctx _context.Context, id string, localVarOptionals *ListClusterAsignedConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
+func (a *DefaultApiService) ListClusterAsignedConnectorDeployments(ctx _context.Context, connectorClusterId string, localVarOptionals *ListClusterAsignedConnectorDeploymentsOpts) (ConnectorDeploymentList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
 		localVarFileBytes    []byte
-		localVarReturnValue  ConnectorList
+		localVarReturnValue  ConnectorDeploymentList
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{id}/connectors"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/deployments"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -1235,13 +1250,12 @@ type ListConnectorClustersOpts struct {
 /*
 ListConnectorClusters Returns a list of connector clusters
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
  * @param optional nil or *ListConnectorClustersOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
 @return ConnectorClusterList
 */
-func (a *DefaultApiService) ListConnectorClusters(ctx _context.Context, id string, localVarOptionals *ListConnectorClustersOpts) (ConnectorClusterList, *_nethttp.Response, error) {
+func (a *DefaultApiService) ListConnectorClusters(ctx _context.Context, localVarOptionals *ListConnectorClustersOpts) (ConnectorClusterList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -1253,8 +1267,6 @@ func (a *DefaultApiService) ListConnectorClusters(ctx _context.Context, id strin
 
 	// create path and map variables
 	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -1362,7 +1374,7 @@ func (a *DefaultApiService) ListConnectorTypes(ctx _context.Context, localVarOpt
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/connector-types"
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-types"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -1447,20 +1459,21 @@ func (a *DefaultApiService) ListConnectorTypes(ctx _context.Context, localVarOpt
 
 // ListConnectorsOpts Optional parameters for the method 'ListConnectors'
 type ListConnectorsOpts struct {
-	Page optional.String
-	Size optional.String
+	KafkaId optional.String
+	Page    optional.String
+	Size    optional.String
 }
 
 /*
 ListConnectors Returns a list of connector types
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
  * @param optional nil or *ListConnectorsOpts - Optional Parameters:
+ * @param "KafkaId" (optional.String) -  The kafka cluster id
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
 @return ConnectorList
 */
-func (a *DefaultApiService) ListConnectors(ctx _context.Context, id string, localVarOptionals *ListConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
+func (a *DefaultApiService) ListConnectors(ctx _context.Context, localVarOptionals *ListConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -1471,13 +1484,14 @@ func (a *DefaultApiService) ListConnectors(ctx _context.Context, id string, loca
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafkas/{id}/connector-deployments"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connectors"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
+		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	}
 	if localVarOptionals != nil && localVarOptionals.Page.IsSet() {
 		localVarQueryParams.Add("page", parameterToString(localVarOptionals.Page.Value(), ""))
 	}
@@ -1645,6 +1659,97 @@ func (a *DefaultApiService) UpdateAgentClusterStatus(ctx _context.Context, id st
 }
 
 /*
+UpdateConnectorDeploymentStatus update the connector deployment status
+ * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ * @param connectorClusterId The id of the connector cluster
+ * @param connectorId The id of the connector
+ * @param connectorDeploymentStatus
+*/
+func (a *DefaultApiService) UpdateConnectorDeploymentStatus(ctx _context.Context, connectorClusterId string, connectorId string, connectorDeploymentStatus ConnectorDeploymentStatus) (*_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	// create path and map variables
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{connector_id}/status"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
+
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_id"+"}", _neturl.QueryEscape(parameterToString(connectorId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = &connectorDeploymentStatus
+	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(r)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v Error
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+		}
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+/*
 UpdateKafkaClusterStatus Update the status of Kafka clusters on an agent cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The id of record
@@ -1735,10 +1840,10 @@ func (a *DefaultApiService) UpdateKafkaClusterStatus(ctx _context.Context, id st
 /*
 UpdateKafkaConnectorAgentClusterStatus Update the status of a connector agent cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
- * @param connectorClusterUpdateStatus Cluster status update data
+ * @param connectorClusterId The id of the connector cluster
+ * @param connectorClusterStatus Cluster status update data
 */
-func (a *DefaultApiService) UpdateKafkaConnectorAgentClusterStatus(ctx _context.Context, id string, connectorClusterUpdateStatus ConnectorClusterUpdateStatus) (*_nethttp.Response, error) {
+func (a *DefaultApiService) UpdateKafkaConnectorAgentClusterStatus(ctx _context.Context, connectorClusterId string, connectorClusterStatus ConnectorClusterStatus) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
 		localVarPostBody     interface{}
@@ -1748,8 +1853,8 @@ func (a *DefaultApiService) UpdateKafkaConnectorAgentClusterStatus(ctx _context.
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{id}/status"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/status"
+	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -1773,98 +1878,7 @@ func (a *DefaultApiService) UpdateKafkaConnectorAgentClusterStatus(ctx _context.
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &connectorClusterUpdateStatus
-	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(r)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v Error
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-		}
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-/*
-UpdateKafkaConnectorStatus Update the status of a connector agent cluster
- * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
- * @param cid The id of the connector
- * @param connectorUpdateStatus Cluster status update data
-*/
-func (a *DefaultApiService) UpdateKafkaConnectorStatus(ctx _context.Context, id string, cid string, connectorUpdateStatus ConnectorUpdateStatus) (*_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/managed-services-api/v1/kafka-connector-clusters/{id}/connectors/{cid}/status"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
-
-	localVarPath = strings.Replace(localVarPath, "{"+"cid"+"}", _neturl.QueryEscape(parameterToString(cid, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = &connectorUpdateStatus
+	localVarPostBody = &connectorClusterStatus
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

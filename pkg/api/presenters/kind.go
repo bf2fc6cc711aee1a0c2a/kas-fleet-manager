@@ -14,8 +14,10 @@ const (
 	KindCloudProvider = "CloudProvider"
 	// KindConnector is a string identifier for the type api.Connector
 	KindConnector = "Connector"
-	// KindConnector is a string identifier for the type api.ConnectorCluster
+	// KindConnectorCluster is a string identifier for the type api.ConnectorCluster
 	KindConnectorCluster = "ConnectorCluster"
+	// KindConnectorDeployment is a string identifier for the type api.ConnectorDeployment
+	KindConnectorDeployment = "ConnectorDeployment"
 	// KindConnectorType is a string identifier for the type api.ConnectorType
 	KindConnectorType = "ConnectorType"
 	// KindError is a string identifier for the type api.ServiceError
@@ -34,6 +36,8 @@ func ObjectKind(i interface{}) string {
 		return KindConnector
 	case api.ConnectorCluster, *api.ConnectorCluster:
 		return KindConnectorCluster
+	case api.ConnectorDeployment, *api.ConnectorDeployment:
+		return KindConnectorDeployment
 	case api.ConnectorType, *api.ConnectorType:
 		return KindConnectorType
 	case errors.ServiceError, *errors.ServiceError:

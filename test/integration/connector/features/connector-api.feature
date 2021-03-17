@@ -12,7 +12,7 @@ Feature: create a a connector
 
   Scenario: Greg lists all connector types
     Given I am logged in as "Greg"
-    When I GET path "/v1/connector-types"
+    When I GET path "/v1/kafka-connector-types"
     Then the response code should be 200
     And the response should match json:
       """
@@ -20,7 +20,7 @@ Feature: create a a connector
         "items": [
           {
             "description": "Receive data from AWS SQS",
-            "href": "/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1",
+            "href": "/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
             "id": "aws-sqs-source-v1alpha1",
             "json_schema": {
               "description": "Receive data from AWS SQS.",
@@ -93,16 +93,17 @@ Feature: create a a connector
   Scenario: Greg tries to create a connector with an invalid configuration spec
     Given I am logged in as "Greg"
     Given I have created a kafka cluster as ${kid}
-    When I POST path "/v1/kafkas/${kid}/connector-deployments?async=true" with json body:
+    When I POST path "/v1/kafka-connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
-          "name": "example 1"
+          "name": "example 1",
+          "kafka_id":"${kid}"
         },
         "deployment_location": {
           "kind": "addon",
-          "group": "default"
+          "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
@@ -129,16 +130,17 @@ Feature: create a a connector
   but Coworker Sally can.
     Given I am logged in as "Greg"
     Given I have created a kafka cluster as ${kid}
-    When I POST path "/v1/kafkas/${kid}/connector-deployments?async=true" with json body:
+    When I POST path "/v1/kafka-connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
-          "name": "example 1"
+          "name": "example 1",
+          "kafka_id":"${kid}"
         },
         "deployment_location": {
           "kind": "addon",
-          "group": "default"
+          "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
@@ -153,7 +155,7 @@ Feature: create a a connector
     And the ".status" selection from the response should match "assigning"
 
     Given I store the ".id" selection from the response as ${cid}
-    When I GET path "/v1/kafkas/${kid}/connector-deployments"
+    When I GET path "/v1/kafka-connectors?kafka_id=${kid}"
     Then the response code should be 200
     And the response should match json:
       """
@@ -168,10 +170,10 @@ Feature: create a a connector
             },
             "connector_type_id": "aws-sqs-source-v1alpha1",
             "deployment_location": {
-              "group": "default",
+              "cluster_id": "default",
               "kind": "addon"
             },
-            "href": "/api/managed-services-api/v1/kafkas/${kid}/connector-deployments/${cid}",
+            "href": "/api/managed-services-api/v1/kafka-connectors/${cid}",
             "id": "${cid}",
             "kind": "Connector",
             "metadata": {
@@ -192,7 +194,7 @@ Feature: create a a connector
       }
       """
 
-    When I GET path "/v1/kafkas/${kid}/connector-deployments/${cid}"
+    When I GET path "/v1/kafka-connectors/${cid}"
     Then the response code should be 200
     And the ".status" selection from the response should match "assigning"
     And the ".id" selection from the response should match "${cid}"
@@ -201,7 +203,7 @@ Feature: create a a connector
       {
           "id": "${cid}",
           "kind": "Connector",
-          "href": "/api/managed-services-api/v1/kafkas/${kid}/connector-deployments/${cid}",
+          "href": "/api/managed-services-api/v1/kafka-connectors/${cid}",
           "metadata": {
               "kafka_id": "${kid}",
               "owner": "${response.metadata.owner}",
@@ -212,7 +214,7 @@ Feature: create a a connector
           },
           "deployment_location": {
               "kind": "addon",
-              "group": "default"
+              "cluster_id": "default"
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "connector_spec": {
@@ -227,19 +229,19 @@ Feature: create a a connector
 
     # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
-    When I GET path "/v1/kafkas/${kid}/connector-deployments/${cid}"
+    When I GET path "/v1/kafka-connectors/${cid}"
     Then the response code should be 200
 
     Given I am logged in as "Evil Bob"
-    When I GET path "/v1/kafkas/${kid}/connector-deployments/${cid}"
+    When I GET path "/v1/kafka-connectors/${cid}"
     Then the response code should be 404
 
     Given I am logged in as "Greg"
-    When I DELETE path "/v1/kafkas/${kid}/connector-deployments/${cid}"
+    When I DELETE path "/v1/kafka-connectors/${cid}"
     Then the response code should be 204
     And the response should match ""
 
-    When I GET path "/v1/kafkas/${kid}/connector-deployments/${cid}"
+    When I GET path "/v1/kafka-connectors/${cid}"
     Then the response code should be 404
     And the response should match json:
       """

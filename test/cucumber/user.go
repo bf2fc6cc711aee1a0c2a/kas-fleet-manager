@@ -63,6 +63,7 @@ func (s *TestScenario) iAmLoggedInAs(name string) error {
 }
 
 func (s *TestScenario) iSetTheAuthorizationHeaderTo(value string) error {
-	s.Session().AuthorizationHeader = s.Expand(value)
+	value = s.Expand(value)
+	s.Session().AuthorizationHeader = value
 	return nil
 }

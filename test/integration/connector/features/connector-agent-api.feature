@@ -6,21 +6,32 @@ Feature: connector agent API
 
   Background:
     Given the path prefix is "/api/managed-services-api"
-    Given a user named "Jimmy" in organization "13639843"
-    Given a user named "Other"
+    Given a user named "Jimmy"
+    Given a user named "Agent"
+    Given a user named "Agent2"
 
     Given I am logged in as "Jimmy"
-    Given I have created a kafka cluster as ${kid}
-    When I POST path "/v1/kafkas/${kid}/connector-deployments?async=true" with json body:
+
+    When I POST path "/v1/kafka-connector-clusters" with json body:
+      """
+      {}
+      """
+    Then the response code should be 202
+    And the ".status" selection from the response should match "unconnected"
+    Given I store the ".id" selection from the response as ${connector_cluster_id}
+
+    Given I have created a kafka cluster as ${kafka_id}
+    When I POST path "/v1/kafka-connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
-          "name": "example 1"
+          "name": "example 1",
+          "kafka_id": "${kafka_id}"
         },
         "deployment_location": {
           "kind": "addon",
-          "group": "default"
+          "cluster_id": "${connector_cluster_id}"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
@@ -33,33 +44,26 @@ Feature: connector agent API
       """
     Then the response code should be 202
     And the ".status" selection from the response should match "assigning"
+    Given I store the ".id" selection from the response as ${connector_id}
 
-    Given I store the ".id" selection from the response as ${cid}
-    When I POST path "/v1/kafka-connector-clusters" with json body:
-      """
-      {}
-      """
-    Then the response code should be 202
-    And the ".status" selection from the response should match "unconnected"
 
-    Given I store the ".id" selection from the response as ${cluster_id}
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}/addon-parameters"
+    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/addon-parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${agent_token}
 
-  Scenario: connector cluster is created and agent processes assigned connectors.
+  Scenario: connector cluster is created and agent processes assigned a deployment.
 
     # Logs in as the agent..
-    Given I am logged in as "Jimmy"
+    Given I am logged in as "Agent"
     Given I set the Authorization header to "Bearer ${agent_token}"
 
-    # There should be no connectors assigned yet, since the cluster status is unconnected
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}/connectors"
+    # There should be no deployments assigned yet, since the cluster status is unconnected
+    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
-    And the ".kind" selection from the response should match "ConnectorList"
+    And the ".kind" selection from the response should match "ConnectorDeploymentList"
     And the ".total" selection from the response should match "0"
 
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}/connectors?watch=true&gt_version=0" as a json event stream
+    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments?watch=true&gt_version=0" as a json event stream
     Then the response code should be 200
     And the response header "Content-Type" should match "application/json;stream=watch"
 
@@ -70,117 +74,143 @@ Feature: connector agent API
       {
         "error": {},
         "object": {
-          "deployment_location": {
-            "kind": ""
-          },
           "metadata": {
             "created_at": "0001-01-01T00:00:00Z",
             "updated_at": "0001-01-01T00:00:00Z"
-          }
+          },
+          "spec": {},
+          "status": {}
         },
         "type": "BOOKMARK"
       }
       """
 
-    # switch to another user to avoid reseting Jimmy's event stream..
-    Given I am logged in as "Other"
+    # switch to another user session to avoid resetting the event stream.
+    Given I am logged in as "Agent2"
     Given I set the Authorization header to "Bearer ${agent_token}"
 
-    When I PUT path "/v1/kafka-connector-clusters/${cluster_id}/status" with json body:
+    When I PUT path "/v1/kafka-connector-clusters/${connector_cluster_id}/status" with json body:
       """
-      {"status":"ready"}
+      {
+        "phase":"ready",
+        "version": "0.0.1",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "operators": [{
+          "id":"camelk",
+          "version": "1.0",
+          "namespace": "openshift-mcs-camelk-1.0",
+          "status": "ready"
+        }]
+      }
       """
     Then the response code should be 204
     And the response should match ""
 
-    # switch back to the previous Jimmy
-    Given I am logged in as "Jimmy"
+    # switch back to the previous session
+    Given I am logged in as "Agent"
     Given I set the Authorization header to "Bearer ${agent_token}"
 
     Given I wait up to "5" seconds for a response event
-    Then the response should match json:
+     Then the response should match json:
       """
       {
+        "type": "CHANGE",
         "error": {},
         "object": {
-          "connector_spec": {
-            "accessKey": "test",
-            "queueNameOrArn": "test",
-            "region": "east",
-            "secretKey": {
-              "kind": "base64",
-              "value": "dGVzdA=="
-            }
-          },
-          "connector_type_id": "aws-sqs-source-v1alpha1",
-          "deployment_location": {
-            "group": "default",
-            "kind": "addon"
-          },
-          "href": "${response.object.href}",
+          "href": "/api/managed-services-api/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",
-          "kind": "Connector",
+          "kind": "ConnectorDeployment",
           "metadata": {
-            "name": "example 1",
             "created_at": "${response.object.metadata.created_at}",
-            "kafka_id": "${response.object.metadata.kafka_id}",
-            "owner": "${response.object.metadata.owner}",
             "resource_version": ${response.object.metadata.resource_version},
             "updated_at": "${response.object.metadata.updated_at}"
           },
-          "status": "assigned"
-        },
-        "type": "CHANGE"
+          "spec": {
+            "connector_id": "${connector_id}"
+          },
+          "status": {}
+        }
       }
       """
 
     # Now that the cluster is ready, a worker should assign the connector to the cluster for deployment.
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka-connector-clusters/${cluster_id}/connectors" response ".total" selection to match "1"
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}/connectors"
+    Given I store the ".object.id" selection from the response as ${connector_deployment_id}
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
+    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the response should match json:
       """
       {
         "items": [
           {
-            "connector_spec": {
-              "accessKey": "test",
-              "queueNameOrArn": "test",
-              "region": "east",
-              "secretKey": {
-                "kind": "base64",
-                "value": "dGVzdA=="
-              }
-            },
-            "connector_type_id": "aws-sqs-source-v1alpha1",
-            "deployment_location": {
-              "group": "default",
-              "kind": "addon"
-            },
-            "href": "/api/managed-services-api/v1/kafkas/${kid}/connector-deployments/${cid}",
-            "id": "${cid}",
-            "kind": "Connector",
+            "href": "/api/managed-services-api/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+            "kind": "ConnectorDeployment",
+            "id": "${response.items[0].id}",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
-              "kafka_id": "${kid}",
-              "name": "example 1",
-              "owner": "${response.items[0].metadata.owner}",
               "resource_version": ${response.items[0].metadata.resource_version},
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
-            "status": "assigned"
+            "spec": {
+              "connector_id": "${connector_id}"
+            },
+            "status": {}
           }
         ],
-        "kind": "ConnectorList",
+        "kind": "ConnectorDeploymentList",
         "page": 1,
         "size": 1,
         "total": 1
       }
       """
 
-    When I PUT path "/v1/kafka-connector-clusters/${cluster_id}/connectors/${cid}/status" with json body:
+    When I PUT path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
-      {"status":"ready"}
+      {
+        "phase":"ready",
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }]
+      }
       """
     Then the response code should be 204
     And the response should match ""
+
+    # Jimmy should now see his connector's status update.
+    Given I am logged in as "Jimmy"
+    When I GET path "/v1/kafka-connectors/${connector_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "connector_spec": {
+          "accessKey": "test",
+          "queueNameOrArn": "test",
+          "region": "east",
+          "secretKey": {}
+        },
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "deployment_location": {
+          "kind": "addon",
+          "cluster_id": "${connector_cluster_id}"
+        },
+        "href": "/api/managed-services-api/v1/kafka-connectors/${connector_id}",
+        "id": "${connector_id}",
+        "kind": "Connector",
+        "metadata": {
+          "name": "example 1",
+          "owner": "${response.metadata.owner}",
+          "created_at": "${response.metadata.created_at}",
+          "kafka_id": "${kafka_id}",
+          "updated_at": "${response.metadata.updated_at}",
+          "resource_version": ${response.metadata.resource_version}
+        },
+        "status": "ready"
+      }
+    """

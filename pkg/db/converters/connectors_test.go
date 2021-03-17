@@ -18,7 +18,7 @@ func Test_ConvertConnectors(t *testing.T) {
 			DeletedAt: nil,
 		},
 		ConnectorTypeId: "b",
-		ConnectorSpec:   "c",
+		ConnectorSpec:   api.JSON("{}"),
 		Region:          "d",
 		ClusterID:       "e",
 		CloudProvider:   "f",
@@ -29,7 +29,7 @@ func Test_ConvertConnectors(t *testing.T) {
 		KafkaID:         "j",
 		Version:         7,
 		TargetKind:      "k",
-		AddonGroup:      "l",
+		AddonClusterId:  "l",
 		OrganisationId:  "m",
 	}
 	Expect([]map[string]interface{}{
@@ -39,7 +39,7 @@ func Test_ConvertConnectors(t *testing.T) {
 			"UpdatedAt":         "0001-01-01T00:00:00Z",
 			"id":                "a",
 			"connector_type_id": "b",
-			"connector_spec":    "c",
+			"connector_spec":    map[string]interface{}{},
 			"region":            "d",
 			"cluster_id":        "e",
 			"cloud_provider":    "f",
@@ -50,7 +50,7 @@ func Test_ConvertConnectors(t *testing.T) {
 			"multi_az":          false,
 			"version":           float64(7),
 			"target_kind":       "k",
-			"addon_group":       "l",
+			"addon_cluster_id":  "l",
 			"organisation_id":   "m",
 		},
 	}).Should(Equal(ConvertConnectors(request)))

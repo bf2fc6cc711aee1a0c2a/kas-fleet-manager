@@ -16,10 +16,10 @@ import (
 //go:generate moq -out connectors_moq.go . ConnectorsService
 type ConnectorsService interface {
 	Create(ctx context.Context, resource *api.Connector) *errors.ServiceError
-	Get(ctx context.Context, kid string, id string, tid string) (*api.Connector, *errors.ServiceError)
+	Get(ctx context.Context, id string, tid string) (*api.Connector, *errors.ServiceError)
 	List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *api.Connector) *errors.ServiceError
-	Delete(ctx context.Context, kid string, id string) *errors.ServiceError
+	Delete(ctx context.Context, id string) *errors.ServiceError
 	ForEachInStatus(statuses []api.ConnectorStatus, f func(*api.Connector) *errors.ServiceError) *errors.ServiceError
 }
 
@@ -62,17 +62,14 @@ func (k *connectorsService) Create(ctx context.Context, resource *api.Connector)
 }
 
 // Get gets a connector by id from the database
-func (k *connectorsService) Get(ctx context.Context, kid string, id string, tid string) (*api.Connector, *errors.ServiceError) {
-	if kid == "" {
-		return nil, errors.Validation("kafka id is undefined")
-	}
+func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*api.Connector, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("connector id is undefined")
 	}
 
 	dbConn := k.connectionFactory.New()
 	var resource api.Connector
-	dbConn = dbConn.Where("id = ? AND kafka_id = ?", id, kid)
+	dbConn = dbConn.Where("id = ?", id)
 
 	var err *errors.ServiceError
 	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)
@@ -114,10 +111,7 @@ func filterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors
 }
 
 // Delete deletes a connector from the database.
-func (k *connectorsService) Delete(ctx context.Context, kid string, id string) *errors.ServiceError {
-	if kid == "" {
-		return errors.Validation("kafka id is undefined")
-	}
+func (k *connectorsService) Delete(ctx context.Context, id string) *errors.ServiceError {
 	if id == "" {
 		return errors.Validation("id is undefined")
 	}
@@ -132,7 +126,7 @@ func (k *connectorsService) Delete(ctx context.Context, kid string, id string) *
 
 	dbConn := k.connectionFactory.New()
 	var resource api.Connector
-	if err := dbConn.Where("owner = ? AND id = ? AND kafka_id = ?", owner, id, kid).First(&resource).Error; err != nil {
+	if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
 		return handleGetError("Connector", "id", id, err)
 	}
 

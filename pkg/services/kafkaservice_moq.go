@@ -44,9 +44,6 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			GetManagedKafkaByClusterIDFunc: func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError) {
 // 				panic("mock out the GetManagedKafkaByClusterID method")
 // 			},
-// 			HasAvailableCapacityFunc: func() (bool, *apiErrors.ServiceError) {
-// 				panic("mock out the HasAvailableCapacity method")
-// 			},
 // 			ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 // 				panic("mock out the List method")
 // 			},
@@ -92,9 +89,6 @@ type KafkaServiceMock struct {
 
 	// GetManagedKafkaByClusterIDFunc mocks the GetManagedKafkaByClusterID method.
 	GetManagedKafkaByClusterIDFunc func(clusterID string) ([]managedkafka.ManagedKafka, *apiErrors.ServiceError)
-
-	// HasAvailableCapacityFunc mocks the HasAvailableCapacity method.
-	HasAvailableCapacityFunc func() (bool, *apiErrors.ServiceError)
 
 	// ListFunc mocks the List method.
 	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
@@ -157,9 +151,6 @@ type KafkaServiceMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// HasAvailableCapacity holds details about calls to the HasAvailableCapacity method.
-		HasAvailableCapacity []struct {
-		}
 		// List holds details about calls to the List method.
 		List []struct {
 			// Ctx is the ctx argument value.
@@ -204,7 +195,6 @@ type KafkaServiceMock struct {
 	lockGet                         sync.RWMutex
 	lockGetById                     sync.RWMutex
 	lockGetManagedKafkaByClusterID  sync.RWMutex
-	lockHasAvailableCapacity        sync.RWMutex
 	lockList                        sync.RWMutex
 	lockListByStatus                sync.RWMutex
 	lockRegisterKafkaDeprovisionJob sync.RWMutex
@@ -439,32 +429,6 @@ func (mock *KafkaServiceMock) GetManagedKafkaByClusterIDCalls() []struct {
 	mock.lockGetManagedKafkaByClusterID.RLock()
 	calls = mock.calls.GetManagedKafkaByClusterID
 	mock.lockGetManagedKafkaByClusterID.RUnlock()
-	return calls
-}
-
-// HasAvailableCapacity calls HasAvailableCapacityFunc.
-func (mock *KafkaServiceMock) HasAvailableCapacity() (bool, *apiErrors.ServiceError) {
-	if mock.HasAvailableCapacityFunc == nil {
-		panic("KafkaServiceMock.HasAvailableCapacityFunc: method is nil but KafkaService.HasAvailableCapacity was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockHasAvailableCapacity.Lock()
-	mock.calls.HasAvailableCapacity = append(mock.calls.HasAvailableCapacity, callInfo)
-	mock.lockHasAvailableCapacity.Unlock()
-	return mock.HasAvailableCapacityFunc()
-}
-
-// HasAvailableCapacityCalls gets all the calls that were made to HasAvailableCapacity.
-// Check the length with:
-//     len(mockedKafkaService.HasAvailableCapacityCalls())
-func (mock *KafkaServiceMock) HasAvailableCapacityCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockHasAvailableCapacity.RLock()
-	calls = mock.calls.HasAvailableCapacity
-	mock.lockHasAvailableCapacity.RUnlock()
 	return calls
 }
 

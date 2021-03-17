@@ -28,6 +28,7 @@ import (
 //go:generate moq -out connector_types_moq.go . ConnectorTypesService
 type ConnectorTypesService interface {
 	Get(id string) (*api.ConnectorType, *errors.ServiceError)
+	GetServiceAddress(id string) (string, *errors.ServiceError)
 	List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
 	DiscoverExtensions() error
 }
@@ -35,9 +36,10 @@ type ConnectorTypesService interface {
 var _ ConnectorTypesService = &connectorTypesService{}
 
 type connectorTypesService struct {
-	connectorTypeIndex   api.ConnectorTypeIndex
-	connectorTypeIndexMu sync.Mutex
-	connectorsConfig     *config.ConnectorsConfig
+	connectorTypeIndex  api.ConnectorTypeIndex
+	serviceAddressIndex map[string]string
+	mu                  sync.RWMutex
+	connectorsConfig    *config.ConnectorsConfig
 }
 
 func NewConnectorTypesService(config *config.ConnectorsConfig) *connectorTypesService {
@@ -51,12 +53,27 @@ func (k *connectorTypesService) Get(id string) (*api.ConnectorType, *errors.Serv
 		return nil, errors.Validation("id is undefined")
 	}
 
-	k.connectorTypeIndexMu.Lock()
+	k.mu.RLock()
 	resource := k.connectorTypeIndex[id]
-	k.connectorTypeIndexMu.Unlock()
+	k.mu.RUnlock()
 
 	if resource == nil {
 		return nil, errors.NotFound("ConnectorType with id='%s' not found", id)
+	}
+	return resource, nil
+}
+
+func (k *connectorTypesService) GetServiceAddress(id string) (string, *errors.ServiceError) {
+	if id == "" {
+		return "", errors.Validation("id is undefined")
+	}
+
+	k.mu.RLock()
+	resource, found := k.serviceAddressIndex[id]
+	k.mu.RUnlock()
+
+	if !found {
+		return "", errors.NotFound("ConnectorType with id='%s' not found", id)
 	}
 	return resource, nil
 }
@@ -81,14 +98,14 @@ func (k *connectorTypesService) List(ctx context.Context, listArgs *ListArgument
 }
 
 func (k *connectorTypesService) connectorTypesSortedByName() api.ConnectorTypeList {
-	k.connectorTypeIndexMu.Lock()
+	k.mu.RLock()
 	r := make(api.ConnectorTypeList, len(k.connectorTypeIndex))
 	i := 0
 	for _, v := range k.connectorTypeIndex {
 		r[i] = v
 		i++
 	}
-	k.connectorTypeIndexMu.Unlock()
+	k.mu.RUnlock()
 
 	sort.Slice(r, func(i, j int) bool {
 		return r[i].Name < r[j].Name
@@ -165,7 +182,10 @@ func (k *connectorTypesService) DiscoverExtensions() error {
 
 func (k *connectorTypesService) discoverExtensions(urls []string) {
 	ctx := context.Background()
-	discoveredList := []*api.ConnectorType{}
+
+	connectorTypeIndex := map[string]*api.ConnectorType{}
+	serviceAddressIndex := map[string]string{}
+
 	for _, u := range urls {
 		xu, err := url.Parse(u)
 		if err != nil {
@@ -189,7 +209,7 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 		base := bxu.String()
 
 		for _, id := range response.ConnectorTypeIds {
-			x := fmt.Sprintf("%s/api/managed-services-api/v1/connector-types/%s", base, id)
+			x := fmt.Sprintf("%s/api/managed-services-api/v1/kafka-connector-types/%s", base, id)
 			response, err := getConnectorType(ctx, x)
 			if err != nil {
 				glog.Warningf("failed to get %s, %v", x, err)
@@ -198,16 +218,16 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 
 			converted := presenters.ConvertConnectorType(*response)
 			converted.ExtensionURL = xu
-			discoveredList = append(discoveredList, converted)
+
+			converted.CreatedAt = time.Time{}
+			converted.UpdatedAt = time.Time{}
+			connectorTypeIndex[id] = converted
+			serviceAddressIndex[id] = base
 		}
 	}
 
-	k.connectorTypeIndexMu.Lock()
-	defer k.connectorTypeIndexMu.Unlock()
-	k.connectorTypeIndex = map[string]*api.ConnectorType{}
-	for _, c := range discoveredList {
-		c.CreatedAt = time.Time{}
-		c.UpdatedAt = time.Time{}
-		k.connectorTypeIndex[c.ID] = c
-	}
+	k.mu.Lock()
+	k.connectorTypeIndex = connectorTypeIndex
+	k.serviceAddressIndex = serviceAddressIndex
+	k.mu.Unlock()
 }
