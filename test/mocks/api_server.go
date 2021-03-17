@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"sync"
 
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -63,6 +65,9 @@ const (
 	// EndpointPathAddonInstallation ocm cluster addon installation endpoint
 	EndpointPathAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}"
 
+	EndpointPathClusterAuthorization = "/api/accounts_mgmt/v1/cluster_authorizations"
+	EndpointPathSubscription         = "/api/accounts_mgmt/v1/subscriptions/{id}"
+
 	// Default values for getX functions
 
 	// MockClusterID default mock cluster id used in the mock ocm server
@@ -107,36 +112,39 @@ const (
 	MockClusterComputeNodes = 3
 	// MockIdentityProviderID default identity provider ID
 	MockIdentityProviderID = "identity-provider-id"
+	//
+	MockSubID = "pphCb6sIQPqtjMtL0GQaX6i4bP"
 )
 
 // variables for endpoints
 var (
-	EndpointClusterGet              = Endpoint{EndpointPathCluster, http.MethodGet}
-	EndpointClusterPatch            = Endpoint{EndpointPathCluster, http.MethodPatch}
-	EndpointKafkaDelete             = Endpoint{EndpointPathSyncset, http.MethodDelete}
-	EndpointClustersGet             = Endpoint{EndpointPathClusters, http.MethodGet}
-	EndpointClusterDelete           = Endpoint{EndpointPathCluster, http.MethodDelete}
-	EndpointClustersPost            = Endpoint{EndpointPathClusters, http.MethodPost}
-	EndpointClusterSyncsetsPost     = Endpoint{EndpointPathSyncsets, http.MethodPost}
-	EndpointClusterSyncsetGet       = Endpoint{EndpointPathSyncset, http.MethodGet}
-	EndpointClusterSyncsetPatch     = Endpoint{EndpointPathSyncset, http.MethodPatch}
-	EndpointClusterIngressGet       = Endpoint{EndpointPathIngresses, http.MethodGet}
-	EndpointCloudProvidersGet       = Endpoint{EndpointPathCloudProviders, http.MethodGet}
-	EndpointCloudProviderGet        = Endpoint{EndpointPathCloudProvider, http.MethodGet}
-	EndpointCloudProviderRegionsGet = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
-	EndpointCloudProviderRegionGet  = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
-	EndpointClusterStatusGet        = Endpoint{EndpointPathClusterStatus, http.MethodGet}
-	EndpointClusterAddonsGet        = Endpoint{EndpointPathClusterAddons, http.MethodGet}
-	EndpointClusterAddonPost        = Endpoint{EndpointPathClusterAddons, http.MethodPost}
-	EndpointMachinePoolsGet         = Endpoint{EndpointPathMachinePools, http.MethodGet}
-	EndpointMachinePoolPost         = Endpoint{EndpointPathMachinePools, http.MethodPost}
-	EndpointMachinePoolPatch        = Endpoint{EndpointPathMachinePool, http.MethodPatch}
-	EndpointMachinePoolGet          = Endpoint{EndpointPathMachinePool, http.MethodGet}
-	EndpointIdentityProviderPost    = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
-	EndpointIdentityProviderPatch   = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
-	EndpointAddonInstallationsPost  = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
-	EndpointAddonInstallationGet    = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
-	EndpointAddonInstallationPatch  = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
+	EndpointClusterGet               = Endpoint{EndpointPathCluster, http.MethodGet}
+	EndpointClusterPatch             = Endpoint{EndpointPathCluster, http.MethodPatch}
+	EndpointKafkaDelete              = Endpoint{EndpointPathSyncset, http.MethodDelete}
+	EndpointClustersGet              = Endpoint{EndpointPathClusters, http.MethodGet}
+	EndpointClustersPost             = Endpoint{EndpointPathClusters, http.MethodPost}
+	EndpointClusterSyncsetsPost      = Endpoint{EndpointPathSyncsets, http.MethodPost}
+	EndpointClusterSyncsetGet        = Endpoint{EndpointPathSyncset, http.MethodGet}
+	EndpointClusterSyncsetPatch      = Endpoint{EndpointPathSyncset, http.MethodPatch}
+	EndpointClusterIngressGet        = Endpoint{EndpointPathIngresses, http.MethodGet}
+	EndpointCloudProvidersGet        = Endpoint{EndpointPathCloudProviders, http.MethodGet}
+	EndpointCloudProviderGet         = Endpoint{EndpointPathCloudProvider, http.MethodGet}
+	EndpointCloudProviderRegionsGet  = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
+	EndpointCloudProviderRegionGet   = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
+	EndpointClusterStatusGet         = Endpoint{EndpointPathClusterStatus, http.MethodGet}
+	EndpointClusterAddonsGet         = Endpoint{EndpointPathClusterAddons, http.MethodGet}
+	EndpointClusterAddonPost         = Endpoint{EndpointPathClusterAddons, http.MethodPost}
+	EndpointMachinePoolsGet          = Endpoint{EndpointPathMachinePools, http.MethodGet}
+	EndpointMachinePoolPost          = Endpoint{EndpointPathMachinePools, http.MethodPost}
+	EndpointMachinePoolPatch         = Endpoint{EndpointPathMachinePool, http.MethodPatch}
+	EndpointMachinePoolGet           = Endpoint{EndpointPathMachinePool, http.MethodGet}
+	EndpointIdentityProviderPost     = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
+	EndpointIdentityProviderPatch    = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
+	EndpointAddonInstallationsPost   = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
+	EndpointAddonInstallationGet     = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
+	EndpointAddonInstallationPatch   = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
+	EndpointClusterAuthorizationPost = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
+	EndpointSubscriptionDelete       = Endpoint{EndpointPathSubscription, http.MethodDelete}
 )
 
 // variables for mocked ocm types
@@ -158,6 +166,8 @@ var (
 	MockMachinePoolList              *clustersmgmtv1.MachinePoolList
 	MockMachinePool                  *clustersmgmtv1.MachinePool
 	MockCluster                      *clustersmgmtv1.Cluster
+	MockClusterAuthorization         *amsv1.ClusterAuthorizationResponse
+	MockSubscription                 *amsv1.Subscription
 )
 
 // routerSwapper is an http.Handler that allows you to swap mux routers.
@@ -319,6 +329,11 @@ func (b *MockConfigurableServerBuilder) SetIdentityProviderPatchResponse(idp *cl
 	b.handlerRegister[EndpointIdentityProviderPatch] = buildMockRequestHandler(idp, err)
 }
 
+// SetClusterAuthorizationResponse set a mock response for Post /api/accounts_mgmt/v1/cluster_authorizations
+func (b *MockConfigurableServerBuilder) SetClusterAuthorizationResponse(idp *amsv1.ClusterAuthorizationResponse, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterAuthorizationPost] = buildMockRequestHandler(idp, err)
+}
+
 // SetAddonInstallationsPostResponse set a mock response for Post /api/clusters_mgmt/v1/clusters/{id}/addons
 func (b *MockConfigurableServerBuilder) SetAddonInstallationsPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointAddonInstallationsPost] = buildMockRequestHandler(ai, err)
@@ -332,6 +347,10 @@ func (b *MockConfigurableServerBuilder) SetAddonInstallationGetResponse(ai *clus
 // SetAddonInstallationPatchResponse set a mock response for Patch /api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}
 func (b *MockConfigurableServerBuilder) SetAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointAddonInstallationPatch] = buildMockRequestHandler(ai, err)
+}
+
+func (b *MockConfigurableServerBuilder) SetSubscriptionPathDeleteResponse(idp *amsv1.Subscription, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointSubscriptionDelete] = buildMockRequestHandler(idp, err)
 }
 
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
@@ -390,32 +409,33 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 	// define a list of default endpoints and handlers in the mock ocm api server, when new endpoints are used in the
 	// managed-services-api service, a default ocm response should also be added here
 	return HandlerRegister{
-		EndpointClusterGet:              buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterPatch:            buildMockRequestHandler(MockCluster, nil),
-		EndpointKafkaDelete:             buildMockRequestHandler(MockSyncset, nil),
-		EndpointClustersGet:             buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterDelete:           buildMockRequestHandler(MockCluster, nil),
-		EndpointClustersPost:            buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterSyncsetsPost:     buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterSyncsetGet:       buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterSyncsetPatch:     buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterIngressGet:       buildMockRequestHandler(MockIngressList, nil),
-		EndpointCloudProvidersGet:       buildMockRequestHandler(MockCloudProviderList, nil),
-		EndpointCloudProviderGet:        buildMockRequestHandler(MockCloudProvider, nil),
-		EndpointCloudProviderRegionsGet: buildMockRequestHandler(MockCloudProviderRegionList, nil),
-		EndpointCloudProviderRegionGet:  buildMockRequestHandler(MockCloudProviderRegion, nil),
-		EndpointClusterStatusGet:        buildMockRequestHandler(MockClusterStatus, nil),
-		EndpointClusterAddonsGet:        buildMockRequestHandler(MockClusterAddonInstallationList, nil),
-		EndpointClusterAddonPost:        buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointMachinePoolsGet:         buildMockRequestHandler(MockMachinePoolList, nil),
-		EndpointMachinePoolGet:          buildMockRequestHandler(MockMachinePool, nil),
-		EndpointMachinePoolPatch:        buildMockRequestHandler(MockMachinePool, nil),
-		EndpointMachinePoolPost:         buildMockRequestHandler(MockMachinePool, nil),
-		EndpointIdentityProviderPatch:   buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointIdentityProviderPost:    buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointAddonInstallationsPost:  buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationGet:    buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationPatch:  buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointClusterGet:               buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterPatch:             buildMockRequestHandler(MockCluster, nil),
+		EndpointKafkaDelete:              buildMockRequestHandler(MockSyncset, nil),
+		EndpointClustersGet:              buildMockRequestHandler(MockCluster, nil),
+		EndpointClustersPost:             buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterSyncsetsPost:      buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetGet:        buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetPatch:      buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterIngressGet:        buildMockRequestHandler(MockIngressList, nil),
+		EndpointCloudProvidersGet:        buildMockRequestHandler(MockCloudProviderList, nil),
+		EndpointCloudProviderGet:         buildMockRequestHandler(MockCloudProvider, nil),
+		EndpointCloudProviderRegionsGet:  buildMockRequestHandler(MockCloudProviderRegionList, nil),
+		EndpointCloudProviderRegionGet:   buildMockRequestHandler(MockCloudProviderRegion, nil),
+		EndpointClusterStatusGet:         buildMockRequestHandler(MockClusterStatus, nil),
+		EndpointClusterAddonsGet:         buildMockRequestHandler(MockClusterAddonInstallationList, nil),
+		EndpointClusterAddonPost:         buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointMachinePoolsGet:          buildMockRequestHandler(MockMachinePoolList, nil),
+		EndpointMachinePoolGet:           buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPatch:         buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPost:          buildMockRequestHandler(MockMachinePool, nil),
+		EndpointIdentityProviderPatch:    buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointIdentityProviderPost:     buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointAddonInstallationsPost:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationGet:     buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationPatch:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointClusterAuthorizationPost: buildMockRequestHandler(MockClusterAuthorization, nil),
+		EndpointSubscriptionDelete:       buildMockRequestHandler(MockSubscription, nil),
 	}, nil
 }
 
@@ -515,6 +535,10 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 	// handle the generic ocm list type
 	case *ocmList:
 		return json.NewEncoder(w).Encode(t)
+	case *amsv1.ClusterAuthorizationResponse:
+		return amsv1.MarshalClusterAuthorizationResponse(t.(*amsv1.ClusterAuthorizationResponse), w)
+	case *amsv1.Subscription:
+		return amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError(""))
@@ -625,6 +649,35 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	MockClusterAuthorization, err = GetMockClusterAuthorization(nil)
+	if err != nil {
+		panic(err)
+	}
+	MockSubscription, err = GetMockSubscription(nil)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GetMockSubscription(modifyFn func(b *amsv1.Subscription)) (*amsv1.Subscription, error) {
+	builder, err := amsv1.NewSubscription().ID(MockSubID).Build()
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder, err
+}
+
+func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResponse)) (*amsv1.ClusterAuthorizationResponse, error) {
+	sub := amsv1.SubscriptionBuilder{}
+	sub.ID(MockSubID)
+	sub.ClusterID(MockClusterExternalID)
+	sub.Status("Active")
+	builder, err := amsv1.NewClusterAuthorizationResponse().Subscription(&sub).Allowed(true).Build()
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder, err
 }
 
 // GetMockSyncsetBuilder for emulated OCM server
