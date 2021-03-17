@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/itchyny/gojq"
+	"github.com/pmezard/go-difflib/difflib"
 	"reflect"
 )
 
@@ -65,13 +66,23 @@ func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 	var expectedParsed interface{}
 	expanded := s.Expand(expected)
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
-		return fmt.Errorf("expected JSON is not valid json: %v, expected: %s", err, expanded)
+		return fmt.Errorf("error parsing expected Json: %v", err)
 	}
 
 	if !reflect.DeepEqual(expectedParsed, actualParsed) {
 		expected, _ := json.MarshalIndent(expectedParsed, "", "  ")
 		actual, _ := json.MarshalIndent(actualParsed, "", "  ")
-		return fmt.Errorf("reponse does not match\nexpected:\n%v\nactual:\n%v", string(expected), string(actual))
+
+		diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+			A:        difflib.SplitLines(string(expected)),
+			B:        difflib.SplitLines(string(actual)),
+			FromFile: "Expected",
+			FromDate: "",
+			ToFile:   "Actual",
+			ToDate:   "",
+			Context:  1,
+		})
+		return fmt.Errorf("reponse does not match expected, diff:\n%s\n", diff)
 	}
 	return nil
 }

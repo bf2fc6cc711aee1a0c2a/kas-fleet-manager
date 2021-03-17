@@ -7,24 +7,7 @@ import (
 	"testing"
 )
 
-func NewConnectorTypeMock(t *testing.T) *httptest.Server {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/",
-		func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprintln(w, `
-{
-  "connector_type_ids": [
-	"aws-sqs-source-v1alpha1"
-  ]
-}
-			`)
-		},
-	)
-	mux.HandleFunc("/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1",
-		func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprintln(w, `
+const SQSConnectorSchemaText = `
 {
   "id": "aws-sqs-source-v1alpha1",
   "kind": "ConnectorType",
@@ -60,17 +43,25 @@ func NewConnectorTypeMock(t *testing.T) *httptest.Server {
       "accessKey": {
         "title": "Access Key",
         "description": "The access key obtained from AWS",
-        "type": "string",
-        "x-descriptors": [
-          "urn:alm:descriptor:com.tectonic.ui:password"
-        ]
+        "type": "string"
       },
       "secretKey": {
         "title": "Secret Key",
         "description": "The secret key obtained from AWS",
-        "type": "string",
         "x-descriptors": [
           "urn:alm:descriptor:com.tectonic.ui:password"
+        ],
+        "oneOf": [
+          {
+            "description": "the secret value",
+            "type": "string",
+            "format": "password"
+          },
+          {
+            "description": "An opaque reference to the secret",
+            "type": "object",
+            "properties": {}
+          }
         ]
       },
       "region": {
@@ -81,8 +72,26 @@ func NewConnectorTypeMock(t *testing.T) *httptest.Server {
       }
     }
   }
+}`
+
+func NewConnectorTypeMock(t *testing.T) *httptest.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/",
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprintln(w, `
+{
+  "connector_type_ids": [
+	"aws-sqs-source-v1alpha1"
+  ]
 }
 			`)
+		},
+	)
+	mux.HandleFunc("/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1",
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = fmt.Fprintln(w, SQSConnectorSchemaText)
 		},
 	)
 	return httptest.NewServer(mux)
