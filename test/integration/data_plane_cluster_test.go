@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -16,6 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	. "github.com/onsi/gomega"
 )
@@ -395,6 +397,140 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Eventually(checkComputeNodesFunc(testDataPlaneclusterID, initialComputeNodes), 60*time.Minute, 5*time.Second).Should(BeTrue())
 }
 
+func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
+	var originalAutoOSDCreationValue *bool = new(bool)
+	startHook := func(h *test.Helper) {
+		*originalAutoOSDCreationValue = h.Env().Config.ClusterCreationConfig.AutoOSDCreation
+		h.Env().Config.Kafka.EnableKasFleetshardSync = true
+		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = false
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.EnableKasFleetshardSync = false
+		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = *originalAutoOSDCreationValue
+	}
+
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedCluster, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedCluster, nil)
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	// We enable Auto OSD creation at this point and not in the startHook due to
+	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
+	// before enabling the auto osd creation logic
+	h.Env().Config.ClusterCreationConfig.AutoOSDCreation = true
+
+	initialExpectedOSDClusters := 1
+	// Check that at this moment we should only have one cluster
+	db := h.Env().DBFactory.New()
+	var count int
+	err = db.Model(&api.Cluster{}).Count(&count).Error
+	Expect(err).ToNot(HaveOccurred())
+	Expect(count).To(Equal(initialExpectedOSDClusters))
+
+	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := h.NewPrivateAPIClient()
+
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
+	initialComputeNodes := ocmCluster.Nodes().Compute()
+	Expect(initialComputeNodes).NotTo(BeNil())
+	Expect(err).ToNot(HaveOccurred())
+
+	// Simulate there's no capacity and we've already reached ceiling to
+	// set status as full and force the cluster mgr reconciler to create a new
+	// OSD cluster
+	kafkaCapacityConfig := h.Env().Config.Kafka.KafkaCapacity
+	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
+	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
+	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
+	clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
+	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{0}[0]
+	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
+	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(initialComputeNodes)}[0]
+	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
+	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
+	clusterStatusUpdateRequest.NodeInfo.Floor = &[]int32{3}[0]
+
+	// Swap mock clusters post response to create a cluster with a different
+	// ClusterID so we simulate two different clusters are created
+	newMockedCluster, err := mockedClusterWithClusterID("new-mocked-test-cluster-id")
+	Expect(err).ToNot(HaveOccurred())
+	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathClusters, http.MethodPost, newMockedCluster, nil)
+
+	resp, err := privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterFull))
+
+	// Wait until the new cluster is created in the DB
+	Eventually(func() int {
+		var count int
+		err := db.Model(&api.Cluster{}).Count(&count).Error
+		if err != nil {
+			return -1
+		}
+		return count
+	}, 5*time.Minute, 5*time.Second).Should(Equal(initialExpectedOSDClusters + 1))
+
+	clusterCreationTimeout := 3 * time.Hour
+	var newCluster *api.Cluster
+	// Wait until new cluster is created and ClusterWaitingForKasFleetShardOperator in OCM
+	Eventually(func() bool {
+		clusters := []api.Cluster{}
+		db.Find(&clusters)
+		err := db.Where("cluster_id <> ?", testDataPlaneclusterID).Find(&clusters).Error
+		if err != nil {
+			return false
+		}
+
+		if len(clusters) != 1 {
+			return false
+		}
+
+		newCluster = &clusters[0]
+		return newCluster.Status == api.ClusterWaitingForKasFleetShardOperator
+	}, clusterCreationTimeout, 5*time.Second).Should(BeTrue())
+
+	// We force status to 'ready' at DB level to ensure no cluster is recreated
+	// again when deleting the new cluster
+	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
+	Expect(err).ToNot(HaveOccurred())
+	err = db.Save(&api.KafkaRequest{ClusterID: testDataPlaneclusterID, Status: string(constants.KafkaRequestStatusReady)}).Error
+	Expect(err).ToNot(HaveOccurred())
+	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", newCluster.ClusterID).Update("status", api.ClusterReady).Error
+	Expect(err).ToNot(HaveOccurred())
+
+	err = wait.PollImmediate(interval, clusterDeletionTimeout, func() (done bool, err error) {
+		clusterFromDb, findClusterByIdErr := clusterService.FindClusterByID(newCluster.ClusterID)
+		if findClusterByIdErr != nil {
+			return false, findClusterByIdErr
+		}
+		return clusterFromDb == nil, nil // cluster has been deleted
+	})
+
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
+}
+
 func newAuthenticatedContexForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
@@ -523,5 +659,11 @@ func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, er
 	clusterMetricsBuilder.Nodes(clusterNodeBuilder)
 	clusterBuilder.Metrics(clusterMetricsBuilder)
 	clusterBuilder.Nodes(clusterNodeBuilder)
+	return clusterBuilder.Build()
+}
+
+func mockedClusterWithClusterID(clusterID string) (*clustersmgmtv1.Cluster, error) {
+	clusterBuilder := mocks.GetMockClusterBuilder(nil)
+	clusterBuilder.ID(clusterID)
 	return clusterBuilder.Build()
 }
