@@ -107,7 +107,10 @@ Feature: connector agent API
             "accessKey": "test",
             "queueNameOrArn": "test",
             "region": "east",
-            "secretKey": "test"
+            "secretKey": {
+              "kind": "base64",
+              "value": "dGVzdA=="
+            }
           },
           "connector_type_id": "aws-sqs-source-v1alpha1",
           "deployment_location": {
@@ -135,7 +138,45 @@ Feature: connector agent API
     Given I wait up to "5" seconds for a GET on path "/v1/kafka-connector-clusters/${cluster_id}/connectors" response ".total" selection to match "1"
     When I GET path "/v1/kafka-connector-clusters/${cluster_id}/connectors"
     Then the response code should be 200
-    And the ".total" selection from the response should match "1"
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "connector_spec": {
+              "accessKey": "test",
+              "queueNameOrArn": "test",
+              "region": "east",
+              "secretKey": {
+                "kind": "base64",
+                "value": "dGVzdA=="
+              }
+            },
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "deployment_location": {
+              "group": "default",
+              "kind": "addon"
+            },
+            "href": "/api/managed-services-api/v1/kafkas/${kid}/connector-deployments/${cid}",
+            "id": "${cid}",
+            "kind": "Connector",
+            "metadata": {
+              "created_at": "${response.items[0].metadata.created_at}",
+              "kafka_id": "${kid}",
+              "name": "example 1",
+              "owner": "${response.items[0].metadata.owner}",
+              "resource_version": ${response.items[0].metadata.resource_version},
+              "updated_at": "${response.items[0].metadata.updated_at}"
+            },
+            "status": "assigned"
+          }
+        ],
+        "kind": "ConnectorList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
 
     When I PUT path "/v1/kafka-connector-clusters/${cluster_id}/connectors/${cid}/status" with json body:
       """

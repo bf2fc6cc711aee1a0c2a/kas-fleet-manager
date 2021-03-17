@@ -1,9 +1,5 @@
 package api
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 type ConnectorStatus = string
 
 const (
@@ -49,14 +45,6 @@ type Connector struct {
 	Version         int64           `json:"version"`
 	TargetKind      TargetKind      `json:"target_kind"`
 	AddonGroup      string          `json:"addon_group"`
-}
-
-func (c *Connector) BeforeCreate(scope *gorm.Scope) error {
-	err := scope.SetColumn("ID", NewID())
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 type ConnectorList []*Connector
