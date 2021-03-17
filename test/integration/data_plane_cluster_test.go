@@ -206,11 +206,15 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(t *testing.T) {
+	var originalAutoOSDCreationValue *bool = new(bool)
 	startHook := func(h *test.Helper) {
+		*originalAutoOSDCreationValue = h.Env().Config.ClusterCreationConfig.AutoOSDCreation
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
+		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = false
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
+		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = *originalAutoOSDCreationValue
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -250,6 +254,11 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterFull))
+
+	// We force status to 'ready' at DB level to ensure no cluster is recreated
+	// again
+	err = h.Env().DBFactory.DB.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
+	Expect(err).ToNot(HaveOccurred())
 }
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {
 	startHook := func(h *test.Helper) {
@@ -354,7 +363,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
-	Expect(cluster.Status).To(Equal(api.ClusterFull))
+	Expect(cluster.Status).To(Equal(api.ClusterComputeNodeScalingUp))
 
 	checkComputeNodesFunc := func(clusterID string, expectedNodes int) func() bool {
 		return func() bool {
