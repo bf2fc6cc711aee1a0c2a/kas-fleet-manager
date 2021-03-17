@@ -166,23 +166,7 @@ func readFileValueBool(file string, val *bool) error {
 }
 
 func readFile(file string) (string, error) {
-	// If the value is in quotes, unquote it
-	unquotedFile, err := strconv.Unquote(file)
-	if err != nil {
-		// values without quotes will raise an error, ignore it.
-		unquotedFile = file
-	}
-
-	// If no file is provided, leave val unchanged.
-	if unquotedFile == "" {
-		return "", nil
-	}
-
-	// Ensure the absolute file path is used
-	absFilePath := unquotedFile
-	if !filepath.IsAbs(unquotedFile) {
-		absFilePath = filepath.Join(projectRootDirectory, unquotedFile)
-	}
+	absFilePath := buildFullFilePath(file)
 
 	// Read the file
 	buf, err := ioutil.ReadFile(absFilePath)
@@ -190,4 +174,25 @@ func readFile(file string) (string, error) {
 		return "", err
 	}
 	return string(buf), nil
+}
+
+func buildFullFilePath(filename string) string {
+	// If the value is in quotes, unquote it
+	unquotedFile, err := strconv.Unquote(filename)
+	if err != nil {
+		// values without quotes will raise an error, ignore it.
+		unquotedFile = filename
+	}
+
+	// If no file is provided, leave val unchanged.
+	if unquotedFile == "" {
+		return ""
+	}
+
+	// Ensure the absolute file path is used
+	absFilePath := unquotedFile
+	if !filepath.IsAbs(unquotedFile) {
+		absFilePath = filepath.Join(projectRootDirectory, unquotedFile)
+	}
+	return absFilePath
 }
