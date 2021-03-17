@@ -34,7 +34,7 @@ func NewServerConfig() *ServerConfig {
 		EnableHTTPS:   false,
 		EnableJWT:     true,
 		EnableAuthz:   true,
-		JwkCertURL:    "https://api.openshift.com/.well-known/jwks.json",
+		JwkCertURL:    "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
 		JwkCertCA:     "",
 		JwkCertCAFile: "secrets/rhsm.ca",
 		HTTPSCertFile: "",
