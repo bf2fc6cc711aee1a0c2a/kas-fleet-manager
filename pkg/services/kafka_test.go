@@ -517,8 +517,6 @@ func Test_kafkaService_Create(t *testing.T) {
 func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
-		keycloakService   KeycloakService
 		quotaService      QuotaService
 	}
 	type args struct {
