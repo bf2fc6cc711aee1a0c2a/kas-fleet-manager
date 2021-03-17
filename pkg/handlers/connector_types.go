@@ -26,13 +26,13 @@ func NewConnectorTypesHandler(service services.ConnectorTypesService) *connector
 	}
 }
 func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
-	id := mux.Vars(r)["id"]
+	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validation("id", &id, minLen(1), maxLen(maxConnectorTypeIdLength)),
+			validation("connector_type_id", &connectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			resource, err := h.service.Get(id)
+			resource, err := h.service.Get(connectorTypeId)
 			if err != nil {
 				return nil, err
 			}
@@ -45,15 +45,15 @@ func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h connectorTypesHandler) ProxyToExtensionService(w http.ResponseWriter, r *http.Request) {
 	glog.Info("proxying to extension")
-	id := mux.Vars(r)["id"]
+	connectorTypeId := mux.Vars(r)["connector_type_id"]
 
-	err := validation("id", &id, minLen(1), maxLen(maxConnectorTypeIdLength))()
+	err := validation("connector_type_id", &connectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength))()
 	if err != nil {
 		handleError(r.Context(), w, err)
 		return
 	}
 
-	resource, err := h.service.Get(id)
+	resource, err := h.service.Get(connectorTypeId)
 	if err != nil {
 		handleError(r.Context(), w, err)
 		return

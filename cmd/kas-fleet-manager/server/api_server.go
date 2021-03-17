@@ -155,48 +155,46 @@ func NewAPIServer() Server {
 
 	if env().Config.ConnectorsConfig.Enabled {
 
-		//  /api/managed-services-api/v1/connector-types
+		//  /api/managed-services-api/v1/kafka-connector-types
 		connectorTypesHandler := handlers.NewConnectorTypesHandler(services.ConnectorTypes)
-		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/connector-types").Subrouter()
-		apiV1ConnectorTypesRouter.HandleFunc("/{id}", connectorTypesHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorTypesRouter.HandleFunc("/{id}/{path:.*}", connectorTypesHandler.ProxyToExtensionService).Methods(http.MethodGet)
+		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/kafka-connector-types").Subrouter()
+		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", connectorTypesHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}/{path:.*}", connectorTypesHandler.ProxyToExtensionService).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
 
-		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments
+		//  /api/managed-services-api/v1/kafka-connectors
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes, services.Vault)
-		apiV1ConnectorsRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments").Subrouter()
-		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Update).Methods(http.MethodPut)
-		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Delete).Methods(http.MethodDelete)
+		apiV1ConnectorsRouter := apiV1Router.PathPrefix("/kafka-connectors").Subrouter()
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
+		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Delete).Methods(http.MethodDelete)
 
-		//  /api/managed-services-api/v1/kafkas/{id}/connector-deployments-of/{tid}
-		apiV1ConnectorsTypedRouter := apiV1KafkasRouter.PathPrefix("/{id}/connector-deployments-of/{tid}").Subrouter()
-		apiV1ConnectorsTypedRouter.HandleFunc("/{cid}", connectorsHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorsRouter.HandleFunc("/{cid}", connectorsHandler.Update).Methods(http.MethodPut)
+		//  /api/managed-services-api/v1/kafka-connectors-of/{connector_type_id}
+		apiV1ConnectorsTypedRouter := apiV1Router.PathPrefix("/kafka-connectors-of/{connector_type_id}").Subrouter()
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
-		//apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
+		apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", connectorsHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
 
-		//  /api/managed-services-api/v1/kafka-connector-clusters/
+		//  /api/managed-services-api/v1/kafka-connector-clusters
 		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.List).Methods(http.MethodGet)
-		apiV1ConnectorClustersRouter.HandleFunc("/{id}", connectorClusterHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorClustersRouter.HandleFunc("/{id}", connectorClusterHandler.Delete).Methods(http.MethodDelete)
-		apiV1ConnectorClustersRouter.HandleFunc("/{id}/addon-parameters", connectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
-		//apiV1ConnectorClustersRouter.Use(authMiddleware.AuthenticateAccountJWT)
+		apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", connectorClusterHandler.Get).Methods(http.MethodGet)
+		apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", connectorClusterHandler.Delete).Methods(http.MethodDelete)
+		apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/addon-parameters", connectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
 
 		// This section adds the API's accessed by the connector agent...
 		{
 			//  /api/managed-services-api/v1/kafka-connector-agent-clusters/{id}
-			agentRouter := apiV1Router.PathPrefix("/kafka-connector-clusters/{id}").Subrouter()
+			agentRouter := apiV1Router.PathPrefix("/kafka-connector-clusters/{connector_cluster_id}").Subrouter()
 			agentRouter.HandleFunc("/status", connectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
-			agentRouter.HandleFunc("/connectors", connectorClusterHandler.ListConnectors).Methods(http.MethodGet)
-			agentRouter.HandleFunc("/connectors/{cid}/status", connectorClusterHandler.UpdateConnectorStatus).Methods(http.MethodPut)
-			auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI)
+			agentRouter.HandleFunc("/deployments", connectorClusterHandler.ListDeployments).Methods(http.MethodGet)
+			agentRouter.HandleFunc("/deployments/{connector_id}/status", connectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
+			auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id")
 		}
 	}
 
@@ -210,7 +208,7 @@ func NewAPIServer() Server {
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).Methods(http.MethodPut)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas", dataPlaneKafkaHandler.GetAll).Methods(http.MethodGet)
 		// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
-		auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI)
+		auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "id")
 	}
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers

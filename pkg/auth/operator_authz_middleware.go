@@ -15,7 +15,7 @@ const (
 	Connector Actor = "connector"
 )
 
-func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkValidIssuerURI string) {
+func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkValidIssuerURI string, clusterIdVar string) {
 	var requiredRole string
 
 	if actor == Kas {
@@ -26,12 +26,12 @@ func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkVali
 
 	router.Use(
 		NewRolesAuhzMiddleware().RequireRealmRole(requiredRole, errors.ErrorNotFound),
-		checkClusterId(actor),
+		checkClusterId(actor, clusterIdVar),
 		NewOCMAuthorizationMiddleware().RequireIssuer(jwkValidIssuerURI, errors.ErrorNotFound),
 	)
 }
 
-func checkClusterId(actor Actor) mux.MiddlewareFunc {
+func checkClusterId(actor Actor, clusterIdVar string) mux.MiddlewareFunc {
 	var clusterIdClaimKey string
 
 	if actor == Kas {
@@ -43,7 +43,7 @@ func checkClusterId(actor Actor) mux.MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
-			clusterId := mux.Vars(request)["id"]
+			clusterId := mux.Vars(request)[clusterIdVar]
 			claims, err := GetClaimsFromContext(ctx)
 			if err != nil {
 				// deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are not authorised

@@ -18,5 +18,6 @@ type Connector struct {
 	DeploymentLocation ClusterTarget          `json:"deployment_location,omitempty"`
 	ConnectorTypeId    string                 `json:"connector_type_id,omitempty"`
 	ConnectorSpec      map[string]interface{} `json:"connector_spec,omitempty"`
+	DesiredState       string                 `json:"desired_state,omitempty"`
 	Status             string                 `json:"status,omitempty"`
 }
