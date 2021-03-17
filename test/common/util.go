@@ -115,6 +115,10 @@ func fileExists(filename string, t *testing.T) bool {
 
 // PersistClusterStruct to json file to be reused by tests that require a running cluster
 func PersistClusterStruct(cluster api.Cluster) error {
+	// We intentionally always persist the cluster status as ClusterProvisioned
+	// with the aim of letting cluster reconciler in other tests reach
+	// the real status depending on the configured environment settings
+	cluster.Status = api.ClusterProvisioned
 	file, err := json.MarshalIndent(cluster, "", " ")
 	if err != nil {
 		return ocmErrors.GeneralError(fmt.Sprintf("Failed to marshal cluster struct details to a file: %v", err))
