@@ -82,22 +82,21 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		}
 		if foundCluster == nil {
 			return "", nil
-		} else {
-			clusterID = foundCluster.ClusterID
 		}
-
-		if expectedStatus != nil {
-			err := waitForClusterStatus(h, clusterID, *expectedStatus)
-			if err != nil {
-				return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", clusterID, *expectedStatus, err)
-			}
-		}
+		clusterID = foundCluster.ClusterID
 
 		if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
 			err := PersistClusterStruct(*foundCluster)
 			if err != nil {
 				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
 			}
+		}
+	}
+
+	if expectedStatus != nil {
+		err := waitForClusterStatus(h, clusterID, *expectedStatus)
+		if err != nil {
+			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", clusterID, *expectedStatus, err)
 		}
 	}
 	return clusterID, nil
