@@ -1,7 +1,9 @@
 package mocks
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,7 +13,7 @@ const SQSConnectorSchemaText = `
 {
   "id": "aws-sqs-source-v1alpha1",
   "kind": "ConnectorType",
-  "href": "/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1",
+  "href": "/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
   "name": "aws-sqs-source",
   "version": "v1alpha1",
   "title": "AWS SQS Source",
@@ -88,10 +90,56 @@ func NewConnectorTypeMock(t *testing.T) *httptest.Server {
 			`)
 		},
 	)
-	mux.HandleFunc("/api/managed-services-api/v1/connector-types/aws-sqs-source-v1alpha1",
+	mux.HandleFunc("/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = fmt.Fprintln(w, SQSConnectorSchemaText)
+		},
+	)
+	mux.HandleFunc("/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1/reify/spec",
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+
+			input := openapi.ConnectorReifyRequest{}
+			err := json.NewDecoder(r.Body).Decode(&input)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			data, err := json.Marshal(input.ConnectorSpec)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			_, _ = fmt.Fprintf(w, `
+{
+  "operator_ids":["example-operator:1.0.0"],
+  "resources":[
+	{
+	   "apiVersion": "v1",
+	   "kind": "Secret",
+	   "metadata": {
+		  "name": "secret-sa-sample",
+		  "annotations": {
+			 "kubernetes.io/service-account.name": "sa-name"
+		  }
+	   },
+	   "type": "kubernetes.io/service-account-token",
+	   "data": {
+		  "extra": "YmFyCg==",
+          "spec": %s
+	   }
+	}
+   ],
+  "status_extractors":[{
+    "apiVersion": "v1",
+    "kind": "Secret",
+    "name": "secret-sa-sample",
+    "jsonPath":	"status",
+	"conditionType": "Secret"
+  }]
+}`, string(data))
 		},
 	)
 	return httptest.NewServer(mux)

@@ -64,9 +64,12 @@ func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 	}
 
 	var expectedParsed interface{}
-	expanded := s.Expand(expected)
+	expanded, err := s.Expand(expected)
+	if err != nil {
+		return err
+	}
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
-		return fmt.Errorf("error parsing expected Json: %v", err)
+		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)
 	}
 
 	if !reflect.DeepEqual(expectedParsed, actualParsed) {
@@ -90,7 +93,10 @@ func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 	session := s.Session()
 
-	expanded := s.Expand(expected)
+	expanded, err := s.Expand(expected)
+	if err != nil {
+		return err
+	}
 
 	if expanded != string(session.RespBytes) {
 		return fmt.Errorf("reponse does not match expected: %v, actual: %v", expanded, string(session.RespBytes))
@@ -100,7 +106,10 @@ func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 
 func (s *TestScenario) theResponseHeaderShouldMatch(header, expected string) error {
 	session := s.Session()
-	expanded := s.Expand(expected)
+	expanded, err := s.Expand(expected)
+	if err != nil {
+		return err
+	}
 
 	actual := session.Resp.Header.Get(header)
 	if expanded != actual {
@@ -142,7 +151,11 @@ func (s *TestScenario) theSelectionFromTheResponseShouldMatch(selector string, e
 		return err
 	}
 
-	expected = s.Expand(expected)
+	expected, err = s.Expand(expected)
+	if err != nil {
+		return err
+	}
+
 	iter := query.Run(doc)
 	if actual, found := iter.Next(); found {
 		actual := fmt.Sprintf("%v", actual)

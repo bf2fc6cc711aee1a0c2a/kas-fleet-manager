@@ -234,7 +234,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		testKafkas[i] = k
 	}
 
-	list, resp, err := testServer.PrivateClient.DefaultApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(3))
@@ -287,7 +287,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		}
 	}
 
-	_, err = testServer.PrivateClient.DefaultApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {

@@ -58,7 +58,7 @@ func TestOperatorAuthzMiddleware_CheckClusterId(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			route.Use(checkClusterId(Kas))
+			route.Use(checkClusterId(Kas, "id"))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)

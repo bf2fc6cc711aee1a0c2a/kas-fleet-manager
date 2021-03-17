@@ -2,7 +2,6 @@ package presenters
 
 import (
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -12,25 +11,23 @@ const (
 )
 
 func ObjectPath(id string, obj interface{}) string {
-	return fmt.Sprintf("%s/%s/%s", BasePath, path(obj), id)
-}
-
-func path(i interface{}) string {
-	switch i := i.(type) {
+	switch obj := obj.(type) {
 	case api.KafkaRequest, *api.KafkaRequest:
-		return "kafkas"
-	case api.Connector:
-		return fmt.Sprintf("kafkas/%s/connector-deployments", i.KafkaID)
-	case *api.Connector:
-		return fmt.Sprintf("kafkas/%s/connector-deployments", i.KafkaID)
+		return fmt.Sprintf("%s/kafkas/%s", BasePath, id)
+	case api.Connector, *api.Connector:
+		return fmt.Sprintf("%s/kafka-connectors/%s", BasePath, id)
 	case api.ConnectorType, *api.ConnectorType:
-		return "connector-types"
+		return fmt.Sprintf("%s/kafka-connector-types/%s", BasePath, id)
 	case api.ConnectorCluster, *api.ConnectorCluster:
-		return "kafka-connector-clusters"
+		return fmt.Sprintf("%s/kafka-connector-clusters/%s", BasePath, id)
+	case api.ConnectorDeployment:
+		return fmt.Sprintf("%s/kafka-connector-clusters/%s/deployments/%s", BasePath, obj.ClusterID, id)
+	case *api.ConnectorDeployment:
+		return fmt.Sprintf("%s/kafka-connector-clusters/%s/deployments/%s", BasePath, obj.ClusterID, id)
 	case errors.ServiceError, *errors.ServiceError:
-		return "errors"
+		return fmt.Sprintf("%s/errors/%s", BasePath, id)
 	case api.ServiceAccount, *api.ServiceAccount:
-		return "serviceaccounts"
+		return fmt.Sprintf("%s/serviceaccounts/%s", BasePath, id)
 	default:
 		return ""
 	}

@@ -328,6 +328,16 @@ run/docs/teardown:
 	docker container rm swagger_ui_docs
 .PHONY: run/docs/teardown
 
+cts/setup:
+	docker run --name camel-connector-type-service --rm -d -p 9091:8080 -e QUARKUS_LOG_CONSOLE_JSON=false quay.io/lburgazzoli/cts:quarkus
+	echo -n "http://localhost:9091/api/managed-services-api/v1/kafka-connector-types" > config/connector-types/cts
+.PHONY: cts/setup
+
+cts/teardown:
+	docker stop camel-connector-type-service
+	rm config/connector-types/cts
+.PHONY: cts/teardown
+
 db/setup:
 	./scripts/local_db_setup.sh
 .PHONY: db/setup

@@ -1,20 +1,21 @@
 package api
 
-type ConnectorStatus = string
+type ConnectorStatusPhase = string
 
 const (
-	ConnectorStatusAssigning ConnectorStatus = "assigning" // set by kas-fleet-manager - user request
-	ConnectorStatusAssigned  ConnectorStatus = "assigned"  // set by kas-fleet-manager - worker
-	ConnectorStatusReady     ConnectorStatus = "ready"     // set by the agent
-	ConnectorStatusFailed    ConnectorStatus = "failed"    // set by the agent
-	ConnectorStatusDeleting  ConnectorStatus = "deleting"  // set by the kas-fleet-manager - user request
-	ConnectorStatusDeleted   ConnectorStatus = "deleted"   // set by the agent
+	ConnectorStatusPhaseAssigning    ConnectorStatusPhase = "assigning"    // set by kas-fleet-manager - user request
+	ConnectorStatusPhaseAssigned     ConnectorStatusPhase = "assigned"     // set by kas-fleet-manager - worker
+	ConnectorStatusPhaseProvisioning ConnectorStatusPhase = "provisioning" // set by kas-fleet-manager -  user request
+	ConnectorStatusPhaseReady        ConnectorStatusPhase = "ready"        // set by the agent
+	ConnectorStatusPhaseFailed       ConnectorStatusPhase = "failed"       // set by the agent
+	ConnectorStatusPhaseDeleting     ConnectorStatusPhase = "deleting"     // set by the kas-fleet-manager - user request
+	ConnectorStatusPhaseDeleted      ConnectorStatusPhase = "deleted"      // set by the agent
 )
 
-var AgentSetConnectorStatus = []ConnectorStatus{
-	ConnectorStatusReady,
-	ConnectorStatusFailed,
-	ConnectorStatusDeleted,
+var AgentSetConnectorStatusPhase = []ConnectorStatusPhase{
+	ConnectorStatusPhaseReady,
+	ConnectorStatusPhaseFailed,
+	ConnectorStatusPhaseDeleted,
 }
 
 type TargetKind = string
@@ -31,29 +32,58 @@ var AllTargetKind = []TargetKind{
 
 type Connector struct {
 	Meta
-	ConnectorTypeId string          `json:"connector_type_id,omitempty"`
-	ConnectorSpec   string          `json:"connector_spec"`
-	Region          string          `json:"region"`
-	ClusterID       string          `json:"cluster_id"`
-	CloudProvider   string          `json:"cloud_provider"`
-	MultiAZ         bool            `json:"multi_az"`
-	Name            string          `json:"name"`
-	Status          ConnectorStatus `json:"status"`
-	Owner           string          `json:"owner"`
-	OrganisationId  string          `json:"organisation_id"`
-	KafkaID         string          `json:"kafka_id"`
-	Version         int64           `json:"version"`
-	TargetKind      TargetKind      `json:"target_kind"`
-	AddonGroup      string          `json:"addon_group"`
+
+	TargetKind     TargetKind `json:"target_kind"`
+	AddonClusterId string     `json:"addon_cluster_id"`
+	CloudProvider  string     `json:"cloud_provider"`
+	Region         string     `json:"region"`
+	MultiAZ        bool       `json:"multi_az"`
+
+	Name           string `json:"name"`
+	Owner          string `json:"owner"`
+	OrganisationId string `json:"organisation_id"`
+	KafkaID        string `json:"kafka_id"`
+	Version        int64  `json:"version"`
+
+	ConnectorTypeId string `json:"connector_type_id,omitempty"`
+	ConnectorSpec   JSON   `json:"connector_spec"`
+	DesiredState    string `json:"desired_state"`
+
+	Status ConnectorStatus `json:"status" gorm:"foreignkey:ID"`
+}
+
+type ConnectorStatus struct {
+	Meta
+	ClusterID string `json:"cluster_id"`
+	Phase     string `json:"phase,omitempty"`
 }
 
 type ConnectorList []*Connector
-type ConnectorIndex map[string]*Connector
 
-func (l ConnectorList) Index() ConnectorIndex {
-	index := ConnectorIndex{}
-	for _, o := range l {
-		index[o.ID] = o
-	}
-	return index
+// ConnectorDeployment Holds the deployment configuration of a connector
+type ConnectorDeployment struct {
+	Meta
+	Version              int64                     `json:"version"`
+	ConnectorID          string                    `json:"connector_id"`
+	ClusterID            string                    `json:"cluster_id"`
+	ConnectorTypeService string                    `json:"connector_type_service"`
+	SpecChecksum         string                    `json:"spec_checksum,omitempty"`
+	Status               ConnectorDeploymentStatus `json:"status" gorm:"foreignkey:ID"`
+}
+
+type ConnectorDeploymentList []ConnectorDeployment
+
+type ConnectorDeploymentStatus struct {
+	Meta
+	Phase        string `json:"phase,omitempty"`
+	SpecChecksum string `json:"spec_checksum,omitempty"`
+	Conditions   JSON   `json:"conditions,omitempty"`
+}
+
+type ConnectorDeploymentSpecStatusExtractors struct {
+	ApiVersion    string `json:"apiVersion,omitempty"`
+	Kind          string `json:"kind,omitempty"`
+	Name          string `json:"name,omitempty"`
+	JsonPath      string `json:"jsonPath,omitempty"`
+	ConditionType string `json:"conditionType,omitempty"`
 }

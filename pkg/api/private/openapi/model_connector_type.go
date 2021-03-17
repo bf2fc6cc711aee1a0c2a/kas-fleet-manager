@@ -20,6 +20,10 @@ type ConnectorType struct {
 	Version string `json:"version"`
 	// A description of the connector.
 	Description string `json:"description,omitempty"`
+	// URL to an icon of the connector.
+	IconHref string `json:"icon_href,omitempty"`
+	// labels used to categorize the connector
+	Labels []string `json:"labels,omitempty"`
 	// A json schema that can be used to validate a connectors connector_spec field.
-	JsonSchema map[string]interface{} `json:"json_schema,omitempty"`
+	JsonSchema map[string]interface{} `json:"json_schema"`
 }
