@@ -42,7 +42,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 # Default Variables
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
-JWKS_URL ?= "https://api.openshift.com/.well-known/jwks.json"
+JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 MAS_SSO_BASE_URL ?="https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
 MAS_SSO_REALM ?="mas-sso-playground"
 
