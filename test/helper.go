@@ -159,7 +159,7 @@ func (helper *Helper) Teardown() {
 
 func (helper *Helper) startAPIServer() {
 	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-	helper.Env().Config.Server.JwkCertURL = jwkURL
+	helper.Env().Config.Server.JwksURL = jwkURL
 	helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = false
 	helper.APIServer = server.NewAPIServer()
 	listener, err := helper.APIServer.Listen()
@@ -459,7 +459,7 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 
 func (helper *Helper) StartJWKCertServerMock() (teardown func()) {
 	jwkURL, teardown = mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
-	helper.Env().Config.Server.JwkCertURL = jwkURL
+	helper.Env().Config.Server.JwksURL = jwkURL
 	return teardown
 }
 

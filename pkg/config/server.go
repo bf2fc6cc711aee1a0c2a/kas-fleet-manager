@@ -16,7 +16,8 @@ type ServerConfig struct {
 	EnableHTTPS   bool          `json:"enable_https"`
 	EnableJWT     bool          `json:"enable_jwt"`
 	EnableAuthz   bool          `json:"enable_authz"`
-	JwkCertURL    string        `json:"jwk_cert_url"`
+	JwksURL       string        `json:"jwks_url"`
+	JwksFile      string        `json:"jwks_file"`
 	JwkCertCA     string        `json:"jwk_cert_ca"`
 	JwkCertCAFile string        `json:"jwk_cert_ca_file"`
 	// The public http host URL to access the service
@@ -34,7 +35,8 @@ func NewServerConfig() *ServerConfig {
 		EnableHTTPS:   false,
 		EnableJWT:     true,
 		EnableAuthz:   true,
-		JwkCertURL:    "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
+		JwksURL:       "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
+		JwksFile:      "config/jwks-file.json",
 		JwkCertCA:     "",
 		JwkCertCAFile: "secrets/rhsm.ca",
 		HTTPSCertFile: "",
@@ -53,11 +55,19 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&s.EnableHTTPS, "enable-https", s.EnableHTTPS, "Enable HTTPS rather than HTTP")
 	fs.BoolVar(&s.EnableJWT, "enable-jwt", s.EnableJWT, "Enable JWT authentication validation")
 	fs.BoolVar(&s.EnableAuthz, "enable-authz", s.EnableAuthz, "Enable Authorization on endpoints, should only be disabled for debug")
-	fs.StringVar(&s.JwkCertURL, "jwk-cert-url", s.JwkCertURL, "JWK Certificate URL")
+	fs.StringVar(&s.JwksURL, "jwks-url", s.JwksURL, "The URL of the JSON web token signing certificates.")
+	fs.StringVar(&s.JwksFile, "jwks-file", s.JwksFile, "File containing the the JSON web token signing certificates.")
 	fs.StringVar(&s.JwkCertCAFile, "jwk-cert-ca-file", s.JwkCertCAFile, "JWK Certificate CA file")
 	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
 }
 
 func (s *ServerConfig) ReadFiles() error {
-	return readFileValueString(s.JwkCertCAFile, &s.JwkCertCA)
+	err := readFileValueString(s.JwkCertCAFile, &s.JwkCertCA)
+	if err != nil {
+		return err
+	}
+
+	s.JwksFile = buildFullFilePath(s.JwksFile)
+
+	return nil
 }

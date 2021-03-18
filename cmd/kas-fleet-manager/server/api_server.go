@@ -221,7 +221,8 @@ func NewAPIServer() Server {
 
 		mainHandler, err = authentication.NewHandler().
 			Logger(authnLogger).
-			KeysURL(env().Config.Server.JwkCertURL).                   //ocm JWK Cert URL
+			KeysURL(env().Config.Server.JwksURL).                      //ocm JWK JSON web token signing certificates URL
+			KeysFile(env().Config.Server.JwksFile).                    //ocm JWK backup JSON web token signing certificates
 			KeysURL(env().Config.Keycloak.KafkaRealm.JwksEndpointURI). // mas-sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
