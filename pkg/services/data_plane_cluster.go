@@ -62,6 +62,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 			AccessToken: d.observabilityConfig.ObservabilityConfigAccessToken,
 			Channel:     d.observabilityConfig.ObservabilityConfigChannel,
 			Repository:  d.observabilityConfig.ObservabilityConfigRepo,
+			Tag:         d.observabilityConfig.ObservabilityConfigTag,
 		},
 	}, nil
 }

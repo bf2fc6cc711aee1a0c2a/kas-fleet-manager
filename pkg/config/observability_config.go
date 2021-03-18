@@ -27,6 +27,7 @@ type ObservabilityConfiguration struct {
 	EnableMock           bool          `json:"enable_mock"`
 
 	// Configuration repo for the Observability operator
+	ObservabilityConfigTag             string `json:"observability_config_tag"`
 	ObservabilityConfigRepo            string `json:"observability_config_repo"`
 	ObservabilityConfigChannel         string `json:"observability_config_channel"`
 	ObservabilityConfigAccessToken     string `json:"observability_config_access_token"`

@@ -48,6 +48,7 @@ func PresentDataPlaneClusterConfig(config *api.DataPlaneClusterConfig) openapi.D
 				AccessToken: config.Observability.AccessToken,
 				Channel:     config.Observability.Channel,
 				Repository:  config.Observability.Repository,
+				Tag:         config.Observability.Tag,
 			},
 		},
 	}

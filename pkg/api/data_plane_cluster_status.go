@@ -37,6 +37,7 @@ type DataPlaneClusterConfigObservability struct {
 	AccessToken string
 	Channel     string
 	Repository  string
+	Tag         string
 }
 
 type DataPlaneClusterConfig struct {

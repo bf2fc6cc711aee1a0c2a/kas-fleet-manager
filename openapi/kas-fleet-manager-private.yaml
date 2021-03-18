@@ -1363,6 +1363,8 @@ components:
                   type: string
                 repository:
                   type: string
+                tag:
+                  type: string
 
   parameters:
     id:
