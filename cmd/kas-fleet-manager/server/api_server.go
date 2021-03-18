@@ -202,6 +202,7 @@ func NewAPIServer() Server {
 		dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(services.DataPlaneCluster, services.Config)
 		dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(services.DataPlaneKafkaService, services.Config, services.Kafka)
 		apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
+		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).Methods(http.MethodGet)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas/status", dataPlaneKafkaHandler.UpdateKafkaStatuses).Methods(http.MethodPut)
 		apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/kafkas", dataPlaneKafkaHandler.GetAll).Methods(http.MethodGet)

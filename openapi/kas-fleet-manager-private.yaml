@@ -783,6 +783,41 @@ paths:
       operationId: getKafkas
       summary: Get the list of ManagedaKafkas for the specified agent cluster
 
+  '/api/managed-services-api/v1/agent-clusters/{id}':
+    get:
+      parameters:
+        - $ref: "#/components/parameters/id"
+      responses:
+        '200':
+          description: The ManagedKafkaAgent CR Spec
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataplaneClusterAgentConfig'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: '#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: getKafkaAgent
+      summary: Get the spec of the ManagedKafkaAgent CR spec
+
 components:
   schemas:
     ObjectReference:
@@ -1309,6 +1344,27 @@ components:
         $ref: '#/components/schemas/DataPlaneKafkaStatus'
       example:
         $ref: '#/components/examples/DataPlaneKafkaUpdateStatusRequestExample'
+
+    DataplaneClusterAgentConfig:
+      description: "Configuration for the data plane cluster agent"
+      type: object
+      properties:
+        spec:
+          description: "Data plane cluster agent spec"
+          type: object
+          properties:
+            observability:
+              description: "Observability configurations"
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                channel:
+                  type: string
+                repository:
+                  type: string
+                tag:
+                  type: string
 
   parameters:
     id:

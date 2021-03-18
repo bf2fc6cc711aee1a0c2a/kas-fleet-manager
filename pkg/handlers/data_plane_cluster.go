@@ -46,6 +46,27 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 	handle(w, r, cfg, http.StatusNoContent)
 }
 
+func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWriter, r *http.Request) {
+	dataPlaneClusterID := mux.Vars(r)["id"]
+
+	cfg := &handlerConfig{
+		Validate: []validate{
+			validateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
+		},
+		Action: func() (interface{}, *errors.ServiceError) {
+			ctx := r.Context()
+			dataClusterConfig, err := h.service.GetDataPlaneClusterConfig(ctx, dataPlaneClusterID)
+			if err != nil {
+				return nil, err
+			}
+			return presenters.PresentDataPlaneClusterConfig(dataClusterConfig), nil
+		},
+		ErrorHandler: handleError,
+	}
+
+	handleGet(w, r, cfg)
+}
+
 func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneClusterUpdateStatusRequest) validate {
 	return func() *errors.ServiceError {
 		err := h.validateNodeInfo(request)
