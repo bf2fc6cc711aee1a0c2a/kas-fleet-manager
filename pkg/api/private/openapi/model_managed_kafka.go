@@ -16,5 +16,4 @@ type ManagedKafka struct {
 	Href     string                    `json:"href,omitempty"`
 	Metadata ManagedKafkaAllOfMetadata `json:"metadata,omitempty"`
 	Spec     ManagedKafkaAllOfSpec     `json:"spec,omitempty"`
-	Status   ManagedKafkaAllOfStatus   `json:"status,omitempty"`
 }

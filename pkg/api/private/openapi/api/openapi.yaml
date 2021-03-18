@@ -1183,6 +1183,14 @@ components:
       - size
       - total
       type: object
+    ListReference:
+      properties:
+        kind:
+          type: string
+      required:
+      - items
+      - kind
+      type: object
     Error:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1202,24 +1210,24 @@ components:
       type: object
     ManagedKafkaCapacity:
       properties:
-        IngressEgressThroughputPerSec:
+        ingressEgressThroughputPerSec:
           type: string
-        TotalMaxConnections:
+        totalMaxConnections:
           format: int
           type: integer
-        MaxDataRetentionSize:
+        maxDataRetentionSize:
           type: string
-        MaxPartitions:
+        maxPartitions:
           format: int
           type: integer
-        MaxDataRetentionPeriod:
+        maxDataRetentionPeriod:
           type: string
       type: object
     ManagedKafkaVersions:
       properties:
-        Kafka:
+        kafka:
           type: string
-        Strimzi:
+        strimzi:
           type: string
       type: object
     ManagedKafka:
@@ -1228,7 +1236,7 @@ components:
       - $ref: '#/components/schemas/ManagedKafka_allOf'
     ManagedKafkaList:
       allOf:
-      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ListReference'
       - $ref: '#/components/schemas/ManagedKafkaList_allOf'
       description: A list of ManagedKafka
     ConnectorType:
@@ -1436,69 +1444,56 @@ components:
           type: string
         annotation:
           $ref: '#/components/schemas/ManagedKafka_allOf_metadata_annotation'
-    ManagedKafka_allOf_spec_OAuth:
+    ManagedKafka_allOf_spec_oauth:
       properties:
-        ClientId:
+        clientId:
           type: string
-        ClientSecret:
+        clientSecret:
           type: string
-        TokenEndpointURI:
+        tokenEndpointURI:
           type: string
-        JwksEndpointURI:
+        jwksEndpointURI:
           type: string
-        ValidIssuerEndpointURI:
+        validIssuerEndpointURI:
           type: string
-        UserNameClaim:
+        userNameClaim:
           type: string
-        TlsTrustedCertificate:
+        tlsTrustedCertificate:
           type: string
-    ManagedKafka_allOf_spec_Endpoint_Tls:
+    ManagedKafka_allOf_spec_endpoint_tls:
       properties:
-        Cert:
+        cert:
           type: string
-        Key:
+        key:
           type: string
-    ManagedKafka_allOf_spec_Endpoint:
+    ManagedKafka_allOf_spec_endpoint:
       properties:
-        BootstrapServerHost:
+        bootstrapServerHost:
           type: string
-        Tls:
-          $ref: '#/components/schemas/ManagedKafka_allOf_spec_Endpoint_Tls'
+        tls:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec_endpoint_tls'
     ManagedKafka_allOf_spec:
       properties:
-        Capacity:
+        capacity:
           $ref: '#/components/schemas/ManagedKafkaCapacity'
-        OAuth:
-          $ref: '#/components/schemas/ManagedKafka_allOf_spec_OAuth'
-        Endpoint:
-          $ref: '#/components/schemas/ManagedKafka_allOf_spec_Endpoint'
-        Versions:
+        oauth:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec_oauth'
+        endpoint:
+          $ref: '#/components/schemas/ManagedKafka_allOf_spec_endpoint'
+        versions:
           $ref: '#/components/schemas/ManagedKafkaVersions'
-        Deleted:
+        deleted:
           type: boolean
       required:
-      - Deleted
-    ManagedKafka_allOf_status:
-      properties:
-        Conditions:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/MetaV1Condition'
-          type: array
-        Capacity:
-          $ref: '#/components/schemas/ManagedKafkaCapacity'
-        Versions:
-          $ref: '#/components/schemas/ManagedKafkaVersions'
+      - deleted
     ManagedKafka_allOf:
       properties:
         metadata:
           $ref: '#/components/schemas/ManagedKafka_allOf_metadata'
         spec:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec'
-        status:
-          $ref: '#/components/schemas/ManagedKafka_allOf_status'
     ManagedKafkaList_allOf:
-      example: '{"kind":"ManagedKafkaList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/ManagedKafkaExample"}}'
+      example: '{"kind":"ManagedKafkaList","items":{"$ref":"#/components/examples/ManagedKafkaExample"}}'
       properties:
         items:
           items:
