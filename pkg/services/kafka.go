@@ -82,7 +82,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 		return errors.FailedToCheckQuota("%v", err)
 	}
 	if !isAllowed {
-		return errors.InsufficientQuotaError("failed to reserve quota")
+		return errors.InsufficientQuotaError("Insufficient Quota")
 	} else {
 		dbConn := k.connectionFactory.New()
 		kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()

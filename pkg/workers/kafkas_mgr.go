@@ -117,27 +117,11 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	for _, kafka := range acceptedKafkas {
-		if kafka.SubscriptionId == "" {
-			isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
-			if err != nil {
-				glog.Errorf("Failed to check quota for %s: %s", kafka.ID, err.Error())
-			}
-			if !isAllowed {
-				kafka.FailedReason = "Insufficient quota"
-				if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
-					glog.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
-				}
-				continue
-			}
-			kafka.SubscriptionId = subscriptionId
-		}
-
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
 			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			continue
 		}
-
 	}
 
 	// handle preparing kafkas
@@ -187,6 +171,9 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	if cluster != nil {
 		kafka.ClusterID = cluster.ClusterID
+		if kafka.SubscriptionId == "" {
+			k.reconcileQuota(kafka)
+		}
 		kafka.Status = constants.KafkaRequestStatusPreparing.String()
 		if err = k.kafkaService.Update(kafka); err != nil {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
@@ -194,6 +181,22 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	return nil
 }
+
+func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
+		isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
+		if err != nil {
+			return fmt.Errorf("failed to check quota for %s: %s", kafka.ID, err.Error())
+		}
+		if !isAllowed {
+			kafka.FailedReason = "Insufficient quota"
+			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
+				return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
+			}
+		}
+		kafka.SubscriptionId = subscriptionId
+	return nil
+}
+
 
 func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
 	if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
