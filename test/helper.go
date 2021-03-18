@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"net/http/httptest"
 	"os"
 	"sync"
@@ -244,9 +245,8 @@ func (helper *Helper) startConnectorWorker() {
 	env := helper.Env()
 	helper.ConnectorWorker = workers.NewConnectorManager(uuid.New().String(), env.Services.Connectors, env.Services.ConnectorCluster, env.Services.Observatorium)
 	go func() {
-		glog.V(10).Info("Test Metrics server started")
+		glog.V(10).Info("Connector worker started")
 		helper.ConnectorWorker.Start()
-		glog.V(10).Info("Test Metrics server stopped")
 	}()
 }
 
@@ -255,7 +255,21 @@ func (helper *Helper) stopConnectorWorker() {
 		return
 	}
 	helper.ConnectorWorker.Stop()
+	glog.V(10).Info("Connector worker stopped")
 }
+
+func (helper *Helper) startSignalBusWorker() {
+	env := helper.Env()
+	glog.V(10).Info("Signal bus worker started")
+	env.Services.SignalBus.(*signalbus.PgSignalBus).Start()
+}
+
+func (helper *Helper) stopSignalBusWorker() {
+	env := helper.Env()
+	env.Services.SignalBus.(*signalbus.PgSignalBus).Stop()
+	glog.V(10).Info("Signal bus worker stopped")
+}
+
 func (helper *Helper) startLeaderElectionWorker() {
 
 	env := helper.Env()

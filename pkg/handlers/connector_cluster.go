@@ -28,6 +28,7 @@ var (
 )
 
 type connectorClusterHandler struct {
+	bus             signalbus.SignalBus
 	service        services.ConnectorClusterService
 	config         services.ConfigService
 	keycloak       services.KeycloakService
@@ -35,8 +36,9 @@ type connectorClusterHandler struct {
 	vault          services.VaultService
 }
 
-func NewConnectorClusterHandler(service services.ConnectorClusterService, config services.ConfigService, keycloak services.KeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *connectorClusterHandler {
+func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config services.ConfigService, keycloak services.KeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *connectorClusterHandler {
 	return &connectorClusterHandler{
+		bus:             bus,
 		service:        service,
 		config:         config,
 		keycloak:       keycloak,
@@ -307,7 +309,7 @@ func (h *connectorClusterHandler) ListConnectors(w http.ResponseWriter, r *http.
 				list, err := getList()
 				firstPoll := true
 
-				sub := signalbus.Default.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", id))
+				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", id))
 				return eventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,

@@ -2,6 +2,7 @@ package environments
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"os"
 	"sync"
 
@@ -51,7 +52,8 @@ type Services struct {
 	DataPlaneCluster          services.DataPlaneClusterService
 	DataPlaneKafkaService     services.DataPlaneKafkaService
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
-	Vault                 services.VaultService
+	SignalBus                 signalbus.SignalBus
+	Vault                     services.VaultService
 }
 
 type Clients struct {
@@ -148,6 +150,8 @@ func (e *Env) Initialize() error {
 }
 
 func (env *Env) LoadServices() error {
+
+	signalBus := signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
@@ -166,15 +170,16 @@ func (env *Env) LoadServices() error {
 	env.Services.Keycloak = kafkaKeycloakService
 	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
 	env.Services.KasFleetshardAddonService = kasFleetshardAddonService
+	env.Services.SignalBus = signalBus
 
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config.Kafka)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
 	env.Services.DataPlaneCluster = dataPlaneClusterService
 	env.Services.DataPlaneKafkaService = dataPlaneKafkaService
 
-	env.Services.Connectors = services.NewConnectorsService(env.DBFactory)
+	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
-	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory)
+	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus)
 	if env.Config.ConnectorsConfig.Enabled {
 		err := env.Services.ConnectorTypes.DiscoverExtensions()
 		if err != nil {

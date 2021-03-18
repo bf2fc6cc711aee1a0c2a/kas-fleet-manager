@@ -5,12 +5,14 @@ import (
 	"sync"
 )
 
-var Default = NewSignalBus()
-
 type SignalBus interface {
+	// Notify will notify all the subscriptions created for the given named signal.
 	Notify(name string)
+	// Subscribe creates a subscription the named signal
 	Subscribe(name string) *Subscription
 }
+
+var _ SignalBus = &signalBus{} // type check the interface is implemented.
 
 type signalBus struct {
 	sync.RWMutex
