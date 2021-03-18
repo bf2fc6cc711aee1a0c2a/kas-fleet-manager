@@ -57,9 +57,6 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 			managedKafkaList := openapi.ManagedKafkaList{
 				Kind:  "ManagedKafkaList",
-				Page:  1,
-				Size:  1,
-				Total: 1,
 				Items: []openapi.ManagedKafka{},
 			}
 
@@ -67,8 +64,6 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 				converted := presenters.PresentManagedKafka(&mk)
 				managedKafkaList.Items = append(managedKafkaList.Items, converted)
 			}
-			managedKafkaList.Size = int32(len(managedKafkaList.Items))
-			managedKafkaList.Total = managedKafkaList.Size
 			return managedKafkaList, nil
 		},
 		ErrorHandler: handleError,

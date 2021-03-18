@@ -847,6 +847,15 @@ components:
         total:
           type: integer
 
+    ListReference:
+      required:
+        - kind
+        - items
+      type: object
+      properties:
+        kind:
+          type: string
+
     Error:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -877,25 +886,25 @@ components:
     ManagedKafkaCapacity:
       type: object
       properties:
-        IngressEgressThroughputPerSec:
+        ingressEgressThroughputPerSec:
           type: string
-        TotalMaxConnections:
+        totalMaxConnections:
           type: integer
           format: int
-        MaxDataRetentionSize:
+        maxDataRetentionSize:
           type: string
-        MaxPartitions:
+        maxPartitions:
           type: integer
           format: int
-        MaxDataRetentionPeriod:
+        maxDataRetentionPeriod:
           type: string
 
     ManagedKafkaVersions:
       type: object
       properties:
-        Kafka:
+        kafka:
           type: string
-        Strimzi:
+        strimzi:
           type: string
 
     ManagedKafka:
@@ -919,68 +928,53 @@ components:
             spec:
               type: object
               properties:
-                Capacity:
+                capacity:
                   $ref: "#/components/schemas/ManagedKafkaCapacity"
-                OAuth:
+                oauth:
                   type: object
                   properties:
-                    ClientId:
+                    clientId:
                       type: string
-                    ClientSecret:
+                    clientSecret:
                       type: string
-                    TokenEndpointURI:
+                    tokenEndpointURI:
                       type: string
-                    JwksEndpointURI:
+                    jwksEndpointURI:
                       type: string
-                    ValidIssuerEndpointURI:
+                    validIssuerEndpointURI:
                       type: string
-                    UserNameClaim:
+                    userNameClaim:
                       type: string
-                    TlsTrustedCertificate:
+                    tlsTrustedCertificate:
                       type: string
-                Endpoint:
+                endpoint:
                   type: object
                   properties:
-                    BootstrapServerHost:
+                    bootstrapServerHost:
                       type: string
-                    Tls:
+                    tls:
                       type: object
                       properties:
-                        Cert:
+                        cert:
                           type: string
-                        Key:
+                        key:
                           type: string
-                Versions:
+                versions:
                   $ref: "#/components/schemas/ManagedKafkaVersions"
-                Deleted:
+                deleted:
                   type: boolean
               required:
-                - Deleted
-            status:
-              type: object
-              properties:
-                Conditions:
-                  type: array
-                  items:
-                    allOf:
-                      - $ref: "#/components/schemas/MetaV1Condition"
-                Capacity:
-                  $ref: "#/components/schemas/ManagedKafkaCapacity"
-                Versions:
-                  $ref: "#/components/schemas/ManagedKafkaVersions"
+                - deleted
 
     ManagedKafkaList:
       description: >-
         A list of ManagedKafka
       allOf:
-        - $ref: "#/components/schemas/List"
+        - $ref: "#/components/schemas/ListReference"
         - type: object
           example:
             kind: "ManagedKafkaList"
-            page: "1"
-            size: "1"
-            total: "1"
-            item:
+            items:
               $ref: '#/components/examples/ManagedKafkaExample'
           properties:
             items:

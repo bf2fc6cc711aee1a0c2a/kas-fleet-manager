@@ -212,6 +212,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			Name:      mockKafkaName3,
 			Status:    constants.KafkaRequestStatusPreparing.String(),
 		},
+		{
+			ClusterID: testServer.ClusterID,
+			MultiAZ:   false,
+			Name:      mockKafkaName4,
+			Status:    constants.KafkaRequestStatusReady.String(),
+		},
 	}
 
 	db := testServer.Helper.Env().DBFactory.New()
@@ -228,7 +234,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	list, resp, err := testServer.PrivateClient.DefaultApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(int(list.Total)).To(Equal(2))
+	Expect(len(list.Items)).To(Equal(3))
 
 	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
 		for _, item := range slice {
@@ -240,7 +246,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	}
 
 	for _, k := range testKafkas {
-		if k.Status == constants.KafkaRequestStatusProvisioning.String() || k.Status == constants.KafkaRequestStatusDeprovision.String() {
+		if k.Status != constants.KafkaRequestStatusPreparing.String() {
 			if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotation.Bf2OrgId == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotation.Bf2OrgPlacementId).To(Equal(k.PlacementId))
