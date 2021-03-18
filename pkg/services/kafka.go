@@ -382,7 +382,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), buildKafkaNamespaceIdentifier(kafkaRequest))
+		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), buildKafkaNamespaceIdentifier(kafkaRequest), "")
 		res = append(res, *mk)
 	}
 
@@ -447,7 +447,7 @@ func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, cl
 	return changeRecordsOutput, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string, clientSecretValue string) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -489,9 +489,11 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 	}
 
 	if keycloakConfig.EnableAuthenticationOnKafka {
+		ssoClientID := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+
 		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
-			ClientId:               keycloakConfig.KafkaRealm.ClientID,
-			ClientSecret:           keycloakConfig.KafkaRealm.ClientSecret,
+			ClientId:               ssoClientID,
+			ClientSecret:           clientSecretValue,
 			TokenEndpointURI:       keycloakConfig.KafkaRealm.TokenEndpointURI,
 			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,

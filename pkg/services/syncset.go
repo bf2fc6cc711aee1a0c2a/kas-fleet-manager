@@ -78,7 +78,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 	if kafkaConfig.EnableManagedKafkaCR {
 		resources = []interface{}{
 			syncsetresources.BuildProject(namespaceName),
-			BuildManagedKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName),
+			BuildManagedKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName, clientSecretValue),
 		}
 	} else {
 		resources = []interface{}{
