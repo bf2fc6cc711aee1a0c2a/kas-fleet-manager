@@ -19,6 +19,7 @@ const multiAZClusterNodeScalingMultiple = 3
 
 type DataPlaneClusterService interface {
 	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError
+	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*api.DataPlaneClusterConfig, *errors.ServiceError)
 }
 
 var _ DataPlaneClusterService = &dataPlaneClusterService{}
@@ -26,9 +27,10 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	ocmClient      ocm.Client
-	clusterService ClusterService
-	kafkaConfig    *config.KafkaConfig
+	ocmClient           ocm.Client
+	clusterService      ClusterService
+	kafkaConfig         *config.KafkaConfig
+	observabilityConfig *config.ObservabilityConfiguration
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -36,12 +38,33 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 	Partitions  int
 }
 
-func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client, kafkaConfig *config.KafkaConfig) *dataPlaneClusterService {
+func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client, config *config.ApplicationConfig) *dataPlaneClusterService {
 	return &dataPlaneClusterService{
-		ocmClient:      ocmClient,
-		clusterService: clusterService,
-		kafkaConfig:    kafkaConfig,
+		ocmClient:           ocmClient,
+		clusterService:      clusterService,
+		kafkaConfig:         config.Kafka,
+		observabilityConfig: config.ObservabilityConfiguration,
 	}
+}
+
+func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*api.DataPlaneClusterConfig, *errors.ServiceError) {
+	cluster, svcErr := d.clusterService.FindClusterByID(clusterID)
+	if svcErr != nil {
+		return nil, svcErr
+	}
+	if cluster == nil {
+		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
+		return nil, errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
+	}
+
+	return &api.DataPlaneClusterConfig{
+		Observability: api.DataPlaneClusterConfigObservability{
+			AccessToken: d.observabilityConfig.ObservabilityConfigAccessToken,
+			Channel:     d.observabilityConfig.ObservabilityConfigChannel,
+			Repository:  d.observabilityConfig.ObservabilityConfigRepo,
+			Tag:         d.observabilityConfig.ObservabilityConfigTag,
+		},
+	}, nil
 }
 
 func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError {
