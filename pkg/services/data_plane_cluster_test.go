@@ -742,6 +742,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						ObservabilityConfigRepo:        "test-repo",
 						ObservabilityConfigChannel:     "test-channel",
 						ObservabilityConfigAccessToken: "test-token",
+						ObservabilityConfigTag:         "test-tag",
 					},
 				},
 			},
@@ -750,6 +751,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 				AccessToken: "test-token",
 				Channel:     "test-channel",
 				Repository:  "test-repo",
+				Tag:         "test-tag",
 			}},
 		},
 		{
@@ -765,6 +767,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						ObservabilityConfigRepo:        "test-repo",
 						ObservabilityConfigChannel:     "test-channel",
 						ObservabilityConfigAccessToken: "test-token",
+						ObservabilityConfigTag:         "test-tag",
 					},
 				},
 			},

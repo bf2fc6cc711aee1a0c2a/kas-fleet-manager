@@ -1409,6 +1409,7 @@ components:
         spec:
           observability:
             channel: channel
+            tag: tag
             accessToken: accessToken
             repository: repository
       properties:
@@ -1696,6 +1697,7 @@ components:
       description: Observability configurations
       example:
         channel: channel
+        tag: tag
         accessToken: accessToken
         repository: repository
       properties:
@@ -1705,11 +1707,14 @@ components:
           type: string
         repository:
           type: string
+        tag:
+          type: string
     DataplaneClusterAgentConfig_spec:
       description: Data plane cluster agent spec
       example:
         observability:
           channel: channel
+          tag: tag
           accessToken: accessToken
           repository: repository
       properties:

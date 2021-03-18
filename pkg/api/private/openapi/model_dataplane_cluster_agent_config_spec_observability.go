@@ -14,4 +14,5 @@ type DataplaneClusterAgentConfigSpecObservability struct {
 	AccessToken string `json:"accessToken,omitempty"`
 	Channel     string `json:"channel,omitempty"`
 	Repository  string `json:"repository,omitempty"`
+	Tag         string `json:"tag,omitempty"`
 }
