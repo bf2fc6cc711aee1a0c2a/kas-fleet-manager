@@ -177,7 +177,7 @@ func NewAPIServer() Server {
 		//apiV1ConnectorsTypedRouter.Use(authMiddleware.AuthenticateAccountJWT)
 
 		//  /api/managed-services-api/v1/kafka-connector-clusters/
-		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
+		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.List).Methods(http.MethodGet)

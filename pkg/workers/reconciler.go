@@ -2,7 +2,7 @@ package workers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"sync"
 	"time"
 
@@ -39,7 +39,8 @@ func (r *Reconciler) Start(worker Worker) {
 	worker.GetSyncGroup().Add(1)
 	worker.SetIsRunning(true)
 
-	sub := signalbus.Default.Subscribe("reconcile:" + worker.GetWorkerType())
+	bus := environments.Environment().Services.SignalBus
+	sub := bus.Subscribe("reconcile:" + worker.GetWorkerType())
 
 	glog.V(1).Infoln(fmt.Sprintf("Starting reconciliation loop for %T [%s]", worker, worker.GetID()))
 	//starts reconcile immediately and then on every repeat interval
