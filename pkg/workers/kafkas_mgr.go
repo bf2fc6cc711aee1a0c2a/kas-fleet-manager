@@ -171,12 +171,10 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	if cluster != nil {
 		kafka.ClusterID = cluster.ClusterID
-		if k.configService.GetConfig().Kafka.EnableQuotaService {
-			if kafka.SubscriptionId == "" {
-				err := k.reconcileQuota(kafka)
-				if err != nil {
-					return err
-				}
+		if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId == "" {
+			err := k.reconcileQuota(kafka)
+			if err != nil {
+				return err
 			}
 		}
 		kafka.Status = constants.KafkaRequestStatusPreparing.String()
