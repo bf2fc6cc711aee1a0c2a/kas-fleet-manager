@@ -11,9 +11,9 @@ package openapi
 
 // ManagedKafkaCapacity struct for ManagedKafkaCapacity
 type ManagedKafkaCapacity struct {
-	IngressEgressThroughputPerSec string `json:"IngressEgressThroughputPerSec,omitempty"`
-	TotalMaxConnections           int32  `json:"TotalMaxConnections,omitempty"`
-	MaxDataRetentionSize          string `json:"MaxDataRetentionSize,omitempty"`
-	MaxPartitions                 int32  `json:"MaxPartitions,omitempty"`
-	MaxDataRetentionPeriod        string `json:"MaxDataRetentionPeriod,omitempty"`
+	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec,omitempty"`
+	TotalMaxConnections           int32  `json:"totalMaxConnections,omitempty"`
+	MaxDataRetentionSize          string `json:"maxDataRetentionSize,omitempty"`
+	MaxPartitions                 int32  `json:"maxPartitions,omitempty"`
+	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod,omitempty"`
 }
