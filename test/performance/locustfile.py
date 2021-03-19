@@ -1,4 +1,4 @@
-import locust, os, random, sys, time, urllib3
+import locust, os, random, time, urllib3
 from locust import task, HttpUser, constant_pacing
 
 from common.auth import *
@@ -10,23 +10,32 @@ urllib3.disable_warnings()
 
 # if set to 'TRUE' - only get endpoints will be attacked
 get_only = os.environ['PERF_TEST_GET_ONLY']
+
 # if set to 'TRUE' - db will be seeded with kafkas
 populate_db = os.environ['PERF_TEST_PREPOPULATE_DB']
+
 # if PERF_TEST_PREPOPULATE_DB == 'TRUE' - this number determines the number of seed kafkas per locust worker
 seed_kafkas = int(os.environ['PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER'])
+
 # PERF_TEST_KAFKA_POST_WAIT_TIME specifies number of seconds to wait before creating another kafka_request (default is 1)
 kafka_post_wait_time = int(os.environ['PERF_TEST_KAFKA_POST_WAIT_TIME'])
+
 # number of kafkas to create by each locust worker
 kafkas_to_create = int(os.environ['PERF_TEST_KAFKAS_PER_WORKER'])
+
 # Runtime in minutes
 run_time_string = os.environ['PERF_TEST_RUN_TIME']
 run_time_seconds = int(run_time_string[0:len(run_time_string)-1]) * 60
 
+# Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating kafkas) 
+wait_time_in_minutes_string = os.environ['PERF_TEST_HIT_ENDPOINTS_HOLD_OFF']
+wait_time_in_minutes = int(wait_time_in_minutes_string)
+
 # set base url for the endpoints (if set via ENV var)
 url_base = '/api/managed-services-api/v1'
-BASE_API_URL = os.getenv('BASE_API_URL')
-if str(BASE_API_URL) != 'None':
-  url_base = BASE_API_URL
+PERF_TEST_BASE_API_URL = os.getenv('PERF_TEST_BASE_API_URL')
+if str(PERF_TEST_BASE_API_URL) != 'None':
+  url_base = PERF_TEST_BASE_API_URL
 
 # tracks how many kafkas were created already (per locust worker)
 kafkas_created = 0
@@ -36,6 +45,7 @@ resources_cleaned_up = False
 
 kafkas_list = []
 service_acc_list = []
+current_run_time = 0
 
 start_time = time.monotonic()
 
@@ -57,6 +67,7 @@ class QuickstartUser(HttpUser):
   def main_task(self):
     global populate_db
     global kafkas_created
+    global current_run_time
     current_run_time = time.monotonic() - start_time
     # create and then instantly delete kafka_requests to seed the database
     if populate_db == 'TRUE' and get_only != 'TRUE':
@@ -84,7 +95,7 @@ class QuickstartUser(HttpUser):
       # between db seed stage (if 'PERF_TEST_PREPOPULATE_DB' env var set to true) and cleanup (1 minute before the end of the test execution)
       else:
         exercise_endpoints(self, get_only)
-
+        
 # main test execution against API endpoints
 #
 # if get-only is set to 'TRUE', only GET endpoints will be attacked
@@ -108,33 +119,37 @@ def exercise_endpoints(self, get_only):
       kafkas_created = kafkas_created + 1
       time.sleep(kafka_post_wait_time) # sleep after creating kafka
   else:
-    endpoint_selector = random.randrange(0,99)
-    if endpoint_selector < 1:
-      service_accounts(self, get_only)
-    elif endpoint_selector < 2:
-      handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
-      handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
-    elif endpoint_selector < 3:
-      handle_get(self, f'{url_base}/openapi', '/openapi')
-    elif endpoint_selector < 53:
-      handle_get(self, f'{url_base}/kafkas', '/kafkas')
-    elif endpoint_selector < 88:
-      handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
-    else:
-      kafka_id = ""
-      if len(kafkas_list) == 0:
-        org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)  
-        # delete all kafkas created by the token used in the performance test
-        items = get_items_from_json_response(org_kafkas)
-        if len(items) > 0:
-          kafka_id = get_random_id(get_ids_from_list(items))
+    # only hit the endpoints, if wait_time_in_minutes has passed already
+    if current_run_time / 60 >= wait_time_in_minutes:
+      endpoint_selector = random.randrange(0,99)
+      if endpoint_selector < 1:
+        service_accounts(self, get_only)
+      elif endpoint_selector < 2:
+        handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
+        handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
+      elif endpoint_selector < 3:
+        handle_get(self, f'{url_base}/openapi', '/openapi')
+      elif endpoint_selector < 53:
+        handle_get(self, f'{url_base}/kafkas', '/kafkas')
+      elif endpoint_selector < 88:
+        handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
       else:
-        kafka_id = get_random_id(kafkas_list)
-      if kafka_id != "":
-        handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
-        if (random.randrange(0,19) < 1): 
-          handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
-          handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
+        kafka_id = ""
+        if len(kafkas_list) == 0:
+          org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)  
+          # get all kafkas and if the list is not empty - get random kafka_id
+          items = get_items_from_json_response(org_kafkas)
+          if len(items) > 0:
+            kafka_id = get_random_id(get_ids_from_list(items))
+        else:
+          kafka_id = get_random_id(kafkas_list)
+        if kafka_id != "":
+          handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
+          if (random.randrange(0,19) < 1): 
+            handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
+            handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
+    elif current_run_time / 60 + 1 < wait_time_in_minutes:
+      time.sleep(15) # wait 15 seconds instead of hitting this if/else unnecessarily
 
 # perf tests against service account endpoints
 def service_accounts(self, get_only):

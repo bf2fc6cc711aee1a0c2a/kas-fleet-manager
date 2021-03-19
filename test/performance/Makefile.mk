@@ -18,6 +18,10 @@ PERF_TEST_KAFKAS_PER_WORKER ?= 0
 PERF_TEST_GET_ONLY ?= TRUE
 # wait time before creating another kafka by a worker (in seconds)
 PERF_TEST_KAFKA_POST_WAIT_TIME ?= 1
+# base API url e.g. '/api/managed-services-api/v1'
+PERF_TEST_BASE_API_URL ?= /api/managed-services-api/v1
+# number of minutes from the test start to wait before attacking endpoints
+PERF_TEST_HIT_ENDPOINTS_HOLD_OFF ?= 0
 
 # run performance tests
 # requires at least the api route to be set as "PERF_TEST_ROUTE_HOST" and "OCM_OFFLINE_TOKEN"
@@ -31,8 +35,9 @@ else
 	PERF_TEST_ROUTE_HOST=$(PERF_TEST_ROUTE_HOST) PERF_TEST_USERS=$(PERF_TEST_USERS) PERF_TEST_USER_SPAWN_RATE=$(PERF_TEST_USER_SPAWN_RATE) \
 		PERF_TEST_RUN_TIME=$(PERF_TEST_RUN_TIME) PERF_TEST_PREPOPULATE_DB=$(PERF_TEST_PREPOPULATE_DB) PERF_TEST_KAFKAS_PER_WORKER=$(PERF_TEST_KAFKAS_PER_WORKER) \
 			PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=$(PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER) PERF_TEST_GET_ONLY=$(PERF_TEST_GET_ONLY) \
-				PERF_TEST_KAFKA_POST_WAIT_TIME=$(PERF_TEST_KAFKA_POST_WAIT_TIME) \
-			  	docker-compose --file test/performance/docker-compose.yml up --scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
+				PERF_TEST_KAFKA_POST_WAIT_TIME=$(PERF_TEST_KAFKA_POST_WAIT_TIME) PERF_TEST_BASE_API_URL=$(PERF_TEST_BASE_API_URL) \
+					PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=$(PERF_TEST_HIT_ENDPOINTS_HOLD_OFF) \
+			  		docker-compose --file test/performance/docker-compose.yml up --scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
 endif
 .PHONY: test/performance
 
