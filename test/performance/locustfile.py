@@ -28,8 +28,8 @@ run_time_string = os.environ['PERF_TEST_RUN_TIME']
 run_time_seconds = int(run_time_string[0:len(run_time_string)-1]) * 60
 
 # Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating kafkas) 
-wait_time_minutes_string = os.environ['PERF_TEST_HIT_ENDPOINTS_HOLD_OFF']
-wait_time_minutes = int(wait_time_minutes_string)
+wait_time_in_minutes_string = os.environ['PERF_TEST_HIT_ENDPOINTS_HOLD_OFF']
+wait_time_in_minutes = int(wait_time_in_minutes_string)
 
 # set base url for the endpoints (if set via ENV var)
 url_base = '/api/managed-services-api/v1'
@@ -119,8 +119,8 @@ def exercise_endpoints(self, get_only):
       kafkas_created = kafkas_created + 1
       time.sleep(kafka_post_wait_time) # sleep after creating kafka
   else:
-    # only hit the endpoints, if wait_time_minutes has passed already
-    if current_run_time / 60 >= wait_time_minutes:
+    # only hit the endpoints, if wait_time_in_minutes has passed already
+    if current_run_time / 60 >= wait_time_in_minutes:
       endpoint_selector = random.randrange(0,99)
       if endpoint_selector < 1:
         service_accounts(self, get_only)
@@ -148,7 +148,7 @@ def exercise_endpoints(self, get_only):
           if (random.randrange(0,19) < 1): 
             handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
             handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
-    elif current_run_time / 60 + 1 < wait_time_minutes:
+    elif current_run_time / 60 + 1 < wait_time_in_minutes:
       time.sleep(15) # wait 15 seconds instead of hitting this if/else unnecessarily
 
 # perf tests against service account endpoints
