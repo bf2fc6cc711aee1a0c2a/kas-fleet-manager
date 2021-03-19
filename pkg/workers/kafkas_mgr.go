@@ -2,10 +2,9 @@ package workers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"sync"
 	"time"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -243,6 +242,25 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 }
 
 func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRequest, err *errors.ServiceError) error {
+	// Important: we need to keep this check first as at the moment, the SSO-related errors also have http status code that is fall in the range of client errors.
+	// So if this is not checked first, then err.IsClientErrorClass() will return true and that will fail the kafka instance creation as there is no retry if it's client errors.
+	if err.IsFailedToCreateSSOClient() || err.IsFailedToGetSSOClient() || err.IsFailedToGetSSOClientSecret() {
+		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
+		if keycloakErr != nil {
+			durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
+			if durationSinceCreation > constants.KafkaMaxDurationWithProvisioningErrs {
+				if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed {
+					if updateErr != nil {
+						return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
+					}
+					metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
+				}
+				return fmt.Errorf("reached kafka %s max attempts to register client in mas-sso", kafkaRequest.ID)
+			}
+		}
+	}
+
 	if err.IsClientErrorClass() {
 		kafkaRequest.Status = string(constants.KafkaRequestStatusFailed)
 		kafkaRequest.FailedReason = err.Reason
@@ -265,23 +283,6 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 			}
 
 			return fmt.Errorf("reached kafka %s max attempts", kafkaRequest.ID)
-		}
-	}
-
-	if err.IsFailedToCreateSSOClient() {
-		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
-		if keycloakErr != nil {
-			durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
-			if durationSinceCreation > constants.KafkaMaxDurationWithProvisioningErrs {
-				if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed {
-					if updateErr != nil {
-						return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
-					}
-					metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-				}
-				return fmt.Errorf("reached kafka %s max attempts to register client in mas-sso", kafkaRequest.ID)
-			}
 		}
 	}
 
