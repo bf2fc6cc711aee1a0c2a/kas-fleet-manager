@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Nerzal/gocloak/v8"
+	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -175,9 +176,14 @@ func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors
 
 func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
 	var serviceAcc api.ServiceAccount
-	accessToken, _ := kc.kcClient.GetToken()
+	accessToken, tokenErr := kc.kcClient.GetToken()
+	if tokenErr != nil {
+		sentry.CaptureException(tokenErr)
+		return nil, errors.GeneralError("failed to get access token: %v", tokenErr)
+	}
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
@@ -213,20 +219,24 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	clientConfig := kc.kcClient.ClientConfig(c)
 	internalClient, err := kc.kcClient.CreateClient(clientConfig, accessToken)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, errors.FailedToCreateServiceAccount("failed to create the service account: %v", err)
 	}
 	clientSecret, err := kc.kcClient.GetClientSecret(internalClient, accessToken)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, errors.FailedToGetSSOClientSecret("failed to get service account secret: %v", err)
 	}
 	serviceAccountUser, err := kc.kcClient.GetClientServiceAccount(accessToken, internalClient)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, errors.FailedToGetServiceAccount("failed fetch the service account user: %v", err)
 	}
 	serviceAccountUser.Attributes = &rhAccountID
 	serAccUser := *serviceAccountUser
 	updateErr := kc.kcClient.UpdateServiceAccountUser(accessToken, serAccUser)
 	if updateErr != nil {
+		sentry.CaptureException(updateErr)
 		return nil, errors.GeneralError("failed add attributes to service account user: %v", updateErr)
 	}
 	serviceAcc.ID = internalClient
@@ -247,15 +257,21 @@ func (kc *keycloakService) buildServiceAccountIdentifier() string {
 }
 
 func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
-	accessToken, _ := kc.kcClient.GetToken()
+	accessToken, tokenErr := kc.kcClient.GetToken()
+	if tokenErr != nil {
+		sentry.CaptureException(tokenErr)
+		return nil, errors.GeneralError("failed to get access token: %v", tokenErr)
+	}
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
 	var sa []api.ServiceAccount
 	clients, err := kc.kcClient.GetClients(accessToken, first, max)
 	if err != nil {
+		sentry.CaptureException(err)
 		return nil, errors.GeneralError("failed to check the sso client exists: %v", err)
 	}
 	for _, client := range clients {
