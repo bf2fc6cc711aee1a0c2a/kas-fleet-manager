@@ -33,6 +33,9 @@ var _ Client = &ClientMock{}
 //             CreateSyncSetFunc: func(clusterID string, syncset *v1.Syncset) (*v1.Syncset, error) {
 // 	               panic("mock out the CreateSyncSet method")
 //             },
+//             DeleteClusterFunc: func(clusterID string) (int, error) {
+// 	               panic("mock out the DeleteCluster method")
+//             },
 //             DeleteSyncSetFunc: func(clusterID string, syncsetID string) (int, error) {
 // 	               panic("mock out the DeleteSyncSet method")
 //             },
@@ -99,6 +102,9 @@ type ClientMock struct {
 
 	// CreateSyncSetFunc mocks the CreateSyncSet method.
 	CreateSyncSetFunc func(clusterID string, syncset *v1.Syncset) (*v1.Syncset, error)
+
+	// DeleteClusterFunc mocks the DeleteCluster method.
+	DeleteClusterFunc func(clusterID string) (int, error)
 
 	// DeleteSyncSetFunc mocks the DeleteSyncSet method.
 	DeleteSyncSetFunc func(clusterID string, syncsetID string) (int, error)
@@ -181,6 +187,11 @@ type ClientMock struct {
 			ClusterID string
 			// Syncset is the syncset argument value.
 			Syncset *v1.Syncset
+		}
+		// DeleteCluster holds details about calls to the DeleteCluster method.
+		DeleteCluster []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
 		}
 		// DeleteSyncSet holds details about calls to the DeleteSyncSet method.
 		DeleteSyncSet []struct {
@@ -285,6 +296,7 @@ type ClientMock struct {
 	lockCreateCluster          sync.RWMutex
 	lockCreateIdentityProvider sync.RWMutex
 	lockCreateSyncSet          sync.RWMutex
+	lockDeleteCluster          sync.RWMutex
 	lockDeleteSyncSet          sync.RWMutex
 	lockGetAddon               sync.RWMutex
 	lockGetCloudProviders      sync.RWMutex
@@ -474,6 +486,37 @@ func (mock *ClientMock) CreateSyncSetCalls() []struct {
 	mock.lockCreateSyncSet.RLock()
 	calls = mock.calls.CreateSyncSet
 	mock.lockCreateSyncSet.RUnlock()
+	return calls
+}
+
+// DeleteCluster calls DeleteClusterFunc.
+func (mock *ClientMock) DeleteCluster(clusterID string) (int, error) {
+	if mock.DeleteClusterFunc == nil {
+		panic("ClientMock.DeleteClusterFunc: method is nil but Client.DeleteCluster was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockDeleteCluster.Lock()
+	mock.calls.DeleteCluster = append(mock.calls.DeleteCluster, callInfo)
+	mock.lockDeleteCluster.Unlock()
+	return mock.DeleteClusterFunc(clusterID)
+}
+
+// DeleteClusterCalls gets all the calls that were made to DeleteCluster.
+// Check the length with:
+//     len(mockedClient.DeleteClusterCalls())
+func (mock *ClientMock) DeleteClusterCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockDeleteCluster.RLock()
+	calls = mock.calls.DeleteCluster
+	mock.lockDeleteCluster.RUnlock()
 	return calls
 }
 

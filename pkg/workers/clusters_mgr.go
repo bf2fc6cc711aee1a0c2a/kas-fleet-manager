@@ -3,6 +3,7 @@ package workers
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"reflect"
 	"strings"
 	"sync"
@@ -121,6 +122,19 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 func (c *ClusterManager) reconcile() {
 	glog.V(5).Infoln("reconciling clusters")
 
+	deprovisioningClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterDeprovisioning)
+	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
+		glog.Errorf("failed to list of deprovisioning clusters: %s", serviceErr.Error())
+	}
+
+	for _, cluster := range deprovisioningClusters {
+		if err := c.reconcileDeprovisioningCluster(cluster); err != nil {
+			sentry.CaptureException(err)
+			glog.Errorf("failed to reconcile deprovisioning cluster %s: %s", cluster.ID, err.Error())
+		}
+	}
+
 	acceptedClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterAccepted)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
@@ -205,7 +219,11 @@ func (c *ClusterManager) reconcile() {
 	}
 
 	for _, readyCluster := range readyClusters {
-		err := c.reconcileReadyCluster(readyCluster)
+		emptyClusterReconciled, err := c.reconcileEmptyCluster(readyCluster)
+		if !emptyClusterReconciled && err != nil {
+			err = c.reconcileReadyCluster(readyCluster)
+		}
+
 		if err != nil {
 			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, err.Error())
@@ -213,6 +231,45 @@ func (c *ClusterManager) reconcile() {
 		}
 		glog.V(5).Infof("reconciled ready cluster %s", readyCluster.ClusterID)
 	}
+}
+
+func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) error {
+	siblingCluster, findClusterErr := c.clusterService.FindCluster(services.FindClusterCriteria{
+		Region:   cluster.Region,
+		Provider: cluster.CloudProvider,
+		MultiAZ:  cluster.MultiAZ,
+		Status:   api.ClusterReady,
+	})
+
+	if findClusterErr != nil {
+		return findClusterErr
+	}
+
+	if siblingCluster == nil {
+		return c.clusterService.UpdateStatus(cluster, api.ClusterReady)
+	}
+
+	deleteHttpCode, deleteClusterErr := c.ocmClient.DeleteCluster(cluster.ClusterID)
+	if deleteClusterErr != nil && http.StatusNotFound != deleteHttpCode { // only log other errors by ignoring not found errors
+		return deleteClusterErr
+	}
+
+	deleteClusterFromDbErr := c.clusterService.DeleteByClusterID(cluster.ClusterID)
+	if deleteClusterFromDbErr != nil {
+		return deleteClusterFromDbErr
+	}
+
+	keycloakDeregistrationErr := c.osdIdpKeycloakService.DeRegisterClientInSSO(cluster.ID)
+	if keycloakDeregistrationErr != nil {
+		return keycloakDeregistrationErr
+	}
+
+	serviceAcountRemovalErr := c.kasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
+	if serviceAcountRemovalErr != nil {
+		return serviceAcountRemovalErr
+	}
+
+	return nil
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
@@ -234,6 +291,34 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 	return nil
+}
+
+// reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion
+func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
+	clusterFromDb, err := c.clusterService.FindNonEmptyClusterById(cluster.ClusterID)
+	if err != nil {
+		return false, err
+	}
+	if clusterFromDb != nil {
+		return false, nil
+	}
+
+	clustersByRegionAndCloudProvider, findSiblingClusterErr := c.clusterService.ListGroupByProviderAndRegion(
+		[]string{cluster.CloudProvider},
+		[]string{cluster.Region},
+		[]string{api.ClusterReady.String()})
+
+	if findSiblingClusterErr != nil || len(clustersByRegionAndCloudProvider) == 0 {
+		return false, findSiblingClusterErr
+	}
+
+	siblingClusterCount := clustersByRegionAndCloudProvider[0]
+	if siblingClusterCount.Count <= 1 { // sibling cluster not found
+		return false, nil
+	}
+
+	updateStatusErr := c.clusterService.UpdateStatus(cluster, api.ClusterDeprovisioning)
+	return updateStatusErr == nil, updateStatusErr
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
@@ -735,7 +820,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	}
 
 	callbackUri := fmt.Sprintf("https://oauth-openshift.%s/oauth2callback/%s", clusterDNS, openIDIdentityProviderName)
-	clientSecret, ssoErr := c.osdIdpKeycloakService.RegisterOSDClusterClientInSSO(cluster.Meta.ID, callbackUri)
+	clientSecret, ssoErr := c.osdIdpKeycloakService.RegisterOSDClusterClientInSSO(cluster.ID, callbackUri)
 	if ssoErr != nil {
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}
@@ -749,7 +834,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		if createIdentityProviderErr != nil {
 			return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
 		}
-		addIdpErr := c.clusterService.AddIdentityProviderID(cluster.Meta.ID, createdIdentyProvider.ID())
+		addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentyProvider.ID())
 		if addIdpErr != nil {
 			return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
 		}
@@ -769,7 +854,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 
 func (c *ClusterManager) buildIdentityProvider(cluster api.Cluster, clientSecret string, withName bool) (*clustersmgmtv1.IdentityProvider, error) {
 	openIdentityBuilder := clustersmgmtv1.NewOpenIDIdentityProvider().
-		ClientID(cluster.Meta.ID).
+		ClientID(cluster.ID).
 		ClientSecret(clientSecret).
 		Claims(clustersmgmtv1.NewOpenIDClaims().
 			Email("email").

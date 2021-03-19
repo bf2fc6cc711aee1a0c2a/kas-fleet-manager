@@ -252,7 +252,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 
 }
 
-func TestNewKeycloakService_DeRegisterKafkaClientInSSO(t *testing.T) {
+func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
@@ -310,7 +310,7 @@ func TestNewKeycloakService_DeRegisterKafkaClientInSSO(t *testing.T) {
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
-			err := keycloakService.DeRegisterKafkaClientInSSO(testClientID)
+			err := keycloakService.DeRegisterClientInSSO(testClientID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RegisterKafkaClientInSSO() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -837,6 +837,83 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("RegisterKasFleetshardOperatorServiceAccount() got = %+v, want %+v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testing.T) {
+	type fields struct {
+		kcClient keycloak.KcClient
+	}
+	type args struct {
+		clusterId string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should receive an error when retrieving the token fails",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return "", fmt.Errorf("some errors")
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive an error when service account deletion fails",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("some error")
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: true,
+		},
+		{
+			name: "should delete the service account",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return nil
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			keycloakService := keycloakService{
+				tt.fields.kcClient,
+			}
+			err := keycloakService.DeRegisterKasFleetshardOperatorServiceAccount(tt.args.clusterId)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
