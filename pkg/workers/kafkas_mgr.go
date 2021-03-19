@@ -171,8 +171,13 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	}
 	if cluster != nil {
 		kafka.ClusterID = cluster.ClusterID
-		if kafka.SubscriptionId == "" {
-			k.reconcileQuota(kafka)
+		if k.configService.GetConfig().Kafka.EnableQuotaService {
+			if kafka.SubscriptionId == "" {
+				err := k.reconcileQuota(kafka)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		kafka.Status = constants.KafkaRequestStatusPreparing.String()
 		if err = k.kafkaService.Update(kafka); err != nil {
@@ -182,25 +187,27 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	return nil
 }
 
+// reserve: true creating the subscription, cluster_authorization is an idempotent endpoint. We will get the same subscription id for a KafkaRequest(id).
 func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
-		isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
-		if err != nil {
-			return fmt.Errorf("failed to check quota for %s: %s", kafka.ID, err.Error())
+	isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
+	if err != nil {
+		return fmt.Errorf("failed to check quota for %s: %s", kafka.ID, err.Error())
+	}
+	if !isAllowed {
+		kafka.FailedReason = "Insufficient quota"
+		if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
+			return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
 		}
-		if !isAllowed {
-			kafka.FailedReason = "Insufficient quota"
-			if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
-				return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
-			}
-		}
-		kafka.SubscriptionId = subscriptionId
+	}
+	kafka.SubscriptionId = subscriptionId
 	return nil
 }
 
-
 func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
-	if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
-		return fmt.Errorf("failed to subscription id %s: %w", kafka.SubscriptionId, err)
+	if k.configService.GetConfig().Kafka.EnableQuotaService {
+		if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
+			return fmt.Errorf("failed to subscription id %s: %w", kafka.SubscriptionId, err)
+		}
 	}
 	if err := k.kafkaService.Delete(kafka); err != nil {
 		return fmt.Errorf("failed to delete kafka %s: %w", kafka.ID, err)

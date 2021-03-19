@@ -77,19 +77,22 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	//cluster id can't be nil. generating random temporary id.
-	isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
-	if err != nil {
-		return errors.FailedToCheckQuota("%v", err)
-	}
-	if !isAllowed {
-		return errors.InsufficientQuotaError("Insufficient Quota")
-	} else {
-		dbConn := k.connectionFactory.New()
-		kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
-		if err := dbConn.Save(kafkaRequest).Error; err != nil {
-			return errors.GeneralError("failed to create kafka job: %v", err)
+	//reserve is false, checking whether a user can reserve a quota or not
+	if k.kafkaConfig.EnableQuotaService {
+		isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
+		if err != nil {
+			return errors.FailedToCheckQuota("%v", err)
+		}
+		if !isAllowed {
+			return errors.InsufficientQuotaError("Insufficient Quota")
 		}
 	}
+	dbConn := k.connectionFactory.New()
+	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
+	if err := dbConn.Save(kafkaRequest).Error; err != nil {
+		return errors.GeneralError("failed to create kafka job: %v", err)
+	}
+
 	return nil
 }
 

@@ -22,6 +22,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
+		configService 		 services.ConfigService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -55,6 +56,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{
@@ -93,6 +97,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return observatorium.KafkaState{}, nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -122,6 +129,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{
@@ -161,6 +171,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return observatorium.KafkaState{}, nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -186,6 +199,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -216,6 +232,9 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -231,6 +250,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
+				configService:        tt.fields.configService,
 			}
 			if err := k.reconcilePreparedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcilePreparedKafka() error = %v, wantErr %v", err, tt.wantErr)
@@ -251,6 +271,7 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
 		quotaService         services.QuotaService
+		configService        services.ConfigService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -278,6 +299,9 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 						return nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 		},
 		{
@@ -296,6 +320,9 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 						return nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			wantErr: true,
 		},
@@ -310,6 +337,7 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
 				quotaService:         tt.fields.quotaService,
+				configService:        tt.fields.configService,
 			}
 			if err := k.reconcileDeprovisioningRequest(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileDeprovisioningRequest() error = %v, wantErr %v", err, tt.wantErr)
@@ -326,6 +354,7 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
+		configService        services.ConfigService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -349,6 +378,9 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -373,6 +405,9 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -400,6 +435,9 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 						return config.NewKeycloakConfig()
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -415,6 +453,7 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
+				configService:        tt.fields.configService,
 			}
 			if err := k.reconcileAcceptedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileAcceptedKafka() error = %v, wantErr %v", err, tt.wantErr)
@@ -431,6 +470,7 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
+		configService        services.ConfigService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -462,6 +502,9 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 						return observatorium.KafkaState{}, errors.NotFound("Not Found")
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -492,6 +535,9 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 						return observatorium.KafkaState{}, errors.NotFound("Not Found")
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -517,6 +563,9 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 						return observatorium.KafkaState{}, errors.NotFound("Not Found")
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -542,6 +591,9 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 						return observatorium.KafkaState{State: "ready"}, nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					Kafka: config.NewKafkaConfig(),
+				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
@@ -557,6 +609,7 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
+				configService:        tt.fields.configService,
 			}
 			if err := k.reconcileProvisioningKafka(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileProvisioningKafka() error = %v, wantErr %v", err, tt.wantErr)
