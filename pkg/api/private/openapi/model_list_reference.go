@@ -9,8 +9,7 @@
 
 package openapi
 
-// ManagedKafkaVersions struct for ManagedKafkaVersions
-type ManagedKafkaVersions struct {
-	Kafka   string `json:"kafka,omitempty"`
-	Strimzi string `json:"strimzi,omitempty"`
+// ListReference struct for ListReference
+type ListReference struct {
+	Kind string `json:"kind"`
 }

@@ -11,6 +11,6 @@ package openapi
 
 // ManagedKafkaAllOfSpecEndpointTls struct for ManagedKafkaAllOfSpecEndpointTls
 type ManagedKafkaAllOfSpecEndpointTls struct {
-	Cert string `json:"Cert,omitempty"`
-	Key  string `json:"Key,omitempty"`
+	Cert string `json:"cert,omitempty"`
+	Key  string `json:"key,omitempty"`
 }

@@ -11,9 +11,9 @@ package openapi
 
 // ManagedKafkaAllOfSpec struct for ManagedKafkaAllOfSpec
 type ManagedKafkaAllOfSpec struct {
-	Capacity ManagedKafkaCapacity          `json:"Capacity,omitempty"`
-	OAuth    ManagedKafkaAllOfSpecOAuth    `json:"OAuth,omitempty"`
-	Endpoint ManagedKafkaAllOfSpecEndpoint `json:"Endpoint,omitempty"`
-	Versions ManagedKafkaVersions          `json:"Versions,omitempty"`
-	Deleted  bool                          `json:"Deleted"`
+	Capacity ManagedKafkaCapacity          `json:"capacity,omitempty"`
+	Oauth    ManagedKafkaAllOfSpecOauth    `json:"oauth,omitempty"`
+	Endpoint ManagedKafkaAllOfSpecEndpoint `json:"endpoint,omitempty"`
+	Versions ManagedKafkaVersions          `json:"versions,omitempty"`
+	Deleted  bool                          `json:"deleted"`
 }

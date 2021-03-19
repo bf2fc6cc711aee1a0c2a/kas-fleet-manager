@@ -25,7 +25,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 				MaxPartitions:                 int32(from.Spec.Capacity.MaxPartitions),
 				MaxDataRetentionPeriod:        from.Spec.Capacity.MaxDataRetentionPeriod,
 			},
-			OAuth: openapi.ManagedKafkaAllOfSpecOAuth{
+			Oauth: openapi.ManagedKafkaAllOfSpecOauth{
 				ClientId:               from.Spec.OAuth.ClientId,
 				ClientSecret:           from.Spec.OAuth.ClientSecret,
 				TokenEndpointURI:       from.Spec.OAuth.TokenEndpointURI,
@@ -47,18 +47,6 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 			},
 			Deleted: from.Spec.Deleted,
 		},
-	}
-
-	if cnds := from.Status.Conditions; cnds != nil {
-		for _, cnd := range cnds {
-			res.Status.Conditions = append(res.Status.Conditions, openapi.MetaV1Condition{
-				Type:               cnd.Type,
-				Reason:             cnd.Reason,
-				Message:            cnd.Message,
-				Status:             string(cnd.Status),
-				LastTransitionTime: cnd.LastTransitionTime.String(),
-			})
-		}
 	}
 
 	return res

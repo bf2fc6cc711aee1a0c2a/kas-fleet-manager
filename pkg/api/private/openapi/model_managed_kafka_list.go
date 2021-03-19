@@ -12,8 +12,5 @@ package openapi
 // ManagedKafkaList A list of ManagedKafka
 type ManagedKafkaList struct {
 	Kind  string         `json:"kind"`
-	Page  int32          `json:"page"`
-	Size  int32          `json:"size"`
-	Total int32          `json:"total"`
 	Items []ManagedKafka `json:"items"`
 }

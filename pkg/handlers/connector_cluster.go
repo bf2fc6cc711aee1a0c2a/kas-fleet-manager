@@ -28,7 +28,7 @@ var (
 )
 
 type connectorClusterHandler struct {
-	bus             signalbus.SignalBus
+	bus            signalbus.SignalBus
 	service        services.ConnectorClusterService
 	config         services.ConfigService
 	keycloak       services.KeycloakService
@@ -38,7 +38,7 @@ type connectorClusterHandler struct {
 
 func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config services.ConfigService, keycloak services.KeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *connectorClusterHandler {
 	return &connectorClusterHandler{
-		bus:             bus,
+		bus:            bus,
 		service:        service,
 		config:         config,
 		keycloak:       keycloak,
