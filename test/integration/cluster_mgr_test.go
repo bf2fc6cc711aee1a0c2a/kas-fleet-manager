@@ -27,6 +27,7 @@ const (
 	timeout                = 3 * time.Hour
 	interval               = 10 * time.Second
 	readyWaitTime          = 30 * time.Minute
+	clusterDeletionTimeout = 5 * time.Minute
 )
 
 // Tests a successful cluster reconcile
@@ -120,4 +121,82 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants.ClusterOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants.ClusterOperationCreate.String()))
+}
+
+func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
+	// setup ocm server
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	// start servers
+	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// setup required services
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
+	db := h.Env().DBFactory.New()
+
+	// change the status of the cluster to ready
+	updateStatusErr := clusterService.UpdateStatus(api.Cluster{ClusterID: clusterID}, api.ClusterReady)
+	if updateStatusErr != nil {
+		t.Error("failed to update cluster")
+		return
+	}
+
+	cluster, _ := clusterService.FindClusterByID(clusterID)
+
+	// create dummy kafkas and assign it to current cluster to make it not empty
+	kafka := api.KafkaRequest{
+		ClusterID:     clusterID,
+		MultiAZ:       false,
+		Region:        cluster.Region,
+		CloudProvider: cluster.CloudProvider,
+		Name:          "dummy-kafka",
+		Status:        constants.KafkaRequestStatusReady.String(),
+	}
+
+	if err := db.Save(&kafka).Error; err != nil {
+		t.Error("failed to create a dummy kafka request")
+		return
+	}
+
+	// Now create an OSD cluster with same characteristics and mark it as ready.
+	// This cluster is empty so it will be deleted after some time
+	dummyCluster := api.Cluster{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ClusterID:     api.NewID(),
+		MultiAZ:       cluster.MultiAZ,
+		Region:        cluster.Region,
+		CloudProvider: cluster.CloudProvider,
+		Status:        api.ClusterReady,
+	}
+
+	if err := db.Save(&dummyCluster).Error; err != nil {
+		t.Error("failed to create dummy cluster")
+		return
+	}
+
+	// checking that cluster has been deleted
+	err := wait.PollImmediate(interval, clusterDeletionTimeout, func() (done bool, err error) {
+		clusterFromDb, findClusterByIdErr := clusterService.FindClusterByID(dummyCluster.ClusterID)
+		if findClusterByIdErr != nil {
+			return false, findClusterByIdErr
+		}
+		return clusterFromDb == nil, nil // cluster has been deleted
+	})
+
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

@@ -35,6 +35,7 @@ type Client interface {
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
+	DeleteCluster(clusterID string) (int, error)
 }
 
 var _ Client = &client{}
@@ -370,4 +371,15 @@ func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList
 		return true
 	})
 	return match
+}
+
+func (c client) DeleteCluster(clusterID string) (int, error) {
+	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, deleteClusterError := clustersResource.Cluster(clusterID).Delete().Send()
+
+	var err error
+	if deleteClusterError != nil {
+		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "OCM client failed to delete cluster '%s': %s", clusterID, deleteClusterError)
+	}
+	return response.Status(), err
 }

@@ -1127,6 +1127,339 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 	}
 }
 
+func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		ocmClient                  ocm.Client
+		osdIDPKeycloakService      services.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should receive error when FindCluster to retrieve sibling cluster returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+					UpdateStatusFunc:      nil, // set to nil as it should not be called
+					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive error when updating status fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return &apiErrors.ServiceError{} // update failed
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should update the status back to ready when no sibling cluster found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "recieves an error when delete OCM cluster fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 500, fmt.Errorf("ocm Error")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "recieves an error when soft delete cluster from database fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 204, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "recieves an error when deregistering the OSD IDP from keycloak fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 204, nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "recieves an error when remove kas-fleetshard-operator service account fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 204, nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "successfull deletion of an OSD cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 204, nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				clusterService:             tt.fields.clusterService,
+				ocmClient:                  tt.fields.ocmClient,
+				osdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
+				kasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+			}
+
+			err := c.reconcileDeprovisioningCluster(tt.arg)
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "should receive error when FindNonEmptyClusterById returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+					UpdateStatusFunc:                 nil, // set to nil as it should not be called
+					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
+				},
+			},
+			wantErr: true,
+			want:    false,
+		},
+		{
+			name: "should return false when cluster is not empty",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return &api.Cluster{ClusterID: clusterId}, nil
+					},
+					UpdateStatusFunc:                 nil, // set to nil as it should not be called
+					ListGroupByProviderAndRegionFunc: nil, // set to nil as it should not be called
+				},
+			},
+			wantErr: false,
+			want:    false,
+		},
+		{
+			name: "receives an error when ListGroupByProviderAndRegion returns an error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: nil, // set to nil as it should not be called
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return nil, &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+			want:    false,
+		},
+		{
+			name: "should not update the cluster status to deprovisioning when no sibling found",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: nil, // set to nil as it not be called
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{{Count: 1}}, nil
+					},
+				},
+			},
+			wantErr: false,
+			want:    false,
+		},
+		{
+			name: "should return false when updating cluster status fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return &apiErrors.ServiceError{}
+					},
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{{Count: 2}}, nil
+					},
+				},
+			},
+			wantErr: true,
+			want:    false,
+		},
+		{
+			name: "should return true and update the cluster status",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindNonEmptyClusterByIdFunc: func(clusterId string) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+					ListGroupByProviderAndRegionFunc: func(providers, regions, status []string) ([]*services.ResGroupCPRegion, *apiErrors.ServiceError) {
+						return []*services.ResGroupCPRegion{{Count: 2}}, nil
+					},
+				},
+			},
+			wantErr: false,
+			want:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				clusterService: tt.fields.clusterService,
+			}
+
+			emptyClusterReconciled, err := c.reconcileEmptyCluster(api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+			})
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+			gomega.Expect(emptyClusterReconciled).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestSyncsetResourcesChanged(t *testing.T) {
 	tests := []struct {
 		name              string

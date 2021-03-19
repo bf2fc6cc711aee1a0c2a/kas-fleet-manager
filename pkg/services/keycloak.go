@@ -26,7 +26,7 @@ const (
 type KeycloakService interface {
 	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
 	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
-	DeRegisterKafkaClientInSSO(kafkaNamespace string) *errors.ServiceError
+	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
 	GetConfig() *config.KeycloakConfig
 	GetRealmConfig() *config.KeycloakRealmConfig
 	IsKafkaClientExist(clientId string) *errors.ServiceError
@@ -35,6 +35,7 @@ type KeycloakService interface {
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
 	ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError)
 	RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
 	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
 }
@@ -124,9 +125,9 @@ func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clust
 	return secretValue, nil
 }
 
-func (kc *keycloakService) DeRegisterKafkaClientInSSO(kafkaClusterName string) *errors.ServiceError {
+func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
 	accessToken, _ := kc.kcClient.GetToken()
-	internalClientID, _ := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
+	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
 	if internalClientID == "" {
 		return nil
 	}
@@ -314,6 +315,19 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
 	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
 	return kc.registerAgentServiceAccount(clusterId, serviceAccountId, agentClusterId, roleName)
+}
+
+func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
+	accessToken, err := kc.kcClient.GetToken()
+	if err != nil {
+		return errors.GeneralError("failed to get token: %s", err.Error())
+	}
+	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
+	err = kc.kcClient.DeleteClient(serviceAccountId, accessToken)
+	if err != nil {
+		return errors.FailedToDeleteServiceAccount("Failed to delete service account: %s", err.Error())
+	}
+	return nil
 }
 
 func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {

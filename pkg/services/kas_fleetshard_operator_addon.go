@@ -34,6 +34,7 @@ const (
 type KasFleetshardOperatorAddon interface {
 	Provision(cluster api.Cluster) (bool, *errors.ServiceError)
 	ReconcileParameters(cluster api.Cluster) *errors.ServiceError
+	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
 
 func NewKasFleetshardOperatorAddon(ssoService KeycloakService, ocm ocm.Client, configService ConfigService) KasFleetshardOperatorAddon {
@@ -150,4 +151,14 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 		//},
 	}
 	return p
+}
+
+func (o *kasFleetshardOperatorAddon) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
+	glog.V(5).Infof("Removing kas-fleetshard-operator service account for cluster %s", cluster.ClusterID)
+	fleetshardOperatorEnabled := o.configService.GetConfig().Kafka.EnableManagedKafkaCR || o.configService.GetConfig().Kafka.EnableKasFleetshardSync
+	if !fleetshardOperatorEnabled {
+		glog.V(5).Infof("kas-fleetshard-operator turned off. Service account for cluster %s not removed", cluster.ClusterID)
+		return nil
+	}
+	return o.ssoService.DeRegisterKasFleetshardOperatorServiceAccount(cluster.ClusterID)
 }
