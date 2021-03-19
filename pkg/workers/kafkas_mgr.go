@@ -273,7 +273,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		keycloakErr := k.keycloakService.IsKafkaClientExist(clientName)
 		if keycloakErr != nil {
 			durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
-			if durationSinceCreation <= constants.KafkaMaxDurationWithProvisioningErrs {
+			if durationSinceCreation > constants.KafkaMaxDurationWithProvisioningErrs {
 				if executed, updateErr := k.kafkaService.UpdateStatus(kafkaRequest.ID, constants.KafkaRequestStatusFailed); executed {
 					if updateErr != nil {
 						return fmt.Errorf("failed to update kafka %s to status: %w", kafkaRequest.ID, updateErr)
