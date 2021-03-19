@@ -175,6 +175,11 @@ func readFileValueBool(file string, val *bool) error {
 func readFile(file string) (string, error) {
 	absFilePath := buildFullFilePath(file)
 
+	// If no file is provided then we don't try to read it
+	if absFilePath == "" {
+		return "", nil
+	}
+
 	// Read the file
 	buf, err := ioutil.ReadFile(absFilePath)
 	if err != nil {
