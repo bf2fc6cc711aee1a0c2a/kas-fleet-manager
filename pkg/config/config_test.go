@@ -24,6 +24,13 @@ func TestConfigReadStringFile(t *testing.T) {
 	Expect(stringConfig).To(Equal("example"))
 }
 
+func TestConfigReadEmptyFile(t *testing.T) {
+	RegisterTestingT(t)
+	res, err := readFile("")
+	Expect(err).NotTo(HaveOccurred())
+	Expect(res).To(Equal(""))
+}
+
 func TestConfigReadIntFile(t *testing.T) {
 	RegisterTestingT(t)
 
