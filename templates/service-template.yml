@@ -298,6 +298,11 @@ parameters:
   description: Enable direct data synchronisation with kas-fleetshard-operator
   value: "false"
 
+- name: ENABLE_QUOTA_SERVICE
+  displayName: Enable quota service with kas-fleetshard-operator
+  description: Enable quota service with kas-fleetshard-operator
+  value: "true"
+
 - name: OBSERVABILITY_CONFIG_REPO
   displayName: Observability configuration repo URL
   description: URL of the observability configuration repo
@@ -621,6 +626,7 @@ objects:
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --enable-kas-fleetshard-sync=${ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC}
+            - --enable-quota-service=${ENABLE_QUOTA_SERVICE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
             - --observability-config-access-token-file=/secrets/service/observability-config-access.token

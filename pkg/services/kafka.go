@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"strings"
 
@@ -21,6 +22,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/getsentry/sentry-go"
 )
+
+const productId = "RHOSAKTrial"
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
@@ -56,9 +59,10 @@ type kafkaService struct {
 	keycloakService   KeycloakService
 	kafkaConfig       *config.KafkaConfig
 	awsConfig         *config.AWSConfig
+	quotaService      QuotaService
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
 		syncsetService:    syncsetService,
@@ -66,16 +70,29 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 		keycloakService:   keycloakService,
 		kafkaConfig:       kafkaConfig,
 		awsConfig:         awsConfig,
+		quotaService:      quotaService,
 	}
 }
 
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	//cluster id can't be nil. generating random temporary id.
+	//reserve is false, checking whether a user can reserve a quota or not
+	if k.kafkaConfig.EnableQuotaService {
+		isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
+		if err != nil {
+			return errors.FailedToCheckQuota("%v", err)
+		}
+		if !isAllowed {
+			return errors.InsufficientQuotaError("Insufficient Quota")
+		}
+	}
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
+
 	return nil
 }
 

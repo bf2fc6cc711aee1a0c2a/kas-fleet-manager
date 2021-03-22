@@ -57,7 +57,8 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
 	syncsetService := services.NewSyncsetService(ocmClient)
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS)
+	QuotaService := services.NewQuotaService(ocmClient)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
 
 	kafkaRequest := &api.KafkaRequest{
 		Region:         region,
