@@ -322,14 +322,6 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
-	// TODO make syncSet and addon installation in parallel?
-
-	// SyncSet creation step
-	syncSetErr := c.reconcileClusterSyncSet(cluster) //OSD cluster itself
-	if syncSetErr != nil {
-		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
-	}
-
 	// Addon installation step
 	// TODO this is currently the responsible of setting the status of the cluster
 	// and it is setting it to a different value depending on the addon being
