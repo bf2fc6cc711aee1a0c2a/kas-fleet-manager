@@ -29,12 +29,15 @@ const (
 	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
 	// ClusterFull the cluster is full and cannot accept more Kafka clusters
 	ClusterFull ClusterStatus = "full"
+	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
+	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
+
 	// KasFleetshardOperatorAddonId the ID of the kas-fleetshard-operator addon
 	KasFleetshardOperatorAddonId = "kas-fleetshard-operator"
 )
 
 // This represents the valid statuses of a OSD cluster
-var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady), string(ClusterAccepted), string(ClusterWaitingForKasFleetShardOperator)}
+var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady), string(ClusterAccepted), string(ClusterWaitingForKasFleetShardOperator), string(ClusterComputeNodeScalingUp)}
 
 type Cluster struct {
 	Meta

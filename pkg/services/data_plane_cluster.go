@@ -236,10 +236,19 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		}
 	}
 
-	if !remainingCapacity && cluster.Status != api.ClusterFull {
-		err := d.clusterService.UpdateStatus(*cluster, api.ClusterFull)
-		if err != nil {
-			return err
+	if !remainingCapacity {
+		var desiredStatus api.ClusterStatus
+		if status.NodeInfo.Current >= d.getRestrictedCeiling(cluster, status) {
+			desiredStatus = api.ClusterFull
+		} else {
+			desiredStatus = api.ClusterComputeNodeScalingUp
+		}
+
+		if cluster.Status != desiredStatus {
+			err := d.clusterService.UpdateStatus(*cluster, desiredStatus)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -261,6 +270,7 @@ func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *api.DataPlan
 
 func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cluster) bool {
 	return cluster.Status == api.ClusterReady ||
+		cluster.Status == api.ClusterComputeNodeScalingUp ||
 		cluster.Status == api.ClusterFull ||
 		cluster.Status == api.ClusterWaitingForKasFleetShardOperator
 }
