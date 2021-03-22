@@ -17,6 +17,7 @@ var productionConfigDefaults map[string]string = map[string]string{
 	"enable-kafka-external-certificate": "true",
 	"cluster-compute-machine-type":      "m5.4xlarge",
 	"ingress-controller-replicas":       "9",
+	"enable-quota-service":              "true",
 }
 
 func loadProduction(env *Env) error {

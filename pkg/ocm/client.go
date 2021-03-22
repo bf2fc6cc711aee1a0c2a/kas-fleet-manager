@@ -3,6 +3,7 @@ package ocm
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -36,6 +37,9 @@ type Client interface {
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	DeleteCluster(clusterID string) (int, error)
+	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
+	DeleteSubscription(id string) (int, error)
+	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
 }
 
 var _ Client = &client{}
@@ -382,4 +386,29 @@ func (c client) DeleteCluster(clusterID string) (int, error) {
 		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "OCM client failed to delete cluster '%s': %s", clusterID, deleteClusterError)
 	}
 	return response.Status(), err
+}
+
+func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
+	r, err := c.ocmClient.AccountsMgmt().V1().
+		ClusterAuthorizations().
+		Post().Request(cb).Send()
+	if err != nil {
+		return nil, err
+	}
+	resp, _ := r.GetResponse()
+	return resp, nil
+}
+
+func (c client) DeleteSubscription(id string) (int, error) {
+	r := c.ocmClient.AccountsMgmt().V1().Subscriptions().Subscription(id).Delete()
+	resp, err := r.Send()
+	return resp.Status(), err
+}
+
+func (c client) FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error) {
+	r, err := c.ocmClient.AccountsMgmt().V1().Subscriptions().List().Search(query).Send()
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }

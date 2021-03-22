@@ -25,6 +25,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"enable-kafka-external-certificate": "false",
 	"cluster-compute-machine-type":      "m5.xlarge",
 	"ingress-controller-replicas":       "3",
+	"enable-quota-service":              "false",
 }
 
 func loadDevelopment(env *Env) error {

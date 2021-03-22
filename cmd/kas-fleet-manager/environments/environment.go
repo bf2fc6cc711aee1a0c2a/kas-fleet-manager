@@ -2,9 +2,10 @@ package environments
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"os"
 	"sync"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 
@@ -54,6 +55,7 @@ type Services struct {
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
 	SignalBus                 signalbus.SignalBus
 	Vault                     services.VaultService
+	Quota                     services.QuotaService
 }
 
 type Clients struct {
@@ -157,7 +159,8 @@ func (env *Env) LoadServices() error {
 	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	OsdIdpKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
 	syncsetService := services.NewSyncsetService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS)
+	QuotaService := services.NewQuotaService(ocmClient)
+	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
 	cloudProviderService := services.NewCloudProvidersService(ocmClient)
 	configService := services.NewConfigService(*env.Config)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
@@ -171,6 +174,7 @@ func (env *Env) LoadServices() error {
 	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
 	env.Services.KasFleetshardAddonService = kasFleetshardAddonService
 	env.Services.SignalBus = signalBus
+	env.Services.Quota = QuotaService
 
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
