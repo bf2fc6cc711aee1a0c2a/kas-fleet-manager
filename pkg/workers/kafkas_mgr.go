@@ -155,6 +155,14 @@ func (k *KafkaManager) reconcile() {
 				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
 				continue
 			}
+
+			if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka && kafka.Status == string(constants.KafkaRequestStatusReady) {
+				if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
+					sentry.CaptureException(err)
+					glog.Errorf("failed to get provisioning kafkas sso client%s: %s", kafka.SsoClientID, err.Error())
+					continue
+				}
+			}
 		}
 	}
 }
@@ -297,4 +305,20 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 	}
 
 	return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafkaRequest.ID, kafkaRequest.ClusterID, err)
+}
+
+func (k *KafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequest) error {
+	if kafkaRequest.SsoClientID == "" && kafkaRequest.SsoClientSecret == "" {
+		kafkaRequest.SsoClientID = services.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		secret, err := k.keycloakService.GetKafkaClientSecret(kafkaRequest.SsoClientID)
+		if err != nil {
+			return fmt.Errorf("failed to get sso client id & secret for kafka cluster: %s: %w", kafkaRequest.SsoClientID, err)
+		}
+		kafkaRequest.SsoClientSecret = secret
+		if err = k.kafkaService.Update(kafkaRequest); err != nil {
+			sentry.CaptureException(err)
+			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafkaRequest.ID, err)
+		}
+	}
+	return nil
 }

@@ -128,7 +128,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		kafkaRequest.SsoClientID = BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID , kafkaRequest.OrganisationId)
 		if err != nil || kafkaRequest.SsoClientSecret == "" {
 			sentry.CaptureException(err)

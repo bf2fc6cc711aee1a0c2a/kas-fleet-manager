@@ -38,6 +38,7 @@ type KeycloakService interface {
 	DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
 	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
+	GetKafkaClientSecret(clientId string) (string, *errors.ServiceError)
 }
 
 type keycloakService struct {
@@ -153,6 +154,19 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 		return errors.FailedToGetSSOClient("failed to get the sso client: %v", err)
 	}
 	return nil
+}
+
+func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
+	accessToken, _ := kc.kcClient.GetToken()
+	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
+	if err != nil {
+		return "", errors.FailedToGetSSOClient("failed to get the sso client: %v", err)
+	}
+	clientSecret, err := kc.kcClient.GetClientSecret(internalClientID, accessToken)
+	if err != nil {
+		return "", errors.FailedToGetSSOClientSecret("failed to get client secret: %v", err)
+	}
+	return clientSecret, nil
 }
 
 func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError) {
