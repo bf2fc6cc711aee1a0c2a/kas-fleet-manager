@@ -154,7 +154,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 				},
 			},
 			want:    "",
-			wantErr: errors.GeneralError("failed to get token for the sso client: token error"),
+			wantErr: errors.GeneralError("failed to get token for the sso client: %v", "token error"),
 		},
 		{
 			name: "fetch osd client secret from sso when client already exists",
