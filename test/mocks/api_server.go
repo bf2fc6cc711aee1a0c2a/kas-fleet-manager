@@ -123,6 +123,7 @@ var (
 	EndpointKafkaDelete              = Endpoint{EndpointPathSyncset, http.MethodDelete}
 	EndpointClustersGet              = Endpoint{EndpointPathClusters, http.MethodGet}
 	EndpointClustersPost             = Endpoint{EndpointPathClusters, http.MethodPost}
+	EndpointClusterDelete            = Endpoint{EndpointPathCluster, http.MethodDelete}
 	EndpointClusterSyncsetsPost      = Endpoint{EndpointPathSyncsets, http.MethodPost}
 	EndpointClusterSyncsetGet        = Endpoint{EndpointPathSyncset, http.MethodGet}
 	EndpointClusterSyncsetPatch      = Endpoint{EndpointPathSyncset, http.MethodPatch}
@@ -414,6 +415,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointKafkaDelete:              buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:              buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:             buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterDelete:            buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterSyncsetsPost:      buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetGet:        buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetPatch:      buildMockRequestHandler(MockSyncset, nil),
