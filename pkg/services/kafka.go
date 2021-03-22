@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"strings"
+
+	"github.com/google/uuid"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/getsentry/sentry-go"
 )
 
@@ -129,7 +129,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		kafkaRequest.SsoClientID = BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID , kafkaRequest.OrganisationId)
+		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
 		if err != nil || kafkaRequest.SsoClientSecret == "" {
 			sentry.CaptureException(err)
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
@@ -275,8 +275,8 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	if kafkaRequest.ClusterID != "" {
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientName)
+			clientId :=  BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
 			if keycloakErr != nil {
 				return errors.GeneralError("error deleting sso client: %v", keycloakErr)
 			}
