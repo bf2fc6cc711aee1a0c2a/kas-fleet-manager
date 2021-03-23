@@ -67,7 +67,7 @@ func (s *ServerConfig) ReadFiles() error {
 		return err
 	}
 
-	s.JwksFile = buildFullFilePath(s.JwksFile)
+	s.JwksFile = BuildFullFilePath(s.JwksFile)
 
 	return nil
 }

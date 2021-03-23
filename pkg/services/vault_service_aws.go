@@ -20,14 +20,15 @@ type awsVaultService struct {
 }
 
 func NewAwsVaultService(vaultConfig *config.VaultConfig) (*awsVaultService, error) {
-	sess, err := session.NewSession(&aws.Config{
+	awsConfig := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(
 			vaultConfig.AccessKey,
 			vaultConfig.SecretAccessKey,
 			""),
-		//Region:  aws.String(region),
+		Region:  aws.String(vaultConfig.Region),
 		Retryer: client.DefaultRetryer{NumMaxRetries: 2},
-	})
+	}
+	sess, err := session.NewSession(awsConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -50,31 +51,28 @@ func (k *awsVaultService) Kind() string {
 }
 
 func (k *awsVaultService) GetSecretString(name string) (string, error) {
-	return k.secretCache.GetSecretString(name)
+	result, err := k.secretCache.GetSecretString(name)
+	return result, err
 }
 
 func (k *awsVaultService) SetSecretString(name string, value string, owningResource string) error {
-	_, err := k.secretClient.PutSecretValue(&secretsmanager.PutSecretValueInput{
-		SecretId:     &name,
+
+	var tags []*secretsmanager.Tag
+	if owningResource != "" {
+		tags = append(tags,
+			&secretsmanager.Tag{
+				Key:   &OwnerResourceTagKey,
+				Value: &owningResource,
+			})
+	}
+
+	_, err := k.secretClient.CreateSecret(&secretsmanager.CreateSecretInput{
+		Name:         &name,
 		SecretString: &value,
+		Tags:         tags,
 	})
 	if err != nil {
 		return err
-	}
-
-	if owningResource != "" {
-		_, err = k.secretClient.TagResource(&secretsmanager.TagResourceInput{
-			SecretId: &name,
-			Tags: []*secretsmanager.Tag{
-				&secretsmanager.Tag{
-					Key:   &OwnerResourceTagKey,
-					Value: &owningResource,
-				},
-			},
-		})
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
