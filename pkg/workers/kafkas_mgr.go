@@ -202,9 +202,9 @@ func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
 }
 
 func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
-	if k.configService.GetConfig().Kafka.EnableQuotaService {
+	if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId != "" {
 		if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
-			return fmt.Errorf("failed to subscription id %s: %w", kafka.SubscriptionId, err)
+			return fmt.Errorf("failed to delete subscription id %s for kafka %s : %w", kafka.SubscriptionId, kafka.ID, err)
 		}
 	}
 	if err := k.kafkaService.Delete(kafka); err != nil {
