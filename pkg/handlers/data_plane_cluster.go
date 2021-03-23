@@ -133,7 +133,7 @@ func (h *dataPlaneClusterHandler) validateResizeInfo(request *openapi.DataPlaneC
 	if resizeInfo.Delta.IngressEgressThroughputPerSec == nil {
 		return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
 	}
-	if resizeInfo.Delta.MaxPartitions == nil {
+	if resizeInfo.Delta.Partitions == nil {
 		return errors.FieldValidationError("resieInfo delta partitions must be set")
 	}
 

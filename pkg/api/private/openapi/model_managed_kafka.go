@@ -13,7 +13,6 @@ package openapi
 type ManagedKafka struct {
 	Id       string                    `json:"id,omitempty"`
 	Kind     string                    `json:"kind,omitempty"`
-	Href     string                    `json:"href,omitempty"`
 	Metadata ManagedKafkaAllOfMetadata `json:"metadata,omitempty"`
 	Spec     ManagedKafkaAllOfSpec     `json:"spec,omitempty"`
 }
