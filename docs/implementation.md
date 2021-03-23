@@ -8,6 +8,8 @@ The system is comprised of three main components:
 - Kafka Worker
 - Cluster Worker
 
+![Component Architecture Diagram](images/kas-fleet-manager-component-architecture.png)
+
 ## REST API
 
 The system has a REST API for managing Kafka resources. This is the primary interface used by
