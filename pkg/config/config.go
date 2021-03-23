@@ -182,7 +182,7 @@ func readFileValueBool(file string, val *bool) error {
 }
 
 func readFile(file string) (string, error) {
-	absFilePath := buildFullFilePath(file)
+	absFilePath := BuildFullFilePath(file)
 
 	// If no file is provided then we don't try to read it
 	if absFilePath == "" {
@@ -197,7 +197,7 @@ func readFile(file string) (string, error) {
 	return string(buf), nil
 }
 
-func buildFullFilePath(filename string) string {
+func BuildFullFilePath(filename string) string {
 	// If the value is in quotes, unquote it
 	unquotedFile, err := strconv.Unquote(filename)
 	if err != nil {

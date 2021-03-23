@@ -44,6 +44,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 
 # Ignore secret files
 /secrets/aws.*
+/secrets/vault.*
 /secrets/ocm-service.*
 /secrets/kafka-tls.*
 /secrets/keycloak-service.*
