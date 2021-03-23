@@ -259,7 +259,7 @@ func TestSyncsetService_Create(t *testing.T) {
 	kafkaSyncBuilder, _, _ := newKafkaSyncsetBuilder(&api.KafkaRequest{
 		Name:      testKafkaRequestName,
 		ClusterID: testClusterID,
-	}, kafkaConfig, keycloakConfig, "")
+	}, kafkaConfig, keycloakConfig)
 
 	type args struct {
 		syncsetBuilder *v1.SyncsetBuilder
@@ -333,7 +333,7 @@ func TestSyncsetService_Delete(t *testing.T) {
 	kafkaSyncBuilder, _, _ := newKafkaSyncsetBuilder(&api.KafkaRequest{
 		Name:      testKafkaRequestName,
 		ClusterID: testClusterID,
-	}, kafkaConfig, keycloakConfig, "")
+	}, kafkaConfig, keycloakConfig)
 
 	type args struct {
 		syncsetBuilder *v1.SyncsetBuilder
@@ -557,7 +557,7 @@ func Test_newKafkaSyncsetBuilder(t *testing.T) {
 
 			kafkaConfig := config.NewKafkaConfig()
 
-			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest, kafkaConfig, &keycloakConfig, "")
+			got, _, _ := newKafkaSyncsetBuilder(tt.args.kafkaRequest, kafkaConfig, &keycloakConfig)
 			syncset, err := got.Build()
 			if err != nil {
 				t.Errorf("newKafkaSyncsetBuilder() failed to build syncset")
