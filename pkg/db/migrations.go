@@ -38,6 +38,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addConnectorClusters(),
 	addKafkaSubscriptionId(),
 	addClusterIdentityProviderID(),
+	addKafkaSsoClientIdAndSecret(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

@@ -58,7 +58,7 @@ func (s syncsetService) Delete(syncsetId, clusterId string) (int, *errors.Servic
 }
 
 // syncset builder for a kafka/strimzi custom resource
-func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, clientSecretValue string) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
+func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
 	syncsetBuilder := cmv1.NewSyncset()
 
 	namespaceName := buildKafkaNamespaceIdentifier(kafkaRequest)
@@ -78,7 +78,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 	if kafkaConfig.EnableManagedKafkaCR {
 		resources = []interface{}{
 			syncsetresources.BuildProject(namespaceName),
-			BuildManagedKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName, clientSecretValue),
+			BuildManagedKafkaCR(kafkaRequest, kafkaConfig, keycloakConfig, namespaceName),
 		}
 	} else {
 		resources = []interface{}{
@@ -92,7 +92,7 @@ func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.
 
 		// include Keycloak resources if authentication is enabled
 		if keycloakConfig.EnableAuthenticationOnKafka {
-			resources = append(resources, syncsetresources.BuildKeycloakResources(kafkaRequest, keycloakConfig, clientSecretValue, namespaceName)...)
+			resources = append(resources, syncsetresources.BuildKeycloakResources(kafkaRequest, keycloakConfig, namespaceName)...)
 		}
 
 		// include Kafka TLS secret if external certs is enabled

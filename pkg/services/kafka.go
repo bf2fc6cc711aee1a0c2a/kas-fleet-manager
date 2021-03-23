@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"net/http"
 	"strings"
+
+	"github.com/google/uuid"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +20,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/getsentry/sentry-go"
 )
 
@@ -127,20 +127,19 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		}
 	}
 
-	var clientSecretValue string
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-		clientSecretValue, err := k.keycloakService.RegisterKafkaClientInSSO(clientName, kafkaRequest.OrganisationId)
-		if err != nil || clientSecretValue == "" {
+		kafkaRequest.SsoClientID = BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
+		if err != nil || kafkaRequest.SsoClientSecret == "" {
 			sentry.CaptureException(err)
-			return errors.FailedToCreateSSOClient("failed to create sso client %s: %v", kafkaRequest.ID, err)
+			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
 	}
 
 	// only use sync set if EnableKasFleetshardSync is set to false
 	if !k.kafkaConfig.EnableKasFleetshardSync {
 		// create the syncset builder
-		syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), clientSecretValue)
+		syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig())
 		if err != nil {
 			sentry.CaptureException(err)
 			return errors.GeneralError("error creating kafka syncset builder: %v", err)
@@ -276,8 +275,8 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	if kafkaRequest.ClusterID != "" {
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-			clientName := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientName)
+			clientId :=  BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
 			if keycloakErr != nil {
 				return errors.GeneralError("error deleting sso client: %v", keycloakErr)
 			}
@@ -399,7 +398,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), buildKafkaNamespaceIdentifier(kafkaRequest), "")
+		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), buildKafkaNamespaceIdentifier(kafkaRequest))
 		res = append(res, *mk)
 	}
 
@@ -464,7 +463,7 @@ func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, cl
 	return changeRecordsOutput, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string, clientSecretValue string) *managedkafka.ManagedKafka {
+func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -506,11 +505,9 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 	}
 
 	if keycloakConfig.EnableAuthenticationOnKafka {
-		ssoClientID := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
-
 		managedKafkaCR.Spec.OAuth = managedkafka.OAuthSpec{
-			ClientId:               ssoClientID,
-			ClientSecret:           clientSecretValue,
+			ClientId:               kafkaRequest.SsoClientID,
+			ClientSecret:           kafkaRequest.SsoClientSecret,
 			TokenEndpointURI:       keycloakConfig.KafkaRealm.TokenEndpointURI,
 			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,

@@ -13,9 +13,9 @@ import (
 )
 
 // BuildKeycloakResources builds the Keycloak client and ca secret
-func BuildKeycloakResources(kafkaRequest *api.KafkaRequest, keycloakConfig *config.KeycloakConfig, clientSecretValue, namespace string) []interface{} {
+func BuildKeycloakResources(kafkaRequest *api.KafkaRequest, keycloakConfig *config.KeycloakConfig, namespace string) []interface{} {
 	keycloakResources := []interface{}{
-		buildKeycloakClientSecret(keycloakConfig, kafkaRequest.Name, clientSecretValue, namespace),
+		buildKeycloakClientSecret(keycloakConfig, kafkaRequest.Name, kafkaRequest.SsoClientSecret, namespace),
 		buildKeycloakCASecret(keycloakConfig, kafkaRequest.Name, namespace),
 	}
 
