@@ -137,6 +137,7 @@ func (k *KafkaManager) reconcile() {
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			continue
 		}
+
 	}
 
 	// handle provisioning kafkas state
@@ -155,8 +156,17 @@ func (k *KafkaManager) reconcile() {
 				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
 				continue
 			}
+		}
+	}
 
-			if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka && kafka.Status == string(constants.KafkaRequestStatusReady) {
+	if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
+		readyKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusReady)
+		if serviceErr != nil {
+			sentry.CaptureException(serviceErr)
+			glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
+		}
+		for _, kafka := range readyKafkas {
+			if kafka.Status == string(constants.KafkaRequestStatusReady) {
 				if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
 					sentry.CaptureException(err)
 					glog.Errorf("failed to get provisioning kafkas sso client%s: %s", kafka.SsoClientID, err.Error())
@@ -316,7 +326,6 @@ func (k *KafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequ
 		}
 		kafkaRequest.SsoClientSecret = secret
 		if err = k.kafkaService.Update(kafkaRequest); err != nil {
-			sentry.CaptureException(err)
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafkaRequest.ID, err)
 		}
 	}
