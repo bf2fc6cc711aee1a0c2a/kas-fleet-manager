@@ -220,7 +220,7 @@ func (c *ClusterManager) reconcile() {
 
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled, err := c.reconcileEmptyCluster(readyCluster)
-		if !emptyClusterReconciled && err != nil {
+		if !emptyClusterReconciled && err == nil {
 			err = c.reconcileReadyCluster(readyCluster)
 		}
 
