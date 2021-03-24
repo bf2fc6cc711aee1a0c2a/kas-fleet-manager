@@ -31,21 +31,25 @@ The service is [limited to certain organisation and users (given by their userna
 
 The username is the account in question.
 
+`max_allowed_instances` determines the maximum allowed instances *per organization*.
+
 To get the org id:
 - Login to `cloud.redhat.com/openshift/token` with the account in question.
 - Use the supplied command to login to `ocm`,
 - Then run `ocm whoami` and get the organisations id from `external_id` field.
 
 
-## Compile from master branch
+## Compile from main branch
 ```
 # Change current directory to your source code folder (ie: cd <any_your_source_code_folder>)
 $ git clone https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git
 $ cd kas-fleet-manager
-$ git checkout master
+$ git checkout main
 $ make binary
 $ ./kas-fleet-manager -h
 ```
+
+> To compile the binary with an ocm token that will not expire, add your long-lived token retrieved from `cloud.redhat.com/openshift/token` into `secrets/ocm-service.token`.
 
 ## Configuring Observability
 The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization.
@@ -110,10 +114,11 @@ follow this process again to generate a new token.
     ```
     echo "" | openssl s_client -connect keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
     ```
-    ##### mas sso client id & client secret from keepassdb
+    ##### mas sso client id & client secret
     ```
     $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret>
     ```
+    > Values can be found in `secrets/keycloak-service.clientId` and `secrets/keycloak-service.clientSecret`, or alternately in keepassdb. 
 
 4. Setup external certificate for kafka brokers
     #### Option A)
@@ -229,7 +234,7 @@ $ ./kas-fleet-manager cluster create
 # Verify cluster record is created
 # Login to the database
 $ make db/login
-# Ensure the cluster exists in clusters table and monitor the status. It should change to 'ready' after provisioned.
+# Ensure the cluster exists in clusters table. Status will change to `cluster-provisioned` once the OSD is available and then to 'ready' after it has been terraformed and ready for use.
 serviceapitests# select * from clusters;
 
 # Alternatively, verify from ocm-cli
@@ -262,8 +267,9 @@ cluster, you will need to register it in the database so that it can be used by 
       ```
       make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id>
       ```
-    - Run the command generated above in your local database.
+    - Run the command generated above in your local database:
         - Login to the local database using `make db/login`
+        - Execute SQL command from previous steps (kas-fleet-manager will populate any blank values when it reconciles)
         - Ensure that the **clusters** table is available.
             - Create the binary by running `make binary`
             - Run `./kas-fleet-manager migrate`
