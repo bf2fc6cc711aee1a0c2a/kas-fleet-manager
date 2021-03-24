@@ -1,4 +1,5 @@
 package config
+
 import "github.com/spf13/pflag"
 
 type KasFleetshardConfig struct {
