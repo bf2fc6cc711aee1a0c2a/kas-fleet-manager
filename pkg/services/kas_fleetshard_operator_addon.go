@@ -105,7 +105,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 
 		{
 			Id:    kasFleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.configService.GetConfig().Keycloak.BaseURL,
+			Value: o.configService.GetConfig().Keycloak.KafkaRealm.ValidIssuerURI,
 		},
 		{
 			Id:    kasFleetshardOperatorParamServiceAccountId,

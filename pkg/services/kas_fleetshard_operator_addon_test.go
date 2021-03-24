@@ -74,8 +74,8 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 					Keycloak: &config.KeycloakConfig{
 						KafkaRealm: &config.KeycloakRealmConfig{},
 					},
-					ClusterCreationConfig:      &config.ClusterCreationConfig{},
-					KasFleetShardConfig: &config.KasFleetshardConfig{},
+					ClusterCreationConfig: &config.ClusterCreationConfig{},
+					KasFleetShardConfig:   &config.KasFleetshardConfig{},
 				}),
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
@@ -233,7 +233,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 					},
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
-					KasFleetShardConfig: &config.KasFleetshardConfig{},
+					KasFleetShardConfig:        &config.KasFleetshardConfig{},
 				}),
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{
