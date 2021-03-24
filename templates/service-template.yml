@@ -303,6 +303,16 @@ parameters:
   description: Enable quota service with kas-fleetshard-operator
   value: "true"
 
+- name: KAS_FLEETSHARD_POLL_INTERVAL
+  displayName: Kas-fleetshard-operator poll interval
+  description: Interval defining how often the synchronizer polls and gets updates from the control plane
+  value: "15s"
+
+- name: KAS_FLEETSHARD_RESYNC_INTERVAL
+  displayName: Kas-fleetshard-operator resync interval
+  description: Interval defining how often the synchronizer reports back status changes to the control plane
+  value: "60s"
+
 - name: OBSERVABILITY_CONFIG_REPO
   displayName: Observability configuration repo URL
   description: URL of the observability configuration repo
@@ -625,6 +635,8 @@ objects:
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
+            - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
+            - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
             - --enable-kas-fleetshard-sync=${ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC}
             - --enable-quota-service=${ENABLE_QUOTA_SERVICE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
