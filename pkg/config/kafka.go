@@ -54,7 +54,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableManagedKafkaCR, "enable-managed-kafka-cr", c.EnableManagedKafkaCR, "Enable usage of the ManagedKafkaCR instead of the KafkaCR")
 	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
 	fs.BoolVar(&c.EnableKasFleetshardSync, "enable-kas-fleetshard-sync", c.EnableKasFleetshardSync, "Enable direct data synchronisation with kas-fleetshard-operator")
-	fs.BoolVar(&c.EnableQuotaService, "enable-quota-service", c.EnableQuotaService, "Enable quota service" )
+	fs.BoolVar(&c.EnableQuotaService, "enable-quota-service", c.EnableQuotaService, "Enable quota service")
 }
 
 func (c *KafkaConfig) ReadFiles() error {

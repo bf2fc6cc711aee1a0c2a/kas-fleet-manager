@@ -1191,6 +1191,13 @@ components:
       - items
       - kind
       type: object
+    PrivateObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+      type: object
     Error:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1232,7 +1239,7 @@ components:
       type: object
     ManagedKafka:
       allOf:
-      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/PrivateObjectReference'
       - $ref: '#/components/schemas/ManagedKafka_allOf'
     ManagedKafkaList:
       allOf:
@@ -1649,7 +1656,7 @@ components:
         dataRetentionSize:
           nullable: true
           type: string
-        maxPartitions:
+        partitions:
           nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_resizeInfo:

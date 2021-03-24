@@ -347,7 +347,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
 	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
+	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
 	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) - 1}[0]
 	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) - 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
@@ -391,7 +391,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	// We force a scale-down by setting one of the remaining fields to be
 	// higher than the scale-down threshold.
 	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{*clusterStatusUpdateRequest.ResizeInfo.Delta.Connections + 1}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(*clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions) + 1}[0]
+	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(*clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions) + 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
 	resp, err = privateAPIClient.DefaultApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -467,7 +467,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
 	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.MaxPartitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
+	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(kafkaCapacityConfig.MaxPartitions) * 30}[0]
 	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{0}[0]
 	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(initialComputeNodes)}[0]
@@ -613,7 +613,7 @@ func sampleDataPlaneclusterStatusRequestWithAvailableCapacity() *openapi.DataPla
 			NodeDelta: &[]int32{3}[0],
 			Delta: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{10000}[0],
-				MaxPartitions:                 &[]int32{10000}[0],
+				Partitions:                    &[]int32{10000}[0],
 				IngressEgressThroughputPerSec: &[]string{"test"}[0],
 				DataRetentionSize:             &[]string{"test"}[0],
 			},
@@ -652,7 +652,7 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *openapi.DataPlaneClusterUpd
 			NodeDelta: &[]int32{3}[0],
 			Delta: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{0}[0],
-				MaxPartitions:                 &[]int32{0}[0],
+				Partitions:                    &[]int32{0}[0],
 				IngressEgressThroughputPerSec: &[]string{""}[0],
 				DataRetentionSize:             &[]string{""}[0],
 			},

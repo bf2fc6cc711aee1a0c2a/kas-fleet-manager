@@ -9,7 +9,6 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 	res := openapi.ManagedKafka{
 		Id:   from.Annotations["id"],
 		Kind: from.Kind,
-		Href: from.Name, // We don't have an Href for ManagedKafka
 		Metadata: openapi.ManagedKafkaAllOfMetadata{
 			Name: from.Name,
 			Annotation: openapi.ManagedKafkaAllOfMetadataAnnotation{

@@ -5,7 +5,7 @@ package ocm
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"sync"
 )
 
@@ -15,22 +15,22 @@ var _ ClusterBuilder = &ClusterBuilderMock{}
 
 // ClusterBuilderMock is a mock implementation of ClusterBuilder.
 //
-//     func TestSomethingThatUsesClusterBuilder(t *testing.T) {
+// 	func TestSomethingThatUsesClusterBuilder(t *testing.T) {
 //
-//         // make and configure a mocked ClusterBuilder
-//         mockedClusterBuilder := &ClusterBuilderMock{
-//             NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
-// 	               panic("mock out the NewOCMClusterFromCluster method")
-//             },
-//         }
+// 		// make and configure a mocked ClusterBuilder
+// 		mockedClusterBuilder := &ClusterBuilderMock{
+// 			NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error) {
+// 				panic("mock out the NewOCMClusterFromCluster method")
+// 			},
+// 		}
 //
-//         // use mockedClusterBuilder in code that requires ClusterBuilder
-//         // and then make assertions.
+// 		// use mockedClusterBuilder in code that requires ClusterBuilder
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type ClusterBuilderMock struct {
 	// NewOCMClusterFromClusterFunc mocks the NewOCMClusterFromCluster method.
-	NewOCMClusterFromClusterFunc func(cluster *api.Cluster) (*v1.Cluster, error)
+	NewOCMClusterFromClusterFunc func(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -44,7 +44,7 @@ type ClusterBuilderMock struct {
 }
 
 // NewOCMClusterFromCluster calls NewOCMClusterFromClusterFunc.
-func (mock *ClusterBuilderMock) NewOCMClusterFromCluster(cluster *api.Cluster) (*v1.Cluster, error) {
+func (mock *ClusterBuilderMock) NewOCMClusterFromCluster(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error) {
 	if mock.NewOCMClusterFromClusterFunc == nil {
 		panic("ClusterBuilderMock.NewOCMClusterFromClusterFunc: method is nil but ClusterBuilder.NewOCMClusterFromCluster was just called")
 	}

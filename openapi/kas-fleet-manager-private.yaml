@@ -856,6 +856,14 @@ components:
         kind:
           type: string
 
+    PrivateObjectReference:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+
     Error:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -909,7 +917,7 @@ components:
 
     ManagedKafka:
       allOf:
-        - $ref: "#/components/schemas/ObjectReference"
+        - $ref: "#/components/schemas/PrivateObjectReference"
         - type: object
           properties:
             metadata:
@@ -1281,7 +1289,7 @@ components:
                 dataRetentionSize:
                   type: string
                   nullable: true
-                maxPartitions:
+                partitions:
                   type: integer
                   nullable: true
       example:

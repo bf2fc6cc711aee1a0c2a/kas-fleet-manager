@@ -13,19 +13,19 @@ var _ IDGenerator = &IDGeneratorMock{}
 
 // IDGeneratorMock is a mock implementation of IDGenerator.
 //
-//     func TestSomethingThatUsesIDGenerator(t *testing.T) {
+// 	func TestSomethingThatUsesIDGenerator(t *testing.T) {
 //
-//         // make and configure a mocked IDGenerator
-//         mockedIDGenerator := &IDGeneratorMock{
-//             GenerateFunc: func() string {
-// 	               panic("mock out the Generate method")
-//             },
-//         }
+// 		// make and configure a mocked IDGenerator
+// 		mockedIDGenerator := &IDGeneratorMock{
+// 			GenerateFunc: func() string {
+// 				panic("mock out the Generate method")
+// 			},
+// 		}
 //
-//         // use mockedIDGenerator in code that requires IDGenerator
-//         // and then make assertions.
+// 		// use mockedIDGenerator in code that requires IDGenerator
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type IDGeneratorMock struct {
 	// GenerateFunc mocks the Generate method.
 	GenerateFunc func() string

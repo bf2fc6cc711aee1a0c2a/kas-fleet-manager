@@ -22,7 +22,7 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
-		configService 		 services.ConfigService
+		configService        services.ConfigService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
