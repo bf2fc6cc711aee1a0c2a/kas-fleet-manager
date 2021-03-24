@@ -29,7 +29,7 @@ func ConvertDataPlaneClusterStatus(status openapi.DataPlaneClusterUpdateStatusRe
 				IngressEgressThroughputPerSec: *status.ResizeInfo.Delta.IngressEgressThroughputPerSec,
 				Connections:                   int(*status.ResizeInfo.Delta.Connections),
 				DataRetentionSize:             *status.ResizeInfo.Delta.DataRetentionSize,
-				Partitions:                    int(*status.ResizeInfo.Delta.MaxPartitions),
+				Partitions:                    int(*status.ResizeInfo.Delta.Partitions),
 			},
 		},
 		Remaining: api.DataPlaneClusterStatusCapacity{

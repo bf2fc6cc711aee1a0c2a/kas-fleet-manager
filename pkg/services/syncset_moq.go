@@ -4,8 +4,8 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"sync"
 )
 
@@ -15,35 +15,35 @@ var _ SyncsetService = &SyncsetServiceMock{}
 
 // SyncsetServiceMock is a mock implementation of SyncsetService.
 //
-//     func TestSomethingThatUsesSyncsetService(t *testing.T) {
+// 	func TestSomethingThatUsesSyncsetService(t *testing.T) {
 //
-//         // make and configure a mocked SyncsetService
-//         mockedSyncsetService := &SyncsetServiceMock{
-//             CreateFunc: func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
-// 	               panic("mock out the Create method")
-//             },
-//             DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-// 	               panic("mock out the Delete method")
-//             },
-//         }
+// 		// make and configure a mocked SyncsetService
+// 		mockedSyncsetService := &SyncsetServiceMock{
+// 			CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *apiErrors.ServiceError) {
+// 				panic("mock out the Create method")
+// 			},
+// 			DeleteFunc: func(syncsetId string, clusterId string) (int, *apiErrors.ServiceError) {
+// 				panic("mock out the Delete method")
+// 			},
+// 		}
 //
-//         // use mockedSyncsetService in code that requires SyncsetService
-//         // and then make assertions.
+// 		// use mockedSyncsetService in code that requires SyncsetService
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type SyncsetServiceMock struct {
 	// CreateFunc mocks the Create method.
-	CreateFunc func(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError)
+	CreateFunc func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *apiErrors.ServiceError)
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(syncsetId string, clusterId string) (int, *errors.ServiceError)
+	DeleteFunc func(syncsetId string, clusterId string) (int, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// Create holds details about calls to the Create method.
 		Create []struct {
 			// SyncsetBuilder is the syncsetBuilder argument value.
-			SyncsetBuilder *v1.SyncsetBuilder
+			SyncsetBuilder *cmv1.SyncsetBuilder
 			// SyncsetId is the syncsetId argument value.
 			SyncsetId string
 			// ClusterId is the clusterId argument value.
@@ -62,12 +62,12 @@ type SyncsetServiceMock struct {
 }
 
 // Create calls CreateFunc.
-func (mock *SyncsetServiceMock) Create(syncsetBuilder *v1.SyncsetBuilder, syncsetId string, clusterId string) (*v1.Syncset, *errors.ServiceError) {
+func (mock *SyncsetServiceMock) Create(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *apiErrors.ServiceError) {
 	if mock.CreateFunc == nil {
 		panic("SyncsetServiceMock.CreateFunc: method is nil but SyncsetService.Create was just called")
 	}
 	callInfo := struct {
-		SyncsetBuilder *v1.SyncsetBuilder
+		SyncsetBuilder *cmv1.SyncsetBuilder
 		SyncsetId      string
 		ClusterId      string
 	}{
@@ -85,12 +85,12 @@ func (mock *SyncsetServiceMock) Create(syncsetBuilder *v1.SyncsetBuilder, syncse
 // Check the length with:
 //     len(mockedSyncsetService.CreateCalls())
 func (mock *SyncsetServiceMock) CreateCalls() []struct {
-	SyncsetBuilder *v1.SyncsetBuilder
+	SyncsetBuilder *cmv1.SyncsetBuilder
 	SyncsetId      string
 	ClusterId      string
 } {
 	var calls []struct {
-		SyncsetBuilder *v1.SyncsetBuilder
+		SyncsetBuilder *cmv1.SyncsetBuilder
 		SyncsetId      string
 		ClusterId      string
 	}
@@ -101,7 +101,7 @@ func (mock *SyncsetServiceMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *SyncsetServiceMock) Delete(syncsetId string, clusterId string) (int, *errors.ServiceError) {
+func (mock *SyncsetServiceMock) Delete(syncsetId string, clusterId string) (int, *apiErrors.ServiceError) {
 	if mock.DeleteFunc == nil {
 		panic("SyncsetServiceMock.DeleteFunc: method is nil but SyncsetService.Delete was just called")
 	}
