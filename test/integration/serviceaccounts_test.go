@@ -161,3 +161,77 @@ func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
+
+func TestServiceAccounts_InputValidation(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	//length check
+	r := openapi.ServiceAccountRequest{
+		Name:        "length-more-than-50-is-not-allowed-managed-service-integration-test",
+		Description: "created by the managed service integration",
+	}
+	_, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//xss prevention
+	r = openapi.ServiceAccountRequest{
+		Name:        "<script>alert(\"TEST\");</script>",
+		Description: "created by the managed service integration",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//description length can not be more than 255
+	r = openapi.ServiceAccountRequest{
+		Name:        "test-svc-1",
+		Description: faker.Paragraph(),
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//min length required for name
+	r = openapi.ServiceAccountRequest{
+		Name:        "",
+		Description: "test",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//min length required for desc
+	r = openapi.ServiceAccountRequest{
+		Name:        "test",
+		Description: "",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//xss prevention
+	r = openapi.ServiceAccountRequest{
+		Name:        "service-account-1",
+		Description: "created by the managed service integration #$@#$#@$#@$$#",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+
+	// verify malformed  id
+	id := faker.ID
+	_, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	Expect(err).Should(HaveOccurred())
+}
