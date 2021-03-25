@@ -30,7 +30,7 @@ import (
 const (
 	mockKafkaName      = "test-kafka1"
 	kafkaReadyTimeout  = time.Minute * 10
-	kafkaCheckInterval = time.Second * 10
+	kafkaCheckInterval = time.Second * 1
 	testMultiAZ        = true
 	invalidKafkaName   = "Test_Cluster9"
 	longKafkaName      = "thisisaninvalidkafkaclusternamethatexceedsthenamesizelimit"
@@ -642,7 +642,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	// Set a custom request handler for POST /syncsets with a delay so we can trigger the deletion during Kafka creation
 	ocmServerBuilder.SetClusterSyncsetPostRequestHandler(func() func(w http.ResponseWriter, r *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
-			time.Sleep(time.Second * 10)
+			time.Sleep(time.Second * 1)
 			w.Header().Set("Content-Type", "application/json")
 			if err := clustersmgmtv1.MarshalSyncset(mocks.MockSyncset, w); err != nil {
 				t.Error(err)
