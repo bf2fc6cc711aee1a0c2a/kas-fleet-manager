@@ -1,3 +1,6 @@
+import logging
+import requests, json
+
 import locust, os, random, time, urllib3
 from locust import task, HttpUser, constant_pacing
 
@@ -42,6 +45,8 @@ kafkas_created = 0
 
 # boolean flag driving cleanup stage
 resources_cleaned_up = False
+
+kafkas_persisted = False
 
 kafkas_list = []
 service_acc_list = []
@@ -108,8 +113,14 @@ class QuickstartUser(HttpUser):
 # kafka metrics                                     1%
 # cloud provider(s) get                             1%
 # openapi get                                       1%
-# service accounts + service account password reset	1%
 # kafka get metrics                      	        0.5%
+# 
+# Stages of the main execution include:
+# 1. creating kafkas followed by creating serviceaccounts (if specified by PERF_TEST_KAFKAS_PER_WORKER param) 
+#    - 1:1 ratio of kafkas and service accounts to be created
+# 2. attack GET endpoints:
+#    - immediately, if PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=0
+#    - x minutes after the testing was started, where x is specified by PERF_TEST_HIT_ENDPOINTS_HOLD_OFF parameter
 def exercise_endpoints(self, get_only):
   global kafkas_created
   if len(kafkas_list) < kafkas_to_create:
@@ -119,6 +130,8 @@ def exercise_endpoints(self, get_only):
       kafkas_created = kafkas_created + 1
       time.sleep(kafka_post_wait_time) # sleep after creating kafka
   else:
+    if kafkas_persisted == False:
+      wait_for_kafkas_ready(self)
     # only hit the endpoints, if wait_time_in_minutes has passed already
     if current_run_time / 60 >= wait_time_in_minutes:
       endpoint_selector = random.randrange(0,99)
@@ -134,22 +147,65 @@ def exercise_endpoints(self, get_only):
       elif endpoint_selector < 88:
         handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
       else:
-        kafka_id = ""
+        kafka_id = ''
         if len(kafkas_list) == 0:
-          org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)  
+          org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
           # get all kafkas and if the list is not empty - get random kafka_id
           items = get_items_from_json_response(org_kafkas)
           if len(items) > 0:
             kafka_id = get_random_id(get_ids_from_list(items))
         else:
           kafka_id = get_random_id(kafkas_list)
-        if kafka_id != "":
+        if kafka_id != '':
           handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
           if (random.randrange(0,19) < 1): 
             handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
             handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
     elif current_run_time / 60 + 1 < wait_time_in_minutes:
       time.sleep(15) # wait 15 seconds instead of hitting this if/else unnecessarily
+
+# wait for kafkas to be in ready state and persist kafka config
+def wait_for_kafkas_ready(self):
+  global kafkas_persisted
+  i = 0
+  while i < len(kafkas_list):
+    kafka = handle_get(self, f'{url_base}/kafkas/{kafkas_list[i]}', '/kafkas/[id]', True)
+    svc_acc_id = ''
+    if 'status' in kafka:
+      if kafka['status'] == 'ready' and 'bootstrapServerHost' in kafka:
+        while svc_acc_id == '':
+          svc_acc_json_payload = svc_acc_json(url_base)
+          svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
+          if svc_acc_id != '':
+            bootstrap_url = kafka['bootstrapServerHost']
+            username = svc_acc_json_payload['clientID']
+            password = svc_acc_json_payload['clientSecret']
+            config = {
+                        'bootstrapURL': bootstrap_url,
+                        'username': username,
+                        'password': password,
+                      }
+            headers = {'content-type': 'application/json'}
+            config_persisted = False
+            r = requests.post('http://api:8099/write_kafka_config', data=json.dumps(config), headers=headers)
+            while config_persisted == False:
+              # retry persisting config if unsuccessful
+              if r.status_code != 204:
+                time.sleep(random.uniform(1, 2))
+                continue
+              else: 
+                config_persisted = True
+                i += 1
+                if i == len(kafkas_list):
+                  kafkas_persisted = True
+                  logging.info('kafka config persisted for the worker')
+          else:
+            time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
+      else:
+        time.sleep(random.uniform(25,30)) # sleep before checking kafka status again if not ready
+    else:
+      # if there was no kafka body returned - backoff for 1-5 seconds and try to GET kafka details again
+      time.sleep(random.uniform(1,5))
 
 # perf tests against service account endpoints
 def service_accounts(self, get_only):

@@ -18,8 +18,8 @@ def handle_post(self, url, payload, name):
         if 'id' in response_json:
           return response_json['id']
       except ValueError: # no json response
-        return ""
-    return ""
+        return ''
+    return ''
 
 # handle delete requests for specified 'url'. 
 # 'name' parameter denotes the display name in the statistics printed by locust
