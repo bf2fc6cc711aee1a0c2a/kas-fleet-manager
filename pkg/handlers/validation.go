@@ -41,7 +41,7 @@ func validateAsyncEnabled(r *http.Request, action string) validate {
 	}
 }
 
-func validServiceAccountName(value *string, field string) validate {
+func validateServiceAccountName(value *string, field string) validate {
 	return func() *errors.ServiceError {
 		if !validServiceAccountNameRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountName("%s does not match %s", field, validServiceAccountNameRegexp.String())

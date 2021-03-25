@@ -176,7 +176,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 
 	//length check
 	r := openapi.ServiceAccountRequest{
-		Name:        "length-more-than-50-is-allowed-managed-service-integration-test",
+		Name:        "length-more-than-50-is-not-allowed-managed-service-integration-test",
 		Description: "created by the managed service integration",
 	}
 	_, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
@@ -203,7 +203,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 
-	// verify get by id
+	// verify malformed  id
 	id := faker.ID
 	_, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
