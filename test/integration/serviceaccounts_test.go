@@ -192,6 +192,32 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
+	//description length can not be more than 255
+	r = openapi.ServiceAccountRequest{
+		Name:        "test-svc-1",
+		Description: faker.Paragraph(),
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//min length required for name
+	r = openapi.ServiceAccountRequest{
+		Name:        "",
+		Description: "test",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+
+	//min length required for desc
+	r = openapi.ServiceAccountRequest{
+		Name:        "test",
+		Description: "",
+	}
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	//xss prevention
 	r = openapi.ServiceAccountRequest{

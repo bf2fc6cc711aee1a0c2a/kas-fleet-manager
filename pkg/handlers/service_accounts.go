@@ -129,7 +129,7 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 	cfg := &handlerConfig{
 		Validate: []validate{
 			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
-			validServiceAccountId(&id, "id"),
+			validateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
