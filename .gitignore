@@ -64,6 +64,7 @@ Dockerfile_integration_tests
 # performance tests leftovers
 **/__pycache__
 test/performance/reports/perf_test*
+test/performance/token_api/config.txt
 
 # local bin directory
 bin
