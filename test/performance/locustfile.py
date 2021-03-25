@@ -134,7 +134,7 @@ def exercise_endpoints(self, get_only):
       wait_for_kafkas_ready(self)
     # only hit the endpoints, if wait_time_in_minutes has passed already
     if current_run_time / 60 >= wait_time_in_minutes:
-      endpoint_selector = random.randrange(1,99)
+      endpoint_selector = random.randrange(0,99)
       if endpoint_selector < 1:
         service_accounts(self, get_only)
       elif endpoint_selector < 2:
