@@ -234,7 +234,7 @@ $ ./kas-fleet-manager cluster create
 # Verify cluster record is created
 # Login to the database
 $ make db/login
-# Ensure the cluster exists in clusters table. Status will change to `cluster-provisioned` once the OSD is available and then to 'ready' after it has been terraformed and ready for use.
+# Ensure the cluster exists in clusters table. Status will change to `cluster_provisioned` once the OSD is available and then to 'ready' after it has been terraformed and ready for use.
 serviceapitests# select * from clusters;
 
 # Alternatively, verify from ocm-cli
