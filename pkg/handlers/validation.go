@@ -19,15 +19,15 @@ import (
 
 var (
 	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
-	validKafkaClusterNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
-	validUuidRegexp = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-	validServiceAccountNameRegexp =  regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+	validKafkaClusterNameRegexp   = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+	validUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+	validServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 	validServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9\s]*$`)
-	minRequiredFieldLength      = 1
-	maxKafkaNameLength          = 32
-	maxServiceAccountNameLength = 50
-	maxServiceAccountDescLength = 255
-	maxServiceAccountId = 36
+	minRequiredFieldLength        = 1
+	maxKafkaNameLength            = 32
+	maxServiceAccountNameLength   = 50
+	maxServiceAccountDescLength   = 255
+	maxServiceAccountId           = 36
 )
 
 // validateAsyncEnabled returns a validator that returns an error if the async query param is not true
