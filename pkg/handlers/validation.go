@@ -50,7 +50,7 @@ func validateServiceAccountName(value *string, field string) validate {
 	}
 }
 
-func validServiceAccountDesc(value *string, field string) validate {
+func validateServiceAccountDesc(value *string, field string) validate {
 	return func() *errors.ServiceError {
 		if !validServiceAccountDescRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountDesc("%s does not match %s", field, validServiceAccountDescRegexp.String())
@@ -59,7 +59,7 @@ func validServiceAccountDesc(value *string, field string) validate {
 	}
 }
 
-func validServiceAccountId(value *string, field string) validate {
+func validateServiceAccountId(value *string, field string) validate {
 	return func() *errors.ServiceError {
 		if !validUuidRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountId("%s does not match %s", field, validUuidRegexp.String())

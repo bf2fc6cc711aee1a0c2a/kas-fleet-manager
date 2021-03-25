@@ -68,8 +68,8 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 		Validate: []validate{
 			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength,&maxServiceAccountNameLength),
 			validateLength(&serviceAccountRequest.Description, "description", &minRequiredFieldLength,&maxServiceAccountDescLength),
-			validServiceAccountName(&serviceAccountRequest.Name, "name"),
-			validServiceAccountDesc(&serviceAccountRequest.Description, "description"),
+			validateServiceAccountName(&serviceAccountRequest.Name, "name"),
+			validateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -90,7 +90,7 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 	cfg := &handlerConfig{
 		Validate: []validate{
 			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
-			validServiceAccountId(&id, "id"),
+			validateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -108,7 +108,7 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 	cfg := &handlerConfig{
 		Validate: []validate{
 			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
-			validServiceAccountId(&id, "id"),
+			validateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
