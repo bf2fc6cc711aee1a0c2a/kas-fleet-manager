@@ -136,6 +136,18 @@ const (
 	// Failure to send an error response (i.e. unable to send error response as the error can't be converted to JSON.)
 	ErrorUnableToSendErrorResponse       ServiceErrorCode = 1000
 	ErrorUnableToSendErrorResponseReason string           = "An unexpected error happened, please check the log of the service for details"
+
+	// Invalid service account name
+	ErrorMalformedServiceAccountName       ServiceErrorCode = 38
+	ErrorMalformedServiceAccountNameReason string           = "Service account name is invalid"
+
+	// Invalid service account desc
+	ErrorMalformedServiceAccountDesc       ServiceErrorCode = 39
+	ErrorMalformedServiceAccountDescReason string           = "Service account desc is invalid"
+
+	// Invalid service account desc
+	ErrorMalformedServiceAccountId       ServiceErrorCode = 40
+	ErrorMalformedServiceAccountIdReason string           = "Service account id is invalid"
 )
 
 type ServiceErrorCode int
@@ -184,6 +196,9 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden},
 		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusForbidden},
+		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest},
+		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest},
+		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest},
 	}
 }
 
@@ -436,6 +451,18 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 
 func MalformedKafkaClusterName(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMalformedKafkaClusterName, reason, values...)
+}
+
+func MalformedServiceAccountName(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedServiceAccountName, reason, values...)
+}
+
+func MalformedServiceAccountDesc(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedServiceAccountDesc, reason, values...)
+}
+
+func MalformedServiceAccountId(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedServiceAccountId, reason, values...)
 }
 
 func DuplicateKafkaClusterName() *ServiceError {

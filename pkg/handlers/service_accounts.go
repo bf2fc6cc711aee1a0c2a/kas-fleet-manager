@@ -66,7 +66,10 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 	cfg := &handlerConfig{
 		MarshalInto: &serviceAccountRequest,
 		Validate: []validate{
-			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength, nil),
+			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength,&maxServiceAccountNameLength),
+			validateLength(&serviceAccountRequest.Description, "description", &minRequiredFieldLength,&maxServiceAccountDescLength),
+			validateServiceAccountName(&serviceAccountRequest.Name, "name"),
+			validateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -85,6 +88,10 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
+		Validate: []validate{
+			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			validateServiceAccountId(&id, "id"),
+		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			err := s.service.DeleteServiceAccount(ctx, id)
@@ -100,7 +107,8 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
+			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			validateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -120,7 +128,8 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 	id := mux.Vars(r)["id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
+			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			validateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
