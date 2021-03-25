@@ -85,6 +85,26 @@ func (c *Client) newConnection() error {
 	return nil
 }
 
+func (c *Client) NewConnWithUserToken(token string) (*sdkClient.Connection, error) {
+	builder := sdkClient.NewConnectionBuilder().
+		Logger(c.logger).
+		URL(c.config.BaseURL).
+		MetricsSubsystem("api_outbound")
+
+	if c.config.SelfToken != "" {
+		builder = builder.Tokens(token)
+	} else {
+		return nil, fmt.Errorf("can't build OCM client connection. No token has been provided")
+	}
+
+	connection, err := builder.Build()
+	if err != nil {
+		return nil, fmt.Errorf("can't build OCM client connection: %s", err.Error())
+	}
+	c.Connection = connection
+	return c.Connection, nil
+}
+
 func (c *Client) Close() {
 	if c.Connection != nil {
 		c.Connection.Close()

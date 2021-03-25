@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -15,6 +16,7 @@ import (
 type kafkaHandler struct {
 	service services.KafkaService
 	config  services.ConfigService
+	authz services.AuthorizationService
 }
 
 func NewKafkaHandler(service services.KafkaService, configService services.ConfigService) *kafkaHandler {
@@ -66,6 +68,10 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
+			isAllowed ,err:= h.authz.CheckAccessReviewByKafkaID(ctx,r.Method, id)
+			if !isAllowed || err != nil {
+				shared.HandleError(ctx, w, errors.ErrorUnauthenticated, err.Reason)
+			}
 			kafkaRequest, err := h.service.Get(ctx, id)
 			if err != nil {
 				return nil, err
@@ -86,8 +92,11 @@ func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
-
-			err := h.service.RegisterKafkaDeprovisionJob(ctx, id)
+			isAllowed,err:= h.authz.CheckAccessReviewByKafkaID(ctx,r.Method, id)
+			if !isAllowed || err != nil {
+				shared.HandleError(ctx, w, errors.ErrorUnauthenticated, err.Reason)
+			}
+			err = h.service.RegisterKafkaDeprovisionJob(ctx, id)
 			return nil, err
 		},
 		ErrorHandler: handleError,
@@ -99,7 +108,8 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-
+			//listKafkas,err:=h.authz.ListAllowedKafkaInstance(ctx, "RHOSAKTrial")
+			//Todo update the list method to take listKakfas as input & do lookup based on the input.
 			listArgs := services.NewListArguments(r.URL.Query())
 			kafkaRequests, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
