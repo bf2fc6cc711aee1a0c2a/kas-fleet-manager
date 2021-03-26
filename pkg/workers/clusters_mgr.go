@@ -22,8 +22,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/golang/glog"
 	"github.com/getsentry/sentry-go"
+	"github.com/golang/glog"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -695,7 +695,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v2.0.0",
+			StartingCSV:            "observability-operator.v3.0.0",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
