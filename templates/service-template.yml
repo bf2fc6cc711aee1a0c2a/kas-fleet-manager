@@ -321,7 +321,12 @@ parameters:
 - name: OBSERVABILITY_CONFIG_CHANNEL
   displayName: Observability configuration channel
   description: Channel of the observability configuration
-  value: "development"
+  value: "resources"
+
+- name: OBSERVABILITY_CONFIG_TAG
+  displayName: Observability configuration tag
+  description: Tag or branch to use inside the configuration repo
+  value: "v1.0.0"
 
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service
@@ -642,6 +647,7 @@ objects:
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
             - --observability-config-access-token-file=/secrets/service/observability-config-access.token
+            - --observability-config-tag=${OBSERVABILITY_CONFIG_TAG}
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}

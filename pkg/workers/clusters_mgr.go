@@ -24,6 +24,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
+
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
@@ -40,7 +41,7 @@ const (
 	observabilityNamespace          = "managed-application-services-observability"
 	openshiftIngressNamespace       = "openshift-ingress-operator"
 	observabilityDexCredentials     = "observatorium-dex-credentials"
-	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v2.0.0"
+	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v3.0.0"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
@@ -694,7 +695,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v2.0.0",
+			StartingCSV:            "observability-operator.v3.0.0",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
@@ -785,6 +786,7 @@ func (c *ClusterManager) buildObservabilityExternalConfigResource() *k8sCoreV1.C
 			"access_token": observabilityConfig.ObservabilityConfigAccessToken,
 			"channel":      observabilityConfig.ObservabilityConfigChannel,
 			"repository":   observabilityConfig.ObservabilityConfigRepo,
+			"tag":          observabilityConfig.ObservabilityConfigTag,
 		},
 	}
 }
