@@ -228,7 +228,6 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
-
 	// verify malformed  id
 	id := faker.ID
 	_, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)

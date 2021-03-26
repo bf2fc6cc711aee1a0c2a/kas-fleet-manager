@@ -66,8 +66,8 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 	cfg := &handlerConfig{
 		MarshalInto: &serviceAccountRequest,
 		Validate: []validate{
-			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength,&maxServiceAccountNameLength),
-			validateLength(&serviceAccountRequest.Description, "description", &minRequiredFieldLength,&maxServiceAccountDescLength),
+			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength, &maxServiceAccountNameLength),
+			validateLength(&serviceAccountRequest.Description, "description", &minRequiredFieldLength, &maxServiceAccountDescLength),
 			validateServiceAccountName(&serviceAccountRequest.Name, "name"),
 			validateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
 		},

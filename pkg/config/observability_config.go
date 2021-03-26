@@ -49,9 +49,10 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		EnableMock:                         false,
 		Insecure:                           true, // TODO: false
 		ObservabilityConfigRepo:            "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents",
-		ObservabilityConfigChannel:         "staging",
+		ObservabilityConfigChannel:         "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
 		ObservabilityConfigAccessToken:     "",
 		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
+		ObservabilityConfigTag:             "v1.0.0",
 	}
 }
 
@@ -72,6 +73,8 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ObservabilityConfigRepo, "observability-config-repo", c.ObservabilityConfigRepo, "Repo for the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigChannel, "observability-config-channel", c.ObservabilityConfigChannel, "Channel for the observability operator configuration repo")
 	fs.StringVar(&c.ObservabilityConfigAccessTokenFile, "observability-config-access-token-file", c.ObservabilityConfigAccessTokenFile, "File contains the access token to the observability operator configuration repo")
+	fs.StringVar(&c.ObservabilityConfigTag, "observability-config-tag", c.ObservabilityConfigTag, "Tag or branch to use inside the observability configuration repo")
+
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {

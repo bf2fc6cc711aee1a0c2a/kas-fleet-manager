@@ -1634,6 +1634,7 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 		ObservabilityConfigRepo:        "obs-config-repo",
 		ObservabilityConfigChannel:     "obs-config-channel",
 		ObservabilityConfigAccessToken: "obs-config-token",
+		ObservabilityConfigTag:         "obs-config-tag",
 	}
 	return observabilityConfig
 }
@@ -1765,7 +1766,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				CatalogSource:          observabilityCatalogSourceName,
 				Channel:                "alpha",
 				CatalogSourceNamespace: observabilityNamespace,
-				StartingCSV:            "observability-operator.v2.0.0",
+				StartingCSV:            "observability-operator.v3.0.0",
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
 			},
@@ -1786,6 +1787,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				"access_token": observabilityConfig.ObservabilityConfigAccessToken,
 				"channel":      observabilityConfig.ObservabilityConfigChannel,
 				"repository":   observabilityConfig.ObservabilityConfigRepo,
+				"tag":          observabilityConfig.ObservabilityConfigTag,
 			},
 		},
 	}
