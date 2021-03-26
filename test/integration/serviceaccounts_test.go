@@ -210,14 +210,21 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
-	//min length required for desc
+	//min length required is not required for desc
 	r = openapi.ServiceAccountRequest{
 		Name:        "test",
 		Description: "",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
+	sa, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(sa.ClientID).NotTo(BeEmpty())
+	Expect(sa.ClientSecret).NotTo(BeEmpty())
+	Expect(sa.Id).NotTo(BeEmpty())
+
+	//verify delete
+	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
+	Expect(err).ShouldNot(HaveOccurred())
 
 	//xss prevention
 	r = openapi.ServiceAccountRequest{
