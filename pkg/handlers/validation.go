@@ -3,9 +3,10 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/xeipuuv/gojsonschema"
 	"net/http"
 	"regexp"
+
+	"github.com/xeipuuv/gojsonschema"
 
 	"net/url"
 	"strconv"
@@ -115,7 +116,7 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 // reached the max number of allowed instances that can be created for this user if any or the global max allowed defaults
 func validateMaxAllowedInstances(kafkaService services.KafkaService, configService services.ConfigService, context context.Context) validate {
 	return func() *errors.ServiceError {
-		if !configService.IsAllowListEnabled() {
+		if !configService.GetConfig().AccessControlList.EnableAllowList {
 			return nil
 		}
 

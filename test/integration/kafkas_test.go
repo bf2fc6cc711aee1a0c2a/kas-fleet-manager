@@ -3,11 +3,12 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -30,6 +31,7 @@ import (
 const (
 	mockKafkaName      = "test-kafka1"
 	kafkaReadyTimeout  = time.Minute * 10
+	kafkaDeleteTimeout = time.Minute * 10
 	kafkaCheckInterval = time.Second * 1
 	testMultiAZ        = true
 	invalidKafkaName   = "Test_Cluster9"
@@ -321,6 +323,140 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 			Expect(resp.Header.Get("Content-Type")).To(Equal("application/json"))
 		})
 	}
+}
+
+// TestKafkaDenyList_UnauthorizedValidation tests the deny list API access validations is performed when enabled
+func TestKafkaDenyList_UnauthorizedValidation(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
+	// this value if taken from config/deny-list-configuration.yaml
+	username := "denied-test-user1@example.com"
+	account := h.NewAccount(username, username, username, "13640203")
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	tests := []struct {
+		name      string
+		operation func() *http.Response
+	}{
+		{
+			name: "HTTP 403 when listing kafkas",
+			operation: func() *http.Response {
+				_, resp, _ := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+				return resp
+			},
+		},
+		{
+			name: "HTTP 403 when creating a new kafka request",
+			operation: func() *http.Response {
+				body := openapi.KafkaRequestPayload{
+					CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+					MultiAz:       mocks.MockCluster.MultiAZ(),
+					Region:        "us-east-3",
+					Name:          mockKafkaName,
+				}
+
+				_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, body)
+				return resp
+			},
+		},
+		{
+			name: "HTTP 403 when deleting new kafka request",
+			operation: func() *http.Response {
+				_, resp, _ := client.DefaultApi.DeleteKafkaById(ctx, "kafka-id", true)
+				return resp
+			},
+		},
+		{
+			name: "HTTP 403 when getting a new kafka request",
+			operation: func() *http.Response {
+				_, resp, _ := client.DefaultApi.GetKafkaById(ctx, "kafka-id")
+				return resp
+			},
+		},
+	}
+
+	// verify that the user does not have access to the service
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			resp := tt.operation()
+			Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
+			Expect(resp.Header.Get("Content-Type")).To(Equal("application/json"))
+		})
+	}
+}
+
+// TestKafkaDenyList_RemovingKafkaForDeniedOwners tests that all kafkas of denied owners are removed
+func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	defer teardown()
+
+	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
+	// these values are taken from config/deny-list-configuration.yaml
+	username1 := "denied-test-user1@example.com"
+	username2 := "denied-test-user2@example.com"
+
+	// this value is taken from config/allow-list-configuration.yaml
+	orgId := "13640203"
+
+	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
+	db := h.Env().DBFactory.New()
+	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
+	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
+	kafkas := []*api.KafkaRequest{
+		{
+			MultiAZ:        false,
+			Owner:          username1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+		{
+			MultiAZ:        false,
+			Owner:          username2,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-2",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+		{
+			MultiAZ:        false,
+			Owner:          username2,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-3",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+	}
+
+	for _, kafka := range kafkas {
+		if err := db.Save(kafka).Error; err != nil {
+			Expect(err).NotTo(HaveOccurred())
+			return
+		}
+	}
+
+	// also verify that any kafkas held by the first user has been deleted.
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
+		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+		return list.Size == 0, err
+	})
+
+	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for first kafka deletion: %v", kafkaDeletionErr)
 }
 
 // TestKafkaAllowList_MaxAllowedInstances tests the allow list max allowed instances creation validations is performed when enabled

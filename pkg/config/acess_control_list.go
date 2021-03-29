@@ -86,36 +86,75 @@ func (allowedAccounts AllowedAccounts) GetByUsername(username string) (AllowedAc
 	return AllowedAccount{}, false
 }
 
+type DeniedUsers []string
+
+func (deniedAccounts DeniedUsers) IsUserDenied(username string) bool {
+	for _, user := range deniedAccounts {
+		if username == user {
+			return true
+		}
+	}
+
+	return false
+}
+
 type AllowListConfiguration struct {
 	Organisations   OrganisationList `yaml:"allowed_users_per_organisation"`
 	ServiceAccounts AllowedAccounts  `yaml:"allowed_service_accounts"`
 }
 
-type AllowListConfig struct {
+type AccessControlListConfig struct {
 	AllowList           AllowListConfiguration
+	DenyList            DeniedUsers
 	EnableAllowList     bool
+	EnableDenyList      bool
 	AllowListConfigFile string
+	DenyListConfigFile  string
 }
 
-func NewAllowListConfig() *AllowListConfig {
-	return &AllowListConfig{
+func NewAccessControlListConfig() *AccessControlListConfig {
+	return &AccessControlListConfig{
 		AllowListConfigFile: "config/allow-list-configuration.yaml",
+		DenyListConfigFile:  "config/deny-list-configuration.yaml",
 		EnableAllowList:     false,
+		EnableDenyList:      false,
 	}
 }
 
-func (c *AllowListConfig) AddFlags(fs *pflag.FlagSet) {
+func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.AllowListConfigFile, "allow-list-config-file", c.AllowListConfigFile, "AllowList configuration file")
-	fs.BoolVar(&c.EnableAllowList, "enable-allow-list", c.EnableAllowList, "Enable allow list of users")
+	fs.BoolVar(&c.EnableAllowList, "enable-allow-list", c.EnableAllowList, "Enable access control via the allowed list of users")
+	fs.StringVar(&c.DenyListConfigFile, "deny-list-config-file", c.DenyListConfigFile, "DenyList configuration file")
+	fs.BoolVar(&c.EnableDenyList, "enable-deny-list", c.EnableDenyList, "Enable access control via the denied list of users")
 	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Maximumm number of allowed instances that can be created by the user")
 }
 
-func (c *AllowListConfig) ReadFiles() error {
-	return readFileOrganisationsConfig(c.AllowListConfigFile, &c.AllowList)
+func (c *AccessControlListConfig) ReadFiles() error {
+	var err error
+
+	if c.EnableAllowList {
+		err = readAllowListConfigFile(c.AllowListConfigFile, &c.AllowList)
+	}
+
+	if c.EnableDenyList && err == nil {
+		err = readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)
+	}
+
+	return err
 }
 
 // Read the contents of file into the allow list config
-func readFileOrganisationsConfig(file string, val *AllowListConfiguration) error {
+func readAllowListConfigFile(file string, val *AllowListConfiguration) error {
+	fileContents, err := readFile(file)
+	if err != nil {
+		return err
+	}
+
+	return yaml.UnmarshalStrict([]byte(fileContents), val)
+}
+
+// Read the contents of file into the deny list config
+func readDenyListConfigFile(file string, val *DeniedUsers) error {
 	fileContents, err := readFile(file)
 	if err != nil {
 		return err

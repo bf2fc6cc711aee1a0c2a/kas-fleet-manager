@@ -245,6 +245,11 @@ parameters:
   description: Enable the allow list access control feature
   value: "false"
 
+- name: ENABLE_DENY_LIST
+  displayName: Enable the Deny List
+  description: Enable the denied list access control feature
+  value: "false"
+
 - name: MAX_ALLOWED_INSTANCES
   displayName: Maximum allowed instances
   description: The default value of maximum number of instances that can be created by users.
@@ -259,6 +264,11 @@ parameters:
   displayName: A list of allowed users per organisation
   description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
   value: "[{id: 13640203, max_allowed_instances: 5, allow_all: true, allowed_users: []}, {id: 12147054, max_allowed_instances: 1, allow_all: true, allowed_users: []}, {id: 13639843, max_allowed_instances: 1, allow_all: true, allowed_users: []}]"
+
+- name: DENIED_USERS
+  displayName: A list of denied users given by their usernames
+  description: A list of denied users that are not allowed to access the service. A user is identified by its username.
+  value: "[]"  
 
 - name: MAS_SSO_DEBUG
   displayName: MAS SSO API Debug mode
@@ -383,6 +393,15 @@ objects:
       allow-list-configuration.yaml: |-
         allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
         allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
+   - kind: ConfigMap
+     apiVersion: v1
+     metadata:
+       name: ocm-managed-services-denied-users-config
+       annotations:
+         qontract.recycle: "true"
+     data:
+        deny-list-configuration.yaml: |-
+          ${DENIED_USERS}       
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -498,6 +517,9 @@ objects:
           - name: ocm-managed-services-allowed-users-config
             configMap:
               name: ocm-managed-services-allowed-users-config
+          - name: ocm-managed-services-denied-users-config
+            configMap:
+              name: ocm-managed-services-denied-users-config    
           - name: ocm-managed-services-connector-types-config
             configMap:
               name: ocm-managed-services-connector-types-config
@@ -550,6 +572,9 @@ objects:
             - name: ocm-managed-services-allowed-users-config
               mountPath: /config/allow-list-configuration.yaml
               subPath: allow-list-configuration.yaml
+            - name: ocm-managed-services-denied-users-config
+              mountPath: /config/deny-list-configuration.yaml
+              subPath: deny-list-configuration.yaml 
             - name: ocm-managed-services-connector-types-config
               mountPath: /config/connector-types
             - name: ocm-managed-services-kafka-capacity-config
@@ -571,6 +596,7 @@ objects:
             - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
+            - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
@@ -636,6 +662,7 @@ objects:
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
             - --enable-allow-list=${ENABLE_ALLOW_LIST}
+            - --enable-deny-list=${ENABLE_DENY_LIST}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}

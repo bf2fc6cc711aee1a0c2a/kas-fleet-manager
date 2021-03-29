@@ -48,6 +48,8 @@ type KafkaService interface {
 	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
+	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
+	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
 }
 
 var _ KafkaService = &kafkaService{}
@@ -258,6 +260,16 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 			return handleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+	}
+
+	return nil
+}
+
+func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceError {
+	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("owner IN (?)", users)
+
+	if err := dbConn.Update("status", constants.KafkaRequestStatusDeprovision).Error; err != nil {
+		return errors.GeneralError("Unable to deprovision kafka requests for users %s", err)
 	}
 
 	return nil

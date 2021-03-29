@@ -140,9 +140,11 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 
-	if env().Services.Config.IsAllowListEnabled() {
-		apiV1KafkasRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
-		apiV1ServiceAccountsRouter.Use(acl.NewAllowListMiddleware(env().Services.Config).Authorize)
+	accessControlListConfig := env().Services.Config.GetConfig().AccessControlList
+	accessControlListEnabled := accessControlListConfig.EnableAllowList || accessControlListConfig.EnableDenyList
+	if accessControlListEnabled {
+		apiV1KafkasRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
+		apiV1ServiceAccountsRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
 	}
 
 	//  /api/managed-services-api/v1/kafkas/{id}/metrics

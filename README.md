@@ -38,6 +38,14 @@ To get the org id:
 - Use the supplied command to login to `ocm`,
 - Then run `ocm whoami` and get the organisations id from `external_id` field.
 
+## Deny List Configurations
+
+The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). 
+Additionally, you can deny users access to the service by adding their usernames in [the list of denied users](config/deny-list-configuration.yaml)
+
+The username is the account in question.
+
+>NOTE: Once a user is in deny list, all Kafkas created by this users will be deprovisioned.
 
 ## Compile from main branch
 ```

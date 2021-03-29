@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/onsi/gomega"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
@@ -1370,6 +1371,57 @@ func Test_kafkaService_Update(t *testing.T) {
 				t.Errorf("kafkaService.Update() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+		})
+	}
+}
+
+func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		users []string
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "should receive error when update fails",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithError(fmt.Errorf("some update error"))
+			},
+			args: args{users: []string{"user"}},
+		},
+		{
+			name: "should not receive error when update succeed",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: false,
+			args:    args{users: []string{"user"}},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants.KafkaRequestStatusDeprovision)).WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			gomega.RegisterTestingT(t)
+			k := kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			err := k.DeprovisionKafkaForUsers(tt.args.users)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
