@@ -40,17 +40,18 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	"github.com/cucumber/godog"
-	"github.com/cucumber/godog/colors"
-	"github.com/itchyny/gojq"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/cucumber/godog"
+	"github.com/cucumber/godog/colors"
+	"github.com/itchyny/gojq"
 )
 
 // TestSuite holds the sate global to all the test scenarios.
@@ -200,7 +201,7 @@ func TestMain(m *testing.M, helper *test.Helper) {
 
 	// Generate lots of org id's that scenarios can use to avoid
 	// conflicting with each other..
-	allow := helper.Env().Config.AllowList
+	allow := helper.Env().Config.AccessControlList
 	if allow != nil {
 		for i := 0; i < 1000; i++ {
 			allow.AllowList.Organisations = append(allow.AllowList.Organisations, config.Organisation{

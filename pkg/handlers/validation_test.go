@@ -205,7 +205,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
-						AllowList: &config.AllowListConfig{
+						AccessControlList: &config.AccessControlListConfig{
 							EnableAllowList: false,
 						},
 					},
@@ -223,7 +223,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							ServiceAccounts: config.AllowedAccounts{
@@ -249,7 +249,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
-						AllowList: &config.AllowListConfig{
+						AccessControlList: &config.AccessControlListConfig{
 							EnableAllowList: true,
 							AllowList: config.AllowListConfiguration{
 								Organisations: config.OrganisationList{
@@ -281,7 +281,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
-						AllowList: &config.AllowListConfig{
+						AccessControlList: &config.AccessControlListConfig{
 							EnableAllowList: true,
 							AllowList: config.AllowListConfiguration{
 								ServiceAccounts: config.AllowedAccounts{
@@ -312,7 +312,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
-						AllowList: &config.AllowListConfig{
+						AccessControlList: &config.AccessControlListConfig{
 							EnableAllowList: true,
 							AllowList: config.AllowListConfiguration{
 								ServiceAccounts: config.AllowedAccounts{
@@ -341,7 +341,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 					},
 				}),

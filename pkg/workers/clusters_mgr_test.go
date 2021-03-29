@@ -353,7 +353,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						SupportedProviders:         &config.ProviderConfig{},
-						AllowList:                  &config.AllowListConfig{},
+						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 						ClusterCreationConfig:      &config.ClusterCreationConfig{},
 					},
@@ -425,7 +425,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						SupportedProviders:         &tt.fields.providersConfig,
-						AllowList:                  &config.AllowListConfig{},
+						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 						ClusterCreationConfig:      &tt.fields.clusterCreationConfig,
 					}),
@@ -560,7 +560,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
 					SupportedProviders:         &tt.fields.providersConfig,
-					AllowList:                  &config.AllowListConfig{},
+					AccessControlList:          &config.AccessControlListConfig{},
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 				}),
@@ -663,7 +663,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 				timer:     tt.fields.timer,
 				configService: services.NewConfigService(config.ApplicationConfig{
 					SupportedProviders:         &config.ProviderConfig{},
-					AllowList:                  &config.AllowListConfig{},
+					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
 					ClusterCreationConfig:      &tt.fields.clusterCreateConfig,
 					Kafka:                      &config.KafkaConfig{},
@@ -915,7 +915,7 @@ func TestClusterManager_reconcileClusterSyncSet(t *testing.T) {
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
 					SupportedProviders:         &config.ProviderConfig{},
-					AllowList:                  &config.AllowListConfig{},
+					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
 					ClusterCreationConfig:      &config.ClusterCreationConfig{},
 					Kafka:                      &config.KafkaConfig{},

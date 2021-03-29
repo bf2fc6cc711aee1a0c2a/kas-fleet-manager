@@ -10,6 +10,7 @@ var productionConfigDefaults map[string]string = map[string]string{
 	"enable-ocm-mock":                   "false",
 	"enable-sentry":                     "true",
 	"enable-allow-list":                 "true",
+	"enable-deny-list":                  "true",
 	"max-allowed-instances":             "1",
 	"auto-osd-creation":                 "true",
 	"mas-sso-realm":                     "mas-sso",

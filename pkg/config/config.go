@@ -23,7 +23,7 @@ type ApplicationConfig struct {
 	Sentry                     *SentryConfig               `json:"sentry"`
 	AWS                        *AWSConfig                  `json:"aws"`
 	SupportedProviders         *ProviderConfig             `json:"providers"`
-	AllowList                  *AllowListConfig            `json:"allow_list"`
+	AccessControlList          *AccessControlListConfig    `json:"allow_list"`
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
@@ -43,7 +43,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		Sentry:                     NewSentryConfig(),
 		AWS:                        NewAWSConfig(),
 		SupportedProviders:         NewSupportedProvidersConfig(),
-		AllowList:                  NewAllowListConfig(),
+		AccessControlList:          NewAccessControlListConfig(),
 		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
@@ -64,7 +64,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Sentry.AddFlags(flagset)
 	c.AWS.AddFlags(flagset)
 	c.SupportedProviders.AddFlags(flagset)
-	c.AllowList.AddFlags(flagset)
+	c.AccessControlList.AddFlags(flagset)
 	c.ObservabilityConfiguration.AddFlags(flagset)
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
@@ -115,16 +115,17 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	if c.AllowList.EnableAllowList {
-		err = c.AllowList.ReadFiles()
-		if err != nil {
-			return err
-		}
+
+	err = c.AccessControlList.ReadFiles()
+	if err != nil {
+		return err
 	}
+
 	err = c.Kafka.ReadFiles()
 	if err != nil {
 		return err
 	}
+
 	if c.ConnectorsConfig.Enabled {
 		err = c.ConnectorsConfig.ReadFiles()
 		if err != nil {

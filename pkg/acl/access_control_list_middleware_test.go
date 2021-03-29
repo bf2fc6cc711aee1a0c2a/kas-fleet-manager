@@ -24,7 +24,7 @@ const (
 	jwtCAFile  = "test/support/jwt_ca.pem"
 )
 
-func Test_AllowListMiddleware_Disabled(t *testing.T) {
+func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 	RegisterTestingT(t)
 	req, err := http.NewRequest("GET", "/api/managed-services/kafkas", nil)
 	if err != nil {
@@ -33,10 +33,11 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	middleware := NewAllowListMiddleware(services.NewConfigService(
+	middleware := NewAccessControlListMiddleware(services.NewConfigService(
 		config.ApplicationConfig{
-			AllowList: &config.AllowListConfig{
+			AccessControlList: &config.AccessControlListConfig{
 				EnableAllowList: false,
+				EnableDenyList:  false,
 			},
 		},
 	))
@@ -47,7 +48,7 @@ func Test_AllowListMiddleware_Disabled(t *testing.T) {
 	Expect(rr.Code).To(Equal(http.StatusOK))
 }
 
-func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
+func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
@@ -58,10 +59,33 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 		arg  services.ConfigService
 	}{
 		{
+			name: "returns 403 Forbidden response when user is not allowed to access service",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AccessControlList: &config.AccessControlListConfig{
+						EnableAllowList: true,
+						EnableDenyList:  true,
+						DenyList:        config.DeniedUsers{"username"},
+						AllowList: config.AllowListConfiguration{
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:       "org-id-0",
+									AllowAll: true,
+								},
+							},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username"},
+							},
+						},
+					},
+				},
+			),
+		},
+		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with allowed users",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -79,7 +103,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with empty allowed users and no users is allowed to access the service",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -98,7 +122,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allowed service accounts list",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -120,7 +144,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the service accounts allow list",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -152,7 +176,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 
-			middleware := NewAllowListMiddleware(tt.arg)
+			middleware := NewAccessControlListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
 			// create a jwt and set it in the context
@@ -175,13 +199,15 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
+			Expect(rr.Code).To(Equal(http.StatusForbidden))
+			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
+
 			var data map[string]string
 			err = json.Unmarshal(body, &data)
 			if err != nil {
 				t.Fatal(err)
 			}
-			Expect(rr.Code).To(Equal(http.StatusForbidden))
-			Expect(rr.Header().Get("Content-Type")).To(Equal("application/json"))
 			Expect(data["kind"]).To(Equal("Error"))
 			Expect(data["reason"]).To(Equal("User 'username' is not authorized to access the service."))
 			// verify that context about user being allowed as service account is set to false always
@@ -192,7 +218,7 @@ func Test_AllowListMiddleware_UserHasNoAccess(t *testing.T) {
 
 }
 
-func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
+func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
@@ -213,7 +239,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			name: "returns 200 Ok response when user is allowed to access service for the given organisation with allowed users",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -233,7 +259,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -254,7 +280,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -279,7 +305,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 			name: "returns 200 Ok response when token used is retrieved from sso.redhat.com and user is allowed access to the service",
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
@@ -311,7 +337,7 @@ func Test_AllowListMiddleware_UserHasAccess(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 
-			middleware := NewAllowListMiddleware(tt.arg)
+			middleware := NewAccessControlListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
 			req = req.WithContext(tt.ctx)
