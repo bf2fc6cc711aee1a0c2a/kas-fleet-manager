@@ -91,10 +91,10 @@ func (c *Client) NewConnWithUserToken(token string) (*sdkClient.Connection, erro
 		URL(c.config.BaseURL).
 		MetricsSubsystem("api_outbound")
 
-	if c.config.SelfToken != "" {
+	if token!= "" {
 		builder = builder.Tokens(token)
 	} else {
-		return nil, fmt.Errorf("can't build OCM client connection. No token has been provided")
+		return nil,fmt.Errorf("can't build OCM client connection. No token has been provided")
 	}
 
 	connection, err := builder.Build()

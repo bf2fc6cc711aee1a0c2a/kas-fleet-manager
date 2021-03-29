@@ -2,10 +2,15 @@ package ocm
 
 import (
 	"context"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
 // authorizationMock returns allowed=true for every request
 type authorizationMock service
+
+func (a authorizationMock) FindSubscriptions(ctx context.Context, query string) (*amsv1.SubscriptionsListResponse, error) {
+	return nil, nil
+}
 
 var _ OCMAuthorization = &authorizationMock{}
 

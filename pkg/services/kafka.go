@@ -23,7 +23,6 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
-const productId = "RHOSAKTrial"
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
@@ -79,7 +78,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	//cluster id can't be nil. generating random temporary id.
 	//reserve is false, checking whether a user can reserve a quota or not
 	if k.kafkaConfig.EnableQuotaService {
-		isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
+		isAllowed, _, err := k.quotaService.ReserveQuota(api.RHOSAKTrial, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
 		if err != nil {
 			return errors.FailedToCheckQuota("%v", err)
 		}

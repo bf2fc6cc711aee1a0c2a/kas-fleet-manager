@@ -187,7 +187,7 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 
 // reserve: true creating the subscription, cluster_authorization is an idempotent endpoint. We will get the same subscription id for a KafkaRequest(id).
 func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
-	isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
+	isAllowed, subscriptionId, err := k.quotaService.ReserveQuota(api.RHOSAKTrial, kafka.ClusterID, kafka.ID, kafka.Owner, true, "single")
 	if err != nil {
 		return fmt.Errorf("failed to check quota for %s: %s", kafka.ID, err.Error())
 	}

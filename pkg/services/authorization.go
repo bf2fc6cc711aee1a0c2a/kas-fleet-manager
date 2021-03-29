@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -11,8 +12,8 @@ import (
 
 type AuthorizationService interface {
 	CheckAccessReviewByKafkaID(ctx context.Context, action string, kafkaId string) (bool, *errors.ServiceError)
-	ListAllowedKafkaInstance(ctx context.Context, productID string ) ([]string, *errors.ServiceError)
-	IsQuotaReserved(ctx context.Context, productID string) (bool, *errors.ServiceError)
+	ListAllowedInstance(ctx context.Context, productID api.ProductTypes ) ([]string, *errors.ServiceError)
+	IsQuotaReserved(ctx context.Context, productID api.ProductTypes) (bool, *errors.ServiceError)
 }
 
 type authorizationService struct {
@@ -31,7 +32,7 @@ func (a authorizationService) CheckAccessReviewByKafkaID(ctx context.Context, ac
 	return isAllowed, nil
 }
 
-func (a authorizationService) ListAllowedKafkaInstance(ctx context.Context, productID string) ([]string, *errors.ServiceError){
+func (a authorizationService) ListAllowedInstance(ctx context.Context, productID api.ProductTypes) ([]string, *errors.ServiceError){
 	query := fmt.Sprintf("plan_id is '%s' and status='%s'", productID, "Active")
 	subs, err := a.authzClient.FindSubscriptions(ctx, query)
 	if err != nil {
@@ -47,7 +48,7 @@ func (a authorizationService) ListAllowedKafkaInstance(ctx context.Context, prod
 }
 
 
-func (a authorizationService) IsQuotaReserved(ctx context.Context, productID string) (bool, *errors.ServiceError) {
+func (a authorizationService) IsQuotaReserved(ctx context.Context, productID api.ProductTypes) (bool, *errors.ServiceError) {
 	query := fmt.Sprintf("plan_id is '%s' and status='%s'", productID, "Active")
 	subs, err :=  a.authzClient.FindSubscriptions(ctx, query)
 	if err != nil {

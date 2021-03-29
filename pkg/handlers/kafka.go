@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"net/http"
 
@@ -108,7 +109,8 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			//listKafkas,err:=h.authz.ListAllowedKafkaInstance(ctx, "RHOSAKTrial")
+			trial := api.RHOSAKTrial
+			//listKafkas,err:=h.authz.ListAllowedInstance(ctx, trial)
 			//Todo update the list method to take listKakfas as input & do lookup based on the input.
 			listArgs := services.NewListArguments(r.URL.Query())
 			kafkaRequests, paging, err := h.service.List(ctx, listArgs)
