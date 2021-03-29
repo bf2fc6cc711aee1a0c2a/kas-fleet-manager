@@ -51,13 +51,13 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 	if addonErr != nil {
 		return false, errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
 	}
+	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
+	if pErr != nil {
+		return false, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
+	}
+	params := o.buildAddonParams(acc, cluster.ClusterID)
 	if addonInstallation != nil && addonInstallation.ID() == "" {
 		glog.V(5).Infof("No existing %s addon found, create a new one", api.KasFleetshardOperatorAddonId)
-		acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
-		if pErr != nil {
-			return false, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
-		}
-		params := o.buildAddonParams(acc, cluster.ClusterID)
 		addonInstallation, addonErr = o.ocm.CreateAddonWithParams(cluster.ClusterID, api.KasFleetshardOperatorAddonId, params)
 		if addonErr != nil {
 			return false, errors.GeneralError("failed to create addon for cluster %s due to error: %v", cluster.ClusterID, addonErr)
@@ -65,6 +65,10 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 	}
 
 	if addonInstallation != nil && addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
+		addonInstallation, addonErr = o.ocm.UpdateAddonParameters(cluster.ClusterID, addonInstallation.ID(), params)
+		if addonErr != nil {
+			return false, errors.GeneralError("failed to update parameters for addon %s on cluster %s due to error: %v", addonInstallation.ID(), cluster.ClusterID, addonErr)
+		}
 		return true, nil
 	}
 

@@ -10,8 +10,9 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 		Id:   from.Annotations["id"],
 		Kind: from.Kind,
 		Metadata: openapi.ManagedKafkaAllOfMetadata{
-			Name: from.Name,
-			Annotation: openapi.ManagedKafkaAllOfMetadataAnnotation{
+			Name:      from.Name,
+			Namespace: from.Namespace,
+			Annotations: openapi.ManagedKafkaAllOfMetadataAnnotations{
 				Bf2OrgId:          from.Annotations["bf2.org/id"],
 				Bf2OrgPlacementId: from.Annotations["bf2.org/placementId"],
 			},
