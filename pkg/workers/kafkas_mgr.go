@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
@@ -87,6 +88,15 @@ func (c *KafkaManager) SetIsRunning(val bool) {
 
 func (k *KafkaManager) reconcile() {
 	glog.V(5).Infoln("reconciling kafkas")
+
+	accessControlListConfig := k.configService.GetConfig().AccessControlList
+	if accessControlListConfig.EnableDenyList {
+		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
+		if kafkaDeprovisioningForDeniedOwnersErr != nil {
+			sentry.CaptureException(kafkaDeprovisioningForDeniedOwnersErr)
+			glog.Errorf("Failed to deprovision kafka for denied owners %s: %s", accessControlListConfig.DenyList, kafkaDeprovisioningForDeniedOwnersErr.Error())
+		}
+	}
 
 	// handle deprovisioning requests
 	// if kas-fleetshard sync is not enabled, the status we should check is constants.KafkaRequestStatusDeprovision as control plane is responsible for deleting the data
@@ -175,6 +185,14 @@ func (k *KafkaManager) reconcile() {
 			}
 		}
 	}
+}
+
+func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers) *errors.ServiceError {
+	if len(deniedUsers) < 1 {
+		return nil
+	}
+
+	return k.kafkaService.DeprovisionKafkaForUsers(deniedUsers)
 }
 
 func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {

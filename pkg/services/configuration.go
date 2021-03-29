@@ -26,9 +26,6 @@ type ConfigService interface {
 	// IsRegionSupportedForProvider returns true if the provided region is supported in the given provider
 	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
 	IsRegionSupportedForProvider(providerName, regionName string) bool
-	// IsAllowListEnabled returns true if the allow access list is feature is enable for access control
-	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
-	IsAllowListEnabled() bool
 	// GetOrganisationById returns the organisaion by the given id
 	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
 	GetOrganisationById(orgId string) (config.Organisation, bool)
@@ -105,19 +102,14 @@ func (c configService) IsRegionSupportedForProvider(providerName, regionName str
 }
 
 //TODO: move this to AllowList
-func (c configService) IsAllowListEnabled() bool {
-	return c.appConfig.AllowList.EnableAllowList
-}
-
-//TODO: move this to AllowList
 func (c configService) GetOrganisationById(orgId string) (config.Organisation, bool) {
-	return c.appConfig.AllowList.AllowList.Organisations.GetById(orgId)
+	return c.appConfig.AccessControlList.AllowList.Organisations.GetById(orgId)
 }
 
 //TODO: move this to AllowList
 // GetServiceAccountByUsername returns allowed account by from the list of service accounts
 func (c configService) GetServiceAccountByUsername(username string) (config.AllowedAccount, bool) {
-	return c.appConfig.AllowList.AllowList.ServiceAccounts.GetByUsername(username)
+	return c.appConfig.AccessControlList.AllowList.ServiceAccounts.GetByUsername(username)
 }
 
 //TODO: move this to AllowList

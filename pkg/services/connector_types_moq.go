@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -16,34 +16,34 @@ var _ ConnectorTypesService = &ConnectorTypesServiceMock{}
 
 // ConnectorTypesServiceMock is a mock implementation of ConnectorTypesService.
 //
-// 	func TestSomethingThatUsesConnectorTypesService(t *testing.T) {
+//     func TestSomethingThatUsesConnectorTypesService(t *testing.T) {
 //
-// 		// make and configure a mocked ConnectorTypesService
-// 		mockedConnectorTypesService := &ConnectorTypesServiceMock{
-// 			DiscoverExtensionsFunc: func() error {
-// 				panic("mock out the DiscoverExtensions method")
-// 			},
-// 			GetFunc: func(id string) (*api.ConnectorType, *apiErrors.ServiceError) {
-// 				panic("mock out the Get method")
-// 			},
-// 			ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *apiErrors.ServiceError) {
-// 				panic("mock out the List method")
-// 			},
-// 		}
+//         // make and configure a mocked ConnectorTypesService
+//         mockedConnectorTypesService := &ConnectorTypesServiceMock{
+//             DiscoverExtensionsFunc: func() error {
+// 	               panic("mock out the DiscoverExtensions method")
+//             },
+//             GetFunc: func(id string) (*api.ConnectorType, *errors.ServiceError) {
+// 	               panic("mock out the Get method")
+//             },
+//             ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
+// 	               panic("mock out the List method")
+//             },
+//         }
 //
-// 		// use mockedConnectorTypesService in code that requires ConnectorTypesService
-// 		// and then make assertions.
+//         // use mockedConnectorTypesService in code that requires ConnectorTypesService
+//         // and then make assertions.
 //
-// 	}
+//     }
 type ConnectorTypesServiceMock struct {
 	// DiscoverExtensionsFunc mocks the DiscoverExtensions method.
 	DiscoverExtensionsFunc func() error
 
 	// GetFunc mocks the Get method.
-	GetFunc func(id string) (*api.ConnectorType, *apiErrors.ServiceError)
+	GetFunc func(id string) (*api.ConnectorType, *errors.ServiceError)
 
 	// ListFunc mocks the List method.
-	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *apiErrors.ServiceError)
+	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -95,7 +95,7 @@ func (mock *ConnectorTypesServiceMock) DiscoverExtensionsCalls() []struct {
 }
 
 // Get calls GetFunc.
-func (mock *ConnectorTypesServiceMock) Get(id string) (*api.ConnectorType, *apiErrors.ServiceError) {
+func (mock *ConnectorTypesServiceMock) Get(id string) (*api.ConnectorType, *errors.ServiceError) {
 	if mock.GetFunc == nil {
 		panic("ConnectorTypesServiceMock.GetFunc: method is nil but ConnectorTypesService.Get was just called")
 	}
@@ -126,7 +126,7 @@ func (mock *ConnectorTypesServiceMock) GetCalls() []struct {
 }
 
 // List calls ListFunc.
-func (mock *ConnectorTypesServiceMock) List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *apiErrors.ServiceError) {
+func (mock *ConnectorTypesServiceMock) List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
 	if mock.ListFunc == nil {
 		panic("ConnectorTypesServiceMock.ListFunc: method is nil but ConnectorTypesService.List was just called")
 	}

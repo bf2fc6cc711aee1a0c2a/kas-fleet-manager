@@ -364,43 +364,6 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		})
 	}
 }
-func Test_configService_IsAllowListEnabled(t *testing.T) {
-	tests := []struct {
-		name    string
-		service configService
-		want    bool
-	}{
-		{
-			name: "return 'false' when allow list feature disabled",
-			service: configService{
-				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
-						EnableAllowList: false,
-					},
-				},
-			},
-			want: false,
-		},
-		{
-			name: "return 'true' when allow list feature enabled",
-			service: configService{
-				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
-						EnableAllowList: true,
-					},
-				},
-			},
-			want: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			enabled := tt.service.IsAllowListEnabled()
-			Expect(enabled).To(Equal(tt.want))
-		})
-	}
-}
 func Test_configService_GetOrganisationById(t *testing.T) {
 	type result struct {
 		found        bool
@@ -418,7 +381,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			arg:  "some-id",
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								config.Organisation{
@@ -439,7 +402,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			arg:  "some-id",
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								config.Organisation{
@@ -501,7 +464,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 			},
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								organisation,
@@ -523,7 +486,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 			},
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								organisation,
@@ -550,7 +513,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 			},
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								organisation,
@@ -610,7 +573,7 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 			},
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								organisation,
@@ -636,7 +599,7 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 			},
 			service: configService{
 				appConfig: config.ApplicationConfig{
-					AllowList: &config.AllowListConfig{
+					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							Organisations: config.OrganisationList{
 								organisation,

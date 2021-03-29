@@ -10,12 +10,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
-type AllowListMiddleware struct {
+type AccessControlListMiddleware struct {
 	configService services.ConfigService
 }
 
-func NewAllowListMiddleware(configService services.ConfigService) *AllowListMiddleware {
-	middleware := AllowListMiddleware{
+func NewAccessControlListMiddleware(configService services.ConfigService) *AccessControlListMiddleware {
+	middleware := AccessControlListMiddleware{
 		configService: configService,
 	}
 
@@ -23,17 +23,27 @@ func NewAllowListMiddleware(configService services.ConfigService) *AllowListMidd
 }
 
 // Middleware handler to authorize users based on the provided ACL configuration
-func (middleware *AllowListMiddleware) Authorize(next http.Handler) http.Handler {
+func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if middleware.configService.IsAllowListEnabled() {
-			context := r.Context()
-			claims, err := auth.GetClaimsFromContext(context)
-			if err != nil {
-				shared.HandleError(r.Context(), w, errors.ErrorForbidden, err.Error())
+		context := r.Context()
+		claims, err := auth.GetClaimsFromContext(context)
+		if err != nil {
+			shared.HandleError(r.Context(), w, errors.ErrorForbidden, err.Error())
+			return
+		}
+
+		username := auth.GetUsernameFromClaims(claims)
+
+		accessControlListConfig := middleware.configService.GetConfig().AccessControlList
+		if accessControlListConfig.EnableDenyList {
+			userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
+			if userIsDenied {
+				shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User '%s' is not authorized to access the service.", username))
 				return
 			}
+		}
 
-			username := auth.GetUsernameFromClaims(claims)
+		if accessControlListConfig.EnableAllowList {
 			orgId := auth.GetOrgIdFromClaims(claims)
 			org, _ := middleware.configService.GetOrganisationById(orgId)
 			var userIsAllowed, userIsAllowedAsServiceAccount bool
