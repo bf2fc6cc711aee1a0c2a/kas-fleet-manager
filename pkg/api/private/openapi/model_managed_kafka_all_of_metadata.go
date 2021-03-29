@@ -11,6 +11,7 @@ package openapi
 
 // ManagedKafkaAllOfMetadata struct for ManagedKafkaAllOfMetadata
 type ManagedKafkaAllOfMetadata struct {
-	Name       string                              `json:"name,omitempty"`
-	Annotation ManagedKafkaAllOfMetadataAnnotation `json:"annotation,omitempty"`
+	Name        string                               `json:"name,omitempty"`
+	Namespace   string                               `json:"namespace,omitempty"`
+	Annotations ManagedKafkaAllOfMetadataAnnotations `json:"annotations,omitempty"`
 }

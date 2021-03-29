@@ -87,34 +87,36 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				{
 					Conditions: []api.DataPlaneKafkaStatusCondition{
 						{
-							Type:   "NotReady",
-							Status: "True",
-							Reason: "Creating",
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Installing",
 						},
 					},
 				},
 				{
 					Conditions: []api.DataPlaneKafkaStatusCondition{
 						{
-							Type:   "NotReady",
-							Status: "True",
-							Reason: "Failed",
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Error",
 						},
 					},
 				},
 				{
 					Conditions: []api.DataPlaneKafkaStatusCondition{
 						{
-							Type:   "Deleted",
-							Status: "True",
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Deleted",
 						},
 					},
 				},
 				{
 					Conditions: []api.DataPlaneKafkaStatusCondition{
 						{
-							Type:   "Rejected",
-							Status: "True",
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Rejected",
 						},
 					},
 				},

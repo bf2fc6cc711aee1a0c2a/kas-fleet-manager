@@ -1439,7 +1439,7 @@ components:
           type: string
         operation_id:
           type: string
-    ManagedKafka_allOf_metadata_annotation:
+    ManagedKafka_allOf_metadata_annotations:
       properties:
         bf2.org/id:
           type: string
@@ -1449,8 +1449,10 @@ components:
       properties:
         name:
           type: string
-        annotation:
-          $ref: '#/components/schemas/ManagedKafka_allOf_metadata_annotation'
+        namespace:
+          type: string
+        annotations:
+          $ref: '#/components/schemas/ManagedKafka_allOf_metadata_annotations'
     ManagedKafka_allOf_spec_oauth:
       properties:
         clientId:

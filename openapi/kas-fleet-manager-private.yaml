@@ -925,7 +925,9 @@ components:
               properties:
                 name:
                   type: string
-                annotation:
+                namespace:
+                  type: string
+                annotations:
                   type: object
                   properties:
                     bf2.org/id:
