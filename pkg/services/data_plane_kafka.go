@@ -21,6 +21,7 @@ const (
 	statusError      kafkaStatus = "error"
 	statusRejected   kafkaStatus = "rejected"
 	statusDeleted    kafkaStatus = "deleted"
+	statusUnknown    kafkaStatus = "unknown"
 )
 
 type DataPlaneKafkaService interface {
@@ -68,6 +69,8 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(_ context.Context, c
 			e = d.setKafkaClusterDeleted(kafka)
 		case statusRejected:
 			e = d.reassignKafkaCluster(kafka)
+		case statusUnknown:
+			glog.Warningf("kafka cluster %s status is unknown", ks.KafkaClusterId)
 		default:
 			glog.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
 		}
@@ -130,17 +133,25 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *api.KafkaRequest) *e
 
 func getStatus(status *api.DataPlaneKafkaStatus) kafkaStatus {
 	for _, c := range status.Conditions {
-		if strings.EqualFold(c.Type, "Ready") && strings.EqualFold(c.Status, "True") {
-			return statusReady
-		}
-		if strings.EqualFold(c.Type, "NotReady") && strings.EqualFold(c.Status, "True") && !strings.EqualFold(c.Reason, "Creating") {
-			return statusError
-		}
-		if strings.EqualFold(c.Type, "Deleted") && strings.EqualFold(c.Status, "True") {
-			return statusDeleted
-		}
-		if strings.EqualFold(c.Type, "Rejected") && strings.EqualFold(c.Status, "True") {
-			return statusRejected
+		if strings.EqualFold(c.Type, "Ready") {
+			if strings.EqualFold(c.Status, "True") {
+				return statusReady
+			}
+			if strings.EqualFold(c.Status, "Unknown") {
+				return statusUnknown
+			}
+			if strings.EqualFold(c.Reason, "Installing") {
+				return statusInstalling
+			}
+			if strings.EqualFold(c.Reason, "Deleted") {
+				return statusDeleted
+			}
+			if strings.EqualFold(c.Reason, "Error") {
+				return statusError
+			}
+			if strings.EqualFold(c.Reason, "Rejected") {
+				return statusRejected
+			}
 		}
 	}
 	return statusInstalling

@@ -160,6 +160,8 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 			ID: kafkaRequest.ID,
 		},
 		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
+		SsoClientID:         kafkaRequest.SsoClientID,
+		SsoClientSecret:     kafkaRequest.SsoClientSecret,
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.GeneralError("failed to update kafka request: %v", err)

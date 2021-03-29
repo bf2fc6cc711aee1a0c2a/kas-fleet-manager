@@ -247,10 +247,11 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	for _, k := range testKafkas {
 		if k.Status != constants.KafkaRequestStatusPreparing.String() {
-			if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotation.Bf2OrgId == k.ID }); mk != nil {
+			if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
-				Expect(mk.Metadata.Annotation.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotation.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
+				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
@@ -263,21 +264,22 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	updates := map[string]openapi.DataPlaneKafkaStatus{}
 	for _, item := range list.Items {
 		if !item.Spec.Deleted {
-			updates[item.Metadata.Annotation.Bf2OrgId] = openapi.DataPlaneKafkaStatus{
+			updates[item.Metadata.Annotations.Bf2OrgId] = openapi.DataPlaneKafkaStatus{
 				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 				}},
 			}
-			readyClusters = append(readyClusters, item.Metadata.Annotation.Bf2OrgId)
+			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
 		} else {
-			updates[item.Metadata.Annotation.Bf2OrgId] = openapi.DataPlaneKafkaStatus{
+			updates[item.Metadata.Annotations.Bf2OrgId] = openapi.DataPlaneKafkaStatus{
 				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{{
-					Type:   "Deleted",
-					Status: "True",
+					Type:   "Ready",
+					Status: "False",
+					Reason: "Deleted",
 				}},
 			}
-			deletedClusters = append(deletedClusters, item.Metadata.Annotation.Bf2OrgId)
+			deletedClusters = append(deletedClusters, item.Metadata.Annotations.Bf2OrgId)
 		}
 	}
 
