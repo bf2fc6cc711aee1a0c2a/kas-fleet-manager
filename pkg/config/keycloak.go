@@ -32,7 +32,7 @@ type KeycloakRealmConfig struct {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		EnableAuthenticationOnKafka: false,
+		EnableAuthenticationOnKafka: true,
 		KafkaRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
 			ClientSecretFile: "secrets/keycloak-service.clientSecret",

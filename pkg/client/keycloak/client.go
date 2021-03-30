@@ -247,10 +247,14 @@ func (kc *kcClient) IsOwner(client *gocloak.Client, userId string) bool {
 		return false
 	}
 	attributes := *client.Attributes
-	if attributes["rh-user-id"] == "" {
+	if rhUserId, found := attributes["rh-user-id"]; found {
+		if rhUserId == userId {
+			return true
+		}
+	} else {
 		return true
 	}
-	return attributes["rh-user-id"] == userId
+	return false
 }
 
 func (kc *kcClient) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
