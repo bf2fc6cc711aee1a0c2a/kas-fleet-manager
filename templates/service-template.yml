@@ -268,7 +268,7 @@ parameters:
 - name: DENIED_USERS
   displayName: A list of denied users given by their usernames
   description: A list of denied users that are not allowed to access the service. A user is identified by its username.
-  value: "[]"  
+  value: "[]"
 
 - name: MAS_SSO_DEBUG
   displayName: MAS SSO API Debug mode
@@ -285,14 +285,14 @@ parameters:
   description: MAS SSO Host url
 
 - name: MAS_SSO_REALM
-  displayName: MAS SSO REALM for Kafka SSO Clients and Service Accounts 
+  displayName: MAS SSO REALM for Kafka SSO Clients and Service Accounts
   description: MAS SSO realm for Kafka SSO Clients and Service Accounts
 
 - name: OSD_IDP_MAS_SSO_REALM
-  displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients 
+  displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
   description: MAS SSO realm for OSD Cluster Identity Provider Clients
   value: "interim-test-realm"
-  
+
 - name: CLUSTER_OPENSHIFT_VERSION
   displayName: The version of openshift
   description: The version of openshift to be deployed on a new created OSD cluster
@@ -347,6 +347,11 @@ parameters:
   displayName: Strimzi operator version
   description: The version of the Strimzi operator to install
   value: "v0.21.3"
+
+- name: KAFKA_CAPACITY_MAX_CAPACITY
+  displayName: Maximum number of clusters
+  description: Maximum number of allowed kafka clusters
+  value: "1000"
 
 - name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
   displayName: Kafka ingress throughput
@@ -406,7 +411,7 @@ objects:
         qontract.recycle: "true"
     data:
       deny-list-configuration.yaml: |-
-        ${DENIED_USERS}       
+        ${DENIED_USERS}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -424,6 +429,7 @@ objects:
         qontract.recycle: "true"
     data:
       kafka-capacity-config.yaml: |-
+        maxCapacity: ${KAFKA_CAPACITY_MAX_CAPACITY}
         ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
         totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
         maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RENTENTION_SIZE}
@@ -524,7 +530,7 @@ objects:
               name: ocm-managed-services-allowed-users-config
           - name: ocm-managed-services-denied-users-config
             configMap:
-              name: ocm-managed-services-denied-users-config    
+              name: ocm-managed-services-denied-users-config
           - name: ocm-managed-services-connector-types-config
             configMap:
               name: ocm-managed-services-connector-types-config
@@ -579,7 +585,7 @@ objects:
               subPath: allow-list-configuration.yaml
             - name: ocm-managed-services-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
-              subPath: deny-list-configuration.yaml 
+              subPath: deny-list-configuration.yaml
             - name: ocm-managed-services-connector-types-config
               mountPath: /config/connector-types
             - name: ocm-managed-services-kafka-capacity-config
