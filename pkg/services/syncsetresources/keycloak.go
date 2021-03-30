@@ -62,5 +62,5 @@ func BuildKeycloakClientNameIdentifier(kafkaRequestID string) string {
 }
 
 func BuildCustomClaimCheck(kafkaRequest *api.KafkaRequest) string {
-	return fmt.Sprintf("@.rh-org-id == '%s' && @.rh-user-id == '%s'", kafkaRequest.OrganisationId, kafkaRequest.OwnerAccountId)
+	return fmt.Sprintf("@.rh-org-id == '%s' && (( @.rh-user-id && @.rh-user-id =='%s') || !@.rh-user-id)", kafkaRequest.OrganisationId, kafkaRequest.OwnerAccountId)
 }
