@@ -25,6 +25,26 @@ paths:
                 $ref: '#/components/schemas/VersionMetadata'
           description: Version metadata
       summary: Retrieves the version metadata
+  /api/managed-services-api/v1/status:
+    get:
+      operationId: serviceStatus
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceStatus'
+          description: Ok
+        "500":
+          description: Unexpected error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'  
+      summary: Retrieves the status of resources e.g whether we have reached maximum service capacity    
   /api/managed-services-api/v1/kafkas/{id}:
     get:
       operationId: getKafkaById
@@ -716,7 +736,21 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/ObjectReference"                       
+                  - $ref: "#/components/schemas/ObjectReference"
+    ServiceStatus:
+      description: Schema for the service status response body
+      example:
+        kafkas:
+          max_capacity_reached: true
+      type: object
+      properties:
+        kafkas:
+          description: The kafka resource api status
+          type: object
+          properties: 
+            max_capacity_reached: 
+              description: Indicates whether we have reached kafka maximum capacity
+              type: boolean
     KafkaRequestPayload:
       description: Schema for the request body sent to /kafkas POST
       required:
