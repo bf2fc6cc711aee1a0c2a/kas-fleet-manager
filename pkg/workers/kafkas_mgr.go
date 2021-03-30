@@ -26,7 +26,6 @@ type KafkaManager struct {
 	workerType           string
 	isRunning            bool
 	ocmClient            ocm.Client
-	clusterService       services.ClusterService
 	kafkaService         services.KafkaService
 	keycloakService      services.KeycloakService
 	observatoriumService services.ObservatoriumService
@@ -36,20 +35,23 @@ type KafkaManager struct {
 	imStop               chan struct{}
 	syncTeardown         sync.WaitGroup
 	reconciler           Reconciler
+	clusterPlmtStrategy  services.ClusterPlacementStrategy
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, clusterService services.ClusterService, ocmClient ocm.Client, id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService, configService services.ConfigService, quotaService services.QuotaService) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, ocmClient ocm.Client,
+	id string, keycloakService services.KeycloakService, observatoriumService services.ObservatoriumService,
+	configService services.ConfigService, quotaService services.QuotaService, clusterPlmtStrategy services.ClusterPlacementStrategy) *KafkaManager {
 	return &KafkaManager{
 		id:                   id,
 		workerType:           "kafka",
 		ocmClient:            ocmClient,
-		clusterService:       clusterService,
 		kafkaService:         kafkaService,
 		keycloakService:      keycloakService,
 		observatoriumService: observatoriumService,
 		configService:        configService,
 		quotaService:         quotaService,
+		clusterPlmtStrategy:  clusterPlmtStrategy,
 	}
 }
 
@@ -206,12 +208,7 @@ func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers
 }
 
 func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
-	cluster, err := k.clusterService.FindCluster(services.FindClusterCriteria{
-		Provider: kafka.CloudProvider,
-		Region:   kafka.Region,
-		MultiAZ:  kafka.MultiAZ,
-		Status:   api.ClusterReady,
-	})
+	cluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
 	if err != nil {
 		return fmt.Errorf("failed to find cluster for kafka request %s: %w", kafka.ID, err)
 	}
@@ -223,9 +220,10 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 				return err
 			}
 		}
+
 		kafka.Status = constants.KafkaRequestStatusPreparing.String()
-		if err = k.kafkaService.Update(kafka); err != nil {
-			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err)
+		if err2 := k.kafkaService.Update(kafka); err2 != nil {
+			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err2)
 		}
 	}
 	return nil

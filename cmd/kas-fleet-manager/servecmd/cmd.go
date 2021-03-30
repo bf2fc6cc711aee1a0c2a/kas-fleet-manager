@@ -64,6 +64,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	osdIdpKeycloakService := env.Services.OsdIdpKeycloak
 	var workerList []workers.Worker
 	kasFleetshardOperatorAddon := env.Services.KasFleetshardAddonService
+
 	//set Unique Id for each work to facilitate Leader Election process
 	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
 	workerList = append(workerList, clusterManager)
@@ -71,12 +72,13 @@ func runServe(cmd *cobra.Command, args []string) {
 	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
 
 	// creates kafka worker
-	clusterService = environments.Environment().Services.Cluster
 	kafkaService := environments.Environment().Services.Kafka
 	observatoriumService := environments.Environment().Services.Observatorium
 	quotaService := environments.Environment().Services.Quota
+	clusterPlmtStrategy := env.Services.ClusterPlmtStrategy
+
 	//set Unique Id for each work to facilitate Leader Election process
-	kafkaManager := workers.NewKafkaManager(kafkaService, clusterService, ocmClient, uuid.New().String(), keycloakService, observatoriumService, configService, quotaService)
+	kafkaManager := workers.NewKafkaManager(kafkaService, ocmClient, uuid.New().String(), keycloakService, observatoriumService, configService, quotaService, clusterPlmtStrategy)
 	workerList = append(workerList, kafkaManager)
 
 	// add the connector manager worker

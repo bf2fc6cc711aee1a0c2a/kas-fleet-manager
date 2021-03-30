@@ -36,11 +36,20 @@ type ClusterService interface {
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
-	AddIdentityProviderID(clusterId string, identityProviderId string) *apiErrors.ServiceError
+	AddIdentityProviderID(clusterID string, identityProviderId string) *apiErrors.ServiceError
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e kafka that are not in failure state.
-	FindNonEmptyClusterById(clusterId string) (*api.Cluster, *apiErrors.ServiceError)
+	FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
+	// ListAllClusterIds returns all the valid cluster ids in array
+	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
+	// FindAllClusters return all the valid clusters in array
+	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
+	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters
+	// Cluster is not included in the result if it is not been used; otherwise, return the cluster id and the count
+	FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError)
+	// UpdateMultiClusterStatus updates a list of clusters' status to a status
+	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 }
 
 type clusterService struct {
@@ -63,7 +72,6 @@ func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Cl
 // RegisterClusterJob registers a new job in the cluster table
 func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
-	clusterRequest.Status = api.ClusterAccepted
 	if err := dbConn.Save(clusterRequest).Error; err != nil {
 		return apiErrors.GeneralError("failed to create cluster job: %v", err)
 	}
@@ -321,4 +329,89 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 	}
 
 	return cluster, nil
+}
+
+func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var res []api.Cluster
+
+	if err := dbConn.Model(&api.Cluster{}).
+		Select("cluster_id").
+		Where("cluster_id != '' ").
+		Order("clusters.id asc ").
+		Scan(&res).Error; err != nil {
+		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+	}
+	return res, nil
+}
+
+type ResKafkaInstanceCount struct {
+	Clusterid string //must be capitalized for Gorm to work?!
+	Count     int
+}
+
+func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var res []*ResKafkaInstanceCount
+	if err := dbConn.Model(&api.KafkaRequest{}).
+		Select("cluster_id as Clusterid, count(1) as Count ").
+		Where(" cluster_id in (?) ", clusterIDs).
+		Group(" cluster_id").Order("cluster_id asc").
+		Scan(&res).Error; err != nil {
+		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+	}
+
+	return res, nil
+}
+
+func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var cluster []*api.Cluster
+
+	clusterDetails := &api.Cluster{
+		CloudProvider: criteria.Provider,
+		Region:        criteria.Region,
+		MultiAZ:       criteria.MultiAZ,
+		Status:        criteria.Status,
+	}
+
+	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("clusters.id asc").Scan(&cluster).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, apiErrors.GeneralError("failed to find all clusters with criteria: %s", err.Error())
+	}
+
+	return cluster, nil
+}
+
+func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+
+	if status.String() == "" {
+		return apiErrors.Validation("status is undefined")
+	}
+	if len(clusterIds) == 0 {
+		return apiErrors.Validation("ids is empty")
+	}
+
+	dbConn := c.connectionFactory.New()
+
+	if err := dbConn.Model(&api.Cluster{}).Where("cluster_id in (?)", clusterIds).
+		Update("status", status).Error; err != nil {
+		return apiErrors.GeneralError("failed to update status: %s %s", err.Error(), clusterIds)
+	}
+
+	for range clusterIds {
+		if status == api.ClusterReady || status == api.ClusterFailed {
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+		}
+		if status == api.ClusterReady {
+			metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
+		}
+	}
+
+	return nil
 }

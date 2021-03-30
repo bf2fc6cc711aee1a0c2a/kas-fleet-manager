@@ -50,6 +50,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Region:        mocks.MockCluster.Region().ID(),
 		MultiAZ:       testMultiAZ,
+		Status:        api.ClusterAccepted,
 	})
 	if clusterRegisterError != nil {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())

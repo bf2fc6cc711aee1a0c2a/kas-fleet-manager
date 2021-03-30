@@ -126,6 +126,10 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 func (c *ClusterManager) reconcile() {
 	glog.V(5).Infoln("reconciling clusters")
 
+	if err := c.reconcileClusterWithManualConfig(); err != nil {
+		glog.Errorf("failed to reconcile clusters with config file: %s", err.Error())
+	}
+
 	deprovisioningClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterDeprovisioning)
 	if serviceErr != nil {
 		sentry.CaptureException(serviceErr)
@@ -252,6 +256,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) err
 		return findClusterErr
 	}
 
+	//if it is the only cluster left in that region, set it back to ready.
 	if siblingCluster == nil {
 		return c.clusterService.UpdateStatus(cluster, api.ClusterReady)
 	}
@@ -496,6 +501,53 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 	return false, nil
 }
 
+// reconcileClusterWithConfig reconciles clusters with the config file
+// A new clusters will be registered if it is not yet in the database
+// A cluster will be deprovisioned if it is in database but not in config file
+func (c *ClusterManager) reconcileClusterWithManualConfig() error {
+	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneScalingEnabled() {
+		return nil
+	}
+
+	clusters, err := c.clusterService.ListAllClusterIds()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve cluster ids from clusters: %s", err.Error())
+	}
+	clusterIdsMap := make(map[string]api.Cluster)
+	for _, v := range clusters {
+		clusterIdsMap[v.ClusterID] = v
+	}
+
+	//Create all missing clusters
+	for _, p := range c.configService.GetConfig().OSDClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
+		clusterRequest := api.Cluster{
+			CloudProvider: p.CloudProvider,
+			Region:        p.Region,
+			MultiAZ:       p.MultiAZ,
+			ClusterID:     p.ClusterId,
+			Status:        api.ClusterProvisioning,
+		}
+		if err := c.clusterService.RegisterClusterJob(&clusterRequest); err != nil {
+			glog.Errorf("Failed to register new cluster with config file: %s, %s ", p.ClusterId, err.Error())
+		} else {
+			glog.Infof("Registered a new cluster with config file: %s ", p.ClusterId)
+		}
+	}
+
+	// Remove all clusters that are not in the config file
+	excessClusterIds := c.configService.GetConfig().OSDClusterConfig.ClusterConfig.ExcessClusters(clusterIdsMap)
+	if len(excessClusterIds) == 0 {
+		return nil
+	}
+	if err := c.clusterService.UpdateMultiClusterStatus(excessClusterIds, api.ClusterDeprovisioning); err != nil {
+		glog.Errorf("Failed to deprovisioning a cluster: %s, %s ", excessClusterIds, err.Error())
+	} else {
+		glog.Infof("Deprovisioning clusters: not found in config file: %s ", excessClusterIds)
+	}
+
+	return nil
+}
+
 // reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
 func (c *ClusterManager) reconcileClustersForRegions() error {
 	if !c.configService.GetConfig().OSDClusterConfig.DynamicScalingConfig.Enabled {
@@ -533,6 +585,7 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 					CloudProvider: p.Name,
 					Region:        v.Name,
 					MultiAZ:       true,
+					Status:        api.ClusterAccepted,
 				}
 				if err := c.clusterService.RegisterClusterJob(&clusterRequest); err != nil {
 					glog.Errorf("Failed to auto-create cluster request in %s, region: %s %s", p.Name, v.Name, err.Error())

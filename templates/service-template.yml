@@ -392,6 +392,7 @@ parameters:
   displayName: Default Kafka version
   description: The default version of Kafka when creating Kafka instances.
   value: "2.7.0"
+
 - name: KAFKA_LIFE_SPAN
   displayName: Kafka life span expiration in hours
   description: Time period in hours after which kafka instances are deleted. This value must be a positive value
@@ -401,6 +402,16 @@ parameters:
   displayName: Enables Kafka life span for expiration in hours
   description: Enables the ability to set a Kafka life span for expiration in hours
   value: "false"
+
+- name: DATAPLANE_CLUSTER_SCALING_TYPE
+  displayName: Data Plane Cluster Scaling Type
+  description: Data Plane Cluster Scaling type (manual/auto)
+  value: "manual"
+
+- name: CLUSTER_LIST
+  displayName: A list of cluster to be registered in kas fleet manager
+  description: A list of cluster to be registered in kas fleet manager
+  value: "[]"
 
 objects:
   - kind: ConfigMap
@@ -500,6 +511,15 @@ objects:
           ]
         }
 
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-dataplane-cluster-scaling-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      dataplane-cluster-configuration.yaml: |-
+        clusters: ${CLUSTER_LIST}
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
@@ -560,6 +580,9 @@ objects:
           - name: ocm-managed-services-authentication
             configMap:
               name: ocm-managed-services-authentication
+          - name: ocm-managed-services-dataplane-cluster-scaling-config
+            configMap:
+              name: ocm-managed-services-dataplane-cluster-scaling-config
           initContainers:
           - name: id
             image: quay.io/centos/centos:8
@@ -613,6 +636,9 @@ objects:
               subPath: kafka-capacity-config.yaml
             - name: ocm-managed-services-authentication
               mountPath: /config/authentication
+            - name: ocm-managed-services-dataplane-cluster-scaling-config
+              mountPath: /config/dataplane-cluster-configuration.yaml
+              subPath: dataplane-cluster-configuration.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
@@ -700,6 +726,7 @@ objects:
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
+            - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
             - --enable-kas-fleetshard-sync=${ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC}
@@ -713,6 +740,7 @@ objects:
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
             - --enable-dynamic-scaling=${ENABLE_DYNAMIC_SCALING}
             - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
+            - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:
