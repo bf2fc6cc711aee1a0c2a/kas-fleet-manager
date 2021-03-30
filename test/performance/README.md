@@ -22,9 +22,14 @@ Optional parameters (if not provided, they will default to sensible and tested v
 | PERF_TEST_RUN_TIME                        | String  | PERF_TEST_RUN_TIME=120m                             | Runtime of the performance test. Must be in minutes                                                                                                                                                                                                                                        |
 | PERF_TEST_USER_SPAWN_RATE                 | Integer | PERF_TEST_USER_SPAWN_RATE=1                         | The rate per second in which locust users are spawned                                                                                                                                                                                                                                      |
 | PERF_TEST_BASE_API_URL                    | String  | PERF_TEST_BASE_API_URL=/api/managed-services-api/v1 | Base API url (excluding 'PERF_TEST_ROUTE_HOST' param and route suffix representing the resource part of the URL (e.g. 'kafkas'))                                                                                                                                                           |
-| PERF_TEST_HIT_ENDPOINTS_HOLD_OFF          | Integer | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=30                 | Wait time (in minutes) before hitting endpoints (doesn't apply to pre-populating DB and creating kafkas). Counted from the start of the test run                                                                                                                                            |
+| PERF_TEST_HIT_ENDPOINTS_HOLD_OFF          | Integer | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=30                 | Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating kafkas). Counted from the start of the test run                                                                                                                                            |
+| PERF_TEST_CLEANUP                         | Boolean | PERF_TEST_CLEANUP=TRUE                              | Determines if a cleanup (of kafka clusters and service accounts) will be performed during last 90 seconds of the test execution                                                                                                                                                            |
 
 ## Run the performance tests
+
+Note.
+
+By default there will be no instantaneous results printed in the terminal. In order to show them, remove `--only-summary` from `LOCUST_OPTS` in the `docker-compose.yml` file for the `primary` service.
 
 To trigger the test (executed from the root of this repo), run:
 
@@ -32,9 +37,26 @@ To trigger the test (executed from the root of this repo), run:
 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> make test/performance
 ```
 
+### Sample parameters combinations and expected results
+
+- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). For the first 20 minutes (PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20) - create 50 kafka clusters (PERF_TEST_WORKERS_NUMBER=10 workers * PERF_TEST_KAFKAS_PER_WORKER=5) and periodically (every ~30 seconds per kafka cluster) check kafkas/[id] GET (to check if kafka cluster is ready) and hit random endpoint. After 20 minutes all endpoints (PERF_TEST_GET_ONLY set to **FALSE**) will be attacked at rate of approx 45-50 requests per second
+
+```
+PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=23 PERF_TEST_KAFKA_POST_WAIT_TIME=1 PERF_TEST_KAFKAS_PER_WORKER=5 PERF_TEST_GET_ONLY=FALSE PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20 make test/performance
+```
+
+- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). Don't create any kafka requests (by default PERF_TEST_KAFKAS_PER_WORKER is set to **0**) and hit GET only endpoints (by default PERF_TEST_GET_ONLY is set to **TRUE**). All GET endpoints will be attacked at rate of approx 180-200 requests per second
+
+```
+PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=$KAFKA_OCM_TOKEN PERF_TEST_ROUTE_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.q2lz.s1.devshift.org PERF_TEST_USERS=100 make test/performance
+```
+
+## Generating kafka bootstrap URL and service account credentials config file
+If PERF_TEST_KAFKAS_PER_WORKER is set to a value greater than 0, for each of kafka clusters created, its config will be persisted to `test/performance/token_api/config.txt`, so that it can be consumed by Running the Service team for kafka load test.
+
 ## Build and push the images
 
-Make sure login quay.io using a robot account. The credentail are saved under rhoas/robots/ inisde vault. 
+Make sure login quay.io using a robot account. The credentials are saved under rhoas/robots/ inside vault. 
 
 ```
  make test/performance/image/build 
