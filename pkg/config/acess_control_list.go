@@ -7,6 +7,11 @@ import (
 
 var MaxAllowedInstances int = 1
 
+// Returns the default max allowed instances for both internal (users and orgs in allow list config) and external users
+func GetDefaultMaxAllowedInstances() int {
+	return MaxAllowedInstances
+}
+
 type AllowedListItem interface {
 	// IsInstanceCountWithinLimit returns true if the given count is within limits
 	IsInstanceCountWithinLimit(count int) bool
@@ -126,15 +131,13 @@ func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableAllowList, "enable-allow-list", c.EnableAllowList, "Enable access control via the allowed list of users")
 	fs.StringVar(&c.DenyListConfigFile, "deny-list-config-file", c.DenyListConfigFile, "DenyList configuration file")
 	fs.BoolVar(&c.EnableDenyList, "enable-deny-list", c.EnableDenyList, "Enable access control via the denied list of users")
-	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Maximumm number of allowed instances that can be created by the user")
+	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Default maximum number of allowed instances that can be created by a user")
 }
 
 func (c *AccessControlListConfig) ReadFiles() error {
 	var err error
 
-	if c.EnableAllowList {
-		err = readAllowListConfigFile(c.AllowListConfigFile, &c.AllowList)
-	}
+	err = readAllowListConfigFile(c.AllowListConfigFile, &c.AllowList)
 
 	if c.EnableDenyList && err == nil {
 		err = readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)

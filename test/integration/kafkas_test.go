@@ -550,16 +550,23 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 // The max allowed instances limit is set to "1" set for one organusation is not depassed.
 // At the same time, users of a different organisation should be able to create instances.
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
+	startHook := func(h *test.Helper) {
+		h.Env().Config.AccessControlList.EnableAllowList = false
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.AccessControlList.EnableAllowList = true
+	}
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer teardown()
 
 	// this value if taken from config/allow-list-configuration.yaml
 	orgIdWithLimitOfOne := "12147054"
-	ownerAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
-	ctx := h.NewAuthenticatedContext(ownerAccount, nil)
+	internalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
+	internalUserCtx := h.NewAuthenticatedContext(internalUserAccount, nil)
 
 	kafka1 := openapi.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
@@ -576,10 +583,10 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	}
 
 	// create the first kafka
-	_, resp1, _ := client.DefaultApi.CreateKafka(ctx, true, kafka1)
+	_, resp1, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
 
 	// create the second kafka
-	_, resp2, _ := client.DefaultApi.CreateKafka(ctx, true, kafka2)
+	_, resp2, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka2)
 
 	// verify that the first request was accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
@@ -590,10 +597,10 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 
 	// verify that user of the same org cannot create a new kafka since limit has been reached
 	accountInSameOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
-	ctx = h.NewAuthenticatedContext(accountInSameOrg, nil)
+	internalUserCtx = h.NewAuthenticatedContext(accountInSameOrg, nil)
 
 	// attempt to create kafka for this user account
-	_, resp3, _ := client.DefaultApi.CreateKafka(ctx, true, kafka2)
+	_, resp3, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka2)
 
 	// verify that the request errored with 403 forbidden for the account in same organisation
 	Expect(resp3.StatusCode).To(Equal(http.StatusForbidden))
@@ -601,13 +608,30 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 
 	// verify that user of a different organisation can still create kafka instances
 	accountInDifferentOrg := h.NewRandAccount()
-	ctx = h.NewAuthenticatedContext(accountInDifferentOrg, nil)
+	internalUserCtx = h.NewAuthenticatedContext(accountInDifferentOrg, nil)
 
 	// attempt to create kafka for this user account
-	_, resp4, _ := client.DefaultApi.CreateKafka(ctx, true, kafka1)
+	_, resp4, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
 
 	// verify that the request was accepted
 	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
+
+	// verify that an external user not listed in the allow list can create the default maximum allowed kafka instances
+	externalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
+	externalUserCtx := h.NewAuthenticatedContext(externalUserAccount, nil)
+
+	// create the first kafka
+	_, resp5, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka1)
+
+	// create the second kafka
+	_, resp6, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka2)
+
+	// verify that the first request was accepted
+	Expect(resp5.StatusCode).To(Equal(http.StatusAccepted))
+
+	// verify that the second request for the external user errored with 403 Forbidden
+	Expect(resp6.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(resp6.Header.Get("Content-Type")).To(Equal("application/json"))
 }
 
 func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {

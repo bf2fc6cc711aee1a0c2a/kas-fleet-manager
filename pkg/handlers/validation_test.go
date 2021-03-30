@@ -173,13 +173,11 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 		context       context.Context
 	}
 
-	username := "username"
-
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatalf("failed to create auth helper: %s", err.Error())
 	}
-	account, err := authHelper.NewAccount(username, "", "", "org-id")
+	account, err := authHelper.NewAccount("username", "", "", "org-id")
 	if err != nil {
 		t.Fatal("failed to build a new account")
 	}
@@ -200,7 +198,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
-						return api.KafkaList{}, nil, nil
+						return api.KafkaList{}, &api.PagingMeta{}, nil
 					},
 				},
 				configService: services.NewConfigService(
@@ -228,7 +226,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 						AllowList: config.AllowListConfiguration{
 							ServiceAccounts: config.AllowedAccounts{
 								config.AllowedAccount{
-									Username:            username,
+									Username:            account.Username(),
 									MaxAllowedInstances: 4,
 								},
 							},
@@ -286,7 +284,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 							AllowList: config.AllowListConfiguration{
 								ServiceAccounts: config.AllowedAccounts{
 									config.AllowedAccount{
-										Username:            username,
+										Username:            account.Username(),
 										MaxAllowedInstances: 4,
 									},
 								},
@@ -317,7 +315,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 							AllowList: config.AllowListConfiguration{
 								ServiceAccounts: config.AllowedAccounts{
 									config.AllowedAccount{
-										Username: username,
+										Username: account.Username(),
 									},
 								},
 							},
@@ -333,7 +331,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			},
 		},
 		{
-			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allowed service accounts list",
+			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allow list",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
@@ -342,9 +340,41 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
+						EnableAllowList: false,
 					},
 				}),
+				context: authenticatedCtx,
+			},
+			want: &errors.ServiceError{
+				HttpCode: http.StatusForbidden,
+				Reason:   "User 'username' has reached a maximum number of 1 allowed instances.",
+				Code:     5,
+			},
+		},
+		{
+			name: "throw an error if user is not allowed in their org and they cannot create any more instances after exceeding default allowed user limits",
+			arg: args{
+				kafkaService: &services.KafkaServiceMock{
+					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+						return nil, &api.PagingMeta{Total: 1}, nil
+					},
+				},
+				configService: services.NewConfigService(
+					config.ApplicationConfig{
+						AccessControlList: &config.AccessControlListConfig{
+							EnableInstanceLimitControl: true,
+							AllowList: config.AllowListConfiguration{
+								Organisations: config.OrganisationList{
+									config.Organisation{
+										Id:                  "org-id",
+										MaxAllowedInstances: 4,
+										AllowAll:            false,
+									},
+								},
+							},
+						},
+					},
+				),
 				context: authenticatedCtx,
 			},
 			want: &errors.ServiceError{
