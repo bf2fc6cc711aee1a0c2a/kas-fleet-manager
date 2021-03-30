@@ -25,7 +25,6 @@ func TestServiceAccounts_Success(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-
 	//verify list
 	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
 	Expect(err).ShouldNot(HaveOccurred())

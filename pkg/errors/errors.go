@@ -64,6 +64,10 @@ const (
 	ErrorFailedToParseSearch       ServiceErrorCode = 23
 	ErrorFailedToParseSearchReason string           = "Failed to parse search query"
 
+	// TooManyRequests occurs when a the kafka instances capacity gets filled up
+	ErrorTooManyKafkaInstancesReached       ServiceErrorCode = 24
+	ErrorTooManyKafkaInstancesReachedReason string           = "The maximum number of allowed kafka instances has been reached"
+
 	// Synchronous request not supported
 	ErrorSyncActionNotSupported       ServiceErrorCode = 103
 	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
@@ -167,6 +171,7 @@ func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden},
 		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden},
+		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusTooManyRequests},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound},
 		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest},
@@ -378,6 +383,10 @@ func Forbidden(reason string, values ...interface{}) *ServiceError {
 
 func MaximumAllowedInstanceReached(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorMaxAllowedInstanceReached, reason, values...)
+}
+
+func TooManyKafkaInstancesReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorTooManyKafkaInstancesReached, reason, values...)
 }
 
 func NotImplemented(reason string, values ...interface{}) *ServiceError {

@@ -278,6 +278,73 @@ func Test_kafkaService_GetById(t *testing.T) {
 	}
 }
 
+func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		kafkaConfig       *config.KafkaConfig
+	}
+
+	tests := []struct {
+		name        string
+		fields      fields
+		setupFn     func()
+		wantErr     bool
+		hasCapacity bool
+	}{
+		{
+			name:        "capacity exhausted",
+			hasCapacity: false,
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaCapacity: config.KafkaCapacityConfig{
+						MaxCapacity: 1000,
+					},
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{{"a": "1000"}})
+			},
+			wantErr: false,
+		},
+		{
+			name:        "capacity available",
+			hasCapacity: true,
+			fields: fields{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaCapacity: config.KafkaCapacityConfig{
+						MaxCapacity: 1000,
+					},
+				},
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{{"a": "999"}})
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				kafkaConfig:       tt.fields.kafkaConfig,
+			}
+
+			if hasCapacity, err := k.HasAvailableCapacity(); (err != nil) != tt.wantErr {
+				t.Errorf("HasAvailableCapacity() error = %v, wantErr = %v", err, tt.wantErr)
+			} else if hasCapacity != tt.hasCapacity {
+				t.Errorf("HasAvailableCapacity() hasCapacity = %v, wanted = %v", hasCapacity, tt.hasCapacity)
+			}
+		})
+	}
+}
+
 func Test_kafkaService_Create(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
@@ -778,6 +845,13 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		clusterService    ClusterService
 		quotaService      QuotaService
 	}
+
+	type errorCheck struct {
+		wantErr  bool
+		code     errors.ServiceErrorCode
+		httpCode int
+	}
+
 	type args struct {
 		kafkaRequest *api.KafkaRequest
 	}
@@ -786,7 +860,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		fields  fields
 		args    args
 		setupFn func()
-		wantErr bool
+		error   errorCheck
 	}{
 		{
 			name: "registering kafka job succeeds",
@@ -804,9 +878,37 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "200"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT").WithReply(nil)
 			},
-			wantErr: false,
+			error: errorCheck{
+				wantErr: false,
+			},
+		},
+		{
+			name: "registering kafka too many instances",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				syncsetService:    nil,
+				clusterService:    nil,
+				quotaService: &QuotaServiceMock{
+					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
+						return true, "", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "1000"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT").WithReply(nil)
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusTooManyRequests,
+			},
 		},
 		{
 			name: "registering kafka job fails: postgres error",
@@ -824,9 +926,14 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "200"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT").WithExecException()
 			},
-			wantErr: true,
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorGeneral,
+				httpCode: http.StatusInternalServerError,
+			},
 		},
 		{
 			name: "registering kafka job fails: quota error",
@@ -844,11 +951,23 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "200"}})
+				mocket.Catcher.NewMock().WithQuery("INSERT").WithExecException()
 			},
-			wantErr: true,
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorGeneral,
+				httpCode: http.StatusInternalServerError,
+			},
 		},
 	}
+
+	kafkaConf := config.KafkaConfig{
+		KafkaCapacity: config.KafkaCapacityConfig{
+			MaxCapacity: 1000,
+		},
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -859,13 +978,24 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
-				kafkaConfig:       config.NewKafkaConfig(),
+				kafkaConfig:       &kafkaConf,
 				awsConfig:         config.NewAWSConfig(),
 				quotaService:      tt.fields.quotaService,
 			}
 
-			if err := k.RegisterKafkaJob(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
-				t.Errorf("RegisterKafkaJob() error = %v, wantErr = %v", err, tt.wantErr)
+			err := k.RegisterKafkaJob(tt.args.kafkaRequest)
+
+			if (err != nil) != tt.error.wantErr {
+				t.Errorf("RegisterKafkaJob() error = %v, wantErr = %v", err, tt.error.wantErr)
+			}
+
+			if tt.error.wantErr && err.Code != tt.error.code {
+				if err.Code != tt.error.code {
+					t.Errorf("RegisterKafkaJob() received error code %v, expected error %v", err.Code, tt.error.code)
+				}
+				if err.HttpCode != tt.error.httpCode {
+					t.Errorf("RegisterKafkaJob() received http code %v, expected %v", err.HttpCode, tt.error.httpCode)
+				}
 			}
 		})
 	}
