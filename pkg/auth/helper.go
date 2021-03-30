@@ -60,13 +60,11 @@ func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId str
 		lastName = names[1]
 	}
 
-
 	builder := amv1.NewAccount().
 		ID(uuid.New().String()).
 		Username(username).
 		FirstName(firstName).
 		LastName(lastName).
-
 		Email(email).
 		Organization(amv1.NewOrganization().ExternalID(orgId))
 
