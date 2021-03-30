@@ -439,6 +439,15 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
+		{
+			MultiAZ:        false,
+			Owner:          "some-other-user",
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "this-kafka-will-remain",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
 	}
 
 	for _, kafka := range kafkas {
@@ -453,7 +462,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
 		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
-		return list.Size == 0, err
+		return list.Size == 1, err
 	})
 
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for first kafka deletion: %v", kafkaDeletionErr)
