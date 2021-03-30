@@ -393,15 +393,15 @@ objects:
       allow-list-configuration.yaml: |-
         allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
         allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
-   - kind: ConfigMap
-     apiVersion: v1
-     metadata:
-       name: ocm-managed-services-denied-users-config
-       annotations:
-         qontract.recycle: "true"
-     data:
-        deny-list-configuration.yaml: |-
-          ${DENIED_USERS}       
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-denied-users-config
+      annotations:
+        qontract.recycle: "true"
+    data:
+      deny-list-configuration.yaml: |-
+        ${DENIED_USERS}       
   - kind: ConfigMap
     apiVersion: v1
     metadata:
