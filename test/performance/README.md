@@ -48,7 +48,7 @@ PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_o
 - Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). Don't create any kafka requests (by default PERF_TEST_KAFKAS_PER_WORKER is set to **0**) and hit GET only endpoints (by default PERF_TEST_GET_ONLY is set to **TRUE**). All GET endpoints will be attacked at rate of approx 180-200 requests per second
 
 ```
-PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=$KAFKA_OCM_TOKEN PERF_TEST_ROUTE_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.q2lz.s1.devshift.org PERF_TEST_USERS=100 make test/performance
+PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=100 make test/performance
 ```
 
 ## Generating kafka bootstrap URL and service account credentials config file
