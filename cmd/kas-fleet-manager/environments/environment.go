@@ -155,7 +155,7 @@ func (env *Env) LoadServices() error {
 
 	signalBus := signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
 	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	OsdIdpKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
 	syncsetService := services.NewSyncsetService(ocmClient)

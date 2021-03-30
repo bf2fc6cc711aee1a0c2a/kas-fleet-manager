@@ -10,13 +10,13 @@ var stageConfigDefaults map[string]string = map[string]string{
 	"enable-allow-list":                 "true",
 	"enable-deny-list":                  "true",
 	"max-allowed-instances":             "1",
-	"auto-osd-creation":                 "true",
 	"mas-sso-base-url":                  "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
 	"mas-sso-realm":                     "mas-sso-staging",
 	"enable-kafka-external-certificate": "true",
 	"cluster-compute-machine-type":      "m5.4xlarge",
 	"ingress-controller-replicas":       "9",
 	"enable-quota-service":              "true",
+	"enable-dynamic-scaling":            "false",
 }
 
 func loadStage(env *Env) error {

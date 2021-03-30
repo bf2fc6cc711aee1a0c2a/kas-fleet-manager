@@ -836,35 +836,3 @@ func Test_configService_validateProvider(t *testing.T) {
 		})
 	}
 }
-
-func Test_configService_IsAutoCreateOSDEnabled(t *testing.T) {
-	tests := []struct {
-		name                  string
-		clusterCreationConfig config.ClusterCreationConfig
-		want                  bool
-	}{
-		{
-			name:                  "return true if auto osd creation is enabled",
-			clusterCreationConfig: config.ClusterCreationConfig{AutoOSDCreation: true},
-			want:                  true,
-		},
-		{
-
-			name:                  "return false if auto osd creation is disabled",
-			clusterCreationConfig: config.ClusterCreationConfig{AutoOSDCreation: false},
-			want:                  false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			c := configService{
-				appConfig: config.ApplicationConfig{
-					ClusterCreationConfig: &tt.clusterCreationConfig,
-				},
-			}
-			enabled := c.IsAutoCreateOSDEnabled()
-			Expect(enabled).To(Equal(tt.want))
-		})
-	}
-}
