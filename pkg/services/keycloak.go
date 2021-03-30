@@ -72,7 +72,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 		ClientID:                     kafkaClusterName,
 		Name:                         kafkaClusterName,
 		ServiceAccountsEnabled:       true,
-		AuthorizationServicesEnabled: true,
+		AuthorizationServicesEnabled: false,
 		StandardFlowEnabled:          false,
 		Attributes:                   rhOrgIdAttributes,
 	}
