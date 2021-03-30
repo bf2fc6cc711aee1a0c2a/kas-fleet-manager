@@ -74,6 +74,16 @@ func SendAPIV1(w http.ResponseWriter, r *http.Request) {
 			Kind: "KafkaList",
 			HREF: r.URL.Path + "/kafkas",
 		},
+		{
+			ID:   "serviceaccounts",
+			Kind: "ServiceAccountList",
+			HREF: r.URL.Path + "/serviceaccounts",
+		},
+		{
+			ID:   "cloud_providers",
+			Kind: "CloudProviderList",
+			HREF: r.URL.Path + "/cloud_providers",
+		},
 	}
 	body := VersionMetadata{
 		ID:          id,
