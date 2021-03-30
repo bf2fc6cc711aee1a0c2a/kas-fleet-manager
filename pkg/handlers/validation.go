@@ -182,7 +182,7 @@ func validateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 func validateMaxLength(value *string, field string, maxVal *int) validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
-			return errors.MaximumFieldLengthMissing("%s is not valid. Maximum length %d is required", field, maxVal)
+			return errors.MaximumFieldLengthMissing("%s is not valid. Maximum length %d is required", field, *maxVal)
 		}
 		return nil
 	}
