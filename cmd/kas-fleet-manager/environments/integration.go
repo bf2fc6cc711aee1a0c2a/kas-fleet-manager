@@ -21,7 +21,6 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"enable-allow-list":                 "true",
 	"enable-deny-list":                  "true",
 	"max-allowed-instances":             "1",
-	"auto-osd-creation":                 "false",
 	"mas-sso-base-url":                  "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
 	"mas-sso-realm":                     "mas-sso-playground",
 	"osd-idp-mas-sso-realm":             "mas-sso-playground",
@@ -29,6 +28,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"cluster-compute-machine-type":      "m5.xlarge",
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
+	"enable-dynamic-scaling":            "false",
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server

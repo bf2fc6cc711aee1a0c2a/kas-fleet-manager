@@ -27,7 +27,7 @@ type ApplicationConfig struct {
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
-	ClusterCreationConfig      *ClusterCreationConfig      `json:"cluster_creation"`
+	OSDClusterConfig           *OSDClusterConfig           `json:"osd_cluster"`
 	ConnectorsConfig           *ConnectorsConfig           `json:"connectors"`
 	KasFleetShardConfig        *KasFleetshardConfig        `json:"kas-fleetshard"`
 	Vault                      *VaultConfig                `json:"vault"`
@@ -47,7 +47,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
-		ClusterCreationConfig:      NewClusterCreationConfig(),
+		OSDClusterConfig:           NewOSDClusterConfig(),
 		ConnectorsConfig:           NewConnectorsConfig(),
 		KasFleetShardConfig:        NewKasFleetshardConfig(),
 		Vault:                      NewVaultConfig(),
@@ -68,7 +68,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.ObservabilityConfiguration.AddFlags(flagset)
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
-	c.ClusterCreationConfig.AddFlags(flagset)
+	c.OSDClusterConfig.AddFlags(flagset)
 	c.ConnectorsConfig.AddFlags(flagset)
 	c.KasFleetShardConfig.AddFlags(flagset)
 	c.Vault.AddFlags(flagset)
@@ -132,7 +132,7 @@ func (c *ApplicationConfig) ReadFiles() error {
 			return err
 		}
 	}
-	err = c.ClusterCreationConfig.ReadFiles()
+	err = c.OSDClusterConfig.ReadFiles()
 	if err != nil {
 		return err
 	}

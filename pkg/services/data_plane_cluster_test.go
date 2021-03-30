@@ -37,7 +37,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 						return nil, nil
 					},
 				}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: true,
 		},
@@ -84,7 +84,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 						return nil
 					},
 				}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 		},
 	}
@@ -136,7 +136,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				kafkaConfig := sampleValidConfig()
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
 				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, kafkaConfig)
 				return &input{
 					status:                  testStatus,
@@ -169,7 +169,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -200,7 +200,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -213,7 +213,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when all scale-down threshold is crossed number of compute nodes is decreased",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidConfig().Kafka
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest().Kafka
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -240,7 +240,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					},
 				}
 
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -253,7 +253,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when not all scale-down threshold are crossed number of compute nodes is not decreased",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidConfig().Kafka
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest().Kafka
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -275,7 +275,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -288,7 +288,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when scale-down threshold is crossed but scaled-down nodes would be less than workloadMin then no scaling is performed",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidConfig().Kafka
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest().Kafka
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -311,7 +311,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -324,7 +324,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when scale-down threshold is crossed but scaled-down nodes would be less than restricted floor then no scaling is performed",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidConfig().Kafka
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest().Kafka
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -348,7 +348,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -361,7 +361,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when no scale-up or scale-down thresholds are crossed no scaling is performed",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidConfig().Kafka
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest().Kafka
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 12
 				testStatus.NodeInfo.Ceiling = 30
@@ -387,7 +387,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -451,7 +451,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 					},
 				}
 				clusterService := &ClusterServiceMock{}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want:    false,
 			wantErr: false,
@@ -481,7 +481,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 					},
 				}
 				clusterService := &ClusterServiceMock{}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want:    true,
 			wantErr: false,
@@ -506,7 +506,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 					},
 				}
 				clusterService := &ClusterServiceMock{}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidConfig())
+				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want:    false,
 			wantErr: true,
@@ -553,7 +553,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: false,
 			want:    true,
@@ -569,7 +569,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: false,
 			want:    false,
@@ -580,7 +580,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				Conditions: []api.DataPlaneClusterStatusCondition{},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: false,
 			want:    false,
@@ -596,7 +596,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: true,
 			want:    false,
@@ -634,7 +634,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterReady,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -644,7 +644,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterFull,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -654,7 +654,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterWaitingForKasFleetShardOperator,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -664,7 +664,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterComputeNodeScalingUp,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -674,7 +674,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterProvisioning,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -684,7 +684,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterFailed,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -694,7 +694,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterAccepted,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -704,7 +704,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterProvisioned,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, &config.ApplicationConfig{})
+				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -753,6 +753,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						ObservabilityConfigAccessToken: "test-token",
 						ObservabilityConfigTag:         "test-tag",
 					},
+					OSDClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest().OSDClusterConfig,
 				},
 			},
 			wantErr: false,
@@ -778,7 +779,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						ObservabilityConfigAccessToken: "test-token",
 						ObservabilityConfigTag:         "test-tag",
 					},
-				},
+					OSDClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest().OSDClusterConfig},
 			},
 			wantErr: true,
 			want:    nil,
@@ -815,7 +816,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			name: "when there is capacity remaining and cluster is not ready then it is set as ready",
 			inputFactory: func() (*input, *api.ClusterStatus) {
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
-				applicationConfig := sampleValidConfig()
+				applicationConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
 				kafkaConfig := applicationConfig.Kafka
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
@@ -855,12 +856,11 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			want:    api.ClusterReady,
 			wantErr: false,
 		},
-
 		{
 			name: "when there is no capacity remaining and current number of nodes is less than restricted ceiling then state is set as scaling in progress",
 			inputFactory: func() (*input, *api.ClusterStatus) {
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
-				applicationConfig := sampleValidConfig()
+				applicationConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -900,10 +900,54 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "when there is no capacity remaining and dynamic scaling is not enabled then state is set as ready",
+			inputFactory: func() (*input, *api.ClusterStatus) {
+				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
+				applicationConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
+				applicationConfig.OSDClusterConfig.DynamicScalingConfig.Enabled = false
+				testStatus.NodeInfo.Current = 3
+				testStatus.NodeInfo.Ceiling = 10000
+				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
+				testStatus.Remaining.Connections = 0
+				testStatus.Remaining.Partitions = 0
+				apiCluster := &api.Cluster{
+					ClusterID: testClusterID,
+					MultiAZ:   true,
+					Status:    api.ClusterWaitingForKasFleetShardOperator,
+				}
+				ocmClient := &ocm.ClientMock{}
+				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
+
+				clusterService := &ClusterServiceMock{
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+						if clusterID != apiCluster.ClusterID {
+							return nil, errors.GeneralError("unexpected test error")
+						}
+						return nil, nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if cluster.ClusterID != apiCluster.ClusterID {
+							return errors.GeneralError("unexpected test error")
+						}
+						*spyReceivedUpdateStatus = status
+						return nil
+					},
+				}
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				return &input{
+					status:                  testStatus,
+					cluster:                 apiCluster,
+					dataPlaneClusterService: dataPlaneClusterService,
+				}, spyReceivedUpdateStatus
+			},
+			want:    api.ClusterReady,
+			wantErr: false,
+		},
+		{
 			name: "when there is no capacity remaining and current number of nodes is higher or equal than restricted ceiling then state is set to full",
 			inputFactory: func() (*input, *api.ClusterStatus) {
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
-				applicationConfig := sampleValidConfig()
+				applicationConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
 				testStatus.NodeInfo.Current = 10
 				testStatus.NodeInfo.Ceiling = 11
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -997,11 +1041,18 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *api.DataPlaneClusterStatus 
 	}
 }
 
-func sampleValidConfig() *config.ApplicationConfig {
-	return &config.ApplicationConfig{Kafka: &config.KafkaConfig{
-		KafkaCapacity: config.KafkaCapacityConfig{
-			MaxPartitions:       100,
-			TotalMaxConnections: 100,
+func sampleValidApplicationConfigForDataPlaneClusterTest() *config.ApplicationConfig {
+	osdClusterConfig := config.NewOSDClusterConfig()
+	osdClusterConfig.DynamicScalingConfig = &config.DynamicScalingConfig{
+		Enabled: true,
+	}
+	return &config.ApplicationConfig{
+		Kafka: &config.KafkaConfig{
+			KafkaCapacity: config.KafkaCapacityConfig{
+				MaxPartitions:       100,
+				TotalMaxConnections: 100,
+			},
 		},
-	}}
+		OSDClusterConfig: osdClusterConfig,
+	}
 }

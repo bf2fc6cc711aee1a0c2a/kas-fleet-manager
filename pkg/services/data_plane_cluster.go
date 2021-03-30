@@ -27,10 +27,11 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	ocmClient           ocm.Client
-	clusterService      ClusterService
-	kafkaConfig         *config.KafkaConfig
-	observabilityConfig *config.ObservabilityConfiguration
+	ocmClient            ocm.Client
+	clusterService       ClusterService
+	kafkaConfig          *config.KafkaConfig
+	observabilityConfig  *config.ObservabilityConfiguration
+	dynamicScalingConfig *config.DynamicScalingConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -40,10 +41,11 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 
 func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client, config *config.ApplicationConfig) *dataPlaneClusterService {
 	return &dataPlaneClusterService{
-		ocmClient:           ocmClient,
-		clusterService:      clusterService,
-		kafkaConfig:         config.Kafka,
-		observabilityConfig: config.ObservabilityConfiguration,
+		ocmClient:            ocmClient,
+		clusterService:       clusterService,
+		kafkaConfig:          config.Kafka,
+		observabilityConfig:  config.ObservabilityConfiguration,
+		dynamicScalingConfig: config.OSDClusterConfig.DynamicScalingConfig,
 	}
 }
 
@@ -105,18 +107,20 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.ToServiceError(err)
 	}
 
-	computeNodeScalingInProgress, err := d.computeNodeScalingActionInProgress(cluster, status)
-	if err != nil {
-		return errors.ToServiceError(err)
-	}
-	if computeNodeScalingInProgress {
-		glog.V(10).Infof("Cluster '%s' compute nodes scaling currently in progress. Omitting scaling actions evaluation...", cluster.ClusterID)
-		return nil
-	}
+	if d.dynamicScalingConfig.Enabled {
+		computeNodeScalingInProgress, err := d.computeNodeScalingActionInProgress(cluster, status)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
+		if computeNodeScalingInProgress {
+			glog.V(10).Infof("Cluster '%s' compute nodes scaling currently in progress. Omitting scaling actions evaluation...", cluster.ClusterID)
+			return nil
+		}
 
-	_, err = d.updateDataPlaneClusterNodes(cluster, status)
-	if err != nil {
-		return errors.ToServiceError(err)
+		_, err = d.updateDataPlaneClusterNodes(cluster, status)
+		if err != nil {
+			return errors.ToServiceError(err)
+		}
 	}
 
 	return nil
@@ -224,9 +228,13 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 }
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *api.DataPlaneClusterStatus) error {
-	remainingCapacity, err := d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
-	if err != nil {
-		return err
+	remainingCapacity := true
+	if d.dynamicScalingConfig.Enabled {
+		var err error
+		remainingCapacity, err = d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
+		if err != nil {
+			return err
+		}
 	}
 
 	if remainingCapacity && cluster.Status != api.ClusterReady {
