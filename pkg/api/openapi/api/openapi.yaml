@@ -14,6 +14,17 @@ servers:
 - description: current domain
   url: /
 paths:
+  /api/managed-services-api/v1:
+    get:
+      operationId: versionMetadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionMetadata'
+          description: Version metadata
+      summary: Retrieves the version metadata
   /api/managed-services-api/v1/kafkas/{id}:
     delete:
       operationId: deleteKafkaById
@@ -1205,6 +1216,10 @@ components:
       allOf:
       - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/KafkaRequestList_allOf'
+    VersionMetadata:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/VersionMetadata_allOf'
     KafkaRequestPayload:
       description: Schema for the request body sent to /kafkas POST
       example:
@@ -1395,6 +1410,14 @@ components:
           items:
             allOf:
             - $ref: '#/components/schemas/KafkaRequest'
+          type: array
+    VersionMetadata_allOf:
+      example: '{"kind":"APIVersion","id":"v1","href":"/api/managed-services-api/v1","collections":[{"id":"kafkas","href":"/api/managed-services-api/v1/kafkas","kind":"KafkaList"}]}'
+      properties:
+        collections:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ObjectReference'
           type: array
     CloudProviderList_allOf:
       example: '{"kind":"CloudProviderList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'

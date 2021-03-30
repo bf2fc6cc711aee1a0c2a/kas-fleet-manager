@@ -14,6 +14,17 @@ servers:
   - url: /
     description: current domain
 paths:
+  /api/managed-services-api/v1:
+    get:
+      operationId: versionMetadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionMetadata'
+          description: Version metadata
+      summary: Retrieves the version metadata
   /api/managed-services-api/v1/kafkas/{id}:
     get:
       operationId: getKafkaById
@@ -688,6 +699,24 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/KafkaRequest"
+    VersionMetadata:
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          example:
+            kind: "APIVersion"
+            id: "v1"
+            href: "/api/managed-services-api/v1"
+            collections:
+              - id: "kafkas"
+                href: "/api/managed-services-api/v1/kafkas"
+                kind: "KafkaList" 
+          properties:
+            collections:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/ObjectReference"                       
     KafkaRequestPayload:
       description: Schema for the request body sent to /kafkas POST
       required:
