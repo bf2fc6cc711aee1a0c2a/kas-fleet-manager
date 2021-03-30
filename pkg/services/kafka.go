@@ -526,6 +526,7 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
+			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
 		}
 	}

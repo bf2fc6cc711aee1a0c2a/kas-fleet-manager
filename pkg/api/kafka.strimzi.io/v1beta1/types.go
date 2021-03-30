@@ -187,6 +187,7 @@ type KafkaListenerAuthenticationOAuth struct {
 	CheckIssuer                    bool                `json:"checkIssuer,omitempty"`
 	ClientID                       string              `json:"clientId,omitempty"`
 	ClientSecret                   GenericSecretSource `json:"clientSecret,omitempty"`
+	CustomClaimCheck               string              `json:"customClaimCheck,omitempty"`
 	DisableTLSHostnameVerification bool                `json:"disableTlsHostnameVerification,omitempty"`
 	EnableECDSA                    bool                `json:"enableECDSA,omitempty"`
 	FallbackUserNameClaim          string              `json:"fallbackUserNameClaim,omitempty"`

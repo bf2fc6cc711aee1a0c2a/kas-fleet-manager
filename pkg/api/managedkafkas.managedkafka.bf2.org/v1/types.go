@@ -48,6 +48,7 @@ type OAuthSpec struct {
 	ValidIssuerEndpointURI string `json:"validIssuerEndpointURI"`
 	UserNameClaim          string `json:"userNameClaim"`
 	TlsTrustedCertificate  string `json:"tlsTrustedCertificate"`
+	CustomClaimCheck       string `json:"customClaimCheck"`
 }
 
 type TlsSpec struct {

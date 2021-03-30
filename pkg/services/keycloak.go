@@ -18,6 +18,8 @@ import (
 
 const (
 	rhOrgId            = "rh-org-id"
+	rhUserId           = "rh-user-id"
+	username           = "username"
 	clusterId          = "kas-fleetshard-operator-cluster-id"
 	connectorClusterId = "connector-fleetshard-operator-cluster-id"
 )
@@ -177,13 +179,23 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
+	ownerAccountId := auth.GetAccountIdFromClaims(claims)
+	owner := auth.GetUsernameFromClaims(claims)
 	rhAccountID := map[string][]string{
-		"rh-org-id": {orgId},
+		rhOrgId:  {orgId},
+		rhUserId: {ownerAccountId},
+		username: {owner},
 	}
 	rhOrgIdAttributes := map[string]string{
-		rhOrgId: orgId,
+		rhOrgId:  orgId,
+		rhUserId: ownerAccountId,
+		username: owner,
 	}
-	protocolMapper := kc.kcClient.CreateProtocolMapperConfig(rhOrgId)
+	OrgIdProtocolMapper := kc.kcClient.CreateProtocolMapperConfig(rhOrgId)
+	userIdProtocolMapper := kc.kcClient.CreateProtocolMapperConfig(rhUserId)
+	userProtocolMapper := kc.kcClient.CreateProtocolMapperConfig(username)
+	protocolMapper := append(OrgIdProtocolMapper, userIdProtocolMapper...)
+	protocolMapper = append(protocolMapper, userProtocolMapper...)
 
 	c := keycloak.ClientRepresentation{
 		ClientID:               kc.buildServiceAccountIdentifier(),
@@ -214,6 +226,7 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 		return nil, errors.GeneralError("failed add attributes to service account user: %v", updateErr)
 	}
 	serviceAcc.ID = internalClient
+	serviceAcc.Owner = owner
 	serviceAcc.Name = c.Name
 	serviceAcc.ClientID = c.ClientID
 	serviceAcc.Description = c.Description
@@ -243,6 +256,7 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 		att := *attributes
 		if att["rh-org-id"] == orgId && strings.HasPrefix(safeString(client.ClientID), "srvc-acct") {
 			acc.ID = *client.ID
+			acc.Owner = att["username"]
 			acc.ClientID = *client.ClientID
 			acc.Name = safeString(client.Name)
 			acc.Description = safeString(client.Description)
@@ -259,11 +273,12 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 		return errors.Unauthenticated("user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
+	userId := auth.GetAccountIdFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
 		return errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
 	}
-	if kc.kcClient.IsSameOrg(c, orgId) {
+	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		err = kc.kcClient.DeleteClient(id, accessToken)
 		if err != nil {
 			return errors.FailedToDeleteServiceAccount("failed to delete service account: %v", err)
@@ -281,11 +296,13 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
+	userId := auth.GetAccountIdFromClaims(claims)
+	owner := auth.GetUsernameFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
 		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
 	}
-	if kc.kcClient.IsSameOrg(c, orgId) {
+	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		credRep, err := kc.kcClient.RegenerateClientSecret(accessToken, id)
 		if err != nil {
 			return nil, errors.GeneralError("failed to regenerate service account secret: %v", err)
@@ -294,6 +311,7 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 		return &api.ServiceAccount{
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
+			Owner:        owner,
 			ClientSecret: value,
 			Name:         safeString(c.Name),
 			Description:  safeString(c.Description),
@@ -310,14 +328,17 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 		return nil, errors.Unauthenticated("user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
+	userId := auth.GetAccountIdFromClaims(claims)
+	owner := auth.GetUsernameFromClaims(claims)
 	c, err := kc.kcClient.GetClientById(id, accessToken)
 	if err != nil {
 		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
 	}
-	if kc.kcClient.IsSameOrg(c, orgId) {
+	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		return &api.ServiceAccount{
 			ID:          *c.ID,
 			ClientID:    *c.ClientID,
+			Owner:       owner,
 			Name:        safeString(c.Name),
 			Description: safeString(c.Description),
 		}, nil

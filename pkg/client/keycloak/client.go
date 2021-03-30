@@ -26,6 +26,7 @@ type KcClient interface {
 	UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error
 	GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error)
 	IsSameOrg(client *gocloak.Client, orgId string) bool
+	IsOwner(client *gocloak.Client, userId string) bool
 	RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error)
 	GetRealmRole(accessToken string, roleName string) (*gocloak.Role, error)
 	CreateRealmRole(accessToken string, roleName string) (*gocloak.Role, error)
@@ -239,6 +240,14 @@ func (kc *kcClient) IsSameOrg(client *gocloak.Client, orgId string) bool {
 	}
 	attributes := *client.Attributes
 	return attributes["rh-org-id"] == orgId
+}
+
+func (kc *kcClient) IsOwner(client *gocloak.Client, userId string) bool {
+	if userId == "" {
+		return false
+	}
+	attributes := *client.Attributes
+	return attributes["rh-user-id"] == userId
 }
 
 func (kc *kcClient) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {

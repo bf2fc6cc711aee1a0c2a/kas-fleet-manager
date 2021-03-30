@@ -40,6 +40,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientID).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
+	Expect(sa.Owner).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	// verify get by id
@@ -48,6 +49,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientID).NotTo(BeEmpty())
+	Expect(sa.Owner).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	//verify reset
@@ -56,6 +58,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
+	Expect(sa.Owner).NotTo(BeEmpty())
 
 	//verify delete
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
