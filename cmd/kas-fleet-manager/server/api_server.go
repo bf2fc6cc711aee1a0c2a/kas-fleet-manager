@@ -63,6 +63,7 @@ func NewAPIServer() Server {
 	errorsHandler := handlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(services.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(services.Observatorium)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(services.Kafka, services.Config)
 
 	/* TODO
 	var authzMiddleware auth.AuthorizationMiddleware = auth.NewAuthzMiddlewareMock()
@@ -118,6 +119,11 @@ func NewAPIServer() Server {
 	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
 	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
+
+	// /api/managed-services-api/v1/status
+	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
+	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
+	apiV1Status.Use(ocmAuthzMiddlewareRequireIssuer)
 
 	//  /api/managed-services-api/v1/kafkas
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
