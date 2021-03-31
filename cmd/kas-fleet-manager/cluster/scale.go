@@ -61,7 +61,7 @@ func runScaleUp(cmd *cobra.Command, _ []string) {
 	}
 	env := environments.Environment()
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
 
 	// scale up compute nodes
 	cluster, err := clusterService.ScaleUpComputeNodes(clusterID, DefaultClusterNodeScaleIncrement)
@@ -84,7 +84,7 @@ func runScaleDown(cmd *cobra.Command, _ []string) {
 	}
 	env := environments.Environment()
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
 
 	// scale down compute nodes
 	cluster, err := clusterService.ScaleDownComputeNodes(clusterID, DefaultClusterNodeScaleIncrement)

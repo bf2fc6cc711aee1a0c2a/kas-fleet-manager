@@ -42,7 +42,7 @@ func runCreate(cmd *cobra.Command, _ []string) {
 
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
 
 	clusterRequest := api.Cluster{
 		CloudProvider: provider,

@@ -43,7 +43,7 @@ func runDelete(cmd *cobra.Command, _ []string) {
 
 	// setup required services
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
 	syncsetService := services.NewSyncsetService(ocmClient)
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	QuotaService := services.NewQuotaService(ocmClient)

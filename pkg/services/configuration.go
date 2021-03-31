@@ -37,9 +37,6 @@ type ConfigService interface {
 	GetServiceAccountByUsername(username string) (config.AllowedAccount, bool)
 	// Validate ensures all configuration managed by the service contains correct and valid values
 	Validate() error
-	// IsAutoCreateOSDEnabled returns true if the automatic creation of OSD cluster is enabled, false otherwise.
-	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
-	IsAutoCreateOSDEnabled() bool
 	// GetObservabilityConfiguration returns ObservabilityConfiguration.
 	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
 	GetObservabilityConfiguration() config.ObservabilityConfiguration
@@ -157,11 +154,6 @@ func (c configService) validateProvider(provider config.Provider) error {
 		return fmt.Errorf("expected 1 default region in provider %s, got %d", provider.Name, defaultCount)
 	}
 	return nil
-}
-
-//TODO: move this to ClusterCreationConfig
-func (c configService) IsAutoCreateOSDEnabled() bool {
-	return c.appConfig.ClusterCreationConfig.AutoOSDCreation
 }
 
 // GetObservabilityConfiguration returns ObservabilityConfiguration.
