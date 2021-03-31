@@ -27,7 +27,7 @@ services:
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=master
       - LOCUST_MASTER_HOST=primary
-      - LOCUST_OPTS=--headless --only-summary --logfile=/mnt/locust/reports/perf_test_logfile --csv-full-history --csv=/mnt/locust/reports/perf_test  -u ${PERF_TEST_USERS} -r ${PERF_TEST_USER_SPAWN_RATE} --run-time ${PERF_TEST_RUN_TIME} --html /mnt/locust/reports/perf_test_report.html
+      - LOCUST_OPTS=--headless --logfile=/mnt/locust/reports/perf_test_logfile --csv-full-history --csv=/mnt/locust/reports/perf_test  -u ${PERF_TEST_USERS} -r ${PERF_TEST_USER_SPAWN_RATE} --run-time ${PERF_TEST_RUN_TIME} --html /mnt/locust/reports/perf_test_report.html ${ADDITIONAL_LOCUST_OPTS}
     ports:
       - 8089:8089
     working_dir: /mnt/locust

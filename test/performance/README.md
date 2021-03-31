@@ -24,12 +24,17 @@ Optional parameters (if not provided, they will default to sensible and tested v
 | PERF_TEST_BASE_API_URL                    | String  | PERF_TEST_BASE_API_URL=/api/managed-services-api/v1 | Base API url (excluding 'PERF_TEST_ROUTE_HOST' param and route suffix representing the resource part of the URL (e.g. 'kafkas'))                                                                                                                                                           |
 | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF          | Integer | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=30                 | Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating kafkas). Counted from the start of the test run                                                                                                                                            |
 | PERF_TEST_CLEANUP                         | Boolean | PERF_TEST_CLEANUP=TRUE                              | Determines if a cleanup (of kafka clusters and service accounts) will be performed during last 90 seconds of the test execution                                                                                                                                                            |
+| ADDITIONAL_LOCUST_OPTS                    | String  | ADDITIONAL_LOCUST_OPTS=--only-summary               | Additional flags supported by locust                                                                                                                                                                                                                                                       |
 
 ## Run the performance tests
 
 Note.
 
-By default there will be no instantaneous results printed in the terminal. In order to show them, remove `--only-summary` from `LOCUST_OPTS` in the `docker-compose.yml` file for the `primary` service.
+By default there will be instantaneous results printed in the terminal. In order to turn it off, add `ADDITIONAL_LOCUST_OPTS=--only-summary` to the make command when running the tests, e.g.:
+
+```
+OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> ADDITIONAL_LOCUST_OPTS=--only-summary make test/performance
+```
 
 To trigger the test (executed from the root of this repo), run:
 
