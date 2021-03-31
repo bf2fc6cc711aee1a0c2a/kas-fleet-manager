@@ -15,7 +15,7 @@ const openshiftVersion = "openshift-v4.6.1"
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
 
-	clusterCreationConfig := &config.ClusterCreationConfig{
+	osdClusterConfig := &config.OSDClusterConfig{
 		OpenshiftVersion:   openshiftVersion,
 		ComputeMachineType: ComputeMachineType,
 	}
@@ -27,9 +27,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		SecretAccessKey(awsConfig.SecretAccessKey)
 
 	type fields struct {
-		idGenerator           IDGenerator
-		awsConfig             *config.AWSConfig
-		clusterCreationConfig *config.ClusterCreationConfig
+		idGenerator      IDGenerator
+		awsConfig        *config.AWSConfig
+		osdClusterConfig *config.OSDClusterConfig
 	}
 
 	type args struct {
@@ -45,9 +45,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil aws config results in error",
 			fields: fields{
-				idGenerator:           NewIDGenerator(""),
-				awsConfig:             nil,
-				clusterCreationConfig: clusterCreationConfig,
+				idGenerator:      NewIDGenerator(""),
+				awsConfig:        nil,
+				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
 				cluster: &api.Cluster{},
@@ -57,9 +57,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil cluster creation config results in error",
 			fields: fields{
-				idGenerator:           NewIDGenerator(""),
-				awsConfig:             awsConfig,
-				clusterCreationConfig: nil,
+				idGenerator:      NewIDGenerator(""),
+				awsConfig:        awsConfig,
+				osdClusterConfig: nil,
 			},
 			args: args{
 				cluster: &api.Cluster{},
@@ -69,9 +69,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil cluster results in error",
 			fields: fields{
-				idGenerator:           NewIDGenerator(""),
-				awsConfig:             awsConfig,
-				clusterCreationConfig: clusterCreationConfig,
+				idGenerator:      NewIDGenerator(""),
+				awsConfig:        awsConfig,
+				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
 				cluster: nil,
@@ -81,9 +81,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil id generator results in error",
 			fields: fields{
-				idGenerator:           nil,
-				awsConfig:             awsConfig,
-				clusterCreationConfig: clusterCreationConfig,
+				idGenerator:      nil,
+				awsConfig:        awsConfig,
+				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
 				cluster: &api.Cluster{},
@@ -98,8 +98,8 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 						return ""
 					},
 				},
-				awsConfig:             awsConfig,
-				clusterCreationConfig: clusterCreationConfig,
+				awsConfig:        awsConfig,
+				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
 				cluster: &api.Cluster{
@@ -140,9 +140,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			r := clusterBuilder{
-				idGenerator:           tt.fields.idGenerator,
-				awsConfig:             tt.fields.awsConfig,
-				clusterCreationConfig: tt.fields.clusterCreationConfig,
+				idGenerator:      tt.fields.idGenerator,
+				awsConfig:        tt.fields.awsConfig,
+				osdClusterConfig: tt.fields.osdClusterConfig,
 			}
 			got, err := r.NewOCMClusterFromCluster(tt.args.cluster)
 			if (err != nil) != tt.wantErr {

@@ -43,7 +43,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// setup required services
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 
 	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
 	clusterRegisterError := clusterService.RegisterClusterJob(&api.Cluster{
@@ -124,18 +124,26 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 }
 
 func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
+	var originalDynamicScalingEnabledValue *bool = new(bool)
+	startHook := func(h *test.Helper) {
+		*originalDynamicScalingEnabledValue = h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = *originalDynamicScalingEnabledValue
+	}
+
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer teardown()
 
 	// setup required services
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
@@ -188,6 +196,11 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		t.Error("failed to create dummy cluster")
 		return
 	}
+
+	// We enable Dynamic Scaling at this point and not in the startHook due to
+	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
+	// before enabling the dynamic scaling logic
+	h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = true
 
 	// checking that cluster has been deleted
 	err := wait.PollImmediate(interval, clusterDeletionTimeout, func() (done bool, err error) {

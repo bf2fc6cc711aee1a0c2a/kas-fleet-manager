@@ -51,12 +51,12 @@ type clusterService struct {
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Client, awsConfig *config.AWSConfig, clusterCreationConfig *config.ClusterCreationConfig) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Client, awsConfig *config.AWSConfig, osdClusterConfig *config.OSDClusterConfig) ClusterService {
 	return &clusterService{
 		connectionFactory: connectionFactory,
 		ocmClient:         ocmClient,
 		awsConfig:         awsConfig,
-		clusterBuilder:    ocm.NewClusterBuilder(awsConfig, clusterCreationConfig),
+		clusterBuilder:    ocm.NewClusterBuilder(awsConfig, osdClusterConfig),
 	}
 }
 

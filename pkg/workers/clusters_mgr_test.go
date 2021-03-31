@@ -355,7 +355,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 						SupportedProviders:         &config.ProviderConfig{},
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-						ClusterCreationConfig:      &config.ClusterCreationConfig{},
+						OSDClusterConfig:           &config.OSDClusterConfig{},
 					},
 				),
 			}
@@ -372,10 +372,9 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 
 func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 	type fields struct {
-		providerLst           []string
-		clusterService        services.ClusterService
-		providersConfig       config.ProviderConfig
-		clusterCreationConfig config.ClusterCreationConfig
+		providerLst     []string
+		clusterService  services.ClusterService
+		providersConfig config.ProviderConfig
 	}
 
 	tests := []struct {
@@ -396,9 +395,6 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 						sample, _ := v1.NewCluster().Build()
 						return sample, nil
 					},
-				},
-				clusterCreationConfig: config.ClusterCreationConfig{
-					AutoOSDCreation: true,
 				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
@@ -427,7 +423,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 						SupportedProviders:         &tt.fields.providersConfig,
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-						ClusterCreationConfig:      &tt.fields.clusterCreationConfig,
+						OSDClusterConfig:           config.NewOSDClusterConfig(),
 					}),
 			}
 
@@ -447,10 +443,10 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 
 func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 	type fields struct {
-		providerLst           []string
-		clusterService        services.ClusterService
-		providersConfig       config.ProviderConfig
-		clusterCreationConfig config.ClusterCreationConfig
+		providerLst          []string
+		clusterService       services.ClusterService
+		providersConfig      config.ProviderConfig
+		dynamicScalingConfig config.DynamicScalingConfig
 	}
 
 	tests := []struct {
@@ -471,8 +467,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return nil
 					},
 				},
-				clusterCreationConfig: config.ClusterCreationConfig{
-					AutoOSDCreation: true,
+				dynamicScalingConfig: config.DynamicScalingConfig{
+					Enabled: true,
 				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
@@ -504,8 +500,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return apiErrors.GeneralError("failed to create cluster request")
 					},
 				},
-				clusterCreationConfig: config.ClusterCreationConfig{
-					AutoOSDCreation: true,
+				dynamicScalingConfig: config.DynamicScalingConfig{
+					Enabled: true,
 				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
@@ -533,8 +529,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "Database retrieval failed")
 					},
 				},
-				clusterCreationConfig: config.ClusterCreationConfig{
-					AutoOSDCreation: true,
+				dynamicScalingConfig: config.DynamicScalingConfig{
+					Enabled: true,
 				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
@@ -561,8 +557,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				configService: services.NewConfigService(config.ApplicationConfig{
 					SupportedProviders:         &tt.fields.providersConfig,
 					AccessControlList:          &config.AccessControlListConfig{},
-					ClusterCreationConfig:      &config.ClusterCreationConfig{},
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					OSDClusterConfig:           config.NewOSDClusterConfig(),
 				}),
 			}
 			err := c.reconcileClustersForRegions()
@@ -576,7 +572,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 func TestClusterManager_createSyncSet(t *testing.T) {
 	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
-	clusterCreateConfig := config.ClusterCreationConfig{
+	clusterCreateConfig := config.OSDClusterConfig{
 		ImagePullDockerConfigContent: "image-pull-secret-test",
 		IngressControllerReplicas:    12,
 	}
@@ -584,7 +580,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 	type fields struct {
 		ocmClient           ocm.Client
 		timer               *time.Timer
-		clusterCreateConfig config.ClusterCreationConfig
+		clusterCreateConfig config.OSDClusterConfig
 	}
 
 	type result struct {
@@ -639,14 +635,14 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 						return syncset, nil
 					},
 				},
-				clusterCreateConfig: config.ClusterCreationConfig{
+				clusterCreateConfig: config.OSDClusterConfig{
 					ImagePullDockerConfigContent: "",
 				},
 			},
 			want: result{
 				err: nil,
 				syncset: func() *clustersmgmtv1.Syncset {
-					s, _ := buildSyncSet(observabilityConfig, config.ClusterCreationConfig{
+					s, _ := buildSyncSet(observabilityConfig, config.OSDClusterConfig{
 						ImagePullDockerConfigContent: "",
 					}, ingressDNS)
 					return s
@@ -665,7 +661,7 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 					SupportedProviders:         &config.ProviderConfig{},
 					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
-					ClusterCreationConfig:      &tt.fields.clusterCreateConfig,
+					OSDClusterConfig:           &tt.fields.clusterCreateConfig,
 					Kafka:                      &config.KafkaConfig{},
 				}),
 			}
@@ -917,7 +913,7 @@ func TestClusterManager_reconcileClusterSyncSet(t *testing.T) {
 					SupportedProviders:         &config.ProviderConfig{},
 					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
-					ClusterCreationConfig:      &config.ClusterCreationConfig{},
+					OSDClusterConfig:           &config.OSDClusterConfig{},
 					Kafka:                      &config.KafkaConfig{},
 				}),
 			}
@@ -1640,7 +1636,7 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 }
 
 // buildSyncSet builds a syncset used for testing
-func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.ClusterCreationConfig, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
+func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.OSDClusterConfig, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
 	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
 	expansion := true
 	consumer := storagev1.VolumeBindingWaitForFirstConsumer

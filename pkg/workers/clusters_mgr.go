@@ -220,7 +220,10 @@ func (c *ClusterManager) reconcile() {
 	}
 
 	for _, readyCluster := range readyClusters {
-		emptyClusterReconciled, err := c.reconcileEmptyCluster(readyCluster)
+		emptyClusterReconciled := false
+		if c.configService.GetConfig().OSDClusterConfig.DynamicScalingConfig.Enabled {
+			emptyClusterReconciled, err = c.reconcileEmptyCluster(readyCluster)
+		}
 		if !emptyClusterReconciled && err == nil {
 			err = c.reconcileReadyCluster(readyCluster)
 		}
@@ -490,9 +493,10 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 
 // reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
 func (c *ClusterManager) reconcileClustersForRegions() error {
-	if !c.configService.IsAutoCreateOSDEnabled() {
+	if !c.configService.GetConfig().OSDClusterConfig.DynamicScalingConfig.Enabled {
 		return nil
 	}
+
 	var providers []string
 	var regions []string
 	status := api.StatusForValidCluster
@@ -703,7 +707,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 }
 
 func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressoperatorv1.IngressController {
-	r := int32(c.configService.GetConfig().ClusterCreationConfig.IngressControllerReplicas)
+	r := int32(c.configService.GetConfig().OSDClusterConfig.IngressControllerReplicas)
 	return &ingressoperatorv1.IngressController{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "operator.openshift.io/v1",
@@ -792,7 +796,7 @@ func (c *ClusterManager) buildObservabilityExternalConfigResource() *k8sCoreV1.C
 }
 
 func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secret {
-	content := c.configService.GetConfig().ClusterCreationConfig.ImagePullDockerConfigContent
+	content := c.configService.GetConfig().OSDClusterConfig.ImagePullDockerConfigContent
 	if strings.TrimSpace(content) == "" {
 		return nil
 	}

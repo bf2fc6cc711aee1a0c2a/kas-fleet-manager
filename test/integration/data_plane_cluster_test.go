@@ -60,7 +60,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	Expect(err).ToNot(HaveOccurred())
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -206,15 +206,14 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(t *testing.T) {
-	var originalAutoOSDCreationValue *bool = new(bool)
+	var originalDynamicScalingEnabledValue *bool = new(bool)
 	startHook := func(h *test.Helper) {
-		*originalAutoOSDCreationValue = h.Env().Config.ClusterCreationConfig.AutoOSDCreation
+		*originalDynamicScalingEnabledValue = h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = false
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = *originalAutoOSDCreationValue
+		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = *originalDynamicScalingEnabledValue
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -237,6 +236,66 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		t.Fatalf("Cluster not found")
 	}
 
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+
+	// Now create an OSD dummy cluster in the DB with same characteristics and
+	// mark it as ready. This is done so no scale up is triggered
+	// once the test data plane cluster is marked as full because the
+	// dynamic scaling feature, that we enable in this test, would perform
+	// an OSD cluster scale-up if all the clusters there are are full
+	dummyClusterID := api.NewID()
+	dummyCluster := api.Cluster{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ClusterID:     dummyClusterID,
+		MultiAZ:       cluster.MultiAZ,
+		Region:        cluster.Region,
+		CloudProvider: cluster.CloudProvider,
+		Status:        api.ClusterReady,
+	}
+
+	db := h.Env().DBFactory.New()
+	if err := db.Save(&dummyCluster).Error; err != nil {
+		t.Error("failed to create dummy cluster")
+		return
+	}
+	// Create dummy kafka and assign it to dummy cluster to make it not empty.
+	// This is done so it is not scaled down by the dynamic scaling
+	// functionality
+	dummyKafka := api.KafkaRequest{
+		ClusterID:     dummyClusterID,
+		MultiAZ:       false,
+		Region:        cluster.Region,
+		CloudProvider: cluster.CloudProvider,
+		Name:          "dummy-kafka",
+		Status:        constants.KafkaRequestStatusReady.String(),
+	}
+
+	if err := db.Save(&dummyKafka).Error; err != nil {
+		t.Error("failed to create a dummy kafka request")
+		return
+	}
+
+	// Create dummy kafka and assign it to test data plane cluster to make it not
+	// empty. This is done so it is not scaled down by the dynamic scaling
+	// functionality
+	dummyKafka.ID = api.NewID()
+	dummyKafka.ClusterID = testDataPlaneclusterID
+	if err := db.Save(&dummyKafka).Error; err != nil {
+		t.Error("failed to create a dummy kafka request")
+		return
+	}
+
+	// We enable Dynamic Scaling at this point and not in the startHook due to
+	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
+	// before enabling the dynamic scaling logic
+	h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = true
+
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
@@ -248,9 +307,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
-	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err = clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterFull))
@@ -293,7 +350,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(err).ToNot(HaveOccurred())
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -359,7 +416,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -407,15 +464,15 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 }
 
 func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
-	var originalAutoOSDCreationValue *bool = new(bool)
+	var originalDynamicScalingEnabledValue *bool = new(bool)
 	startHook := func(h *test.Helper) {
-		*originalAutoOSDCreationValue = h.Env().Config.ClusterCreationConfig.AutoOSDCreation
+		*originalDynamicScalingEnabledValue = h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = false
+		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = false
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-		h.Env().Config.ClusterCreationConfig.AutoOSDCreation = *originalAutoOSDCreationValue
+		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = *originalDynamicScalingEnabledValue
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -438,10 +495,10 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 		t.Fatalf("Cluster not found")
 	}
 
-	// We enable Auto OSD creation at this point and not in the startHook due to
+	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
-	// before enabling the auto osd creation logic
-	h.Env().Config.ClusterCreationConfig.AutoOSDCreation = true
+	// before enabling the dynamic scaling logic
+	h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = true
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster
@@ -485,7 +542,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())

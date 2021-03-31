@@ -28,7 +28,7 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	}(h)
 	h.Env().Config.AWS.AccountID = "123456789012"
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS, h.Env().Config.ClusterCreationConfig)
+	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",
