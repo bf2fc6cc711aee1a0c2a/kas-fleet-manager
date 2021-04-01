@@ -154,11 +154,6 @@ func BuildNamespaceName(kafka *api.KafkaRequest) (string, error) {
 	return namespaceName, nil
 }
 
-// BuildKeycloakClientNameIdentifier builds an identifier based on the kafka request id
-func BuildKeycloakClientNameIdentifier(kafkaRequestID string) string {
-	return fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafkaRequestID))
-}
-
 func safeString(ptr *string) string {
 	if ptr == nil {
 		return ""

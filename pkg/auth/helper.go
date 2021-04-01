@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/rsa"
 	"fmt"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
@@ -60,6 +61,7 @@ func (authHelper *AuthHelper) NewAccount(username, name, email string, orgId str
 	}
 
 	builder := amv1.NewAccount().
+		ID(uuid.New().String()).
 		Username(username).
 		FirstName(firstName).
 		LastName(lastName).
@@ -100,10 +102,12 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		claims[ocmUsernameKey] = account.Username()
 		claims["first_name"] = account.FirstName()
 		claims["last_name"] = account.LastName()
-
+		claims["account_id"] = account.ID()
+		claims["rh-user-id"] = account.ID()
 		org, ok := account.GetOrganization()
 		if ok {
 			claims["org_id"] = org.ExternalID()
+
 		}
 
 		if account.Email() != "" {

@@ -2,7 +2,6 @@ package syncsetresources
 
 import (
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -250,6 +249,7 @@ func getKafkaListener(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaC
 			Key:        constants.MASClientSecretKey,
 			SecretName: kafkaRequest.Name + "-sso-secret",
 		}
+
 		plainOverOauthAuthenticationListener = &strimzi.KafkaListenerAuthentication{
 			Type: strimzi.OAuth,
 			KafkaListenerAuthenticationOAuth: strimzi.KafkaListenerAuthenticationOAuth{
@@ -259,6 +259,7 @@ func getKafkaListener(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaC
 				ValidIssuerURI:         keycloakConfig.KafkaRealm.ValidIssuerURI,
 				TLSTrustedCertificates: secretSources,
 				ClientSecret:           secretSource,
+				CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 				EnablePlain:            true,
 				TokenEndpointURI:       keycloakConfig.KafkaRealm.TokenEndpointURI,
 			},
@@ -270,6 +271,7 @@ func getKafkaListener(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaC
 				ClientID:               ssoClientID,
 				JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 				UserNameClaim:          keycloakConfig.UserNameClaim,
+				CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 				ValidIssuerURI:         keycloakConfig.KafkaRealm.ValidIssuerURI,
 				TLSTrustedCertificates: secretSources,
 				ClientSecret:           secretSource,

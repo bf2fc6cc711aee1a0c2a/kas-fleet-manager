@@ -19,6 +19,7 @@ func PresentServiceAccount(account *api.ServiceAccount) *openapi.ServiceAccount 
 		ClientSecret: account.ClientSecret,
 		Name:         account.Name,
 		Description:  account.Description,
+		Owner:        account.Owner,
 		Id:           reference.Id,
 		Kind:         reference.Kind,
 		Href:         reference.Href,
@@ -33,6 +34,7 @@ func PresentServiceAccountListItem(account *api.ServiceAccount) openapi.ServiceA
 		Href:        ref.Href,
 		ClientID:    account.ClientID,
 		Name:        account.Name,
+		Owner:       account.Owner,
 		Description: account.Description,
 	}
 }

@@ -488,6 +488,9 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
 						return true
 					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
 				},
 			},
 			args: args{
@@ -562,6 +565,9 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 						}
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
 						return true
 					},
 					GetClientsFunc: func(accessToken string, first int, max int) ([]*gocloak.Client, error) {
@@ -643,6 +649,9 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						}
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
 						return true
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
@@ -967,6 +976,9 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 						}
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
 						return true
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {

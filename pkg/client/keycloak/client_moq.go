@@ -67,6 +67,9 @@ var _ KcClient = &KcClientMock{}
 // 			IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 // 				panic("mock out the IsClientExist method")
 // 			},
+// 			IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+// 				panic("mock out the IsOwner method")
+// 			},
 // 			IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
 // 				panic("mock out the IsSameOrg method")
 // 			},
@@ -133,6 +136,9 @@ type KcClientMock struct {
 
 	// IsClientExistFunc mocks the IsClientExist method.
 	IsClientExistFunc func(clientId string, accessToken string) (string, error)
+
+	// IsOwnerFunc mocks the IsOwner method.
+	IsOwnerFunc func(client *gocloak.Client, userId string) bool
 
 	// IsSameOrgFunc mocks the IsSameOrg method.
 	IsSameOrgFunc func(client *gocloak.Client, orgId string) bool
@@ -248,6 +254,13 @@ type KcClientMock struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
+		// IsOwner holds details about calls to the IsOwner method.
+		IsOwner []struct {
+			// Client is the client argument value.
+			Client *gocloak.Client
+			// UserId is the userId argument value.
+			UserId string
+		}
 		// IsSameOrg holds details about calls to the IsSameOrg method.
 		IsSameOrg []struct {
 			// Client is the client argument value.
@@ -295,6 +308,7 @@ type KcClientMock struct {
 	lockGetRealmRole               sync.RWMutex
 	lockGetToken                   sync.RWMutex
 	lockIsClientExist              sync.RWMutex
+	lockIsOwner                    sync.RWMutex
 	lockIsSameOrg                  sync.RWMutex
 	lockRegenerateClientSecret     sync.RWMutex
 	lockUpdateServiceAccountUser   sync.RWMutex
@@ -831,6 +845,41 @@ func (mock *KcClientMock) IsClientExistCalls() []struct {
 	mock.lockIsClientExist.RLock()
 	calls = mock.calls.IsClientExist
 	mock.lockIsClientExist.RUnlock()
+	return calls
+}
+
+// IsOwner calls IsOwnerFunc.
+func (mock *KcClientMock) IsOwner(client *gocloak.Client, userId string) bool {
+	if mock.IsOwnerFunc == nil {
+		panic("KcClientMock.IsOwnerFunc: method is nil but KcClient.IsOwner was just called")
+	}
+	callInfo := struct {
+		Client *gocloak.Client
+		UserId string
+	}{
+		Client: client,
+		UserId: userId,
+	}
+	mock.lockIsOwner.Lock()
+	mock.calls.IsOwner = append(mock.calls.IsOwner, callInfo)
+	mock.lockIsOwner.Unlock()
+	return mock.IsOwnerFunc(client, userId)
+}
+
+// IsOwnerCalls gets all the calls that were made to IsOwner.
+// Check the length with:
+//     len(mockedKcClient.IsOwnerCalls())
+func (mock *KcClientMock) IsOwnerCalls() []struct {
+	Client *gocloak.Client
+	UserId string
+} {
+	var calls []struct {
+		Client *gocloak.Client
+		UserId string
+	}
+	mock.lockIsOwner.RLock()
+	calls = mock.calls.IsOwner
+	mock.lockIsOwner.RUnlock()
 	return calls
 }
 

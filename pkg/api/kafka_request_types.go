@@ -14,6 +14,7 @@ type KafkaRequest struct {
 	SsoClientSecret     string `json:"sso_client_secret"`
 	SubscriptionId      string `json:"subscription_id"`
 	Owner               string `json:"owner"` // TODO: ocm owner?
+	OwnerAccountId      string `json:"owner_account_id"`
 	BootstrapServerHost string `json:"bootstrap_server_host"`
 	OrganisationId      string `json:"organisation_id"`
 	FailedReason        string `json:"failed_reason"`
