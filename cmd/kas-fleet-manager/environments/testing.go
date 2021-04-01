@@ -17,6 +17,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"enable-ocm-mock":                   "true",
 	"enable-sentry":                     "false",
 	"enable-deny-list":                  "true",
+	"enable-instance-limit-control":     "true",
 	"max-allowed-instances":             "1",
 	"mas-sso-base-url":                  "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org",
 	"mas-sso-realm":                     "mas-sso-playground",
