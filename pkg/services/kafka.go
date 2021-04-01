@@ -9,6 +9,7 @@ import (
 
 	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/golang/glog"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -55,6 +56,7 @@ type KafkaService interface {
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
+	DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError
 }
 
 var _ KafkaService = &kafkaService{}
@@ -296,6 +298,17 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 	if err := dbConn.Update("status", constants.KafkaRequestStatusDeprovision).Error; err != nil {
 		return errors.GeneralError("Unable to deprovision kafka requests for users %s", err)
 	}
+
+	return nil
+}
+
+func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
+	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour))
+
+	if err := dbConn.Update("status", constants.KafkaRequestStatusDeprovision).Error; err != nil {
+		return errors.GeneralError("unable to deprovision expired kafkas: %v", err)
+	}
+	glog.Infof("%v kafka_request's lifespans are over %d hours and have had their status updated to deprovisioning", dbConn.RowsAffected, kafkaAgeInHours)
 
 	return nil
 }

@@ -99,6 +99,15 @@ func (k *KafkaManager) reconcile() {
 		}
 	}
 
+	// cleaning up expired kafkas
+	kafkaConfig := k.configService.GetConfig().Kafka
+	if kafkaConfig.EnableDeletionOfExpiredKafka {
+		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifeSpan)
+		if expiredKafkasError != nil {
+			sentry.CaptureException(expiredKafkasError)
+		}
+	}
+
 	// handle deprovisioning requests
 	// if kas-fleetshard sync is not enabled, the status we should check is constants.KafkaRequestStatusDeprovision as control plane is responsible for deleting the data
 	// otherwise the status should be constants.KafkaRequestStatusDeleted as only at that point the control plane should clean it up

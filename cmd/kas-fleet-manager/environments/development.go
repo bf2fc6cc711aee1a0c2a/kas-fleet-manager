@@ -27,6 +27,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
 	"enable-dynamic-scaling":            "false",
+	"enable-deletion-of-expired-kafka":  "false",
 }
 
 func loadDevelopment(env *Env) error {
