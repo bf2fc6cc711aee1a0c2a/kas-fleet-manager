@@ -14,7 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -127,6 +127,82 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// delete test kafka to free up resources on an OSD cluster
 	deleteTestKafka(ctx, client, foundKafka.Id)
+}
+
+func TestKafkaCreate_TooManyKafkas(t *testing.T) {
+	startHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.KafkaCapacity.MaxCapacity = 2
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.KafkaCapacity.MaxCapacity = 1000
+	}
+	// create a mock ocm api server, keep all endpoints as defaults
+	// see the mocks package for more information on the configurable mock server
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
+	// ocm
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	defer tearDown()
+
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+	// setup pre-requisites to performing requests
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	kafkaRegion := "dummy"
+	kafkaCloudProvider := "dummy"
+	// this value is taken from config/allow-list-configuration.yaml
+	orgId := "13640203"
+
+	// create dummy kafkas
+	db := h.Env().DBFactory.New()
+	kafkas := []*api.KafkaRequest{
+		{
+			MultiAZ:        false,
+			Owner:          "dummyuser1",
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+		{
+			MultiAZ:        false,
+			Owner:          "dummyuser2",
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-2",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+	}
+
+	for _, kafka := range kafkas {
+		if err := db.Save(kafka).Error; err != nil {
+			Expect(err).NotTo(HaveOccurred())
+			return
+		}
+	}
+
+	k := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          mockKafkaName,
+		MultiAz:       testMultiAZ,
+	}
+
+	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+
+	Expect(err).To(HaveOccurred(), "Error posting object:  %v", err)
+	Expect(resp.StatusCode).To(Equal(http.StatusTooManyRequests))
 }
 
 // TestKafkaPost_Validations tests the API validations performed by the kafka creation endpoint
