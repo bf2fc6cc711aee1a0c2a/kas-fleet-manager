@@ -17,5 +17,6 @@ type ServiceAccountListItem struct {
 	Href        string      `json:"href,omitempty"`
 	ClientID    string      `json:"clientID,omitempty"`
 	Name        string      `json:"name,omitempty"`
+	Owner       string      `json:"owner,omitempty"`
 	Description interface{} `json:"description,omitempty"`
 }

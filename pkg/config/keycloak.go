@@ -13,6 +13,7 @@ type KeycloakConfig struct {
 	TLSTrustedCertificatesFile  string               `json:"tls_trusted_certificates_file"`
 	EnablePlain                 bool                 `json:"enable_plain"`
 	EnableOauthBearer           bool                 `json:"enable_oauth_bearer"`
+	EnableCustomClaimCheck      bool                 `json:"enable_custom_claim_check"`
 	KafkaRealm                  *KeycloakRealmConfig `json:"kafka_realm"`
 	OSDClusterIDPRealm          *KeycloakRealmConfig `json:"osd_cluster_idp_realm"`
 }
@@ -31,7 +32,7 @@ type KeycloakRealmConfig struct {
 
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
-		EnableAuthenticationOnKafka: false,
+		EnableAuthenticationOnKafka: true,
 		KafkaRealm: &KeycloakRealmConfig{
 			ClientIDFile:     "secrets/keycloak-service.clientId",
 			ClientSecretFile: "secrets/keycloak-service.clientSecret",

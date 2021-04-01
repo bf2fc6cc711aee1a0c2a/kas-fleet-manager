@@ -13,43 +13,43 @@ var _ Worker = &WorkerMock{}
 
 // WorkerMock is a mock implementation of Worker.
 //
-// 	func TestSomethingThatUsesWorker(t *testing.T) {
+//     func TestSomethingThatUsesWorker(t *testing.T) {
 //
-// 		// make and configure a mocked Worker
-// 		mockedWorker := &WorkerMock{
-// 			GetIDFunc: func() string {
-// 				panic("mock out the GetID method")
-// 			},
-// 			GetStopChanFunc: func() *chan struct{} {
-// 				panic("mock out the GetStopChan method")
-// 			},
-// 			GetSyncGroupFunc: func() *sync.WaitGroup {
-// 				panic("mock out the GetSyncGroup method")
-// 			},
-// 			GetWorkerTypeFunc: func() string {
-// 				panic("mock out the GetWorkerType method")
-// 			},
-// 			IsRunningFunc: func() bool {
-// 				panic("mock out the IsRunning method")
-// 			},
-// 			SetIsRunningFunc: func(val bool)  {
-// 				panic("mock out the SetIsRunning method")
-// 			},
-// 			StartFunc: func()  {
-// 				panic("mock out the Start method")
-// 			},
-// 			StopFunc: func()  {
-// 				panic("mock out the Stop method")
-// 			},
-// 			reconcileFunc: func()  {
-// 				panic("mock out the reconcile method")
-// 			},
-// 		}
+//         // make and configure a mocked Worker
+//         mockedWorker := &WorkerMock{
+//             GetIDFunc: func() string {
+// 	               panic("mock out the GetID method")
+//             },
+//             GetStopChanFunc: func() *chan struct{} {
+// 	               panic("mock out the GetStopChan method")
+//             },
+//             GetSyncGroupFunc: func() *sync.WaitGroup {
+// 	               panic("mock out the GetSyncGroup method")
+//             },
+//             GetWorkerTypeFunc: func() string {
+// 	               panic("mock out the GetWorkerType method")
+//             },
+//             IsRunningFunc: func() bool {
+// 	               panic("mock out the IsRunning method")
+//             },
+//             SetIsRunningFunc: func(val bool)  {
+// 	               panic("mock out the SetIsRunning method")
+//             },
+//             StartFunc: func()  {
+// 	               panic("mock out the Start method")
+//             },
+//             StopFunc: func()  {
+// 	               panic("mock out the Stop method")
+//             },
+//             reconcileFunc: func()  {
+// 	               panic("mock out the reconcile method")
+//             },
+//         }
 //
-// 		// use mockedWorker in code that requires Worker
-// 		// and then make assertions.
+//         // use mockedWorker in code that requires Worker
+//         // and then make assertions.
 //
-// 	}
+//     }
 type WorkerMock struct {
 	// GetIDFunc mocks the GetID method.
 	GetIDFunc func() string
