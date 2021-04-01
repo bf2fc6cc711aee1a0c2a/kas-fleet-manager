@@ -25,29 +25,149 @@ const (
 )
 
 func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
-	RegisterTestingT(t)
-	req, err := http.NewRequest("GET", "/api/managed-services/kafkas", nil)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	rr := httptest.NewRecorder()
+	acc, err := authHelper.NewAccount("username", "test-user", "", "org-id-0")
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	middleware := NewAccessControlListMiddleware(services.NewConfigService(
-		config.ApplicationConfig{
-			AccessControlList: &config.AccessControlListConfig{
-				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
-					AllowAnyRegisteredUsers: true,
+	tests := []struct {
+		name                          string
+		arg                           services.ConfigService
+		ctx                           context.Context
+		userIsAllowedAsServiceAccount bool
+	}{
+		{
+			name: "returns 200 Ok response for internal users who belong to an organisation listed in the allow list",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AccessControlList: &config.AccessControlListConfig{
+						EnableDenyList: false,
+						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: true,
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+								},
+							},
+						},
+					},
 				},
-			},
+			),
+			userIsAllowedAsServiceAccount: false,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
 		},
-	))
-	handler := middleware.Authorize(http.HandlerFunc(NextHandler))
+		{
+			name: "returns 200 Ok response for internal users who are listed in the allow list",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AccessControlList: &config.AccessControlListConfig{
+						EnableDenyList: false,
+						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: true,
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username"},
+							},
+						},
+					},
+				},
+			),
+			userIsAllowedAsServiceAccount: true,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
+		},
+		{
+			name: "returns 200 OK response for internal users who do not have access through their organisation but as a service account in the allow list",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AccessControlList: &config.AccessControlListConfig{
+						EnableDenyList: false,
+						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: true,
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowAll:        false,
+									AllowedAccounts: config.AllowedAccounts{},
+								},
+							},
+							ServiceAccounts: config.AllowedAccounts{
+								config.AllowedAccount{Username: "username"},
+							},
+						},
+					},
+				},
+			),
+			userIsAllowedAsServiceAccount: true,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
+		},
+		{
+			name: "returns 200 Ok response for external users",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AccessControlList: &config.AccessControlListConfig{
+						EnableDenyList: false,
+						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: true,
+						},
+					},
+				},
+			),
+			userIsAllowedAsServiceAccount: true,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
+		},
+		{
+			name: "returns 200 Ok response for external users who are not included in their organisation in the allow list",
+			arg: services.NewConfigService(
+				config.ApplicationConfig{
+					AccessControlList: &config.AccessControlListConfig{
+						EnableDenyList: false,
+						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: true,
+							Organisations: config.OrganisationList{
+								config.Organisation{
+									Id:              "org-id-0",
+									AllowAll:        false,
+									AllowedAccounts: config.AllowedAccounts{},
+								},
+							},
+						},
+					},
+				},
+			),
+			userIsAllowedAsServiceAccount: true,
+			ctx:                           getAuthenticatedContext(authHelper, t, acc, nil),
+		},
+	}
 
-	handler.ServeHTTP(rr, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
 
-	Expect(rr.Code).To(Equal(http.StatusOK))
+			req, err := http.NewRequest("GET", "/api/managed-services/kafkas", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+
+			middleware := NewAccessControlListMiddleware(tt.arg)
+			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
+
+			req = req.WithContext(tt.ctx)
+			handler.ServeHTTP(rr, req)
+
+			Expect(rr.Code).To(Equal(http.StatusOK))
+
+			// verify that the context is set with whether the user is allowed as a service account or not
+			ctxAfterMiddleware := req.Context()
+			Expect(auth.GetUserIsAllowedAsServiceAccountFromContext(ctxAfterMiddleware)).To(Equal(tt.userIsAllowedAsServiceAccount))
+		})
+	}
 }
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
@@ -217,7 +337,6 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			Expect(auth.GetUserIsAllowedAsServiceAccountFromContext(ctxAfterMiddleware)).To(Equal(false))
 		})
 	}
-
 }
 
 func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
@@ -352,7 +471,6 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 			Expect(auth.GetUserIsAllowedAsServiceAccountFromContext(ctxAfterMiddleware)).To(Equal(tt.userIsAllowedAsServiceAccount))
 		})
 	}
-
 }
 
 // NextHandler is a dummy handler that returns OK when AllowList middleware has passed

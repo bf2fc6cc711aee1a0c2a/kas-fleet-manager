@@ -622,10 +622,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	externalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserCtx := h.NewAuthenticatedContext(externalUserAccount, nil)
 
-	// create the first kafka
 	_, resp5, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka1)
-
-	// create the second kafka
 	_, resp6, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka2)
 
 	// verify that the first request was accepted
@@ -634,6 +631,20 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	// verify that the second request for the external user errored with 403 Forbidden
 	Expect(resp6.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(resp6.Header.Get("Content-Type")).To(Equal("application/json"))
+
+	// verify that another external user in the same org can also create the default maximum allowed kafka instances
+	externalUserSameOrgAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
+	externalUserSameOrgCtx := h.NewAuthenticatedContext(externalUserSameOrgAccount, nil)
+
+	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka1)
+	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka2)
+
+	// verify that the first request was accepted
+	Expect(resp7.StatusCode).To(Equal(http.StatusAccepted))
+
+	// verify that the second request for the external user errored with 403 Forbidden
+	Expect(resp8.StatusCode).To(Equal(http.StatusForbidden))
+	Expect(resp8.Header.Get("Content-Type")).To(Equal("application/json"))
 }
 
 func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {
