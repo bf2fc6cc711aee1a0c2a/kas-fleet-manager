@@ -147,7 +147,7 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 
 	accessControlListConfig := env().Services.Config.GetConfig().AccessControlList
-	accessControlListEnabled := accessControlListConfig.EnableAllowList || accessControlListConfig.EnableDenyList
+	accessControlListEnabled := !accessControlListConfig.AllowList.AllowAnyRegisteredUsers || accessControlListConfig.EnableDenyList
 	if accessControlListEnabled {
 		apiV1KafkasRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
 		apiV1ServiceAccountsRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)

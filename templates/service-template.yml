@@ -240,11 +240,6 @@ parameters:
   displayName: Observatorium ssl mode (disable)
   value: "true"
 
-- name: ENABLE_ALLOW_LIST
-  displayName: Enable the Allow List
-  description: Enable the allow list access control feature
-  value: "false"
-
 - name: ENABLE_DENY_LIST
   displayName: Enable the Deny List
   description: Enable the denied list access control feature
@@ -254,6 +249,11 @@ parameters:
   displayName: Maximum allowed instances
   description: The default value of maximum number of instances that can be created by users.
   value: "1"
+
+- name: ALLOW_ANY_REGISTERED_USERS
+  displayName: Allow any registered users
+  description: Enable to allow any registered users to access the service.
+  value: "false"
 
 - name: ALLOWED_SERVICE_ACCOUNTS
   displayName: A list of allowed service accounts
@@ -415,6 +415,7 @@ objects:
         qontract.recycle: "true"
     data:
       allow-list-configuration.yaml: |-
+        allow_any_registered_users: ${ALLOW_ANY_REGISTERED_USERS}
         allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
         allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
   - kind: ConfigMap
@@ -688,7 +689,6 @@ objects:
             - --enable-connectors=${ENABLE_CONNECTORS}
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
-            - --enable-allow-list=${ENABLE_ALLOW_LIST}
             - --enable-deny-list=${ENABLE_DENY_LIST}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}

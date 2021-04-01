@@ -551,10 +551,10 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 // At the same time, users of a different organisation should be able to create instances.
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	startHook := func(h *test.Helper) {
-		h.Env().Config.AccessControlList.EnableAllowList = false
+		h.Env().Config.AccessControlList.AllowList.AllowAnyRegisteredUsers = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.AccessControlList.EnableAllowList = true
+		h.Env().Config.AccessControlList.AllowList.AllowAnyRegisteredUsers = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()

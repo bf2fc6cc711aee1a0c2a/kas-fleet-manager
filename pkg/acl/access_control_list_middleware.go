@@ -43,7 +43,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			}
 		}
 
-		if accessControlListConfig.EnableAllowList {
+		if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
 			orgId := auth.GetOrgIdFromClaims(claims)
 			org, _ := middleware.configService.GetOrganisationById(orgId)
 			var userIsAllowed, userIsAllowedAsServiceAccount bool
