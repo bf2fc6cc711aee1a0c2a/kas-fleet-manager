@@ -204,7 +204,9 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
-							EnableAllowList: false,
+							AllowList: config.AllowListConfiguration{
+								AllowAnyRegisteredUsers: true,
+							},
 						},
 					},
 				),
@@ -222,8 +224,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							ServiceAccounts: config.AllowedAccounts{
 								config.AllowedAccount{
 									Username:            account.Username(),
@@ -248,8 +250,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
-							EnableAllowList: true,
 							AllowList: config.AllowListConfiguration{
+								AllowAnyRegisteredUsers: false,
 								Organisations: config.OrganisationList{
 									config.Organisation{
 										Id:                  "org-id",
@@ -280,8 +282,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
-							EnableAllowList: true,
 							AllowList: config.AllowListConfiguration{
+								AllowAnyRegisteredUsers: false,
 								ServiceAccounts: config.AllowedAccounts{
 									config.AllowedAccount{
 										Username:            account.Username(),
@@ -311,8 +313,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
-							EnableAllowList: true,
 							AllowList: config.AllowListConfiguration{
+								AllowAnyRegisteredUsers: false,
 								ServiceAccounts: config.AllowedAccounts{
 									config.AllowedAccount{
 										Username: account.Username(),
@@ -340,7 +342,9 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: false,
+						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: true,
+						},
 					},
 				}),
 				context: authenticatedCtx,

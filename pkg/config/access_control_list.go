@@ -104,14 +104,14 @@ func (deniedAccounts DeniedUsers) IsUserDenied(username string) bool {
 }
 
 type AllowListConfiguration struct {
-	Organisations   OrganisationList `yaml:"allowed_users_per_organisation"`
-	ServiceAccounts AllowedAccounts  `yaml:"allowed_service_accounts"`
+	AllowAnyRegisteredUsers bool             `yaml:"allow_any_registered_users"`
+	Organisations           OrganisationList `yaml:"allowed_users_per_organisation"`
+	ServiceAccounts         AllowedAccounts  `yaml:"allowed_service_accounts"`
 }
 
 type AccessControlListConfig struct {
 	AllowList           AllowListConfiguration
 	DenyList            DeniedUsers
-	EnableAllowList     bool
 	EnableDenyList      bool
 	AllowListConfigFile string
 	DenyListConfigFile  string
@@ -121,14 +121,12 @@ func NewAccessControlListConfig() *AccessControlListConfig {
 	return &AccessControlListConfig{
 		AllowListConfigFile: "config/allow-list-configuration.yaml",
 		DenyListConfigFile:  "config/deny-list-configuration.yaml",
-		EnableAllowList:     false,
 		EnableDenyList:      false,
 	}
 }
 
 func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.AllowListConfigFile, "allow-list-config-file", c.AllowListConfigFile, "AllowList configuration file")
-	fs.BoolVar(&c.EnableAllowList, "enable-allow-list", c.EnableAllowList, "Enable access control via the allowed list of users")
 	fs.StringVar(&c.DenyListConfigFile, "deny-list-config-file", c.DenyListConfigFile, "DenyList configuration file")
 	fs.BoolVar(&c.EnableDenyList, "enable-deny-list", c.EnableDenyList, "Enable access control via the denied list of users")
 	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Default maximum number of allowed instances that can be created by a user")

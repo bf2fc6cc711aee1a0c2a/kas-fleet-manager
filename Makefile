@@ -498,6 +498,7 @@ deploy: deploy/db
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		-p ENABLE_MANAGED_KAFKA_CR="$(ENABLE_MANAGED_KAFKA_CR)" \
 		-p ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC="$(ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC)" \
+		-p ALLOW_ANY_REGISTERED_USERS="$(ALLOW_ANY_REGISTERED_USERS)" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy

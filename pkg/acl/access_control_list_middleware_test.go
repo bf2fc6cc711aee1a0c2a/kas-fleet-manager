@@ -36,8 +36,10 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 	middleware := NewAccessControlListMiddleware(services.NewConfigService(
 		config.ApplicationConfig{
 			AccessControlList: &config.AccessControlListConfig{
-				EnableAllowList: false,
-				EnableDenyList:  false,
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
+				},
 			},
 		},
 	))
@@ -63,10 +65,10 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
-						EnableDenyList:  true,
-						DenyList:        config.DeniedUsers{"username"},
+						EnableDenyList: true,
+						DenyList:       config.DeniedUsers{"username"},
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:       "org-id-0",
@@ -86,8 +88,8 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
@@ -104,8 +106,8 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
@@ -123,8 +125,8 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:       "org-id-3",
@@ -145,8 +147,8 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
@@ -240,8 +242,8 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
@@ -260,8 +262,8 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
@@ -281,8 +283,8 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
@@ -306,8 +308,8 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 			arg: services.NewConfigService(
 				config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						EnableAllowList: true,
 						AllowList: config.AllowListConfiguration{
+							AllowAnyRegisteredUsers: false,
 							Organisations: config.OrganisationList{
 								config.Organisation{
 									Id:              "org-id-0",
