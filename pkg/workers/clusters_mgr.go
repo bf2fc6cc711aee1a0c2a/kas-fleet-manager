@@ -448,12 +448,14 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 			}
 		}
 	}
-	if isStrimziReady && isFleetShardReady {
-		status := api.ClusterReady
-		if c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-			// if kas-fleetshard sync is enabled, the cluster status will be reported by the kas-fleetshard
-			status = api.ClusterWaitingForKasFleetShardOperator
+	if c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+		// if kas-fleetshard sync is enabled, the cluster status will be reported by the kas-fleetshard
+		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
+		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
+			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 		}
+	} else if isStrimziReady && isFleetShardReady {
+		status := api.ClusterReady
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", status, provisionedCluster.ClusterID)
 		if err := c.clusterService.UpdateStatus(provisionedCluster, status); err != nil {
 			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
