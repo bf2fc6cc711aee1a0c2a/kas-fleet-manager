@@ -43,30 +43,29 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			}
 		}
 
-		if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
-			orgId := auth.GetOrgIdFromClaims(claims)
-			org, _ := middleware.configService.GetOrganisationById(orgId)
-			var userIsAllowed, userIsAllowedAsServiceAccount bool
+		orgId := auth.GetOrgIdFromClaims(claims)
+		org, _ := middleware.configService.GetOrganisationById(orgId)
 
-			// check if user is allowed within the organisation
+		if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
+			var userIsAllowed bool
+
 			if org.IsUserAllowed(username) {
 				userIsAllowed = true
-				userIsAllowedAsServiceAccount = false
 			} else {
-				// check if user is allowed a service account
-				_, found := middleware.configService.GetServiceAccountByUsername(username)
-				userIsAllowed = found
-				userIsAllowedAsServiceAccount = found
+				// check if user is allowed as a service account if they do not belong to an org
+				_, userIsAllowed = middleware.configService.GetServiceAccountByUsername(username)
 			}
 
 			if !userIsAllowed {
 				shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User '%s' is not authorized to access the service.", username))
 				return
 			}
-
-			context = auth.SetUserIsAllowedAsServiceAccountContext(context, userIsAllowedAsServiceAccount)
-			*r = *r.WithContext(context)
 		}
+
+		// user is allowed as a service account if they do not belong to an org listed in the allow list
+		userIsAllowedAsServiceAccount := !org.IsUserAllowed(username)
+		context = auth.SetUserIsAllowedAsServiceAccountContext(context, userIsAllowedAsServiceAccount)
+		*r = *r.WithContext(context)
 
 		next.ServeHTTP(w, r)
 	})
