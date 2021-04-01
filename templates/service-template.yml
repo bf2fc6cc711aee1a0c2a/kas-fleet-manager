@@ -245,6 +245,11 @@ parameters:
   description: Enable the denied list access control feature
   value: "false"
 
+- name: ENABLE_INSTANCE_LIMIT_CONTROL
+  displayName: Enable instance limit control
+  description: Enable to enforce limits on how much instances a user can create.
+  value: "true"
+
 - name: MAX_ALLOWED_INSTANCES
   displayName: Maximum allowed instances
   description: The default value of maximum number of instances that can be created by users.
@@ -690,6 +695,7 @@ objects:
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
             - --enable-deny-list=${ENABLE_DENY_LIST}
+            - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
             - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}

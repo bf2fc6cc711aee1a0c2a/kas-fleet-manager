@@ -116,6 +116,10 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 // reached the max number of allowed instances that can be created for this user if any or the global max allowed defaults
 func validateMaxAllowedInstances(kafkaService services.KafkaService, configService services.ConfigService, context context.Context) validate {
 	return func() *errors.ServiceError {
+		if !configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
+			return nil
+		}
+
 		var allowListItem config.AllowedListItem
 		claims, err := auth.GetClaimsFromContext(context)
 		if err != nil {

@@ -110,18 +110,20 @@ type AllowListConfiguration struct {
 }
 
 type AccessControlListConfig struct {
-	AllowList           AllowListConfiguration
-	DenyList            DeniedUsers
-	EnableDenyList      bool
-	AllowListConfigFile string
-	DenyListConfigFile  string
+	AllowList                  AllowListConfiguration
+	DenyList                   DeniedUsers
+	EnableDenyList             bool
+	AllowListConfigFile        string
+	DenyListConfigFile         string
+	EnableInstanceLimitControl bool
 }
 
 func NewAccessControlListConfig() *AccessControlListConfig {
 	return &AccessControlListConfig{
-		AllowListConfigFile: "config/allow-list-configuration.yaml",
-		DenyListConfigFile:  "config/deny-list-configuration.yaml",
-		EnableDenyList:      false,
+		AllowListConfigFile:        "config/allow-list-configuration.yaml",
+		DenyListConfigFile:         "config/deny-list-configuration.yaml",
+		EnableDenyList:             false,
+		EnableInstanceLimitControl: false,
 	}
 }
 
@@ -130,6 +132,7 @@ func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DenyListConfigFile, "deny-list-config-file", c.DenyListConfigFile, "DenyList configuration file")
 	fs.BoolVar(&c.EnableDenyList, "enable-deny-list", c.EnableDenyList, "Enable access control via the denied list of users")
 	fs.IntVar(&MaxAllowedInstances, "max-allowed-instances", MaxAllowedInstances, "Default maximum number of allowed instances that can be created by a user")
+	fs.BoolVar(&c.EnableInstanceLimitControl, "enable-instance-limit-control", c.EnableInstanceLimitControl, "Enable to enforce limits on how much instances a user can create")
 }
 
 func (c *AccessControlListConfig) ReadFiles() error {

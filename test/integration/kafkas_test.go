@@ -552,9 +552,11 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	startHook := func(h *test.Helper) {
 		h.Env().Config.AccessControlList.AllowList.AllowAnyRegisteredUsers = true
+		h.Env().Config.AccessControlList.EnableInstanceLimitControl = true
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.AccessControlList.AllowList.AllowAnyRegisteredUsers = false
+		h.Env().Config.AccessControlList.EnableInstanceLimitControl = false
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()

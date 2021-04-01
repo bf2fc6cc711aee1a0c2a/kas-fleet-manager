@@ -194,7 +194,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 		want *errors.ServiceError
 	}{
 		{
-			name: "do not throw an error when allow list disabled",
+			name: "do not throw an error when instance limit control is disabled",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
 					ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
@@ -204,9 +204,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
-							AllowList: config.AllowListConfiguration{
-								AllowAnyRegisteredUsers: true,
-							},
+							EnableInstanceLimitControl: false,
 						},
 					},
 				),
@@ -224,8 +222,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
+						EnableInstanceLimitControl: true,
 						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
 							ServiceAccounts: config.AllowedAccounts{
 								config.AllowedAccount{
 									Username:            account.Username(),
@@ -250,8 +248,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
+							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
-								AllowAnyRegisteredUsers: false,
 								Organisations: config.OrganisationList{
 									config.Organisation{
 										Id:                  "org-id",
@@ -282,8 +280,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
+							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
-								AllowAnyRegisteredUsers: false,
 								ServiceAccounts: config.AllowedAccounts{
 									config.AllowedAccount{
 										Username:            account.Username(),
@@ -313,8 +311,8 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				configService: services.NewConfigService(
 					config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
+							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
-								AllowAnyRegisteredUsers: false,
 								ServiceAccounts: config.AllowedAccounts{
 									config.AllowedAccount{
 										Username: account.Username(),
@@ -342,9 +340,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-						},
+						EnableInstanceLimitControl: true,
 					},
 				}),
 				context: authenticatedCtx,
