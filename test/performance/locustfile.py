@@ -1,5 +1,4 @@
 import logging
-import requests, json
 
 import locust, os, random, time, urllib3
 from locust import task, HttpUser, constant_pacing
@@ -16,6 +15,9 @@ get_only = os.environ['PERF_TEST_GET_ONLY']
 
 # if set to 'TRUE' - db will be seeded with kafkas
 populate_db = os.environ['PERF_TEST_PREPOPULATE_DB']
+
+# if set to 'TRUE' - db will be seeded with kafkas
+cleanup_resources = os.environ['PERF_TEST_CLEANUP']
 
 # if PERF_TEST_PREPOPULATE_DB == 'TRUE' - this number determines the number of seed kafkas per locust worker
 seed_kafkas = int(os.environ['PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER'])
@@ -59,7 +61,7 @@ remove_res_created_start = 90
 cleanup_stage_start = 60
 
 # only running GET requests - no need to run cleanup
-if kafkas_to_create == 0 and get_only == 'TRUE':
+if (kafkas_to_create == 0 and get_only == 'TRUE') or cleanup_resources != "TRUE":
   remove_res_created_start = 0
   cleanup_stage_start = 0
 
@@ -70,29 +72,20 @@ class QuickstartUser(HttpUser):
   wait_time = constant_pacing(0.5)
   @task
   def main_task(self):
-    global populate_db
-    global kafkas_created
     global current_run_time
+    global populate_db
     current_run_time = time.monotonic() - start_time
-    # create and then instantly delete kafka_requests to seed the database
+    # create and then instantly delete kafka clusters to seed the database
     if populate_db == 'TRUE' and get_only != 'TRUE':
       if run_time_seconds - current_run_time > 120:
-        kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
-        if kafka_id != '':
-          kafkas_created = kafkas_created + 1
-          kafkas_list.append(kafka_id)
-          remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
-          if kafkas_created >= seed_kafkas:
-            time.sleep(60) # wait for all kafkas to be deleted
-            populate_db = 'FALSE'
-            kafkas_created = 0
+        prepopulate_db(self)
       else:
         populate_db = 'FALSE'
     else:
       # cleanup before the test completes
       if run_time_seconds - current_run_time < remove_res_created_start:
         cleanup(self)
-        # make sure that no kafka_requests or service accounts created by this test are removed
+        # make sure that no kafka clusters or service accounts created by this test are removed
         if run_time_seconds - current_run_time < cleanup_stage_start:
           if resources_cleaned_up == False:
             check_leftover_resources(self)
@@ -100,20 +93,32 @@ class QuickstartUser(HttpUser):
       # between db seed stage (if 'PERF_TEST_PREPOPULATE_DB' env var set to true) and cleanup (1 minute before the end of the test execution)
       else:
         exercise_endpoints(self, get_only)
-        
+
+# pre-populate db with kafka clusters
+def prepopulate_db(self):
+  global populate_db
+  global kafkas_created
+  kafka_id = create_kafka_cluster(self)
+  if kafka_id != '':
+    remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
+    if kafkas_created >= seed_kafkas:
+      time.sleep(60) # wait for all kafkas to be deleted
+      populate_db = 'FALSE'
+      kafkas_created = 0
+
+# create kafka cluster
+def create_kafka_cluster(self):
+  global kafkas_created
+  kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
+  if kafka_id != '':
+    kafkas_created = kafkas_created + 1
+    kafkas_list.append(kafka_id)
+  return kafka_id
+
 # main test execution against API endpoints
 #
 # if get-only is set to 'TRUE', only GET endpoints will be attacked
 # otherwise all public API endpoints (where applicable) will be attacked:
-#
-# THe distribution between the endpoints will be semi-random with the following proportions
-# kafkas get                                       50%
-# kafka search                                     35%
-# kafka get                                        10%
-# kafka metrics                                     1%
-# cloud provider(s) get                             1%
-# openapi get                                       1%
-# kafka get metrics                      	        0.5%
 # 
 # Stages of the main execution include:
 # 1. creating kafkas followed by creating serviceaccounts (if specified by PERF_TEST_KAFKAS_PER_WORKER param) 
@@ -124,45 +129,54 @@ class QuickstartUser(HttpUser):
 def exercise_endpoints(self, get_only):
   global kafkas_created
   if len(kafkas_list) < kafkas_to_create:
-    kafka_id = handle_post(self, f'{url_base}/kafkas?async=true', kafka_json(), '/kafkas')
-    if kafka_id != '':
-      kafkas_list.append(kafka_id)
-      kafkas_created = kafkas_created + 1
-      time.sleep(kafka_post_wait_time) # sleep after creating kafka
+    create_kafka_cluster(self)
+    time.sleep(kafka_post_wait_time) # sleep after creating kafka
   else:
     if kafkas_persisted == False:
       wait_for_kafkas_ready(self)
     # only hit the endpoints, if wait_time_in_minutes has passed already
     if current_run_time / 60 >= wait_time_in_minutes:
-      endpoint_selector = random.randrange(0,99)
-      if endpoint_selector < 1:
-        service_accounts(self, get_only)
-      elif endpoint_selector < 2:
-        handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
-        handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
-      elif endpoint_selector < 3:
-        handle_get(self, f'{url_base}/openapi', '/openapi')
-      elif endpoint_selector < 53:
-        handle_get(self, f'{url_base}/kafkas', '/kafkas')
-      elif endpoint_selector < 88:
-        handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
-      else:
-        kafka_id = ''
-        if len(kafkas_list) == 0:
-          org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
-          # get all kafkas and if the list is not empty - get random kafka_id
-          items = get_items_from_json_response(org_kafkas)
-          if len(items) > 0:
-            kafka_id = get_random_id(get_ids_from_list(items))
-        else:
-          kafka_id = get_random_id(kafkas_list)
-        if kafka_id != '':
-          handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
-          if (random.randrange(0,19) < 1): 
-            handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
-            handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
+      hit_endpoint(self, get_only)
     elif current_run_time / 60 + 1 < wait_time_in_minutes:
       time.sleep(15) # wait 15 seconds instead of hitting this if/else unnecessarily
+
+# The distribution between the endpoints will be semi-random with the following proportions
+# kafkas get                                       50%
+# kafka search                                     35%
+# kafka get                                        10%
+# kafka metrics                                     1%
+# cloud provider(s) get                             1%
+# openapi get                                       1%
+# service accounts (get, post, delete, reset pwd)   1%
+# kafka get metrics                      	        0.5%
+def hit_endpoint(self, get_only):
+  endpoint_selector = random.randrange(0,99)
+  if endpoint_selector < 1:
+    service_accounts(self, get_only)
+  elif endpoint_selector < 2:
+    handle_get(self, f'{url_base}/cloud_providers', '/cloud_providers')
+    handle_get(self, f'{url_base}/cloud_providers/aws/regions', '/cloud_providers/aws/regions')
+  elif endpoint_selector < 3:
+    handle_get(self, f'{url_base}/openapi', '/openapi')
+  elif endpoint_selector < 53:
+    handle_get(self, f'{url_base}/kafkas', '/kafkas')
+  elif endpoint_selector < 88:
+    handle_get(self, f'{url_base}/kafkas?search={get_random_search()}', '/kafkas?search')
+  else:
+    kafka_id = ''
+    if len(kafkas_list) == 0:
+      org_kafkas = handle_get(self, f'{url_base}/kafkas', '/kafkas', True)
+      # get all kafkas and if the list is not empty - get random kafka_id
+      items = get_items_from_json_response(org_kafkas)
+      if len(items) > 0:
+        kafka_id = get_random_id(get_ids_from_list(items))
+    else:
+      kafka_id = get_random_id(kafkas_list)
+    if kafka_id != '':
+      handle_get(self, f'{url_base}/kafkas/{kafka_id}', '/kafkas/[id]')
+      if (random.randrange(0,19) < 1): 
+        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query', '/kafkas/[id]/metrics/query')
+        handle_get(self, f'{url_base}/kafkas/{kafka_id}/metrics/query_range?duration=5&interval=30', '/kafkas/[id]/metrics/query_range')
 
 # wait for kafkas to be in ready state and persist kafka config
 def wait_for_kafkas_ready(self):
@@ -177,31 +191,16 @@ def wait_for_kafkas_ready(self):
           svc_acc_json_payload = svc_acc_json(url_base)
           svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
           if svc_acc_id != '':
-            bootstrap_url = kafka['bootstrapServerHost']
-            username = svc_acc_json_payload['clientID']
-            password = svc_acc_json_payload['clientSecret']
-            config = {
-                        'bootstrapURL': bootstrap_url,
-                        'username': username,
-                        'password': password,
-                      }
-            headers = {'content-type': 'application/json'}
-            config_persisted = False
-            r = requests.post('http://api:8099/write_kafka_config', data=json.dumps(config), headers=headers)
-            while config_persisted == False:
-              # retry persisting config if unsuccessful
-              if r.status_code != 204:
-                time.sleep(random.uniform(1, 2))
-                continue
-              else: 
-                config_persisted = True
-                i += 1
-                if i == len(kafkas_list):
-                  kafkas_persisted = True
-                  logging.info('kafka config persisted for the worker')
+            persist_kafka_config(kafka['bootstrapServerHost'], svc_acc_json_payload)
           else:
             time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
+        i += 1
+        # after persisting config of last kafka in the dict - notify that config has been fully persisted for the locust user
+        if i == len(kafkas_list):
+          kafkas_persisted = True
+          logging.info('kafka config persisted for the user')
       else:
+        hit_endpoint(self, True)
         time.sleep(random.uniform(25,30)) # sleep before checking kafka status again if not ready
     else:
       # if there was no kafka body returned - backoff for 1-5 seconds and try to GET kafka details again
@@ -222,7 +221,7 @@ def service_accounts(self, get_only):
         handle_post(self, f'{url_base}/serviceaccounts/{svc_acc_id}/reset-credentials', svc_acc_json_payload, '/serviceaccounts/[id]/reset-credentials')
         service_acc_list.append(svc_acc_id)
 
-# get the list of left over service accounts and kafka requests and delete them
+# get the list of left over service accounts and kafka clusters and delete them
 def check_leftover_resources(self):
   time.sleep(random.uniform(1.0, 5.0))
   global resources_cleaned_up, service_acc_list, kafkas_list
@@ -246,7 +245,7 @@ def check_leftover_resources(self):
   if (len(kafkas_list) == 0 and len(service_acc_list) == 0):
     resources_cleaned_up = True
 
-# cleanup created kafka_requests and service accounts 1 minute before the test completion
+# cleanup created kafka clusters and service accounts 1 minute before the test completion
 def cleanup(self):
   remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
   if kafkas_to_create > 0: # only delete kafkas, if some were created

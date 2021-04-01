@@ -20,13 +20,14 @@ services:
       - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
       - PERF_TEST_GET_ONLY=${PERF_TEST_GET_ONLY}
       - PERF_TEST_KAFKA_POST_WAIT_TIME=${PERF_TEST_KAFKA_POST_WAIT_TIME}
+      - PERF_TEST_CLEANUP=${PERF_TEST_CLEANUP}
       - ATTACKED_HOST=${PERF_TEST_ROUTE_HOST}
       - PERF_TEST_BASE_API_URL=${PERF_TEST_BASE_API_URL}
       - PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=${PERF_TEST_HIT_ENDPOINTS_HOLD_OFF}
       - LOCUST_FILE=/mnt/locust/locustfile.py
       - LOCUST_MODE=master
       - LOCUST_MASTER_HOST=primary
-      - LOCUST_OPTS=--headless --only-summary --logfile=/mnt/locust/reports/perf_test_logfile --csv-full-history --csv=/mnt/locust/reports/perf_test  -u ${PERF_TEST_USERS} -r ${PERF_TEST_USER_SPAWN_RATE} --run-time ${PERF_TEST_RUN_TIME} --html /mnt/locust/reports/perf_test_report.html
+      - LOCUST_OPTS=--headless --logfile=/mnt/locust/reports/perf_test_logfile --csv-full-history --csv=/mnt/locust/reports/perf_test  -u ${PERF_TEST_USERS} -r ${PERF_TEST_USER_SPAWN_RATE} --run-time ${PERF_TEST_RUN_TIME} --html /mnt/locust/reports/perf_test_report.html ${ADDITIONAL_LOCUST_OPTS}
     ports:
       - 8089:8089
     working_dir: /mnt/locust
@@ -43,6 +44,7 @@ services:
       - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
       - PERF_TEST_GET_ONLY=${PERF_TEST_GET_ONLY}
       - PERF_TEST_KAFKA_POST_WAIT_TIME=${PERF_TEST_KAFKA_POST_WAIT_TIME}
+      - PERF_TEST_CLEANUP=${PERF_TEST_CLEANUP}
       - ATTACKED_HOST=${PERF_TEST_ROUTE_HOST}
       - PERF_TEST_BASE_API_URL=${PERF_TEST_BASE_API_URL}
       - PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=${PERF_TEST_HIT_ENDPOINTS_HOLD_OFF}

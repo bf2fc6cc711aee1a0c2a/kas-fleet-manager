@@ -1,4 +1,4 @@
-import random, string
+import json, random, requests, string, time
 
 # get_ids_from_list iterates over passed list and returns ids found among the passed list items
 def get_ids_from_list(list):
@@ -87,3 +87,23 @@ def svc_acc_json(base_url):
            'description': svc_acc_description(),
            'clientSecret': generate_random_svc_acc_secret()
          }
+
+# send kafka bootstrap URL and svc acc credentials to the helper API
+# which will persist it to a text file
+def persist_kafka_config(bootstrapURL, svc_acc_json):
+  config = {
+             'bootstrapURL': bootstrapURL,
+             'username': svc_acc_json['clientID'],
+             'password': svc_acc_json['clientSecret'],
+           }
+  headers = {'content-type': 'application/json'}
+  config_persisted = False
+  while config_persisted == False:
+    r = requests.post('http://api:8099/write_kafka_config', data=json.dumps(config), headers=headers)
+    # retry persisting config if unsuccessful
+    if r.status_code != 204:
+      time.sleep(random.uniform(1, 2))
+      continue
+    else: 
+      config_persisted = True
+  return
