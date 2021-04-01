@@ -30,6 +30,8 @@ type KafkaConfig struct {
 	EnableKasFleetshardSync        bool                `json:"enable_kas_fleetshard_sync"`
 	EnableQuotaService             bool                `json:"enable_quota_service"`
 	DefaultKafkaVersion            string              `json:"default_kafka_version"`
+	EnableDeletionOfExpiredKafka   bool                `json:"enable_deletion_of_expired_kafka"`
+	KafkaLifeSpan                  int                 `json:"kafka_life_span"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -45,6 +47,8 @@ func NewKafkaConfig() *KafkaConfig {
 		EnableKasFleetshardSync:        false,
 		EnableQuotaService:             false,
 		DefaultKafkaVersion:            "2.7.0",
+		EnableDeletionOfExpiredKafka:   true,
+		KafkaLifeSpan:                  48,
 	}
 }
 
@@ -59,6 +63,8 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableKasFleetshardSync, "enable-kas-fleetshard-sync", c.EnableKasFleetshardSync, "Enable direct data synchronisation with kas-fleetshard-operator")
 	fs.BoolVar(&c.EnableQuotaService, "enable-quota-service", c.EnableQuotaService, "Enable quota service")
 	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
+	fs.BoolVar(&c.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
+	fs.IntVar(&c.KafkaLifeSpan, "kafka-life-span", c.KafkaLifeSpan, "The desired life span of a Kafka instance")
 }
 
 func (c *KafkaConfig) ReadFiles() error {

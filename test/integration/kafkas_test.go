@@ -1245,3 +1245,80 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
+
+// TestKafka_RemovingExpiredKafkas tests that all kafkas are removed after their allocated life span has expired
+func TestKafka_RemovingExpiredKafkas(t *testing.T) {
+	startHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.EnableDeletionOfExpiredKafka = true
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.EnableDeletionOfExpiredKafka = false
+	}
+
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	defer tearDown()
+
+	// create an account with values from config/allow-list-configuration.yaml
+	testuser1 := "testuser1@example.com"
+	orgId := "13640203"
+
+	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
+	db := h.Env().DBFactory.New()
+	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
+	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
+	kafkas := []*api.KafkaRequest{
+		{
+			MultiAZ:        false,
+			Owner:          testuser1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+		{
+			Meta: api.Meta{
+				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
+			},
+			MultiAZ:        false,
+			Owner:          testuser1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-2",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+		{
+			Meta: api.Meta{
+				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
+			},
+			MultiAZ:        false,
+			Owner:          testuser1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-3",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+	}
+
+	for _, kafka := range kafkas {
+		if err := db.Save(kafka).Error; err != nil {
+			Expect(err).NotTo(HaveOccurred())
+			return
+		}
+	}
+
+	// also verify that any kafkas whose life has expired has been deleted.
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
+		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+		return list.Size == 1, err
+	})
+
+	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
+}

@@ -26,6 +26,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"cluster-compute-machine-type":      "m5.xlarge",
 	"ingress-controller-replicas":       "3",
 	"enable-dynamic-scaling":            "false",
+	"enable-deletion-of-expired-kafka":  "false",
 }
 
 // The testing environment is specifically for automated testing
