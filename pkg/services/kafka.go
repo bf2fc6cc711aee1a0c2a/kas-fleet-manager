@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
+	"github.com/golang/glog"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/google/uuid"
 
@@ -28,6 +30,7 @@ const productId = "RHOSAKTrial"
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
+	HasAvailableCapacity() (bool, *errors.ServiceError)
 	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	// Get method will retrieve the kafkaRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
@@ -63,6 +66,7 @@ type kafkaService struct {
 	kafkaConfig       *config.KafkaConfig
 	awsConfig         *config.AWSConfig
 	quotaService      QuotaService
+	mu                sync.Mutex
 }
 
 func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
@@ -77,8 +81,28 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 	}
 }
 
+func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+	var count int
+
+	if err := dbConn.Model(&api.KafkaRequest{}).Count(&count).Error; err != nil {
+		return false, errors.GeneralError("failed counting kafkas: %v", err)
+	}
+
+	glog.Infof("%d of %d kafka clusters currently instantiated", count, k.kafkaConfig.KafkaCapacity.MaxCapacity)
+	return count < k.kafkaConfig.KafkaCapacity.MaxCapacity, nil
+}
+
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
+		return err
+	} else if !hasCapacity {
+		glog.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
+		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
+	}
 	//cluster id can't be nil. generating random temporary id.
 	//reserve is false, checking whether a user can reserve a quota or not
 	if k.kafkaConfig.EnableQuotaService {
@@ -420,7 +444,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	return res, nil
 }
 
-func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	if err := dbConn.Model(kafkaRequest).Update(kafkaRequest).Error; err != nil {
@@ -429,7 +453,7 @@ func (k kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErro
 	return nil
 }
 
-func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
 	if kafka, err := k.GetById(id); err != nil {
@@ -455,7 +479,7 @@ func (k kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (boo
 	return true, nil
 }
 
-func (k kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(kafkaRequest.BootstrapServerHost, clusterDNS, action, k.kafkaConfig)
 
 	// Create AWS client with the region of this Kafka Cluster
