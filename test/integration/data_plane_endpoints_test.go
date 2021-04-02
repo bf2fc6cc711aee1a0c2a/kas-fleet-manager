@@ -192,31 +192,34 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		}
 	})
 	defer testServer.TearDown()
-
 	var testKafkas = []api.KafkaRequest{
 		{
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName1,
 			Status:    constants.KafkaRequestStatusDeprovision.String(),
+			Version:   "2.7.0",
 		},
 		{
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName2,
 			Status:    constants.KafkaRequestStatusProvisioning.String(),
+			Version:   "2.6.0",
 		},
 		{
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName3,
 			Status:    constants.KafkaRequestStatusPreparing.String(),
+			Version:   "2.7.1",
 		},
 		{
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
 			Name:      mockKafkaName4,
 			Status:    constants.KafkaRequestStatusReady.String(),
+			Version:   "2.7.2",
 		},
 	}
 
@@ -253,6 +256,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
+				Expect(mk.Spec.Versions.Kafka).To(Equal(k.Version))
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
 				break
