@@ -32,7 +32,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 // Mocks are loaded by default.
 // The environment is expected to be modified as needed
 func loadTesting(env *Env) error {
-	env.DBFactory = db.NewConnectionFactory(env.Config.Database)
+	env.DBFactory = db.NewMockConnectionFactory(env.Config.Database)
 
 	// Support a one-off env to allow enabling db debug in testing
 	if os.Getenv("DB_DEBUG") == "true" {
