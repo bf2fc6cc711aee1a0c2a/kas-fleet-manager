@@ -49,7 +49,7 @@ type Connector struct {
 	ConnectorSpec   JSON   `json:"connector_spec"`
 	DesiredState    string `json:"desired_state"`
 
-	Status ConnectorStatus `json:"status" gorm:"foreignkey:ID"`
+	Status ConnectorStatus `json:"status" gorm:"foreignKey:ID"`
 }
 
 type ConnectorStatus struct {
@@ -68,7 +68,7 @@ type ConnectorDeployment struct {
 	ClusterID            string                    `json:"cluster_id"`
 	ConnectorTypeService string                    `json:"connector_type_service"`
 	SpecChecksum         string                    `json:"spec_checksum,omitempty"`
-	Status               ConnectorDeploymentStatus `json:"status" gorm:"foreignkey:ID"`
+	Status               ConnectorDeploymentStatus `json:"status" gorm:"foreignKey:ID"`
 }
 
 type ConnectorDeploymentList []ConnectorDeployment

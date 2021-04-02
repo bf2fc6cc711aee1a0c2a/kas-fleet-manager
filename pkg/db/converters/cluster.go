@@ -1,8 +1,6 @@
 package converters
 
 import (
-	"encoding/json"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
@@ -21,27 +19,30 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 			"external_id":    cluster.ExternalID,
 			"created_at":     cluster.Meta.CreatedAt,
 			"updated_at":     cluster.Meta.UpdatedAt,
-			"deleted_at":     cluster.Meta.DeletedAt,
+			"deleted_at":     cluster.Meta.DeletedAt.Time,
 		},
 	}
 }
 
 // ConvertClusterList - converts []api.Cluster to the response type expected by mocket
-func ConvertClusterList(clusterList []api.Cluster) ([]map[string]interface{}, error) {
+func ConvertClusterList(clusterList []api.Cluster) []map[string]interface{} {
 	var convertedClusterList []map[string]interface{}
 
 	for _, cluster := range clusterList {
-		data, err := json.Marshal(cluster)
-		if err != nil {
-			return nil, err
-		}
-
-		var converted map[string]interface{}
-		if err = json.Unmarshal(data, &converted); err != nil {
-			return nil, err
-		}
-		convertedClusterList = append(convertedClusterList, converted)
+		data := ConvertCluster(&cluster)
+		convertedClusterList = append(convertedClusterList, data...)
 	}
 
-	return convertedClusterList, nil
+	return convertedClusterList
+}
+
+func ConvertClusters(clusterList []*api.Cluster) []map[string]interface{} {
+	var convertedClusterList []map[string]interface{}
+
+	for _, cluster := range clusterList {
+		data := ConvertCluster(cluster)
+		convertedClusterList = append(convertedClusterList, data...)
+	}
+
+	return convertedClusterList
 }

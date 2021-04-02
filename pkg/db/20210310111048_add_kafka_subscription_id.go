@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addKafkaSubscriptionId() *gormigrate.Migration {
@@ -12,16 +12,10 @@ func addKafkaSubscriptionId() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20210310111048",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&KafkaRequest{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.AutoMigrate(&KafkaRequest{})
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Table("kafka_requests").DropColumn("subscription_id").Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropColumn(&KafkaRequest{}, "subscription_id")
 		},
 	}
 }

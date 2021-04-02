@@ -192,7 +192,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		}
 	})
 	defer testServer.TearDown()
-	var testKafkas = []api.KafkaRequest{
+	var testKafkas = []*api.KafkaRequest{
 		{
 			ClusterID: testServer.ClusterID,
 			MultiAZ:   false,
@@ -226,12 +226,9 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	db := testServer.Helper.Env().DBFactory.New()
 
 	// create dummy kafkas
-	for i, k := range testKafkas {
-		if err := db.Save(&k).Error; err != nil {
-			t.Error("failed to create a dummy kafka request")
-			break
-		}
-		testKafkas[i] = k
+	if err := db.Create(&testKafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
 
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)

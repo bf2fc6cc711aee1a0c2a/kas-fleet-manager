@@ -1,6 +1,6 @@
 package api
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 type KafkaRequest struct {
 	Meta
@@ -34,11 +34,11 @@ func (l KafkaList) Index() KafkaIndex {
 	return index
 }
 
-func (org *KafkaRequest) BeforeCreate(scope *gorm.Scope) error {
+func (kafkaRequest *KafkaRequest) BeforeCreate(scope *gorm.DB) error {
 	// To allow the id set on the KafkaRequest object to be used. This is useful for testing purposes.
-	id := org.ID
+	id := kafkaRequest.ID
 	if id == "" {
-		id = NewID()
+		kafkaRequest.ID = NewID()
 	}
-	return scope.SetColumn("ID", id)
+	return nil
 }
