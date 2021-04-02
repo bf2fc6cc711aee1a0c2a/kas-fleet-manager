@@ -3,11 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
-	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
-	"github.com/golang/glog"
 	"net/http"
 	"strings"
 	"sync"
+
+	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
+	"github.com/golang/glog"
 
 	"github.com/google/uuid"
 
@@ -202,10 +203,6 @@ func (k *kafkaService) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaR
 	dbConn := k.connectionFactory.New()
 
 	var kafkas []*api.KafkaRequest
-
-	if err := dbConn.Model(&api.KafkaRequest{}).Scan(&kafkas).Error; err != nil {
-		return nil, errors.GeneralError(err.Error())
-	}
 
 	if err := dbConn.Model(&api.KafkaRequest{}).Where("status = ?", status).Scan(&kafkas).Error; err != nil {
 		return nil, errors.GeneralError(err.Error())
