@@ -3,12 +3,14 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/lib/pq"
-	mocket "github.com/selvatico/go-mocket"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	_ "github.com/lib/pq"
+	mocket "github.com/selvatico/go-mocket"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var singleton *ConnectionFactory
@@ -19,12 +21,28 @@ type ConnectionFactory struct {
 	DB     *gorm.DB
 }
 
+var gormConfig *gorm.Config = &gorm.Config{
+	PrepareStmt:       true,
+	AllowGlobalUpdate: false, // change it to tru to allow updates without the WHERE clause
+	QueryFields:       true,
+	Logger:            logger.Default.LogMode(logger.Silent),
+}
+
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
 // Go includes database connection pooling in the platform. Gorm uses the same and provides a method to
 // clone a connection via New(), which is safe for use by concurrent Goroutines.
 func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
 	once.Do(func() {
-		db, err := gorm.Open(config.Dialect, config.ConnectionString())
+		var db *gorm.DB
+		var err error
+		// refer to https://gorm.io/docs/gorm_config.html
+
+		if config.Dialect == "postgres" {
+			db, err = gorm.Open(postgres.Open(config.ConnectionString()), gormConfig)
+		} else {
+			// TODO what other dialects do we support?
+			panic(fmt.Sprintf("Unsupported DB dialect: %s", config.Dialect))
+		}
 		if err != nil {
 			panic(fmt.Sprintf(
 				"failed to connect to %s database %s with connection string: %s\nError: %s",
@@ -34,8 +52,12 @@ func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
 				err.Error(),
 			))
 		}
-		db.DB().SetMaxOpenConns(config.MaxOpenConnections)
+		sqlDB, sqlDBErr := db.DB()
+		if sqlDBErr != nil {
+			panic(fmt.Errorf("Unexpected connection error: %s", sqlDBErr))
+		}
 
+		sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
 		singleton = &ConnectionFactory{Config: config, DB: db}
 	})
 	return singleton
@@ -50,7 +72,13 @@ func NewMockConnectionFactory(dbConfig *config.DatabaseConfig) *ConnectionFactor
 	}
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true
-	mocketDB, err := gorm.Open(mocket.DriverName, "")
+	sqlDB, err := sql.Open(mocket.DriverName, "connection_string")
+	if err != nil {
+		panic(err)
+	}
+	mocketDB, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: sqlDB,
+	}))
 	if err != nil {
 		panic(err)
 	}
@@ -61,9 +89,9 @@ func NewMockConnectionFactory(dbConfig *config.DatabaseConfig) *ConnectionFactor
 // New returns a new database connection
 func (f *ConnectionFactory) New() *gorm.DB {
 	if f.Config.Debug {
-		return f.DB.New().Debug()
+		return f.DB.Debug()
 	}
-	return f.DB.New()
+	return f.DB
 }
 
 // Checks to ensure a connection is present
@@ -75,7 +103,11 @@ func (f *ConnectionFactory) CheckConnection() error {
 // THIS MUST **NOT** BE CALLED UNTIL THE SERVER/PROCESS IS EXITING!!
 // This should only ever be called once for the entire duration of the application and only at the end.
 func (f *ConnectionFactory) Close() error {
-	return f.DB.Close()
+	sqlDB, sqlDBErr := f.DB.DB()
+	if sqlDBErr != nil {
+		return sqlDBErr
+	}
+	return sqlDB.Close()
 }
 
 // By default do no roll back transaction.
@@ -98,7 +130,11 @@ func newTransaction() (*txFactory, error) {
 }
 
 func (f *txFactory) begin() error {
-	tx, err := singleton.DB.DB().Begin()
+	sqlDB, sqlDBErr := singleton.DB.DB()
+	if sqlDBErr != nil {
+		return sqlDBErr
+	}
+	tx, err := sqlDB.Begin()
 	if err != nil {
 		return err
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 const (
@@ -35,9 +35,9 @@ func Test_handleGetError(t *testing.T) {
 				resourceType: resourceType,
 				field:        "id",
 				value:        "sample-id",
-				err:          gorm.ErrInvalidSQL,
+				err:          gorm.ErrInvalidData,
 			},
-			want: errors.GeneralError("Unable to find %s with id='sample-id': %s", resourceType, gorm.ErrInvalidSQL.Error()),
+			want: errors.GeneralError("Unable to find %s with id='sample-id': %s", resourceType, gorm.ErrInvalidData.Error()),
 		},
 		{
 			name: "Handler should return a not found error if record was not found in the database",
@@ -83,9 +83,9 @@ func Test_handleCreateError(t *testing.T) {
 			name: "Handler should return a general error for any other errors than violating unique constraints",
 			args: args{
 				resourceType: resourceType,
-				err:          gorm.ErrInvalidSQL,
+				err:          gorm.ErrInvalidField,
 			},
-			want: errors.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidSQL.Error()),
+			want: errors.GeneralError("Unable to create %s: %s", resourceType, gorm.ErrInvalidField.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if creation error is due to violating unique constraints",
@@ -119,9 +119,9 @@ func Test_handleUpdateError(t *testing.T) {
 			name: "Handler should return a general error for any other errors than violating unique constraints",
 			args: args{
 				resourceType: resourceType,
-				err:          gorm.ErrInvalidSQL,
+				err:          gorm.ErrInvalidData,
 			},
-			want: errors.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidSQL.Error()),
+			want: errors.GeneralError("Unable to update %s: %s", resourceType, gorm.ErrInvalidData.Error()),
 		},
 		{
 			name: "Handler should return a conflict error if update error is due to violating unique constraints",

@@ -90,7 +90,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService Syn
 
 func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
-	var count int
+	var count int64
 
 	if err := dbConn.Model(&api.KafkaRequest{}).Count(&count).Error; err != nil {
 		return false, errors.GeneralError("failed counting kafkas: %v", err)
@@ -460,7 +460,9 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
-	dbConn.Model(&kafkaRequestList).Count(&pagingMeta.Total)
+	total := int64(pagingMeta.Total)
+	dbConn.Model(&kafkaRequestList).Count(&total)
+	pagingMeta.Total = int(total)
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
 	}
@@ -495,7 +497,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 func (k *kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
-	if err := dbConn.Model(kafkaRequest).Update(kafkaRequest).Error; err != nil {
+	if err := dbConn.Model(kafkaRequest).Updates(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
 	}
 	return nil

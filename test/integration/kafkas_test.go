@@ -187,11 +187,9 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
 
 	k := openapi.KafkaRequestPayload{
@@ -528,11 +526,9 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
 
 	// also verify that any kafkas held by the first user has been deleted.
@@ -982,7 +978,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	// Check status of soft deleted kafka request. Status should not be 'deprovision'
 	db := h.Env().DBFactory.New()
-	var kafkaRequest openapi.KafkaRequest
+	var kafkaRequest api.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find soft deleted kafka request")
 	}
