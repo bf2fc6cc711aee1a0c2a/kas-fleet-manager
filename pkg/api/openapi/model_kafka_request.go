@@ -28,4 +28,5 @@ type KafkaRequest struct {
 	CreatedAt           time.Time `json:"created_at,omitempty"`
 	UpdatedAt           time.Time `json:"updated_at,omitempty"`
 	FailedReason        string    `json:"failed_reason,omitempty"`
+	Version             string    `json:"version,omitempty"`
 }

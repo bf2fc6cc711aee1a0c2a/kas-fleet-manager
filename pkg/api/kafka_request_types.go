@@ -20,6 +20,7 @@ type KafkaRequest struct {
 	FailedReason        string `json:"failed_reason"`
 	// PlacementId field should be updated every time when a KafkaRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
+	Version     string `json:"version"`
 }
 
 type KafkaList []*KafkaRequest

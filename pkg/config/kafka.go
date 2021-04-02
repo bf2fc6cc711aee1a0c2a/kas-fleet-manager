@@ -29,6 +29,7 @@ type KafkaConfig struct {
 	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
 	EnableKasFleetshardSync        bool                `json:"enable_kas_fleetshard_sync"`
 	EnableQuotaService             bool                `json:"enable_quota_service"`
+	DefaultKafkaVersion            string              `json:"default_kafka_version"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -43,6 +44,7 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		EnableKasFleetshardSync:        false,
 		EnableQuotaService:             false,
+		DefaultKafkaVersion:            "2.7.0",
 	}
 }
 
@@ -56,6 +58,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
 	fs.BoolVar(&c.EnableKasFleetshardSync, "enable-kas-fleetshard-sync", c.EnableKasFleetshardSync, "Enable direct data synchronisation with kas-fleetshard-operator")
 	fs.BoolVar(&c.EnableQuotaService, "enable-quota-service", c.EnableQuotaService, "Enable quota service")
+	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
 }
 
 func (c *KafkaConfig) ReadFiles() error {

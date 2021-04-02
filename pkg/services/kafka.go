@@ -115,6 +115,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 		}
 	}
 	dbConn := k.connectionFactory.New()
+	kafkaRequest.Version = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
@@ -537,7 +538,8 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			},
 			// These values must be changed as soon as we will have the real values
 			Versions: managedkafka.VersionsSpec{
-				Kafka:   "2.6.0",
+				Kafka: kafkaRequest.Version,
+				//TODO: we should remove the strimzi version as it should not be specified here
 				Strimzi: "0.21.1",
 			},
 			Deleted: kafkaRequest.Status == constants.KafkaRequestStatusDeprovision.String(),

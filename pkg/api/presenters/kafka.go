@@ -35,6 +35,7 @@ func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) openapi.KafkaRequest {
 		CreatedAt:           kafkaRequest.CreatedAt,
 		UpdatedAt:           kafkaRequest.UpdatedAt,
 		FailedReason:        kafkaRequest.FailedReason,
+		Version:             kafkaRequest.Version,
 	}
 }
 

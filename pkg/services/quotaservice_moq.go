@@ -4,7 +4,7 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -14,40 +14,40 @@ var _ QuotaService = &QuotaServiceMock{}
 
 // QuotaServiceMock is a mock implementation of QuotaService.
 //
-//     func TestSomethingThatUsesQuotaService(t *testing.T) {
+// 	func TestSomethingThatUsesQuotaService(t *testing.T) {
 //
-//         // make and configure a mocked QuotaService
-//         mockedQuotaService := &QuotaServiceMock{
-//             DeleteQuotaFunc: func(id string) *errors.ServiceError {
-// 	               panic("mock out the DeleteQuota method")
-//             },
-//             IsQuotaReservedFunc: func(productID string, orgID string) (bool, *errors.ServiceError) {
-// 	               panic("mock out the IsQuotaReserved method")
-//             },
-//             ListReservedKafkaQuotaFunc: func(productID string, orgID string) ([]string, *errors.ServiceError) {
-// 	               panic("mock out the ListReservedKafkaQuota method")
-//             },
-//             ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
-// 	               panic("mock out the ReserveQuota method")
-//             },
-//         }
+// 		// make and configure a mocked QuotaService
+// 		mockedQuotaService := &QuotaServiceMock{
+// 			DeleteQuotaFunc: func(id string) *apiErrors.ServiceError {
+// 				panic("mock out the DeleteQuota method")
+// 			},
+// 			IsQuotaReservedFunc: func(productID string, orgID string) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the IsQuotaReserved method")
+// 			},
+// 			ListReservedKafkaQuotaFunc: func(productID string, orgID string) ([]string, *apiErrors.ServiceError) {
+// 				panic("mock out the ListReservedKafkaQuota method")
+// 			},
+// 			ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *apiErrors.ServiceError) {
+// 				panic("mock out the ReserveQuota method")
+// 			},
+// 		}
 //
-//         // use mockedQuotaService in code that requires QuotaService
-//         // and then make assertions.
+// 		// use mockedQuotaService in code that requires QuotaService
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type QuotaServiceMock struct {
 	// DeleteQuotaFunc mocks the DeleteQuota method.
-	DeleteQuotaFunc func(id string) *errors.ServiceError
+	DeleteQuotaFunc func(id string) *apiErrors.ServiceError
 
 	// IsQuotaReservedFunc mocks the IsQuotaReserved method.
-	IsQuotaReservedFunc func(productID string, orgID string) (bool, *errors.ServiceError)
+	IsQuotaReservedFunc func(productID string, orgID string) (bool, *apiErrors.ServiceError)
 
 	// ListReservedKafkaQuotaFunc mocks the ListReservedKafkaQuota method.
-	ListReservedKafkaQuotaFunc func(productID string, orgID string) ([]string, *errors.ServiceError)
+	ListReservedKafkaQuotaFunc func(productID string, orgID string) ([]string, *apiErrors.ServiceError)
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError)
+	ReserveQuotaFunc func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -93,7 +93,7 @@ type QuotaServiceMock struct {
 }
 
 // DeleteQuota calls DeleteQuotaFunc.
-func (mock *QuotaServiceMock) DeleteQuota(id string) *errors.ServiceError {
+func (mock *QuotaServiceMock) DeleteQuota(id string) *apiErrors.ServiceError {
 	if mock.DeleteQuotaFunc == nil {
 		panic("QuotaServiceMock.DeleteQuotaFunc: method is nil but QuotaService.DeleteQuota was just called")
 	}
@@ -124,7 +124,7 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // IsQuotaReserved calls IsQuotaReservedFunc.
-func (mock *QuotaServiceMock) IsQuotaReserved(productID string, orgID string) (bool, *errors.ServiceError) {
+func (mock *QuotaServiceMock) IsQuotaReserved(productID string, orgID string) (bool, *apiErrors.ServiceError) {
 	if mock.IsQuotaReservedFunc == nil {
 		panic("QuotaServiceMock.IsQuotaReservedFunc: method is nil but QuotaService.IsQuotaReserved was just called")
 	}
@@ -159,7 +159,7 @@ func (mock *QuotaServiceMock) IsQuotaReservedCalls() []struct {
 }
 
 // ListReservedKafkaQuota calls ListReservedKafkaQuotaFunc.
-func (mock *QuotaServiceMock) ListReservedKafkaQuota(productID string, orgID string) ([]string, *errors.ServiceError) {
+func (mock *QuotaServiceMock) ListReservedKafkaQuota(productID string, orgID string) ([]string, *apiErrors.ServiceError) {
 	if mock.ListReservedKafkaQuotaFunc == nil {
 		panic("QuotaServiceMock.ListReservedKafkaQuotaFunc: method is nil but QuotaService.ListReservedKafkaQuota was just called")
 	}
@@ -194,7 +194,7 @@ func (mock *QuotaServiceMock) ListReservedKafkaQuotaCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *apiErrors.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
