@@ -295,6 +295,57 @@ paths:
         - Bearer: [ ]
       operationId: deleteConnector
       summary: Delete a connector
+    patch:
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+          description: The connector matching the request
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                401Example:
+                  $ref: '#/components/examples/401Example'
+          description: Auth token is invalid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: '#/components/examples/404Example'
+          description: No matching connector type exists
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: '#/components/examples/500Example'
+          description: Unexpected error occurred
+      security:
+        - Bearer: [ ]
+      operationId: patchConnector
+      summary: patch a connector
+      requestBody:
+        description: Data to patch the connector with
+        content:
+          application/json-patch+json:
+            schema:
+              description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
+              type: object
+          application/merge-patch+json:
+            schema:
+              description: A JSON Merge Patch, RFC 7386 - https://tools.ietf.org/html/rfc7386
+              type: object
+        required: true
 
   # Endpoints for managing connector clusters and connector agent sync
   /api/managed-services-api/v1/kafka-connector-clusters:
@@ -1137,6 +1188,8 @@ components:
                 resource_version:
                   type: integer
                   format: int64
+                spec_checksum:
+                  type: string
             spec:
               $ref: '#/components/schemas/ConnectorDeploymentSpec'
             status:
@@ -1177,6 +1230,8 @@ components:
       type: object
       properties:
         phase:
+          type: string
+        spec_checksum:
           type: string
         conditions:
           type: array

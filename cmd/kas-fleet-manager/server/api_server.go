@@ -173,7 +173,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Update).Methods(http.MethodPut)
+		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Delete).Methods(http.MethodDelete)
 
 		//  /api/managed-services-api/v1/kafka-connectors-of/{connector_type_id}
@@ -181,7 +181,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
 		apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", connectorsHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Update).Methods(http.MethodPut)
+		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
 
 		//  /api/managed-services-api/v1/kafka-connector-clusters
 		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)

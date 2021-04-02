@@ -11,6 +11,7 @@ package openapi
 
 // ConnectorDeploymentStatus The status of connector deployment
 type ConnectorDeploymentStatus struct {
-	Phase      string            `json:"phase,omitempty"`
-	Conditions []MetaV1Condition `json:"conditions,omitempty"`
+	Phase        string            `json:"phase,omitempty"`
+	SpecChecksum string            `json:"spec_checksum,omitempty"`
+	Conditions   []MetaV1Condition `json:"conditions,omitempty"`
 }

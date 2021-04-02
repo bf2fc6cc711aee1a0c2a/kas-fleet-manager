@@ -39,6 +39,7 @@ type Connector struct {
 	MultiAZ         bool            `json:"multi_az"`
 	Name            string          `json:"name"`
 	Status          ConnectorStatus `json:"status"`
+	DesiredState    string          `json:"desired_state"`
 	Owner           string          `json:"owner"`
 	OrganisationId  string          `json:"organisation_id"`
 	KafkaID         string          `json:"kafka_id"`
@@ -53,24 +54,27 @@ type ConnectorList []*Connector
 type ConnectorDeployment struct {
 	Meta
 	Version              int64                     `json:"version"`
+	ConnectorID          string                    `json:"connector_id"`
+	ConnectorVersion     int64                     `json:"connector_resource_version"`
 	ClusterID            string                    `json:"cluster_id"`
 	ConnectorTypeService string                    `json:"connector_type_service"`
-	Spec                 ConnectorDeploymentSpec   `json:"spec,omitempty" gorm:"embedded;embedded_prefix:spec_"`
+	SpecChecksum         string                    `json:"spec_checksum,omitempty"`
 	Status               ConnectorDeploymentStatus `json:"status,omitempty" gorm:"embedded;embedded_prefix:status_"`
 }
 
-type ConnectorDeploymentSpec struct {
-	ConnectorId      string
-	OperatorsIds     JSON `gorm:"type:jsonb"`
-	Resources        JSON `gorm:"type:jsonb"`
-	StatusExtractors JSON `gorm:"type:jsonb"`
-}
+//type ConnectorDeploymentSpec struct {
+//	ConnectorId      string
+//	OperatorsIds     JSON `gorm:"type:jsonb"`
+//	Resources        JSON `gorm:"type:jsonb"`
+//	StatusExtractors JSON `gorm:"type:jsonb"`
+//}
 
 type ConnectorDeploymentList []ConnectorDeployment
 
 type ConnectorDeploymentStatus struct {
-	Phase      string `json:"phase,omitempty"`
-	Conditions JSON   `json:"conditions,omitempty"`
+	Phase        string `json:"phase,omitempty"`
+	SpecChecksum string `json:"spec_checksum,omitempty"`
+	Conditions   JSON   `json:"conditions,omitempty"`
 }
 
 type ConnectorDeploymentSpecStatusExtractors struct {

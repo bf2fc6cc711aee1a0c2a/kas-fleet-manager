@@ -55,7 +55,7 @@ Feature: connector agent API
 
     # Logs in as the agent..
     Given I am logged in as "Agent"
-    Given I set the Authorization header to "Bearer ${agent_token}"
+    Given I set the "Authorization" header to "Bearer ${agent_token}"
 
     # There should be no deployments assigned yet, since the cluster status is unconnected
     When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
@@ -87,7 +87,7 @@ Feature: connector agent API
 
     # switch to another user session to avoid resetting the event stream.
     Given I am logged in as "Agent2"
-    Given I set the Authorization header to "Bearer ${agent_token}"
+    Given I set the "Authorization" header to "Bearer ${agent_token}"
 
     When I PUT path "/v1/kafka-connector-clusters/${connector_cluster_id}/status" with json body:
       """
@@ -112,10 +112,12 @@ Feature: connector agent API
 
     # switch back to the previous session
     Given I am logged in as "Agent"
-    Given I set the Authorization header to "Bearer ${agent_token}"
+    Given I set the "Authorization" header to "Bearer ${agent_token}"
 
     Given I wait up to "5" seconds for a response event
-     Then the response should match json:
+    Given I store the ".object.metadata.spec_checksum" selection from the response as ${deployment_spec_checksum}
+    Given I store the ".object.id" selection from the response as ${connector_deployment_id}
+    Then the response should match json:
       """
       {
         "type": "CHANGE",
@@ -127,10 +129,39 @@ Feature: connector agent API
           "metadata": {
             "created_at": "${response.object.metadata.created_at}",
             "resource_version": ${response.object.metadata.resource_version},
+            "spec_checksum": "${deployment_spec_checksum}",
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "connector_id": "${connector_id}"
+            "connector_id": "${connector_id}",
+            "operator_ids": [
+              "example-operator:1.0.0"
+            ],
+            "resources": [
+              {
+                "apiVersion": "v1",
+                "data": {
+                  "extra": "YmFyCg=="
+                },
+                "kind": "Secret",
+                "metadata": {
+                  "annotations": {
+                    "kubernetes.io/service-account.name": "sa-name"
+                  },
+                  "name": "secret-sa-sample"
+                },
+                "type": "kubernetes.io/service-account-token"
+              }
+            ],
+            "status_extractors": [
+              {
+                "apiVersion": "v1",
+                "conditionType": "Secret",
+                "jsonPath": "status",
+                "kind": "Secret",
+                "name": "secret-sa-sample"
+              }
+            ]
           },
           "status": {}
         }
@@ -138,8 +169,6 @@ Feature: connector agent API
       """
 
     # Now that the cluster is ready, a worker should assign the connector to the cluster for deployment.
-    Given I store the ".object.id" selection from the response as ${connector_deployment_id}
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments" response ".total" selection to match "1"
     When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the response should match json:
@@ -153,10 +182,40 @@ Feature: connector agent API
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
               "resource_version": ${response.items[0].metadata.resource_version},
+              "spec_checksum": "${deployment_spec_checksum}",
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
             "spec": {
-              "connector_id": "${connector_id}"
+              "connector_id": "${connector_id}",
+              "operator_ids": [
+                "example-operator:1.0.0"
+              ],
+              "resources": [
+                {
+                  "apiVersion": "v1",
+                  "data": {
+                    "extra": "YmFyCg=="
+                  },
+                  "kind": "Secret",
+                  "metadata": {
+                    "annotations": {
+                      "kubernetes.io/service-account.name": "sa-name"
+                    },
+                    "name": "secret-sa-sample"
+                  },
+                  "type": "kubernetes.io/service-account-token"
+                }
+              ],
+              "status_extractors": [
+                {
+                  "apiVersion": "v1",
+                  "conditionType": "Secret",
+                  "jsonPath": "status",
+                  "kind": "Secret",
+                  "name": "secret-sa-sample"
+                }
+              ]
+
             },
             "status": {}
           }
@@ -172,6 +231,7 @@ Feature: connector agent API
       """
       {
         "phase":"ready",
+        "spec_checksum": "${deployment_spec_checksum}",
         "conditions": [{
           "type": "Ready",
           "status": "True",
@@ -211,6 +271,49 @@ Feature: connector agent API
           "updated_at": "${response.metadata.updated_at}",
           "resource_version": ${response.metadata.resource_version}
         },
+        "desired_state": "ready",
         "status": "ready"
       }
     """
+
+    # Updating the connector config should update the deployment.
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+      """
+      {
+        "connector_spec": {
+            "queueNameOrArn": "I-GOT-PATCHED"
+        }
+      }
+      """
+
+    Then the response code should be 202
+    And the response should match json:
+      """
+      {
+        "connector_spec": {
+          "accessKey": "test",
+          "queueNameOrArn": "I-GOT-PATCHED",
+          "region": "east",
+          "secretKey": {}
+        },
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "deployment_location": {
+          "kind": "addon",
+          "cluster_id": "${connector_cluster_id}"
+        },
+        "href": "/api/managed-services-api/v1/kafka-connectors/${connector_id}",
+        "id": "${connector_id}",
+        "kind": "Connector",
+        "metadata": {
+          "name": "example 1",
+          "owner": "${response.metadata.owner}",
+          "created_at": "${response.metadata.created_at}",
+          "kafka_id": "${kafka_id}",
+          "updated_at": "${response.metadata.updated_at}",
+          "resource_version": ${response.metadata.resource_version}
+        },
+        "desired_state": "ready",
+        "status": "ready"
+      }
+      """

@@ -176,6 +176,12 @@ func (env *Env) LoadServices() error {
 	env.Services.SignalBus = signalBus
 	env.Services.Quota = QuotaService
 
+	vaultService, err := services.NewVaultService(env.Config.Vault)
+	if err != nil {
+		return err
+	}
+	env.Services.Vault = vaultService
+
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
 	env.Services.DataPlaneCluster = dataPlaneClusterService
@@ -183,19 +189,13 @@ func (env *Env) LoadServices() error {
 
 	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
-	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus)
+	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
 	if env.Config.ConnectorsConfig.Enabled {
 		err := env.Services.ConnectorTypes.DiscoverExtensions()
 		if err != nil {
 			return err
 		}
 	}
-
-	vaultService, err := services.NewVaultService(env.Config.Vault)
-	if err != nil {
-		return err
-	}
-	env.Services.Vault = vaultService
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
 	env.Services.Config = configService

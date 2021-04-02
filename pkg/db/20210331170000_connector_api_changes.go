@@ -64,6 +64,17 @@ func connectorApiChanges() *gormigrate.Migration {
 		},
 
 		func(tx *gorm.DB, do bool) error {
+			type Connector struct {
+				DesiredState string `json:"desired_state"`
+			}
+			if do {
+				return tx.AutoMigrate(&Connector{}).Error
+			} else {
+				return tx.Table("connectors").DropColumn("desired_state").Error
+			}
+		},
+
+		func(tx *gorm.DB, do bool) error {
 			type ConnectorClusters struct {
 				AddonGroup string
 			}
@@ -76,21 +87,18 @@ func connectorApiChanges() *gormigrate.Migration {
 
 		func(tx *gorm.DB, do bool) error {
 			type ConnectorDeploymentStatus struct {
-				Phase      string
-				Conditions string `gorm:"type:jsonb;index:"`
-			}
-			type ConnectorDeploymentSpec struct {
-				ConnectorId      string
-				OperatorsIds     string `gorm:"type:jsonb"`
-				Resources        string `gorm:"type:jsonb"`
-				StatusExtractors string `gorm:"type:jsonb"`
+				Phase        string
+				SpecChecksum string
+				Conditions   string `gorm:"type:jsonb;index:"`
 			}
 			type ConnectorDeployment struct {
 				Model
 				Version              int64  `gorm:"type:bigserial;index:"`
+				ConnectorID          string `json:"connector_id"`
+				ConnectorVersion     int64  `json:"connector_resource_version"`
 				ClusterID            string `gorm:"index:"`
 				ConnectorTypeService string
-				Spec                 ConnectorDeploymentSpec   `json:"spec,omitempty" gorm:"embedded;embedded_prefix:spec_"`
+				SpecChecksum         string                    `json:"spec_checksum,omitempty"`
 				Status               ConnectorDeploymentStatus `json:"status,omitempty" gorm:"embedded;embedded_prefix:status_"`
 			}
 			if do {

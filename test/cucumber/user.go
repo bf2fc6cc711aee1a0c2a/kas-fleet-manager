@@ -20,7 +20,7 @@ func init() {
 		ctx.Step(`^a user named "([^"]*)"$`, s.Suite.createUserNamed)
 		ctx.Step(`^a user named "([^"]*)" in organization "([^"]*)"$`, s.Suite.createUserNamedInOrganization)
 		ctx.Step(`^I am logged in as "([^"]*)"$`, s.iAmLoggedInAs)
-		ctx.Step(`^I set the Authorization header to "([^"]*)"$`, s.iSetTheAuthorizationHeaderTo)
+		ctx.Step(`^I set the "([^"]*)" header to "([^"]*)"$`, s.iSetTheHeaderTo)
 	})
 }
 
@@ -57,13 +57,17 @@ func (s *TestSuite) createUserNamedInOrganization(name string, orgid string) err
 	return nil
 }
 func (s *TestScenario) iAmLoggedInAs(name string) error {
-	s.Session().AuthorizationHeader = ""
+	s.Session().Header.Del("Authorization")
 	s.CurrentUser = name
 	return nil
 }
 
-func (s *TestScenario) iSetTheAuthorizationHeaderTo(value string) error {
-	value = s.Expand(value)
-	s.Session().AuthorizationHeader = value
+func (s *TestScenario) iSetTheHeaderTo(name string, value string) error {
+	expanded, err := s.Expand(value)
+	if err != nil {
+		return err
+	}
+
+	s.Session().Header.Set(name, expanded)
 	return nil
 }

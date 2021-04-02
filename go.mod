@@ -16,6 +16,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
+	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-sql-driver/mysql v1.5.0 // indirect

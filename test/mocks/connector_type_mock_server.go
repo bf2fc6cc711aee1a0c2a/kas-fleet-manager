@@ -99,9 +99,30 @@ func NewConnectorTypeMock(t *testing.T) *httptest.Server {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = fmt.Fprintln(w, `
 {
-  "operator_ids":[],
-  "resources":[],
-  "status_extractors":[]
+  "operator_ids":["example-operator:1.0.0"],
+  "resources":[
+	{
+	   "apiVersion": "v1",
+	   "kind": "Secret",
+	   "metadata": {
+		  "name": "secret-sa-sample",
+		  "annotations": {
+			 "kubernetes.io/service-account.name": "sa-name"
+		  }
+	   },
+	   "type": "kubernetes.io/service-account-token",
+	   "data": {
+		  "extra": "YmFyCg=="
+	   }
+	}
+   ],
+  "status_extractors":[{
+    "apiVersion": "v1",
+    "kind": "Secret",
+    "name": "secret-sa-sample",
+    "jsonPath":	"status",
+	"conditionType": "Secret"
+  }]
 }`)
 		},
 	)

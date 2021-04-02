@@ -7,7 +7,6 @@ import (
 	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -58,16 +57,23 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 		cfg.ErrorHandler = handleError
 	}
 
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		handleError(r.Context(), w, errors.MalformedRequest("Unable to read request body: %s", err))
-		return
-	}
+	if cfg.MarshalInto != nil {
 
-	err = json.Unmarshal(bytes, &cfg.MarshalInto)
-	if err != nil {
-		handleError(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
-		return
+		err := json.NewDecoder(r.Body).Decode(&cfg.MarshalInto)
+
+		// Use the following instead if you want to debug the request body:
+		//bytes, err := ioutil.ReadAll(r.Body)
+		//if err != nil {
+		//	handleError(r.Context(), w, errors.MalformedRequest("Unable to read request body: %s", err))
+		//	return
+		//}
+		//fmt.Println(string(bytes))
+		//err = json.Unmarshal(bytes, &cfg.MarshalInto)
+
+		if err != nil {
+			handleError(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
+			return
+		}
 	}
 
 	for _, v := range cfg.Validate {

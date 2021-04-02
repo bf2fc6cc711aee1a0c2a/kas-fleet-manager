@@ -184,6 +184,7 @@ Feature: create a a connector
               "resource_version": ${response.items[0].metadata.resource_version},
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
+            "desired_state": "ready",
             "status": "assigning"
           }
         ],
@@ -223,6 +224,7 @@ Feature: create a a connector
               "region": "east",
               "secretKey": {}
           },
+          "desired_state": "ready",
           "status": "assigning"
       }
       """
@@ -242,16 +244,34 @@ Feature: create a a connector
     And the response should match ""
 
     When I GET path "/v1/kafka-connectors/${cid}"
-    Then the response code should be 404
+    Then the response code should be 200
     And the response should match json:
       """
       {
-        "code": "MGD-SERV-API-7",
-        "href": "/api/managed-services-api/v1/errors/7",
-        "id": "7",
-        "kind": "Error",
-        "operation_id": "${response.operation_id}",
-        "reason": "Connector with id='${cid}' not found"
+          "id": "${cid}",
+          "kind": "Connector",
+          "href": "/api/managed-services-api/v1/kafka-connectors/${cid}",
+          "metadata": {
+              "kafka_id": "${kid}",
+              "owner": "${response.metadata.owner}",
+              "name": "example 1",
+              "created_at": "${response.metadata.created_at}",
+              "updated_at": "${response.metadata.updated_at}",
+              "resource_version": ${response.metadata.resource_version}
+          },
+          "deployment_location": {
+              "kind": "addon",
+              "cluster_id": "default"
+          },
+          "connector_type_id": "aws-sqs-source-v1alpha1",
+          "connector_spec": {
+              "accessKey": "test",
+              "queueNameOrArn": "test",
+              "region": "east",
+              "secretKey": {}
+          },
+          "desired_state": "deleted",
+          "status": "assigning"
       }
       """
 

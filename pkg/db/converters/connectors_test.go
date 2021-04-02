@@ -31,6 +31,7 @@ func Test_ConvertConnectors(t *testing.T) {
 		TargetKind:      "k",
 		AddonClusterId:  "l",
 		OrganisationId:  "m",
+		DesiredState:    "n",
 	}
 	Expect([]map[string]interface{}{
 		map[string]interface{}{
@@ -52,6 +53,7 @@ func Test_ConvertConnectors(t *testing.T) {
 			"target_kind":       "k",
 			"addon_cluster_id":  "l",
 			"organisation_id":   "m",
+			"desired_state":     "n",
 		},
 	}).Should(Equal(ConvertConnectors(request)))
 }

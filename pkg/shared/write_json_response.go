@@ -19,7 +19,10 @@ func WriteStreamJSONResponseWithContentType(w http.ResponseWriter, code int, pay
 	w.WriteHeader(code)
 
 	if payload != nil {
-		response, _ := json.Marshal(payload)
-		_, _ = w.Write(response)
+		_ = json.NewEncoder(w).Encode(payload)
+		// In case we need to debug response encoding... use this instead:
+		//response, _ := json.Marshal(payload)
+		//fmt.Println(string(response))
+		//_, _ = w.Write(response)
 	}
 }

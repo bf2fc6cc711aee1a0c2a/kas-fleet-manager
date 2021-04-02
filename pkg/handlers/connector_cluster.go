@@ -282,6 +282,26 @@ func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 					if err != nil {
 						return list, err
 					}
+
+					apiSpec, err := h.service.GetConnectorClusterSpec(r.Context(), resource)
+					if err != nil {
+						return list, err
+					}
+					converted.Spec = apiSpec
+					converted.Spec.ConnectorId = resource.ConnectorID
+
+					checksum, serr := services.Checksum(apiSpec)
+					if serr != nil {
+						return list, errors.GeneralError("failed to checksum the connector spec: %v", err)
+					}
+					// Did the spec change since we were generated?
+					if resource.SpecChecksum != checksum {
+						// Should not really happen unless the type service changed what it's generating for
+						// the deployment.
+						converted.Metadata.SpecChecksum = checksum
+						// TODO: trigger an update of the deployment so it picks up the new spec.
+					}
+
 					list.Items = append(list.Items, converted)
 				}
 				return
@@ -292,7 +312,7 @@ func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				list, err := getList()
 				firstPoll := true
 
-				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/connectors", connectorClusterId))
+				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", connectorClusterId))
 				return eventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,

@@ -95,6 +95,7 @@ func (s *TestScenario) Session() *TestSession {
 		result = &TestSession{
 			TestUser: s.User(),
 			Client:   &http.Client{},
+			Header:   http.Header{},
 		}
 		s.sessions[s.CurrentUser] = result
 	}
@@ -102,7 +103,7 @@ func (s *TestScenario) Session() *TestSession {
 }
 
 // Expand replaces ${var} or $var in the string based on saved Variables in the session/test scenario.
-func (s *TestScenario) Expand(value string) string {
+func (s *TestScenario) Expand(value string) (result string, rerr error) {
 	session := s.Session()
 	return os.Expand(value, func(name string) string {
 		if strings.HasPrefix(name, "response.") {
@@ -110,12 +111,14 @@ func (s *TestScenario) Expand(value string) string {
 			selector := strings.TrimPrefix(name, "response")
 			query, err := gojq.Parse(selector)
 			if err != nil {
-				return s.Variables[name]
+				rerr = err
+				return ""
 			}
 
 			j, err := session.RespJson()
 			if err != nil {
-				return s.Variables[name]
+				rerr = err
+				return ""
 			}
 
 			iter := query.Run(j)
@@ -127,27 +130,33 @@ func (s *TestScenario) Expand(value string) string {
 					return fmt.Sprintf("%f", next)
 				case float32:
 					return fmt.Sprintf("%f", next)
+				case nil:
+					rerr = fmt.Errorf("field ${%s} not found in json response:\n%s\n", name, string(session.RespBytes))
+					return ""
 				default:
 					return fmt.Sprintf("%s", next)
 				}
+			} else {
+				rerr = fmt.Errorf("field ${%s} not found in json response:\n%s\n", name, string(session.RespBytes))
+				return ""
 			}
 		}
 		return s.Variables[name]
-	})
+	}), rerr
 }
 
 // TestSession holds the http context for a user kinda like a browser.  Each scenario
 // had a different session even if using the same user.
 type TestSession struct {
-	TestUser            *TestUser
-	Client              *http.Client
-	Resp                *http.Response
-	Ctx                 context.Context
-	RespBytes           []byte
-	respJson            interface{}
-	AuthorizationHeader string
-	EventStream         bool
-	EventStreamEvents   chan interface{}
+	TestUser          *TestUser
+	Client            *http.Client
+	Resp              *http.Response
+	Ctx               context.Context
+	RespBytes         []byte
+	respJson          interface{}
+	Header            http.Header
+	EventStream       bool
+	EventStreamEvents chan interface{}
 }
 
 // RespJson returns the last http response body as json

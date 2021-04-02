@@ -364,6 +364,74 @@ paths:
       security:
       - Bearer: []
       summary: Get a connector
+    patch:
+      operationId: patchConnector
+      parameters:
+      - description: The kafka cluster id
+        explode: true
+        in: query
+        name: kafka_id
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: The id of the connector
+        explode: false
+        in: path
+        name: connector_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema:
+              description: A JSON Patch, RFC 6902 - https://tools.ietf.org/html/rfc6902
+              type: object
+          application/merge-patch+json:
+            schema:
+              description: A JSON Merge Patch, RFC 7386 - https://tools.ietf.org/html/rfc7386
+              type: object
+        description: Data to patch the connector with
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+          description: The connector matching the request
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector type exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: patch a connector
   /api/managed-services-api/v1/kafka-connector-clusters:
     get:
       operationId: listConnectorClusters
@@ -1307,6 +1375,7 @@ components:
       description: The status of connector deployment
       example:
         phase: phase
+        spec_checksum: spec_checksum
         conditions:
         - reason: reason
           type: type
@@ -1320,6 +1389,8 @@ components:
           status: status
       properties:
         phase:
+          type: string
+        spec_checksum:
           type: string
         conditions:
           items:
@@ -1664,6 +1735,8 @@ components:
         resource_version:
           format: int64
           type: integer
+        spec_checksum:
+          type: string
     ConnectorDeployment_allOf:
       properties:
         metadata:
