@@ -146,14 +146,16 @@ func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStat
 
 	dbConn := c.connectionFactory.New()
 
+	var query, arg string
+
 	if cluster.ID != "" {
-		if err := dbConn.Model(&api.Cluster{Meta: api.Meta{ID: cluster.ID}}).Update("status", status).Error; err != nil {
-			return apiErrors.GeneralError("failed to update status: %s", err.Error())
-		}
+		query, arg = "id = ?", cluster.ID
 	} else {
-		if err := dbConn.Model(&api.Cluster{ClusterID: cluster.ClusterID}).Update("status", status).Error; err != nil {
-			return apiErrors.GeneralError("failed to update status: %s", err.Error())
-		}
+		query, arg = "cluster_id = ?", cluster.ClusterID
+	}
+
+	if err := dbConn.Model(&api.Cluster{}).Where(query, arg).Update("status", status).Error; err != nil {
+		return apiErrors.GeneralError("failed to update status: %s", err.Error())
 	}
 
 	if status == api.ClusterReady {
