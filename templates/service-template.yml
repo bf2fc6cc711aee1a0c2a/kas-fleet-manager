@@ -383,6 +383,11 @@ parameters:
   description: Dynamic scaling functionality enablement configuration. Controls OSD cluster, Compute node dynamic scaling, OSD cluster autocreation and additional cluster capacity state setting
   value: "false"
 
+- name: DEFAULT_KAFKA_VERSION
+  displayName: Default Kafka version
+  description: The default version of Kafka when creating Kafka instances.
+  value: "2.7.0"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -690,6 +695,7 @@ objects:
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
             - --enable-dynamic-scaling=${ENABLE_DYNAMIC_SCALING}
+            - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:
