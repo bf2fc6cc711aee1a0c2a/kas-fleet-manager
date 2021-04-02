@@ -521,10 +521,10 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster
 	db := h.Env().DBFactory.New()
-	var count int
+	var count int64
 	err = db.Model(&api.Cluster{}).Count(&count).Error
 	Expect(err).ToNot(HaveOccurred())
-	Expect(count).To(Equal(initialExpectedOSDClusters))
+	Expect(count).To(Equal(int64(initialExpectedOSDClusters)))
 
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
@@ -567,14 +567,14 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(cluster.Status).To(Equal(api.ClusterFull))
 
 	// Wait until the new cluster is created in the DB
-	Eventually(func() int {
-		var count int
+	Eventually(func() int64 {
+		var count int64
 		err := db.Model(&api.Cluster{}).Count(&count).Error
 		if err != nil {
 			return -1
 		}
 		return count
-	}, 5*time.Minute, 5*time.Second).Should(Equal(initialExpectedOSDClusters + 1))
+	}, 5*time.Minute, 5*time.Second).Should(Equal(int64(initialExpectedOSDClusters + 1)))
 
 	clusterCreationTimeout := 3 * time.Hour
 	var newCluster *api.Cluster

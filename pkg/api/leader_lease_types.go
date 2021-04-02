@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/jinzhu/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type LeaderLease struct {
@@ -23,6 +24,7 @@ func (l LeaderLeaseList) Index() LeaderLeaseIndex {
 	return index
 }
 
-func (org *LeaderLease) BeforeCreate(scope *gorm.Scope) error {
-	return scope.SetColumn("ID", NewID())
+func (leaderLease *LeaderLease) BeforeCreate(tx *gorm.DB) error {
+	leaderLease.ID = NewID()
+	return nil
 }

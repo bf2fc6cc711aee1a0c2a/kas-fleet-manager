@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -16,6 +17,7 @@ import (
 	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
+	"gorm.io/gorm"
 
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
@@ -41,7 +43,8 @@ var (
 func buildKafkaRequest(modifyFn func(kafkaRequest *api.KafkaRequest)) *api.KafkaRequest {
 	kafkaRequest := &api.KafkaRequest{
 		Meta: api.Meta{
-			ID: testID,
+			ID:        testID,
+			DeletedAt: gorm.DeletedAt{Valid: true},
 		},
 		Region:        testKafkaRequestRegion,
 		ClusterID:     testClusterID,
@@ -1022,6 +1025,11 @@ func Test_kafkaService_List(t *testing.T) {
 						Name:          "dummy-cluster-name",
 						Status:        "accepted",
 						Owner:         testUser,
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+							UpdatedAt: time.Now(),
+							DeletedAt: gorm.DeletedAt{Valid: true},
+						},
 					},
 					&api.KafkaRequest{
 						Region:        testKafkaRequestRegion,
@@ -1031,6 +1039,11 @@ func Test_kafkaService_List(t *testing.T) {
 						Name:          "dummy-cluster-name2",
 						Status:        "accepted",
 						Owner:         testUser,
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+							UpdatedAt: time.Now(),
+							DeletedAt: gorm.DeletedAt{Valid: true},
+						},
 					},
 				},
 				pagingMeta: &api.PagingMeta{
@@ -1049,10 +1062,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
-				if err != nil {
-					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
-				}
+				response := dbConverters.ConvertKafkaRequestList(kafkaList)
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
 		},
@@ -1079,6 +1089,11 @@ func Test_kafkaService_List(t *testing.T) {
 						Name:          "dummy-cluster-name",
 						Status:        "accepted",
 						Owner:         testUser,
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+							UpdatedAt: time.Now(),
+							DeletedAt: gorm.DeletedAt{Valid: true},
+						},
 					},
 				},
 				pagingMeta: &api.PagingMeta{
@@ -1097,10 +1112,8 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
-				if err != nil {
-					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
-				}
+				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
 		},
@@ -1135,10 +1148,8 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
-				if err != nil {
-					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
-				}
+				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
 		},
@@ -1167,10 +1178,8 @@ func Test_kafkaService_List(t *testing.T) {
 				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
 
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response, err := dbConverters.ConvertKafkaRequestList(kafkaList)
-				if err != nil {
-					t.Errorf("List() failed to convert KafkaRequestList: %s", err.Error())
-				}
+				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
 		},
@@ -1270,9 +1279,9 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
-			want: []*api.KafkaRequest{},
+			want: []*api.KafkaRequest{buildKafkaRequest(nil)},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}

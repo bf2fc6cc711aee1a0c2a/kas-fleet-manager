@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addKafkaSsoClientIdAndSecret() *gormigrate.Migration {
@@ -13,19 +13,14 @@ func addKafkaSsoClientIdAndSecret() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "20210322131730",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&KafkaRequest{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.AutoMigrate(&KafkaRequest{})
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Table("kafka_requests").DropColumn("sso_client_id").Error; err != nil {
+			err := tx.Migrator().DropColumn(&KafkaRequest{}, "sso_client_id")
+			if err != nil {
 				return err
 			}
-			if err := tx.Table("kafka_requests").DropColumn("sso_client_secret").Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropColumn(&KafkaRequest{}, "sso_client_secret")
 		},
 	}
 }

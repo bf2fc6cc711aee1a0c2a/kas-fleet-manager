@@ -2,13 +2,12 @@ package services
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
@@ -329,9 +328,8 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 		ClusterID: clusterID,
 	}
 
-	//subQuery := dbConn.Select("cluster_id").Where("status != '?' AND cluster_id != ''", constants.KafkaRequestStatusFailed).Table("kafka_requests")
-	subQuery := `SELECT "kafka_requests"."cluster_id" FROM kafka_requests WHERE "kafka_requests"."status" != 'failed' AND "kafka_requests"."deleted_at" IS NULL AND "kafka_requests"."cluster_id" != ''`
-	if err := dbConn.Where(clusterDetails).Where(fmt.Sprintf("cluster_id IN (%s)", subQuery)).First(cluster).Error; err != nil {
+	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants.KafkaRequestStatusFailed, clusterID).Model(api.KafkaRequest{})
+	if err := dbConn.Where(clusterDetails).Where("cluster_id IN (?)", subQuery).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -361,21 +359,23 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 }
 
 type ResKafkaInstanceCount struct {
-	Clusterid string //must be capitalized for Gorm to work?!
+	Clusterid string
 	Count     int
 }
 
 func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
-	dbConn := c.connectionFactory.New()
-
 	var res []ResKafkaInstanceCount
-	q := dbConn.Model(&api.KafkaRequest{}).Select("cluster_id as Clusterid, count(1) as Count")
-	if len(clusterIDs) > 0 {
-		q = q.Where("cluster_id in (?)", clusterIDs)
-	}
-	q = q.Group("cluster_id").Order("cluster_id asc").Scan(&res)
+	query := c.connectionFactory.New().
+		Model(&api.KafkaRequest{}).
+		Select("cluster_id as Clusterid, count(1) as Count")
 
-	if err := q.Error; err != nil {
+	if len(clusterIDs) > 0 {
+		query = query.Where("cluster_id in (?)", clusterIDs)
+	}
+
+	query = query.Group("cluster_id").Order("cluster_id asc").Scan(&res)
+
+	if err := query.Error; err != nil {
 		return nil, apiErrors.GeneralError("failed to query by cluster info: %s", err.Error())
 	}
 	// the query above won't return a count for a clusterId if that cluster doesn't have any Kafkas,

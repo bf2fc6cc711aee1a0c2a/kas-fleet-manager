@@ -1,10 +1,11 @@
 package db
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 type LeaderLease struct {
@@ -18,20 +19,20 @@ func addLeaderLease() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202012031820",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(
-				&LeaderLease{},
-			).Error; err != nil {
+			var err error
+			err = tx.AutoMigrate(&LeaderLease{})
+			if err != nil {
 				return err
 			}
 			// pre-seed a single empty leader lease for each type of workers that leader election mgr can begin attempting to claim
 			now := time.Now().Add(-time.Minute) //set to a expired time
-			if err := tx.Create(&api.LeaderLease{
+			if err = tx.Create(&api.LeaderLease{
 				Expires:   &now,
 				LeaseType: "cluster",
 			}).Error; err != nil {
 				return err
 			}
-			if err := tx.Create(&api.LeaderLease{
+			if err = tx.Create(&api.LeaderLease{
 				Expires:   &now,
 				LeaseType: "kafka",
 			}).Error; err != nil {
@@ -40,12 +41,7 @@ func addLeaderLease() *gormigrate.Migration {
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.DropTable(
-				&LeaderLease{},
-			).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropTable(&LeaderLease{})
 		},
 	}
 }

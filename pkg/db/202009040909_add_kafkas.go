@@ -6,8 +6,8 @@ package db
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addKafkaRequest() *gormigrate.Migration {
@@ -25,16 +25,10 @@ func addKafkaRequest() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202009040909",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&KafkaRequest{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.AutoMigrate(&KafkaRequest{})
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.DropTable(&KafkaRequest{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropTable(&KafkaRequest{})
 		},
 	}
 }
