@@ -116,12 +116,7 @@ func Test_ConvertClusterList(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ConvertClusterList(tt.args.clusterList)
-
-			if err != nil {
-				t.Errorf("ConvertClusterList() resulted in an error %v", err)
-			}
-
+			got := ConvertClusterList(tt.args.clusterList)
 			if got[0]["cloud_provider"] != tt.want[0]["cloud_provider"] || got[0]["region"] != tt.want[0]["region"] {
 				t.Errorf("ConvertClusterList() = got %v, want %v", got, tt.want)
 			}

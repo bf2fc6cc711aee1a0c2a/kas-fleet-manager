@@ -2,7 +2,7 @@
 
 Database migrations are handled by this package. All migrations should be created in separate files, following a starndard naming convetion
 
-The `migrations.go` file defines an array of migrate functions that are called by the [gormigrate](https://gopkg.in/gormigrate.v1) helper. Each migration function should perform a specific migration.
+The `migrations.go` file defines an array of migrate functions that are called by the [gormigrate](https://github.com/go-gormigrate/gormigrate/v2) helper. Each migration function should perform a specific migration.
 
 ## Creating a new migration
 
@@ -10,7 +10,7 @@ Create a migration ID based on the time using the YYYYMMDDHHMM  format. Example:
 
 Your migration's name should be used in the file name and in the function name and should adequately represent the actions your migration is taking. If your migration is doing too much to fit in a name, you should consider creating multiple migrations.
 
-Create a separate file in `pkg/db/` following the naming schema in place: `<migration_id>_<migration_name>.go`. In the file, you'll create a function that returns a [gormmigrate.Migration](https://gopkg.in/gormigrate.v1/blob/master/gormigrate.go#L37) object with `gormigrate.Migrate` and `gormigrate.Rollback` functions defined.
+Create a separate file in `pkg/db/` following the naming schema in place: `<migration_id>_<migration_name>.go`. In the file, you'll create a function that returns a [gormmigrate.Migration](https://github.com/go-gormigrate/gormigrate/v2/blob/master/gormigrate.go#L37) object with `gormigrate.Migrate` and `gormigrate.Rollback` functions defined.
 
 Add the function you created in the separate file to the `migrations` list in `pkg/db/migrations.go`.
 
@@ -41,8 +41,7 @@ type Account struct {
   Hidden boolean
 }
 
-err := tx.AutoMigrate(&Account{}).Error
-if err != nil {
+return tx.AutoMigrate(&Account{})
 ...
 ```
 

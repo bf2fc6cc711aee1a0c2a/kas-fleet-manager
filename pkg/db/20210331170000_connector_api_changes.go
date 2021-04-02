@@ -6,8 +6,8 @@ package db
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func connectorApiChanges() *gormigrate.Migration {
@@ -29,18 +29,21 @@ func connectorApiChanges() *gormigrate.Migration {
 				Operators  string `json:"operators,omitempty"`
 			}
 			type ConnectorCluster struct {
-				Status ConnectorClusterStatus `json:"status" gorm:"embedded;embedded_prefix:status_"`
+				Status ConnectorClusterStatus `json:"status" gorm:"embedded;embeddedPrefix:status_"`
 			}
 			if do {
-				return tx.AutoMigrate(&ConnectorCluster{}).Error
+				return tx.AutoMigrate(&ConnectorCluster{})
 			} else {
-				if err := tx.Table("connector_clusters").DropColumn("status_version").Error; err != nil {
+				err := tx.Migrator().DropColumn(&ConnectorCluster{}, "status_version")
+				if err != nil {
 					return err
 				}
-				if err := tx.Table("connector_clusters").DropColumn("status_conditions").Error; err != nil {
+				err = tx.Migrator().DropColumn(&ConnectorCluster{}, "status_conditions")
+				if err != nil {
 					return err
 				}
-				if err := tx.Table("connector_clusters").DropColumn("status_operators").Error; err != nil {
+				err = tx.Migrator().DropColumn(&ConnectorCluster{}, "status_operators")
+				if err != nil {
 					return err
 				}
 				return nil
@@ -71,19 +74,19 @@ func connectorApiChanges() *gormigrate.Migration {
 			}
 			type Connector struct {
 				Model
-				Status ConnectorStatus
+				Status ConnectorStatus `gorm:"foreignKey:ID"`
 			}
 			if do {
-				if err := tx.AutoMigrate(&ConnectorStatus{}).Error; err != nil {
+				err := tx.AutoMigrate(&ConnectorStatus{})
+				if err != nil {
 					return err
 				}
-				if err := tx.AutoMigrate(&Connector{}).Error; err != nil {
+				err = tx.AutoMigrate(&Connector{})
+				if err != nil {
 					return err
 				}
 			} else {
-				if err := tx.DropTable(&ConnectorStatus{}).Error; err != nil {
-					return err
-				}
+				return tx.Migrator().DropTable(&ConnectorStatus{})
 			}
 			return nil
 		},
@@ -95,16 +98,16 @@ func connectorApiChanges() *gormigrate.Migration {
 				Status    string
 			}
 			if do {
-				if err := tx.Table("connectors").DropColumn("status").Error; err != nil {
+				err := tx.Migrator().DropColumn(&Connector{}, "status")
+				if err != nil {
 					return err
 				}
-				if err := tx.Table("connectors").DropColumn("cluster_id").Error; err != nil {
+				err = tx.Migrator().DropColumn(&Connector{}, "cluster_id")
+				if err != nil {
 					return err
 				}
 			} else {
-				if err := tx.AutoMigrate(&Connector{}).Error; err != nil {
-					return err
-				}
+				return tx.AutoMigrate(&Connector{})
 			}
 			return nil
 		},
@@ -114,9 +117,9 @@ func connectorApiChanges() *gormigrate.Migration {
 				DesiredState string `json:"desired_state"`
 			}
 			if do {
-				return tx.AutoMigrate(&Connector{}).Error
+				return tx.AutoMigrate(&Connector{})
 			} else {
-				return tx.Table("connectors").DropColumn("desired_state").Error
+				return tx.Migrator().DropColumn(&Connector{}, "desired_state")
 			}
 		},
 
@@ -125,9 +128,9 @@ func connectorApiChanges() *gormigrate.Migration {
 				AddonGroup string
 			}
 			if do {
-				return tx.Table("connector_clusters").DropColumn("addon_group").Error
+				return tx.Migrator().DropColumn(&ConnectorClusters{}, "addon_group")
 			} else {
-				return tx.AutoMigrate(&ConnectorClusters{}).Error
+				return tx.AutoMigrate(&ConnectorClusters{})
 			}
 		},
 
@@ -145,30 +148,33 @@ func connectorApiChanges() *gormigrate.Migration {
 				Version              int64                     `gorm:"type:bigserial;index:"`
 				ConnectorID          string                    `json:"connector_id"`
 				ConnectorVersion     int64                     `json:"connector_resource_version"`
-				Status               ConnectorDeploymentStatus `gorm:"foreignkey:ID"`
+				Status               ConnectorDeploymentStatus `gorm:"foreignKey:ID"`
 				ConnectorTypeService string
 				ClusterID            string `gorm:"index:"`
 				SpecChecksum         string `json:"spec_checksum,omitempty"`
 			}
 
 			if do {
-				if err := tx.AutoMigrate(&ConnectorDeploymentStatus{}).Error; err != nil {
+				err := tx.AutoMigrate(&ConnectorDeploymentStatus{})
+				if err != nil {
 					return err
 				}
-				if err := tx.AutoMigrate(&ConnectorDeployment{}).Error; err != nil {
+				err = tx.AutoMigrate(&ConnectorDeployment{})
+				if err != nil {
 					return err
 				}
 			} else {
-				if err := tx.DropTable(&ConnectorDeployment{}).Error; err != nil {
+				err := tx.Migrator().DropTable(&ConnectorDeployment{})
+				if err != nil {
 					return err
 				}
-				if err := tx.DropTable(&ConnectorDeploymentStatus{}).Error; err != nil {
+				err = tx.Migrator().DropTable(&ConnectorDeploymentStatus{})
+				if err != nil {
 					return err
 				}
 			}
 			return nil
 		},
-
 		func(tx *gorm.DB, do bool) error {
 			if do {
 				return tx.Exec(`
@@ -183,7 +189,6 @@ func connectorApiChanges() *gormigrate.Migration {
 				return tx.Exec(`DROP FUNCTION connector_deployments_version_trigger`).Error
 			}
 		},
-
 		func(tx *gorm.DB, do bool) error {
 			if do {
 				return tx.Exec(`

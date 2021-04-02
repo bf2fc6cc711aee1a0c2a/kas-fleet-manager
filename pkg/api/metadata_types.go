@@ -18,7 +18,11 @@ limitations under the License.
 
 package api
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // CollectionMetadata represents a collection.
 type CollectionMetadata struct {
@@ -48,7 +52,8 @@ type Meta struct {
 	ID        string `json:"id"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt *time.Time
+	// needed for soft delete. See https://gorm.io/docs/delete.html#Soft-Delete
+	DeletedAt gorm.DeletedAt
 }
 
 // List Paging metadata

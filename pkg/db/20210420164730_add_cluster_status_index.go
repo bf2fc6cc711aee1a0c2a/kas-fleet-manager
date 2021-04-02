@@ -1,24 +1,22 @@
 package db
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addClusterStatusIndex() *gormigrate.Migration {
+	type Cluster struct {
+		Status string `gorm:"index"`
+	}
+
 	return &gormigrate.Migration{
 		ID: "20210420164730",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.Table("clusters").AddIndex("idx_clusters_status", "status").Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().CreateIndex(&Cluster{}, "Status")
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Table("clusters").RemoveIndex("idx_clusters_status").Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropIndex(&Cluster{}, "Status")
 		},
 	}
 }

@@ -4,7 +4,8 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"github.com/jinzhu/gorm"
+
+	"gorm.io/gorm"
 )
 
 type ConnectorClusterPhaseEnum = string
@@ -35,20 +36,20 @@ type ConnectorCluster struct {
 	Owner          string                 `json:"owner"`
 	OrganisationId string                 `json:"organisation_id"`
 	Name           string                 `json:"name"`
-	Status         ConnectorClusterStatus `json:"status" gorm:"embedded;embedded_prefix:status_"`
+	Status         ConnectorClusterStatus `json:"status" gorm:"embedded;embeddedPrefix:status_"`
 }
 
 type ConnectorClusterStatus struct {
 	Phase ConnectorClusterPhaseEnum `json:"phase,omitempty"`
 	// the version of the agent
 	Version    string        `json:"version,omitempty"`
-	Conditions ConditionList `json:"conditions,omitempty"`
-	Operators  OperatorList  `json:"operators,omitempty"`
+	Conditions ConditionList `json:"conditions,omitempty" gorm:"type:text"`
+	Operators  OperatorList  `json:"operators,omitempty" gorm:"type:text"`
 }
 
 type ConditionList []Condition
 
-func (j *ConditionList) Scan(value interface{}) error {
+func (c *ConditionList) Scan(value interface{}) error {
 	s, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("failed to unmarshal json value: %v", value)
@@ -56,20 +57,20 @@ func (j *ConditionList) Scan(value interface{}) error {
 
 	result := ConditionList{}
 	err := json.Unmarshal([]byte(s), &result)
-	*j = ConditionList(result)
+	*c = ConditionList(result)
 	return err
 }
 
-func (j ConditionList) Value() (driver.Value, error) {
-	if len(j) == 0 {
+func (c ConditionList) Value() (driver.Value, error) {
+	if len(c) == 0 {
 		return nil, nil
 	}
-	return json.Marshal(j)
+	return json.Marshal(c)
 }
 
 type OperatorList []Operators
 
-func (j *OperatorList) Scan(value interface{}) error {
+func (o *OperatorList) Scan(value interface{}) error {
 	s, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("failed to unmarshal json value: %v", value)
@@ -77,15 +78,15 @@ func (j *OperatorList) Scan(value interface{}) error {
 
 	result := OperatorList{}
 	err := json.Unmarshal([]byte(s), &result)
-	*j = OperatorList(result)
+	*o = OperatorList(result)
 	return err
 }
 
-func (j OperatorList) Value() (driver.Value, error) {
-	if len(j) == 0 {
+func (o OperatorList) Value() (driver.Value, error) {
+	if len(o) == 0 {
 		return nil, nil
 	}
-	return json.Marshal(j)
+	return json.Marshal(o)
 }
 
 type Condition struct {
@@ -107,8 +108,9 @@ type Operators struct {
 	Status string `json:"status,omitempty"`
 }
 
-func (org *ConnectorCluster) BeforeCreate(scope *gorm.Scope) error {
-	return scope.SetColumn("ID", NewID())
+func (org *ConnectorCluster) BeforeCreate(tx *gorm.DB) error {
+	org.ID = NewID()
+	return nil
 }
 
 type ConnectorClusterList []ConnectorCluster
