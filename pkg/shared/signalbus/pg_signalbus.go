@@ -1,6 +1,7 @@
 package signalbus
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
 	"github.com/lib/pq"
@@ -126,6 +127,10 @@ func (sbw *PgSignalBus) waitForNotification(l *pq.Listener) (exit bool, err erro
 			// this occurs triggered when PgSignalBus.Stop() is called... let the caller we should exit..
 			return true, nil
 		case n := <-l.Notify:
+			if n == nil {
+				// notify channel was closed.. likely due to db connection failure.
+				return false, fmt.Errorf("postgres listner channel closed")
+			}
 			glog.V(1).Infof("Received data from channel: %s, data: %s", n.Channel, n.Extra)
 
 			// we got the signal name from the DB... lets use the in memory signalBus
