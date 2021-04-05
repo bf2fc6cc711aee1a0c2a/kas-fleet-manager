@@ -44,6 +44,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
+      security:
+      - Bearer: []
       summary: Retrieves the status of resources e.g whether we have reached maximum
         service capacity
   /api/managed-services-api/v1/kafkas/{id}:
