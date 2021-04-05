@@ -13,6 +13,7 @@ import (
 
 // TestApiStatus_Success verifies the object returned by api status endpoint:
 // - kafka maximum capacity is set to true if user is in deny list
+// - kafka maximum capacity is set to true if user is not in deny list and is not allowed to access the service via the allow list
 // - or service maximum capacity has been reached i.e we've more than maxCapacity of kafkas created
 // - otherwise it is set to false.
 func TestServiceStatus(t *testing.T) {
@@ -33,8 +34,19 @@ func TestServiceStatus(t *testing.T) {
 	deniedAccount := h.NewAccount(deniedUser, deniedUser, deniedUser, orgId)
 	deniedCtx := h.NewAuthenticatedContext(deniedAccount, nil)
 
-	// since this user is not authorized to access the service, kafkas maximum capacity should be set to false
+	// since this user is in the deny list and not authorized to access the service, kafkas maximum capacity should be set to true
 	serviceStatus, serviceStatusResp, err := client.DefaultApi.ServiceStatus(deniedCtx)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
+	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
+
+	// create another user not in deny list and allow list
+	// since this user is in not in the allow list and not authorized to access the service, kafkas maximum capacity should be set to true
+	orgId = "some-org-id"
+	notAllowedUser := "user@not-allowed.com"
+	notAllowAccount := h.NewAccount(notAllowedUser, notAllowedUser, notAllowedUser, orgId)
+	notAllowedCtx := h.NewAuthenticatedContext(notAllowAccount, nil)
+	serviceStatus, serviceStatusResp, err = client.DefaultApi.ServiceStatus(notAllowedCtx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
