@@ -44,7 +44,9 @@ paths:
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'  
-      summary: Retrieves the status of resources e.g whether we have reached maximum service capacity    
+      summary: Retrieves the status of resources e.g whether we have reached maximum service capacity
+      security:
+        - Bearer: []    
   /api/managed-services-api/v1/kafkas/{id}:
     get:
       operationId: getKafkaById
