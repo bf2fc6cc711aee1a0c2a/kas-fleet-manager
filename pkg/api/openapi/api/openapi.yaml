@@ -1461,6 +1461,8 @@ components:
         max_capacity_reached:
           description: Indicates whether we have reached kafka maximum capacity
           type: boolean
+      required:
+      - max_capacity_reached
     CloudProviderList_allOf:
       example: '{"kind":"CloudProviderList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
       properties:

@@ -749,6 +749,8 @@ components:
         kafkas:
           description: The kafka resource api status
           type: object
+          required: 
+            - max_capacity_reached
           properties: 
             max_capacity_reached: 
               description: Indicates whether we have reached kafka maximum capacity
