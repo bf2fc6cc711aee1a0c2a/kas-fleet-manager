@@ -1555,3 +1555,55 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 		})
 	}
 }
+
+func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+
+	type args struct {
+		kafkaAgeInMins int
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail when database update throws an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithError(fmt.Errorf("an update error"))
+			},
+		},
+		{
+			name: "success when database does not throw an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants.KafkaRequestStatusDeprovision)).WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			err := k.DeprovisionExpiredKafkas(tt.args.kafkaAgeInMins)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}

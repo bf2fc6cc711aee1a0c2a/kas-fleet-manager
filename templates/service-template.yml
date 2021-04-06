@@ -387,6 +387,15 @@ parameters:
   displayName: Default Kafka version
   description: The default version of Kafka when creating Kafka instances.
   value: "2.7.0"
+- name: KAFKA_LIFE_SPAN
+  displayName: Kafka life span expiration in hours
+  description: Time period in hours after which kafka instances are deleted. This value must be a positive value
+  value: "48"
+
+- name: ENABLE_KAFKA_LIFE_SPAN
+  displayName: Enables Kafka life span for expiration in hours
+  description: Enables the ability to set a Kafka life span for expiration in hours
+  value: "false"
 
 objects:
   - kind: ConfigMap
@@ -614,6 +623,8 @@ objects:
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
+            - --kafka-life-span=${KAFKA_LIFE_SPAN}
+            - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
