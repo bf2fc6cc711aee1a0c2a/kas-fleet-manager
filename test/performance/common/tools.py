@@ -1,5 +1,10 @@
 import json, random, requests, string, subprocess, time
 
+# golang API helper urls used to persist config
+svc_acc_id_write_url = 'http://api:8099/write_svc_acc_id'
+kafka_id_write_url = 'http://api:8099/write_kafka_id'
+kafka_config_write_url = 'http://api:8099/write_kafka_config'
+
 # check if container id of the container making the request was elected
 # to create kafka requests
 def check_kafka_create_enabled():
@@ -122,19 +127,19 @@ def persist_kafka_config(bootstrapURL, svc_acc_json):
              'username': svc_acc_json['clientID'],
              'password': svc_acc_json['clientSecret'],
            }
-  persist_to_api_helper('http://api:8099/write_kafka_config', config)
+  persist_to_api_helper(kafka_config_write_url, config)
 
 def persist_kafka_id(kafka_id):
   config = {
              'kafkaId': kafka_id,
            }
-  persist_to_api_helper('http://api:8099/write_kafka_id', config)
+  persist_to_api_helper(kafka_id_write_url, config)
 
 def persist_service_account_id(svc_acc_id):
   config = {
              'serviceAccountId': svc_acc_id,
            }
-  persist_to_api_helper('http://api:8099/write_svc_acc_id', config)
+  persist_to_api_helper(svc_acc_id_write_url, config)
 
 def persist_to_api_helper(url, config):
   headers = {'content-type': 'application/json'}

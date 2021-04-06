@@ -130,6 +130,7 @@ def create_kafka_cluster(self):
 
 # create_svc_acc_for_kafka associated with kafka cluster
 def create_svc_acc_for_kafka(self):
+  global kafka_assoc_svc_accs
   svc_acc_json_payload = svc_acc_json(url_base)
   svc_acc_id = ''
   while svc_acc_id == '':
@@ -152,7 +153,6 @@ def create_svc_acc_for_kafka(self):
 #    - x minutes after the testing was started, where x is specified by PERF_TEST_HIT_ENDPOINTS_HOLD_OFF parameter
 def exercise_endpoints(self, get_only):
   global kafkas_created
-  global kafka_assoc_svc_accs
   if len(kafkas_list) < kafkas_to_create and is_kafka_creation_enabled == True:
     kafka_id = create_kafka_cluster(self)
     if kafka_id != '':
