@@ -128,6 +128,17 @@ def create_kafka_cluster(self):
     persist_kafka_id(kafka_id)
   return kafka_id
 
+# create_svc_acc_for_kafka associated with kafka cluster
+def create_svc_acc_for_kafka(self):
+  svc_acc_json_payload = svc_acc_json(url_base)
+  svc_acc_id = ''
+  while svc_acc_id == '':
+    svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
+    if svc_acc_id != '':
+      kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': svc_acc_json_payload})
+    else:
+      time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
+
 # main test execution against API endpoints
 #
 # if get-only is set to 'TRUE', only GET endpoints will be attacked
@@ -146,14 +157,7 @@ def exercise_endpoints(self, get_only):
     kafka_id = create_kafka_cluster(self)
     if kafka_id != '':
       time.sleep(kafka_post_wait_time) # sleep after creating kafka
-      svc_acc_json_payload = svc_acc_json(url_base)
-      svc_acc_id = ''
-      while svc_acc_id == '':
-        svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
-        if svc_acc_id != '':
-          kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': svc_acc_json_payload})
-        else:
-          time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
+      create_svc_acc_for_kafka(self)
   else:
     if kafkas_persisted == False and is_kafka_creation_enabled == True:
       wait_for_kafkas_ready(self)
