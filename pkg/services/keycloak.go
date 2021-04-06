@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Nerzal/gocloak/v8"
 	"github.com/golang/glog"
@@ -20,6 +21,7 @@ const (
 	rhOrgId            = "rh-org-id"
 	rhUserId           = "rh-user-id"
 	username           = "username"
+	created_at          = "created_at"
 	clusterId          = "kas-fleetshard-operator-cluster-id"
 	connectorClusterId = "connector-fleetshard-operator-cluster-id"
 )
@@ -181,6 +183,7 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	orgId := auth.GetOrgIdFromClaims(claims)
 	ownerAccountId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
+	createdAt := time.Now().Format(time.RFC3339)
 	rhAccountID := map[string][]string{
 		rhOrgId:  {orgId},
 		rhUserId: {ownerAccountId},
@@ -190,6 +193,7 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 		rhOrgId:  orgId,
 		rhUserId: ownerAccountId,
 		username: owner,
+		created_at: createdAt,
 	}
 	OrgIdProtocolMapper := kc.kcClient.CreateProtocolMapperConfig(rhOrgId)
 	userIdProtocolMapper := kc.kcClient.CreateProtocolMapperConfig(rhUserId)
