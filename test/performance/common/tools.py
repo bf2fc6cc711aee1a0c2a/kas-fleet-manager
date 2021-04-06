@@ -1,4 +1,24 @@
-import json, random, requests, string, time
+import json, random, requests, string, subprocess, time, logging
+
+# check if container id of the container making the request was elected
+# to create kafka requests
+def check_kafka_create_enabled():
+  get_container_id_output = subprocess.check_output("cat /proc/self/cgroup | head -n 1 | cut -d '/' -f3", shell=True)
+  container_id = get_container_id_output.decode('utf-8')
+  container_info = {
+            'containerId': container_id,
+          }
+  headers = {'content-type': 'application/json'}
+  container_id_sent = False
+  while container_id_sent == False:
+    r = requests.post('http://api:8099/kafka_create_container_id', data=json.dumps(container_info), headers=headers)
+    # retry persisting config if unsuccessful
+    if r.status_code != 200:
+      time.sleep(random.uniform(1, 2))
+      continue
+    else: 
+      container_id_sent = True
+  return r.text == container_id
 
 # get_ids_from_list iterates over passed list and returns ids found among the passed list items
 def get_ids_from_list(list):
@@ -88,6 +108,12 @@ def svc_acc_json(base_url):
            'clientSecret': generate_random_svc_acc_secret()
          }
 
+# get details of service account associated with kafka
+def get_svc_account_for_kafka(collection, kafka_id):
+  for item in collection:
+    if 'kafka_id' in item and item['kafka_id'] == kafka_id:
+      return item
+
 # send kafka bootstrap URL and svc acc credentials to the helper API
 # which will persist it to a text file
 def persist_kafka_config(bootstrapURL, svc_acc_json):
@@ -96,10 +122,25 @@ def persist_kafka_config(bootstrapURL, svc_acc_json):
              'username': svc_acc_json['clientID'],
              'password': svc_acc_json['clientSecret'],
            }
+  persist_to_api_helper('http://api:8099/write_kafka_config', config)
+
+def persist_kafka_id(kafka_id):
+  config = {
+             'kafkaId': kafka_id,
+           }
+  persist_to_api_helper('http://api:8099/write_kafka_id', config)
+
+def persist_service_account_id(svc_acc_id):
+  config = {
+             'serviceAccountId': svc_acc_id,
+           }
+  persist_to_api_helper('http://api:8099/write_svc_acc_id', config)
+
+def persist_to_api_helper(url, config):
   headers = {'content-type': 'application/json'}
   config_persisted = False
   while config_persisted == False:
-    r = requests.post('http://api:8099/write_kafka_config', data=json.dumps(config), headers=headers)
+    r = requests.post(url, data=json.dumps(config), headers=headers)
     # retry persisting config if unsuccessful
     if r.status_code != 204:
       time.sleep(random.uniform(1, 2))
