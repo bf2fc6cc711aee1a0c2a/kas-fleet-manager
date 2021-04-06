@@ -60,5 +60,9 @@ func (c *OCMConfig) ReadFiles() error {
 		return err
 	}
 	err = readFileValueString(c.SelfTokenFile, &c.SelfToken)
-	return err
+	if err != nil && (c.ClientSecret == "" || c.ClientID == "") {
+		return err
+	}
+
+	return nil
 }
