@@ -2,6 +2,7 @@ package syncsetresources
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -82,6 +83,7 @@ func BuildKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfi
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
 				Config:   kafkaCRConfig,
+				Version:  kafkaRequest.Version,
 				Replicas: kafkaConfig.NumOfBrokers,
 				Resources: &corev1.ResourceRequirements{
 					Requests: map[corev1.ResourceName]resource.Quantity{
