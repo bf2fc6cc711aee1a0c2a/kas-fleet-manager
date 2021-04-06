@@ -918,7 +918,7 @@ func TestClusterManager_reconcileClusterSyncSet(t *testing.T) {
 				}),
 			}
 
-			err := c.reconcileClusterSyncSet(api.Cluster{ClusterID: "test-cluster-id"})
+			err := c.reconcileClusterSyncSet(api.Cluster{ClusterID: "test-cluster-id"},false)
 			if !tt.wantErr && err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
