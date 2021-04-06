@@ -1,4 +1,4 @@
-import json, random, requests, string, subprocess, time, logging
+import json, random, requests, string, subprocess, time
 
 # check if container id of the container making the request was elected
 # to create kafka requests
