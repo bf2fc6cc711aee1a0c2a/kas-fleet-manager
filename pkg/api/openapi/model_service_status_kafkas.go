@@ -12,5 +12,5 @@ package openapi
 // ServiceStatusKafkas The kafka resource api status
 type ServiceStatusKafkas struct {
 	// Indicates whether we have reached kafka maximum capacity
-	MaxCapacityReached bool `json:"max_capacity_reached,omitempty"`
+	MaxCapacityReached bool `json:"max_capacity_reached"`
 }
