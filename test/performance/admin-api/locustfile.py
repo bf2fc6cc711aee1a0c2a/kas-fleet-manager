@@ -1,7 +1,7 @@
 from locust import HttpUser, task
 import requests, json, time, urllib3, os, sys
 
-# disable ssl check on workers
+# disable ssl check warning
 urllib3.disable_warnings()
 
 sso_url = os.getenv('ADMIN_API_SSO_AUTH_URL')
@@ -34,4 +34,3 @@ class MyUser(HttpUser):
               with self.client.delete(f'/rest/topics/{topic_name}', verify=False, catch_response=True) as response:
                 time.sleep(0.65)
                 delete_status = response.status_code
-
