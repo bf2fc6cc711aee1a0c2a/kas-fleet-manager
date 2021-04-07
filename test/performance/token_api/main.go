@@ -15,12 +15,33 @@ import (
 )
 
 var (
-	shortLivingToken = ""
+	shortLivingToken       = ""
+	kafkaCreateContainerId = ""
 )
 
 const (
-	filename = "/mnt/api/config.txt"
+	configFilename    = "/mnt/api/config.txt"
+	kafkaIdsFilemane  = "/mnt/api/kafkas.txt"
+	svcAccIdsFilemane = "/mnt/api/service_accounts.txt"
 )
+
+type configStruct struct {
+	BootstrapUrl string
+	Username     string
+	Password     string
+}
+
+type kafkaIdStruct struct {
+	KafkaId string
+}
+
+type svcAccIdStruct struct {
+	ServiceAccountId string
+}
+
+type containerIdStruct struct {
+	ContainerId string
+}
 
 // login to ocm via shell (OCM_OFFLINE_TOKEN env var required)
 func loginToOcm() {
@@ -36,10 +57,7 @@ func loginToOcm() {
 
 // get short living token and return its value via http response
 func getToken(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		returnError(w, "Method not supported!", http.StatusMethodNotAllowed)
-		return
-	}
+	checkHttpMethod(w, r, "GET")
 
 	if shortLivingToken == "" || !isTokenValid(string(shortLivingToken)) {
 		tokenOutput, err := exec.Command("ocm", "token").Output()
@@ -65,41 +83,55 @@ func isTokenValid(tokenOutput string) bool {
 	return expTimestamp > currentTime
 }
 
+func checkKafkaCreateContainerId(w http.ResponseWriter, r *http.Request) {
+	checkHttpMethod(w, r, "POST")
+
+	var c containerIdStruct
+
+	unmarshalBody(w, r, &c)
+
+	// assign kafkaCreateContainerId, if empty
+	if kafkaCreateContainerId == "" && c.ContainerId != "" {
+		kafkaCreateContainerId = c.ContainerId
+	}
+	// return containerID
+	fmt.Fprint(w, kafkaCreateContainerId)
+}
+
 // run the server
 func runServer() {
 	http.HandleFunc("/ocm_token", getToken)
 	http.HandleFunc("/write_kafka_config", writeKafkaConfig)
+	http.HandleFunc("/write_kafka_id", writeKafkaId)
+	http.HandleFunc("/write_svc_acc_id", writeSvcAccId)
+	http.HandleFunc("/kafka_create_container_id", checkKafkaCreateContainerId)
 	err := http.ListenAndServe(":8099", nil)
 	if err != nil {
 		log.Fatalf("Unable to start the server: %s", err.Error())
 	}
 }
 
-type configStruct struct {
-	BootstrapUrl string
-	Username     string
-	Password     string
-}
-
-func writeKafkaConfig(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
+func checkHttpMethod(w http.ResponseWriter, r *http.Request, method string) {
+	if r.Method != method {
 		returnError(w, "Method not supported!", http.StatusMethodNotAllowed)
 		return
 	}
+}
 
+func unmarshalBody(w http.ResponseWriter, r *http.Request, str interface{}) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		returnError(w, fmt.Sprintf("Unable to read request body: %s", err), http.StatusInternalServerError)
 		return
 	}
-
-	var c configStruct
-	err = json.Unmarshal(body, &c)
+	err = json.Unmarshal(body, &str)
 	if err != nil {
 		returnError(w, fmt.Sprintf("Unable to unmarshal request body: %s", err), http.StatusInternalServerError)
 		return
 	}
+}
 
+func writeToFile(w http.ResponseWriter, filename string, checkExists string, config string) {
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		returnError(w, fmt.Sprintf("Unable to open/create config file: %s", err), http.StatusInternalServerError)
@@ -117,9 +149,8 @@ func writeKafkaConfig(w http.ResponseWriter, r *http.Request) {
 	currentConfig := string(content)
 
 	// checking if current config contains config to be persisted
-	if !strings.Contains(currentConfig, c.BootstrapUrl) {
-		configString := fmt.Sprintf("---\nbootstrapURL: \"%s\"\nusername: %s\npassword: %s\n", c.BootstrapUrl, c.Username, c.Password)
-		if _, err := file.WriteString(configString); err != nil {
+	if !strings.Contains(currentConfig, checkExists) {
+		if _, err := file.WriteString(config); err != nil {
 			returnError(w, fmt.Sprintf("Unable to write to file: %s", err), http.StatusInternalServerError)
 			return
 		}
@@ -127,6 +158,42 @@ func writeKafkaConfig(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent) // respond with 204 on successful config write
 	defer file.Close()
+}
+
+func writeSvcAccId(w http.ResponseWriter, r *http.Request) {
+	checkHttpMethod(w, r, "POST")
+
+	var c svcAccIdStruct
+
+	unmarshalBody(w, r, &c)
+
+	configString := fmt.Sprintf("%s\n", c.ServiceAccountId)
+
+	writeToFile(w, svcAccIdsFilemane, c.ServiceAccountId, configString)
+}
+
+func writeKafkaId(w http.ResponseWriter, r *http.Request) {
+	checkHttpMethod(w, r, "POST")
+
+	var c kafkaIdStruct
+
+	unmarshalBody(w, r, &c)
+
+	configString := fmt.Sprintf("%s\n", c.KafkaId)
+
+	writeToFile(w, kafkaIdsFilemane, c.KafkaId, configString)
+}
+
+func writeKafkaConfig(w http.ResponseWriter, r *http.Request) {
+	checkHttpMethod(w, r, "POST")
+
+	var c configStruct
+
+	unmarshalBody(w, r, &c)
+
+	configString := fmt.Sprintf("---\nbootstrapURL: \"%s\"\nusername: %s\npassword: %s\n", c.BootstrapUrl, c.Username, c.Password)
+
+	writeToFile(w, configFilename, c.BootstrapUrl, configString)
 }
 
 func returnError(w http.ResponseWriter, err string, statusCode int) {

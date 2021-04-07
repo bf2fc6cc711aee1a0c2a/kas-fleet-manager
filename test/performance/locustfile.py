@@ -45,6 +45,15 @@ if str(PERF_TEST_BASE_API_URL) != 'None':
 # tracks how many kafkas were created already (per locust worker)
 kafkas_created = 0
 
+# service accounts to be created and used by kafka clusters
+kafka_assoc_svc_accs = []
+
+# If 'True' - kafka clusters will be created by the worker
+is_kafka_creation_enabled = True
+
+# if set to 'TRUE' - only one of the workers will be used to create kafka clusters
+single_worker_kafka_create = os.environ['PERF_TEST_SINGLE_WORKER_KAFKA_CREATE']
+
 # boolean flag driving cleanup stage
 resources_cleaned_up = False
 
@@ -67,7 +76,10 @@ if (kafkas_to_create == 0 and get_only == 'TRUE') or cleanup_resources != "TRUE"
 
 class QuickstartUser(HttpUser):
   def on_start(self):
-    time.sleep(random.randint(5, 10)) # to make sure that the api server is started
+    global is_kafka_creation_enabled
+    time.sleep(random.randint(5, 15)) # to make sure that the api server is started
+    if single_worker_kafka_create == 'TRUE':
+      is_kafka_creation_enabled = check_kafka_create_enabled()
     get_token(self)
   wait_time = constant_pacing(0.5)
   @task
@@ -113,7 +125,20 @@ def create_kafka_cluster(self):
   if kafka_id != '':
     kafkas_created = kafkas_created + 1
     kafkas_list.append(kafka_id)
+    persist_kafka_id(kafka_id)
   return kafka_id
+
+# create_svc_acc_for_kafka associated with kafka cluster
+def create_svc_acc_for_kafka(self):
+  global kafka_assoc_svc_accs
+  svc_acc_json_payload = svc_acc_json(url_base)
+  svc_acc_id = ''
+  while svc_acc_id == '':
+    svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
+    if svc_acc_id != '':
+      kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': svc_acc_json_payload})
+    else:
+      time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
 
 # main test execution against API endpoints
 #
@@ -128,11 +153,13 @@ def create_kafka_cluster(self):
 #    - x minutes after the testing was started, where x is specified by PERF_TEST_HIT_ENDPOINTS_HOLD_OFF parameter
 def exercise_endpoints(self, get_only):
   global kafkas_created
-  if len(kafkas_list) < kafkas_to_create:
-    create_kafka_cluster(self)
-    time.sleep(kafka_post_wait_time) # sleep after creating kafka
+  if len(kafkas_list) < kafkas_to_create and is_kafka_creation_enabled == True:
+    kafka_id = create_kafka_cluster(self)
+    if kafka_id != '':
+      time.sleep(kafka_post_wait_time) # sleep after creating kafka
+      create_svc_acc_for_kafka(self)
   else:
-    if kafkas_persisted == False:
+    if kafkas_persisted == False and is_kafka_creation_enabled == True:
       wait_for_kafkas_ready(self)
     # only hit the endpoints, if wait_time_in_minutes has passed already
     if current_run_time / 60 >= wait_time_in_minutes:
@@ -150,7 +177,7 @@ def exercise_endpoints(self, get_only):
 # service accounts (get, post, delete, reset pwd)   1%
 # kafka get metrics                      	        0.5%
 def hit_endpoint(self, get_only):
-  endpoint_selector = random.randrange(0,99)
+  endpoint_selector = random.randrange(1,99) # set to (0,99) post scale testing
   if endpoint_selector < 1:
     service_accounts(self, get_only)
   elif endpoint_selector < 2:
@@ -184,21 +211,13 @@ def wait_for_kafkas_ready(self):
   i = 0
   while i < len(kafkas_list):
     kafka = handle_get(self, f'{url_base}/kafkas/{kafkas_list[i]}', '/kafkas/[id]', True)
-    svc_acc_id = ''
     if 'status' in kafka:
+      # persist service account and kafka details to config files
       if kafka['status'] == 'ready' and 'bootstrapServerHost' in kafka:
-        while svc_acc_id == '':
-          svc_acc_json_payload = svc_acc_json(url_base)
-          svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
-          if svc_acc_id != '':
-            persist_kafka_config(kafka['bootstrapServerHost'], svc_acc_json_payload)
-          else:
-            time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
+        svc_acc_json_payload = get_svc_account_for_kafka(kafka_assoc_svc_accs, kafkas_list[i])
+        persist_kafka_config(kafka['bootstrapServerHost'], svc_acc_json_payload['svc_acc_json'])
+        persist_service_account_id(svc_acc_json_payload['svc_acc_json']['id'])
         i += 1
-        # after persisting config of last kafka in the dict - notify that config has been fully persisted for the locust user
-        if i == len(kafkas_list):
-          kafkas_persisted = True
-          logging.info('kafka config persisted for the user')
       else:
         hit_endpoint(self, True)
         time.sleep(random.uniform(25,30)) # sleep before checking kafka status again if not ready

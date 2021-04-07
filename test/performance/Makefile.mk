@@ -24,6 +24,8 @@ PERF_TEST_BASE_API_URL ?= /api/managed-services-api/v1
 PERF_TEST_HIT_ENDPOINTS_HOLD_OFF ?= 0
 # if set to TRUE - kafka clusters and service accounts created by the tool will be removed in the cleanup stage
 PERF_TEST_CLEANUP ?= TRUE
+# create kafkas by single worker only
+PERF_TEST_SINGLE_WORKER_KAFKA_CREATE ?= FALSE
 
 # run performance tests
 # requires at least the api route to be set as "PERF_TEST_ROUTE_HOST" and "OCM_OFFLINE_TOKEN"
@@ -39,7 +41,8 @@ else
 			PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=$(PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER) PERF_TEST_GET_ONLY=$(PERF_TEST_GET_ONLY) \
 				PERF_TEST_KAFKA_POST_WAIT_TIME=$(PERF_TEST_KAFKA_POST_WAIT_TIME) PERF_TEST_BASE_API_URL=$(PERF_TEST_BASE_API_URL) \
 					PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=$(PERF_TEST_HIT_ENDPOINTS_HOLD_OFF) PERF_TEST_CLEANUP=$(PERF_TEST_CLEANUP) ADDITIONAL_LOCUST_OPTS=$(ADDITIONAL_LOCUST_OPTS) \
-			  		docker-compose --file test/performance/docker-compose.yml up --scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
+						PERF_TEST_SINGLE_WORKER_KAFKA_CREATE=$(PERF_TEST_SINGLE_WORKER_KAFKA_CREATE) \
+			  			docker-compose --file test/performance/docker-compose.yml up --scale secondary=$(PERF_TEST_WORKERS_NUMBER) --remove-orphans
 endif
 .PHONY: test/performance
 
