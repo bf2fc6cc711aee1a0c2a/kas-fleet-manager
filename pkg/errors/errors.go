@@ -152,6 +152,10 @@ const (
 	// Invalid service account desc
 	ErrorMalformedServiceAccountId       ServiceErrorCode = 40
 	ErrorMalformedServiceAccountIdReason string           = "Service account id is invalid"
+
+	// Too Many requests error. Used by rate limiting
+	ErrorTooManyRequests       ServiceErrorCode = 429
+	ErrorTooManyRequestsReason string           = "Too Many requests"
 )
 
 type ServiceErrorCode int
@@ -172,6 +176,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden},
 		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden},
 		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusTooManyRequests},
+		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound},
 		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest},
