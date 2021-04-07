@@ -774,47 +774,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 				}))
 			},
 		},
-		{
-			name: "syncset delete should not be called when EnableKasFleetshardSync is enabled",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						panic("this should not be called")
-					},
-				},
-				keycloakService: &KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							EnableAuthenticationOnKafka: true,
-						}
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{
-					EnableKasFleetshardSync: true,
-				},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
-					kafkaRequest.ID = testID
-				}),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
-					Meta: api.Meta{
-						ID: testID,
-					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       false,
-					Status:        constants.KafkaRequestStatusPreparing.String(),
-				}))
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
