@@ -56,3 +56,14 @@ test/performance/image/build:
 test/performance/image/push:
 	docker push  ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST}
 	docker push  ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH}
+
+# admin-api params and make commands
+ADMIN_API_RUN_TIME ?= 1m # running time (in minutes)
+
+.PHONY: test/performance/admin-api
+test/performance/admin-api:
+	@if [[ -z "${ADMIN_API_SSO_AUTH_URL}" ]] || [[ -z "${ADMIN_API_SVC_ACC_ID}" ]] || [[ -z "${ADMIN_API_SVC_ACC_SECRET}" ]] || [[ -z "${ADMIN_API_HOST}" ]]; \
+		then echo "Not all env vars required to run the admin-api tests (ADMIN_API_SSO_AUTH_URL, ADMIN_API_SVC_ACC_ID, ADMIN_API_SVC_ACC_SECRET, ADMIN_API_HOST were provided!" ; exit 1 ; fi;
+
+	ADMIN_API_SSO_AUTH_URL=$(ADMIN_API_SSO_AUTH_URL) ADMIN_API_SVC_ACC_ID=$(ADMIN_API_SVC_ACC_ID) ADMIN_API_SVC_ACC_SECRET=$(ADMIN_API_SVC_ACC_SECRET) \
+		locust -f test/performance/admin-api/locustfile.py --headless -u 1 --run-time $(ADMIN_API_RUN_TIME) --host $(ADMIN_API_HOST)
