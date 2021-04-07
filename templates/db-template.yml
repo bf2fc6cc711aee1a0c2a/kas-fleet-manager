@@ -86,7 +86,7 @@ objects:
     kind: DeploymentConfig
     metadata:
       annotations:
-        template.alpha.openshift.io/wait-for-ready: true
+        template.alpha.openshift.io/wait-for-ready: "true"
       name: ${DATABASE_SERVICE_NAME}
     spec:
       replicas: 1
