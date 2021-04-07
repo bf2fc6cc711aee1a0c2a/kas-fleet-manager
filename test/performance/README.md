@@ -122,7 +122,7 @@ In order to run admin-api tests, these parameters are required:
 - `ADMIN_API_HOST` - admin-api host (including `https://`, but excluding port number)
 
 ## optional parameter
-- `ADMIN_API_RUN_TIME` - duration of the test, if not provided - the test will run for one minute
+- `ADMIN_API_RUN_TIME` - duration of the test in minutes, if not provided - the test will run for one minute
 
 ## Running the tests
 
