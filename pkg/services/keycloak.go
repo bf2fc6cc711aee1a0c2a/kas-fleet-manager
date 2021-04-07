@@ -21,7 +21,7 @@ const (
 	rhOrgId            = "rh-org-id"
 	rhUserId           = "rh-user-id"
 	username           = "username"
-	created_at          = "created_at"
+	created_at         = "created_at"
 	clusterId          = "kas-fleetshard-operator-cluster-id"
 	connectorClusterId = "connector-fleetshard-operator-cluster-id"
 )
@@ -190,9 +190,9 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 		username: {owner},
 	}
 	rhOrgIdAttributes := map[string]string{
-		rhOrgId:  orgId,
-		rhUserId: ownerAccountId,
-		username: owner,
+		rhOrgId:    orgId,
+		rhUserId:   ownerAccountId,
+		username:   owner,
 		created_at: createdAt,
 	}
 	OrgIdProtocolMapper := kc.kcClient.CreateProtocolMapperConfig(rhOrgId)
