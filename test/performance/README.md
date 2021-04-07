@@ -116,7 +116,7 @@ This will prevent from hitting the endpoints and to resolve this stop the tests 
 ## mandatory parameters
 
 In order to run admin-api tests, these parameters are required:
-- `ADMIN_API_SSO_AUTH_URL` - SSO cluster used for getting access token (including `https;//`)
+- `ADMIN_API_SSO_AUTH_URL` - SSO cluster used for getting access token (including `https://`)
 - `ADMIN_API_SVC_ACC_ID` - service account id used to communicate with the admin-api
 - `ADMIN_API_SVC_ACC_SECRET` - service account id used to communicate with the admin-api
 - `ADMIN_API_HOST` - admin-api host (including `https://`, but excluding port number)
