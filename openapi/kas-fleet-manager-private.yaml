@@ -960,6 +960,8 @@ components:
                       type: string
                     tlsTrustedCertificate:
                       type: string
+                    customClaimCheck:
+                      type: string
                 endpoint:
                   type: object
                   properties:

@@ -1472,6 +1472,8 @@ components:
           type: string
         tlsTrustedCertificate:
           type: string
+        customClaimCheck:
+          type: string
     ManagedKafka_allOf_spec_endpoint_tls:
       properties:
         cert:
