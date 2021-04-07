@@ -343,14 +343,15 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create jwt: %s", err.Error())
 	}
-	created_at := time.Now().Format(time.RFC3339)
+	currTime := time.Now().Format(time.RFC3339)
+	createdAt, _ := time.Parse(time.RFC3339, currTime)
 	testServiceAccount := api.ServiceAccount{
 		ID:           testClientID,
 		ClientSecret: secret,
 		Name:         "test-svc",
 		Description:  "desc",
 		ClientID:     "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5",
-		CreatedAt:    created_at,
+		CreatedAt:    createdAt,
 	}
 
 	tests := []struct {
@@ -424,7 +425,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 			}
 			//over-riding the random generate id
 			got.ClientID = "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5"
-			got.CreatedAt = created_at
+			got.CreatedAt = createdAt
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateServiceAccount() got = %+v, want %+v", got, tt.want)
 			}
@@ -695,7 +696,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				ClientSecret: secret,
 				Name:         "",
 				Description:  "",
-				CreatedAt:    "",
+				CreatedAt:    time.Time{},
 			},
 			wantErr: false,
 		},
@@ -1018,7 +1019,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 				ClientID:    "12221",
 				Name:        "",
 				Description: "",
-				CreatedAt:   "",
+				CreatedAt:   time.Time{},
 			},
 			wantErr: false,
 		},

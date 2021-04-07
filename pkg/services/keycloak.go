@@ -235,7 +235,12 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	serviceAcc.ClientID = c.ClientID
 	serviceAcc.Description = c.Description
 	serviceAcc.ClientSecret = clientSecret
-	serviceAcc.CreatedAt = createdAt
+	if createdAt != "" {
+		serviceAcc.CreatedAt, err = time.Parse(time.RFC3339, createdAt)
+		if err != nil {
+			serviceAcc.CreatedAt = time.Time{}
+		}
+	}
 	return &serviceAcc, nil
 }
 
@@ -260,9 +265,13 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 		attributes := client.Attributes
 		att := *attributes
 		if att["rh-org-id"] == orgId && strings.HasPrefix(safeString(client.ClientID), "srvc-acct") {
+			createdAt, err := time.Parse(time.RFC3339, att["created_at"])
+			if err != nil {
+				createdAt = time.Time{}
+			}
 			acc.ID = *client.ID
 			acc.Owner = att["username"]
-			acc.CreatedAt = att["created_at"]
+			acc.CreatedAt = createdAt
 			acc.ClientID = *client.ClientID
 			acc.Name = safeString(client.Name)
 			acc.Description = safeString(client.Description)
@@ -316,10 +325,14 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 		value := *credRep.Value
 		attributes := c.Attributes
 		att := *attributes
+		createdAt, err := time.Parse(time.RFC3339, att["created_at"])
+		if err != nil {
+			createdAt = time.Time{}
+		}
 		return &api.ServiceAccount{
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
-			CreatedAt:    att["created_at"],
+			CreatedAt:    createdAt,
 			Owner:        owner,
 			ClientSecret: value,
 			Name:         safeString(c.Name),
@@ -345,11 +358,15 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 	}
 	attributes := c.Attributes
 	att := *attributes
+	createdAt, err := time.Parse(time.RFC3339, att["created_at"])
+	if err != nil {
+		createdAt = time.Time{}
+	}
 	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		return &api.ServiceAccount{
 			ID:          *c.ID,
 			ClientID:    *c.ClientID,
-			CreatedAt:   att["created_at"],
+			CreatedAt:   createdAt,
 			Owner:       owner,
 			Name:        safeString(c.Name),
 			Description: safeString(c.Description),
