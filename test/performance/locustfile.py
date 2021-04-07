@@ -218,6 +218,8 @@ def wait_for_kafkas_ready(self):
         persist_kafka_config(kafka['bootstrapServerHost'], svc_acc_json_payload['svc_acc_json'])
         persist_service_account_id(svc_acc_json_payload['svc_acc_json']['id'])
         i += 1
+        if i == len(kafkas_list):
+          kafkas_persisted = True
       else:
         hit_endpoint(self, True)
         time.sleep(random.uniform(25,30)) # sleep before checking kafka status again if not ready
