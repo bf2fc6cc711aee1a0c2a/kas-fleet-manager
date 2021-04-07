@@ -131,14 +131,17 @@ def create_kafka_cluster(self):
 # create_svc_acc_for_kafka associated with kafka cluster
 def create_svc_acc_for_kafka(self, kafka_id):
   global kafka_assoc_svc_accs
-  svc_acc_json_payload = svc_acc_json(url_base)
-  svc_acc_id = ''
-  while svc_acc_id == '':
-    svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
-    if svc_acc_id != '':
-      kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': svc_acc_json_payload})
-    else:
-      time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
+  # only create service account if not created already
+  if get_svc_account_for_kafka(kafka_assoc_svc_accs, kafka_id) == []:
+    svc_acc_json_payload = svc_acc_json(url_base)
+    svc_acc_id = ''
+    while svc_acc_id == '':
+      service_acc_json = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts', True)
+      if service_acc_json != '' and 'id' in service_acc_json:
+        svc_acc_id = service_acc_json['id']
+        kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': service_acc_json})
+      else:
+        time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
 
 # main test execution against API endpoints
 #

@@ -118,6 +118,7 @@ def get_svc_account_for_kafka(collection, kafka_id):
   for item in collection:
     if 'kafka_id' in item and item['kafka_id'] == kafka_id:
       return item
+  return []
 
 # send kafka bootstrap URL and svc acc credentials to the helper API
 # which will persist it to a text file

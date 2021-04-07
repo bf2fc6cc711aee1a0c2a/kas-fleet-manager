@@ -5,7 +5,7 @@ from common.tools import *
 # 'name' parameter denotes the display name in the statistics printed by locust
 # 
 # return either empty string if not successful or resource 'id'
-def handle_post(self, url, payload, name):
+def handle_post(self, url, payload, name, full_json=False):
   with self.client.post(url, json=payload, verify=False, catch_response=True, name=name) as response:
     if response.status_code == 409:
       response.success() # ignore unlike 409 errors when generated resource id is duplicated
@@ -16,7 +16,10 @@ def handle_post(self, url, payload, name):
       try:
         response_json = response.json()
         if 'id' in response_json:
-          return response_json['id']
+          if full_json == True:
+            return response_json
+          else:
+            return response_json['id']
       except ValueError: # no json response
         return ''
     return ''
