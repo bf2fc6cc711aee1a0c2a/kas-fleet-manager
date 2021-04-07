@@ -132,6 +132,7 @@ func NewAPIServer() Server {
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(ocmAuthzMiddlewareRequireIssuer)
+	apiV1KafkasRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
 
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
@@ -145,13 +146,7 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
-
-	accessControlListConfig := env().Services.Config.GetConfig().AccessControlList
-	accessControlListEnabled := accessControlListConfig.EnableAllowList || accessControlListConfig.EnableDenyList
-	if accessControlListEnabled {
-		apiV1KafkasRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
-		apiV1ServiceAccountsRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
-	}
+	apiV1ServiceAccountsRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
 
 	//  /api/managed-services-api/v1/kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()

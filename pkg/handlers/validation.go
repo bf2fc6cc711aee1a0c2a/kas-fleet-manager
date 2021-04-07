@@ -116,7 +116,7 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 // reached the max number of allowed instances that can be created for this user if any or the global max allowed defaults
 func validateMaxAllowedInstances(kafkaService services.KafkaService, configService services.ConfigService, context context.Context) validate {
 	return func() *errors.ServiceError {
-		if !configService.GetConfig().AccessControlList.EnableAllowList {
+		if !configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
 			return nil
 		}
 
@@ -129,15 +129,17 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		orgId := auth.GetOrgIdFromClaims(claims)
 		username := auth.GetUsernameFromClaims(claims)
 
+		message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, config.GetDefaultMaxAllowedInstances())
 		org, orgFound := configService.GetOrganisationById(orgId)
-		var message string
-		if orgFound {
+		if orgFound && org.IsUserAllowed(username) {
 			allowListItem = org
 			message = fmt.Sprintf("Organisation '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
 		} else {
-			user, _ := configService.GetServiceAccountByUsername(username)
-			allowListItem = user
-			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
+			user, userFound := configService.GetServiceAccountByUsername(username)
+			if userFound {
+				allowListItem = user
+				message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
+			}
 		}
 
 		_, pageMeta, svcErr := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
@@ -145,7 +147,13 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 			return svcErr
 		}
 
-		if !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total) {
+		maxInstanceReached := pageMeta.Total >= config.GetDefaultMaxAllowedInstances()
+		// check instance limit for internal users (users and orgs listed in allow list config)
+		if allowListItem != nil {
+			maxInstanceReached = !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total)
+		}
+
+		if maxInstanceReached {
 			return errors.MaximumAllowedInstanceReached(message)
 		}
 

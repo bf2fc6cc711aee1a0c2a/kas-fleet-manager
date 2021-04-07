@@ -1,4 +1,9 @@
 ---
+# If the following property is enabled, the access control list (acl) middleware will allow any registered users to access the service. 
+# If disabled, the acl middleware will only allow access to users whose orgs are listed in the allowed_users_per_organisation or whose 
+# usernames are listed in the allowed_service_accounts properties below.
+allow_any_registered_users: false
+
 # A list of allowed users given by their usernames irrespective whether they are under an organisation or not.
 # For now, this only supports RH service account at the moment.
 # In the future it may support service accounts outside RH.

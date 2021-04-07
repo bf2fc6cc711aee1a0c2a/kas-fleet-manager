@@ -25,27 +25,35 @@ For more information on how the service works, see [the implementation documenta
 - Ensure the organization your personal OCM account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
     - Find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs).
 
-## Allow List Configurations
+## Access Control 
+### Allow List Configurations
 
-The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). To configure this list, you'll need to have username and or the organisation id.
+Access to the service is limited to certain organisations and users (given by their username) via the [allow list configuration](config/allow-list-configuration.yaml) by default. To disable this, set the property `allow_any_registered_users` to `true` to allow any registered users against redhat.com to access the service. 
+
+#### Adding organisations and users to the allow list
+
+To configure this list, you'll need to have the user's username and/or their organisation id.
 
 The username is the account in question.
-
-`max_allowed_instances` determines the maximum allowed instances *per organization*.
 
 To get the org id:
 - Login to `cloud.redhat.com/openshift/token` with the account in question.
 - Use the supplied command to login to `ocm`,
 - Then run `ocm whoami` and get the organisations id from `external_id` field.
 
-## Deny List Configurations
+#### Max allowed instances
+If the instance limit control is enabled, the service will enforce the `max_allowed_instances` configuration as the limit to how many instances (i.e. Kafka) a user can create. This configuration can be specified per user or per organisation in the allow list configuration. If not defined there, the service will take the default `max_allowed_instances` into account instead.
 
-The service is [limited to certain organisation and users (given by their username)](config/allow-list-configuration.yaml). 
-Additionally, you can deny users access to the service by adding their usernames in [the list of denied users](config/deny-list-configuration.yaml)
+Precedence of `max_allowed_instances` configuration: Org > User > Default.
+
+>NOTE: Instance limit control is disabled in the development environment.
+### Deny List Configurations
+
+Users can be denied access to the service explicitly by adding their usernames in [the list of denied users](config/deny-list-configuration.yaml).
 
 The username is the account in question.
 
->NOTE: Once a user is in deny list, all Kafkas created by this users will be deprovisioned.
+>NOTE: Once a user is in the deny list, all Kafkas created by this user will be deprovisioned.
 
 ## Compile from main branch
 ```
@@ -217,6 +225,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `OBSERVATORIUM_SERVICE_TOKEN`: Token for observatorium service.
 - `MAS_SSO_BASE_URL`: MAS SSO base url.
 - `MAS_SSO_REALM`: MAS SSO realm url.
+- `ALLOW_ANY_REGISTERED_USERS`: Enable to allow any registered users against redhat.com to access the service.
 
 The service can be accessed by via the host of the route created by the service deployment.
 ```
