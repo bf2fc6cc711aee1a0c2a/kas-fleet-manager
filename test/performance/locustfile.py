@@ -129,7 +129,7 @@ def create_kafka_cluster(self):
   return kafka_id
 
 # create_svc_acc_for_kafka associated with kafka cluster
-def create_svc_acc_for_kafka(self):
+def create_svc_acc_for_kafka(self, kafka_id):
   global kafka_assoc_svc_accs
   svc_acc_json_payload = svc_acc_json(url_base)
   svc_acc_id = ''
@@ -157,7 +157,7 @@ def exercise_endpoints(self, get_only):
     kafka_id = create_kafka_cluster(self)
     if kafka_id != '':
       time.sleep(kafka_post_wait_time) # sleep after creating kafka
-      create_svc_acc_for_kafka(self)
+      create_svc_acc_for_kafka(self, kafka_id)
   else:
     if kafkas_persisted == False and is_kafka_creation_enabled == True:
       wait_for_kafkas_ready(self)
