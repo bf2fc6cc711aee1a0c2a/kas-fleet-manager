@@ -121,7 +121,7 @@ In order to run admin-api tests, these parameters are required:
 - `ADMIN_API_SVC_ACC_SECRET` - service account id used to communicate with the admin-api
 - `ADMIN_API_HOST` - admin-api host (including `https://`, but excluding port number)
 
-## mandatory parameter
+## optional parameter
 - `ADMIN_API_RUN_TIME` - duration of the test, if not provided - the test will run for one minute
 
 ## Running the tests
