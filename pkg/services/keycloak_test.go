@@ -1004,8 +1004,8 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 						testID := "12221"
 						att := map[string]string{}
 						return &gocloak.Client{
-							ID:       &testID,
-							ClientID: &testID,
+							ID:         &testID,
+							ClientID:   &testID,
 							Attributes: &att,
 						}, nil
 					},
