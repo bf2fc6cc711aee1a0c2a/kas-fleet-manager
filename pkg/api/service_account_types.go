@@ -7,4 +7,5 @@ type ServiceAccount struct {
 	Name         string `json:"name,omitempty"`
 	Owner        string `json:"owner,omitempty"`
 	Description  string `json:"description,omitempty"`
+	CreatedAt    string `json:"created_at,omitempty"`
 }

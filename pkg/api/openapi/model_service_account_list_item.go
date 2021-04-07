@@ -18,5 +18,6 @@ type ServiceAccountListItem struct {
 	ClientID    string      `json:"clientID,omitempty"`
 	Name        string      `json:"name,omitempty"`
 	Owner       string      `json:"owner,omitempty"`
+	CreatedAt   string      `json:"created_at,omitempty"`
 	Description interface{} `json:"description,omitempty"`
 }

@@ -20,4 +20,5 @@ type ServiceAccount struct {
 	ClientID     string `json:"clientID,omitempty"`
 	ClientSecret string `json:"clientSecret,omitempty"`
 	Owner        string `json:"owner,omitempty"`
+	CreatedAt    string `json:"created_at,omitempty"`
 }

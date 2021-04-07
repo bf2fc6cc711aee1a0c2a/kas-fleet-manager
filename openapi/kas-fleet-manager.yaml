@@ -894,6 +894,8 @@ components:
               type: string
             owner:
               type: string
+            created_at:
+                type: string
           example:
             $ref: "#/components/examples/ServiceAccountExample"
     ServiceAccountRequest:
@@ -926,6 +928,9 @@ components:
               description: ''
               type: string
             owner:
+              description: ''
+              type: string
+            created_at:
               description: ''
               type: string
             description:

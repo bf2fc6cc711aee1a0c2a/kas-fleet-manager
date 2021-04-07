@@ -235,6 +235,7 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	serviceAcc.ClientID = c.ClientID
 	serviceAcc.Description = c.Description
 	serviceAcc.ClientSecret = clientSecret
+	serviceAcc.CreatedAt = createdAt
 	return &serviceAcc, nil
 }
 
@@ -261,6 +262,7 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 		if att["rh-org-id"] == orgId && strings.HasPrefix(safeString(client.ClientID), "srvc-acct") {
 			acc.ID = *client.ID
 			acc.Owner = att["username"]
+			acc.CreatedAt = att["created_at"]
 			acc.ClientID = *client.ClientID
 			acc.Name = safeString(client.Name)
 			acc.Description = safeString(client.Description)
@@ -312,9 +314,12 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 			return nil, errors.GeneralError("failed to regenerate service account secret: %v", err)
 		}
 		value := *credRep.Value
+		attributes := c.Attributes
+		att := *attributes
 		return &api.ServiceAccount{
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
+			CreatedAt:    att["created_at"],
 			Owner:        owner,
 			ClientSecret: value,
 			Name:         safeString(c.Name),
@@ -338,10 +343,13 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 	if err != nil {
 		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
 	}
+	attributes := c.Attributes
+	att := *attributes
 	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		return &api.ServiceAccount{
 			ID:          *c.ID,
 			ClientID:    *c.ClientID,
+			CreatedAt:   att["created_at"],
 			Owner:       owner,
 			Name:        safeString(c.Name),
 			Description: safeString(c.Description),

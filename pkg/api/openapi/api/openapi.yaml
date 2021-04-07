@@ -1523,6 +1523,8 @@ components:
           type: string
         owner:
           type: string
+        created_at:
+          type: string
     ServiceAccountListItem_allOf:
       properties:
         id:
@@ -1533,6 +1535,8 @@ components:
         name:
           type: string
         owner:
+          type: string
+        created_at:
           type: string
         description: {}
     ServiceAccountList_allOf:
