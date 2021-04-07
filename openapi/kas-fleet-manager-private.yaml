@@ -929,6 +929,9 @@ components:
                   type: string
                 annotations:
                   type: object
+                  required:
+                    - bf2.org/id
+                    - bf2.org/placementId
                   properties:
                     bf2.org/id:
                       type: string
