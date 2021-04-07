@@ -33,6 +33,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 				ValidIssuerEndpointURI: from.Spec.OAuth.ValidIssuerEndpointURI,
 				UserNameClaim:          from.Spec.OAuth.UserNameClaim,
 				TlsTrustedCertificate:  from.Spec.OAuth.TlsTrustedCertificate,
+				CustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
 			},
 			Endpoint: openapi.ManagedKafkaAllOfSpecEndpoint{
 				BootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
