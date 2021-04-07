@@ -110,3 +110,22 @@ secondary_1  | urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPCo
 ```
 
 This will prevent from hitting the endpoints and to resolve this stop the tests manually again and restart the test
+
+# admin-api performance tests
+
+## mandatory parameters
+
+In order to run admin-api tests, these parameters are required:
+- `ADMIN_API_SSO_AUTH_URL` - SSO cluster used for getting access token (including `https://`)
+- `ADMIN_API_SVC_ACC_ID` - service account id used to communicate with the admin-api
+- `ADMIN_API_SVC_ACC_SECRET` - service account secret used to communicate with the admin-api
+- `ADMIN_API_HOST` - admin-api host (including `https://`, but excluding port number)
+
+## optional parameter
+- `ADMIN_API_RUN_TIME` - duration of the test in minutes, if not provided - the test will run for one minute
+
+## Running the tests
+
+```
+ADMIN_API_SSO_AUTH_URL=<your_sso_url> ADMIN_API_SVC_ACC_ID=<your_svc_acc_id> ADMIN_API_SVC_ACC_SECRET=<your_svc_acc_secret> ADMIN_API_HOST=<your_admin_api_host> make test/performance/admin-api
+```
