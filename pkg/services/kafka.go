@@ -7,9 +7,10 @@ import (
 	"strings"
 	"sync"
 
+	"time"
+
 	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/golang/glog"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -282,7 +283,13 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	}
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
-	if executed, err := k.UpdateStatus(id, constants.KafkaRequestStatusDeprovision); executed {
+	deprovisionStatus := constants.KafkaRequestStatusDeprovision
+	// If a Kafka instance has not been assigned an OSD cluster, we can safely skip the need to involve the syncronisher
+	if k.kafkaConfig.EnableKasFleetshardSync && kafkaRequest.ClusterID == "" {
+		deprovisionStatus = constants.KafkaRequestStatusDeleted
+	}
+
+	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
 			return handleGetError("KafkaResource", "id", id, err)
 		}
@@ -350,17 +357,13 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 			}
 		}
 
-		// only delete the sync set if kas-fleetshard sync is not enabled
-		// otherwise the kas-fleetshard will get the information through the endpoints
-		if !k.kafkaConfig.EnableKasFleetshardSync {
-			// delete the syncset
-			syncsetId := buildSyncsetIdentifier(kafkaRequest)
-			statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
+		// delete the syncset
+		syncsetId := buildSyncsetIdentifier(kafkaRequest)
+		statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 
-			if err != nil && statucCode != http.StatusNotFound {
-				sentry.CaptureException(err)
-				return errors.GeneralError("error deleting syncset: %v", err)
-			}
+		if err != nil && statucCode != http.StatusNotFound {
+			sentry.CaptureException(err)
+			return errors.GeneralError("error deleting syncset: %v", err)
 		}
 	}
 
