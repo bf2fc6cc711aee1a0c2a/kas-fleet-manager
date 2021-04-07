@@ -718,6 +718,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/ServiceAccount'
           description: reset credentials
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: auth token is invalid
+        "403":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/403Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: User not authorized to access the service
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema: {}
+          description: Unexpected error occurred
       security:
       - Bearer: []
       summary: reset credentials for the service account
