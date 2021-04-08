@@ -120,7 +120,7 @@ func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.IngressControllerReplicas, "ingress-controller-replicas", s.IngressControllerReplicas, "The number of replicas for the IngressController")
 	fs.BoolVar(&s.DynamicScalingConfig.Enabled, "enable-dynamic-scaling", s.DynamicScalingConfig.Enabled, "Enable Dynamic Scaling functionality")
 	fs.StringVar(&s.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", s.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
-	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. It's value should be either 'manual' or 'auto'.")
+	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'manual' or 'auto'.")
 }
 
 func (s *OSDClusterConfig) ReadFiles() error {
