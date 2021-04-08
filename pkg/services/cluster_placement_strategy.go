@@ -5,7 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
-//go:generate moq -out cluster_placement_strategy_mod.go . ClusterPlacementStrategy
+//go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
 	FindCluster(kafka *api.KafkaRequest) (*api.Cluster, error)

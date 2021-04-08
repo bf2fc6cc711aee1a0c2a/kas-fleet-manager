@@ -417,10 +417,11 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 	}
 
 	for rows := dbConn.RowsAffected; rows > 0; rows-- {
-		if status == api.ClusterReady || status == api.ClusterFailed {
+		if status == api.ClusterFailed {
 			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
 		}
 		if status == api.ClusterReady {
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
 			metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
 		}
 	}
