@@ -60,9 +60,7 @@ func (s syncsetService) Delete(syncsetId, clusterId string) (int, *errors.Servic
 // syncset builder for a kafka/strimzi custom resource
 func newKafkaSyncsetBuilder(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig) (*cmv1.SyncsetBuilder, string, *errors.ServiceError) {
 	syncsetBuilder := cmv1.NewSyncset()
-
-	namespaceName := buildKafkaNamespaceIdentifier(kafkaRequest)
-	namespaceName, err := replaceNamespaceSpecialChar(namespaceName)
+	namespaceName, err := BuildNamespaceName(kafkaRequest)
 	if err != nil {
 		return syncsetBuilder, "", errors.GeneralError(fmt.Sprintf("unable to create syncset for kafka id: %s", kafkaRequest.ID), err)
 	}

@@ -455,8 +455,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		ns := buildKafkaNamespaceIdentifier(kafkaRequest)
-		ns, _ = replaceNamespaceSpecialChar(ns)
+		ns, _ := BuildNamespaceName(kafkaRequest)
 		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), ns)
 		res = append(res, *mk)
 	}
