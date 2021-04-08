@@ -63,6 +63,22 @@ data:
                 trusted_ca:
                   filename: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
 
+      # This cluster is used to send request to the rate limiting service.
+      - name: limiter
+        connect_timeout: 1s
+        type: STRICT_DNS
+        lb_policy: ROUND_ROBIN
+        http2_protocol_options: {}
+        load_assignment:
+          cluster_name: limiter
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    address: limitador.app-sre-rate-limiting.svc
+                    port_value: 8081
+
       listeners:
 
       # This listener is used to accept /metrics and /ready requests.
@@ -134,6 +150,21 @@ data:
                   - "*"
                   routes:
 
+                  # This is an example of how to define a rate limit for a
+                  # specific path.
+                  # - name: my_path
+                  #   match:
+                  #     path: /my_path
+                  #   route:
+                  #     cluster: backend
+                  #     rate_limits:
+                  #     - actions:
+                  #       - generic_key:
+                  #           descriptor_key: example_descriptor_key
+                  #           descriptor_value: example_descriptor_value
+
+                  # Everything else not matching one of the rules above goes
+                  # directly to the backend, without rate limits.
                   - name: default
                     match:
                       prefix: /
@@ -141,6 +172,19 @@ data:
                       cluster: backend
 
               http_filters:
+
+              # This is needed to enable the rate limiter:
+              - name: envoy.filters.http.ratelimit
+                typed_config:
+                  "@type": type.googleapis.com/envoy.extensions.filters.http.ratelimit.v3.RateLimit
+                  domain: development:kas_fleet_manager # This changes by environment
+                  failure_mode_deny: false
+                  timeout: 0.05s
+                  rate_limit_service:
+                    grpc_service:
+                      envoy_grpc:
+                        cluster_name: limiter
+                    transport_api_version: V3
 
               # This is mandatory in order to have the HTTP routes above.
               - name: envoy.filters.http.router
