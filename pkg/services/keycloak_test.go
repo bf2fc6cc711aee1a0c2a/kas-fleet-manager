@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	gocloak "github.com/Nerzal/gocloak/v8"
 	"github.com/onsi/gomega"
@@ -342,13 +343,15 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create jwt: %s", err.Error())
 	}
-
+	currTime := time.Now().Format(time.RFC3339)
+	createdAt, _ := time.Parse(time.RFC3339, currTime)
 	testServiceAccount := api.ServiceAccount{
 		ID:           testClientID,
 		ClientSecret: secret,
 		Name:         "test-svc",
 		Description:  "desc",
 		ClientID:     "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5",
+		CreatedAt:    createdAt,
 	}
 
 	tests := []struct {
@@ -379,8 +382,10 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"
+						att := map[string]string{}
 						return gocloak.Client{
-							ClientID: &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}
 					},
 					GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
@@ -420,6 +425,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 			}
 			//over-riding the random generate id
 			got.ClientID = "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5"
+			got.CreatedAt = createdAt
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateServiceAccount() got = %+v, want %+v", got, tt.want)
 			}
@@ -472,8 +478,10 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"
+						att := map[string]string{}
 						return gocloak.Client{
-							ClientID: &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}
 					},
 					DeleteClientFunc: func(internalClientID string, accessToken string) error {
@@ -481,8 +489,10 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
 						testID := "12221"
+						att := map[string]string{}
 						return &gocloak.Client{
-							ClientID: &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}, nil
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
@@ -560,8 +570,10 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"
+						att := map[string]string{}
 						return gocloak.Client{
-							ClientID: &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
@@ -644,8 +656,10 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"
+						att := map[string]string{}
 						return gocloak.Client{
-							ClientID: &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
@@ -656,9 +670,11 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
 						testID := "12221"
+						att := map[string]string{}
 						return &gocloak.Client{
-							ID:       &testID,
-							ClientID: &testID,
+							ID:         &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}, nil
 					},
 					RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
@@ -680,6 +696,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				ClientSecret: secret,
 				Name:         "",
 				Description:  "",
+				CreatedAt:    time.Time{},
 			},
 			wantErr: false,
 		},
@@ -971,8 +988,10 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"
+						att := map[string]string{}
 						return gocloak.Client{
-							ClientID: &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}
 					},
 					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
@@ -983,9 +1002,11 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
 						testID := "12221"
+						att := map[string]string{}
 						return &gocloak.Client{
-							ID:       &testID,
-							ClientID: &testID,
+							ID:         &testID,
+							ClientID:   &testID,
+							Attributes: &att,
 						}, nil
 					},
 				},
@@ -998,6 +1019,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 				ClientID:    "12221",
 				Name:        "",
 				Description: "",
+				CreatedAt:   time.Time{},
 			},
 			wantErr: false,
 		},

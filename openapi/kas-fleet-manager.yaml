@@ -894,6 +894,9 @@ components:
               type: string
             owner:
               type: string
+            created_at:
+              format: date-time
+              type: string
           example:
             $ref: "#/components/examples/ServiceAccountExample"
     ServiceAccountRequest:
@@ -920,16 +923,21 @@ components:
               description: 'server generated unique id of the service account'
               type: string
             clientID:
-              description: ''
+              description: 'client id of the service account'
               type: string
             name:
-              description: ''
+              description: 'name of the service account'
               type: string
             owner:
-              description: ''
+              description: 'owner of the service account'
+              type: string
+            created_at:
+              format: date-time
+              description: 'service account creation timestamp'
               type: string
             description:
-              description: ''
+              type: string
+              description: 'description of the service account'
     ServiceAccountList:
       allOf:
         - type: object
@@ -1224,6 +1232,7 @@ components:
         clientID: "SA-121212"
         clientSecret: "secret"
         owner: "test-user"
+        created_at: "2021-04-07T16:24:01+05:30"
     ServiceAccountByIdExample:
       value:
         id: "1"
@@ -1233,6 +1242,7 @@ components:
         description: "service account for my app"
         clientID: "SA-121212"
         owner: "test-user"
+        created_at: "2021-04-07T16:24:01+05:30"
     ServiceAccountListItemExample:
       value:
         id: "1"
@@ -1242,6 +1252,7 @@ components:
         description: "service account for my app"
         clientID: "SA-121212"
         owner: "test-user"
+        created_at: "2021-04-07T16:24:01+05:30"
     MetricsRangeQueryExample:
       value:
         metric:

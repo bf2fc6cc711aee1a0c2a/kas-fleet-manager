@@ -9,14 +9,24 @@
 
 package openapi
 
+import (
+	"time"
+)
+
 // ServiceAccountListItem struct for ServiceAccountListItem
 type ServiceAccountListItem struct {
 	// server generated unique id of the service account
-	Id          string      `json:"id,omitempty"`
-	Kind        string      `json:"kind,omitempty"`
-	Href        string      `json:"href,omitempty"`
-	ClientID    string      `json:"clientID,omitempty"`
-	Name        string      `json:"name,omitempty"`
-	Owner       string      `json:"owner,omitempty"`
-	Description interface{} `json:"description,omitempty"`
+	Id   string `json:"id,omitempty"`
+	Kind string `json:"kind,omitempty"`
+	Href string `json:"href,omitempty"`
+	// client id of the service account
+	ClientID string `json:"clientID,omitempty"`
+	// name of the service account
+	Name string `json:"name,omitempty"`
+	// owner of the service account
+	Owner string `json:"owner,omitempty"`
+	// service account creation timestamp
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// description of the service account
+	Description string `json:"description,omitempty"`
 }
