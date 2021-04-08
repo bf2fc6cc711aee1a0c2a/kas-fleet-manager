@@ -29,8 +29,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	count := 30
-	currTime := time.Now().Add(time.Duration(-count) * time.Minute).Format(time.RFC3339)
+	currTime := time.Now().Format(time.RFC3339)
 	createdAt, _ := time.Parse(time.RFC3339, currTime)
 	//verify create
 	r := openapi.ServiceAccountRequest{
@@ -44,7 +43,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
-	Expect(sa.CreatedAt).Should(BeTemporally(">", createdAt))
+	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	// verify get by id
 	id := sa.Id
@@ -55,7 +54,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.Owner).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
-	Expect(sa.CreatedAt).Should(BeTemporally(">", createdAt))
+	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	//verify reset
 	oldSecret := sa.ClientSecret
@@ -65,7 +64,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Owner).NotTo(BeEmpty())
-	Expect(sa.CreatedAt).Should(BeTemporally(">", createdAt))
+	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	//verify delete
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
