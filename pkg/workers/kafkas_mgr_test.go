@@ -18,7 +18,6 @@ import (
 func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 	type fields struct {
 		ocmClient            ocm.Client
-		clusterService       services.ClusterService
 		kafkaService         services.KafkaService
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
@@ -246,7 +245,6 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				ocmClient:            tt.fields.ocmClient,
-				clusterService:       tt.fields.clusterService,
 				kafkaService:         tt.fields.kafkaService,
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
@@ -266,7 +264,6 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 	type fields struct {
 		ocmClient            ocm.Client
-		clusterService       services.ClusterService
 		kafkaService         services.KafkaService
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
@@ -332,7 +329,6 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				ocmClient:            tt.fields.ocmClient,
-				clusterService:       tt.fields.clusterService,
 				kafkaService:         tt.fields.kafkaService,
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
@@ -350,12 +346,12 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 	type fields struct {
 		ocmClient            ocm.Client
-		clusterService       services.ClusterService
 		kafkaService         services.KafkaService
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
 		observatoriumService services.ObservatoriumService
 		configService        services.ConfigService
+		clusterPlmtStrategy  services.ClusterPlacementStrategy
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -369,8 +365,8 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		{
 			name: "error when finding cluster fails",
 			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
+				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
 						return nil, errors.GeneralError("test")
 					},
 				},
@@ -391,8 +387,8 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		{
 			name: "error when kafka service update fails",
 			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
+				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
@@ -418,8 +414,8 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		{
 			name: "successful reconcile",
 			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
+				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
@@ -449,12 +445,12 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				ocmClient:            tt.fields.ocmClient,
-				clusterService:       tt.fields.clusterService,
 				kafkaService:         tt.fields.kafkaService,
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,
 				observatoriumService: tt.fields.observatoriumService,
 				configService:        tt.fields.configService,
+				clusterPlmtStrategy:  tt.fields.clusterPlmtStrategy,
 			}
 			if err := k.reconcileAcceptedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileAcceptedKafka() error = %v, wantErr %v", err, tt.wantErr)
@@ -466,7 +462,6 @@ func TestKafkaManager_reconcileAcceptedKafka(t *testing.T) {
 func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 	type fields struct {
 		ocmClient            ocm.Client
-		clusterService       services.ClusterService
 		kafkaService         services.KafkaService
 		timer                *time.Timer
 		keycloakService      services.KeycloakService
@@ -605,7 +600,6 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &KafkaManager{
 				ocmClient:            tt.fields.ocmClient,
-				clusterService:       tt.fields.clusterService,
 				kafkaService:         tt.fields.kafkaService,
 				timer:                tt.fields.timer,
 				keycloakService:      tt.fields.keycloakService,

@@ -115,17 +115,14 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-
 	err = c.AccessControlList.ReadFiles()
 	if err != nil {
 		return err
 	}
-
 	err = c.Kafka.ReadFiles()
 	if err != nil {
 		return err
 	}
-
 	if c.ConnectorsConfig.Enabled {
 		err = c.ConnectorsConfig.ReadFiles()
 		if err != nil {
@@ -144,7 +141,6 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 

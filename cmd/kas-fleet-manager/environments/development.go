@@ -27,6 +27,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"enable-quota-service":              "false",
 	"enable-dynamic-scaling":            "false",
 	"enable-deletion-of-expired-kafka":  "false",
+	"dataplane-cluster-scaling-type":    "auto",
 }
 
 func loadDevelopment(env *Env) error {

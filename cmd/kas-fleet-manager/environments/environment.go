@@ -56,6 +56,7 @@ type Services struct {
 	SignalBus                 signalbus.SignalBus
 	Vault                     services.VaultService
 	Quota                     services.QuotaService
+	ClusterPlmtStrategy       services.ClusterPlacementStrategy
 }
 
 type Clients struct {
@@ -165,6 +166,7 @@ func (env *Env) LoadServices() error {
 	configService := services.NewConfigService(*env.Config)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
 	kasFleetshardAddonService := services.NewKasFleetshardOperatorAddon(kafkaKeycloakService, ocmClient, configService)
+	clusterPlmtStrategy := services.NewClusterPlacementStrategy(configService, clusterService)
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
@@ -175,6 +177,7 @@ func (env *Env) LoadServices() error {
 	env.Services.KasFleetshardAddonService = kasFleetshardAddonService
 	env.Services.SignalBus = signalBus
 	env.Services.Quota = QuotaService
+	env.Services.ClusterPlmtStrategy = clusterPlmtStrategy
 
 	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)

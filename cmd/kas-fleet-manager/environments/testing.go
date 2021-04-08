@@ -27,6 +27,7 @@ var testingConfigDefaults map[string]string = map[string]string{
 	"ingress-controller-replicas":       "3",
 	"enable-dynamic-scaling":            "false",
 	"enable-deletion-of-expired-kafka":  "false",
+	"dataplane-cluster-scaling-type":    "auto",
 }
 
 // The testing environment is specifically for automated testing
