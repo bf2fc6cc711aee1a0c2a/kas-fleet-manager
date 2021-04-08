@@ -149,12 +149,12 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	}
 
 	c := struct {
-		clusterList ClusterList `yaml:"clusters"`
+		ClusterList ClusterList `yaml:"clusters"`
 	}{}
 
 	if err = yaml.UnmarshalStrict([]byte(fileContents), &c); err != nil {
 		return nil, err
 	} else {
-		return c.clusterList, nil
+		return c.ClusterList, nil
 	}
 }

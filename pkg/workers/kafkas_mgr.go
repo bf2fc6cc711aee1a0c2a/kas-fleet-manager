@@ -221,10 +221,14 @@ func (k *KafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 			}
 		}
 
+		glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
+
 		kafka.Status = constants.KafkaRequestStatusPreparing.String()
 		if err2 := k.kafkaService.Update(kafka); err2 != nil {
 			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err2)
 		}
+	} else {
+		glog.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
 	}
 	return nil
 }
