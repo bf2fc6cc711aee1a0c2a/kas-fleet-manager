@@ -6,6 +6,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/golang/glog"
 
 	"github.com/jinzhu/gorm"
 
@@ -295,10 +296,14 @@ func (c clusterService) AddIdentityProviderID(id string, identityProviderId stri
 
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
+	metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationDelete)
+
 	if err := dbConn.Delete(&api.Cluster{}, api.Cluster{ClusterID: clusterID}).Error; err != nil {
 		return apiErrors.GeneralError("Unable to delete cluster with cluster_id %s: %s", clusterID, err)
 	}
 
+	glog.Infof("Cluster %s deleted successful", clusterID)
+	metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationDelete)
 	return nil
 }
 
