@@ -120,11 +120,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				ConfigService: NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
-						ClusterConfig: &config.ClusterConfig{
-							clusterConfigMap: map[string]config.ManualCluster{
-								"test01": {Schedulable: true, KafkaInstanceLimit: 3},
-							},
-						},
+						ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 3}}),
 					},
 				}),
 				ClusterService: &ClusterServiceMock{
@@ -152,11 +148,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				ConfigService: NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
-						ClusterConfig: &config.ClusterConfig{
-							clusterConfigMap: map[string]config.ManualCluster{
-								"test01": {Schedulable: true, KafkaInstanceLimit: 1},
-							},
-						},
+						ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 1}}),
 					},
 				}),
 				ClusterService: &ClusterServiceMock{
@@ -184,13 +176,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				ConfigService: NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
-						ClusterConfig: &config.ClusterConfig{
-							clusterConfigMap: map[string]config.ManualCluster{
-								"test01": {Schedulable: true, KafkaInstanceLimit: 1},
-								"test02": {Schedulable: true, KafkaInstanceLimit: 3},
-							},
-						},
-					},
+						ClusterConfig: config.NewClusterConfig(config.ClusterList{
+							config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 1},
+							config.ManualCluster{ClusterId: "test02", Schedulable: true, KafkaInstanceLimit: 3}})},
 				}),
 				ClusterService: &ClusterServiceMock{
 					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
@@ -219,11 +207,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				ConfigService: NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
-						ClusterConfig: &config.ClusterConfig{
-							clusterConfigMap: map[string]config.ManualCluster{
-								"test01": {Schedulable: false, KafkaInstanceLimit: 1},
-							},
-						},
+						ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: false, KafkaInstanceLimit: 1}}),
 					},
 				}),
 				ClusterService: &ClusterServiceMock{
