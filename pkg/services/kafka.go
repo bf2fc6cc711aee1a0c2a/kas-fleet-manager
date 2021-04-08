@@ -300,10 +300,21 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 }
 
 func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("owner IN (?)", users)
+	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("owner IN (?)", users).
+		Update("status", constants.KafkaRequestStatusDeprovision)
 
-	if err := dbConn.Update("status", constants.KafkaRequestStatusDeprovision).Error; err != nil {
+	err := dbConn.Error
+	if err != nil {
 		return errors.GeneralError("Unable to deprovision kafka requests for users %s", err)
+	}
+
+	if dbConn.RowsAffected >= 1 {
+		glog.Infof("%v kafkas have are deprovisioning for users %v", dbConn.RowsAffected, users)
+		var counter int64 = 0
+		for ; counter < dbConn.RowsAffected; counter++ {
+			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
+			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+		}
 	}
 
 	return nil
@@ -319,6 +330,11 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 	}
 	if db.RowsAffected >= 1 {
 		glog.Infof("%v kafka_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, kafkaAgeInHours)
+		var counter int64 = 0
+		for ; counter < db.RowsAffected; counter++ {
+			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
+			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+		}
 	}
 
 	return nil
