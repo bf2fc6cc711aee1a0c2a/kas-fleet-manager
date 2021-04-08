@@ -156,11 +156,15 @@ def create_svc_acc_for_kafka(self, kafka_id):
 #    - x minutes after the testing was started, where x is specified by PERF_TEST_HIT_ENDPOINTS_HOLD_OFF parameter
 def exercise_endpoints(self, get_only):
   global kafkas_created
+  global kafkas_to_create
   if len(kafkas_list) < kafkas_to_create and is_kafka_creation_enabled == True:
     kafka_id = create_kafka_cluster(self)
     if kafka_id != '':
-      time.sleep(kafka_post_wait_time) # sleep after creating kafka
-      create_svc_acc_for_kafka(self, kafka_id)
+      if kafka_id == '429':
+        kafkas_to_create = len(kafkas_list)
+      else:
+        time.sleep(kafka_post_wait_time) # sleep after creating kafka
+        create_svc_acc_for_kafka(self, kafka_id)
   else:
     if kafkas_persisted == False and is_kafka_creation_enabled == True:
       wait_for_kafkas_ready(self)
