@@ -235,11 +235,9 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	serviceAcc.ClientID = c.ClientID
 	serviceAcc.Description = c.Description
 	serviceAcc.ClientSecret = clientSecret
-	if createdAt != "" {
-		serviceAcc.CreatedAt, err = time.Parse(time.RFC3339, createdAt)
-		if err != nil {
-			serviceAcc.CreatedAt = time.Time{}
-		}
+	serviceAcc.CreatedAt, err = time.Parse(time.RFC3339, createdAt)
+	if err != nil {
+		serviceAcc.CreatedAt = time.Time{}
 	}
 	return &serviceAcc, nil
 }
