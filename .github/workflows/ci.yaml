@@ -46,8 +46,10 @@ env:
   GORM_SSLMODE: disable
   GORM_DEBUG: false
   # Dummy MAS SSO variables
-  MAS_SSO_CLIENT_ID: test-managed-services-api
-  MAS_SSO_CLIENT_SECRET: c1a79f76-272d-4b2b-ad27-2740fc81a508
+  MAS_SSO_CLIENT_ID: mas_sso_client_id
+  MAS_SSO_CLIENT_SECRET: mas_sso_client_secret
+  OSD_IDP_MAS_SSO_CLIENT_ID: osd_idp_mas_sso_client_id
+  OSD_IDP_MAS_SSO_CLIENT_SECRET: osd_idp_mas_sso_client_secret
   # Dummy AWS credentials 
   AWS_ACCOUNT_ID: aws_accountid
   AWS_ACCESS_KEY: aws_accesskey
