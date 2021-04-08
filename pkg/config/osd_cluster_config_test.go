@@ -9,7 +9,6 @@ import (
 func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	type fields struct {
 		HorizontalScalingConfig string
-		ClusterListMap          map[string]ManualCluster
 		ClusterList             ClusterList
 	}
 
@@ -30,9 +29,6 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 3},
 				},
-				ClusterListMap: map[string]ManualCluster{
-					"test01": {KafkaInstanceLimit: 3},
-				},
 			},
 			args: args{
 				clusterId: "test01",
@@ -47,9 +43,6 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 3},
 				},
-				ClusterListMap: map[string]ManualCluster{
-					"test01": {KafkaInstanceLimit: 3},
-				},
 			},
 			args: args{
 				clusterId: "test01",
@@ -60,9 +53,7 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conf := &ClusterConfig{
-				ClusterConfigMap: tt.fields.ClusterListMap,
-			}
+			conf := NewClusterConfig(tt.fields.ClusterList)
 			if got := conf.IsNumberOfKafkaWithinClusterLimit(tt.args.clusterId, tt.args.count); got != tt.want {
 				t.Errorf("IsWithinClusterLimit() = %v, want %v", got, tt.want)
 			}
@@ -72,8 +63,7 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 
 func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 	type fields struct {
-		HorizontalScalingConfig string
-		ClusterListMap          map[string]ManualCluster
+		ClusterList ClusterList
 	}
 	type args struct {
 		clusterId string
@@ -87,9 +77,8 @@ func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 		{
 			name: "schedulable",
 			fields: fields{
-				HorizontalScalingConfig: "manual",
-				ClusterListMap: map[string]ManualCluster{
-					"test01": {Schedulable: true},
+				ClusterList: ClusterList{
+					ManualCluster{ClusterId: "test01", Schedulable: true},
 				},
 			},
 			args: args{
@@ -100,9 +89,8 @@ func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 		{
 			name: "unschedulable",
 			fields: fields{
-				HorizontalScalingConfig: "manual",
-				ClusterListMap: map[string]ManualCluster{
-					"test01": {Schedulable: false},
+				ClusterList: ClusterList{
+					ManualCluster{ClusterId: "test01", Schedulable: false},
 				},
 			},
 			args: args{
@@ -113,9 +101,7 @@ func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conf := &ClusterConfig{
-				ClusterConfigMap: tt.fields.ClusterListMap,
-			}
+			conf := NewClusterConfig(tt.fields.ClusterList)
 			if got := conf.IsClusterSchedulable(tt.args.clusterId); got != tt.want {
 				t.Errorf("IsClusterSchedule() = %v, want %v", got, tt.want)
 			}
@@ -125,8 +111,7 @@ func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 
 func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 	type fields struct {
-		ClusterList    ClusterList
-		ClusterListMap map[string]ManualCluster
+		ClusterList ClusterList
 	}
 	type args struct {
 		clusterList map[string]api.Cluster
@@ -146,9 +131,6 @@ func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test02", Region: "us-east", MultiAZ: true, CloudProvider: "aws"},
 				},
-				ClusterListMap: map[string]ManualCluster{
-					"test02": {ClusterId: "test02", Region: "us-east", MultiAZ: true, CloudProvider: "aws"},
-				},
 			},
 			args: args{
 				clusterList: map[string]api.Cluster{
@@ -165,9 +147,6 @@ func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test02", Region: "us-east", MultiAZ: true, CloudProvider: "aws"},
 				},
-				ClusterListMap: map[string]ManualCluster{
-					"test02": {ClusterId: "test02", Region: "us-east", MultiAZ: true, CloudProvider: "aws"},
-				},
 			},
 			args: args{
 				clusterList: map[string]api.Cluster{
@@ -181,10 +160,7 @@ func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conf := &ClusterConfig{
-				ClusterList:      tt.fields.ClusterList,
-				ClusterConfigMap: tt.fields.ClusterListMap,
-			}
+			conf := NewClusterConfig(tt.fields.ClusterList)
 			if got := conf.MissingClusters(tt.args.clusterList); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MissingClusters() = %v, want %v", got, tt.want)
 			}
@@ -194,7 +170,7 @@ func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 
 func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
 	type fields struct {
-		ClusterListMap map[string]ManualCluster
+		ClusterList ClusterList
 	}
 	type args struct {
 		clusterList map[string]api.Cluster
@@ -211,8 +187,8 @@ func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
 		{
 			name: "Excess clusters find",
 			fields: fields{
-				ClusterListMap: map[string]ManualCluster{
-					"test02": {},
+				ClusterList{
+					ManualCluster{ClusterId: "test02"},
 				},
 			},
 			args: args{
@@ -225,8 +201,8 @@ func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
 		{
 			name: "No Excess clusters find",
 			fields: fields{
-				ClusterListMap: map[string]ManualCluster{
-					"test01": {},
+				ClusterList{
+					ManualCluster{ClusterId: "test01"},
 				},
 			},
 			args: args{
@@ -239,9 +215,7 @@ func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			conf := &ClusterConfig{
-				ClusterConfigMap: tt.fields.ClusterListMap,
-			}
+			conf := NewClusterConfig(tt.fields.ClusterList)
 			if got := conf.ExcessClusters(tt.args.clusterList); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ExcessClusters() = %v, want %v", got, tt.want)
 			}

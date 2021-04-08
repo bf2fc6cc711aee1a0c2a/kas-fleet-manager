@@ -14,7 +14,7 @@ type ClusterPlacementStrategy interface {
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
 func NewClusterPlacementStrategy(configService ConfigService, clusterService ClusterService) ClusterPlacementStrategy {
 	var clusterSelection ClusterPlacementStrategy
-	if configService.GetConfig().OSDClusterConfig.IsDataPlaneScalingEnabled() {
+	if configService.GetConfig().OSDClusterConfig.IsManualDataPlaneScalingEnabled() {
 		clusterSelection = &FirstSchedulableWithinLimit{configService, clusterService}
 	} else {
 		clusterSelection = &FirstReadyCluster{configService, clusterService}
@@ -89,8 +89,11 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *api.KafkaRequest) (*api
 
 	//#3 which schedulable cluster is also within the limit or never been associated w/ an kafka yet
 	for _, schClusterid := range clusterSchIds {
-		cluLimit := osdClusterConfig.ClusterConfigMap[schClusterid].KafkaInstanceLimit
-		if cnt, exists := clusterWithinLimit[schClusterid]; !exists && cluLimit >= 1 || osdClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
+		cnt, exists := clusterWithinLimit[schClusterid]
+		if !exists {
+			cnt = 0
+		}
+		if osdClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
 			return searchClusterObjInArray(clusterObj, schClusterid), nil
 		}
 	}

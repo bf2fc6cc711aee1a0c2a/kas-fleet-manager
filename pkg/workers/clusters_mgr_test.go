@@ -1827,13 +1827,11 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 
 func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		configService              services.ConfigService
+		clusterService services.ClusterService
+		configService  services.ConfigService
 	}
 	testOsdConfig := config.NewOSDClusterConfig()
-	testOsdConfig.ClusterConfig.ClusterConfigMap = map[string]config.ManualCluster{
-		"test01": {Schedulable: true, KafkaInstanceLimit: 2,},
-	}
+	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{config.ManualCluster{Schedulable: true, KafkaInstanceLimit: 2}})
 	tests := []struct {
 		name    string
 		fields  fields
@@ -1885,8 +1883,8 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				configService:              tt.fields.configService,
-				clusterService:             tt.fields.clusterService,
+				configService:  tt.fields.configService,
+				clusterService: tt.fields.clusterService,
 			}
 			if err := c.reconcileClusterWithManualConfig(); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileClusterWithManualConfig() error = %v, wantErr %v", err, tt.wantErr)
