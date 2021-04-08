@@ -37,11 +37,9 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//*********************************************************************
 	//pre-create an cluster
 	//*********************************************************************
-	h.Env().Config.OSDClusterConfig.ClusterConfig.ClusterList = config.ClusterList{
+	h.Env().Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws"},
-	}
-	h.Env().Config.OSDClusterConfig.ClusterConfig.ClusterConfigMap = map[string]config.ManualCluster{
-		"test03": {Schedulable: true, CloudProvider: "aws", Region: "us-east-1", ClusterId: "test03", MultiAZ: true, KafkaInstanceLimit: 1}}
+	})
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
@@ -70,23 +68,17 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//*********************************************************************
 	//data plane cluster config - with new clusters
 	//*********************************************************************
-	h.Env().Config.OSDClusterConfig.ClusterConfig.ClusterList = config.ClusterList{
+	h.Env().Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws"},
 		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws"},
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws"},
-	}
-	h.Env().Config.OSDClusterConfig.ClusterConfig.ClusterConfigMap = map[string]config.ManualCluster{
-		"test01": {Schedulable: true, CloudProvider: "aws", Region: "us-east-1", ClusterId: "test01", MultiAZ: true, KafkaInstanceLimit: 0},
-		"test02": {Schedulable: true, CloudProvider: "aws", Region: "us-east-1", ClusterId: "test02", MultiAZ: true, KafkaInstanceLimit: 1},
-		"test03": {Schedulable: true, CloudProvider: "aws", Region: "us-east-1", ClusterId: "test03", MultiAZ: true, KafkaInstanceLimit: 1}}
-
+	})
 	err3 := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
 
 		found, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
 			Provider: "aws",
 			Region:   "us-east-1",
 			MultiAZ:  true,
-			Status:   api.ClusterReady,
 		})
 
 		if svcErr != nil {

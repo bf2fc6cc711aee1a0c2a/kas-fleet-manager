@@ -535,7 +535,7 @@ func Test_ListByStatus(t *testing.T) {
 			setupFn: func() {
 				response, err := dbConverters.ConvertClusterList(emptyClusterList)
 				if err != nil {
-					t.Errorf("Test_ListByStatus() failed to convert ClusterList: %s", err.Error())
+					t.Errorf("Test_ListByStatus() failed to convert clusterList: %s", err.Error())
 				}
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
 			},
@@ -553,7 +553,7 @@ func Test_ListByStatus(t *testing.T) {
 			setupFn: func() {
 				response, err := dbConverters.ConvertClusterList(nonEmptyClusterList)
 				if err != nil {
-					t.Errorf("Test_ListByStatus() failed to convert ClusterList: %s", err.Error())
+					t.Errorf("Test_ListByStatus() failed to convert clusterList: %s", err.Error())
 				}
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
 			},

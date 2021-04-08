@@ -505,7 +505,7 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 // A new clusters will be registered if it is not yet in the database
 // A cluster will be deprovisioned if it is in database but not in config file
 func (c *ClusterManager) reconcileClusterWithManualConfig() error {
-	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneScalingEnabled() {
+	if !c.configService.GetConfig().OSDClusterConfig.IsManualDataPlaneScalingEnabled() {
 		return nil
 	}
 

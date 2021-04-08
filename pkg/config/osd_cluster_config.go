@@ -54,23 +54,33 @@ type ManualCluster struct {
 
 type ClusterList []ManualCluster
 
-//
 type ClusterConfig struct {
-	ClusterList      ClusterList `yaml:"clusters"`
-	ClusterConfigMap map[string]ManualCluster
+	clusterList      ClusterList
+	clusterConfigMap map[string]ManualCluster
+}
+
+func NewClusterConfig(clusters ClusterList) *ClusterConfig {
+	clusterMap := make(map[string]ManualCluster)
+	for _, c := range clusters {
+		clusterMap[c.ClusterId] = c
+	}
+	return &ClusterConfig{
+		clusterList:      clusters,
+		clusterConfigMap: clusterMap,
+	}
 }
 
 func (conf *ClusterConfig) IsNumberOfKafkaWithinClusterLimit(clusterId string, count int) bool {
-	if _, exist := conf.ClusterConfigMap[clusterId]; exist {
-		limit := conf.ClusterConfigMap[clusterId].KafkaInstanceLimit
-		return limit == -1 || count <= conf.ClusterConfigMap[clusterId].KafkaInstanceLimit
+	if _, exist := conf.clusterConfigMap[clusterId]; exist {
+		limit := conf.clusterConfigMap[clusterId].KafkaInstanceLimit
+		return limit == -1 || count <= conf.clusterConfigMap[clusterId].KafkaInstanceLimit
 	}
 	return true
 }
 
 func (conf *ClusterConfig) IsClusterSchedulable(clusterId string) bool {
-	if _, exist := conf.ClusterConfigMap[clusterId]; exist {
-		return conf.ClusterConfigMap[clusterId].Schedulable
+	if _, exist := conf.clusterConfigMap[clusterId]; exist {
+		return conf.clusterConfigMap[clusterId].Schedulable
 	}
 	return true
 }
@@ -79,7 +89,7 @@ func (conf *ClusterConfig) ExcessClusters(clusterList map[string]api.Cluster) []
 	var res []string
 
 	for clusterId, v := range clusterList {
-		if _, exist := conf.ClusterConfigMap[clusterId]; !exist {
+		if _, exist := conf.clusterConfigMap[clusterId]; !exist {
 			res = append(res, v.ClusterID)
 		}
 	}
@@ -90,7 +100,7 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	var res []ManualCluster
 
 	//ensure the order
-	for _, p := range conf.ClusterList {
+	for _, p := range conf.clusterList {
 		if _, exists := clusterMap[p.ClusterId]; !exists {
 			res = append(res, p)
 		}
@@ -98,7 +108,7 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	return res
 }
 
-func (c *OSDClusterConfig) IsDataPlaneScalingEnabled() bool {
+func (c *OSDClusterConfig) IsManualDataPlaneScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == "manual"
 }
 
@@ -110,7 +120,7 @@ func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.IngressControllerReplicas, "ingress-controller-replicas", s.IngressControllerReplicas, "The number of replicas for the IngressController")
 	fs.BoolVar(&s.DynamicScalingConfig.Enabled, "enable-dynamic-scaling", s.DynamicScalingConfig.Enabled, "Enable Dynamic Scaling functionality")
 	fs.StringVar(&s.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", s.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
-	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters")
+	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. It's value should be either 'manual' or 'auto'.")
 }
 
 func (s *OSDClusterConfig) ReadFiles() error {
@@ -120,25 +130,31 @@ func (s *OSDClusterConfig) ReadFiles() error {
 			return err
 		}
 	}
-	if s.IsDataPlaneScalingEnabled() {
-		err := readDataPlaneClusterConfig(s.DataPlaneClusterConfigFile, s.ClusterConfig)
+	if s.IsManualDataPlaneScalingEnabled() {
+		list, err := readDataPlaneClusterConfig(s.DataPlaneClusterConfigFile)
 		if err == nil {
-			s.ClusterConfig.ClusterConfigMap = make(map[string]ManualCluster)
-			//initialize helper map
-			for _, p := range s.ClusterConfig.ClusterList {
-				s.ClusterConfig.ClusterConfigMap[p.ClusterId] = p
-			}
+			s.ClusterConfig = NewClusterConfig(list)
+		} else {
+			return err
 		}
 	}
 
 	return nil
 }
 
-func readDataPlaneClusterConfig(file string, val *ClusterConfig) error {
+func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	fileContents, err := readFile(file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return yaml.UnmarshalStrict([]byte(fileContents), val)
+	c := struct {
+		clusterList ClusterList `yaml:"clusters"`
+	}{}
+
+	if err = yaml.UnmarshalStrict([]byte(fileContents), &c); err != nil {
+		return nil, err
+	} else {
+		return c.clusterList, nil
+	}
 }
