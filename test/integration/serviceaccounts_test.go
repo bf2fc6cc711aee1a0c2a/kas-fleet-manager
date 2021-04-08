@@ -1,13 +1,13 @@
 package integration
 
 import (
-	"net/http"
-	"testing"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
+	"net/http"
+	"testing"
+	"time"
 
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
@@ -29,7 +29,8 @@ func TestServiceAccounts_Success(t *testing.T) {
 	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-
+	currTime := time.Now().Format(time.RFC3339)
+	createdAt, _ := time.Parse(time.RFC3339, currTime)
 	//verify create
 	r := openapi.ServiceAccountRequest{
 		Name:        "managed-service-integration-test-account",
@@ -42,6 +43,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
+	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	// verify get by id
 	id := sa.Id
@@ -52,6 +54,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.Owner).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
+	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	//verify reset
 	oldSecret := sa.ClientSecret
@@ -61,6 +64,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Owner).NotTo(BeEmpty())
+	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	//verify delete
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
