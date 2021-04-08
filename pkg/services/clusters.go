@@ -339,7 +339,7 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 	if err := dbConn.Model(&api.Cluster{}).
 		Select("cluster_id").
 		Where("cluster_id != '' ").
-		Order("clusters.id asc ").
+		Order("id asc ").
 		Scan(&res).Error; err != nil {
 		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
 	}
@@ -378,7 +378,7 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		Status:        criteria.Status,
 	}
 
-	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("clusters.id asc").Scan(&cluster).Error; err != nil {
+	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("id asc").Scan(&cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -404,7 +404,7 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 		return apiErrors.GeneralError("failed to update status: %s %s", err.Error(), clusterIds)
 	}
 
-	for range clusterIds {
+	for rows := dbConn.RowsAffected; rows > 0; rows-- {
 		if status == api.ClusterReady || status == api.ClusterFailed {
 			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
 		}
