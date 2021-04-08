@@ -219,7 +219,11 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		Status:        criteria.Status,
 	}
 
-	if err := dbConn.Where(clusterDetails).First(&cluster).Error; err != nil {
+	// we order them by "created_at" field instead of the default "id" field.
+	// They are mostly the same as the library we use (ksuid) does take the generation timestamp into consideration,
+	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
+	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
+	if err := dbConn.Where(clusterDetails).First(&cluster).Order("created_at asc").Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -336,10 +340,14 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 
 	var res []api.Cluster
 
+	// we order them by "created_at" field instead of the default "id" field.
+	// They are mostly the same as the library we use (ksuid) does take the generation timestamp into consideration,
+	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
+	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
 	if err := dbConn.Model(&api.Cluster{}).
 		Select("cluster_id").
 		Where("cluster_id != '' ").
-		Order("id asc ").
+		Order("created_at asc ").
 		Scan(&res).Error; err != nil {
 		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
 	}
@@ -378,7 +386,11 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		Status:        criteria.Status,
 	}
 
-	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("id asc").Scan(&cluster).Error; err != nil {
+	// we order them by "created_at" field instead of the default "id" field.
+	// They are mostly the same as the library we use (ksuid) does take the generation timestamp into consideration,
+	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
+	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
+	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("created_at asc").Scan(&cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
