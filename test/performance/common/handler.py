@@ -12,6 +12,8 @@ def handle_post(self, url, payload, name, full_json=False):
     if response.status_code == 401:
       response.success()
       get_token(self)
+    if response.status_code == 429: # limit exceeded
+      return '429'
     if response.status_code == 202:
       try:
         response_json = response.json()
