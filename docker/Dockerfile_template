@@ -20,8 +20,10 @@ ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
 ENV OCM_OFFLINE_TOKEN <ocm_offline_token>
 ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
-ENV MAS_SSO_CLIENT_ID test-managed-services-api
-ENV MAS_SSO_CLIENT_SECRET c1a79f76-272d-4b2b-ad27-2740fc81a508
+ENV MAS_SSO_CLIENT_ID <mas_sso_client_id>
+ENV MAS_SSO_CLIENT_SECRET <mas_sso_client_secret>
+ENV OSD_IDP_MAS_SSO_CLIENT_ID <osd_idp_mas_sso_client_id>
+ENV OSD_IDP_MAS_SSO_CLIENT_SECRET <osd_idp_mas_sso_client_secret>
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
 ENV KAFKA_TLS_KEY <kafka_tls_key>
 ENV DEBIAN_FRONTEND=noninteractive

@@ -43,8 +43,8 @@ DOCKER_CONFIG="${PWD}/.docker"
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
-MAS_SSO_BASE_URL ?="https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
-MAS_SSO_REALM ?="mas-sso-playground"
+MAS_SSO_BASE_URL ?="https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com"
+MAS_SSO_REALM ?="rhoas"
 
 GO := go
 GOFMT := gofmt
@@ -409,8 +409,8 @@ aws/setup:
 keycloak/setup:
 	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/keycloak-service.clientId
 	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/keycloak-service.clientSecret
-	@echo -n "$(MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
-	@echo -n "$(MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
+	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_ID)" > secrets/osd-idp-keycloak-service.clientId
+	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
 
 # Setup for the kafka broker certificate
@@ -459,9 +459,9 @@ deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy: IMAGE_REPOSITORY ?= $(image_repository)
 deploy: IMAGE_TAG ?= $(image_tag)
 deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
-deploy: MAS_SSO_BASE_URL ?= "https://keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org"
-deploy: MAS_SSO_REALM ?= "mas-sso-playground"
-deploy: OSD_IDP_MAS_SSO_REALM ?= "mas-sso-playground"
+deploy: MAS_SSO_BASE_URL ?= "https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com"
+deploy: MAS_SSO_REALM ?= "rhoas"
+deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: ENABLE_MANAGED_KAFKA_CR ?= "true"
 deploy: ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC ?= "false"
 deploy: deploy/db

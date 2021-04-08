@@ -128,13 +128,13 @@ follow this process again to generate a new token.
 
     ##### keycloak cert
     ```
-    echo "" | openssl s_client -connect keycloak-edge-redhat-rhoam-user-sso.apps.mas-sso-stage.1gzl.s1.devshift.org:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
+    echo "" | openssl s_client -connect keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
     ```
     ##### mas sso client id & client secret
     ```
-    $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret>
+    $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> OSD_IDP_MAS_SSO_CLIENT_ID=<osd_idp_mas_sso_client_id> OSD_IDP_MAS_SSO_CLIENT_SECRET=<osd_idp_mas_sso_client_secret>
     ```
-    > Values can be found in `secrets/keycloak-service.clientId` and `secrets/keycloak-service.clientSecret`, or alternately in keepassdb. 
+    > Values can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services-ci/show/managed-service-api/integration-tests).
 
 4. Setup external certificate for kafka brokers
     #### Option A)
