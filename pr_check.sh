@@ -36,7 +36,7 @@ export PATH="${GOBIN}:${PATH}"
 
 export IMAGE_NAME="test/kas-fleet-manager"
 
-if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
+if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
 then
    echo "Required mas sso env var: client id & client secret & crt is not provided"
    exit 1
