@@ -1,0 +1,16 @@
+---
+#- A list of clusters for kas fleet manager
+#- All clusters are created with 'clusterprovisioned' status if they are not already in kas fleet manager
+#- All clusters in kas fleet manager DB already but are missing in the list will be marked as
+#  'clusterdeprovisioning' and will later be deleted.
+#- This list is ordered, any new cluster should be appended at the end.
+#e.g.:
+#clusters:
+#  - name: anyname
+#    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378
+#    cloud_provider: aws
+#    region: us-east-1
+#    multi_az: true
+#    schedulable: true
+#    kafka_instance_limit: 2
+clusters: []

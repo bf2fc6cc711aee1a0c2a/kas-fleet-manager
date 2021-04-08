@@ -37,11 +37,20 @@ type ClusterService interface {
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
-	AddIdentityProviderID(clusterId string, identityProviderId string) *apiErrors.ServiceError
+	AddIdentityProviderID(clusterID string, identityProviderId string) *apiErrors.ServiceError
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e kafka that are not in failure state.
-	FindNonEmptyClusterById(clusterId string) (*api.Cluster, *apiErrors.ServiceError)
+	FindNonEmptyClusterById(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
+	// ListAllClusterIds returns all the valid cluster ids in array
+	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
+	// FindAllClusters return all the valid clusters in array
+	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
+	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters
+	// Cluster is not included in the result if it is not been used; otherwise, return the cluster id and the count
+	FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError)
+	// UpdateMultiClusterStatus updates a list of clusters' status to a status
+	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 }
 
 type clusterService struct {
@@ -64,7 +73,6 @@ func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Cl
 // RegisterClusterJob registers a new job in the cluster table
 func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
-	clusterRequest.Status = api.ClusterAccepted
 	if err := dbConn.Save(clusterRequest).Error; err != nil {
 		return apiErrors.GeneralError("failed to create cluster job: %v", err)
 	}
@@ -212,7 +220,11 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		Status:        criteria.Status,
 	}
 
-	if err := dbConn.Where(clusterDetails).First(&cluster).Error; err != nil {
+	// we order them by "created_at" field instead of the default "id" field.
+	// They are mostly the same as the library we use (ksuid) does take the generation timestamp into consideration,
+	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
+	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
+	if err := dbConn.Where(clusterDetails).First(&cluster).Order("created_at asc").Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
@@ -326,4 +338,98 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 	}
 
 	return cluster, nil
+}
+
+func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var res []api.Cluster
+
+	// we order them by "created_at" field instead of the default "id" field.
+	// They are mostly the same as the library we use (ksuid) does take the generation timestamp into consideration,
+	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
+	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
+	if err := dbConn.Model(&api.Cluster{}).
+		Select("cluster_id").
+		Where("cluster_id != '' ").
+		Order("created_at asc ").
+		Scan(&res).Error; err != nil {
+		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+	}
+	return res, nil
+}
+
+type ResKafkaInstanceCount struct {
+	Clusterid string //must be capitalized for Gorm to work?!
+	Count     int
+}
+
+func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var res []*ResKafkaInstanceCount
+	if err := dbConn.Model(&api.KafkaRequest{}).
+		Select("cluster_id as Clusterid, count(1) as Count ").
+		Where(" cluster_id in (?) ", clusterIDs).
+		Group(" cluster_id").Order("cluster_id asc").
+		Scan(&res).Error; err != nil {
+		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+	}
+
+	return res, nil
+}
+
+func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError) {
+	dbConn := c.connectionFactory.New()
+
+	var cluster []*api.Cluster
+
+	clusterDetails := &api.Cluster{
+		CloudProvider: criteria.Provider,
+		Region:        criteria.Region,
+		MultiAZ:       criteria.MultiAZ,
+		Status:        criteria.Status,
+	}
+
+	// we order them by "created_at" field instead of the default "id" field.
+	// They are mostly the same as the library we use (ksuid) does take the generation timestamp into consideration,
+	// However, it only down to the level of seconds. This means that if a few records are created at almost the same time,
+	// the order is not guaranteed. So use the `created_at` column will provider better consistency.
+	if err := dbConn.Model(&api.Cluster{}).Where(clusterDetails).Order("created_at asc").Scan(&cluster).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, apiErrors.GeneralError("failed to find all clusters with criteria: %s", err.Error())
+	}
+
+	return cluster, nil
+}
+
+func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
+
+	if status.String() == "" {
+		return apiErrors.Validation("status is undefined")
+	}
+	if len(clusterIds) == 0 {
+		return apiErrors.Validation("ids is empty")
+	}
+
+	dbConn := c.connectionFactory.New()
+
+	if err := dbConn.Model(&api.Cluster{}).Where("cluster_id in (?)", clusterIds).
+		Update("status", status).Error; err != nil {
+		return apiErrors.GeneralError("failed to update status: %s %s", err.Error(), clusterIds)
+	}
+
+	for rows := dbConn.RowsAffected; rows > 0; rows-- {
+		if status == api.ClusterFailed {
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+		}
+		if status == api.ClusterReady {
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+			metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
+		}
+	}
+
+	return nil
 }

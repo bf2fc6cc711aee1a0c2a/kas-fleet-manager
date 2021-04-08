@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	clusterIDAssignTimeout = 5 * time.Minute
+	clusterIDAssignTimeout = 2 * time.Minute
 	timeout                = 3 * time.Hour
 	interval               = 10 * time.Second
 	readyWaitTime          = 30 * time.Minute
@@ -50,6 +50,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Region:        mocks.MockCluster.Region().ID(),
 		MultiAZ:       testMultiAZ,
+		Status:        api.ClusterAccepted,
 	})
 	if clusterRegisterError != nil {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
