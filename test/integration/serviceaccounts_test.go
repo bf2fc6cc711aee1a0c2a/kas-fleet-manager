@@ -204,7 +204,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	//description length can not be more than 255
 	r = openapi.ServiceAccountRequest{
 		Name:        "test-svc-1",
-		Description: faker.Paragraph(),
+		Description: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
 	}
 	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
@@ -225,6 +225,18 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Description: "",
 	}
 	sa, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(sa.ClientID).NotTo(BeEmpty())
+	Expect(sa.ClientSecret).NotTo(BeEmpty())
+	Expect(sa.Id).NotTo(BeEmpty())
+
+	// certain characters are allowed in the description
+	r = openapi.ServiceAccountRequest{
+		Name:        "test",
+		Description: "Created by the managed-services integration tests.,",
+	}
+	sa, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientID).NotTo(BeEmpty())

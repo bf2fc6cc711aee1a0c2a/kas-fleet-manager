@@ -23,7 +23,7 @@ var (
 	validKafkaClusterNameRegexp   = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 	validUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 	validServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
-	validServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9\s]*$`)
+	validServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9.,\-\s]*$`)
 	minRequiredFieldLength        = 1
 	maxKafkaNameLength            = 32
 	maxServiceAccountNameLength   = 50
