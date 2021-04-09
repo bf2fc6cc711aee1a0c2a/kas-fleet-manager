@@ -36,17 +36,6 @@ export PATH="${GOBIN}:${PATH}"
 
 export IMAGE_NAME="test/kas-fleet-manager"
 
-if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
-then
-   echo "Required mas sso env var: client id & client secret & crt is not provided"
-   exit 1
-else
-  sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
-  sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
-  sed -i "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
-  sed -i "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
-fi
-
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
 if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]];
 then
@@ -63,6 +52,17 @@ else
   sed -i "s/<aws_secret_access_key>/${AWS_SECRET_ACCESS_KEY}/g" Dockerfile_integration_tests
   sed -i "s/<ocm_offline_token>/${OCM_OFFLINE_TOKEN}/g" Dockerfile_integration_tests
   sed -i "s/<observatorium_config_access_token>/${OBSERVATORIUM_CONFIG_ACCESS_TOKEN}/g" Dockerfile_integration_tests
+fi
+
+if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
+then
+   echo "Required mas sso env var: client id & client secret & crt is not provided"
+   exit 1
+else
+  sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
+  sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
+  sed -i "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
+  sed -i "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
 fi
 
 docker login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
