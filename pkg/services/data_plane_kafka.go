@@ -87,6 +87,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *e
 			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusReady, kafka.ID, err)
 			return err
 		}
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
@@ -100,6 +101,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *
 			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusFailed, kafka.ID, err)
 			return err
 		}
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 	}
 	return nil
@@ -113,6 +115,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterDeleted(kafka *api.KafkaRequest) 
 			return updateErr
 		}
 	}
+	metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusDeleted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	return nil
 }
 
@@ -125,9 +128,11 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *api.KafkaRequest) *e
 		if err := d.kafkaService.Update(kafka); err != nil {
 			return err
 		}
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	} else {
 		glog.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)
 	}
+
 	return nil
 }
 
