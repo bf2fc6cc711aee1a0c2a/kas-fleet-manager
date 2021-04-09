@@ -17,7 +17,6 @@ var productionConfigDefaults map[string]string = map[string]string{
 	"cluster-compute-machine-type":      "m5.4xlarge",
 	"ingress-controller-replicas":       "9",
 	"enable-quota-service":              "true",
-	"enable-dynamic-scaling":            "false",
 }
 
 func loadProduction(env *Env) error {

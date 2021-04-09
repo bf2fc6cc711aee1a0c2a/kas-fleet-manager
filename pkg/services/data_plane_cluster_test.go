@@ -904,7 +904,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			inputFactory: func() (*input, *api.ClusterStatus) {
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				applicationConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
-				applicationConfig.OSDClusterConfig.DynamicScalingConfig.Enabled = false
+				applicationConfig.OSDClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -1043,9 +1043,8 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *api.DataPlaneClusterStatus 
 
 func sampleValidApplicationConfigForDataPlaneClusterTest() *config.ApplicationConfig {
 	osdClusterConfig := config.NewOSDClusterConfig()
-	osdClusterConfig.DynamicScalingConfig = &config.DynamicScalingConfig{
-		Enabled: true,
-	}
+	osdClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+
 	return &config.ApplicationConfig{
 		Kafka: &config.KafkaConfig{
 			KafkaCapacity: config.KafkaCapacityConfig{

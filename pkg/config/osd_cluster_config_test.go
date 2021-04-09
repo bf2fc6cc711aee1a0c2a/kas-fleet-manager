@@ -1,15 +1,91 @@
 package config
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"reflect"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/onsi/gomega"
 )
+
+func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
+	type fields struct {
+		DataPlaneClusterScalingType string
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "auto scaling enabled",
+			fields: fields{
+				DataPlaneClusterScalingType: AutoScaling,
+			},
+			want: true,
+		},
+		{
+			name: "auto scaling disabled",
+			fields: fields{
+				DataPlaneClusterScalingType: ManualScaling,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			conf := OSDClusterConfig{
+				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
+			}
+			got := conf.IsDataPlaneAutoScalingEnabled()
+			gomega.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
+	type fields struct {
+		DataPlaneClusterScalingType string
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "manual scaling enabled",
+			fields: fields{
+				DataPlaneClusterScalingType: ManualScaling,
+			},
+			want: true,
+		},
+		{
+			name: "manual scaling disabled",
+			fields: fields{
+				DataPlaneClusterScalingType: AutoScaling,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			conf := OSDClusterConfig{
+				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
+			}
+			got := conf.IsDataPlaneManualScalingEnabled()
+			gomega.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
 
 func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	type fields struct {
-		HorizontalScalingConfig string
-		ClusterList             ClusterList
+		DataPlaneClusterScalingType string
+		ClusterList                 ClusterList
 	}
 
 	type args struct {
@@ -25,7 +101,7 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 		{
 			name: "within the limit",
 			fields: fields{
-				HorizontalScalingConfig: "manual",
+				DataPlaneClusterScalingType: ManualScaling,
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 3},
 				},
@@ -39,7 +115,7 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 		{
 			name: "exceed the limit",
 			fields: fields{
-				HorizontalScalingConfig: "manual",
+				DataPlaneClusterScalingType: ManualScaling,
 				ClusterList: ClusterList{
 					ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 3},
 				},
