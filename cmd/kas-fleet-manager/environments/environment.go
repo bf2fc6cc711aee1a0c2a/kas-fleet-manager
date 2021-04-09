@@ -105,14 +105,14 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 	switch e.Name {
 	case DevelopmentEnv:
 		defaults = developmentConfigDefaults
-	case TestingEnv:
-		defaults = testingConfigDefaults
 	case ProductionEnv:
 		defaults = productionConfigDefaults
 	case StageEnv:
 		defaults = stageConfigDefaults
 	case IntegrationEnv:
 		defaults = integrationConfigDefaults
+	case TestingEnv:
+		// do nothing as there are no defaults for testing environment
 	default:
 		return fmt.Errorf("Unsupported environment %q", e.Name)
 	}
