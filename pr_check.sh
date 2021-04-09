@@ -35,14 +35,16 @@ export GOBIN="${PWD}/.gobin"
 export PATH="${GOBIN}:${PATH}"
 
 export IMAGE_NAME="test/kas-fleet-manager"
-export ENV MAS_SSO_CLIENT_ID="test-managed-services-api"
-export MAS_SSO_CLIENT_SECRET="c1a79f76-272d-4b2b-ad27-2740fc81a508"
-INTEGRATION_ENV="integration"
 
-if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]];
+if [[ -z "${MAS_SSO_CLIENT_ID}" ]] || [[ -z "${MAS_SSO_CLIENT_SECRET}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_ID}" ]] || [[ -z "${OSD_IDP_MAS_SSO_CLIENT_SECRET}" ]];
 then
    echo "Required mas sso env var: client id & client secret & crt is not provided"
    exit 1
+else
+  sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
+  sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
+  sed -i "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
+  sed -i "s/<osd_idp_mas_sso_client_secret>/${OSD_IDP_MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
 fi
 
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
