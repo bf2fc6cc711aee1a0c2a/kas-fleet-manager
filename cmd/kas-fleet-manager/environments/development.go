@@ -25,9 +25,8 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"cluster-compute-machine-type":      "m5.xlarge",
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
-	"enable-dynamic-scaling":            "false",
 	"enable-deletion-of-expired-kafka":  "false",
-	"dataplane-cluster-scaling-type":    "auto",
+	"dataplane-cluster-scaling-type":    "manual",
 }
 
 func loadDevelopment(env *Env) error {

@@ -2,6 +2,8 @@ package integration
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -13,17 +15,20 @@ import (
 	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"testing"
 )
 
 func TestClusterPlacementStrategy_ManualType(t *testing.T) {
-	var oriFlag string
+	var clusterConfig *config.ClusterConfig
+	var originalScalingType string
+
 	startHook := func(h *test.Helper) {
-		oriFlag = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
-		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = "manual"
+		clusterConfig = h.Env().Config.OSDClusterConfig.ClusterConfig
+		originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = oriFlag
+		h.Env().Config.OSDClusterConfig.ClusterConfig = clusterConfig
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = originalScalingType
 	}
 
 	// setup ocm server

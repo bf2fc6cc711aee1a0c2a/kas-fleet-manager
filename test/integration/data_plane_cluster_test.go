@@ -206,14 +206,14 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(t *testing.T) {
-	var originalDynamicScalingEnabledValue *bool = new(bool)
+	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
-		*originalDynamicScalingEnabledValue = h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled
+		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = *originalDynamicScalingEnabledValue
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -294,7 +294,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = true
+	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
@@ -464,15 +464,14 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 }
 
 func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
-	var originalDynamicScalingEnabledValue *bool = new(bool)
+	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
-		*originalDynamicScalingEnabledValue = h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled
+		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = false
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = *originalDynamicScalingEnabledValue
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -498,7 +497,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = true
+	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster

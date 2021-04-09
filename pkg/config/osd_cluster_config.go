@@ -7,14 +7,16 @@ import (
 )
 
 type OSDClusterConfig struct {
-	IngressControllerReplicas    int                   `json:"ingress_controller_replicas"`
-	OpenshiftVersion             string                `json:"cluster_openshift_version"`
-	ComputeMachineType           string                `json:"cluster_compute_machine_type"`
-	StrimziOperatorVersion       string                `json:"strimzi_operator_version"`
-	ImagePullDockerConfigContent string                `json:"image_pull_docker_config_content"`
-	ImagePullDockerConfigFile    string                `json:"image_pull_docker_config_file"`
-	DynamicScalingConfig         *DynamicScalingConfig `json:"dynamic_scaling_config"`
-	//'manual' to use OSD Cluster configuration file, 'auto' to use dynamic scaling and it is TBD
+	IngressControllerReplicas    int    `json:"ingress_controller_replicas"`
+	OpenshiftVersion             string `json:"cluster_openshift_version"`
+	ComputeMachineType           string `json:"cluster_compute_machine_type"`
+	StrimziOperatorVersion       string `json:"strimzi_operator_version"`
+	ImagePullDockerConfigContent string `json:"image_pull_docker_config_content"`
+	ImagePullDockerConfigFile    string `json:"image_pull_docker_config_file"`
+	// Possible values are:
+	// 'manual' to use OSD Cluster configuration file,
+	// 'auto' to use dynamic scaling
+	// 'none' to disabled scaling all together, useful in testing
 	DataPlaneClusterScalingType string         `json:"dataplane_cluster_scaling_type"`
 	DataPlaneClusterConfigFile  string         `json:"dataplane_cluster_config_file"`
 	ClusterConfig               *ClusterConfig `json:"clusters_config"`
@@ -24,6 +26,15 @@ type DynamicScalingConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
+const (
+	// ManualScaling is the manual DataPlaneClusterScalingType via the configuration file
+	ManualScaling string = "manual"
+	// AutoScaling is the automatic DataPlaneClusterScalingType depending on cluster capacity as reported by the Agent Operator
+	AutoScaling string = "auto"
+	// NoScaling disables cluster scaling. This is useful in testing
+	NoScaling string = "none"
+)
+
 func NewOSDClusterConfig() *OSDClusterConfig {
 	return &OSDClusterConfig{
 		OpenshiftVersion:             "",
@@ -32,12 +43,9 @@ func NewOSDClusterConfig() *OSDClusterConfig {
 		ImagePullDockerConfigContent: "",
 		ImagePullDockerConfigFile:    "secrets/image-pull.dockerconfigjson",
 		IngressControllerReplicas:    9,
-		DynamicScalingConfig: &DynamicScalingConfig{
-			Enabled: false,
-		},
-		DataPlaneClusterConfigFile:  "config/dataplane-cluster-configuration.yaml",
-		DataPlaneClusterScalingType: "manual",
-		ClusterConfig:               &ClusterConfig{},
+		DataPlaneClusterConfigFile:   "config/dataplane-cluster-configuration.yaml",
+		DataPlaneClusterScalingType:  ManualScaling,
+		ClusterConfig:                &ClusterConfig{},
 	}
 }
 
@@ -108,8 +116,12 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	return res
 }
 
-func (c *OSDClusterConfig) IsManualDataPlaneScalingEnabled() bool {
-	return c.DataPlaneClusterScalingType == "manual"
+func (c *OSDClusterConfig) IsDataPlaneManualScalingEnabled() bool {
+	return c.DataPlaneClusterScalingType == ManualScaling
+}
+
+func (c *OSDClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
+	return c.DataPlaneClusterScalingType == AutoScaling
 }
 
 func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
@@ -118,9 +130,8 @@ func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.StrimziOperatorVersion, "strimzi-operator-version", s.StrimziOperatorVersion, "The version of the Strimzi operator to install")
 	fs.StringVar(&s.ImagePullDockerConfigFile, "image-pull-docker-config-file", s.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
 	fs.IntVar(&s.IngressControllerReplicas, "ingress-controller-replicas", s.IngressControllerReplicas, "The number of replicas for the IngressController")
-	fs.BoolVar(&s.DynamicScalingConfig.Enabled, "enable-dynamic-scaling", s.DynamicScalingConfig.Enabled, "Enable Dynamic Scaling functionality")
 	fs.StringVar(&s.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", s.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
-	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'manual' or 'auto'.")
+	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 }
 
 func (s *OSDClusterConfig) ReadFiles() error {
@@ -130,7 +141,7 @@ func (s *OSDClusterConfig) ReadFiles() error {
 			return err
 		}
 	}
-	if s.IsManualDataPlaneScalingEnabled() {
+	if s.IsDataPlaneManualScalingEnabled() {
 		list, err := readDataPlaneClusterConfig(s.DataPlaneClusterConfigFile)
 		if err == nil {
 			s.ClusterConfig = NewClusterConfig(list)
