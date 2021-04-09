@@ -266,20 +266,61 @@ $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
 # Verify the OSD cluster was created successfully and have strimzi-operator installed in namespace 'redhat-managed-kafka-operator'
 ```
 #### Using an existing OSD Cluster
+
 Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
 cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.  The cluster must have been created with multizone availability.
 
-1. Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`). There are two ways of getting this:
-   - From the cluster overview URL.
-        - Go to the `OpenShift Cluster Management Dashboard` > `Clusters`.
-        - Select your cluster from the cluster list to go to the overview page.
-        - The ID should be located in the URL:
-          `https://cloud.redhat.com/openshift/details/<cluster-id>#overview`
-   - From the CLI
+Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the CLI
         - Run `ocm list clusters`
         - The ID should be displayed under the ID column
 
-2. Register the cluster to the service
+>NOTE: By default the auto scaling feature is enabled in development mode. You can change it to false by passing `--dataplane-cluster-scaling-type=manual` when starting a built binary. Or changing the default value in [default development environment flags file](cmd/kas-fleet-manager/environments/development.go) when using `make run` to start the API.
+
+#### Using an existing cluster with manual scaling enabled via `dataplane-cluster-scaling-type` flag set to `manual`
+
+You can manually add the cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file. 
+
+A content of the file is:
+
+- A list of clusters for kas fleet manager
+- All clusters are created with `cluster_provisioning` status if they are not already in kas fleet manager
+- All clusters in kas fleet manager DB already but are missing in the list will be marked as `deprovisioning` and will later be deleted.
+- This list is ordered, any new cluster should be appended at the end.
+
+From the cluster ID taken from step (1), use `ocm` CLI to get cluster details i.e `name`, `id` which is cluster_id, `multi_az`, `cloud_provider` and `region`.
+```shell
+ocm get /api/clusters_mgmt/v1/clusters/$ID | jq ' .name, .id, .multi_az, .cloud_provider.id, .region.id '
+
+"cluster-name"
+"1jp6kdr7k0sjbe5adck2prjur8f39378" # or a value matching your cluster ID 
+true
+"aws" # or any cloud provider
+"us-east-1" # or any region
+```
+
+From the above command, the resulting [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file content will
+```yaml
+clusters:
+  - name: cluster-name
+    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378
+    cloud_provider: aws
+    region: us-east-1
+    multi_az: true
+    schedulable: true # change this to false if you do not want the cluster to be schedulable
+    kafka_instance_limit: 2 # change this to match any value of configuration
+```
+
+#### Configuring OSD Cluster Creation and AutoScaling
+
+To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
+Once auto scaling is enabled this will activate the scaling up/down of compute nodes for exisiting clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md) 
+
+#### Registering an existing cluster in the Database
+
+>NOTE: This should only be done if auto scaling is enabled. If manual scaling is enabled, please follow the guide for [using an existing cluster with manual scaling](#using-an-existing-cluster-with-manual-scaling-enabled-via-dataplane-cluster-scaling-type-flag-set-to-manual) instead.
+
+
+1. Register the cluster to the service
     - Run the following command to generate an **INSERT** command:
       ```
       make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id>
@@ -292,7 +333,7 @@ cluster, you will need to register it in the database so that it can be used by 
             - Run `./kas-fleet-manager migrate`
         - Once the table is available, the generated **INSERT** command can now be run.
 
-3. Ensure the cluster is ready to be used for incoming Kafka requests.
+2. Ensure the cluster is ready to be used for incoming Kafka requests.
     - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Strimzi operator installation).
     - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Kafka requests.
     - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Kafka requests so that the service can process them.
