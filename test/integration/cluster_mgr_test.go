@@ -125,12 +125,12 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 }
 
 func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
-	var originalDynamicScalingEnabledValue *bool = new(bool)
+	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
-		*originalDynamicScalingEnabledValue = h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled
+		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = *originalDynamicScalingEnabledValue
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
 	// setup ocm server
@@ -201,7 +201,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env().Config.OSDClusterConfig.DynamicScalingConfig.Enabled = true
+	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
 	err := wait.PollImmediate(interval, clusterDeletionTimeout, func() (done bool, err error) {

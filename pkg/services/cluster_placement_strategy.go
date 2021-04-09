@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
@@ -14,7 +15,7 @@ type ClusterPlacementStrategy interface {
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
 func NewClusterPlacementStrategy(configService ConfigService, clusterService ClusterService) ClusterPlacementStrategy {
 	var clusterSelection ClusterPlacementStrategy
-	if configService.GetConfig().OSDClusterConfig.IsManualDataPlaneScalingEnabled() {
+	if configService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
 		clusterSelection = &FirstSchedulableWithinLimit{configService, clusterService}
 	} else {
 		clusterSelection = &FirstReadyCluster{configService, clusterService}
