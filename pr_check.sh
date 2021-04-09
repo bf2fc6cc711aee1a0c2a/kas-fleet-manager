@@ -41,6 +41,7 @@ then
    echo "Required mas sso env var: client id & client secret & crt is not provided"
    exit 1
 else
+  cp docker/Dockerfile_template Dockerfile_integration_tests
   sed -i "s/<mas_sso_client_id>/${MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
   sed -i "s/<mas_sso_client_secret>/${MAS_SSO_CLIENT_SECRET}/g" Dockerfile_integration_tests
   sed -i "s/<osd_idp_mas_sso_client_id>/${OSD_IDP_MAS_SSO_CLIENT_ID}/g" Dockerfile_integration_tests
