@@ -1,5 +1,5 @@
+openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
 # All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
-openapi: 3.0.0
 info:
   title: Kafka Service Fleet Manager
   version: 0.0.1

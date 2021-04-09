@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"encoding/base64"
-	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -17,7 +15,7 @@ func stripSecretReferences(resource *api.Connector, cts services.ConnectorTypesS
 	}
 
 	// clear out secrets..
-	if resource.ConnectorSpec != "" {
+	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
 				err := node.SetObject(map[string]*ajson.Node{})
@@ -48,7 +46,7 @@ func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesServ
 		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
 	}
 	// move secrets to a vault.
-	if resource.ConnectorSpec != "" {
+	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.String {
 				keyId := api.NewID()
@@ -81,51 +79,6 @@ func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesServ
 			default:
 				return errors.GeneralError("could not store connectors secrets in the vault")
 			}
-		}
-		resource.ConnectorSpec = updated
-	}
-	return nil
-}
-
-func getSecretsFromVaultAsBase64(resource *api.Connector, cts services.ConnectorTypesService, vault services.VaultService) *errors.ServiceError {
-	ct, err := cts.Get(resource.ConnectorTypeId)
-	if err != nil {
-		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
-	}
-	// move secrets to a vault.
-	if resource.ConnectorSpec != "" {
-		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
-			if node.Type() == ajson.Object {
-				ref, err := node.GetKey("ref")
-				if err != nil {
-					return err
-				}
-				r, err := ref.GetString()
-				if err != nil {
-					return err
-				}
-				v, err := vault.GetSecretString(r)
-				if err != nil {
-					return err
-				}
-
-				encoded := base64.StdEncoding.EncodeToString([]byte(v))
-				err = node.SetObject(map[string]*ajson.Node{
-					"kind":  ajson.StringNode("", "base64"),
-					"value": ajson.StringNode("", encoded),
-				})
-				if err != nil {
-					return err
-				}
-			} else if node.Type() == ajson.Null {
-				// don't change..
-			} else {
-				return fmt.Errorf("secret field must be set to an object: " + node.Path())
-			}
-			return nil
-		})
-		if err != nil {
-			return errors.GeneralError("could not store connectors secrets in the vault")
 		}
 		resource.ConnectorSpec = updated
 	}

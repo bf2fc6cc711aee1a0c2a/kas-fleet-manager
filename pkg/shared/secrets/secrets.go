@@ -3,21 +3,22 @@ package secrets
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/santhosh-tekuri/jsonschema/v3"
 	"github.com/spyzhov/ajson"
 	"reflect"
 )
 
-func ModifySecrets(schemaDom map[string]interface{}, doc string, f func(node *ajson.Node) error) (string, error) {
+func ModifySecrets(schemaDom map[string]interface{}, doc api.JSON, f func(node *ajson.Node) error) (api.JSON, error) {
 	schemaBytes, err := json.Marshal(schemaDom)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	secrets, err := modifySecrets(schemaBytes, []byte(doc), f)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(secrets), nil
+	return secrets, nil
 }
 
 func modifySecrets(schemaBytes []byte, doc []byte, f func(node *ajson.Node) error) ([]byte, error) {
