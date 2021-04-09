@@ -401,6 +401,8 @@ aws/setup:
 	@echo -n "$(AWS_ACCOUNT_ID)" > secrets/aws.accountid
 	@echo -n "$(AWS_ACCESS_KEY)" > secrets/aws.accesskey
 	@echo -n "$(AWS_SECRET_ACCESS_KEY)" > secrets/aws.secretaccesskey
+	@echo -n "$(VAULT_ACCESS_KEY)" > secrets/vault.accesskey
+	@echo -n "$(VAULT_SECRET_ACCESS_KEY)" > secrets/vault.secretaccesskey
 	@echo -n "$(ROUTE53_ACCESS_KEY)" > secrets/aws.route53accesskey
 	@echo -n "$(ROUTE53_SECRET_ACCESS_KEY)" > secrets/aws.route53secretaccesskey
 .PHONY: aws/setup
@@ -480,6 +482,8 @@ deploy: deploy/db
 		-p DEX_PASSWORD="${DEX_PASSWORD}" \
 		-p ROUTE53_ACCESS_KEY="$(ROUTE53_ACCESS_KEY)" \
 		-p ROUTE53_SECRET_ACCESS_KEY="$(ROUTE53_SECRET_ACCESS_KEY)" \
+		-p VAULT_ACCESS_KEY="$(VAULT_ACCESS_KEY)" \
+		-p VAULT_SECRET_ACCESS_KEY="$(VAULT_SECRET_ACCESS_KEY)" \
 		-p KAFKA_TLS_CERT="$(KAFKA_TLS_CERT)" \
 		-p KAFKA_TLS_KEY="$(KAFKA_TLS_KEY)" \
 		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
