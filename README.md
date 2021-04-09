@@ -270,7 +270,7 @@ $ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
 Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
 cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.  The cluster must have been created with multizone availability.
 
-1. Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the CLI
+Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the CLI
         - Run `ocm list clusters`
         - The ID should be displayed under the ID column
 
@@ -278,7 +278,7 @@ cluster, you will need to register it in the database so that it can be used by 
 
 #### Using an existing cluster with manual scaling enabled via `dataplane-cluster-scaling-type` flag set to `manual`
 
-2. You can manually add the cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file. 
+You can manually add the cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file. 
 
 A content of the file is:
 
@@ -310,9 +310,17 @@ clusters:
     kafka_instance_limit: 2 # change this to match any value of configuration
 ```
 
-#### Using an existing with auto-scaling enabled via `dataplane-cluster-scaling-type` flag set to `auto` 
+#### Configuring OSD Cluster Creation and AutoScaling
 
-2. Register the cluster to the service
+To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
+Once auto scaling is enabled this will activate the scaling up/down of compute nodes for exisiting clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md) 
+
+#### Registering an existing cluster in the Database
+
+>NOTE: This should only be done if auto scaling is enabled. If manual scaling is enabled, please follow the guide for [using an existing cluster with manual scaling](#using-an-existing-cluster-with-manual-scaling-enabled-via-dataplane-cluster-scaling-type-flag-set-to-manual) instead.
+
+
+1. Register the cluster to the service
     - Run the following command to generate an **INSERT** command:
       ```
       make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id>
@@ -325,11 +333,10 @@ clusters:
             - Run `./kas-fleet-manager migrate`
         - Once the table is available, the generated **INSERT** command can now be run.
 
-3. Ensure the cluster is ready to be used for incoming Kafka requests.
+2. Ensure the cluster is ready to be used for incoming Kafka requests.
     - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Strimzi operator installation).
     - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Kafka requests.
     - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Kafka requests so that the service can process them.
-
 
 #### Creating a Kafka Cluster
 ```
