@@ -204,7 +204,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	//description length can not be more than 255
 	r = openapi.ServiceAccountRequest{
 		Name:        "test-svc-1",
-		Description: faker.Paragraph(),
+		Description: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
 	}
 	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
