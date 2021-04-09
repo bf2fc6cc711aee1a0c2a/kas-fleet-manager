@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	goerrors "errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/jinzhu/gorm"
 
@@ -107,10 +108,9 @@ func filterToOwnerOrOrg(ctx context.Context, dbConn *gorm.DB) (*gorm.DB, *errors
 	}
 
 	orgId := auth.GetOrgIdFromClaims(claims)
-	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
+	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
 	if filterByOrganisationId {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
