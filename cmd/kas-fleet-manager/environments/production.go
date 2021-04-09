@@ -12,7 +12,7 @@ var productionConfigDefaults map[string]string = map[string]string{
 	"enable-deny-list":                  "true",
 	"max-allowed-instances":             "1",
 	"mas-sso-realm":                     "rhoas",
-	"mas-sso-base-url":                  "https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com",
+	"mas-sso-base-url":                  "https://identity.api.openshift.com",
 	"enable-kafka-external-certificate": "true",
 	"cluster-compute-machine-type":      "m5.4xlarge",
 	"ingress-controller-replicas":       "9",
