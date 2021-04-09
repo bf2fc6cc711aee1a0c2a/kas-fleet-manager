@@ -14,7 +14,8 @@ type contextKey string
 
 const (
 	// Context Keys
-	contextIsAllowedAsServiceAccountKey contextKey = "user-is-allowed-as-service-account"
+	// FilterByOrganisation is used to determine whether resources are filtered by a user's organisation or as an individual owner
+	contextFilterByOrganisation contextKey = "filter-by-organisation"
 
 	// ocm token claim keys
 	ocmUsernameKey string = "username"
@@ -58,16 +59,16 @@ func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 	return ""
 }
 
-func SetUserIsAllowedAsServiceAccountContext(ctx context.Context, isAllowedAsServiceAccount bool) context.Context {
-	return context.WithValue(ctx, contextIsAllowedAsServiceAccountKey, isAllowedAsServiceAccount)
+func SetFilterByOrganisationContext(ctx context.Context, filterByOrganisation bool) context.Context {
+	return context.WithValue(ctx, contextFilterByOrganisation, filterByOrganisation)
 }
 
-func GetUserIsAllowedAsServiceAccountFromContext(ctx context.Context) bool {
-	isAllowedAsServiceAccount := ctx.Value(contextIsAllowedAsServiceAccountKey)
-	if isAllowedAsServiceAccount == nil {
+func GetFilterByOrganisationFromContext(ctx context.Context) bool {
+	filterByOrganisation := ctx.Value(contextFilterByOrganisation)
+	if filterByOrganisation == nil {
 		return false
 	}
-	return isAllowedAsServiceAccount.(bool)
+	return filterByOrganisation.(bool)
 }
 
 func SetTokenInContext(ctx context.Context, token *jwt.Token) context.Context {
