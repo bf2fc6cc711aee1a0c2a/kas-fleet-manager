@@ -69,9 +69,17 @@ func (s *TestScenario) sendHttpRequestWithJsonBodyAndStyle(method, path string, 
 
 	body := &bytes.Buffer{}
 	if jsonTxt != nil {
-		body.WriteString(s.Expand(jsonTxt.Content))
+		expanded, err := s.Expand(jsonTxt.Content)
+		if err != nil {
+			return err
+		}
+		body.WriteString(expanded)
 	}
-	fullUrl := s.Suite.ApiURL + s.PathPrefix + s.Expand(path)
+	expandedPath, err := s.Expand(path)
+	if err != nil {
+		return err
+	}
+	fullUrl := s.Suite.ApiURL + s.PathPrefix + expandedPath
 
 	// Lets reset all the response session state...
 	if session.Resp != nil {
@@ -92,12 +100,19 @@ func (s *TestScenario) sendHttpRequestWithJsonBodyAndStyle(method, path string, 
 		return err
 	}
 
-	if session.AuthorizationHeader != "" {
-		req.Header.Set("Authorization", session.AuthorizationHeader)
+	// We consume the session headers on every request except for the Authorization header.
+	req.Header = session.Header
+	session.Header = http.Header{}
+
+	if req.Header.Get("Authorization") != "" {
+		session.Header.Set("Authorization", req.Header.Get("Authorization"))
 	} else if session.TestUser.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+session.TestUser.Token)
 	}
-	req.Header.Set("Content-Type", "application/json")
+
+	if req.Header.Get("Content-Type") == "" {
+		req.Header.Set("Content-Type", "application/json")
+	}
 
 	resp, err := session.Client.Do(req)
 	if err != nil {

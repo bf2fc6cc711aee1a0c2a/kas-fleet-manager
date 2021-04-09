@@ -17,7 +17,6 @@ import (
 type ConnectorClusterAllOfMetadata struct {
 	Owner     string    `json:"owner,omitempty"`
 	Name      string    `json:"name,omitempty"`
-	Group     string    `json:"group,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
-	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -58,16 +56,23 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 		cfg.ErrorHandler = handleError
 	}
 
-	bytes, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		handleError(r.Context(), w, errors.MalformedRequest("Unable to read request body: %s", err))
-		return
-	}
+	if cfg.MarshalInto != nil {
 
-	err = json.Unmarshal(bytes, &cfg.MarshalInto)
-	if err != nil {
-		handleError(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
-		return
+		err := json.NewDecoder(r.Body).Decode(&cfg.MarshalInto)
+
+		// Use the following instead if you want to debug the request body:
+		//bytes, err := ioutil.ReadAll(r.Body)
+		//if err != nil {
+		//	handleError(r.Context(), w, errors.MalformedRequest("Unable to read request body: %s", err))
+		//	return
+		//}
+		//fmt.Println(string(bytes))
+		//err = json.Unmarshal(bytes, &cfg.MarshalInto)
+
+		if err != nil {
+			handleError(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
+			return
+		}
 	}
 
 	for _, v := range cfg.Validate {
@@ -167,10 +172,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 		shared.WriteStreamJSONResponseWithContentType(w, http.StatusOK, nil, stream.ContentType)
 		for {
 			result, err := stream.GetNextEvent()
-			if result == io.EOF {
-				// the GetNextEvent should unblock and return io.EOF when the context is canceled.
-				return
-			} else if err != nil {
+			if err != nil {
 				ulog := logger.NewUHCLogger(ctx)
 				operationID := logger.GetOperationID(ctx)
 				// If this is a 400 error, its the user's issue, log as info rather than error
@@ -186,6 +188,9 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 				_ = json.NewEncoder(w).Encode(result)
 				return
 			} else {
+				if result == nil {
+					return // the event stream was done.
+				}
 				_ = json.NewEncoder(w).Encode(result)
 				_, _ = fmt.Fprint(w, "\n")
 				flusher.Flush() // sends the result to the client (forces Transfer-Encoding: chunked)

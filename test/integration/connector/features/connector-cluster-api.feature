@@ -26,7 +26,6 @@ Feature: create a a connector
         "kind": "ConnectorCluster",
         "metadata": {
           "created_at": "${response.metadata.created_at}",
-          "group": "default",
           "name": "New Cluster",
           "owner": "${response.metadata.owner}",
           "updated_at": "${response.metadata.updated_at}"
@@ -52,7 +51,6 @@ Feature: create a a connector
         "kind": "ConnectorCluster",
         "metadata": {
           "created_at": "${response.metadata.created_at}",
-          "group": "default",
           "name": "New Cluster",
           "owner": "${response.metadata.owner}",
           "updated_at": "${response.metadata.updated_at}"
