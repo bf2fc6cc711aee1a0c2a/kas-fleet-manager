@@ -1,8 +1,8 @@
 ---
 #- A list of clusters for kas fleet manager
-#- All clusters are created with 'clusterprovisioned' status if they are not already in kas fleet manager
+#- All clusters are created with 'cluster_provisioning' status if they are not already in kas fleet manager
 #- All clusters in kas fleet manager DB already but are missing in the list will be marked as
-#  'clusterdeprovisioning' and will later be deleted.
+#  'deprovisioning' and will later be deleted.
 #- This list is ordered, any new cluster should be appended at the end.
 #e.g.:
 #clusters:
