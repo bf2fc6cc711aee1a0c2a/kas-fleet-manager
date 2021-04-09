@@ -27,11 +27,11 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	ocmClient            ocm.Client
-	clusterService       ClusterService
-	kafkaConfig          *config.KafkaConfig
-	observabilityConfig  *config.ObservabilityConfiguration
-	dynamicScalingConfig *config.DynamicScalingConfig
+	ocmClient           ocm.Client
+	clusterService      ClusterService
+	kafkaConfig         *config.KafkaConfig
+	observabilityConfig *config.ObservabilityConfiguration
+	osdClusterConfig    *config.OSDClusterConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -41,11 +41,11 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 
 func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client, config *config.ApplicationConfig) *dataPlaneClusterService {
 	return &dataPlaneClusterService{
-		ocmClient:            ocmClient,
-		clusterService:       clusterService,
-		kafkaConfig:          config.Kafka,
-		observabilityConfig:  config.ObservabilityConfiguration,
-		dynamicScalingConfig: config.OSDClusterConfig.DynamicScalingConfig,
+		ocmClient:           ocmClient,
+		clusterService:      clusterService,
+		kafkaConfig:         config.Kafka,
+		observabilityConfig: config.ObservabilityConfiguration,
+		osdClusterConfig:    config.OSDClusterConfig,
 	}
 }
 
@@ -107,7 +107,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.ToServiceError(err)
 	}
 
-	if d.dynamicScalingConfig.Enabled {
+	if d.osdClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		computeNodeScalingInProgress, err := d.computeNodeScalingActionInProgress(cluster, status)
 		if err != nil {
 			return errors.ToServiceError(err)
@@ -229,7 +229,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *api.DataPlaneClusterStatus) error {
 	remainingCapacity := true
-	if d.dynamicScalingConfig.Enabled {
+	if d.osdClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		var err error
 		remainingCapacity, err = d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
 		if err != nil {

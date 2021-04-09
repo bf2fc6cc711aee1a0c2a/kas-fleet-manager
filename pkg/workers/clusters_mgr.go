@@ -228,7 +228,7 @@ func (c *ClusterManager) reconcile() {
 
 	for _, readyCluster := range readyClusters {
 		emptyClusterReconciled := false
-		if c.configService.GetConfig().OSDClusterConfig.DynamicScalingConfig.Enabled {
+		if c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
 			emptyClusterReconciled, err = c.reconcileEmptyCluster(readyCluster)
 		}
 		if !emptyClusterReconciled && err == nil {
@@ -505,7 +505,7 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 // A new clusters will be registered if it is not yet in the database
 // A cluster will be deprovisioned if it is in database but not in config file
 func (c *ClusterManager) reconcileClusterWithManualConfig() error {
-	if !c.configService.GetConfig().OSDClusterConfig.IsManualDataPlaneScalingEnabled() {
+	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
 		return nil
 	}
 
@@ -550,7 +550,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 
 // reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
 func (c *ClusterManager) reconcileClustersForRegions() error {
-	if !c.configService.GetConfig().OSDClusterConfig.DynamicScalingConfig.Enabled {
+	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		return nil
 	}
 

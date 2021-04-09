@@ -383,11 +383,6 @@ parameters:
   description: Data retention period configuration for the default Kafka instance type
   value: "P14D"
 
-- name: ENABLE_DYNAMIC_SCALING
-  displayName: Enable dynamic scaling
-  description: Dynamic scaling functionality enablement configuration. Controls OSD cluster, Compute node dynamic scaling, OSD cluster autocreation and additional cluster capacity state setting
-  value: "false"
-
 - name: DEFAULT_KAFKA_VERSION
   displayName: Default Kafka version
   description: The default version of Kafka when creating Kafka instances.
@@ -405,7 +400,7 @@ parameters:
 
 - name: DATAPLANE_CLUSTER_SCALING_TYPE
   displayName: Data Plane Cluster Scaling Type
-  description: Data Plane Cluster Scaling type (manual/auto)
+  description: Data Plane Cluster Scaling type (manual/auto/none). If set to none, scaling is disabled.
   value: "manual"
 
 - name: CLUSTER_LIST
@@ -738,7 +733,6 @@ objects:
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
-            - --enable-dynamic-scaling=${ENABLE_DYNAMIC_SCALING}
             - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --alsologtostderr

@@ -274,7 +274,7 @@ Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the C
         - Run `ocm list clusters`
         - The ID should be displayed under the ID column
 
->NOTE: By default the auto scaling feature is enabled in development mode. You can change it to false by passing `--dataplane-cluster-scaling-type=manual` when starting a built binary. Or changing the default value in [default development environment flags file](cmd/kas-fleet-manager/environments/development.go) when using `make run` to start the API.
+>NOTE: By default the auto scaling feature is disabled in development mode. You can enable it by passing `--dataplane-cluster-scaling-type=auto` when starting a built binary. Or changing the default value in [default development environment flags file](cmd/kas-fleet-manager/environments/development.go) when using `make run` to start the API.
 
 #### Using an existing cluster with manual scaling enabled via `dataplane-cluster-scaling-type` flag set to `manual`
 

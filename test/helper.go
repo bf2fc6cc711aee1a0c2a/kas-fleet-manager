@@ -5,12 +5,13 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"net/http/httptest"
 	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -121,6 +122,8 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 			JWTCA:         authHelper.JWTCA,
 			AuthHelper:    authHelper,
 		}
+
+		helper.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 
 		// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
 		jwkMockTeardown := helper.StartJWKCertServerMock()
