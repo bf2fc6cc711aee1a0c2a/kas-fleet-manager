@@ -231,6 +231,18 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
+	// certain characters are allowed in the description
+	r = openapi.ServiceAccountRequest{
+		Name:        "test",
+		Description: "Created by the managed-services integration tests.,",
+	}
+	sa, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	Expect(err).ShouldNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(sa.ClientID).NotTo(BeEmpty())
+	Expect(sa.ClientSecret).NotTo(BeEmpty())
+	Expect(sa.Id).NotTo(BeEmpty())
+
 	//verify delete
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
 	Expect(err).ShouldNot(HaveOccurred())
