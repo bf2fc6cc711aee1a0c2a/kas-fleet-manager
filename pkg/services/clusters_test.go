@@ -3,9 +3,10 @@ package services
 import (
 	"errors"
 	"fmt"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"reflect"
 	"testing"
+
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/onsi/gomega"
 
@@ -21,7 +22,7 @@ import (
 var (
 	testRegion   = "us-west-1"
 	testProvider = "aws"
-	testDNS      = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
+	testDNS      = "apps.mk-btq2d1h8d3b1.b3k3.s1.devshift.org"
 	testMultiAZ  = true
 	testStatus   = api.ClusterProvisioned
 )
