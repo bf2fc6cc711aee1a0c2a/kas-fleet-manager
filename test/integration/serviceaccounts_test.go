@@ -231,6 +231,10 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
+	//verify delete
+	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
+	Expect(err).ShouldNot(HaveOccurred())
+
 	// certain characters are allowed in the description
 	r = openapi.ServiceAccountRequest{
 		Name:        "test",

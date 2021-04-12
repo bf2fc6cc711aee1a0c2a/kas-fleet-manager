@@ -1385,6 +1385,7 @@ components:
       - $ref: '#/components/schemas/ServiceAccountListItem_allOf'
     ServiceAccountList:
       allOf:
+      - $ref: '#/components/schemas/List'
       - $ref: '#/components/schemas/ServiceAccountList_allOf'
     MetricsRangeQueryList:
       allOf:
@@ -1551,10 +1552,8 @@ components:
           description: description of the service account
           type: string
     ServiceAccountList_allOf:
-      example: '{"kind":"ServiceAccountList","items":{"$ref":"#/components/examples/ServiceAccountListItemExample"}}'
+      example: '{"kind":"ServiceAccountList","page":0,"size":1,"Total":2,"items":[{"$ref":"#/components/examples/ServiceAccountListItemExample"}]}'
       properties:
-        kind:
-          type: string
         items:
           items:
             allOf:

@@ -31,9 +31,13 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 			if err != nil {
 				return nil, err
 			}
+			Total := len(sa)
 
 			serviceAccountList := openapi.ServiceAccountList{
 				Kind:  "ServiceAccountList",
+				Page:  int32(Page),
+				Size:  int32(Size),
+				Total: int32(Total),
 				Items: []openapi.ServiceAccountListItem{},
 			}
 

@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/bf2fc6cc711aee1a0c2a/gocloak/v8"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 )
 
@@ -24,7 +24,7 @@ type KcClient interface {
 	CreateProtocolMapperConfig(string) []gocloak.ProtocolMapperRepresentation
 	GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error)
 	UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error
-	GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error)
+	GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error)
 	IsSameOrg(client *gocloak.Client, orgId string) bool
 	IsOwner(client *gocloak.Client, userId string) bool
 	RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error)
@@ -219,12 +219,16 @@ func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountU
 	return err
 }
 
-func (kc *kcClient) GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error) {
+func (kc *kcClient) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{}
-	if first > 0 && max > 0 {
+	if max == 0 {
+		max = 100
+	}
+	if max > 0 {
 		params = gocloak.GetClientsParams{
 			First: &first,
 			Max:   &max,
+			SearchableAttributes: &attribute,
 		}
 	}
 	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
