@@ -11,7 +11,7 @@ To solve this problem, it is recommended to use a service like [ngrok](https://n
 3. Open a terminal window and run `ngrok http 8000`. This will create a tunnel to the Ngrok service and you should see the forwarding urls to access your local server printed in the console. Copy the https one.
 4. Before starting the kas-fleet-manager, make sure you have added the right access token to the `observability-config-access.token` file in the local `secrets` directory (note: do not commit it!).
 5. Start the kas-fleet-manager with the following command:
-   ```
+   ```bash
    ./kas-fleet-manager serve --public-host-url=<https forwarding url from Ngrok> --enable-kas-fleetshard-sync=true <other flags>
    ```
 5. You should also see access logs printed in the ngrok console, and the requests should be handled by the kas-fleet-manager once it's started successfully.
