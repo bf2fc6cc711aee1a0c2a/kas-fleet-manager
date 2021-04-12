@@ -368,10 +368,10 @@ parameters:
   description: Totoal max connections configuration for the default Kafka instance type
   value: "100"
 
-- name: KAFKA_CAPACITY_MAX_DATA_RENTENTION_SIZE
+- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE
   displayName: Kafka max data retention size
   description: Data retention size configuration for the default Kafka instance type
-  value: "100Gi"
+  value: "60Gi"
 
 - name: KAFKA_CAPACITY_MAX_PARTITIONS
   displayName: Kafka max partitions
@@ -458,7 +458,7 @@ objects:
         maxCapacity: ${KAFKA_CAPACITY_MAX_CAPACITY}
         ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
         totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
-        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RENTENTION_SIZE}
+        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
         maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
         maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
   - kind: ConfigMap
