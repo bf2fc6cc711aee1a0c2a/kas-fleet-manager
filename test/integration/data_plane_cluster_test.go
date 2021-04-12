@@ -318,11 +318,14 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	Expect(err).ToNot(HaveOccurred())
 }
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {
+	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
+		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -338,6 +341,9 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	if testDataPlaneclusterID == "" {
 		t.Fatalf("Cluster not found")
 	}
+
+	// enable dynamic autoscaling
+	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
@@ -358,12 +364,16 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 }
 
 func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
+	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
+		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
 		h.Env().Config.Kafka.EnableKasFleetshardSync = false
+		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
+
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedCluster, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
 	if err != nil {
@@ -389,6 +399,9 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	if testDataPlaneclusterID == "" {
 		t.Fatalf("Cluster not found")
 	}
+
+	// enable auto scaling
+	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
