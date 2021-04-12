@@ -128,7 +128,7 @@ follow this process again to generate a new token.
 
     ##### keycloak cert
     ```
-echo "" | openssl s_client -servername identity.api.stage.openshift.com -connect identity.api.stage.openshift.com:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
+    echo "" | openssl s_client -servername identity.api.stage.openshift.com -connect identity.api.stage.openshift.com:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
     ```
     ##### mas sso client id & client secret
     ```
@@ -170,6 +170,8 @@ echo "" | openssl s_client -servername identity.api.stage.openshift.com -connect
     $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas
    {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
     ```
+
+9. If the `--enable-kas-fleetshard-sync` flag is set to true (it is set to false by default at the moment, so you need to explicitly enable it), you should follow the [extra steps](./docs/test-locally-with-fleetshard-sync.md) to allow the synchronizer to communicate with your local server. 
 
 ## Running the Service on an OpenShift cluster
 ### Build and Push the Image to the OpenShift Image Registry
