@@ -9,7 +9,7 @@ import (
 
 // ClusterNamePrefix a prefix used for new OCM cluster names
 const (
-	ClusterNamePrefix  = "ms-"
+	ClusterNamePrefix  = "mk-"
 	ComputeMachineType = "m5.4xlarge"
 )
 
