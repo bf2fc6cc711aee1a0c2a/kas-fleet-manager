@@ -9,7 +9,7 @@ var stageConfigDefaults map[string]string = map[string]string{
 	"enable-ocm-mock":                   "false",
 	"enable-deny-list":                  "true",
 	"max-allowed-instances":             "1",
-	"mas-sso-base-url":                  "https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com",
+	"mas-sso-base-url":                  "https://identity.api.stage.openshift.com",
 	"mas-sso-realm":                     "rhoas",
 	"enable-kafka-external-certificate": "true",
 	"cluster-compute-machine-type":      "m5.4xlarge",
