@@ -212,7 +212,7 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 		return nil, errors.GeneralError("+%v", err)
 	}
 	if !isAllowed {
-		return nil, errors.GeneralError("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
+		return nil, errors.NewErrorFromHTTPStatusCode(403,"Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
 	}
 	glog.V(5).Infof("creating service accounts: user = %s", owner)
 	createdAt := time.Now().Format(time.RFC3339)

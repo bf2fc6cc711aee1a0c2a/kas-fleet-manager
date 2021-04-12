@@ -309,15 +309,14 @@ func TestServiceAccount_CreationLimits(t *testing.T)  {
 		Name:        "test-account-acc-3",
 		Description: "created by the managed service integration tests",
 	}
-	_,_, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_,resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
 	//cleanup
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(err).ShouldNot(HaveOccurred())
 
 	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa2.Id)
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(err).ShouldNot(HaveOccurred())
 }
