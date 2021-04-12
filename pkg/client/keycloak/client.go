@@ -222,12 +222,12 @@ func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountU
 func (kc *kcClient) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 	params := gocloak.GetClientsParams{}
 	if max == 0 {
-		max = 100
+		max = 500
 	}
 	if max > 0 {
 		params = gocloak.GetClientsParams{
-			First: &first,
-			Max:   &max,
+			First:                &first,
+			Max:                  &max,
 			SearchableAttributes: &attribute,
 		}
 	}

@@ -940,16 +940,14 @@ components:
               description: 'description of the service account'
     ServiceAccountList:
       allOf:
-        - $ref: "#/components/schemas/List"
         - type: object
           example:
             kind: "ServiceAccountList"
-            page: 0
-            size: 1
-            Total: 2
             items:
               - $ref: '#/components/examples/ServiceAccountListItemExample'
           properties:
+            kind:
+              type: string
             items:
               type: array
               items:
