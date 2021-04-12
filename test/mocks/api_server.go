@@ -89,7 +89,7 @@ const (
 	// MockIngressID default mock ingress id used in the mock ocm server
 	MockIngressID = "s1h5"
 	// MockIngressDNS default mock ingress dns used in the mock ocm server
-	MockIngressDNS = "apps.ms-btq2d1h8d3b1.b3k3.s1.devshift.org"
+	MockIngressDNS = "apps.mk-btq2d1h8d3b1.b3k3.s1.devshift.org"
 	// MockIngressHref default mock ingress HREF used in the mock ocm server
 	MockIngressHref = "/api/clusters_mgmt/v1/clusters/000/ingresses/i8y1"
 	// MockIngressListening default mock ingress listening used in the mock ocm server
