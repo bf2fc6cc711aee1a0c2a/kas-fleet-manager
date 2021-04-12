@@ -575,7 +575,7 @@ func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientR
 func (kc *keycloakService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, userId string) (bool, error) {
 	glog.V(5).Infof("Check if user is allowed to create service accounts: userId = %s", userId)
 	searchAtt := fmt.Sprintf("rh-user-id:%s", userId)
-	clients, err := kc.kcClient.GetClients(accessToken, 0, 10, searchAtt)
+	clients, err := kc.kcClient.GetClients(accessToken, 0, maxAllowed, searchAtt)
 	if err != nil {
 		sentry.CaptureException(err)
 		return false, errors.GeneralError("failed to get clients for user %s:%v", userId, err)
