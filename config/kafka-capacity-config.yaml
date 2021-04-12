@@ -3,6 +3,6 @@
 maxCapacity: 1000
 ingressEgressThroughputPerSec: "2Mi"
 totalMaxConnections: 100
-maxDataRetentionSize: "100Gi"
+maxDataRetentionSize: "60Gi"
 maxPartitions: 100
 maxDataRetentionPeriod: "P14D"
