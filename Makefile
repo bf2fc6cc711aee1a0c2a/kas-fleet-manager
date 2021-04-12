@@ -43,7 +43,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 ENABLE_OCM_MOCK ?= false
 OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
-MAS_SSO_BASE_URL ?="https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com"
+MAS_SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
 MAS_SSO_REALM ?="rhoas"
 
 GO := go
@@ -471,7 +471,7 @@ deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy: IMAGE_REPOSITORY ?= $(image_repository)
 deploy: IMAGE_TAG ?= $(image_tag)
 deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
-deploy: MAS_SSO_BASE_URL ?= "https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com"
+deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: ENABLE_MANAGED_KAFKA_CR ?= "true"

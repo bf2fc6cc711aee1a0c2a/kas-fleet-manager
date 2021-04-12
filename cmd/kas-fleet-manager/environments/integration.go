@@ -21,7 +21,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"enable-deny-list":                  "true",
 	"enable-instance-limit-control":     "true",
 	"max-allowed-instances":             "1",
-	"mas-sso-base-url":                  "https://keycloak-mas-sso-stage.apps.app-sre-stage-0.k3s7.p1.openshiftapps.com",
+	"mas-sso-base-url":                  "https://identity.api.stage.openshift.com",
 	"mas-sso-realm":                     "rhoas",
 	"osd-idp-mas-sso-realm":             "rhoas-kafka-sre",
 	"enable-kafka-external-certificate": "false",
