@@ -113,9 +113,10 @@ func (d *dataPlaneKafkaService) setKafkaClusterDeleted(kafka *api.KafkaRequest) 
 		if updateErr != nil {
 			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleted, kafka.ID, updateErr)
 			return updateErr
+		} else {
+			metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusDeleted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		}
 	}
-	metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusDeleted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	return nil
 }
 
