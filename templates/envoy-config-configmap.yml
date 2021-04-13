@@ -4,8 +4,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kas-fleet-manager-envoy-config
-annotations:
-  qontract.recycle: "true"
+  annotations:
+    qontract.recycle: "true"
 data:
   main.yaml: |
     # The administration endpoint uses a Unix socket instead of TCP in order
