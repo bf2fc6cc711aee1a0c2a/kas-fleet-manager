@@ -1129,6 +1129,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 		ocmClient                  ocm.Client
 		osdIDPKeycloakService      services.KeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+		configService              services.ConfigService
 	}
 	tests := []struct {
 		name    string
@@ -1146,6 +1147,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					UpdateStatusFunc:      nil, // set to nil as it should not be called
 					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: true,
 		},
@@ -1161,6 +1167,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return &apiErrors.ServiceError{} // update failed
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: true,
 		},
@@ -1176,6 +1187,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: false,
 		},
@@ -1196,6 +1212,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return 500, fmt.Errorf("ocm Error")
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: true,
 		},
@@ -1218,6 +1239,21 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return 204, nil
 					},
 				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: true,
 		},
@@ -1245,6 +1281,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return &apiErrors.ServiceError{}
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: true,
 		},
@@ -1277,6 +1318,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return &apiErrors.ServiceError{}
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
 			},
 			wantErr: true,
 		},
@@ -1309,6 +1355,49 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return nil
 					},
 				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "auto",
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "successful deletion of an OSD cluster when manual configuration is enabled",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
+						// this should never be called when manual cluster configuration is used
+						return &api.Cluster{ClusterID: "dummy cluster"}, nil
+					},
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return &apiErrors.ServiceError{}
+					},
+				},
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 204, nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "manual",
+					},
+				}),
 			},
 			wantErr: false,
 		},
@@ -1322,6 +1411,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 				ocmClient:                  tt.fields.ocmClient,
 				osdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
 				kasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				configService:              tt.fields.configService,
 			}
 
 			err := c.reconcileDeprovisioningCluster(tt.arg)
