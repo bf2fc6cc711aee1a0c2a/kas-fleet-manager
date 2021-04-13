@@ -158,7 +158,7 @@ func KafkaRequestsStatusMetric(status constants.KafkaStatus, kafkaId string, clu
 		LabelKafkaRequestID: string(kafkaId),
 		LabelKafkaClusterID: string(clusterId),
 	}
-	kafkaStatusDurationMetric.With(labels).Add(float64(elapsed.Seconds()))
+	kafkaStatusDurationMetric.With(labels).Set(float64(elapsed.Seconds()))
 }
 
 // create a new GaugeVec for kafkas status duration
