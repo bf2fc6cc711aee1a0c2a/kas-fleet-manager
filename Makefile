@@ -498,6 +498,7 @@ deploy: deploy/db
 		-p KAFKA_TLS_KEY="$(KAFKA_TLS_KEY)" \
 		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
 		| oc apply -f - -n $(NAMESPACE)
+	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(OCM_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
@@ -524,6 +525,7 @@ undeploy:
 	@-oc process -f ./templates/db-template.yml | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/secrets-template.yml | oc delete -f - -n $(NAMESPACE)
 	@-oc process -f ./templates/route-template.yml | oc delete -f - -n $(NAMESPACE)
+	@-oc delete -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
 	@-oc process -f ./templates/service-template.yml \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
