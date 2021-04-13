@@ -66,4 +66,5 @@ test/performance/admin-api:
 		then echo "Not all env vars required to run the admin-api tests (ADMIN_API_SSO_AUTH_URL, ADMIN_API_SVC_ACC_ID, ADMIN_API_SVC_ACC_SECRET, ADMIN_API_HOST were provided!" ; exit 1 ; fi;
 
 	ADMIN_API_SSO_AUTH_URL=$(ADMIN_API_SSO_AUTH_URL) ADMIN_API_SVC_ACC_ID=$(ADMIN_API_SVC_ACC_ID) ADMIN_API_SVC_ACC_SECRET=$(ADMIN_API_SVC_ACC_SECRET) \
-		locust -f test/performance/admin-api/locustfile.py --headless -u 1 --run-time $(ADMIN_API_RUN_TIME) --host $(ADMIN_API_HOST)
+		locust -f test/performance/admin-api/locustfile.py --headless -u 1 --run-time $(ADMIN_API_RUN_TIME) --host $(ADMIN_API_HOST) --csv-full-history --csv=test/performance/admin-api/reports/admin_api \
+		  --logfile=test/performance/admin-api/reports/admin_api_logfile --html test/performance/admin-api/reports/admin_api_report.html

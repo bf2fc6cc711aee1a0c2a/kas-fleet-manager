@@ -69,5 +69,11 @@ test/performance/token_api/config.txt
 test/performance/token_api/kafkas.txt
 test/performance/token_api/service_accounts.txt
 
+# admin api reports
+test/performance/admin-api/reports/admin_api*
+
 # local bin directory
 bin
+
+# Mac DS_Store files
+**/.DS_Store

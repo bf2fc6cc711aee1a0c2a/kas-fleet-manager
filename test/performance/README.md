@@ -113,6 +113,9 @@ This will prevent from hitting the endpoints and to resolve this stop the tests 
 
 # admin-api performance tests
 
+## Prerequisites
+Locust 1.4.2 or newer is required to run admin-api tests
+
 ## mandatory parameters
 
 In order to run admin-api tests, these parameters are required:
