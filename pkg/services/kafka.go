@@ -124,7 +124,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
-
+	metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
 }
 
@@ -230,12 +230,11 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 	}
 
 	orgId := auth.GetOrgIdFromClaims(claims)
-	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
+	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
 	dbConn := k.connectionFactory.New().Where("id = ?", id)
 
 	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
 	if filterByOrganisationId {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
@@ -294,6 +293,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 			return handleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+		metrics.KafkaRequestsStatusMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	}
 
 	return nil
@@ -414,10 +414,9 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	}
 
 	orgId := auth.GetOrgIdFromClaims(claims)
-	userIsAllowedAsServiceAccount := auth.GetUserIsAllowedAsServiceAccountFromContext(ctx)
-	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-	filterByOrganisationId := !userIsAllowedAsServiceAccount && orgId != ""
+	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
+	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
 	if filterByOrganisationId {
 		// filter kafka requests by organisation_id since the user is allowed to see all kafka requests of my id
 		dbConn = dbConn.Where("organisation_id = ?", orgId)

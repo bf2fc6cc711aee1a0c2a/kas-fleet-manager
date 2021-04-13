@@ -29,3 +29,10 @@ This template deploys a simple postgresl-9.4 database deployment with a TLS-enab
 `templates/secrets-template.yml`
 
 This template deploys the `uhc-acct-mngr` secret with all of the necessary secret key/value pairs.
+
+## Envoy Config template
+
+`templates/envoy-config-template.yml`
+
+This template deploys the `kas-fleet-manager-envoy-config` ConfigMap that contains the Envoy
+configuration for the `envoy-sidecar` container of the `kas-fleet-manager` Deployment.

@@ -100,6 +100,8 @@ func NewAPIServer() Server {
 	// Request logging middleware logs pertinent information about the request and response
 	mainRouter.Use(logging.RequestLoggingMiddleware)
 
+	authorizeMiddleware := acl.NewAccessControlListMiddleware(env().Services.Config).Authorize
+
 	//  /api/managed-services-api
 	apiRouter := mainRouter.PathPrefix("/api/managed-services-api").Subrouter()
 	apiRouter.HandleFunc("", api.SendAPI).Methods(http.MethodGet)
@@ -132,7 +134,7 @@ func NewAPIServer() Server {
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(ocmAuthzMiddlewareRequireIssuer)
-	apiV1KafkasRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
+	apiV1KafkasRouter.Use(authorizeMiddleware)
 
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
@@ -146,7 +148,7 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
-	apiV1ServiceAccountsRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
+	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
 
 	//  /api/managed-services-api/v1/kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
@@ -161,6 +163,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", connectorTypesHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}/{path:.*}", connectorTypesHandler.ProxyToExtensionService).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
+		apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
 
 		//  /api/managed-services-api/v1/kafka-connectors
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes, services.Vault)
@@ -170,6 +173,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Delete).Methods(http.MethodDelete)
+		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
 		//  /api/managed-services-api/v1/kafka-connectors-of/{connector_type_id}
 		apiV1ConnectorsTypedRouter := apiV1Router.PathPrefix("/kafka-connectors-of/{connector_type_id}").Subrouter()
@@ -177,6 +181,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
 		apiV1ConnectorsTypedRouter.HandleFunc("/{connector_id}", connectorsHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
+		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
 		//  /api/managed-services-api/v1/kafka-connector-clusters
 		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
@@ -186,6 +191,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", connectorClusterHandler.Get).Methods(http.MethodGet)
 		apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}", connectorClusterHandler.Delete).Methods(http.MethodDelete)
 		apiV1ConnectorClustersRouter.HandleFunc("/{connector_cluster_id}/addon-parameters", connectorClusterHandler.GetAddonParameters).Methods(http.MethodGet)
+		apiV1ConnectorClustersRouter.Use(authorizeMiddleware)
 
 		// This section adds the API's accessed by the connector agent...
 		{
