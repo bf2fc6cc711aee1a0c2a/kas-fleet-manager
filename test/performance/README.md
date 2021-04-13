@@ -60,6 +60,18 @@ PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_o
 ## Generating kafka bootstrap URL and service account credentials config file
 If PERF_TEST_KAFKAS_PER_WORKER is set to a value greater than 0, for each of kafka clusters created, its config will be persisted to `test/performance/token_api/config.txt`, so that it can be consumed by Running the Service team for kafka load test.
 
+## Cleaning up created kafka clusters/ service accounts
+If any kafka clusters were created during the test run, `test/performance/token_api/kafkas.txt` will be populated with the IDs of those kafka clusters. Assuming that any of those kafka clusters become ready during test execution, `test/performance/token_api/serviceaccounts.txt` file will contain IDs of created service accounts. Those two files can be used to cleanup the resources using `test/performance/scripts/cleanup.py`. The script requires three mandatory parameters:
+
+* `API_HOST` - e.g. `https://api.openshift.com` for production API
+* `FILE_PATH` - absolute or relative path to the file with the resources IDs, e.g. `kafkas.txt`
+* `RESOURCE` - `kafkas` or `serviceaccounts` (must be the resource name used in the api url)
+
+### Running the cleanup example
+```
+API_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=kafkas.txt RESOURCE=kafkas python3 cleanup.py
+```
+
 ## Build and push the images
 
 Make sure login quay.io using a robot account. The credentials are saved under rhoas/robots/ inside vault. 
