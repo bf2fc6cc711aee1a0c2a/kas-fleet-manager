@@ -150,6 +150,26 @@ data:
                   - "*"
                   routes:
 
+                  # Route kas-fleet-manager's agent-cluster related endpoints
+                  # directly to the service without rate limiting
+                  - name: kas-fleet-shard-operator-agent-cluster-routes
+                    match:
+                      prefix: /api/managed-services-api/v1/agent-clusters
+                    route:
+                      cluster: backend
+
+                  # Apply rate limit to all other kas-fleet-manager endpoints
+                  - name: kas-fleet-manager-v1-routes
+                    match:
+                      prefix: /api/managed-services-api/v1
+                    route:
+                      cluster: backend
+                      rate_limits:
+                      - actions:
+                        - generic_key:
+                            descriptor_key: path
+                            descriptor_value: kas_fleet_manager_v1
+
                   # This is an example of how to define a rate limit for a
                   # specific path.
                   # - name: my_path
