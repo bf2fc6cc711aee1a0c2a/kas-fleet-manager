@@ -45,11 +45,12 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 
 		orgId := auth.GetOrgIdFromClaims(claims)
 		org, _ := middleware.configService.GetOrganisationById(orgId)
+		userAllowedAsOrgMember := org.IsUserAllowed(username)
 
 		if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
 			var userIsAllowed bool
 
-			if org.IsUserAllowed(username) {
+			if userAllowedAsOrgMember {
 				userIsAllowed = true
 			} else {
 				// check if user is allowed as a service account if they do not belong to an org
@@ -62,9 +63,8 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 			}
 		}
 
-		// user is allowed as a service account if they do not belong to an org listed in the allow list
-		userIsAllowedAsServiceAccount := !org.IsUserAllowed(username)
-		context = auth.SetUserIsAllowedAsServiceAccountContext(context, userIsAllowedAsServiceAccount)
+		// If the user is allowed as an organisation member, resources should be filtered by their organisation. Otherwise, filter them by owner.
+		context = auth.SetFilterByOrganisationContext(context, userAllowedAsOrgMember)
 		*r = *r.WithContext(context)
 
 		next.ServeHTTP(w, r)

@@ -36,7 +36,7 @@ objects:
   spec:
     to:
       kind: Service
-      name: kas-fleet-manager
+      name: kas-fleet-manager-envoy
     tls:
       termination: reencrypt
       insecureEdgeTerminationPolicy: Redirect
