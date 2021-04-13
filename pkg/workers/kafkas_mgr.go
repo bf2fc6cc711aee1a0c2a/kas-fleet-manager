@@ -139,6 +139,7 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	for _, kafka := range acceptedKafkas {
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
 			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
@@ -154,6 +155,7 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	for _, kafka := range preparingKafkas {
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcilePreparedKafka(kafka); err != nil {
 			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
@@ -163,16 +165,17 @@ func (k *KafkaManager) reconcile() {
 	}
 
 	// handle provisioning kafkas state
-	if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
+	if serviceErr != nil {
+		sentry.CaptureException(serviceErr)
+		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
+	}
+
+	for _, kafka := range provisioningKafkas {
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		// only need to check if Kafka clusters are ready if kas-fleetshard sync is not enabled
 		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
-		provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
-		if serviceErr != nil {
-			sentry.CaptureException(serviceErr)
-			glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
-		}
-
-		for _, kafka := range provisioningKafkas {
+		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
 			if err := k.reconcileProvisioningKafka(kafka); err != nil {
 				sentry.CaptureException(err)
 				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
@@ -245,6 +248,8 @@ func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
 		if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
 			return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
 		}
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+
 	}
 	kafka.SubscriptionId = subscriptionId
 	return nil
@@ -311,6 +316,8 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 		/**TODO if there is a creation failure, total operations needs to be incremented: this info. is not available at this time.*/
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+
 		return nil
 	}
 	glog.V(1).Infof("reconciled kafka %s state %s", kafka.ID, kafkaState.State)
@@ -330,7 +337,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 			if updateErr != nil {
 				return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
 			}
-
+			metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 			return fmt.Errorf("reached kafka %s max attempts", kafkaRequest.ID)
 		}
 	} else if err.IsClientErrorClass() {
@@ -341,6 +348,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		if updateErr != nil {
 			return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
 		}
+		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 		sentry.CaptureException(err)
 		return fmt.Errorf("error creating kafka %s: %w", kafkaRequest.ID, err)
 	}
