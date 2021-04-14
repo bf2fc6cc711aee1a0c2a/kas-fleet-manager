@@ -23,7 +23,8 @@ type ServerConfig struct {
 	// The public http host URL to access the service
 	// For staging it is "https://api.stage.openshift.com"
 	// For production it is "https://api.openshift.com"
-	PublicHostURL string `json:"public_url"`
+	PublicHostURL         string `json:"public_url"`
+	EnableTermsAcceptance bool   `json:"enable_terms_acceptance"`
 }
 
 func NewServerConfig() *ServerConfig {
@@ -54,6 +55,7 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.HTTPSKeyFile, "https-key-file", s.HTTPSKeyFile, "The path to the tls.key file.")
 	fs.BoolVar(&s.EnableHTTPS, "enable-https", s.EnableHTTPS, "Enable HTTPS rather than HTTP")
 	fs.BoolVar(&s.EnableJWT, "enable-jwt", s.EnableJWT, "Enable JWT authentication validation")
+	fs.BoolVar(&s.EnableTermsAcceptance, "enable-terms-acceptance", s.EnableTermsAcceptance, "Enable terms acceptance check")
 	fs.BoolVar(&s.EnableAuthz, "enable-authz", s.EnableAuthz, "Enable Authorization on endpoints, should only be disabled for debug")
 	fs.StringVar(&s.JwksURL, "jwks-url", s.JwksURL, "The URL of the JSON web token signing certificates.")
 	fs.StringVar(&s.JwksFile, "jwks-file", s.JwksFile, "File containing the the JSON web token signing certificates.")
