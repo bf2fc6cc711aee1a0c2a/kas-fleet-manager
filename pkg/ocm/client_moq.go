@@ -70,6 +70,9 @@ var _ Client = &ClientMock{}
 // 			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 // 				panic("mock out the GetRegions method")
 // 			},
+// 			GetRequiresTermsAcceptanceFunc: func(username string) (bool, error) {
+// 				panic("mock out the GetRequiresTermsAcceptance method")
+// 			},
 // 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the GetSyncSet method")
 // 			},
@@ -148,6 +151,9 @@ type ClientMock struct {
 
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
+
+	// GetRequiresTermsAcceptanceFunc mocks the GetRequiresTermsAcceptance method.
+	GetRequiresTermsAcceptanceFunc func(username string) (bool, error)
 
 	// GetSyncSetFunc mocks the GetSyncSet method.
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
@@ -269,6 +275,11 @@ type ClientMock struct {
 			// Provider is the provider argument value.
 			Provider *clustersmgmtv1.CloudProvider
 		}
+		// GetRequiresTermsAcceptance holds details about calls to the GetRequiresTermsAcceptance method.
+		GetRequiresTermsAcceptance []struct {
+			// Username is the username argument value.
+			Username string
+		}
 		// GetSyncSet holds details about calls to the GetSyncSet method.
 		GetSyncSet []struct {
 			// ClusterID is the clusterID argument value.
@@ -325,30 +336,31 @@ type ClientMock struct {
 			Syncset *clustersmgmtv1.Syncset
 		}
 	}
-	lockClusterAuthorization   sync.RWMutex
-	lockCreateAddon            sync.RWMutex
-	lockCreateAddonWithParams  sync.RWMutex
-	lockCreateCluster          sync.RWMutex
-	lockCreateIdentityProvider sync.RWMutex
-	lockCreateSyncSet          sync.RWMutex
-	lockDeleteCluster          sync.RWMutex
-	lockDeleteSubscription     sync.RWMutex
-	lockDeleteSyncSet          sync.RWMutex
-	lockFindSubscriptions      sync.RWMutex
-	lockGetAddon               sync.RWMutex
-	lockGetCloudProviders      sync.RWMutex
-	lockGetCluster             sync.RWMutex
-	lockGetClusterDNS          sync.RWMutex
-	lockGetClusterIngresses    sync.RWMutex
-	lockGetClusterStatus       sync.RWMutex
-	lockGetRegions             sync.RWMutex
-	lockGetSyncSet             sync.RWMutex
-	lockScaleDownComputeNodes  sync.RWMutex
-	lockScaleUpComputeNodes    sync.RWMutex
-	lockSetComputeNodes        sync.RWMutex
-	lockUpdateAddonParameters  sync.RWMutex
-	lockUpdateIdentityProvider sync.RWMutex
-	lockUpdateSyncSet          sync.RWMutex
+	lockClusterAuthorization       sync.RWMutex
+	lockCreateAddon                sync.RWMutex
+	lockCreateAddonWithParams      sync.RWMutex
+	lockCreateCluster              sync.RWMutex
+	lockCreateIdentityProvider     sync.RWMutex
+	lockCreateSyncSet              sync.RWMutex
+	lockDeleteCluster              sync.RWMutex
+	lockDeleteSubscription         sync.RWMutex
+	lockDeleteSyncSet              sync.RWMutex
+	lockFindSubscriptions          sync.RWMutex
+	lockGetAddon                   sync.RWMutex
+	lockGetCloudProviders          sync.RWMutex
+	lockGetCluster                 sync.RWMutex
+	lockGetClusterDNS              sync.RWMutex
+	lockGetClusterIngresses        sync.RWMutex
+	lockGetClusterStatus           sync.RWMutex
+	lockGetRegions                 sync.RWMutex
+	lockGetRequiresTermsAcceptance sync.RWMutex
+	lockGetSyncSet                 sync.RWMutex
+	lockScaleDownComputeNodes      sync.RWMutex
+	lockScaleUpComputeNodes        sync.RWMutex
+	lockSetComputeNodes            sync.RWMutex
+	lockUpdateAddonParameters      sync.RWMutex
+	lockUpdateIdentityProvider     sync.RWMutex
+	lockUpdateSyncSet              sync.RWMutex
 }
 
 // ClusterAuthorization calls ClusterAuthorizationFunc.
@@ -898,6 +910,37 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 	mock.lockGetRegions.RLock()
 	calls = mock.calls.GetRegions
 	mock.lockGetRegions.RUnlock()
+	return calls
+}
+
+// GetRequiresTermsAcceptance calls GetRequiresTermsAcceptanceFunc.
+func (mock *ClientMock) GetRequiresTermsAcceptance(username string) (bool, error) {
+	if mock.GetRequiresTermsAcceptanceFunc == nil {
+		panic("ClientMock.GetRequiresTermsAcceptanceFunc: method is nil but Client.GetRequiresTermsAcceptance was just called")
+	}
+	callInfo := struct {
+		Username string
+	}{
+		Username: username,
+	}
+	mock.lockGetRequiresTermsAcceptance.Lock()
+	mock.calls.GetRequiresTermsAcceptance = append(mock.calls.GetRequiresTermsAcceptance, callInfo)
+	mock.lockGetRequiresTermsAcceptance.Unlock()
+	return mock.GetRequiresTermsAcceptanceFunc(username)
+}
+
+// GetRequiresTermsAcceptanceCalls gets all the calls that were made to GetRequiresTermsAcceptance.
+// Check the length with:
+//     len(mockedClient.GetRequiresTermsAcceptanceCalls())
+func (mock *ClientMock) GetRequiresTermsAcceptanceCalls() []struct {
+	Username string
+} {
+	var calls []struct {
+		Username string
+	}
+	mock.lockGetRequiresTermsAcceptance.RLock()
+	calls = mock.calls.GetRequiresTermsAcceptance
+	mock.lockGetRequiresTermsAcceptance.RUnlock()
 	return calls
 }
 

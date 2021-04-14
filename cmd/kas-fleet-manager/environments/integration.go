@@ -14,6 +14,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"enable-https":                      "false",
 	"enable-metrics-https":              "false",
 	"enable-authz":                      "true",
+	"enable-terms-acceptance":           "false",
 	"ocm-debug":                         "false",
 	"enable-ocm-mock":                   "true",
 	"ocm-mock-mode":                     config.MockModeEmulateServer,

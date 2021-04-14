@@ -12,9 +12,9 @@ import (
 	"reflect"
 	"sync"
 
-	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	authorizationsv1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -67,6 +67,8 @@ const (
 
 	EndpointPathClusterAuthorization = "/api/accounts_mgmt/v1/cluster_authorizations"
 	EndpointPathSubscription         = "/api/accounts_mgmt/v1/subscriptions/{id}"
+
+	EndpointPathTermsReview = "/api/authorizations/v1/terms_review"
 
 	// Default values for getX functions
 
@@ -146,6 +148,7 @@ var (
 	EndpointAddonInstallationPatch   = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
 	EndpointClusterAuthorizationPost = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
 	EndpointSubscriptionDelete       = Endpoint{EndpointPathSubscription, http.MethodDelete}
+	EndpointTermsReviewPost          = Endpoint{EndpointPathTermsReview, http.MethodPost}
 )
 
 // variables for mocked ocm types
@@ -169,6 +172,7 @@ var (
 	MockCluster                      *clustersmgmtv1.Cluster
 	MockClusterAuthorization         *amsv1.ClusterAuthorizationResponse
 	MockSubscription                 *amsv1.Subscription
+	MockTermsReview                  *authorizationsv1.TermsReviewResponse
 )
 
 // routerSwapper is an http.Handler that allows you to swap mux routers.
@@ -354,6 +358,10 @@ func (b *MockConfigurableServerBuilder) SetSubscriptionPathDeleteResponse(idp *a
 	b.handlerRegister[EndpointSubscriptionDelete] = buildMockRequestHandler(idp, err)
 }
 
+func (b *MockConfigurableServerBuilder) SetTermsReviewPostResponse(idp *authorizationsv1.TermsReviewResponse, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointTermsReviewPost] = buildMockRequestHandler(idp, err)
+}
+
 // Build builds the mock ocm api server using the endpoint handlers that have been set in the builder
 func (b *MockConfigurableServerBuilder) Build() *httptest.Server {
 	router = mux.NewRouter()
@@ -438,6 +446,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointAddonInstallationPatch:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
 		EndpointClusterAuthorizationPost: buildMockRequestHandler(MockClusterAuthorization, nil),
 		EndpointSubscriptionDelete:       buildMockRequestHandler(MockSubscription, nil),
+		EndpointTermsReviewPost:          buildMockRequestHandler(MockTermsReview, nil),
 	}, nil
 }
 
@@ -541,6 +550,8 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		return amsv1.MarshalClusterAuthorizationResponse(t.(*amsv1.ClusterAuthorizationResponse), w)
 	case *amsv1.Subscription:
 		return amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
+	case *authorizationsv1.TermsReviewResponse:
+		return authorizationsv1.MarshalTermsReviewResponse(t.(*authorizationsv1.TermsReviewResponse), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError(""))
@@ -680,6 +691,10 @@ func GetMockClusterAuthorization(modifyFn func(b *amsv1.ClusterAuthorizationResp
 		modifyFn(builder)
 	}
 	return builder, err
+}
+
+func GetMockTermsReview(modifyFn func(b *authorizationsv1.TermsReviewResponse)) (*authorizationsv1.TermsReviewResponse, error) {
+	return authorizationsv1.NewTermsReviewResponse().TermsRequired(true).Build()
 }
 
 // GetMockSyncsetBuilder for emulated OCM server
@@ -857,6 +872,14 @@ func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clust
 		CloudProvider(GetMockCloudProviderBuilder(nil)).
 		Region(GetMockCloudProviderRegionBuilder(nil)).
 		Version(GetMockOpenshiftVersionBuilder(nil))
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
+}
+
+func GetMockTermsReviewBuilder(modifyFn func(builder *authorizationsv1.TermsReviewResponseBuilder)) *authorizationsv1.TermsReviewResponseBuilder {
+	builder := authorizationsv1.NewTermsReviewResponse()
 	if modifyFn != nil {
 		modifyFn(builder)
 	}

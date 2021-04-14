@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"net"
 	"net/http"
 	"time"
@@ -74,6 +75,7 @@ func NewAPIServer() Server {
 
 	ocmAuthzMiddleware := auth.NewOCMAuthorizationMiddleware()
 	ocmAuthzMiddlewareRequireIssuer := ocmAuthzMiddleware.RequireIssuer(env().Config.OCM.TokenIssuerURL, errors.ErrorUnauthenticated)
+	ocmAuthzMiddlewareRequireTermsAcceptance := ocmAuthzMiddleware.RequireTermsAcceptance(env().Config.Server.EnableTermsAcceptance, ocm.NewClient(env().Clients.OCM.Connection), errors.ErrorTermsNotAccepted)
 
 	// mainRouter is top level "/"
 	mainRouter := mux.NewRouter()
@@ -129,12 +131,19 @@ func NewAPIServer() Server {
 
 	//  /api/managed-services-api/v1/kafkas
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
+	apiV1KafkasCreateRouter := apiV1KafkasRouter.NewRoute().Subrouter()
+
+	//apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
-	apiV1KafkasRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 	apiV1KafkasRouter.Use(authorizeMiddleware)
+
+	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
+	apiV1KafkasCreateRouter.Use(ocmAuthzMiddlewareRequireTermsAcceptance)
+	apiV1KafkasCreateRouter.Use(ocmAuthzMiddlewareRequireIssuer)
+	apiV1KafkasCreateRouter.Use(acl.NewAccessControlListMiddleware(env().Services.Config).Authorize)
 
 	//  /api/managed-services-api/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()

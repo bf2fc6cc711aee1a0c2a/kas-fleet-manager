@@ -1,9 +1,11 @@
 package ocm
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -40,6 +42,7 @@ type Client interface {
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
 	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
+	GetRequiresTermsAcceptance(username string) (termsRequired bool, err error)
 }
 
 var _ Client = &client{}
@@ -63,6 +66,24 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 	createdCluster := response.Body()
 
 	return createdCluster, nil
+}
+
+func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, err error) {
+	request, err := v1.NewTermsReviewRequest().AccountUsername(username).Build()
+	if err != nil {
+		return false, err
+	}
+	selfTermsReview := c.ocmClient.Authorizations().V1().TermsReview()
+	postResp, err := selfTermsReview.Post().Request(request).Send()
+	if err != nil {
+		return false, err
+	}
+	response, ok := postResp.GetResponse()
+	if !ok {
+		return false, fmt.Errorf("empty response from authorization post request")
+	}
+
+	return response.TermsRequired(), nil
 }
 
 // GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
