@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/bf2fc6cc711aee1a0c2a/gocloak/v8"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
@@ -69,12 +69,12 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 		return "", errors.GeneralError("failed to check the sso client exists:%v", err)
 	}
 	if internalClientId != "" {
+		glog.V(5).Infof("Existing Kafka Client %s found", kafkaClusterName)
 		secretValue, _ := kc.kcClient.GetClientSecret(internalClientId, accessToken)
 		return secretValue, nil
 	}
-
 	rhOrgIdAttributes := map[string]string{
-		rhOrgId: orgId,
+		"owner-rh-org-id": orgId,
 	}
 	c := keycloak.ClientRepresentation{
 		ClientID:                     kafkaClusterName,
@@ -93,6 +93,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	if err != nil {
 		return "", errors.FailedToGetSSOClientSecret("failed to get the sso client secret: %v", err)
 	}
+	glog.V(5).Infof("Kafka Client %s created successfully", kafkaClusterName)
 	return secretValue, nil
 }
 
@@ -145,6 +146,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 		return errors.GeneralError("failed to get access token to deregister OSD cluster client in sso: %v", tokenErr)
 	}
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
+	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
 	if internalClientID == "" {
 		return nil
 	}
@@ -153,6 +155,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 		sentry.CaptureException(err)
 		return errors.FailedToDeleteSSOClient("failed to delete the sso client: %v", err)
 	}
+	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
 	return nil
 }
 
@@ -204,6 +207,14 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	orgId := auth.GetOrgIdFromClaims(claims)
 	ownerAccountId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
+	isAllowed, err := kc.checkAllowedServiceAccountsLimits(accessToken, kc.GetConfig().MaxAllowedServiceAccounts, ownerAccountId)
+	if err != nil {
+		return nil, errors.GeneralError("+%v", err)
+	}
+	if !isAllowed {
+		return nil, errors.NewErrorFromHTTPStatusCode(403,"Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
+	}
+	glog.V(5).Infof("creating service accounts: user = %s", owner)
 	createdAt := time.Now().Format(time.RFC3339)
 	rhAccountID := map[string][]string{
 		rhOrgId:  {orgId},
@@ -264,6 +275,7 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	if err != nil {
 		serviceAcc.CreatedAt = time.Time{}
 	}
+	glog.V(5).Infof("service account clientId = %s created for user = %s", owner, serviceAcc.ClientID)
 	return &serviceAcc, nil
 }
 
@@ -284,7 +296,8 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
 	var sa []api.ServiceAccount
-	clients, err := kc.kcClient.GetClients(accessToken, first, max)
+	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
+	clients, err := kc.kcClient.GetClients(accessToken, first, max, searchAtt)
 	if err != nil {
 		sentry.CaptureException(err)
 		return nil, errors.GeneralError("failed to check the sso client exists: %v", err)
@@ -293,7 +306,7 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 		acc := api.ServiceAccount{}
 		attributes := client.Attributes
 		att := *attributes
-		if att["rh-org-id"] == orgId && strings.HasPrefix(safeString(client.ClientID), "srvc-acct") {
+		if strings.HasPrefix(safeString(client.ClientID), "srvc-acct") {
 			createdAt, err := time.Parse(time.RFC3339, att["created_at"])
 			if err != nil {
 				createdAt = time.Time{}
@@ -556,6 +569,24 @@ func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientR
 		Description:  clientRep.Description,
 	}
 	return serviceAcc, nil
+
+}
+
+func (kc *keycloakService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, userId string) (bool, error) {
+	glog.V(5).Infof("Check if user is allowed to create service accounts: userId = %s", userId)
+	searchAtt := fmt.Sprintf("rh-user-id:%s", userId)
+	clients, err := kc.kcClient.GetClients(accessToken, 0, maxAllowed, searchAtt)
+	if err != nil {
+		sentry.CaptureException(err)
+		return false, errors.GeneralError("failed to get clients for user %s:%v", userId, err)
+	}
+	numOfClientsFound := len(clients) + 1
+	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the userId:%s", numOfClientsFound, maxAllowed, userId)
+	if numOfClientsFound > maxAllowed {
+		return false, nil
+	} else {
+		return true, nil
+	}
 }
 
 func buildAgentOperatorServiceAccountId(agentClusterId string) string {
