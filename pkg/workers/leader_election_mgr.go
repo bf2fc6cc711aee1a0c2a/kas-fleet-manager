@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	mgrRepeatInterval = 30 * time.Second
-	leaseRenewTime    = 3 * time.Minute
+	mgrRepeatInterval = 15 * time.Second
+	leaseRenewTime    = 1 * time.Minute
 )
 
 type LeaderElectionManager struct {
@@ -145,7 +145,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 	isLeader := false
 
 	// determine if we have an opportunity to acquire or extend the lease (extend if the lease is going to expire in one min)
-	if isExpired(lease) || (lease.Leader == workerId && lease.Expires.Before(time.Now().Add(time.Minute))) {
+	if isExpired(lease) || (lease.Leader == workerId && lease.Expires.Before(time.Now().Add(30*time.Second))) {
 		// begin a new transaction
 		// we must ensure we commit or rollback this transaction to avoid stale transactions being left around
 		leaderTx := dbConn.Begin() //starts a new transaction
