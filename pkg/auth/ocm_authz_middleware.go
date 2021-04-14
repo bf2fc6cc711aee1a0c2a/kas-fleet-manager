@@ -2,7 +2,9 @@ package auth
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/patrickmn/go-cache"
 	"net/http"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -16,12 +18,17 @@ type OCMAuthorizationMiddleware interface {
 	RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
 
-type ocmAuthorizationMiddleware struct{}
+type ocmAuthorizationMiddleware struct {
+	cache *cache.Cache
+}
 
 var _ OCMAuthorizationMiddleware = &ocmAuthorizationMiddleware{}
 
 func NewOCMAuthorizationMiddleware() OCMAuthorizationMiddleware {
-	return &ocmAuthorizationMiddleware{}
+	return &ocmAuthorizationMiddleware{
+		// entries will expire in 5 minutes and will be evicted every 10 minutes
+		cache: cache.New(5*time.Minute, 10*time.Minute),
+	}
 }
 
 func (m *ocmAuthorizationMiddleware) RequireIssuer(issuer string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
@@ -55,12 +62,19 @@ func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmCli
 					return
 				}
 				username := GetUsernameFromClaims(claims)
-				if termsRequired, err := ocmClient.GetRequiresTermsAcceptance(username); err != nil {
-					shared.HandleError(ctx, writer, code, err.Error())
-				} else {
-					if termsRequired {
-						shared.HandleError(ctx, writer, code, "required terms have not been accepted")
+				termsRequired, cached := m.cache.Get(username)
+				if !cached {
+					termsRequired, err = ocmClient.GetRequiresTermsAcceptance(username)
+					if err != nil {
+						shared.HandleError(ctx, writer, code, err.Error())
+						return
 					}
+
+					m.cache.Set(username, termsRequired, cache.DefaultExpiration)
+				}
+
+				if termsRequired.(bool) {
+					shared.HandleError(ctx, writer, code, "required terms have not been accepted")
 				}
 				return
 			}
