@@ -412,9 +412,14 @@ parameters:
   displayName: A list of cluster to be registered in kas fleet manager
   description: A list of cluster to be registered in kas fleet manager
   value: "[]"
+
 - name: ENVOY_IMAGE
   description: Envoy image
   value: envoyproxy/envoy:v1.16.1
+
+- name: KAFKA_DOMAIN_NAME
+  description: The domain name to use for Kafka instances
+  value: bf2.kafka-stage.rhcloud.com
 
 objects:
   - kind: ConfigMap
@@ -753,6 +758,7 @@ objects:
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
             - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
+            - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:
