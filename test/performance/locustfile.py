@@ -140,6 +140,7 @@ def create_svc_acc_for_kafka(self, kafka_id):
       if service_acc_json != '' and 'id' in service_acc_json:
         svc_acc_id = service_acc_json['id']
         kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': service_acc_json})
+        persist_service_account_id(svc_acc_id)
       else:
         time.sleep(random.uniform(0.5, 1)) # back off for ~1s if serviceaccount creation was unsuccessful
 
@@ -223,7 +224,6 @@ def wait_for_kafkas_ready(self):
       if kafka['status'] == 'ready' and 'bootstrapServerHost' in kafka:
         svc_acc_json_payload = get_svc_account_for_kafka(kafka_assoc_svc_accs, kafkas_list[i])
         persist_kafka_config(kafka['bootstrapServerHost'], svc_acc_json_payload['svc_acc_json'])
-        persist_service_account_id(svc_acc_json_payload['svc_acc_json']['id'])
         i += 1
         if i == len(kafkas_list):
           kafkas_persisted = True
