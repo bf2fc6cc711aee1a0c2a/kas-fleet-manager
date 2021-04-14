@@ -65,6 +65,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
 	fs.BoolVar(&c.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.IntVar(&c.KafkaLifeSpan, "kafka-life-span", c.KafkaLifeSpan, "The desired life span of a Kafka instance")
+	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
 }
 
 func (c *KafkaConfig) ReadFiles() error {
