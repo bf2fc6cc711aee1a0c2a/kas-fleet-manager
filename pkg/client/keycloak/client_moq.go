@@ -4,7 +4,7 @@
 package keycloak
 
 import (
-	"github.com/Nerzal/gocloak/v8"
+	"github.com/bf2fc6cc711aee1a0c2a/gocloak/v8"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"sync"
 )
@@ -49,7 +49,7 @@ var _ KcClient = &KcClientMock{}
 // 			GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
 // 				panic("mock out the GetClientServiceAccount method")
 // 			},
-// 			GetClientsFunc: func(accessToken string, first int, max int) ([]*gocloak.Client, error) {
+// 			GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 // 				panic("mock out the GetClients method")
 // 			},
 // 			GetConfigFunc: func() *config.KeycloakConfig {
@@ -120,7 +120,7 @@ type KcClientMock struct {
 	GetClientServiceAccountFunc func(accessToken string, internalClient string) (*gocloak.User, error)
 
 	// GetClientsFunc mocks the GetClients method.
-	GetClientsFunc func(accessToken string, first int, max int) ([]*gocloak.Client, error)
+	GetClientsFunc func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error)
 
 	// GetConfigFunc mocks the GetConfig method.
 	GetConfigFunc func() *config.KeycloakConfig
@@ -230,6 +230,8 @@ type KcClientMock struct {
 			First int
 			// Max is the max argument value.
 			Max int
+			// Attribute is the attribute argument value.
+			Attribute string
 		}
 		// GetConfig holds details about calls to the GetConfig method.
 		GetConfig []struct {
@@ -662,7 +664,7 @@ func (mock *KcClientMock) GetClientServiceAccountCalls() []struct {
 }
 
 // GetClients calls GetClientsFunc.
-func (mock *KcClientMock) GetClients(accessToken string, first int, max int) ([]*gocloak.Client, error) {
+func (mock *KcClientMock) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 	if mock.GetClientsFunc == nil {
 		panic("KcClientMock.GetClientsFunc: method is nil but KcClient.GetClients was just called")
 	}
@@ -670,15 +672,17 @@ func (mock *KcClientMock) GetClients(accessToken string, first int, max int) ([]
 		AccessToken string
 		First       int
 		Max         int
+		Attribute   string
 	}{
 		AccessToken: accessToken,
 		First:       first,
 		Max:         max,
+		Attribute:   attribute,
 	}
 	mock.lockGetClients.Lock()
 	mock.calls.GetClients = append(mock.calls.GetClients, callInfo)
 	mock.lockGetClients.Unlock()
-	return mock.GetClientsFunc(accessToken, first, max)
+	return mock.GetClientsFunc(accessToken, first, max, attribute)
 }
 
 // GetClientsCalls gets all the calls that were made to GetClients.
@@ -688,11 +692,13 @@ func (mock *KcClientMock) GetClientsCalls() []struct {
 	AccessToken string
 	First       int
 	Max         int
+	Attribute   string
 } {
 	var calls []struct {
 		AccessToken string
 		First       int
 		Max         int
+		Attribute   string
 	}
 	mock.lockGetClients.RLock()
 	calls = mock.calls.GetClients

@@ -25,11 +25,11 @@ func main() {
 
 	last := 0
 	for {
-		clients, err := kcClient.GetClients(accessToken, last, 1000)
+		clients, err := kcClient.GetClients(accessToken, last, 100,"")
 		if err != nil {
 			panic(err)
 		}
-		last += 1000
+		last += 100
 		if len(clients) == 0 {
 			break
 		}

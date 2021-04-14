@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	gocloak "github.com/Nerzal/gocloak/v8"
+	gocloak "github.com/bf2fc6cc711aee1a0c2a/gocloak/v8"
 	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -388,6 +388,17 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 							Attributes: &att,
 						}
 					},
+					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
+						testID := "12221"
+						att := map[string]string{}
+						clients:= []*gocloak.Client{
+							{
+								ClientID: &testID,
+								Attributes: &att,
+							},
+						}
+						return clients, nil
+					},
 					GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
 						id := "1"
 						return &gocloak.User{
@@ -412,20 +423,93 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 			want:    &testServiceAccount,
 			wantErr: false,
 		},
+		{
+			name: "failed to created a service account in sso due to max allowed limit",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					GetClientSecretFunc: func(internalClientId string, accessToken string) (string, error) {
+						return secret, nil
+					},
+					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
+						return testClientID, nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
+						testID := "12221"
+						testID2 := "21222"
+						att := map[string]string{}
+						clients:= []*gocloak.Client{
+							{
+								ClientID: &testID,
+								Attributes: &att,
+							},
+							{
+								ClientID: &testID2,
+								Attributes: &att,
+							},
+						}
+						return clients, nil
+					},
+					GetClientServiceAccountFunc: func(accessToken string, internalClient string) (*gocloak.User, error) {
+						id := "1"
+						return &gocloak.User{
+							ID: &id,
+						}, nil
+					},
+					UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
+						return nil
+					},
+					CreateProtocolMapperConfigFunc: func(name string) []gocloak.ProtocolMapperRepresentation {
+						return []gocloak.ProtocolMapperRepresentation{}
+					},
+				},
+			},
+			args: args{
+				serviceAccountRequest: &api.ServiceAccountRequest{
+					Name:        "test-svc",
+					Description: "desc",
+				},
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			want:  nil,
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// max allowed: 2
+			tt.fields.kcClient.GetConfig().MaxAllowedServiceAccounts = 2
 			keycloakService := keycloakService{
 				tt.fields.kcClient,
 			}
+
 			got, err := keycloakService.CreateServiceAccount(tt.args.serviceAccountRequest, tt.args.ctx)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			//over-riding the random generate id
-			got.ClientID = "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5"
-			got.CreatedAt = createdAt
+			if got != nil{
+				got.ClientID = "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5"
+				got.CreatedAt = createdAt
+			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateServiceAccount() got = %+v, want %+v", got, tt.want)
 			}
@@ -582,7 +666,7 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
 						return true
 					},
-					GetClientsFunc: func(accessToken string, first int, max int) ([]*gocloak.Client, error) {
+					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 						testClient := []*gocloak.Client{}
 						return testClient, nil
 					},
