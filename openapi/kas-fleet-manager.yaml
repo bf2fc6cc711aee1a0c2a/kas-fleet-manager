@@ -944,7 +944,7 @@ components:
           example:
             kind: "ServiceAccountList"
             items:
-              $ref: '#/components/examples/ServiceAccountListItemExample'
+              - $ref: '#/components/examples/ServiceAccountListItemExample'
           properties:
             kind:
               type: string

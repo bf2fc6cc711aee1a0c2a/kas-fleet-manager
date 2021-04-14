@@ -1551,7 +1551,7 @@ components:
           description: description of the service account
           type: string
     ServiceAccountList_allOf:
-      example: '{"kind":"ServiceAccountList","items":{"$ref":"#/components/examples/ServiceAccountListItemExample"}}'
+      example: '{"kind":"ServiceAccountList","items":[{"$ref":"#/components/examples/ServiceAccountListItemExample"}]}'
       properties:
         kind:
           type: string

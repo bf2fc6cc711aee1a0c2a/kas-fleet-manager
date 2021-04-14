@@ -155,10 +155,10 @@ var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 func KafkaRequestsStatusMetric(status constants.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelKafkaStatus:    string(status),
-		LabelKafkaRequestID: string(kafkaId),
-		LabelKafkaClusterID: string(clusterId),
+		LabelKafkaRequestID: kafkaId,
+		LabelKafkaClusterID: clusterId,
 	}
-	kafkaStatusDurationMetric.With(labels).Set(float64(elapsed.Seconds()))
+	kafkaStatusDurationMetric.With(labels).Set(elapsed.Seconds())
 }
 
 // create a new GaugeVec for kafkas status duration
