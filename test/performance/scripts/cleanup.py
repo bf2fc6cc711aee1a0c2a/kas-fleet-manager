@@ -30,9 +30,9 @@ while i < len(lines):
   url = f'{api_host}/api/managed-services-api/v1/{resource}/{lines[i]}?async=true'
   r = requests.delete(url, headers=headers, verify=False)
   print(f'{resource} deletion -> id: {lines[i]} -> status code: {str(r.status_code)}')
-  if r.status_code == 202 or r.status_code == 404: # 404 or 202 are success states
+  if r.status_code <= 204 or r.status_code == 404: # 404 or 202 are success states
     i = i + 1
   if r.status_code == 401: # if token expired - get new one
     headers = get_headers()
   # small timeout between requests
-  time.sleep(0.15)
+  time.sleep(0.1)
