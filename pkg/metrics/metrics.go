@@ -35,6 +35,12 @@ const (
 	// ClusterOperationsTotalCount - name of the metric for all cluster-related operations
 	ClusterOperationsTotalCount = "cluster_operations_total_count"
 	labelOperation              = "operation"
+
+	ReconcilerDuration     = "reconciler_duration_in_seconds"
+	ReconcilerSuccessCount = "reconciler_success_count"
+	ReconcilerFailureCount = "reconciler_failure_count"
+	ReconcilerErrorsCount  = "reconciler_errors_count"
+	labelReconcilerType    = "worker_type"
 )
 
 // JobType metric to capture
@@ -67,6 +73,10 @@ var KafkaOperationsCountMetricsLabels = []string{
 // ClusterOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
 var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
+}
+
+var ReconcilerMetricsLabels = []string{
+	labelReconcilerType,
 }
 
 // create a new histogramVec for cluster creation duration
@@ -233,6 +243,65 @@ func IncreaseClusterTotalOperationsCountMetric(operation constants.ClusterOperat
 	clusterOperationsTotalCountMetric.With(labels).Inc()
 }
 
+// create a new gaugeVec for reconciler duration
+var reconcilerDurationMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      ReconcilerDuration,
+		Help:      "Duration of each background reconcile in seconds.",
+	},
+	ReconcilerMetricsLabels,
+)
+
+func UpdateReconcilerDurationMetric(reconcilerType string, elapsed time.Duration) {
+	labels := prometheus.Labels{
+		labelReconcilerType: reconcilerType,
+	}
+	reconcilerDurationMetric.With(labels).Set(float64(elapsed.Seconds()))
+}
+
+var reconcilerSuccessCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: KasFleetManager,
+		Name:      ReconcilerSuccessCount,
+		Help:      "count of success operations of the backgroup reconcilers",
+	}, ReconcilerMetricsLabels)
+
+func IncreaseReconcilerSuccessCount(reconcilerType string) {
+	labels := prometheus.Labels{
+		labelReconcilerType: reconcilerType,
+	}
+	reconcilerSuccessCountMetric.With(labels).Inc()
+}
+
+var reconcilerFailureCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: KasFleetManager,
+		Name:      ReconcilerFailureCount,
+		Help:      "count of failed operations of the backgroup reconcilers",
+	}, ReconcilerMetricsLabels)
+
+func IncreaseReconcilerFailureCount(reconcilerType string) {
+	labels := prometheus.Labels{
+		labelReconcilerType: reconcilerType,
+	}
+	reconcilerFailureCountMetric.With(labels).Inc()
+}
+
+var reconcilerErrorsCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: KasFleetManager,
+		Name:      ReconcilerErrorsCount,
+		Help:      "count of errors occured during backgroup reconcilers runs",
+	}, ReconcilerMetricsLabels)
+
+func IncreaseReconcilerErrorsCount(reconcilerType string, numOfErr int) {
+	labels := prometheus.Labels{
+		labelReconcilerType: reconcilerType,
+	}
+	reconcilerErrorsCountMetric.With(labels).Add(float64(numOfErr))
+}
+
 // register the metric(s)
 func init() {
 	prometheus.MustRegister(requestClusterCreationDurationMetric)
@@ -242,6 +311,10 @@ func init() {
 	prometheus.MustRegister(clusterOperationsSuccessCountMetric)
 	prometheus.MustRegister(clusterOperationsTotalCountMetric)
 	prometheus.MustRegister(kafkaStatusDurationMetric)
+	prometheus.MustRegister(reconcilerDurationMetric)
+	prometheus.MustRegister(reconcilerSuccessCountMetric)
+	prometheus.MustRegister(reconcilerFailureCountMetric)
+	prometheus.MustRegister(reconcilerErrorsCountMetric)
 }
 
 // Reset the metrics we have defined. It is mainly used for testing.
@@ -253,4 +326,8 @@ func Reset() {
 	clusterOperationsSuccessCountMetric.Reset()
 	clusterOperationsTotalCountMetric.Reset()
 	kafkaStatusDurationMetric.Reset()
+	reconcilerDurationMetric.Reset()
+	reconcilerSuccessCountMetric.Reset()
+	reconcilerFailureCountMetric.Reset()
+	reconcilerErrorsCountMetric.Reset()
 }
