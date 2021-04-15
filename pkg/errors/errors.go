@@ -76,33 +76,39 @@ const (
 	ErrorSyncActionNotSupported       ServiceErrorCode = 103
 	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
 
-	// Failed to create sso client
+	// Failed to create sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
 	ErrorFailedToCreateSSOClientReason string           = "Failed to create kafka client in the mas sso"
 
-	// Failed to get sso client secret
+	// Failed to get sso client secret  - an internal error incurred when calling keycloak server
 	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
 	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get kafka client secret from the mas sso"
 
-	// Failed to get sso client
+	// Failed to get sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
 	ErrorFailedToGetSSOClientReason string           = "Failed to get kafka client from the mas sso"
 
-	// Failed to delete sso client
+	// Failed to delete sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
 	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete kafka client from the mas sso"
 
-	// Failed to create service account
+	// Failed to create service account, after validating user's request, but failed at the server end
+	// it is an internal server error
 	ErrorFailedToCreateServiceAccount       ServiceErrorCode = 110
 	ErrorFailedToCreateServiceAccountReason string           = "Failed to create service account"
 
-	// Failed to get service account
+	// Failed to get service account - an internal error incurred when calling keycloak server
 	ErrorFailedToGetServiceAccount       ServiceErrorCode = 111
 	ErrorFailedToGetServiceAccountReason string           = "Failed to get service account"
 
-	// Failed to delete service account
+	// Failed to delete service account - an internal error incurred when calling keycloak server
 	ErrorFailedToDeleteServiceAccount       ServiceErrorCode = 112
 	ErrorFailedToDeleteServiceAccountReason string           = "Failed to delete service account"
+
+	// Failed to find service account - a client error as incorrect SA is given
+	ErrorServiceAccountNotFound       ServiceErrorCode = 113
+	ErrorServiceAccountNotFoundReason string           = "Failed to find service account"
+
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
@@ -193,13 +199,14 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusNotFound, nil},
-		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusNotFound, nil},
-		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusNotFound, nil},
-		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusNotFound, nil},
-		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
@@ -210,7 +217,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
-		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusForbidden, nil},
+		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
@@ -280,7 +287,7 @@ func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...i
 	exists, err := Find(code)
 	if !exists {
 		glog.Errorf("Undefined error code used: %d", code)
-		err = &ServiceError{ErrorGeneral, "Unspecified error", 500, nil}
+		err = &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, nil}
 	}
 
 	err.cause = cause
@@ -355,6 +362,10 @@ func (e *ServiceError) IsFailedToGetServiceAccount() bool {
 
 func (e *ServiceError) IsFailedToDeleteServiceAccount() bool {
 	return e.Code == FailedToDeleteServiceAccount("").Code
+}
+
+func (e *ServiceError) IsServiceAccountNotFound() bool {
+	return e.Code == ServiceAccountNotFound("").Code
 }
 
 func (e *ServiceError) IsBadRequest() bool {
@@ -478,6 +489,10 @@ func FailedToDeleteServiceAccount(reason string, values ...interface{}) *Service
 
 func FailedToGetServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToGetServiceAccount, reason, values...)
+}
+
+func ServiceAccountNotFound(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorServiceAccountNotFound, reason, values...)
 }
 
 func RegionNotSupported(reason string, values ...interface{}) *ServiceError {

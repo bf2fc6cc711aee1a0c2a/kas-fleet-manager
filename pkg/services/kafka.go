@@ -106,7 +106,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
-		return err
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request")
 	} else if !hasCapacity {
 		glog.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
 		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
@@ -116,7 +116,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	if k.kafkaConfig.EnableQuotaService {
 		isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
 		if err != nil {
-			return errors.FailedToCheckQuota("%v", err)
+			return errors.NewWithCause(errors.ErrorFailedToCheckQuota, err, "failed to create kafka request")
 		}
 		if !isAllowed {
 			return errors.InsufficientQuotaError("Insufficient Quota")
@@ -126,7 +126,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	kafkaRequest.Version = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
-		return errors.GeneralError("failed to create kafka job: %v", err)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
@@ -229,7 +229,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
-		return nil, errors.Unauthenticated("user not authenticated: %s", err.Error())
+		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 
 	user := auth.GetUsernameFromClaims(claims)
@@ -269,7 +269,7 @@ func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceErr
 	return &kafkaRequest, nil
 }
 
-// RegisterKafkaJob registers a kafka deprovision job in the kafka table
+// RegisterKafkaDeprovisionJob registers a kafka deprovision job in the kafka table
 func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
 	if id == "" {
 		return errors.Validation("id is undefined")
@@ -278,7 +278,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	// filter kafka request by owner to only retrieve request of the current authenticated user
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
-		return errors.Unauthenticated("user not authenticated")
+		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 	user := auth.GetUsernameFromClaims(claims)
 	dbConn := k.connectionFactory.New()
@@ -424,7 +424,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
-		return nil, nil, errors.Unauthenticated("user not authenticated")
+		return nil, nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 
 	user := auth.GetUsernameFromClaims(claims)
@@ -448,7 +448,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	if len(listArgs.Search) > 0 {
 		searchDbQuery, err := GetSearchQuery(listArgs.Search)
 		if err != nil {
-			return kafkaRequestList, pagingMeta, errors.FailedToParseSearch("Unable to list kafka requests for %s: %s", user, err)
+			return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list kafka requests for %s", user)
 		}
 
 		dbConn = dbConn.Where(searchDbQuery.query, searchDbQuery.values...)
@@ -475,7 +475,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 
 	// execute query
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
-		return kafkaRequestList, pagingMeta, errors.GeneralError("Unable to list kafka requests for %s: %s", user, err)
+		return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to list kafka requests")
 	}
 
 	return kafkaRequestList, pagingMeta, nil
