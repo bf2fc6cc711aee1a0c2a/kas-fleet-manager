@@ -1560,6 +1560,9 @@ components:
             allOf:
             - $ref: '#/components/schemas/ServiceAccountListItem'
           type: array
+      required:
+      - items
+      - kind
     MetricsRangeQueryList_allOf:
       example: '{"kind":"MetricsRangeQueryList","id":"1nbpS70HduPe4l0to8jSg2CLzfu","items":{"$ref":"#/components/examples/MetricsRangeQueryExample"}}'
       properties:

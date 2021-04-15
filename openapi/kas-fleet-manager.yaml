@@ -953,6 +953,9 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/ServiceAccountListItem"
+          required:
+            - kind
+            - items
     # user-facing metrics related #
     MetricsRangeQueryList:
       allOf:
