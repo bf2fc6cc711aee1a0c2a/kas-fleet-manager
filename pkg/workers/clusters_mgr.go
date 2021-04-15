@@ -277,16 +277,17 @@ func (c *ClusterManager) reconcile() []error {
 	for _, readyCluster := range readyClusters {
 		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
+		var recErr error
 		if c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
-			emptyClusterReconciled, err = c.reconcileEmptyCluster(readyCluster)
+			emptyClusterReconciled, recErr = c.reconcileEmptyCluster(readyCluster)
 		}
-		if !emptyClusterReconciled && err == nil {
-			err = c.reconcileReadyCluster(readyCluster)
+		if !emptyClusterReconciled && recErr == nil {
+			recErr = c.reconcileReadyCluster(readyCluster)
 		}
 
-		if err != nil {
-			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, err.Error())
-			errors = append(errors, err)
+		if recErr != nil {
+			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, recErr.Error())
+			errors = append(errors, recErr)
 			continue
 		}
 	}
