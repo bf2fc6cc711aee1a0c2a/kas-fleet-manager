@@ -337,7 +337,9 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 }
 
 func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error {
-	// TODO make syncSet and addon installation in parallel?
+	if err := c.reconcileClusterIdentityProvider(cluster); err != nil {
+		return err
+	}
 
 	// SyncSet creation step
 	syncSetErr := c.reconcileClusterSyncSet(cluster, false) //OSD cluster itself
@@ -906,6 +908,7 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 }
 
 func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
+	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil || clusterDNS == "" {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, dnsErr.Error())
@@ -930,7 +933,6 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		if addIdpErr != nil {
 			return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
 		}
-		return nil
 	} else { // identity provider created, let's update it
 		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, false)
 		if buildErr != nil {
@@ -940,8 +942,9 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		if updateIdentityProviderErr != nil {
 			return errors.WithMessagef(updateIdentityProviderErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, updateIdentityProviderErr.Error())
 		}
-		return nil
 	}
+	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
+	return nil
 }
 
 func (c *ClusterManager) buildIdentityProvider(cluster api.Cluster, clientSecret string, withName bool) (*clustersmgmtv1.IdentityProvider, error) {
