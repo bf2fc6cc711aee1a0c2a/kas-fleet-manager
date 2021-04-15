@@ -245,30 +245,27 @@ func (c *ClusterManager) reconcile() {
 }
 
 func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) error {
-	siblingCluster, findClusterErr := c.clusterService.FindCluster(services.FindClusterCriteria{
-		Region:   cluster.Region,
-		Provider: cluster.CloudProvider,
-		MultiAZ:  cluster.MultiAZ,
-		Status:   api.ClusterReady,
-	})
+	if c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		siblingCluster, findClusterErr := c.clusterService.FindCluster(services.FindClusterCriteria{
+			Region:   cluster.Region,
+			Provider: cluster.CloudProvider,
+			MultiAZ:  cluster.MultiAZ,
+			Status:   api.ClusterReady,
+		})
 
-	if findClusterErr != nil {
-		return findClusterErr
-	}
+		if findClusterErr != nil {
+			return findClusterErr
+		}
 
-	//if it is the only cluster left in that region, set it back to ready.
-	if siblingCluster == nil {
-		return c.clusterService.UpdateStatus(cluster, api.ClusterReady)
+		//if it is the only cluster left in that region, set it back to ready.
+		if siblingCluster == nil {
+			return c.clusterService.UpdateStatus(cluster, api.ClusterReady)
+		}
 	}
 
 	deleteHttpCode, deleteClusterErr := c.ocmClient.DeleteCluster(cluster.ClusterID)
 	if deleteClusterErr != nil && http.StatusNotFound != deleteHttpCode { // only log other errors by ignoring not found errors
 		return deleteClusterErr
-	}
-
-	deleteClusterFromDbErr := c.clusterService.DeleteByClusterID(cluster.ClusterID)
-	if deleteClusterFromDbErr != nil {
-		return deleteClusterFromDbErr
 	}
 
 	keycloakDeregistrationErr := c.osdIdpKeycloakService.DeRegisterClientInSSO(cluster.ID)
@@ -279,6 +276,12 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) err
 	serviceAcountRemovalErr := c.kasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
 	if serviceAcountRemovalErr != nil {
 		return serviceAcountRemovalErr
+	}
+
+	// delete the db entry should be done at last to ensure things are cleaned up properly
+	deleteClusterFromDbErr := c.clusterService.DeleteByClusterID(cluster.ClusterID)
+	if deleteClusterFromDbErr != nil {
+		return deleteClusterFromDbErr
 	}
 
 	return nil

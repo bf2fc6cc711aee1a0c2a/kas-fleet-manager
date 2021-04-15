@@ -26,7 +26,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
 	"enable-deletion-of-expired-kafka":  "false",
-	"dataplane-cluster-scaling-type":    "manual",
+	"dataplane-cluster-scaling-type":    "auto",
 }
 
 func loadDevelopment(env *Env) error {

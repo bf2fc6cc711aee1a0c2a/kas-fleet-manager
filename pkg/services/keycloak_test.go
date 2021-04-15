@@ -971,6 +971,9 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 					GetTokenFunc: func() (string, error) {
 						return "", fmt.Errorf("some errors")
 					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
 					DeleteClientFunc: func(internalClientID, accessToken string) error {
 						return fmt.Errorf("some error")
 					},
@@ -987,6 +990,9 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
 						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "testclietid", nil
 					},
 					DeleteClientFunc: func(internalClientID, accessToken string) error {
 						return fmt.Errorf("some error")
@@ -1005,8 +1011,31 @@ func TestKeycloakService_DeRegisterKasFleetshardOperatorServiceAccount(t *testin
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "testclientid", nil
+					},
 					DeleteClientFunc: func(internalClientID, accessToken string) error {
 						return nil
+					},
+				},
+			},
+			args: args{
+				clusterId: "test-cluster-id",
+			},
+			wantErr: false,
+		},
+		{
+			name: "should not call delete if client doesn't exist",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					DeleteClientFunc: func(internalClientID, accessToken string) error {
+						return fmt.Errorf("this should not be called")
 					},
 				},
 			},

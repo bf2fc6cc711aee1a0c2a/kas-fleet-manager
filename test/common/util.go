@@ -73,15 +73,22 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	}
 
 	if clusterID == "" {
-		foundCluster, svcErr := h.Env().Services.Cluster.FindCluster(services.FindClusterCriteria{
+		foundClusters, svcErr := h.Env().Services.Cluster.FindAllClusters(services.FindClusterCriteria{
 			Region:   mocks.MockCluster.Region().ID(),
 			Provider: mocks.MockCluster.CloudProvider().ID(),
 		})
 		if svcErr != nil {
 			return "", svcErr
 		}
-		if foundCluster == nil {
+		if len(foundClusters) == 0 {
 			return "", nil
+		}
+		var foundCluster *api.Cluster
+		for _, c := range foundClusters {
+			if c.Status.String() != api.ClusterDeprovisioning.String() {
+				t.Log(fmt.Sprintf("Found a cluster that is not being removed: %v", foundCluster))
+				foundCluster = c
+			}
 		}
 		clusterID = foundCluster.ClusterID
 
