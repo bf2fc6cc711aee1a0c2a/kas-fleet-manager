@@ -66,7 +66,7 @@ func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 	var expectedParsed interface{}
 	expanded, err := s.Expand(expected)
 	if err != nil {
-		return err
+		return fmt.Errorf("%v\nresponse was:\n%s\n", err, string(session.RespBytes))
 	}
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
 		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)

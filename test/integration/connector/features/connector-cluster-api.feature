@@ -4,7 +4,7 @@ Feature: create a a connector
   I need to be able to manage connectors addon clusters
 
   Background:
-    Given the path prefix is "/api/kafkas_mgmt"
+    Given the path prefix is "/api/connector_mgmt"
     Given a user named "Greg" in organization "13640203"
     Given a user named "Coworker Sally" in organization "13640203"
     Given a user named "Evil Bob"
@@ -21,7 +21,7 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${cluster_id}",
+        "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
         "metadata": {
@@ -46,7 +46,7 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${cluster_id}",
+        "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
         "metadata": {

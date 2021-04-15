@@ -18,5 +18,4 @@ type ConnectorDeploymentAllOfMetadata struct {
 	CreatedAt       time.Time `json:"created_at,omitempty"`
 	UpdatedAt       time.Time `json:"updated_at,omitempty"`
 	ResourceVersion int64     `json:"resource_version,omitempty"`
-	SpecChecksum    string    `json:"spec_checksum,omitempty"`
 }

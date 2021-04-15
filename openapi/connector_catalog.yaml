@@ -1,0 +1,88 @@
+openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
+info:
+  title: Connector Catalog Service
+  version: 0.0.1
+  description: |
+    The endpoints of a Connector Catalog service are discover
+    connector type APIs that can be used by the Connector Catalog Manager.
+servers:
+  - url: http://localhost:8000
+    description: localhost
+  - url: /
+    description: current domain
+
+paths:
+  /v1/kafka-connector-catalog:
+    get:
+      operationId: listConnectorCatalog
+      summary: Returns a list of connector Catalog Entries
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorCatalog'
+          description: A list of connector types
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+          description: Unexpected error occurred
+
+  '/v1/kafka-connector-types/{connector_type_id}':
+    parameters:
+      - name: connector_type_id
+        description: The id of the connector type
+        schema:
+          type: string
+        in: path
+        required: true
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: 'connector_mgmt.yaml#/components/schemas/ConnectorType'
+          description: The connector type matching the request
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+          description: No matching connector type exists
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                500Example:
+                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+          description: Unexpected error occurred
+      operationId: getConnectorTypeByID
+      summary: Get a connector type by id
+
+components:
+  schemas:
+    ConnectorCatalog:
+      type: array
+      items:
+        allOf:
+          - $ref: '#/components/schemas/ConnectorCatalogEntry'
+    ConnectorCatalogEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+        shard_metadata:
+          type: object

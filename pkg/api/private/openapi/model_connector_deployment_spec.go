@@ -11,8 +11,13 @@ package openapi
 
 // ConnectorDeploymentSpec Holds the deployment specification of a connector
 type ConnectorDeploymentSpec struct {
-	ConnectorId      string                                    `json:"connector_id,omitempty"`
-	OperatorIds      []string                                  `json:"operator_ids,omitempty"`
-	Resources        []map[string]interface{}                  `json:"resources,omitempty"`
-	StatusExtractors []ConnectorDeploymentSpecStatusExtractors `json:"status_extractors,omitempty"`
+	ShardMetadata map[string]interface{} `json:"shard_metadata,omitempty"`
+	ConnectorId   string                 `json:"connector_id,omitempty"`
+	// allow the connector to upgrade to a new operator
+	AllowUpgrade             bool                   `json:"allow_upgrade,omitempty"`
+	ConnectorResourceVersion int64                  `json:"connector_resource_version,omitempty"`
+	KafkaId                  string                 `json:"kafka_id,omitempty"`
+	ConnectorTypeId          string                 `json:"connector_type_id,omitempty"`
+	ConnectorSpec            map[string]interface{} `json:"connector_spec,omitempty"`
+	DesiredState             string                 `json:"desired_state,omitempty"`
 }

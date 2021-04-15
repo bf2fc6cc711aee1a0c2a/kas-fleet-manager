@@ -7,8 +7,8 @@ import (
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -45,6 +45,7 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &resource,
 		Validate: []validate{
 			validateAsyncEnabled(r, "creating connector"),
+			validation("channel", &resource.Channel, withDefault("stable"), maxLen(40)),
 			validation("name", &resource.Metadata.Name,
 				withDefault("New Connector"), minLen(1), maxLen(100)),
 			validation("kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
@@ -170,8 +171,8 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			dbresource.Status.Phase = api.ConnectorStatusPhaseProvisioning
-			p.Status.Phase = api.ConnectorStatusPhaseProvisioning
+			dbresource.Status.Phase = api.ConnectorStatusPhaseUpdating
+			p.Status.Phase = api.ConnectorStatusPhaseUpdating
 			serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
 			if serr != nil {
 				return nil, serr
@@ -282,7 +283,7 @@ func (h connectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
-			validation("kafka_id", &kafkaId, minLen(1), maxLen(maxKafkaNameLength)),
+			validation("kafka_id", &kafkaId, maxLen(maxKafkaNameLength)),
 			validation("connector_type_id", &connectorTypeId, maxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {

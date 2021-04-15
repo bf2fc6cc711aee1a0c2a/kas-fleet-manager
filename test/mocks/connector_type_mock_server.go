@@ -1,20 +1,17 @@
 package mocks
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 )
 
 const SQSConnectorSchemaText = `
 {
   "id": "aws-sqs-source-v1alpha1",
   "kind": "ConnectorType",
-  "href": "/api/kafkas_mgmt/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
+  "href": "/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
   "name": "aws-sqs-source",
   "version": "v1alpha1",
   "title": "AWS SQS Source",
@@ -79,68 +76,45 @@ const SQSConnectorSchemaText = `
 
 func NewConnectorTypeMock(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/",
+	mux.HandleFunc("/v1/kafka-connector-catalog",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = fmt.Fprintln(w, `
-{
-  "connector_type_ids": [
-	"aws-sqs-source-v1alpha1"
-  ]
-}
+[
+    {
+        "id": "aws-sqs-source-v1alpha1",
+        "channel": "stable",
+        "shard_metadata": {
+            "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+            "operators": [
+                {
+                    "type": "camel-k",
+                    "versions": "[1.0.0,2.0.0]"
+                }
+            ]
+        }
+    },
+    {
+        "id": "aws-sqs-source-v1alpha1",
+        "channel": "beta",
+        "shard_metadata": {
+            "meta_image": "quay.io/mock-image:beta",
+            "operators": [
+                {
+                    "type": "camel-k",
+                    "versions": "[2.0.0]"
+                }
+            ]
+        }
+    }
+]
 			`)
 		},
 	)
-	mux.HandleFunc("/api/kafkas_mgmt/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
+	mux.HandleFunc("/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = fmt.Fprintln(w, SQSConnectorSchemaText)
-		},
-	)
-	mux.HandleFunc("/api/kafkas_mgmt/v1/kafka-connector-types/aws-sqs-source-v1alpha1/reify/spec",
-		func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Type", "application/json")
-
-			input := openapi.ConnectorReifyRequest{}
-			err := json.NewDecoder(r.Body).Decode(&input)
-			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			data, err := json.Marshal(input.ConnectorSpec)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-
-			_, _ = fmt.Fprintf(w, `
-{
-  "operator_ids":["example-operator:1.0.0"],
-  "resources":[
-	{
-	   "apiVersion": "v1",
-	   "kind": "Secret",
-	   "metadata": {
-		  "name": "secret-sa-sample",
-		  "annotations": {
-			 "kubernetes.io/service-account.name": "sa-name"
-		  }
-	   },
-	   "type": "kubernetes.io/service-account-token",
-	   "data": {
-		  "extra": "YmFyCg==",
-          "spec": %s
-	   }
-	}
-   ],
-  "status_extractors":[{
-    "apiVersion": "v1",
-    "kind": "Secret",
-    "name": "secret-sa-sample",
-    "jsonPath":	"status",
-	"conditionType": "Secret"
-  }]
-}`, string(data))
 		},
 	)
 	return httptest.NewServer(mux)

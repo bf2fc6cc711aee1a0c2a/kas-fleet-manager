@@ -8,26 +8,29 @@ package services
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"net/url"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	catalog_api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector_catalog/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
+type ConnectorCatalogKey struct {
+	Id      string `json:"id"`
+	Channel string `json:"channel"`
+}
+
+type ConnectorCatalogEntry = catalog_api.ConnectorCatalogEntry
+
 type ConnectorTypesService interface {
 	Get(id string) (*api.ConnectorType, *errors.ServiceError)
-	GetServiceAddress(id string) (string, *errors.ServiceError)
+	GetConnectorCatalogEntry(id string, channel string) (*ConnectorCatalogEntry, *errors.ServiceError)
 	List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
 	DiscoverExtensions() error
 }
@@ -35,10 +38,10 @@ type ConnectorTypesService interface {
 var _ ConnectorTypesService = &connectorTypesService{}
 
 type connectorTypesService struct {
-	connectorTypeIndex  api.ConnectorTypeIndex
-	serviceAddressIndex map[string]string
-	mu                  sync.RWMutex
-	connectorsConfig    *config.ConnectorsConfig
+	connectorTypeIndex api.ConnectorTypeIndex
+	connectorCatalog   map[ConnectorCatalogKey]ConnectorCatalogEntry
+	mu                 sync.RWMutex
+	connectorsConfig   *config.ConnectorsConfig
 }
 
 func NewConnectorTypesService(config *config.ConnectorsConfig) *connectorTypesService {
@@ -62,19 +65,22 @@ func (k *connectorTypesService) Get(id string) (*api.ConnectorType, *errors.Serv
 	return resource, nil
 }
 
-func (k *connectorTypesService) GetServiceAddress(id string) (string, *errors.ServiceError) {
+func (k *connectorTypesService) GetConnectorCatalogEntry(id string, channel string) (*ConnectorCatalogEntry, *errors.ServiceError) {
 	if id == "" {
-		return "", errors.Validation("id is undefined")
+		return nil, errors.Validation("id is undefined")
 	}
 
 	k.mu.RLock()
-	resource, found := k.serviceAddressIndex[id]
+	resource, found := k.connectorCatalog[ConnectorCatalogKey{
+		Id:      id,
+		Channel: channel,
+	}]
 	k.mu.RUnlock()
 
 	if !found {
-		return "", errors.NotFound("ConnectorType with id='%s' not found", id)
+		return nil, errors.NotFound("ConnectorType with id='%s' not found", id)
 	}
-	return resource, nil
+	return &resource, nil
 }
 
 // List returns all connector types
@@ -112,68 +118,6 @@ func (k *connectorTypesService) connectorTypesSortedByName() api.ConnectorTypeLi
 	return r
 }
 
-type ConnectorTypeCatalog struct {
-	ConnectorTypeIds []string `json:"connector_type_ids"`
-}
-
-func getConnectorTypeCatalog(ctx context.Context, serviceUrl string) (*ConnectorTypeCatalog, error) {
-	response := ConnectorTypeCatalog{}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serviceUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-
-	c := &http.Client{}
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	contentType := resp.Header.Get("Content-Type")
-	if strings.HasPrefix(contentType, "application/json") {
-		err = json.NewDecoder(resp.Body).Decode(&response)
-		if err != nil {
-			return nil, err
-		}
-		return &response, nil
-	} else {
-		return nil, fmt.Errorf("expected Content-Type: application/json, but got %s", contentType)
-	}
-}
-
-func getConnectorType(ctx context.Context, serviceUrl string) (*openapi.ConnectorType, error) {
-	response := openapi.ConnectorType{}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, serviceUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-
-	c := &http.Client{}
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	contentType := resp.Header.Get("Content-Type")
-	if strings.HasPrefix(contentType, "application/json") {
-		err = json.NewDecoder(resp.Body).Decode(&response)
-		if err != nil {
-			return nil, err
-		}
-		return &response, nil
-	} else {
-		return nil, fmt.Errorf("expected Content-Type: application/json, but got %s", contentType)
-	}
-}
-
 func (k *connectorTypesService) DiscoverExtensions() error {
 	k.discoverExtensions(k.connectorsConfig.ConnectorTypeSvcUrls)
 	return nil
@@ -184,6 +128,7 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 
 	connectorTypeIndex := map[string]*api.ConnectorType{}
 	serviceAddressIndex := map[string]string{}
+	connectorCatalog := map[ConnectorCatalogKey]ConnectorCatalogEntry{}
 
 	for _, u := range urls {
 		xu, err := url.Parse(u)
@@ -192,41 +137,55 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 			continue
 		}
 
-		response, err := getConnectorTypeCatalog(ctx, u)
+		config := catalog_api.NewConfiguration()
+		config.BasePath = u
+		client := catalog_api.NewAPIClient(config)
+
+		catalog, _, err := client.DefaultApi.ListConnectorCatalog(ctx)
 		if err != nil {
-			logger.Logger.Warningf("failed to get %s, %v", u, err)
+			logger.Logger.Warningf("failed to list catalog from: %s, %v", u, err)
 			continue
 		}
 
-		if len(response.ConnectorTypeIds) == 0 {
-			logger.Logger.Warningf("no connector_type_ids defined in %v", u)
-			continue
-		}
+		for _, ct := range catalog {
+			id := ct.Id
 
-		bxu := *xu
-		bxu.Path = ""
-		base := bxu.String()
-
-		for _, id := range response.ConnectorTypeIds {
-			x := fmt.Sprintf("%s/api/kafkas_mgmt/v1/kafka-connector-types/%s", base, id)
-			response, err := getConnectorType(ctx, x)
+			response, _, err := client.DefaultApi.GetConnectorTypeByID(ctx, id)
 			if err != nil {
-				logger.Logger.Warningf("failed to get %s, %v", x, err)
+				logger.Logger.Warningf("failed to get connector type %s, %v", id, err)
 				continue
 			}
 
-			converted := presenters.ConvertConnectorType(*response)
+			converted := presenters.ConvertConnectorType(response)
 			converted.ExtensionURL = xu
 
 			converted.CreatedAt = time.Time{}
 			converted.UpdatedAt = time.Time{}
-			connectorTypeIndex[id] = converted
-			serviceAddressIndex[id] = base
+			if connectorTypeIndex[id] == nil {
+				converted.Channels = []string{ct.Channel}
+				connectorTypeIndex[id] = converted
+				serviceAddressIndex[id] = u
+				connectorCatalog[ConnectorCatalogKey{
+					Id:      ct.Id,
+					Channel: ct.Channel,
+				}] = ct
+			} else {
+				if Contains(connectorTypeIndex[id].Channels, ct.Channel) {
+					logger.Logger.Warningf("skipping duplicate type id '%s' and channel '%s' for connector type service found in: %s, keeping the one found in: %s", id, ct.Channel, u, serviceAddressIndex[id])
+					continue
+				}
+				connectorTypeIndex[id].Channels = append(connectorTypeIndex[id].Channels, ct.Channel)
+				connectorCatalog[ConnectorCatalogKey{
+					Id:      ct.Id,
+					Channel: ct.Channel,
+				}] = ct
+			}
+
 		}
 	}
 
 	k.mu.Lock()
 	k.connectorTypeIndex = connectorTypeIndex
-	k.serviceAddressIndex = serviceAddressIndex
+	k.connectorCatalog = connectorCatalog
 	k.mu.Unlock()
 }

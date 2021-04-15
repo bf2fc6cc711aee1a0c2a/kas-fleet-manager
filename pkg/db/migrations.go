@@ -47,6 +47,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addKafkaWorkersInLeaderLeases(),
 	renameDeletingKafkaLeaseType(),
 	addClusterDNS(),
+	connectorMigrations20210518(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

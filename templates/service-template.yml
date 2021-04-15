@@ -451,6 +451,10 @@ parameters:
   description: ID of the kas-fleetshard addon
   value: "kas-fleetshard-operator"
 
+- name: VAULT_KIND
+  description: The type of vault to use to store secrets
+  value: tmp
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -497,8 +501,7 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      camelv1: http://camelv1-type-service:9090
-      camelv2: http://camelv2-type-service:9090
+      mcs-camel-type-catalog: http://mcs-camel-type-catalog:8080/api/managed-services-api/v1/kafka-connector-types
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -812,6 +815,9 @@ objects:
             - --kas-fleetshard-addon-id=${KAS_FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - -v=${GLOG_V}
+            - --vault-kind=${VAULT_KIND}
+            - --vault-access-key-file=/secrets/service/vault.accesskey
+            - --vault-secret-access-key-file=/secrets/service/vault.secretaccesskey
             resources:
               requests:
                 cpu: ${CPU_REQUEST}
