@@ -25,7 +25,7 @@ func main() {
 
 	last := 0
 	for {
-		clients, err := kcClient.GetClients(accessToken, last, 100,"")
+		clients, err := kcClient.GetClients(accessToken, last, 100, "")
 		if err != nil {
 			panic(err)
 		}

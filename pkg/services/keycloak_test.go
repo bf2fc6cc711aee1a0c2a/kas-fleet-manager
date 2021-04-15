@@ -391,9 +391,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 						testID := "12221"
 						att := map[string]string{}
-						clients:= []*gocloak.Client{
+						clients := []*gocloak.Client{
 							{
-								ClientID: &testID,
+								ClientID:   &testID,
 								Attributes: &att,
 							},
 						}
@@ -454,13 +454,13 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 						testID := "12221"
 						testID2 := "21222"
 						att := map[string]string{}
-						clients:= []*gocloak.Client{
+						clients := []*gocloak.Client{
 							{
-								ClientID: &testID,
+								ClientID:   &testID,
 								Attributes: &att,
 							},
 							{
-								ClientID: &testID2,
+								ClientID:   &testID2,
 								Attributes: &att,
 							},
 						}
@@ -487,7 +487,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 				},
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
-			want:  nil,
+			want:    nil,
 			wantErr: true,
 		},
 	}
@@ -505,7 +505,7 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 				t.Errorf("CreateServiceAccount() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			//over-riding the random generate id
-			if got != nil{
+			if got != nil {
 				got.ClientID = "srvc-acct-cca1a262-9465-4878-9f76-c3bb59d4b4b5"
 				got.CreatedAt = createdAt
 			}
