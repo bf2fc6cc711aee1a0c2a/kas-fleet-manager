@@ -375,7 +375,7 @@ parameters:
 
 - name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
   displayName: Kafka total max connections
-  description: Totoal max connections configuration for the default Kafka instance type
+  description: Total max connections configuration for the default Kafka instance type
   value: "100"
 
 - name: KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE
@@ -392,6 +392,11 @@ parameters:
   displayName: Kafka max data retention period
   description: Data retention period configuration for the default Kafka instance type
   value: "P14D"
+
+- name: KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
+  displayName: Kafka max connection attempts per second
+  description: Max connection attempts per second configuration for the default Kafka instance type
+  value: "100"
 
 - name: DEFAULT_KAFKA_VERSION
   displayName: Default Kafka version
@@ -479,6 +484,7 @@ objects:
         maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
         maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
         maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
+        maxConnectionAttemptsPerSec: ${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
   - kind: ConfigMap
     apiVersion: v1
     metadata:

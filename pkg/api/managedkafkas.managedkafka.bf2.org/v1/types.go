@@ -26,6 +26,7 @@ type Capacity struct {
 	MaxDataRetentionSize          string `json:"maxDataRetentionSize"`
 	MaxPartitions                 int    `json:"maxPartitions"`
 	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod"`
+	MaxConnectionAttemptsPerSec   int    `json:"maxConnectionAttemptsPerSec"`
 }
 
 type VersionsSpec struct {

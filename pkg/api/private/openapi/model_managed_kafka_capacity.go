@@ -16,4 +16,5 @@ type ManagedKafkaCapacity struct {
 	MaxDataRetentionSize          string `json:"maxDataRetentionSize,omitempty"`
 	MaxPartitions                 int32  `json:"maxPartitions,omitempty"`
 	MaxDataRetentionPeriod        string `json:"maxDataRetentionPeriod,omitempty"`
+	MaxConnectionAttemptsPerSec   int32  `json:"maxConnectionAttemptsPerSec,omitempty"`
 }
