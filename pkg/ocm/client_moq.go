@@ -67,10 +67,13 @@ var _ Client = &ClientMock{}
 // 			GetClusterStatusFunc: func(id string) (*clustersmgmtv1.ClusterStatus, error) {
 // 				panic("mock out the GetClusterStatus method")
 // 			},
+// 			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+// 				panic("mock out the GetExistingClusterMetrics method")
+// 			},
 // 			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 // 				panic("mock out the GetRegions method")
 // 			},
-// 			GetRequiresTermsAcceptanceFunc: func(username string) (bool, error) {
+// 			GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 // 				panic("mock out the GetRequiresTermsAcceptance method")
 // 			},
 // 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
@@ -149,11 +152,14 @@ type ClientMock struct {
 	// GetClusterStatusFunc mocks the GetClusterStatus method.
 	GetClusterStatusFunc func(id string) (*clustersmgmtv1.ClusterStatus, error)
 
+	// GetExistingClusterMetricsFunc mocks the GetExistingClusterMetrics method.
+	GetExistingClusterMetricsFunc func(clusterID string) (*amsv1.SubscriptionMetrics, error)
+
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
 
 	// GetRequiresTermsAcceptanceFunc mocks the GetRequiresTermsAcceptance method.
-	GetRequiresTermsAcceptanceFunc func(username string) (bool, error)
+	GetRequiresTermsAcceptanceFunc func(username string) (bool, string, error)
 
 	// GetSyncSetFunc mocks the GetSyncSet method.
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
@@ -270,6 +276,11 @@ type ClientMock struct {
 			// ID is the id argument value.
 			ID string
 		}
+		// GetExistingClusterMetrics holds details about calls to the GetExistingClusterMetrics method.
+		GetExistingClusterMetrics []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// GetRegions holds details about calls to the GetRegions method.
 		GetRegions []struct {
 			// Provider is the provider argument value.
@@ -352,6 +363,7 @@ type ClientMock struct {
 	lockGetClusterDNS              sync.RWMutex
 	lockGetClusterIngresses        sync.RWMutex
 	lockGetClusterStatus           sync.RWMutex
+	lockGetExistingClusterMetrics  sync.RWMutex
 	lockGetRegions                 sync.RWMutex
 	lockGetRequiresTermsAcceptance sync.RWMutex
 	lockGetSyncSet                 sync.RWMutex
@@ -882,6 +894,37 @@ func (mock *ClientMock) GetClusterStatusCalls() []struct {
 	return calls
 }
 
+// GetExistingClusterMetrics calls GetExistingClusterMetricsFunc.
+func (mock *ClientMock) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+	if mock.GetExistingClusterMetricsFunc == nil {
+		panic("ClientMock.GetExistingClusterMetricsFunc: method is nil but Client.GetExistingClusterMetrics was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockGetExistingClusterMetrics.Lock()
+	mock.calls.GetExistingClusterMetrics = append(mock.calls.GetExistingClusterMetrics, callInfo)
+	mock.lockGetExistingClusterMetrics.Unlock()
+	return mock.GetExistingClusterMetricsFunc(clusterID)
+}
+
+// GetExistingClusterMetricsCalls gets all the calls that were made to GetExistingClusterMetrics.
+// Check the length with:
+//     len(mockedClient.GetExistingClusterMetricsCalls())
+func (mock *ClientMock) GetExistingClusterMetricsCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockGetExistingClusterMetrics.RLock()
+	calls = mock.calls.GetExistingClusterMetrics
+	mock.lockGetExistingClusterMetrics.RUnlock()
+	return calls
+}
+
 // GetRegions calls GetRegionsFunc.
 func (mock *ClientMock) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 	if mock.GetRegionsFunc == nil {
@@ -914,7 +957,7 @@ func (mock *ClientMock) GetRegionsCalls() []struct {
 }
 
 // GetRequiresTermsAcceptance calls GetRequiresTermsAcceptanceFunc.
-func (mock *ClientMock) GetRequiresTermsAcceptance(username string) (bool, error) {
+func (mock *ClientMock) GetRequiresTermsAcceptance(username string) (bool, string, error) {
 	if mock.GetRequiresTermsAcceptanceFunc == nil {
 		panic("ClientMock.GetRequiresTermsAcceptanceFunc: method is nil but Client.GetRequiresTermsAcceptance was just called")
 	}

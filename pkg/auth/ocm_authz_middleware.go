@@ -64,7 +64,7 @@ func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmCli
 				username := GetUsernameFromClaims(claims)
 				termsRequired, cached := m.cache.Get(username)
 				if !cached {
-					termsRequired, err = ocmClient.GetRequiresTermsAcceptance(username)
+					termsRequired, _, err = ocmClient.GetRequiresTermsAcceptance(username)
 					if err != nil {
 						shared.HandleError(ctx, writer, code, err.Error())
 						return

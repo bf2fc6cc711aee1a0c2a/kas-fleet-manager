@@ -88,8 +88,8 @@ func TestOCMAuthorizationMiddleware_RequireTermsAcceptance(t *testing.T) {
 			name:    "should fail if we are a product and terms are required",
 			product: true,
 			client: &ocm.ClientMock{
-				GetRequiresTermsAcceptanceFunc: func(username string) (bool, error) {
-					return true, nil
+				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
+					return true, "", nil
 				},
 			},
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -101,8 +101,8 @@ func TestOCMAuthorizationMiddleware_RequireTermsAcceptance(t *testing.T) {
 			name:    "should succeed if we are not a product even if terms are required",
 			product: false,
 			client: &ocm.ClientMock{
-				GetRequiresTermsAcceptanceFunc: func(username string) (bool, error) {
-					return true, nil
+				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
+					return true, "", nil
 				},
 			},
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -114,8 +114,8 @@ func TestOCMAuthorizationMiddleware_RequireTermsAcceptance(t *testing.T) {
 			name:    "should succeed if we are a product and terms are not required",
 			product: true,
 			client: &ocm.ClientMock{
-				GetRequiresTermsAcceptanceFunc: func(username string) (bool, error) {
-					return false, nil
+				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
+					return false, "", nil
 				},
 			},
 			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

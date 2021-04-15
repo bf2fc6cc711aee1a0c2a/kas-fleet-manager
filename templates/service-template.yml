@@ -242,7 +242,7 @@ parameters:
 
 - name: ENABLE_TERMS_ACCEPTANCE
   displayName: Enable terms acceptance
-  description: If enabled, apis can't be called unless required terms are accepted
+  description: If enabled, kafkas can't be created unless required terms are accepted
   value: "false"
 
 - name: ENABLE_DENY_LIST

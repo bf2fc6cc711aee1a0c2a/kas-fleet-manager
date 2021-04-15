@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"reflect"
 	"testing"
 
@@ -63,11 +64,18 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 						clusterBuilder := clustersmgmtv1.NewCluster()
 						clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
 						clusterNodeBuilder.Compute(6)
-						clusterMetricsBuilder := clustersmgmtv1.NewClusterMetrics()
-						clusterMetricsBuilder.Nodes(clusterNodeBuilder)
-						clusterBuilder.Metrics(clusterMetricsBuilder)
 						clusterBuilder.Nodes(clusterNodeBuilder)
 						return clusterBuilder.Build()
+					},
+					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+						clusterMetricsBuilder := amsv1.NewSubscriptionMetrics()
+						clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
+						clusterMetricsNodeBuilder.Compute(6)
+
+						clusterMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
+						metrics, _ := clusterMetricsBuilder.Build()
+
+						return metrics, nil
 					},
 				}
 				clusterService := &ClusterServiceMock{
@@ -436,9 +444,6 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				clusterBuilder.ID(testClusterID)
 				clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
 				clusterNodeBuilder.Compute(6)
-				clusterMetricsBuilder := clustersmgmtv1.NewClusterMetrics()
-				clusterMetricsBuilder.Nodes(clusterNodeBuilder)
-				clusterBuilder.Metrics(clusterMetricsBuilder)
 				clusterBuilder.Nodes(clusterNodeBuilder)
 				cluster, err := clusterBuilder.Build()
 				if err != nil {
@@ -448,6 +453,16 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				ocmClient := &ocm.ClientMock{
 					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
 						return cluster, nil
+					},
+					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+						clusterMetricsBuilder := amsv1.NewSubscriptionMetrics()
+						clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
+						clusterMetricsNodeBuilder.Compute(6)
+
+						clusterMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
+						metrics, _ := clusterMetricsBuilder.Build()
+
+						return metrics, nil
 					},
 				}
 				clusterService := &ClusterServiceMock{}
@@ -467,9 +482,6 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				clusterBuilder.Nodes(clusterNodeBuilder)
 				clusterNodeBuilderExisting := clustersmgmtv1.NewClusterNodes()
 				clusterNodeBuilderExisting.Compute(8)
-				clusterMetricsBuilder := clustersmgmtv1.NewClusterMetrics()
-				clusterMetricsBuilder.Nodes(clusterNodeBuilderExisting)
-				clusterBuilder.Metrics(clusterMetricsBuilder)
 				cluster, err := clusterBuilder.Build()
 				if err != nil {
 					return nil
@@ -478,6 +490,16 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				ocmClient := &ocm.ClientMock{
 					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
 						return cluster, nil
+					},
+					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+						clusterMetricsBuilder := amsv1.NewSubscriptionMetrics()
+						clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
+						clusterMetricsNodeBuilder.Compute(8)
+
+						clusterMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
+						metrics, _ := clusterMetricsBuilder.Build()
+
+						return metrics, nil
 					},
 				}
 				clusterService := &ClusterServiceMock{}
@@ -503,6 +525,9 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 				ocmClient := &ocm.ClientMock{
 					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
 						return cluster, nil
+					},
+					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+						return nil, nil
 					},
 				}
 				clusterService := &ClusterServiceMock{}
