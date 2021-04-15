@@ -21,6 +21,7 @@ ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
 ENV KAFKA_TLS_CERT <kafka_tls_cert>
 ENV KAFKA_TLS_KEY <kafka_tls_key>
+ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
 ENV DOCKER_PR_CHECK true
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -65,6 +66,7 @@ RUN make aws/setup
 RUN make ocm/setup
 RUN make keycloak/setup
 RUN make kafkacert/setup
+RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
 RUN chown -R postgres:postgres /uhc /usr/local/go
