@@ -432,9 +432,7 @@ kafkacert/setup:
 .PHONY:kafkacert/setup
 
 observatorium/setup:
-ifeq ($(OCM_ENV), development)
 	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
-endif
 .PHONY:observatorium/setup
 
 # OCM login

@@ -783,6 +783,7 @@ func (c *ClusterManager) buildManagedKafkaSubscriptionResource() *v1alpha1.Subsc
 			Namespace: strimziAddonNamespace,
 		},
 		Spec: &v1alpha1.SubscriptionSpec{
+			Package:                "managed-kafka",
 			CatalogSource:          strimziCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: strimziCatalogSourceNamespace,

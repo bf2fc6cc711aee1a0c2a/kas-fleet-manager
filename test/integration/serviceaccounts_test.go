@@ -267,7 +267,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).Should(HaveOccurred())
 }
 
-func TestServiceAccount_CreationLimits(t *testing.T)  {
+func TestServiceAccount_CreationLimits(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -309,7 +309,7 @@ func TestServiceAccount_CreationLimits(t *testing.T)  {
 		Name:        "test-account-acc-3",
 		Description: "created by the managed service integration tests",
 	}
-	_,resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
