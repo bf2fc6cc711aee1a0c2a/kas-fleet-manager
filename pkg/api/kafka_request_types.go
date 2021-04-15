@@ -35,5 +35,10 @@ func (l KafkaList) Index() KafkaIndex {
 }
 
 func (org *KafkaRequest) BeforeCreate(scope *gorm.Scope) error {
-	return scope.SetColumn("ID", NewID())
+	// To allow the id set on the KafkaRequest object to be used. This is useful for testing purposes.
+	id := org.ID
+	if id == "" {
+		id = NewID()
+	}
+	return scope.SetColumn("ID", id)
 }

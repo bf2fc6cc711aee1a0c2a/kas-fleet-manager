@@ -1560,6 +1560,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
+				kafkaConfig:       config.NewKafkaConfig(),
 			}
 			err := k.DeprovisionExpiredKafkas(tt.args.kafkaAgeInMins)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))

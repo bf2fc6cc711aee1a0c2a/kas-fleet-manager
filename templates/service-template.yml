@@ -421,6 +421,11 @@ parameters:
   description: The domain name to use for Kafka instances
   value: bf2.kafka-stage.rhcloud.com
 
+- name: LONG_LIVED_KAFKAS
+  displayName: List of Kafkas that will not expire
+  description: List of Kafkas that will not expire
+  value: "[]"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -451,6 +456,15 @@ objects:
     data:
       deny-list-configuration.yaml: |-
         ${DENIED_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: ocm-managed-services-long-lived-kafkas
+      annotations:
+        qontract.recycle: "true"
+    data:
+      long-lived-kafkas-configuration.yaml: |-
+        ${LONG_LIVED_KAFKAS}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -585,6 +599,9 @@ objects:
           - name: ocm-managed-services-kafka-capacity-config
             configMap:
               name: ocm-managed-services-kafka-capacity-config
+          - name: ocm-managed-services-long-lived-kafkas
+            configMap:
+              name: ocm-managed-services-long-lived-kafkas
           - name: ocm-managed-services-authentication
             configMap:
               name: ocm-managed-services-authentication
@@ -651,6 +668,9 @@ objects:
             - name: ocm-managed-services-kafka-capacity-config
               mountPath: /config/kafka-capacity-config.yaml
               subPath: kafka-capacity-config.yaml
+            - name: ocm-managed-services-long-lived-kafkas
+              mountPath: /config/long-lived-kafkas-configuration.yaml
+              subPath: long-lived-kafkas-configuration.yaml
             - name: ocm-managed-services-authentication
               mountPath: /config/authentication
             - name: ocm-managed-services-dataplane-cluster-scaling-config
@@ -672,8 +692,9 @@ objects:
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
-            - --kafka-life-span=${KAFKA_LIFE_SPAN}
+            - --kafka-lifespan=${KAFKA_LIFE_SPAN}
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
+            - --long-lived-kafkas-config-file=/config/long-lived-kafkas-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
