@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/getsentry/sentry-go"
 )
 
 var _ ObservatoriumService = &observatoriumService{}
@@ -37,11 +38,13 @@ func (obs observatoriumService) GetMetricsByKafkaId(ctx context.Context, kafkasM
 
 	namespace, replaceErr := BuildNamespaceName(kafkaRequest)
 	if replaceErr != nil {
-		return kafkaRequest.ID, errors.GeneralError("failed to build namespace for kafka %s: %v", kafkaRequest.ID, replaceErr)
+		sentry.CaptureException(replaceErr)
+		return kafkaRequest.ID, errors.GeneralError("failed to retrieve metrics")
 	}
 	replaceErr = obs.observatorium.Service.GetMetrics(kafkasMetrics, namespace, &query)
 	if replaceErr != nil {
-		return kafkaRequest.ID, errors.GeneralError("failed to get state from observatorium for kafka %s namespace %s cluster %s: %v", kafkaRequest.ID, namespace, kafkaRequest.ClusterID, replaceErr)
+		sentry.CaptureException(replaceErr)
+		return kafkaRequest.ID, errors.GeneralError("failed to retrieve metrics")
 	}
 
 	return kafkaRequest.ID, nil

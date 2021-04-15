@@ -149,12 +149,12 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
-						return "", fmt.Errorf("token error")
+						return "", fmt.Errorf("failed to retrieve the token: %v", "token error")
 					},
 				},
 			},
 			want:    "",
-			wantErr: errors.GeneralError("failed to get token for the sso client: %v", "token error"),
+			wantErr: errors.GeneralError("failed to retrieve the token: %v", "token error"),
 		},
 		{
 			name: "fetch osd client secret from sso when client already exists",
@@ -224,7 +224,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 						return secret, nil
 					},
 					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-						return "", fmt.Errorf("some errors")
+						return "", fmt.Errorf("failed to create the sso client: %v", "some errors")
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"

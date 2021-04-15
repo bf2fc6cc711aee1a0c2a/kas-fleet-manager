@@ -92,7 +92,7 @@ const (
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
 	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete kafka client from the mas sso"
 
-	// Failed to create service account
+	// Failed to create service account, after validating user's request, but failed at the server end
 	ErrorFailedToCreateServiceAccount       ServiceErrorCode = 110
 	ErrorFailedToCreateServiceAccountReason string           = "Failed to create service account"
 
@@ -103,6 +103,14 @@ const (
 	// Failed to delete service account
 	ErrorFailedToDeleteServiceAccount       ServiceErrorCode = 112
 	ErrorFailedToDeleteServiceAccountReason string           = "Failed to delete service account"
+
+	// Failed to find service account
+	ErrorServiceAccountNotFound       ServiceErrorCode = 113
+	ErrorServiceAccountNotFoundReason string           = "Failed to find service account"
+
+	ErrorSSOClientNotFound       ServiceErrorCode = 114
+	ErrorSSOClientNotFoundReason string           = "Failed to find SSOClient"
+
 	// Insufficient quota
 	ErrorInsufficientQuota       ServiceErrorCode = 120
 	ErrorInsufficientQuotaReason string           = "Insufficient quota"
@@ -193,13 +201,15 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest},
 		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest},
 		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusNotFound},
+		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusInternalServerError},
+		ServiceError{ErrorSSOClientNotFound, ErrorSSOClientNotFoundReason, http.StatusNotFound},
+		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusInternalServerError},
+		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusInternalServerError},
+		ServiceError{ErrorServiceAccountNotFound, ErrorServiceAccountNotFoundReason, http.StatusNotFound},
+		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError},
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest},
 		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest},
@@ -210,7 +220,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden},
-		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusForbidden},
+		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusInternalServerError},
 		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest},
 		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest},
 		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest},
@@ -274,7 +284,7 @@ func New(code ServiceErrorCode, reason string, values ...interface{}) *ServiceEr
 	exists, err := Find(code)
 	if !exists {
 		glog.Errorf("Undefined error code used: %d", code)
-		err = &ServiceError{ErrorGeneral, "Unspecified error", 500}
+		err = &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError}
 	}
 
 	// If the reason is unspecified, use the default
@@ -341,6 +351,10 @@ func (e *ServiceError) IsFailedToDeleteServiceAccount() bool {
 	return e.Code == FailedToDeleteServiceAccount("").Code
 }
 
+func (e *ServiceError) IsServiceAccountNotFound() bool {
+	return e.Code == ServiceAccountNotFound("").Code
+}
+
 func (e *ServiceError) IsBadRequest() bool {
 	return e.Code == BadRequest("").Code
 }
@@ -350,6 +364,10 @@ func (e *ServiceError) InSufficientQuota() bool {
 
 func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
+}
+
+func (e *ServiceError) IsNotFound() bool {
+	return e.Code == NotFound("").Code
 }
 
 func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
@@ -452,6 +470,10 @@ func FailedToDeleteSSOClient(reason string, values ...interface{}) *ServiceError
 	return New(ErrorFailedToDeleteSSOClient, reason, values...)
 }
 
+func SSOClientNotFound(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorSSOClientNotFound, reason, values...)
+}
+
 func FailedToCreateServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToCreateServiceAccount, reason, values...)
 }
@@ -462,6 +484,10 @@ func FailedToDeleteServiceAccount(reason string, values ...interface{}) *Service
 
 func FailedToGetServiceAccount(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorFailedToGetServiceAccount, reason, values...)
+}
+
+func ServiceAccountNotFound(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorServiceAccountNotFound, reason, values...)
 }
 
 func RegionNotSupported(reason string, values ...interface{}) *ServiceError {

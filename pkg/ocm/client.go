@@ -149,7 +149,7 @@ func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) 
 	providersCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders()
 	providersResponse, err := providersCollection.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error retrieving cloud provider list: %v", err)
 	}
 	cloudProviderList := providersResponse.Items()
 	return cloudProviderList, nil
@@ -159,7 +159,7 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	regionsCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders().CloudProvider(provider.ID()).Regions()
 	regionsResponse, err := regionsCollection.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error retrieving cloud region list: %v", err)
 	}
 
 	regionList := regionsResponse.Items()

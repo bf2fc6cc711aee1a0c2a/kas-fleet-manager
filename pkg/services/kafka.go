@@ -103,7 +103,8 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
-		return err
+		sentry.CaptureException(err)
+		return errors.GeneralError("failed to create kafka request")
 	} else if !hasCapacity {
 		glog.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
 		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
@@ -113,7 +114,8 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	if k.kafkaConfig.EnableQuotaService {
 		isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
 		if err != nil {
-			return errors.FailedToCheckQuota("%v", err)
+			sentry.CaptureException(err)
+			return errors.FailedToCheckQuota("internal server error")
 		}
 		if !isAllowed {
 			return errors.InsufficientQuotaError("Insufficient Quota")
@@ -123,7 +125,8 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	kafkaRequest.Version = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
-		return errors.GeneralError("failed to create kafka job: %v", err)
+		sentry.CaptureException(err)
+		return errors.GeneralError("failed to create kafka request") //hide the db error to http caller
 	}
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
@@ -164,7 +167,6 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
 		if err != nil || kafkaRequest.SsoClientSecret == "" {
-			sentry.CaptureException(err)
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
 	}
@@ -222,7 +224,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
-		return nil, errors.Unauthenticated("user not authenticated: %s", err.Error())
+		return nil, errors.Unauthenticated("user not authenticated")
 	}
 
 	user := auth.GetUsernameFromClaims(claims)
@@ -262,7 +264,7 @@ func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceErr
 	return &kafkaRequest, nil
 }
 
-// RegisterKafkaJob registers a kafka deprovision job in the kafka table
+// RegisterKafkaDeprovisionJob registers a kafka deprovision job in the kafka table
 func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError {
 	if id == "" {
 		return errors.Validation("id is undefined")
@@ -456,7 +458,8 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 
 	// execute query
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
-		return kafkaRequestList, pagingMeta, errors.GeneralError("Unable to list kafka requests for %s: %s", user, err)
+		sentry.CaptureException(err)
+		return kafkaRequestList, pagingMeta, errors.GeneralError("Unable to list kafka requests")
 	}
 
 	return kafkaRequestList, pagingMeta, nil

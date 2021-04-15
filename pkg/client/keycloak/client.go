@@ -4,8 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/gocloak/v8"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 )
 
@@ -113,7 +113,7 @@ func setTokenEndpoints(config *config.KeycloakConfig, realmConfig *config.Keyclo
 func (kc *kcClient) CreateClient(client gocloak.Client, accessToken string) (string, error) {
 	internalClientID, err := kc.kcClient.CreateClient(kc.ctx, accessToken, kc.realmConfig.Realm, client)
 	if err != nil {
-		return "", fmt.Errorf("%+v", err.Error())
+		return "", fmt.Errorf("failed to create the sso client: %s:%+v", *client.ClientID, err.Error())
 	}
 	return internalClientID, err
 }
@@ -124,7 +124,7 @@ func (kc *kcClient) GetClient(clientId string, accessToken string) (*gocloak.Cli
 	}
 	client, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
 	if err != nil {
-		return nil, fmt.Errorf("%+v", err.Error())
+		return nil, fmt.Errorf("failed to get client with id %s %+v", clientId, err.Error())
 	}
 	if len(client) > 0 {
 		return client[0], nil
@@ -149,7 +149,7 @@ func (kc *kcClient) GetToken() (string, error) {
 func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string) (string, error) {
 	resp, err := kc.kcClient.GetClientSecret(kc.ctx, accessToken, kc.realmConfig.Realm, internalClientId)
 	if err != nil {
-		return "", fmt.Errorf("%+v", err.Error())
+		return "", fmt.Errorf("failed to get service account secret id:%s %+v", internalClientId, err.Error())
 	}
 	value := *resp.Value
 	return value, err
@@ -158,7 +158,7 @@ func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string)
 func (kc *kcClient) DeleteClient(internalClientID string, accessToken string) error {
 	err := kc.kcClient.DeleteClient(kc.ctx, accessToken, kc.realmConfig.Realm, internalClientID)
 	if err != nil {
-		return fmt.Errorf("%+v", err.Error())
+		return fmt.Errorf("failed to delete service account: %+v", err.Error())
 	}
 	return err
 }
@@ -169,7 +169,7 @@ func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.C
 	}
 	client, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
 	if err != nil {
-		return nil, fmt.Errorf("%+v", err.Error())
+		return nil, err
 	}
 	return client, err
 }
@@ -177,7 +177,8 @@ func (kc *kcClient) getClient(clientId string, accessToken string) ([]*gocloak.C
 func (kc *kcClient) GetClientById(id string, accessToken string) (*gocloak.Client, error) {
 	client, err := kc.kcClient.GetClient(kc.ctx, accessToken, kc.realmConfig.Realm, id)
 	if err != nil {
-		return nil, fmt.Errorf("client id: %s:%+v", id, err.Error())
+		//caller to determine the error type
+		return nil, err
 	}
 	return client, err
 }
@@ -194,7 +195,7 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 	client, err := kc.getClient(clientId, accessToken)
 	var internalClientID string
 	if err != nil {
-		return internalClientID, fmt.Errorf("client id: %s:%+v", clientId, err.Error())
+		return internalClientID, err
 	}
 	if len(client) > 0 {
 		internalClientID = *client[0].ID
@@ -206,7 +207,7 @@ func (kc *kcClient) IsClientExist(clientId string, accessToken string) (string, 
 func (kc *kcClient) GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error) {
 	serviceAccountUser, err := kc.kcClient.GetClientServiceAccount(kc.ctx, accessToken, kc.realmConfig.Realm, internalClient)
 	if err != nil {
-		return nil, fmt.Errorf("%+v", err.Error())
+		return nil, fmt.Errorf("failed to read service account %+v", err.Error())
 	}
 	return serviceAccountUser, err
 }
@@ -214,7 +215,7 @@ func (kc *kcClient) GetClientServiceAccount(accessToken string, internalClient s
 func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error {
 	err := kc.kcClient.UpdateUser(kc.ctx, accessToken, kc.realmConfig.Realm, serviceAccountUser)
 	if err != nil {
-		return fmt.Errorf("%+v", err.Error())
+		return fmt.Errorf("failed to update service account  %+v", err.Error())
 	}
 	return err
 }
@@ -233,7 +234,7 @@ func (kc *kcClient) GetClients(accessToken string, first int, max int, attribute
 	}
 	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
 	if err != nil {
-		return nil, fmt.Errorf("%+v", err.Error())
+		return nil, fmt.Errorf("failed to get clients with search att: %s, %+v", attribute, err.Error())
 	}
 	return clients, err
 }
@@ -264,7 +265,7 @@ func (kc *kcClient) IsOwner(client *gocloak.Client, userId string) bool {
 func (kc *kcClient) RegenerateClientSecret(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 	credRep, err := kc.kcClient.RegenerateClientSecret(kc.ctx, accessToken, kc.realmConfig.Realm, id)
 	if err != nil {
-		return nil, fmt.Errorf("client id: %s:%+v", id, err.Error())
+		return nil, fmt.Errorf("failed to generate secret for client id: %s:%+v", id, err.Error())
 	}
 	return credRep, err
 }
@@ -275,7 +276,7 @@ func (kc *kcClient) GetRealmRole(accessToken string, roleName string) (*gocloak.
 		if isNotFoundError(err) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("realm role: %s:%+v", roleName, err.Error())
+		return nil, fmt.Errorf("failed to get realm role: %s:%+v", roleName, err.Error())
 	}
 	return r, err
 }
@@ -286,12 +287,12 @@ func (kc *kcClient) CreateRealmRole(accessToken string, roleName string) (*goclo
 	}
 	_, err := kc.kcClient.CreateRealmRole(kc.ctx, accessToken, kc.realmConfig.Realm, *r)
 	if err != nil {
-		return nil, fmt.Errorf("realm role: %s:%+v", roleName, err.Error())
+		return nil, fmt.Errorf("failed to create realm role: %s:%+v", roleName, err.Error())
 	}
 	// for some reason, the internal id of the role is not returned by kcClient.CreateRealmRole, so we have to get the role again to get the full details
 	r, err = kc.kcClient.GetRealmRole(kc.ctx, accessToken, kc.realmConfig.Realm, roleName)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create realm role: %s:%+v", roleName, err.Error())
+		return nil, fmt.Errorf("failed to get realm role after creation: %s:%+v", roleName, err.Error())
 	}
 	return r, nil
 }
