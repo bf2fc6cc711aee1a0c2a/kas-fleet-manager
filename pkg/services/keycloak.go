@@ -450,9 +450,16 @@ func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentCl
 		return errors.GeneralError("failed to get token: %s", err.Error())
 	}
 	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
-	err = kc.kcClient.DeleteClient(serviceAccountId, accessToken)
+	internalServiceAccountId, err := kc.kcClient.IsClientExist(serviceAccountId, accessToken)
 	if err != nil {
-		return errors.FailedToDeleteServiceAccount("Failed to delete service account: %s", err.Error())
+		return errors.FailedToGetServiceAccount("Failed to get service account %s due to error: %s", serviceAccountId, err.Error())
+	}
+	if internalServiceAccountId == "" {
+		return nil
+	}
+	err = kc.kcClient.DeleteClient(internalServiceAccountId, accessToken)
+	if err != nil {
+		return errors.FailedToDeleteServiceAccount("Failed to delete service account %s due to error: %s", internalServiceAccountId, err.Error())
 	}
 	return nil
 }

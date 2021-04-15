@@ -29,7 +29,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
 	"enable-deletion-of-expired-kafka":  "false",
-	"dataplane-cluster-scaling-type":    "manual",
+	"dataplane-cluster-scaling-type":    "auto", // need to set this to 'auto' for integration environment as some tests rely on this
 }
 
 // The integration environment is specifically for automated integration testing using an emulated server
