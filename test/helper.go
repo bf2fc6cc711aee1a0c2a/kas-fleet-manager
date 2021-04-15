@@ -124,6 +124,7 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 		}
 
 		helper.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+		helper.Env().Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 
 		// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
 		jwkMockTeardown := helper.StartJWKCertServerMock()

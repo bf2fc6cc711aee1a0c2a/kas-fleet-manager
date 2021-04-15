@@ -1285,17 +1285,10 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 // TestKafka_RemovingExpiredKafkas tests that all kafkas are removed after their allocated life span has expired
 func TestKafka_RemovingExpiredKafkas(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableDeletionOfExpiredKafka = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableDeletionOfExpiredKafka = false
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, client, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	// create an account with values from config/allow-list-configuration.yaml
@@ -1340,6 +1333,19 @@ func TestKafka_RemovingExpiredKafkas(t *testing.T) {
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
+		{
+			Meta: api.Meta{
+				ID:        "123456",
+				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
+			},
+			MultiAZ:        false,
+			Owner:          testuser1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-4",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
 	}
 
 	for _, kafka := range kafkas {
@@ -1354,7 +1360,7 @@ func TestKafka_RemovingExpiredKafkas(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
 		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
-		return list.Size == 1, err
+		return list.Size == 2, err
 	})
 
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
