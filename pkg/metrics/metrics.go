@@ -25,10 +25,11 @@ const (
 	KafkaOperationsTotalCount = "kafka_operations_total_count"
 
 	// KafkaRequestsStatus - kafka requests status metric
-	KafkaRequestsStatus = "kafka_requests_status"
-	LabelKafkaStatus    = "status"
-	LabelKafkaRequestID = "id"
-	LabelKafkaClusterID = "cluster_id"
+	KafkaRequestsStatusDuration = "kafka_requests_status_duration"
+	KafkaRequestsStatusCount    = "kafka_requests_status_count"
+	LabelKafkaStatus            = "status"
+	LabelKafkaRequestID         = "id"
+	LabelKafkaClusterID         = "cluster_id"
 
 	// ClusterOperationsSuccessCount - name of the metric for cluster-related successful operations
 	ClusterOperationsSuccessCount = "cluster_operations_success_count"
@@ -58,11 +59,16 @@ var JobsMetricsLabels = []string{
 	labelJobType,
 }
 
-// KafkaStatusMetricsLabels  is the slice of labels to add to
-var KafkaStatusMetricsLabels = []string{
+// kafkaStatusDurationMetricLabels  is the slice of labels to add to
+var kafkaStatusDurationMetricLabels = []string{
 	LabelKafkaStatus,
 	LabelKafkaRequestID,
 	LabelKafkaClusterID,
+}
+
+// kafkaStatusCountMetricLabels  is the slice of labels to add to
+var kafkaStatusCountMetricLabels = []string{
+	LabelKafkaStatus,
 }
 
 // KafkaOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
@@ -161,8 +167,8 @@ var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	KafkaOperationsCountMetricsLabels,
 )
 
-//
-func KafkaRequestsStatusMetric(status constants.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
+//KafkaRequestsStatusDurationMetric
+func KafkaRequestsStatusDurationMetric(status constants.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelKafkaStatus:    string(status),
 		LabelKafkaRequestID: kafkaId,
@@ -171,14 +177,32 @@ func KafkaRequestsStatusMetric(status constants.KafkaStatus, kafkaId string, clu
 	kafkaStatusDurationMetric.With(labels).Set(elapsed.Seconds())
 }
 
+//KafkaRequestsStatusCountMetric
+func KafkaRequestsStatusCountMetric(status constants.KafkaStatus, count int) {
+	labels := prometheus.Labels{
+		LabelKafkaStatus: string(status),
+	}
+	KafkaStatusCountMetric.With(labels).Set(float64(count))
+}
+
+// create a new GaugeVec for status counts
+var KafkaStatusCountMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      KafkaRequestsStatusCount,
+		Help:      "number of total Kafka instances in each status ",
+	},
+	kafkaStatusCountMetricLabels,
+)
+
 // create a new GaugeVec for kafkas status duration
 var kafkaStatusDurationMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaRequestsStatus,
+		Name:      KafkaRequestsStatusDuration,
 		Help:      "metrics to track the Kafka instances in various status and their duration",
 	},
-	KafkaStatusMetricsLabels,
+	kafkaStatusDurationMetricLabels,
 )
 
 // IncreaseKafkaSuccessOperationsCountMetric - increase counter for the kafkaOperationsSuccessCountMetric
@@ -315,6 +339,7 @@ func init() {
 	prometheus.MustRegister(reconcilerSuccessCountMetric)
 	prometheus.MustRegister(reconcilerFailureCountMetric)
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
+	prometheus.MustRegister(KafkaStatusCountMetric)
 }
 
 // Reset the metrics we have defined. It is mainly used for testing.
@@ -330,4 +355,5 @@ func Reset() {
 	reconcilerSuccessCountMetric.Reset()
 	reconcilerFailureCountMetric.Reset()
 	reconcilerErrorsCountMetric.Reset()
+	KafkaStatusCountMetric.Reset()
 }
