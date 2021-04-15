@@ -59,6 +59,9 @@ resources_cleaned_up = False
 
 kafkas_persisted = False
 
+# used to control population of the kafkas.txt config file
+kafkas_ready = []
+
 kafkas_list = []
 service_acc_list = []
 current_run_time = 0
@@ -216,23 +219,22 @@ def hit_endpoint(self, get_only):
 # wait for kafkas to be in ready state and persist kafka config
 def wait_for_kafkas_ready(self):
   global kafkas_persisted
-  i = 0
-  while i < len(kafkas_list):
-    kafka = handle_get(self, f'{url_base}/kafkas/{kafkas_list[i]}', '/kafkas/[id]', True)
-    if 'status' in kafka:
+  global kafkas_ready
+  for kafka in kafkas_list:
+    if not kafka in kafkas_ready:
+      kafka_json = handle_get(self, f'{url_base}/kafkas/{kafka}', '/kafkas/[id]', True)
+      if 'status' in kafka_json:
       # persist service account and kafka details to config files
-      if kafka['status'] == 'ready' and 'bootstrapServerHost' in kafka:
-        svc_acc_json_payload = get_svc_account_for_kafka(kafka_assoc_svc_accs, kafkas_list[i])
-        persist_kafka_config(kafka['bootstrapServerHost'], svc_acc_json_payload['svc_acc_json'])
-        i += 1
-        if i == len(kafkas_list):
-          kafkas_persisted = True
+        if kafka_json['status'] == 'ready' and 'bootstrapServerHost' in kafka_json:
+          svc_acc_json_payload = get_svc_account_for_kafka(kafka_assoc_svc_accs, kafka)
+          persist_kafka_config(kafka_json['bootstrapServerHost'], svc_acc_json_payload['svc_acc_json'])
+          kafkas_ready.append(kafka)
+          if len(kafkas_ready) == len(kafkas_list):
+            kafkas_persisted = True
       else:
         hit_endpoint(self, True)
-        time.sleep(random.uniform(25,30)) # sleep before checking kafka status again if not ready
-    else:
-      # if there was no kafka body returned - backoff for 1-5 seconds and try to GET kafka details again
-      time.sleep(random.uniform(1,5))
+        time.sleep(random.uniform(1,2)) # sleep before checking kafka status again if not ready
+      time.sleep(random.uniform(0.4,1)) # sleep before checking another kafka
 
 # perf tests against service account endpoints
 def service_accounts(self, get_only):
