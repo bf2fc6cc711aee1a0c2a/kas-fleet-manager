@@ -357,9 +357,9 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 }
 
 func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRequest, err *errors.ServiceError) error {
-	// Important: we need to keep this check first as at the moment, the SSO-related errors also have http status code that is fall in the range of client errors.
-	// So if this is not checked first, then err.IsClientErrorClass() will return true and that will fail the kafka instance creation as there is no retry if it's client errors.
-	if err.IsFailedToCreateSSOClient() || err.IsFailedToGetSSOClient() || err.IsFailedToGetSSOClientSecret() || err.IsServerErrorClass() {
+	if err.IsServerErrorClass() {
+		// retry the kafka creation request only if the failure is caused by server errors
+		// and the time elapsed since its db record was created is still within the threshold.
 		durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
 		if durationSinceCreation > constants.KafkaMaxDurationWithProvisioningErrs {
 			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)

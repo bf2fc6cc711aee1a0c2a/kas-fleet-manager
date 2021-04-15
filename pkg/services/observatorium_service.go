@@ -37,11 +37,11 @@ func (obs observatoriumService) GetMetricsByKafkaId(ctx context.Context, kafkasM
 
 	namespace, replaceErr := BuildNamespaceName(kafkaRequest)
 	if replaceErr != nil {
-		return kafkaRequest.ID, errors.GeneralError("failed to build namespace for kafka %s: %v", kafkaRequest.ID, replaceErr)
+		return kafkaRequest.ID, errors.NewWithCause(errors.ErrorGeneral, replaceErr, "failed to retrieve metrics")
 	}
 	replaceErr = obs.observatorium.Service.GetMetrics(kafkasMetrics, namespace, &query)
 	if replaceErr != nil {
-		return kafkaRequest.ID, errors.GeneralError("failed to get state from observatorium for kafka %s namespace %s cluster %s: %v", kafkaRequest.ID, namespace, kafkaRequest.ClusterID, replaceErr)
+		return kafkaRequest.ID, errors.NewWithCause(errors.ErrorGeneral, replaceErr, "failed to retrieve metrics")
 	}
 
 	return kafkaRequest.ID, nil
