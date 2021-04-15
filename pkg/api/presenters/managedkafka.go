@@ -24,6 +24,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 				MaxDataRetentionSize:          from.Spec.Capacity.MaxDataRetentionSize,
 				MaxPartitions:                 int32(from.Spec.Capacity.MaxPartitions),
 				MaxDataRetentionPeriod:        from.Spec.Capacity.MaxDataRetentionPeriod,
+				MaxConnectionAttemptsPerSec:   int32(from.Spec.Capacity.MaxConnectionAttemptsPerSec),
 			},
 			Oauth: openapi.ManagedKafkaAllOfSpecOauth{
 				ClientId:               from.Spec.OAuth.ClientId,
