@@ -50,13 +50,6 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
-	clusterID, getClusterErr := utils.GetRunningOsdClusterID(env.helper, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
 	// setup pre-requisites to performing requests
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)

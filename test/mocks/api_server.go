@@ -67,6 +67,7 @@ const (
 
 	EndpointPathClusterAuthorization = "/api/accounts_mgmt/v1/cluster_authorizations"
 	EndpointPathSubscription         = "/api/accounts_mgmt/v1/subscriptions/{id}"
+	EndpointPathSubscriptionSearch   = "/api/accounts_mgmt/v1/subscriptions"
 
 	EndpointPathTermsReview = "/api/authorizations/v1/terms_review"
 
@@ -148,6 +149,7 @@ var (
 	EndpointAddonInstallationPatch   = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
 	EndpointClusterAuthorizationPost = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
 	EndpointSubscriptionDelete       = Endpoint{EndpointPathSubscription, http.MethodDelete}
+	EndpointSubscriptionSearch       = Endpoint{EndpointPathSubscriptionSearch, http.MethodGet}
 	EndpointTermsReviewPost          = Endpoint{EndpointPathTermsReview, http.MethodPost}
 )
 
@@ -172,6 +174,7 @@ var (
 	MockCluster                      *clustersmgmtv1.Cluster
 	MockClusterAuthorization         *amsv1.ClusterAuthorizationResponse
 	MockSubscription                 *amsv1.Subscription
+	MockSubscriptionSearch           []*amsv1.Subscription
 	MockTermsReview                  *authorizationsv1.TermsReviewResponse
 )
 
@@ -358,6 +361,10 @@ func (b *MockConfigurableServerBuilder) SetSubscriptionPathDeleteResponse(idp *a
 	b.handlerRegister[EndpointSubscriptionDelete] = buildMockRequestHandler(idp, err)
 }
 
+func (b *MockConfigurableServerBuilder) SetSubscriptionSearchResponse(sl *amsv1.SubscriptionList, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointSubscriptionSearch] = buildMockRequestHandler(sl, err)
+}
+
 func (b *MockConfigurableServerBuilder) SetTermsReviewPostResponse(idp *authorizationsv1.TermsReviewResponse, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointTermsReviewPost] = buildMockRequestHandler(idp, err)
 }
@@ -446,6 +453,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointAddonInstallationPatch:   buildMockRequestHandler(MockClusterAddonInstallation, nil),
 		EndpointClusterAuthorizationPost: buildMockRequestHandler(MockClusterAuthorization, nil),
 		EndpointSubscriptionDelete:       buildMockRequestHandler(MockSubscription, nil),
+		EndpointSubscriptionSearch:       buildMockRequestHandler(MockSubscriptionSearch, nil),
 		EndpointTermsReviewPost:          buildMockRequestHandler(MockTermsReview, nil),
 	}, nil
 }
@@ -552,6 +560,16 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		return amsv1.MarshalSubscription(t.(*amsv1.Subscription), w)
 	case *authorizationsv1.TermsReviewResponse:
 		return authorizationsv1.MarshalTermsReviewResponse(t.(*authorizationsv1.TermsReviewResponse), w)
+	case []*amsv1.Subscription:
+		return amsv1.MarshalSubscriptionList(t.([]*amsv1.Subscription), w)
+	case *amsv1.SubscriptionList:
+		subscList, err := NewSubscriptionList().WithItems(t.(*amsv1.SubscriptionList).Slice())
+		if err != nil {
+			return err
+		}
+		return json.NewEncoder(w).Encode(subscList)
+		//list := t.(*amsv1.SubscriptionList)
+		//return amsv1.MarshalSubscriptionList(list.Slice(), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
 		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError(""))
@@ -591,6 +609,31 @@ func (l *ocmList) WithItems(items interface{}) (*ocmList, error) {
 	}
 	l.Items = b.Bytes()
 	return l, nil
+}
+
+type subscriptionList struct {
+	Page  int             `json:"page"`
+	Size  int             `json:"size"`
+	Total int             `json:"total"`
+	Items json.RawMessage `json:"items"`
+}
+
+func (l *subscriptionList) WithItems(items interface{}) (*subscriptionList, error) {
+	var b bytes.Buffer
+	if err := marshalOCMType(items, &b); err != nil {
+		return l, err
+	}
+	l.Items = b.Bytes()
+	return l, nil
+}
+
+func NewSubscriptionList() *subscriptionList {
+	return &subscriptionList{
+		Page:  0,
+		Size:  0,
+		Total: 0,
+		Items: nil,
+	}
 }
 
 // init the shared mock types, panic if we fail, this should never fail
