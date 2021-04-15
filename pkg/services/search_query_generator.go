@@ -64,14 +64,14 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) (DbSearc
 		switch index {
 		case 0: // column name
 			columnName := strings.ToLower(queryToken)
-			if !contains(ValidColumnNames, columnName) {
+			if !Contains(ValidColumnNames, columnName) {
 				return DbSearchQuery{}, errors.FailedToParseSearch("Unsupported column name for search: '%s'. Supported column names are: %s. Query invalid: %s", columnName, strings.Join(ValidColumnNames[:], ", "), searchQuery)
 			}
 			query = fmt.Sprintf("%s%s", query, columnName)
 			index++
 		case 1: // comparator
 			comparator = strings.ToUpper(queryToken)
-			if !contains(ValidComparators, comparator) {
+			if !Contains(ValidComparators, comparator) {
 				return DbSearchQuery{}, errors.FailedToParseSearch("Unsupported comparator: '%s'. Supported comparators are: %s. Query invalid: %s", queryToken, strings.Join(ValidComparators[:], ", "), searchQuery)
 			}
 			query = fmt.Sprintf("%s %s ?", query, comparator)
@@ -94,7 +94,7 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) (DbSearc
 			index++
 		case 3: // only 'and' allowed here
 			join := strings.ToUpper(queryToken)
-			if !contains(ValidJoins, join) {
+			if !Contains(ValidJoins, join) {
 				return DbSearchQuery{}, errors.FailedToParseSearch("Unsupported join value: '%s'. Supported joins are: %s. Query invalid: %s", queryToken, strings.Join(ValidJoins[:], ", "), searchQuery)
 			}
 			query = fmt.Sprintf("%s %s ", query, join)

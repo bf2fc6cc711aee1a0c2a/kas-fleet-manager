@@ -3,15 +3,16 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
@@ -25,8 +26,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server/logging"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -191,7 +190,7 @@ func (s apiServer) Stop() error {
 }
 
 func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) {
-	openAPIDefinitions, err := s.loadOpenAPISpec(openApiFilePath)
+	openAPIDefinitions, err := s.loadOpenAPISpec(openapi.Asset, openApiFilePath)
 	if err != nil {
 		check(err, "Can't load OpenAPI specification")
 	}
@@ -267,6 +266,26 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 
 	if env().Config.ConnectorsConfig.Enabled {
 		//  /kafka-connector-types
+
+		openAPIDefinitions, err := s.loadOpenAPISpec(connector.Asset, "openapi.yaml")
+		if err != nil {
+			check(err, "Can't load OpenAPI specification")
+		}
+
+		//  /api/connector_mgmt
+		apiRouter := mainRouter.PathPrefix("/api/connector_mgmt").Subrouter()
+		apiRouter.HandleFunc("", api.SendAPI).Methods(http.MethodGet)
+		apiRouter.Use(MetricsMiddleware)
+		apiRouter.Use(db.TransactionMiddleware)
+		apiRouter.Use(gorillahandlers.CompressHandler)
+
+		//  /api/connector_mgmt/v1
+		apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
+
+		//  /api/connector_mgmt/v1/openapi
+		apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
+
+		//  /api/connector_mgmt/v1/kafka-connector-types
 		connectorTypesHandler := handlers.NewConnectorTypesHandler(services.ConnectorTypes)
 		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/kafka-connector-types").Subrouter()
 		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", connectorTypesHandler.Get).Methods(http.MethodGet)
@@ -274,7 +293,7 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
 
-		//  /kafka-connectors
+		//  /api/connector_mgmt/v1/kafka-connectors
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorsRouter := apiV1Router.PathPrefix("/kafka-connectors").Subrouter()
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
@@ -284,7 +303,7 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Delete).Methods(http.MethodDelete)
 		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
-		//  /kafka-connectors-of/{connector_type_id}
+		//  /api/connector_mgmt/v1/kafka-connectors-of/{connector_type_id}
 		apiV1ConnectorsTypedRouter := apiV1Router.PathPrefix("/kafka-connectors-of/{connector_type_id}").Subrouter()
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
@@ -292,7 +311,7 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
 		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
-		//  /kafka-connector-clusters
+		//  /api/connector_mgmt/v1/kafka-connector-clusters
 		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
@@ -304,11 +323,12 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 
 		// This section adds the API's accessed by the connector agent...
 		{
-			//  /kafka-connector-agent-clusters/{id}
+			//  /api/connector_mgmt/v1/kafka-connector-agent-clusters/{id}
 			agentRouter := apiV1Router.PathPrefix("/kafka-connector-clusters/{connector_cluster_id}").Subrouter()
 			agentRouter.HandleFunc("/status", connectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
 			agentRouter.HandleFunc("/deployments", connectorClusterHandler.ListDeployments).Methods(http.MethodGet)
-			agentRouter.HandleFunc("/deployments/{connector_id}/status", connectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
+			agentRouter.HandleFunc("/deployments/{deployment_id}", connectorClusterHandler.GetDeployment).Methods(http.MethodGet)
+			agentRouter.HandleFunc("/deployments/{deployment_id}/status", connectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
 			auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id")
 		}
 	}
@@ -328,8 +348,8 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 
 }
 
-func (s *apiServer) loadOpenAPISpec(asset string) (data []byte, err error) {
-	data, err = openapi.Asset(asset)
+func (s *apiServer) loadOpenAPISpec(assetFunc func(name string) ([]byte, error), asset string) (data []byte, err error) {
+	data, err = assetFunc(asset)
 	if err != nil {
 		err = errors.GeneralError(
 			"can't load OpenAPI specification from asset '%s'",

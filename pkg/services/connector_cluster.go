@@ -1,29 +1,21 @@
 package services
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"reflect"
-	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/spyzhov/ajson"
-	"gorm.io/gorm"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/spyzhov/ajson"
+	"gorm.io/gorm"
+	"reflect"
 )
 
 type ConnectorClusterService interface {
@@ -36,11 +28,12 @@ type ConnectorClusterService interface {
 	GetConnectorClusterStatus(ctx context.Context, id string) (api.ConnectorClusterStatus, *errors.ServiceError)
 
 	SaveDeployment(ctx context.Context, resource *api.ConnectorDeployment) *errors.ServiceError
-	GetConnectorClusterSpec(ctx context.Context, resource api.ConnectorDeployment) (openapi.ConnectorDeploymentSpec, *errors.ServiceError)
+	GetConnectorWithBase64Secrets(ctx context.Context, resource api.ConnectorDeployment) (api.Connector, *errors.ServiceError)
 	ListConnectorDeployments(ctx context.Context, id string, listArgs *ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status api.ConnectorDeploymentStatus) *errors.ServiceError
 	FindReadyCluster(owner string, orgId string, group string) (*api.ConnectorCluster, *errors.ServiceError)
-	GetDeployment(ctx context.Context, connectorID string) (api.ConnectorDeployment, *errors.ServiceError)
+	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (api.ConnectorDeployment, *errors.ServiceError)
+	GetDeployment(ctx context.Context, id string) (api.ConnectorDeployment, *errors.ServiceError)
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -310,8 +303,6 @@ func (k *connectorClusterService) FindReadyCluster(owner string, orgId string, c
 	return &resource, nil
 }
 
-var ZombieDeployment = errors.BadRequest("zombie deployment")
-
 func Checksum(spec interface{}) (string, error) {
 	h := sha1.New()
 	err := json.NewEncoder(h).Encode(spec)
@@ -321,40 +312,22 @@ func Checksum(spec interface{}) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (k *connectorClusterService) GetConnectorClusterSpec(ctx context.Context, resource api.ConnectorDeployment) (result openapi.ConnectorDeploymentSpec, serr *errors.ServiceError) {
+func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Context, resource api.ConnectorDeployment) (api.Connector, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 
 	var connector api.Connector
-	err := dbConn.Select("connector_type_id, connector_spec").Where("id = ?", resource.ConnectorID).First(&connector).Error
+	err := dbConn.Where("id = ?", resource.ConnectorID).First(&connector).Error
 	if err != nil {
-		fmt.Println(err)
-		return result, ZombieDeployment
+		return connector, handleGetError("Connector", "id", resource.ConnectorID, err)
 	}
 
-	serr = getSecretsFromVaultAsBase64(&connector, k.connectorTypesService, k.vaultService)
+	serr := getSecretsFromVaultAsBase64(&connector, k.connectorTypesService, k.vaultService)
 	if serr != nil {
-		return
+		return connector, serr
 	}
 
-	connectorSpec, err := connector.ConnectorSpec.Object()
-	if err != nil {
-		return result, errors.BadRequest("could decode connector spec %s: %v", resource.ConnectorID, err)
-	}
-
-	result, err = reify(context.Background(), resource.ConnectorTypeService, connector.ConnectorTypeId, openapi.ConnectorReifyRequest{
-		ConnectorId:     resource.ConnectorID,
-		ResourceVersion: connector.Version,
-		KafkaId:         resource.ClusterID,
-		ClusterId:       resource.ClusterID,
-		//ClusterStatus:   clusterStatus,
-		ConnectorSpec: connectorSpec,
-	})
-	if err != nil {
-		return result, errors.GeneralError("failed to reify deployment for connector %s: %v", resource.ConnectorID, err)
-	}
-
-	return
+	return connector, nil
 }
 
 func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesService, vault VaultService) *errors.ServiceError {
@@ -402,71 +375,21 @@ func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesServ
 	return nil
 }
 
-func reify(ctx context.Context, serviceUrl string, typeId string, reifyRequest openapi.ConnectorReifyRequest) (openapi.ConnectorDeploymentSpec, error) {
-
-	result := openapi.ConnectorDeploymentSpec{}
-	endpoint := fmt.Sprintf("%s/api/kafkas_mgmt/v1/kafka-connector-types/%s/reify/spec", serviceUrl, typeId)
-
-	requestBytes, err := json.Marshal(reifyRequest)
-	if err != nil {
-		return result, err
-	}
-
-	// glog.Infoln("reify request: ", string(requestBytes))
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(requestBytes))
-	if err != nil {
-		return result, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	c := &http.Client{}
-
-	resp, err := c.Do(req)
-	if err != nil {
-		return result, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		all, err := ioutil.ReadAll(io.LimitReader(resp.Body, 400))
-		if err != nil {
-			return result, err
-		}
-		return result, fmt.Errorf("expected 200: but got %d, body: %s", resp.StatusCode, string(all))
-	}
-	contentType := resp.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "application/json") {
-		return result, fmt.Errorf("expected Content-Type: application/json, but got %s", contentType)
-	}
-
-	//all, err := io.ReadAll(resp.Body)
-	//if err != nil {
-	//	return result, err
-	//}
-	//glog.Infoln("reify response: ", string(all))
-	//
-	//err = json.Unmarshal(all, &result)
-	//if err != nil {
-	//	return result, err
-	//}
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return result, err
-	}
-
-	return result, nil
-
-}
-
-func (k *connectorClusterService) GetDeployment(ctx context.Context, connectorID string) (resource api.ConnectorDeployment, serr *errors.ServiceError) {
+func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource api.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Where("connector_id = ?", connectorID)
 	if err := dbConn.First(&resource).Error; err != nil {
-		return resource, handleGetError("Connector cluster status", "id", connectorID, err)
+		return resource, handleGetError("Connector deployment", "connector_id", connectorID, err)
+	}
+	return
+}
+func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource api.ConnectorDeployment, serr *errors.ServiceError) {
+
+	dbConn := k.connectionFactory.New()
+	dbConn = dbConn.Where("id = ?", id)
+	if err := dbConn.First(&resource).Error; err != nil {
+		return resource, handleGetError("Connector deployment", "id", id, err)
 	}
 	return
 }

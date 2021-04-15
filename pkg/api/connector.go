@@ -5,7 +5,8 @@ type ConnectorStatusPhase = string
 const (
 	ConnectorStatusPhaseAssigning    ConnectorStatusPhase = "assigning"    // set by kas-fleet-manager - user request
 	ConnectorStatusPhaseAssigned     ConnectorStatusPhase = "assigned"     // set by kas-fleet-manager - worker
-	ConnectorStatusPhaseProvisioning ConnectorStatusPhase = "provisioning" // set by kas-fleet-manager -  user request
+	ConnectorStatusPhaseUpdating     ConnectorStatusPhase = "updating"     // set by kas-fleet-manager - user request
+	ConnectorStatusPhaseProvisioning ConnectorStatusPhase = "provisioning" // set by kas-agent
 	ConnectorStatusPhaseReady        ConnectorStatusPhase = "ready"        // set by the agent
 	ConnectorStatusPhaseFailed       ConnectorStatusPhase = "failed"       // set by the agent
 	ConnectorStatusPhaseDeleting     ConnectorStatusPhase = "deleting"     // set by the kas-fleet-manager - user request
@@ -13,6 +14,7 @@ const (
 )
 
 var AgentSetConnectorStatusPhase = []ConnectorStatusPhase{
+	ConnectorStatusPhaseProvisioning,
 	ConnectorStatusPhaseReady,
 	ConnectorStatusPhaseFailed,
 	ConnectorStatusPhaseDeleted,
@@ -48,6 +50,7 @@ type Connector struct {
 	ConnectorTypeId string `json:"connector_type_id,omitempty"`
 	ConnectorSpec   JSON   `json:"connector_spec"`
 	DesiredState    string `json:"desired_state"`
+	Channel         string `json:"channel,omitempty"`
 
 	Status ConnectorStatus `json:"status" gorm:"foreignKey:ID"`
 }
@@ -63,21 +66,22 @@ type ConnectorList []*Connector
 // ConnectorDeployment Holds the deployment configuration of a connector
 type ConnectorDeployment struct {
 	Meta
-	Version              int64                     `json:"version"`
-	ConnectorID          string                    `json:"connector_id"`
-	ClusterID            string                    `json:"cluster_id"`
-	ConnectorTypeService string                    `json:"connector_type_service"`
-	SpecChecksum         string                    `json:"spec_checksum,omitempty"`
-	Status               ConnectorDeploymentStatus `json:"status" gorm:"foreignKey:ID"`
+	Version          int64                     `json:"version"`
+	ConnectorID      string                    `json:"connector_id"`
+	ConnectorVersion int64                     `json:"connector_version,omitempty"`
+	ClusterID        string                    `json:"cluster_id"`
+	AllowUpgrade     bool                      `json:"allow_upgrade,omitempty"`
+	Status           ConnectorDeploymentStatus `json:"status" gorm:"foreignKey:ID"`
 }
 
 type ConnectorDeploymentList []ConnectorDeployment
 
 type ConnectorDeploymentStatus struct {
 	Meta
-	Phase        string `json:"phase,omitempty"`
-	SpecChecksum string `json:"spec_checksum,omitempty"`
-	Conditions   JSON   `json:"conditions,omitempty"`
+	Phase             string `json:"phase,omitempty"`
+	Version           int64  `json:"version"`
+	Conditions        JSON   `json:"conditions,omitempty"`
+	AvailableUpgrades string `json:"available_upgrades,omitempty"`
 }
 
 type ConnectorDeploymentSpecStatusExtractors struct {
