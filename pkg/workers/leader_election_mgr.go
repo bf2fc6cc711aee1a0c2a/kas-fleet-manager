@@ -218,7 +218,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 }
 
 func isExpired(lease *api.LeaderLease) bool {
-	return time.Now().After(*lease.Expires)
+	return lease.Leader == "" || time.Now().After(*lease.Expires)
 }
 
 // releaseLeaderLease releases the acquired lease for the worker.
