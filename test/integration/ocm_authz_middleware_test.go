@@ -92,7 +92,7 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
 
 	Expect(err).NotTo(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 }
 
 func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
