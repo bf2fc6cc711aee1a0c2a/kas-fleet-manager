@@ -48,6 +48,10 @@ const (
 	ErrorUnauthorized       ServiceErrorCode = 11
 	ErrorUnauthorizedReason string           = "Account is unauthorized to perform this action"
 
+	// Unauthorized occurs when the requester is not authorized to perform the specified action
+	ErrorTermsNotAccepted       ServiceErrorCode = 12
+	ErrorTermsNotAcceptedReason string           = "Required terms have not been accepted"
+
 	// Unauthenticated occurs when the provided credentials cannot be validated
 	ErrorUnauthenticated       ServiceErrorCode = 15
 	ErrorUnauthenticatedReason string           = "Account authentication could not be verified"
@@ -183,6 +187,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError},
 		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed},
 		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden},
+		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden},
 		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized},
 		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest},
 		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest},
@@ -376,6 +381,10 @@ func GeneralError(reason string, values ...interface{}) *ServiceError {
 
 func Unauthorized(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorUnauthorized, reason, values...)
+}
+
+func TermsNotAccepted(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorTermsNotAccepted, reason, values...)
 }
 
 func Unauthenticated(reason string, values ...interface{}) *ServiceError {

@@ -48,10 +48,10 @@ func (*httpAPIMock) DeleteSeries(ctx context.Context, matches []string, startTim
 func (*httpAPIMock) Flags(ctx context.Context) (pV1.FlagsResult, error) {
 	return pV1.FlagsResult{}, fmt.Errorf("not implemented")
 }
-func (*httpAPIMock) LabelNames(ctx context.Context, startTime time.Time, endTime time.Time) ([]string, pV1.Warnings, error) {
+func (*httpAPIMock) LabelNames(ctx context.Context, matches []string, startTime time.Time, endTime time.Time) ([]string, pV1.Warnings, error) {
 	return []string{}, pV1.Warnings{}, fmt.Errorf("not implemented")
 }
-func (*httpAPIMock) LabelValues(ctx context.Context, label string, startTime time.Time, endTime time.Time) (pModel.LabelValues, pV1.Warnings, error) {
+func (*httpAPIMock) LabelValues(ctx context.Context, label string, matches []string, startTime time.Time, endTime time.Time) (pModel.LabelValues, pV1.Warnings, error) {
 	return pModel.LabelValues{}, pV1.Warnings{}, fmt.Errorf("not implemented")
 }
 
@@ -81,6 +81,10 @@ func (*httpAPIMock) TSDB(ctx context.Context) (pV1.TSDBResult, error) {
 func (*httpAPIMock) Runtimeinfo(ctx context.Context) (pV1.RuntimeinfoResult, error) {
 
 	return pV1.RuntimeinfoResult{}, fmt.Errorf("not implemented")
+}
+
+func (*httpAPIMock) Buildinfo(ctx context.Context) (pV1.BuildinfoResult, error) {
+	return pV1.BuildinfoResult{}, fmt.Errorf("not implemented")
 }
 
 //getMockQueryData

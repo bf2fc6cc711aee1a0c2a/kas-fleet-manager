@@ -13,6 +13,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"enable-ocm-mock":                   "false",
 	"enable-https":                      "false",
 	"enable-metrics-https":              "false",
+	"enable-terms-acceptance":           "false",
 	"api-server-hostname":               "localhost",
 	"api-server-bindaddress":            "localhost:8000",
 	"enable-sentry":                     "false",
