@@ -133,7 +133,7 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		org, orgFound := configService.GetOrganisationById(orgId)
 		if orgFound && org.IsUserAllowed(username) {
 			allowListItem = org
-			message = fmt.Sprintf("Organisation '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
+			message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
 		} else {
 			user, userFound := configService.GetServiceAccountByUsername(username)
 			if userFound {

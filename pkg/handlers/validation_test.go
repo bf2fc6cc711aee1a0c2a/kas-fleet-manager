@@ -265,7 +265,7 @@ func Test_Validation_validateMaxAllowedInstances(t *testing.T) {
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
-				Reason:   "Organisation 'org-id' has reached a maximum number of 4 allowed instances.",
+				Reason:   "Organization 'org-id' has reached a maximum number of 4 allowed instances.",
 				Code:     5,
 			},
 		},
