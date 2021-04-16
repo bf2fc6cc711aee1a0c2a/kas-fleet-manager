@@ -1,10 +1,11 @@
 package auth
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/patrickmn/go-cache"
 	"net/http"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -75,8 +76,8 @@ func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmCli
 
 				if termsRequired.(bool) {
 					shared.HandleError(ctx, writer, code, "required terms have not been accepted")
+					return
 				}
-				return
 			}
 
 			next.ServeHTTP(writer, request)
