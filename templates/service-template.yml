@@ -240,6 +240,11 @@ parameters:
   displayName: Observatorium ssl mode (disable)
   value: "true"
 
+- name: ENABLE_TERMS_ACCEPTANCE
+  displayName: Enable terms acceptance
+  description: If enabled, kafkas can't be created unless required terms are accepted
+  value: "false"
+
 - name: ENABLE_DENY_LIST
   displayName: Enable the Deny List
   description: Enable the denied list access control feature
@@ -738,6 +743,7 @@ objects:
             - --enable-connectors=${ENABLE_CONNECTORS}
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
+            - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}
             - --enable-deny-list=${ENABLE_DENY_LIST}
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}

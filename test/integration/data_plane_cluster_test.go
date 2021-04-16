@@ -16,10 +16,10 @@ import (
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
+	. "github.com/onsi/gomega"
+	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
-
-	. "github.com/onsi/gomega"
 )
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
@@ -222,6 +222,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		t.Fatalf(err.Error())
 	}
 	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+	ocmServerBuilder.SetSubscriptionSearchResponse(mockedClusterSubscritions("123"), nil)
+
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
@@ -445,8 +447,11 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 			if currOcmCluster.Nodes().Compute() != expectedNodes {
 				return false
 			}
-
-			if currOcmCluster.Metrics().Nodes().Compute() != expectedNodes {
+			metrics, err := ocmClient.GetExistingClusterMetrics(clusterID)
+			if err != nil {
+				return false
+			}
+			if int(metrics.Nodes().Compute()) != expectedNodes {
 				return false
 			}
 
@@ -493,6 +498,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 	ocmServerBuilder.SetClusterGetResponse(mockedCluster, nil)
+	ocmServerBuilder.SetSubscriptionSearchResponse(mockedClusterSubscritions(mockedCluster.ID()), nil)
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
@@ -729,13 +735,28 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *openapi.DataPlaneClusterUpd
 	}
 }
 
+func mockedClusterSubscritions(clusterID string) *amsv1.SubscriptionList {
+	subscriptionListBuilder := amsv1.NewSubscriptionList()
+	subscriptionBuilder := amsv1.NewSubscription()
+	subscriptionBuilder.ClusterID(clusterID)
+
+	subscriptionsMetricsBuilder := amsv1.NewSubscriptionMetrics()
+	clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
+	clusterMetricsNodeBuilder.Compute(6)
+	subscriptionsMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
+
+	subscriptionBuilder.Metrics(subscriptionsMetricsBuilder)
+
+	subscriptionListBuilder.Items(subscriptionBuilder)
+	subscriptionList, _ := subscriptionListBuilder.Build()
+
+	return subscriptionList
+}
+
 func mockedClusterWithMetricsInfo(computeNodes int) (*clustersmgmtv1.Cluster, error) {
 	clusterBuilder := mocks.GetMockClusterBuilder(nil)
 	clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
 	clusterNodeBuilder.Compute(computeNodes)
-	clusterMetricsBuilder := clustersmgmtv1.NewClusterMetrics()
-	clusterMetricsBuilder.Nodes(clusterNodeBuilder)
-	clusterBuilder.Metrics(clusterMetricsBuilder)
 	clusterBuilder.Nodes(clusterNodeBuilder)
 	return clusterBuilder.Build()
 }

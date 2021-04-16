@@ -131,11 +131,12 @@ func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *ap
 	if err != nil {
 		return false, err
 	}
-	// TODO get the existing metrics information from a Subscription
-	// using the accountsmgmtv1 client (AMS) when implemented in OCM Go SDK
-	metrics, ok := ocmCluster.GetMetrics()
-	if !ok {
-		return false, fmt.Errorf("Cluster ID %s has no metrics", cluster.ClusterID)
+	metrics, err := d.ocmClient.GetExistingClusterMetrics(cluster.ClusterID)
+	if err != nil {
+		return false, err
+	}
+	if metrics == nil {
+		return false, fmt.Errorf("cluster ID %s has no metrics", cluster.ClusterID)
 	}
 	existingNodes, ok := metrics.GetNodes()
 	if !ok {
@@ -156,9 +157,9 @@ func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *ap
 		return false, fmt.Errorf("Cluster ID %s has no desired compute node information", cluster.ClusterID)
 	}
 
-	glog.V(10).Infof("Cluster ID %s has %d desired compute nodes and %d existing compute nodes", cluster.ClusterID, desiredComputeNodes, existingComputeNodes)
+	glog.V(10).Infof("Cluster ID %s has %d desired compute nodes and %d existing compute nodes", cluster.ClusterID, desiredComputeNodes, int(existingComputeNodes))
 
-	return existingComputeNodes != desiredComputeNodes, nil
+	return int(existingComputeNodes) != desiredComputeNodes, nil
 }
 
 // updateDataPlaneClusterNodes performs node scale-up and scale-down actions on

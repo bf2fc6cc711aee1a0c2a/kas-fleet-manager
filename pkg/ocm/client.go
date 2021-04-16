@@ -1,11 +1,16 @@
 package ocm
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	v1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
+
+const TERMS_SITECODE = "OCM"
+const TERMS_EVENTCODE = "onlineService"
 
 // Specify the parameters for an addon
 // Value will be string here and OCM will convert it to the right type
@@ -40,6 +45,8 @@ type Client interface {
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
 	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
+	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
+	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
 }
 
 var _ Client = &client{}
@@ -55,6 +62,7 @@ func NewClient(ocmClient *sdkClient.Connection) Client {
 }
 
 func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
+
 	clusterResource := c.ocmClient.ClustersMgmt().V1().Clusters()
 	response, err := clusterResource.Add().Body(cluster).Send()
 	if err != nil {
@@ -63,6 +71,51 @@ func (c *client) CreateCluster(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1
 	createdCluster := response.Body()
 
 	return createdCluster, nil
+}
+
+func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error) {
+	subscriptions, err := c.ocmClient.AccountsMgmt().V1().Subscriptions().List().Search(fmt.Sprintf("cluster_id='%s'", clusterID)).Send()
+	if err != nil {
+		return nil, err
+	}
+	items := subscriptions.Items()
+	if items == nil || items.Len() == 0 {
+		return nil, nil
+	}
+
+	if items.Len() > 1 {
+		return nil, fmt.Errorf("expected 1 subscription item, found %d", items.Len())
+	}
+	subscriptionsMetrics := subscriptions.Items().Get(0).Metrics()
+	if len(subscriptionsMetrics) > 1 {
+		// this should never happen: https://github.com/openshift-online/ocm-api-model/blob/9ca12df7763723903c0d1cd87e993995a2acda5f/model/accounts_mgmt/v1/subscription_type.model#L49-L50
+		return nil, fmt.Errorf("expected 1 subscription metric, found %d", len(subscriptionsMetrics))
+	}
+
+	if len(subscriptionsMetrics) == 0 {
+		return nil, nil
+	}
+
+	return subscriptionsMetrics[0], nil
+}
+
+func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {
+	request, err := v1.NewTermsReviewRequest().AccountUsername(username).SiteCode(TERMS_SITECODE).EventCode(TERMS_EVENTCODE).Build()
+	if err != nil {
+		return false, "", err
+	}
+	selfTermsReview := c.ocmClient.Authorizations().V1().TermsReview()
+	postResp, err := selfTermsReview.Post().Request(request).Send()
+	if err != nil {
+		return false, "", err
+	}
+	response, ok := postResp.GetResponse()
+	if !ok {
+		return false, "", fmt.Errorf("empty response from authorization post request")
+	}
+
+	redirectUrl, _ = response.GetRedirectUrl()
+	return response.TermsRequired(), redirectUrl, nil
 }
 
 // GetClusterIngresses sends a GET request to ocm to retrieve the ingresses of an OSD cluster
