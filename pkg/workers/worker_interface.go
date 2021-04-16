@@ -8,7 +8,7 @@ type Worker interface {
 	GetWorkerType() string
 	Start()
 	Stop()
-	reconcile()
+	reconcile() []error
 	GetStopChan() *chan struct{}
 	GetSyncGroup() *sync.WaitGroup
 	IsRunning() bool

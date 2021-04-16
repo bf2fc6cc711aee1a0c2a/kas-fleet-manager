@@ -34,8 +34,10 @@ func TestReconciler_Wakeup(t *testing.T) {
 		GetWorkerTypeFunc: func() string {
 			return "test"
 		},
-		reconcileFunc: func() {
+		reconcileFunc: func() []error {
+			var errors []error
 			reconcileChan <- time.Now()
+			return errors
 		},
 	}
 

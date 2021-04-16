@@ -41,7 +41,7 @@ var _ Worker = &WorkerMock{}
 // 			StopFunc: func()  {
 // 				panic("mock out the Stop method")
 // 			},
-// 			reconcileFunc: func()  {
+// 			reconcileFunc: func() []error {
 // 				panic("mock out the reconcile method")
 // 			},
 // 		}
@@ -76,7 +76,7 @@ type WorkerMock struct {
 	StopFunc func()
 
 	// reconcileFunc mocks the reconcile method.
-	reconcileFunc func()
+	reconcileFunc func() []error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -335,7 +335,7 @@ func (mock *WorkerMock) StopCalls() []struct {
 }
 
 // reconcile calls reconcileFunc.
-func (mock *WorkerMock) reconcile() {
+func (mock *WorkerMock) reconcile() []error {
 	if mock.reconcileFunc == nil {
 		panic("WorkerMock.reconcileFunc: method is nil but Worker.reconcile was just called")
 	}
@@ -344,7 +344,7 @@ func (mock *WorkerMock) reconcile() {
 	mock.lockreconcile.Lock()
 	mock.calls.reconcile = append(mock.calls.reconcile, callInfo)
 	mock.lockreconcile.Unlock()
-	mock.reconcileFunc()
+	return mock.reconcileFunc()
 }
 
 // reconcileCalls gets all the calls that were made to reconcile.

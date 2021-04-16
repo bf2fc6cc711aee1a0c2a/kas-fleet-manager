@@ -22,7 +22,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -123,48 +122,51 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (c *ClusterManager) reconcile() {
+func (c *ClusterManager) reconcile() []error {
 	glog.V(5).Infoln("reconciling clusters")
+	var errors []error
 
 	if err := c.reconcileClusterWithManualConfig(); err != nil {
 		glog.Errorf("failed to reconcile clusters with config file: %s", err.Error())
+		errors = append(errors, err)
 	}
 
 	deprovisioningClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterDeprovisioning)
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list of deprovisioning clusters: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
 	}
 
 	for _, cluster := range deprovisioningClusters {
 		if err := c.reconcileDeprovisioningCluster(cluster); err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile deprovisioning cluster %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
 		}
 	}
 
 	acceptedClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterAccepted)
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted clusters: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
 	}
 
 	for _, cluster := range acceptedClusters {
 		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted cluster %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 		if err := c.clusterService.UpdateStatus(cluster, api.ClusterProvisioning); err != nil {
 			glog.Errorf("failed to change cluster state to provisioning %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
 		}
 	}
 
 	// reconcile the status of existing clusters in a non-ready state
 	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
 	if err != nil {
-		sentry.CaptureException(err)
 		glog.Error("Error retrieving cloud providers and regions", err)
+		errors = append(errors, err)
 	}
 
 	for _, cloudProvider := range cloudProviders {
@@ -180,20 +182,21 @@ func (c *ClusterManager) reconcile() {
 
 	if err := c.reconcileClustersForRegions(); err != nil {
 		glog.Errorf("failed to reconcile clusters by Region: %s", err.Error())
+		errors = append(errors, err)
 	}
 
 	provisioningClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioning)
 	if listErr != nil {
-		sentry.CaptureException(listErr)
 		glog.Errorf("failed to list pending clusters: %s", listErr.Error())
+		errors = append(errors, listErr)
 	}
 
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for _, provisioningCluster := range provisioningClusters {
 		reconciledCluster, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ClusterID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 		glog.V(5).Infof("reconciled provisioning cluster %s state", reconciledCluster.ClusterID)
@@ -204,16 +207,16 @@ func (c *ClusterManager) reconcile() {
 	 */
 	provisionedClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioned)
 	if listErr != nil {
-		sentry.CaptureException(listErr)
 		glog.Errorf("failed to list provisioned clusters: %s", listErr.Error())
+		errors = append(errors, listErr)
 	}
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile provisioned cluster %s: %s", provisionedCluster.ClusterID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 		glog.V(5).Infof("reconciled provisioned cluster %s terraforming", provisionedCluster.ClusterID)
@@ -222,8 +225,8 @@ func (c *ClusterManager) reconcile() {
 	// Keep SyncSet up to date for clusters that are ready
 	readyClusters, listErr := c.clusterService.ListByStatus(api.ClusterReady)
 	if listErr != nil {
-		sentry.CaptureException(listErr)
 		glog.Errorf("failed to list ready clusters: %s", listErr.Error())
+		errors = append(errors, listErr)
 	}
 
 	for _, readyCluster := range readyClusters {
@@ -236,12 +239,14 @@ func (c *ClusterManager) reconcile() {
 		}
 
 		if err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 		glog.V(5).Infof("reconciled ready cluster %s", readyCluster.ClusterID)
 	}
+
+	return errors
 }
 
 func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) error {

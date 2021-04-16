@@ -89,15 +89,16 @@ func (c *KafkaManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *KafkaManager) reconcile() {
+func (k *KafkaManager) reconcile() []error {
 	glog.V(5).Infoln("reconciling kafkas")
+	var errors []error
 
 	accessControlListConfig := k.configService.GetConfig().AccessControlList
 	if accessControlListConfig.EnableDenyList {
 		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
 		if kafkaDeprovisioningForDeniedOwnersErr != nil {
-			sentry.CaptureException(kafkaDeprovisioningForDeniedOwnersErr)
 			glog.Errorf("Failed to deprovision kafka for denied owners %s: %s", accessControlListConfig.DenyList, kafkaDeprovisioningForDeniedOwnersErr.Error())
+			errors = append(errors, kafkaDeprovisioningForDeniedOwnersErr)
 		}
 	}
 
@@ -106,7 +107,8 @@ func (k *KafkaManager) reconcile() {
 	if kafkaConfig.EnableDeletionOfExpiredKafka {
 		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifeSpan)
 		if expiredKafkasError != nil {
-			sentry.CaptureException(expiredKafkasError)
+			glog.Errorf("failed to deprovision expired Kafka instances due to error: %s", expiredKafkasError.Error())
+			errors = append(errors, expiredKafkasError)
 		}
 	}
 
@@ -119,14 +121,14 @@ func (k *KafkaManager) reconcile() {
 	}
 	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deprovisionStatus)
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
 	}
 
 	for _, kafka := range deprovisioningRequests {
 		if err := k.reconcileDeprovisioningRequest(kafka); err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile deprovisioning request %s: %s", kafka.ID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 	}
@@ -134,15 +136,15 @@ func (k *KafkaManager) reconcile() {
 	// handle accepted kafkas
 	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusAccepted)
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
 	}
 
 	for _, kafka := range acceptedKafkas {
 		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 	}
@@ -150,15 +152,15 @@ func (k *KafkaManager) reconcile() {
 	// handle preparing kafkas
 	preparingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusPreparing)
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
 	}
 
 	for _, kafka := range preparingKafkas {
 		metrics.KafkaRequestsStatusMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcilePreparedKafka(kafka); err != nil {
-			sentry.CaptureException(err)
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
+			errors = append(errors, err)
 			continue
 		}
 
@@ -167,8 +169,8 @@ func (k *KafkaManager) reconcile() {
 	// handle provisioning kafkas state
 	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
 	}
 
 	for _, kafka := range provisioningKafkas {
@@ -177,8 +179,8 @@ func (k *KafkaManager) reconcile() {
 		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
 		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
 			if err := k.reconcileProvisioningKafka(kafka); err != nil {
-				sentry.CaptureException(err)
 				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
+				errors = append(errors, err)
 				continue
 			}
 		}
@@ -187,19 +189,21 @@ func (k *KafkaManager) reconcile() {
 	if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
 		readyKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusReady)
 		if serviceErr != nil {
-			sentry.CaptureException(serviceErr)
 			glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
+			errors = append(errors, serviceErr)
 		}
 		for _, kafka := range readyKafkas {
 			if kafka.Status == string(constants.KafkaRequestStatusReady) {
 				if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
-					sentry.CaptureException(err)
 					glog.Errorf("failed to get provisioning kafkas sso client%s: %s", kafka.SsoClientID, err.Error())
+					errors = append(errors, err)
 					continue
 				}
 			}
 		}
 	}
+
+	return errors
 }
 
 func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers) *errors.ServiceError {
