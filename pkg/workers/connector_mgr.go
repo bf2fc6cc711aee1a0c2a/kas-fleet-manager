@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )
 
@@ -76,8 +75,9 @@ func (c *ConnectorManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *ConnectorManager) reconcile() {
+func (k *ConnectorManager) reconcile() []error {
 	glog.V(5).Infoln("reconciling connectors")
+	var errs []error
 
 	serviceErr := k.connectorService.ForEach(func(connector *api.Connector) *errors.ServiceError {
 		return InDBTransaction(func(ctx context.Context) error {
@@ -98,8 +98,8 @@ func (k *ConnectorManager) reconcile() {
 		api.ConnectorStatusPhaseDeleted,
 	})
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("connector manager: %s", serviceErr.Error())
+		errs = append(errs, serviceErr)
 	}
 
 	// Process any connector updates...
@@ -123,9 +123,11 @@ func (k *ConnectorManager) reconcile() {
 	})
 
 	if serviceErr != nil {
-		sentry.CaptureException(serviceErr)
 		glog.Errorf("connector manager: %s", serviceErr.Error())
+		errs = append(errs, serviceErr)
 	}
+
+	return errs
 }
 
 func InDBTransaction(f func(ctx context.Context) error) (rerr *errors.ServiceError) {
