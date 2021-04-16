@@ -2,6 +2,7 @@ package syncsetresources
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	strimzi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/kafka.strimzi.io/v1beta1"
@@ -82,7 +83,7 @@ func BuildKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfi
 		},
 		Spec: strimzi.KafkaSpec{
 			Kafka: strimzi.KafkaClusterSpec{
-				Config:   kafkaCRConfig,
+				Config:   getKafkaCRConfig(kafkaConfig),
 				Version:  kafkaRequest.Version,
 				Replicas: kafkaConfig.NumOfBrokers,
 				Resources: &corev1.ResourceRequirements{
@@ -201,6 +202,16 @@ func getBrokerOverrides(numOfBrokers int, bootstrapServerHost string) []strimzi.
 	}
 
 	return brokerOverrides
+}
+
+func getKafkaCRConfig(kafkaConfig *config.KafkaConfig) map[string]string {
+	// Set Capacity Configuration
+	// only set MaxConnectionAttemptsPerSec if defined.
+	if kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec > 0 {
+		kafkaCRConfig["max.connections.creation.rate"] = strconv.Itoa(kafkaConfig.KafkaCapacity.MaxConnectionAttemptsPerSec)
+	}
+
+	return kafkaCRConfig
 }
 
 func getKafkaLabels() map[string]string {
