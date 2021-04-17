@@ -25,8 +25,7 @@ var (
 	// ValidComparators - valid comparators for search queries
 	ValidComparators = []string{"=", "<>", "LIKE"}
 	// ValidColumnNames - valid column names for search queries
-	ValidColumnNames       = []string{"region", "name", "cloud_provider", "status", "owner"}
-	validSearchValueRegexp = regexp.MustCompile("^([a-zA-Z0-9-_%]*[a-zA-Z0-9-_%])?$")
+	ValidColumnNames = []string{"region", "name", "cloud_provider", "status", "owner"}
 )
 
 // GetSearchQuery - parses searchQuery and returns query ready to be passed to
@@ -88,12 +87,9 @@ func validateAndReturnDbQuery(searchQuery string, queryTokens []string) (DbSearc
 				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Wildcards only allowed with `LIKE` comparator", queryToken, searchQuery)
 			}
 			if startsWithWildcard && endsWithWildcard && len(stringToMatchRegexp) <= 2 {
-				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and/ or end with '%%25' and must conform to '%s'", queryToken, searchQuery, validSearchValueRegexp.String())
+				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and/ or end with '%%25'", queryToken, searchQuery)
 			}
 
-			if !validSearchValueRegexp.MatchString(stringToMatchRegexp) {
-				return DbSearchQuery{}, errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and/ or end with '%%25' when using 'LIKE' comparator and must conform to '%s'", queryToken, searchQuery, validSearchValueRegexp.String())
-			}
 			searchValues = append(searchValues, stringToMatchRegexp)
 			index++
 		case 3: // only 'and' allowed here
