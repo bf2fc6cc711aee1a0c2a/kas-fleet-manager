@@ -8,6 +8,8 @@ type KafkaStatus string
 // KafkaOperation type
 type KafkaOperation string
 
+var AllKafkaStatus = []KafkaStatus{KafkaRequestStatusAccepted, KafkaRequestStatusPreparing, KafkaRequestStatusProvisioning, KafkaRequestStatusReady, KafkaRequestStatusFailed, KafkaRequestStatusDeprovision, KafkaRequestStatusDeleted}
+
 const (
 	// KafkaRequestStatusAccepted - kafka request status when accepted by kafka worker
 	KafkaRequestStatusAccepted KafkaStatus = "accepted"
