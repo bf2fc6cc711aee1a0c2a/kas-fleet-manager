@@ -10,18 +10,19 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
 
 const (
-	mockKafkaName1        = "test-kafka1"
-	mockKafkaName2        = "a-kafka1"
-	mockKafkaName3        = "z-kafka1"
-	mockKafkaName4        = "b-kafka1"
-	nonExistentKafkaName  = "non-existentKafka"
-	nonExistentColumnName = "non_existentColumn"
-	invalidSearchValue    = "&123abc"
-	sqlDeleteQuery        = "delete * from clusters;"
+	mockKafkaName1           = "test-kafka1"
+	mockKafkaName2           = "a-kafka1"
+	mockKafkaName3           = "z-kafka1"
+	mockKafkaName4           = "b-kafka1"
+	nonExistentKafkaName     = "non-existentKafka"
+	nonExistentColumnName    = "non_existentColumn"
+	sqlDeleteQuery           = "delete * from clusters;"
+	usernameWithSpecialChars = "special+kakfa@example.com"
 )
 
 // Test_KafkaListSearchAndOrderBy tests getting kafka requests list
@@ -37,7 +38,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	defer teardown()
 
 	// setup pre-requisites to performing requests
-	account := h.NewRandAccount()
+	account := h.NewAccount(usernameWithSpecialChars, faker.Name(), faker.Email(), "13640203")
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// get initial list (should be empty)
@@ -87,6 +88,8 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	Expect(len(populatedKafkaList.Items)).To(Equal(3), "Expected kafka requests list length to be 1")
 	Expect(populatedKafkaList.Size).To(Equal(int32(3)), "Expected Size == 3")
 	Expect(populatedKafkaList.Total).To(Equal(int32(3)), "Expected Total == 3")
+
+	t.Logf("populatedKafkaList: %+v\n", populatedKafkaList.Items[0])
 
 	// TEST orderBy
 	orderBy := &openapi.ListKafkasOpts{OrderBy: optional.NewString("name asc")}
@@ -148,13 +151,17 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	Expect(searchNameInv.Items[1].Name).NotTo(Equal(nonExistentKafkaName))
 	Expect(searchNameInv.Items[2].Name).NotTo(Equal(nonExistentKafkaName))
 
+	// search by owner = ? where owner has special characaters
+	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("owner = %s", usernameWithSpecialChars))}
+
+	searchOwner, _, err := client.DefaultApi.ListKafkas(ctx, search)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests: %v", err)
+	Expect(searchOwner.Size).To(Equal(int32(3)), "Expected Size == 3")
+	Expect(searchOwner.Total).To(Equal(int32(3)), "Expected Total == 3")
+	Expect(searchOwner.Items[0].Owner).To(Equal(usernameWithSpecialChars))
+
 	// search with invalid column name
 	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("%s <> %s", nonExistentColumnName, mockKafkaName1))}
-	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
-	Expect(err).To(HaveOccurred()) // expecting an error here
-
-	// search with invalid search value
-	search = &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", invalidSearchValue))}
 	_, _, err = client.DefaultApi.ListKafkas(ctx, search)
 	Expect(err).To(HaveOccurred()) // expecting an error here
 
