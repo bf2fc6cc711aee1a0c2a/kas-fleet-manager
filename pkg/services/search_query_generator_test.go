@@ -175,7 +175,7 @@ func Test_GetSearchQuery(t *testing.T) {
 			wantErr: true,
 			want: want{
 				parsedQuery: DbSearchQuery{},
-				err:         errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and end with '%%' and must conform to '%s'", unsupportedSearchString, unsupportedSearchStringQuery, validSearchValueRegexp),
+				err:         errors.FailedToParseSearch("Invalid search value %s in query %s. Search value may start and end with '%%'", unsupportedSearchString, unsupportedSearchStringQuery),
 			},
 		},
 		{
