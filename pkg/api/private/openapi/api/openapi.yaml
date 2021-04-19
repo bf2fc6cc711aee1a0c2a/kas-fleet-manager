@@ -1122,8 +1122,6 @@ components:
             kafka: 2.7.0
             strimzi: 0.21.2
           deleted: false
-    DataPlaneClusterUpdateStatusRequestExample:
-      value: {}
     DataPlaneKafkaStatusRequestExample:
       value:
         conditions:
@@ -1585,7 +1583,39 @@ components:
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
-        $ref: '#/components/examples/DataPlaneClusterUpdateStatusRequestExample'
+        total:
+          partitions: 6
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 0
+          dataRetentionSize: dataRetentionSize
+        resizeInfo:
+          nodeDelta: 7
+          delta:
+            partitions: 3
+            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+            connections: 9
+            dataRetentionSize: dataRetentionSize
+        nodeInfo:
+          ceiling: 1
+          current: 5
+          currentWorkLoadMinimum: 2
+          floor: 5
+        conditions:
+        - reason: reason
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        - reason: reason
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        remaining:
+          partitions: 6
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 0
+          dataRetentionSize: dataRetentionSize
       properties:
         conditions:
           description: The cluster data plane conditions
@@ -1878,6 +1908,12 @@ components:
           description: the status of the operator
           type: string
     DataPlaneClusterUpdateStatusRequest_conditions:
+      example:
+        reason: reason
+        type: type
+        message: message
+        lastTransitionTime: lastTransitionTime
+        status: status
       properties:
         type:
           type: string
@@ -1890,6 +1926,11 @@ components:
         lastTransitionTime:
           type: string
     DataPlaneClusterUpdateStatusRequest_total:
+      example:
+        partitions: 6
+        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        connections: 0
+        dataRetentionSize: dataRetentionSize
       properties:
         ingressEgressThroughputPerSec:
           nullable: true
@@ -1904,6 +1945,11 @@ components:
           nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_nodeInfo:
+      example:
+        ceiling: 1
+        current: 5
+        currentWorkLoadMinimum: 2
+        floor: 5
       properties:
         ceiling:
           nullable: true
@@ -1918,6 +1964,11 @@ components:
           nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_resizeInfo_delta:
+      example:
+        partitions: 3
+        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        connections: 9
+        dataRetentionSize: dataRetentionSize
       nullable: true
       properties:
         ingressEgressThroughputPerSec:
@@ -1933,6 +1984,13 @@ components:
           nullable: true
           type: integer
     DataPlaneClusterUpdateStatusRequest_resizeInfo:
+      example:
+        nodeDelta: 7
+        delta:
+          partitions: 3
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 9
+          dataRetentionSize: dataRetentionSize
       properties:
         nodeDelta:
           nullable: true

@@ -1523,8 +1523,6 @@ components:
                 partitions:
                   type: integer
                   nullable: true
-      example:
-        $ref: "#/components/examples/DataPlaneClusterUpdateStatusRequestExample"
 
     DataPlaneKafkaStatus:
       description: "Schema of the status object for a Kafka cluster"
@@ -1672,8 +1670,6 @@ components:
             kafka: 2.7.0
             strimzi: 0.21.2
           deleted: false
-    DataPlaneClusterUpdateStatusRequestExample:
-      value: { } # TODO fill this
     DataPlaneKafkaStatusRequestExample:
       value:
         conditions:
