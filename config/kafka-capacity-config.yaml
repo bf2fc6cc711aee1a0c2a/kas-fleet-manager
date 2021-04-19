@@ -6,3 +6,4 @@ totalMaxConnections: 100
 maxDataRetentionSize: "60Gi"
 maxPartitions: 100
 maxDataRetentionPeriod: "P14D"
+maxConnectionAttemptsPerSec: 100
