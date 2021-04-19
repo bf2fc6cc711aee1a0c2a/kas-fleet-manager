@@ -26,7 +26,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"cluster-compute-machine-type":      "m5.xlarge",
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
-	"enable-deletion-of-expired-kafka":  "false",
+	"enable-deletion-of-expired-kafka":  "true",
 	"dataplane-cluster-scaling-type":    "auto",
 }
 

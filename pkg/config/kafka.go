@@ -16,23 +16,22 @@ type KafkaCapacityConfig struct {
 }
 
 type KafkaConfig struct {
-	KafkaTLSCert                   string              `json:"kafka_tls_cert"`
-	KafkaTLSCertFile               string              `json:"kafka_tls_cert_file"`
-	KafkaTLSKey                    string              `json:"kafka_tls_key"`
-	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
-	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
-	NumOfBrokers                   int                 `json:"num_of_brokers"`
-	KafkaDomainName                string              `json:"kafka_domain_name"`
-	KafkaCanaryImage               string              `json:"kafka_canary_image"`
-	KafkaAdminServerImage          string              `json:"kafka_admin_server_image"`
-	EnableManagedKafkaCR           bool                `json:"enable_managedkafka_cr"`
-	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
-	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
-	EnableKasFleetshardSync        bool                `json:"enable_kas_fleetshard_sync"`
-	EnableQuotaService             bool                `json:"enable_quota_service"`
-	DefaultKafkaVersion            string              `json:"default_kafka_version"`
-	EnableDeletionOfExpiredKafka   bool                `json:"enable_deletion_of_expired_kafka"`
-	KafkaLifeSpan                  int                 `json:"kafka_life_span"`
+	KafkaTLSCert                   string               `json:"kafka_tls_cert"`
+	KafkaTLSCertFile               string               `json:"kafka_tls_cert_file"`
+	KafkaTLSKey                    string               `json:"kafka_tls_key"`
+	KafkaTLSKeyFile                string               `json:"kafka_tls_key_file"`
+	EnableKafkaExternalCertificate bool                 `json:"enable_kafka_external_certificate"`
+	NumOfBrokers                   int                  `json:"num_of_brokers"`
+	KafkaDomainName                string               `json:"kafka_domain_name"`
+	KafkaCanaryImage               string               `json:"kafka_canary_image"`
+	KafkaAdminServerImage          string               `json:"kafka_admin_server_image"`
+	EnableManagedKafkaCR           bool                 `json:"enable_managedkafka_cr"`
+	KafkaCapacity                  KafkaCapacityConfig  `json:"kafka_capacity_config"`
+	KafkaCapacityConfigFile        string               `json:"kafka_capacity_config_file"`
+	EnableKasFleetshardSync        bool                 `json:"enable_kas_fleetshard_sync"`
+	EnableQuotaService             bool                 `json:"enable_quota_service"`
+	DefaultKafkaVersion            string               `json:"default_kafka_version"`
+	KafkaLifespan                  *KafkaLifespanConfig `json:"kafka_lifespan"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -48,8 +47,7 @@ func NewKafkaConfig() *KafkaConfig {
 		EnableKasFleetshardSync:        false,
 		EnableQuotaService:             false,
 		DefaultKafkaVersion:            "2.7.0",
-		EnableDeletionOfExpiredKafka:   true,
-		KafkaLifeSpan:                  48,
+		KafkaLifespan:                  NewKafkaLifespanConfig(),
 	}
 }
 
@@ -64,9 +62,11 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.EnableKasFleetshardSync, "enable-kas-fleetshard-sync", c.EnableKasFleetshardSync, "Enable direct data synchronisation with kas-fleetshard-operator")
 	fs.BoolVar(&c.EnableQuotaService, "enable-quota-service", c.EnableQuotaService, "Enable quota service")
 	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
-	fs.BoolVar(&c.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
-	fs.IntVar(&c.KafkaLifeSpan, "kafka-life-span", c.KafkaLifeSpan, "The desired life span of a Kafka instance")
+	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
+	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
+	fs.StringVar(&c.KafkaLifespan.LongLivedKafkaConfigFile, "long-lived-kafkas-config-file", c.KafkaLifespan.LongLivedKafkaConfigFile, "The file containing the long lived kafkas")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
+
 }
 
 func (c *KafkaConfig) ReadFiles() error {
@@ -83,6 +83,10 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 	err = yaml.Unmarshal([]byte(content), &c.KafkaCapacity)
+	if err != nil {
+		return err
+	}
+	err = c.KafkaLifespan.ReadFiles()
 	if err != nil {
 		return err
 	}

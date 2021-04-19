@@ -2,9 +2,10 @@ package workers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"sync"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -104,8 +105,8 @@ func (k *KafkaManager) reconcile() []error {
 
 	// cleaning up expired kafkas
 	kafkaConfig := k.configService.GetConfig().Kafka
-	if kafkaConfig.EnableDeletionOfExpiredKafka {
-		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifeSpan)
+	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
+		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifespan.KafkaLifespanInHours)
 		if expiredKafkasError != nil {
 			glog.Errorf("failed to deprovision expired Kafka instances due to error: %s", expiredKafkasError.Error())
 			errors = append(errors, expiredKafkasError)

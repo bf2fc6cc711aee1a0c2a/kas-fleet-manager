@@ -321,13 +321,14 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 }
 
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour))
+	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("created_at  <=  ? AND id NOT IN (?)", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour), k.kafkaConfig.KafkaLifespan.LongLivedKafkas)
 
 	db := dbConn.Update("status", constants.KafkaRequestStatusDeprovision)
 	err := db.Error
 	if err != nil {
 		return errors.GeneralError("unable to deprovision expired kafkas: %v", err)
 	}
+
 	if db.RowsAffected >= 1 {
 		glog.Infof("%v kafka_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, kafkaAgeInHours)
 		var counter int64 = 0
