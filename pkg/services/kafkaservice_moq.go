@@ -26,6 +26,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
 // 				panic("mock out the ChangeKafkaCNAMErecords method")
 // 			},
+// 			CountByStatusFunc: func(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
+// 				panic("mock out the CountByStatus method")
+// 			},
 // 			CreateFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
 // 				panic("mock out the Create method")
 // 			},
@@ -77,6 +80,9 @@ var _ KafkaService = &KafkaServiceMock{}
 type KafkaServiceMock struct {
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError)
+
+	// CountByStatusFunc mocks the CountByStatus method.
+	CountByStatusFunc func(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
 
 	// CreateFunc mocks the Create method.
 	CreateFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
@@ -130,6 +136,11 @@ type KafkaServiceMock struct {
 			ClusterDNS string
 			// Action is the action argument value.
 			Action string
+		}
+		// CountByStatus holds details about calls to the CountByStatus method.
+		CountByStatus []struct {
+			// Status is the status argument value.
+			Status []constants.KafkaStatus
 		}
 		// Create holds details about calls to the Create method.
 		Create []struct {
@@ -209,6 +220,7 @@ type KafkaServiceMock struct {
 		}
 	}
 	lockChangeKafkaCNAMErecords     sync.RWMutex
+	lockCountByStatus               sync.RWMutex
 	lockCreate                      sync.RWMutex
 	lockDelete                      sync.RWMutex
 	lockDeprovisionExpiredKafkas    sync.RWMutex
@@ -261,6 +273,37 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
 	mock.lockChangeKafkaCNAMErecords.RLock()
 	calls = mock.calls.ChangeKafkaCNAMErecords
 	mock.lockChangeKafkaCNAMErecords.RUnlock()
+	return calls
+}
+
+// CountByStatus calls CountByStatusFunc.
+func (mock *KafkaServiceMock) CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
+	if mock.CountByStatusFunc == nil {
+		panic("KafkaServiceMock.CountByStatusFunc: method is nil but KafkaService.CountByStatus was just called")
+	}
+	callInfo := struct {
+		Status []constants.KafkaStatus
+	}{
+		Status: status,
+	}
+	mock.lockCountByStatus.Lock()
+	mock.calls.CountByStatus = append(mock.calls.CountByStatus, callInfo)
+	mock.lockCountByStatus.Unlock()
+	return mock.CountByStatusFunc(status)
+}
+
+// CountByStatusCalls gets all the calls that were made to CountByStatus.
+// Check the length with:
+//     len(mockedKafkaService.CountByStatusCalls())
+func (mock *KafkaServiceMock) CountByStatusCalls() []struct {
+	Status []constants.KafkaStatus
+} {
+	var calls []struct {
+		Status []constants.KafkaStatus
+	}
+	mock.lockCountByStatus.RLock()
+	calls = mock.calls.CountByStatus
+	mock.lockCountByStatus.RUnlock()
 	return calls
 }
 

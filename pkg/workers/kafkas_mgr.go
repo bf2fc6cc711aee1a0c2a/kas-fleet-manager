@@ -124,7 +124,6 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	}
-	metrics.KafkaRequestsStatusCountMetric(deprovisionStatus, len(deprovisioningRequests))
 
 	for _, kafka := range deprovisioningRequests {
 		if err := k.reconcileDeprovisioningRequest(kafka); err != nil {
@@ -140,9 +139,8 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	}
-	metrics.KafkaRequestsStatusCountMetric(constants.KafkaRequestStatusAccepted, len(acceptedKafkas))
 	for _, kafka := range acceptedKafkas {
-		metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			errors = append(errors, err)
@@ -156,9 +154,8 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	}
-	metrics.KafkaRequestsStatusCountMetric(constants.KafkaRequestStatusPreparing, len(preparingKafkas))
 	for _, kafka := range preparingKafkas {
-		metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcilePreparedKafka(kafka); err != nil {
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			errors = append(errors, err)
@@ -173,9 +170,8 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	}
-	metrics.KafkaRequestsStatusCountMetric(constants.KafkaRequestStatusProvisioning, len(provisioningKafkas))
 	for _, kafka := range provisioningKafkas {
-		metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		// only need to check if Kafka clusters are ready if kas-fleetshard sync is not enabled
 		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
 		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
@@ -192,7 +188,6 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	}
-	metrics.KafkaRequestsStatusCountMetric(constants.KafkaRequestStatusReady, len(readyKafkas))
 	if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
 		for _, kafka := range readyKafkas {
 			if kafka.Status == string(constants.KafkaRequestStatusReady) {
@@ -205,19 +200,10 @@ func (k *KafkaManager) reconcile() []error {
 		}
 	}
 
-	deletedRequests, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeleted)
-	if serviceErr != nil {
-		glog.Errorf("failed to list kafka deleted requests: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
+	statusErrors := k.setKafkaStatusCountMetric()
+	if len(statusErrors) > 0 {
+		errors = append(errors, statusErrors...)
 	}
-	metrics.KafkaRequestsStatusCountMetric(deprovisionStatus, len(deletedRequests))
-
-	failedRequests, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusFailed)
-	if serviceErr != nil {
-		glog.Errorf("failed to list kafka failed requests: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
-	}
-	metrics.KafkaRequestsStatusCountMetric(constants.KafkaRequestStatusFailed, len(failedRequests))
 
 	return errors
 }
@@ -268,7 +254,7 @@ func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
 		if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
 			return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
 		}
-		metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 
 	}
 	kafka.SubscriptionId = subscriptionId
@@ -336,7 +322,7 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 		/**TODO if there is a creation failure, total operations needs to be incremented: this info. is not available at this time.*/
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
-		metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 
 		return nil
 	}
@@ -357,7 +343,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 			if updateErr != nil {
 				return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
 			}
-			metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 			return fmt.Errorf("reached kafka %s max attempts", kafkaRequest.ID)
 		}
 	} else if err.IsClientErrorClass() {
@@ -368,7 +354,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		if updateErr != nil {
 			return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
 		}
-		metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 		sentry.CaptureException(err)
 		return fmt.Errorf("error creating kafka %s: %w", kafkaRequest.ID, err)
 	}
@@ -389,4 +375,27 @@ func (k *KafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequ
 		}
 	}
 	return nil
+}
+
+func (k *KafkaManager) setKafkaStatusCountMetric() []error {
+	// we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
+	status := []constants.KafkaStatus{
+		constants.KafkaRequestStatusAccepted,
+		constants.KafkaRequestStatusPreparing,
+		constants.KafkaRequestStatusProvisioning,
+		constants.KafkaRequestStatusReady,
+		constants.KafkaRequestStatusDeprovision,
+		constants.KafkaRequestStatusFailed,
+	}
+	var errors []error
+	if counters, err := k.kafkaService.CountByStatus(status); err != nil {
+		glog.Errorf("failed to count Kafkas by status: %s", err.Error())
+		errors = append(errors, err)
+	} else {
+		for _, c := range counters {
+			metrics.UpdateKafkaRequestsStatusCountMetric(c.Status, c.Count)
+		}
+	}
+
+	return errors
 }

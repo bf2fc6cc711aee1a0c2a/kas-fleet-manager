@@ -131,37 +131,6 @@ func (c *ClusterManager) reconcile() []error {
 		errors = append(errors, err)
 	}
 
-	deprovisioningClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterDeprovisioning)
-	if serviceErr != nil {
-		glog.Errorf("failed to list of deprovisioning clusters: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
-	}
-
-	for _, cluster := range deprovisioningClusters {
-		if err := c.reconcileDeprovisioningCluster(cluster); err != nil {
-			glog.Errorf("failed to reconcile deprovisioning cluster %s: %s", cluster.ID, err.Error())
-			errors = append(errors, err)
-		}
-	}
-
-	acceptedClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterAccepted)
-	if serviceErr != nil {
-		glog.Errorf("failed to list accepted clusters: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
-	}
-
-	for _, cluster := range acceptedClusters {
-		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
-			glog.Errorf("failed to reconcile accepted cluster %s: %s", cluster.ID, err.Error())
-			errors = append(errors, err)
-			continue
-		}
-		if err := c.clusterService.UpdateStatus(cluster, api.ClusterProvisioning); err != nil {
-			glog.Errorf("failed to change cluster state to provisioning %s: %s", cluster.ID, err.Error())
-			errors = append(errors, err)
-		}
-	}
-
 	// reconcile the status of existing clusters in a non-ready state
 	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
 	if err != nil {
@@ -185,6 +154,39 @@ func (c *ClusterManager) reconcile() []error {
 		errors = append(errors, err)
 	}
 
+	deprovisioningClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterDeprovisioning)
+	if serviceErr != nil {
+		glog.Errorf("failed to list of deprovisioning clusters: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
+	}
+
+	for _, cluster := range deprovisioningClusters {
+		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
+		if err := c.reconcileDeprovisioningCluster(cluster); err != nil {
+			glog.Errorf("failed to reconcile deprovisioning cluster %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
+		}
+	}
+
+	acceptedClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterAccepted)
+	if serviceErr != nil {
+		glog.Errorf("failed to list accepted clusters: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
+	}
+
+	for _, cluster := range acceptedClusters {
+		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
+		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
+			glog.Errorf("failed to reconcile accepted cluster %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
+			continue
+		}
+		if err := c.clusterService.UpdateStatus(cluster, api.ClusterProvisioning); err != nil {
+			glog.Errorf("failed to change cluster state to provisioning %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
+		}
+	}
+
 	provisioningClusters, listErr := c.clusterService.ListByStatus(api.ClusterProvisioning)
 	if listErr != nil {
 		glog.Errorf("failed to list pending clusters: %s", listErr.Error())
@@ -193,6 +195,7 @@ func (c *ClusterManager) reconcile() []error {
 
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for _, provisioningCluster := range provisioningClusters {
+		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
 		reconciledCluster, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
 			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ClusterID, err.Error())
@@ -213,6 +216,7 @@ func (c *ClusterManager) reconcile() []error {
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
+		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
 			glog.Errorf("failed to reconcile provisioned cluster %s: %s", provisionedCluster.ClusterID, err.Error())
@@ -244,6 +248,11 @@ func (c *ClusterManager) reconcile() []error {
 			continue
 		}
 		glog.V(5).Infof("reconciled ready cluster %s", readyCluster.ClusterID)
+	}
+
+	statusErr := c.setClusterStatusCountMetrics()
+	if len(statusErr) > 0 {
+		errors = append(errors, statusErr...)
 	}
 
 	return errors
@@ -440,6 +449,7 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	if clusterStatus.State() == clustersmgmtv1.ClusterStateError {
 		cluster.Status = api.ClusterFailed
 		needsUpdate = true
+		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterFailed)
 	}
 	// if cluster is neither ready nor in an error state, assume it's pending
 	if needsUpdate {
@@ -472,6 +482,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
 			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
 		}
+		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
 	} else if isStrimziReady && isFleetShardReady {
 		status := api.ClusterReady
 		glog.V(5).Infof("Set cluster status to %s for cluster %s", status, provisionedCluster.ClusterID)
@@ -481,6 +492,7 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 
 		// add entry for cluster creation metric
 		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
+		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterReady)
 	}
 	return nil
 }
@@ -977,4 +989,29 @@ func (c *ClusterManager) buildIdentityProvider(cluster api.Cluster, clientSecret
 	}
 
 	return identityProvider, nil
+}
+
+func (c *ClusterManager) setClusterStatusCountMetrics() []error {
+	status := []api.ClusterStatus{
+		api.ClusterAccepted,
+		api.ClusterProvisioning,
+		api.ClusterProvisioned,
+		api.ClusterWaitingForKasFleetShardOperator,
+		api.ClusterReady,
+		api.ClusterComputeNodeScalingUp,
+		api.ClusterFull,
+		api.ClusterFailed,
+		api.ClusterDeprovisioning,
+	}
+
+	var errors []error
+	if counters, err := c.clusterService.CountByStatus(status); err != nil {
+		glog.Errorf("failed to count clusters by status: %s", err.Error())
+		errors = append(errors, err)
+	} else {
+		for _, c := range counters {
+			metrics.UpdateClusterStatusCountMetric(c.Status, c.Count)
+		}
+	}
+	return errors
 }

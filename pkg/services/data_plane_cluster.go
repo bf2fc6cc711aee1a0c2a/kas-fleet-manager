@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -94,6 +95,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 			if err != nil {
 				return errors.ToServiceError(err)
 			}
+			metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterWaitingForKasFleetShardOperator)
 		}
 		glog.V(10).Infof("KAS Fleet Shard Operator not ready for Cluster ID '%s", clusterID)
 		return nil
@@ -243,6 +245,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		if err != nil {
 			return err
 		}
+		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterReady)
 	}
 
 	if !remainingCapacity {
@@ -259,6 +262,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 				return err
 			}
 		}
+		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, desiredStatus)
 	}
 
 	return nil
