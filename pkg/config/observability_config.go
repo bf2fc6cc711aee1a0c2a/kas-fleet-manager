@@ -52,7 +52,7 @@ func NewObservabilityConfigurationConfig() *ObservabilityConfiguration {
 		ObservabilityConfigChannel:         "resources", // Pointing to resources as the individual directories for prod and staging are no longer needed
 		ObservabilityConfigAccessToken:     "",
 		ObservabilityConfigAccessTokenFile: "secrets/observability-config-access.token",
-		ObservabilityConfigTag:             "v1.0.0",
+		ObservabilityConfigTag:             "v1.2.0-staging",
 	}
 }
 
