@@ -1630,6 +1630,12 @@ components:
         size:
           value: "100"
 
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+
   examples:
     ManagedKafkaExample:
       value:

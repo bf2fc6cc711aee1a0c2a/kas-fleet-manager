@@ -1988,3 +1988,8 @@ components:
       properties:
         observability:
           $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_observability'
+  securitySchemes:
+    Bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
