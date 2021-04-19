@@ -19,6 +19,9 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 //
 // 		// make and configure a mocked CloudProvidersService
 // 		mockedCloudProvidersService := &CloudProvidersServiceMock{
+// 			GetCachedCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, error) {
+// 				panic("mock out the GetCachedCloudProvidersWithRegions method")
+// 			},
 // 			GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, error) {
 // 				panic("mock out the GetCloudProvidersWithRegions method")
 // 			},
@@ -35,6 +38,9 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 //
 // 	}
 type CloudProvidersServiceMock struct {
+	// GetCachedCloudProvidersWithRegionsFunc mocks the GetCachedCloudProvidersWithRegions method.
+	GetCachedCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, error)
+
 	// GetCloudProvidersWithRegionsFunc mocks the GetCloudProvidersWithRegions method.
 	GetCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, error)
 
@@ -46,6 +52,9 @@ type CloudProvidersServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
+		// GetCachedCloudProvidersWithRegions holds details about calls to the GetCachedCloudProvidersWithRegions method.
+		GetCachedCloudProvidersWithRegions []struct {
+		}
 		// GetCloudProvidersWithRegions holds details about calls to the GetCloudProvidersWithRegions method.
 		GetCloudProvidersWithRegions []struct {
 		}
@@ -58,9 +67,36 @@ type CloudProvidersServiceMock struct {
 		ListCloudProviders []struct {
 		}
 	}
-	lockGetCloudProvidersWithRegions sync.RWMutex
-	lockListCloudProviderRegions     sync.RWMutex
-	lockListCloudProviders           sync.RWMutex
+	lockGetCachedCloudProvidersWithRegions sync.RWMutex
+	lockGetCloudProvidersWithRegions       sync.RWMutex
+	lockListCloudProviderRegions           sync.RWMutex
+	lockListCloudProviders                 sync.RWMutex
+}
+
+// GetCachedCloudProvidersWithRegions calls GetCachedCloudProvidersWithRegionsFunc.
+func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
+	if mock.GetCachedCloudProvidersWithRegionsFunc == nil {
+		panic("CloudProvidersServiceMock.GetCachedCloudProvidersWithRegionsFunc: method is nil but CloudProvidersService.GetCachedCloudProvidersWithRegions was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockGetCachedCloudProvidersWithRegions.Lock()
+	mock.calls.GetCachedCloudProvidersWithRegions = append(mock.calls.GetCachedCloudProvidersWithRegions, callInfo)
+	mock.lockGetCachedCloudProvidersWithRegions.Unlock()
+	return mock.GetCachedCloudProvidersWithRegionsFunc()
+}
+
+// GetCachedCloudProvidersWithRegionsCalls gets all the calls that were made to GetCachedCloudProvidersWithRegions.
+// Check the length with:
+//     len(mockedCloudProvidersService.GetCachedCloudProvidersWithRegionsCalls())
+func (mock *CloudProvidersServiceMock) GetCachedCloudProvidersWithRegionsCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockGetCachedCloudProvidersWithRegions.RLock()
+	calls = mock.calls.GetCachedCloudProvidersWithRegions
+	mock.lockGetCachedCloudProvidersWithRegions.RUnlock()
+	return calls
 }
 
 // GetCloudProvidersWithRegions calls GetCloudProvidersWithRegionsFunc.

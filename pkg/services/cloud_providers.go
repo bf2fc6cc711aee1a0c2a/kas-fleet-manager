@@ -9,9 +9,12 @@ import (
 	"time"
 )
 
+const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
+
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
 	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, error)
+	GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error)
 	ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError)
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
@@ -35,17 +38,7 @@ type CloudProviderWithRegions struct {
 
 func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
 	cloudProviderWithRegions := []CloudProviderWithRegions{}
-	cachedCloudProviderWithRegions, cached := p.cache.Get("cloudProviderWithRegions")
-	if cached {
-		cloudProviderWithRegions, ok := cachedCloudProviderWithRegions.([]CloudProviderWithRegions)
-		if ok {
-			return cloudProviderWithRegions, nil
-		}
-		return nil, nil
-	}
-
 	var regionErr error
-
 	providerList, err := p.ocmClient.GetCloudProviders()
 	if err != nil {
 		return nil, err
@@ -64,10 +57,30 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 
 		return true
 	})
-	p.cache.Set("cloudProviderWithRegions", cloudProviderWithRegions,
-		cache.DefaultExpiration)
 	return cloudProviderWithRegions, regionErr
 }
+
+func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
+	cloudProviderWithRegions, cached := p.cache.Get(keyCloudProvidersWithRegions)
+	if cached {
+		return convertToCloudProviderType(cloudProviderWithRegions)
+	}
+	cloudProviderWithRegions, err := p.GetCloudProvidersWithRegions()
+	if err != nil {
+		return nil, err
+	}
+	p.cache.Set(keyCloudProvidersWithRegions, cloudProviderWithRegions, cache.DefaultExpiration)
+	return convertToCloudProviderType(cloudProviderWithRegions)
+}
+
+func convertToCloudProviderType(cachedCloudProviderWithRegions interface{}) ([]CloudProviderWithRegions, error) {
+	cloudProviderWithRegions, ok := cachedCloudProviderWithRegions.([]CloudProviderWithRegions)
+	if ok {
+		return cloudProviderWithRegions, nil
+	}
+	return nil, nil
+}
+
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
 
 	cloudProviderList := []api.CloudProvider{}
