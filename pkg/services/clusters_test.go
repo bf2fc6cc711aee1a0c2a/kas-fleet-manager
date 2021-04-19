@@ -1364,3 +1364,79 @@ func Test_clusterService_UpdateMultiClusterStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterService_CountByStatus(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		status []api.ClusterStatus
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantErr   bool
+		want      []ClusterStatusCount
+		setupFunc func()
+	}{
+		{
+			name:   "should return the counts of clusters in different status",
+			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			args: args{
+				status: []api.ClusterStatus{api.ClusterAccepted, api.ClusterReady},
+			},
+			wantErr: false,
+			setupFunc: func() {
+				counters := []map[string]interface{}{
+					{
+						"status": "cluster_accepted",
+						"count":  2,
+					},
+					{
+						"status": "ready",
+						"count":  1,
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
+			},
+			want: []ClusterStatusCount{{
+				Status: api.ClusterAccepted,
+				Count:  2,
+			}, {
+				Status: api.ClusterReady,
+				Count:  1,
+			}},
+		},
+		{
+			name:   "should return error",
+			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			args: args{
+				status: []api.ClusterStatus{api.ClusterAccepted, api.ClusterReady},
+			},
+			wantErr: true,
+			setupFunc: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFunc != nil {
+				tt.setupFunc()
+			}
+			c := clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			status, err := c.CountByStatus(tt.args.status)
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error for CountByStatus: %v", err)
+			}
+			if !reflect.DeepEqual(status, tt.want) {
+				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
+			}
+		})
+	}
+}

@@ -58,6 +58,7 @@ type KafkaService interface {
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError
+	CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -124,7 +125,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to create kafka job: %v", err)
 	}
-	metrics.KafkaRequestsStatusDurationMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
 }
 
@@ -293,7 +294,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 			return handleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
-		metrics.KafkaRequestsStatusDurationMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	}
 
 	return nil
@@ -535,6 +536,20 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, c
 	}
 
 	return changeRecordsOutput, nil
+}
+
+type KafkaStatusCount struct {
+	Status constants.KafkaStatus
+	Count  int
+}
+
+func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
+	dbConn := k.connectionFactory.New()
+	var results []KafkaStatusCount
+	if err := dbConn.Model(&api.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
+		return nil, err
+	}
+	return results, nil
 }
 
 func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {

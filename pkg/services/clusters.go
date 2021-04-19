@@ -51,6 +51,8 @@ type ClusterService interface {
 	FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
+	// CountByStatus returns the count of clusters for each given status in the database
+	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, error)
 }
 
 type clusterService struct {
@@ -432,4 +434,18 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 	}
 
 	return nil
+}
+
+type ClusterStatusCount struct {
+	Status api.ClusterStatus
+	Count  int
+}
+
+func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStatusCount, error) {
+	dbConn := c.connectionFactory.New()
+	var results []ClusterStatusCount
+	if err := dbConn.Model(&api.Cluster{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
+		return nil, err
+	}
+	return results, nil
 }
