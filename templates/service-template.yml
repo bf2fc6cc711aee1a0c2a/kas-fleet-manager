@@ -351,7 +351,7 @@ parameters:
 - name: OBSERVABILITY_CONFIG_TAG
   displayName: Observability configuration tag
   description: Tag or branch to use inside the configuration repo
-  value: "v1.0.0"
+  value: "v1.2.0-staging"
 
 - name: SERVICE_PUBLIC_HOST_URL
   displayName: The public HTTP host URL of the service
