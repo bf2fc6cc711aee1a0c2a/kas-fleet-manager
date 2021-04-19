@@ -22,7 +22,7 @@ type CloudProvidersService interface {
 func NewCloudProvidersService(ocmClient ocm.Client) CloudProvidersService {
 	return &cloudProvidersService{
 		ocmClient: ocmClient,
-		cache:     cache.New(5*time.Hour, 10*time.Hour),
+		cache:     cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
@@ -63,17 +63,17 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
 	cloudProviderWithRegions, cached := p.cache.Get(keyCloudProvidersWithRegions)
 	if cached {
-		return convertToCloudProviderType(cloudProviderWithRegions)
+		return convertToCloudProviderWithRegionsType(cloudProviderWithRegions)
 	}
 	cloudProviderWithRegions, err := p.GetCloudProvidersWithRegions()
 	if err != nil {
 		return nil, err
 	}
 	p.cache.Set(keyCloudProvidersWithRegions, cloudProviderWithRegions, cache.DefaultExpiration)
-	return convertToCloudProviderType(cloudProviderWithRegions)
+	return convertToCloudProviderWithRegionsType(cloudProviderWithRegions)
 }
 
-func convertToCloudProviderType(cachedCloudProviderWithRegions interface{}) ([]CloudProviderWithRegions, error) {
+func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interface{}) ([]CloudProviderWithRegions, error) {
 	cloudProviderWithRegions, ok := cachedCloudProviderWithRegions.([]CloudProviderWithRegions)
 	if ok {
 		return cloudProviderWithRegions, nil
