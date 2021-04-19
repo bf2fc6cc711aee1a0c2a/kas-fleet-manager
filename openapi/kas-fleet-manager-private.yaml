@@ -1010,6 +1010,9 @@ components:
           format: int
         maxDataRetentionPeriod:
           type: string
+        maxConnectionAttemptsPerSec:
+          type: integer
+          format: int
 
     ManagedKafkaVersions:
       type: object
@@ -1558,6 +1561,8 @@ components:
               type: integer #example: 100
             maxDataRetentionPeriod:
               type: string #example: P14D
+            maxConnectionAttemptsPerSec:
+              type: integer #example: 100
         versions:
           description: "Version information related to a Kafka cluster"
           type: object
@@ -1566,14 +1571,14 @@ components:
               type: string
             strimzi:
               type: string
+      example:
+        $ref: '#/components/examples/DataPlaneKafkaStatusRequestExample'
 
     DataPlaneKafkaStatusUpdateRequest:
       description: "Schema for the request to update the statuses of Kafka clusters from data plane"
       type: object
       additionalProperties:
         $ref: '#/components/schemas/DataPlaneKafkaStatus'
-      example:
-        $ref: '#/components/examples/DataPlaneKafkaUpdateStatusRequestExample'
 
     DataplaneClusterAgentConfig:
       description: "Configuration for the data plane cluster agent"
@@ -1627,27 +1632,60 @@ components:
 
   examples:
     ManagedKafkaExample:
-      value: { } # TODO fill this
-    DataPlaneClusterUpdateStatusRequestExample:
-      value: { } # TODO fill this
-    DataPlaneKafkaUpdateStatusRequestExample:
       value:
-        1iSY6RQ3JKI8Q0OTmjQFd3ocFRg:
-          conditions:
-            - type: Ready
-              reason: KafkaInstanceReady
-              message: installing
-              status: "False"
-              lastTransitionTime: "2018-01-01T00:00:00Z"
+        kind: "ManagedKafka"
+        metadata:
+          name: "example-kafka"
+          namespace: "example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+          annotations:
+            bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
+            bf2.org/placementId: ""
+        spec:
           capacity:
             ingressEgressThroughputPerSec: 4Mi
             totalMaxConnections: 500
             maxDataRetentionSize: 100Gi
             maxPartitions: 100
             maxDataRetentionPeriod: P14D
+            maxConnectionAttemptsPerSec: 100
+          oauth:
+            clientId: "kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+            clientSecret: "example-client-secret"
+            tokenEndpointURI: "https://example-token-endpoint-uri.com/token"
+            jwksEndpointURI: "https://example-jwks-endpoint-uri.com/certs"
+            validIssuerEndpointURI: "https://issuer-endpoint-uri.com"
+            userNameClaim: "username"
+            tlsTrustedCertificate: ""
+            customClaimCheck: ""
+          endpoint:
+            bootstrapServerHost: "example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org"
+            tls:
+              cert: ""
+              key: ""
           versions:
-            kafka: 2.4.1
+            kafka: 2.7.0
             strimzi: 0.21.2
+          deleted: false
+    DataPlaneClusterUpdateStatusRequestExample:
+      value: { } # TODO fill this
+    DataPlaneKafkaStatusRequestExample:
+      value:
+        conditions:
+          - type: Ready
+            reason: KafkaInstanceReady
+            message: installing
+            status: "False"
+            lastTransitionTime: "2018-01-01T00:00:00Z"
+        capacity:
+          ingressEgressThroughputPerSec: 4Mi
+          totalMaxConnections: 500
+          maxDataRetentionSize: 100Gi
+          maxPartitions: 100
+          maxDataRetentionPeriod: P14D
+          maxConnectionAttemptsPerSec: 100
+        versions:
+          kafka: 2.4.1
+          strimzi: 0.21.2
     400DeletionExample:
       value:
         id: "103"
