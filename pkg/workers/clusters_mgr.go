@@ -255,6 +255,10 @@ func (c *ClusterManager) reconcile() []error {
 		errors = append(errors, statusErr...)
 	}
 
+	if err := c.setKafkaPerClusterCountMetrics(); err != nil {
+		errors = append(errors, err)
+	}
+
 	return errors
 }
 
@@ -1014,4 +1018,15 @@ func (c *ClusterManager) setClusterStatusCountMetrics() []error {
 		}
 	}
 	return errors
+}
+
+func (c *ClusterManager) setKafkaPerClusterCountMetrics() error {
+	if counters, err := c.clusterService.FindKafkaInstanceCount([]string{}); err != nil {
+		return err
+	} else {
+		for _, c := range counters {
+			metrics.UpdateKafkaPerClusterCountMetric(c.Clusterid, c.Count)
+		}
+	}
+	return nil
 }

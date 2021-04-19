@@ -46,6 +46,8 @@ const (
 
 	ClusterStatusSinceCreated = "cluster_status_since_created_in_seconds"
 	ClusterStatusCount        = "cluster_status_count"
+
+	KafkaPerClusterCount = "kafka_per_cluster_count"
 )
 
 // JobType metric to capture
@@ -78,6 +80,10 @@ var kafkaStatusCountMetricLabels = []string{
 // KafkaOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
 var KafkaOperationsCountMetricsLabels = []string{
 	labelOperation,
+}
+
+var KafkaPerClusterCountMetricsLabels = []string{
+	LabelClusterID,
 }
 
 // ClusterOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
@@ -195,6 +201,21 @@ func UpdateClusterStatusCountMetric(status api.ClusterStatus, count int) {
 		LabelStatus: string(status),
 	}
 	clusterStatusCountMetric.With(labels).Set(float64(count))
+}
+
+var kafkaPerClusterCountMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      KafkaPerClusterCount,
+		Help:      "the number of Kafka instances per data plane cluster",
+	},
+	KafkaPerClusterCountMetricsLabels)
+
+func UpdateKafkaPerClusterCountMetric(clusterId string, count int) {
+	labels := prometheus.Labels{
+		LabelClusterID: clusterId,
+	}
+	kafkaPerClusterCountMetric.With(labels).Set(float64(count))
 }
 
 // #### Metrics for Dataplane clusters - End ####
@@ -386,12 +407,13 @@ func IncreaseReconcilerErrorsCount(reconcilerType string, numOfErr int) {
 
 // register the metric(s)
 func init() {
-	// metrics for OpenShift clusters
+	// metrics for data plane clusters
 	prometheus.MustRegister(requestClusterCreationDurationMetric)
 	prometheus.MustRegister(clusterOperationsSuccessCountMetric)
 	prometheus.MustRegister(clusterOperationsTotalCountMetric)
 	prometheus.MustRegister(clusterStatusSinceCreatedMetric)
 	prometheus.MustRegister(clusterStatusCountMetric)
+	prometheus.MustRegister(kafkaPerClusterCountMetric)
 
 	// metrics for Kafkas
 	prometheus.MustRegister(requestKafkaCreationDurationMetric)
@@ -414,6 +436,7 @@ func Reset() {
 	clusterOperationsTotalCountMetric.Reset()
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
+	kafkaPerClusterCountMetric.Reset()
 
 	requestKafkaCreationDurationMetric.Reset()
 	kafkaOperationsSuccessCountMetric.Reset()
