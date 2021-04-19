@@ -1567,3 +1567,79 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 		})
 	}
 }
+
+func TestKafkaService_CountByStatus(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		status []constants.KafkaStatus
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantErr   bool
+		want      []KafkaStatusCount
+		setupFunc func()
+	}{
+		{
+			name:   "should return the counts of Kafkas in different status",
+			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			args: args{
+				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady},
+			},
+			wantErr: false,
+			setupFunc: func() {
+				counters := []map[string]interface{}{
+					{
+						"status": "accepted",
+						"count":  2,
+					},
+					{
+						"status": "ready",
+						"count":  1,
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
+			},
+			want: []KafkaStatusCount{{
+				Status: constants.KafkaRequestStatusAccepted,
+				Count:  2,
+			}, {
+				Status: constants.KafkaRequestStatusReady,
+				Count:  1,
+			}},
+		},
+		{
+			name:   "should return error",
+			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			args: args{
+				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady},
+			},
+			wantErr: true,
+			setupFunc: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFunc != nil {
+				tt.setupFunc()
+			}
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			status, err := k.CountByStatus(tt.args.status)
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error for CountByStatus: %v", err)
+			}
+			if !reflect.DeepEqual(status, tt.want) {
+				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
+			}
+		})
+	}
+}

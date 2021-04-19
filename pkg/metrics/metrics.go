@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -17,7 +18,10 @@ const (
 	// KafkaCreateRequestDuration - name of kafka creation duration metric
 	KafkaCreateRequestDuration = "worker_kafka_duration"
 
-	labelJobType = "jobType"
+	labelJobType   = "jobType"
+	LabelID        = "id"
+	LabelStatus    = "status"
+	LabelClusterID = "cluster_id"
 
 	// KafkaOperationsSuccessCount - name of the metric for Kafka-related successful operations
 	KafkaOperationsSuccessCount = "kafka_operations_success_count"
@@ -25,11 +29,8 @@ const (
 	KafkaOperationsTotalCount = "kafka_operations_total_count"
 
 	// KafkaRequestsStatus - kafka requests status metric
-	KafkaRequestsStatusDuration = "kafka_requests_status_duration"
-	KafkaRequestsStatusCount    = "kafka_requests_status_count"
-	LabelKafkaStatus            = "status"
-	LabelKafkaRequestID         = "id"
-	LabelKafkaClusterID         = "cluster_id"
+	KafkaRequestsStatusSinceCreated = "kafka_requests_status_since_created_in_seconds"
+	KafkaRequestsStatusCount        = "kafka_requests_status_count"
 
 	// ClusterOperationsSuccessCount - name of the metric for cluster-related successful operations
 	ClusterOperationsSuccessCount = "cluster_operations_success_count"
@@ -42,6 +43,9 @@ const (
 	ReconcilerFailureCount = "reconciler_failure_count"
 	ReconcilerErrorsCount  = "reconciler_errors_count"
 	labelReconcilerType    = "worker_type"
+
+	ClusterStatusSinceCreated = "cluster_status_since_created_in_seconds"
+	ClusterStatusCount        = "cluster_status_count"
 )
 
 // JobType metric to capture
@@ -59,16 +63,16 @@ var JobsMetricsLabels = []string{
 	labelJobType,
 }
 
-// kafkaStatusDurationMetricLabels  is the slice of labels to add to
-var kafkaStatusDurationMetricLabels = []string{
-	LabelKafkaStatus,
-	LabelKafkaRequestID,
-	LabelKafkaClusterID,
+// kafkaStatusSinceCreatedMetricLabels  is the slice of labels to add to
+var kafkaStatusSinceCreatedMetricLabels = []string{
+	LabelStatus,
+	LabelID,
+	LabelClusterID,
 }
 
 // kafkaStatusCountMetricLabels  is the slice of labels to add to
 var kafkaStatusCountMetricLabels = []string{
-	LabelKafkaStatus,
+	LabelStatus,
 }
 
 // KafkaOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
@@ -81,10 +85,21 @@ var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
 
+var ClusterStatusSinceCreatedMetricsLabels = []string{
+	LabelID,
+	LabelClusterID,
+	LabelStatus,
+}
+
+var ClusterStatusCountMetricsLabels = []string{
+	LabelStatus,
+}
+
 var ReconcilerMetricsLabels = []string{
 	labelReconcilerType,
 }
 
+// #### Metrics for Dataplane clusters - Start ####
 // create a new histogramVec for cluster creation duration
 var requestClusterCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
@@ -111,6 +126,80 @@ func UpdateClusterCreationDurationMetric(jobType JobType, elapsed time.Duration)
 	requestClusterCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
 }
 
+// create a new counterVec for successful cluster operation counts
+var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterOperationsSuccessCount,
+		Help:      "number of successful cluster operations",
+	},
+	ClusterOperationsCountMetricsLabels,
+)
+
+// IncreaseClusterSuccessOperationsCountMetric - increase counter for clusterOperationsSuccessCountMetric
+func IncreaseClusterSuccessOperationsCountMetric(operation constants.ClusterOperation) {
+	labels := prometheus.Labels{
+		labelOperation: operation.String(),
+	}
+	clusterOperationsSuccessCountMetric.With(labels).Inc()
+}
+
+// reate a new counterVec for total cluster operation counts
+var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterOperationsTotalCount,
+		Help:      "number of total cluster operations",
+	},
+	ClusterOperationsCountMetricsLabels,
+)
+
+// IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
+func IncreaseClusterTotalOperationsCountMetric(operation constants.ClusterOperation) {
+	labels := prometheus.Labels{
+		labelOperation: operation.String(),
+	}
+	clusterOperationsTotalCountMetric.With(labels).Inc()
+}
+
+// create a new GaugeVec for cluster status since created
+var clusterStatusSinceCreatedMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterStatusSinceCreated,
+		Help:      "metrics to track the status of a dataplane cluster and how long since it's been created",
+	},
+	ClusterStatusSinceCreatedMetricsLabels,
+)
+
+func UpdateClusterStatusSinceCreatedMetric(cluster api.Cluster, status api.ClusterStatus) {
+	labels := prometheus.Labels{
+		LabelStatus:    string(status),
+		LabelID:        cluster.ID,
+		LabelClusterID: cluster.ClusterID,
+	}
+	clusterStatusSinceCreatedMetric.With(labels).Set(time.Since(cluster.CreatedAt).Seconds())
+}
+
+var clusterStatusCountMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      ClusterStatusCount,
+		Help:      "metrics to record the number of Dataplane clusters in each status",
+	},
+	ClusterStatusCountMetricsLabels,
+)
+
+func UpdateClusterStatusCountMetric(status api.ClusterStatus, count int) {
+	labels := prometheus.Labels{
+		LabelStatus: string(status),
+	}
+	clusterStatusCountMetric.With(labels).Set(float64(count))
+}
+
+// #### Metrics for Dataplane clusters - End ####
+
+// #### Metrics for Kafkas - Start ####
 // create a new histogramVec for kafka creation duration
 var requestKafkaCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
@@ -167,20 +256,20 @@ var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	KafkaOperationsCountMetricsLabels,
 )
 
-//KafkaRequestsStatusDurationMetric
-func KafkaRequestsStatusDurationMetric(status constants.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
+//UpdateKafkaRequestsStatusSinceCreatedMetric
+func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
-		LabelKafkaStatus:    string(status),
-		LabelKafkaRequestID: kafkaId,
-		LabelKafkaClusterID: clusterId,
+		LabelStatus:    string(status),
+		LabelID:        kafkaId,
+		LabelClusterID: clusterId,
 	}
-	kafkaStatusDurationMetric.With(labels).Set(elapsed.Seconds())
+	kafkaStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-//KafkaRequestsStatusCountMetric
-func KafkaRequestsStatusCountMetric(status constants.KafkaStatus, count int) {
+//UpdateKafkaRequestsStatusCountMetric
+func UpdateKafkaRequestsStatusCountMetric(status constants.KafkaStatus, count int) {
 	labels := prometheus.Labels{
-		LabelKafkaStatus: string(status),
+		LabelStatus: string(status),
 	}
 	KafkaStatusCountMetric.With(labels).Set(float64(count))
 }
@@ -190,19 +279,19 @@ var KafkaStatusCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
 		Name:      KafkaRequestsStatusCount,
-		Help:      "number of total Kafka instances in each status ",
+		Help:      "number of total Kafka instances in each status",
 	},
 	kafkaStatusCountMetricLabels,
 )
 
 // create a new GaugeVec for kafkas status duration
-var kafkaStatusDurationMetric = prometheus.NewGaugeVec(
+var kafkaStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaRequestsStatusDuration,
-		Help:      "metrics to track the Kafka instances in various status and their duration",
+		Name:      KafkaRequestsStatusSinceCreated,
+		Help:      "metrics to track the status of a Kafka instance and how long since it's been created",
 	},
-	kafkaStatusDurationMetricLabels,
+	kafkaStatusSinceCreatedMetricLabels,
 )
 
 // IncreaseKafkaSuccessOperationsCountMetric - increase counter for the kafkaOperationsSuccessCountMetric
@@ -231,42 +320,9 @@ func IncreaseKafkaTotalOperationsCountMetric(operation constants.KafkaOperation)
 	kafkaOperationsTotalCountMetric.With(labels).Inc()
 }
 
-// create a new counterVec for successful cluster operation counts
-var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Subsystem: KasFleetManager,
-		Name:      ClusterOperationsSuccessCount,
-		Help:      "number of successful cluster operations",
-	},
-	ClusterOperationsCountMetricsLabels,
-)
+// #### Metrics for Kafkas - End ####
 
-// IncreaseClusterSuccessOperationsCountMetric - increase counter for clusterOperationsSuccessCountMetric
-func IncreaseClusterSuccessOperationsCountMetric(operation constants.ClusterOperation) {
-	labels := prometheus.Labels{
-		labelOperation: operation.String(),
-	}
-	clusterOperationsSuccessCountMetric.With(labels).Inc()
-}
-
-// reate a new counterVec for total cluster operation counts
-var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
-	prometheus.CounterOpts{
-		Subsystem: KasFleetManager,
-		Name:      ClusterOperationsTotalCount,
-		Help:      "number of total cluster operations",
-	},
-	ClusterOperationsCountMetricsLabels,
-)
-
-// IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
-func IncreaseClusterTotalOperationsCountMetric(operation constants.ClusterOperation) {
-	labels := prometheus.Labels{
-		labelOperation: operation.String(),
-	}
-	clusterOperationsTotalCountMetric.With(labels).Inc()
-}
-
+// #### Metrics for Reconcilers - Start ####
 // create a new gaugeVec for reconciler duration
 var reconcilerDurationMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
@@ -326,34 +382,47 @@ func IncreaseReconcilerErrorsCount(reconcilerType string, numOfErr int) {
 	reconcilerErrorsCountMetric.With(labels).Add(float64(numOfErr))
 }
 
+// #### Metrics for Reconcilers - End ####
+
 // register the metric(s)
 func init() {
+	// metrics for OpenShift clusters
 	prometheus.MustRegister(requestClusterCreationDurationMetric)
+	prometheus.MustRegister(clusterOperationsSuccessCountMetric)
+	prometheus.MustRegister(clusterOperationsTotalCountMetric)
+	prometheus.MustRegister(clusterStatusSinceCreatedMetric)
+	prometheus.MustRegister(clusterStatusCountMetric)
+
+	// metrics for Kafkas
 	prometheus.MustRegister(requestKafkaCreationDurationMetric)
 	prometheus.MustRegister(kafkaOperationsSuccessCountMetric)
 	prometheus.MustRegister(kafkaOperationsTotalCountMetric)
-	prometheus.MustRegister(clusterOperationsSuccessCountMetric)
-	prometheus.MustRegister(clusterOperationsTotalCountMetric)
-	prometheus.MustRegister(kafkaStatusDurationMetric)
+	prometheus.MustRegister(kafkaStatusSinceCreatedMetric)
+	prometheus.MustRegister(KafkaStatusCountMetric)
+
+	// metrics for reconcilers
 	prometheus.MustRegister(reconcilerDurationMetric)
 	prometheus.MustRegister(reconcilerSuccessCountMetric)
 	prometheus.MustRegister(reconcilerFailureCountMetric)
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
-	prometheus.MustRegister(KafkaStatusCountMetric)
 }
 
 // Reset the metrics we have defined. It is mainly used for testing.
 func Reset() {
 	requestClusterCreationDurationMetric.Reset()
+	clusterOperationsSuccessCountMetric.Reset()
+	clusterOperationsTotalCountMetric.Reset()
+	clusterStatusSinceCreatedMetric.Reset()
+	clusterStatusCountMetric.Reset()
+
 	requestKafkaCreationDurationMetric.Reset()
 	kafkaOperationsSuccessCountMetric.Reset()
 	kafkaOperationsTotalCountMetric.Reset()
-	clusterOperationsSuccessCountMetric.Reset()
-	clusterOperationsTotalCountMetric.Reset()
-	kafkaStatusDurationMetric.Reset()
+	kafkaStatusSinceCreatedMetric.Reset()
+	KafkaStatusCountMetric.Reset()
+
 	reconcilerDurationMetric.Reset()
 	reconcilerSuccessCountMetric.Reset()
 	reconcilerFailureCountMetric.Reset()
 	reconcilerErrorsCountMetric.Reset()
-	KafkaStatusCountMetric.Reset()
 }

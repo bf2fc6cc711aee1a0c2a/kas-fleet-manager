@@ -23,6 +23,9 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			AddIdentityProviderIDFunc: func(clusterID string, identityProviderId string) *apiErrors.ServiceError {
 // 				panic("mock out the AddIdentityProviderID method")
 // 			},
+// 			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, error) {
+// 				panic("mock out the CountByStatus method")
+// 			},
 // 			CreateFunc: func(cluster *api.Cluster) (*cmv1.Cluster, *apiErrors.ServiceError) {
 // 				panic("mock out the Create method")
 // 			},
@@ -84,6 +87,9 @@ type ClusterServiceMock struct {
 	// AddIdentityProviderIDFunc mocks the AddIdentityProviderID method.
 	AddIdentityProviderIDFunc func(clusterID string, identityProviderId string) *apiErrors.ServiceError
 
+	// CountByStatusFunc mocks the CountByStatus method.
+	CountByStatusFunc func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, error)
+
 	// CreateFunc mocks the Create method.
 	CreateFunc func(cluster *api.Cluster) (*cmv1.Cluster, *apiErrors.ServiceError)
 
@@ -143,6 +149,11 @@ type ClusterServiceMock struct {
 			ClusterID string
 			// IdentityProviderId is the identityProviderId argument value.
 			IdentityProviderId string
+		}
+		// CountByStatus holds details about calls to the CountByStatus method.
+		CountByStatus []struct {
+			// ClusterStatuss is the clusterStatuss argument value.
+			ClusterStatuss []api.ClusterStatus
 		}
 		// Create holds details about calls to the Create method.
 		Create []struct {
@@ -243,6 +254,7 @@ type ClusterServiceMock struct {
 		}
 	}
 	lockAddIdentityProviderID        sync.RWMutex
+	lockCountByStatus                sync.RWMutex
 	lockCreate                       sync.RWMutex
 	lockDeleteByClusterID            sync.RWMutex
 	lockFindAllClusters              sync.RWMutex
@@ -294,6 +306,37 @@ func (mock *ClusterServiceMock) AddIdentityProviderIDCalls() []struct {
 	mock.lockAddIdentityProviderID.RLock()
 	calls = mock.calls.AddIdentityProviderID
 	mock.lockAddIdentityProviderID.RUnlock()
+	return calls
+}
+
+// CountByStatus calls CountByStatusFunc.
+func (mock *ClusterServiceMock) CountByStatus(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, error) {
+	if mock.CountByStatusFunc == nil {
+		panic("ClusterServiceMock.CountByStatusFunc: method is nil but ClusterService.CountByStatus was just called")
+	}
+	callInfo := struct {
+		ClusterStatuss []api.ClusterStatus
+	}{
+		ClusterStatuss: clusterStatuss,
+	}
+	mock.lockCountByStatus.Lock()
+	mock.calls.CountByStatus = append(mock.calls.CountByStatus, callInfo)
+	mock.lockCountByStatus.Unlock()
+	return mock.CountByStatusFunc(clusterStatuss)
+}
+
+// CountByStatusCalls gets all the calls that were made to CountByStatus.
+// Check the length with:
+//     len(mockedClusterService.CountByStatusCalls())
+func (mock *ClusterServiceMock) CountByStatusCalls() []struct {
+	ClusterStatuss []api.ClusterStatus
+} {
+	var calls []struct {
+		ClusterStatuss []api.ClusterStatus
+	}
+	mock.lockCountByStatus.RLock()
+	calls = mock.calls.CountByStatus
+	mock.lockCountByStatus.RUnlock()
 	return calls
 }
 
