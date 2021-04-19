@@ -9,9 +9,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func NewServeCommand() *cobra.Command {
@@ -37,18 +34,18 @@ func runServe(cmd *cobra.Command, args []string) {
 	}
 
 	// Run the servers
-	apiserver := server.NewAPIServer()
 	go func() {
+		apiserver := server.NewAPIServer()
 		apiserver.Start()
 	}()
 
-	metricsServer := server.NewMetricsServer()
 	go func() {
+		metricsServer := server.NewMetricsServer()
 		metricsServer.Start()
 	}()
 
-	healthcheckServer := server.NewHealthCheckServer()
 	go func() {
+		healthcheckServer := server.NewHealthCheckServer()
 		healthcheckServer.Start()
 	}()
 
@@ -98,15 +95,5 @@ func runServe(cmd *cobra.Command, args []string) {
 	leaderElectionManager := workers.NewLeaderElectionManager(workerList, env.DBFactory)
 	leaderElectionManager.Start()
 
-	// Wait for shutdown signal...
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
-	<-signals
-	glog.Infoln("shutting down")
-
-	leaderElectionManager.Stop()
-	_ = apiserver.Stop()
-	_ = metricsServer.Stop()
-	_ = healthcheckServer.Stop()
-
+	select {}
 }

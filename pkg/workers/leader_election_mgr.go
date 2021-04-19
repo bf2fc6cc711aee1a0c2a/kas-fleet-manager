@@ -2,7 +2,6 @@ package workers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"sync"
 	"time"
 
@@ -48,22 +47,13 @@ func (s *LeaderElectionManager) Start() {
 
 	s.tearDown = make(chan struct{})
 	waitWorkersStart := make(chan struct{})
-
-	bus := environments.Environment().Services.SignalBus
-
-	sub := bus.Subscribe("LeaderElectionManager")
-	s.workerGrp.Add(1)
 	go func() {
-		defer s.workerGrp.Done()
-
 		// Starts once immediately
 		s.startWorkers()
 		close(waitWorkersStart) //let Start() to proceed
 		ticker := time.NewTicker(s.mgrRepeatInterval)
 		for {
 			select {
-			case <-sub.Signal():
-				s.startWorkers()
 			case <-ticker.C:
 				s.startWorkers()
 			case <-s.tearDown:
@@ -73,13 +63,8 @@ func (s *LeaderElectionManager) Start() {
 					if worker.IsRunning() {
 						worker.Stop()
 						s.workerGrp.Done()
-						err := s.releaseLeaderLease(worker)
-						if err != nil {
-							glog.Error(err)
-						}
 					}
 				}
-				bus.Notify("LeaderElectionManager")
 				return
 			}
 		}
@@ -219,12 +204,4 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 
 func isExpired(lease *api.LeaderLease) bool {
 	return lease.Leader == "" || time.Now().After(*lease.Expires)
-}
-
-// releaseLeaderLease releases the acquired lease for the worker.
-func (s *LeaderElectionManager) releaseLeaderLease(worker Worker) error {
-	dbConn := s.connectionFactory.New()
-	workerId := worker.GetID()
-	workerType := worker.GetWorkerType()
-	return dbConn.Exec("UPDATE leader_leases SET leader = ?, expires = ? WHERE deleted_at is null AND lease_type = ? AND leader = ?", nil, time.Now(), workerType, workerId).Error
 }
