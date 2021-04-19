@@ -132,9 +132,9 @@ Locust 1.4.2 or newer is required to run admin-api tests
 
 In order to run admin-api tests, these parameters are required:
 - `ADMIN_API_SSO_AUTH_URL` - SSO cluster used for getting access token (including `https://`)
-- `ADMIN_API_SVC_ACC_ID` - service account id used to communicate with the admin-api
-- `ADMIN_API_SVC_ACC_SECRET` - service account secret used to communicate with the admin-api
-- `ADMIN_API_HOST` - admin-api host (including `https://`, but excluding port number)
+- `ADMIN_API_SVC_ACC_IDS` - comma-separated service account ids used to communicate with the admin-api
+- `ADMIN_API_SVC_ACC_SECRETS` - comma-separated service account secrets used to communicate with the admin-api
+- `ADMIN_API_HOSTS` - comma-separated admin-api hosts (including `https://`, but excluding port number)
 
 ## optional parameter
 - `ADMIN_API_RUN_TIME` - duration of the test in minutes, if not provided - the test will run for one minute
@@ -142,5 +142,5 @@ In order to run admin-api tests, these parameters are required:
 ## Running the tests
 
 ```
-ADMIN_API_SSO_AUTH_URL=<your_sso_url> ADMIN_API_SVC_ACC_ID=<your_svc_acc_id> ADMIN_API_SVC_ACC_SECRET=<your_svc_acc_secret> ADMIN_API_HOST=<your_admin_api_host> make test/performance/admin-api
+ADMIN_API_SSO_AUTH_URL=<your_sso_url> ADMIN_API_SVC_ACC_IDS=<your_svc_acc_ids> ADMIN_API_SVC_ACC_SECRETS=<your_svc_acc_secrets> ADMIN_API_HOSTS=<your_admin_api_hosts> make test/performance/admin-api
 ```
