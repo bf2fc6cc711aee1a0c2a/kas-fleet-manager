@@ -22,7 +22,7 @@ func NewCloudProviderHandler(service services.CloudProvidersService, configServi
 	return &cloudProvidersHandler{
 		service: service,
 		config:  configService,
-		cache:   cache.New(5*time.Minute, 10*time.Minute),
+		cache:   cache.New(5*time.Hour, 10*time.Hour),
 	}
 }
 

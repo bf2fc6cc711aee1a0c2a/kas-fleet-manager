@@ -5,6 +5,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
+	"github.com/patrickmn/go-cache"
+	"time"
 )
 
 type CloudProvidersService interface {
@@ -16,11 +18,13 @@ type CloudProvidersService interface {
 func NewCloudProvidersService(ocmClient ocm.Client) CloudProvidersService {
 	return &cloudProvidersService{
 		ocmClient: ocmClient,
+		cache:     cache.New(5*time.Hour, 10*time.Hour),
 	}
 }
 
 type cloudProvidersService struct {
 	ocmClient ocm.Client
+	cache     *cache.Cache
 }
 
 type CloudProviderWithRegions struct {
@@ -29,8 +33,16 @@ type CloudProviderWithRegions struct {
 }
 
 func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
-
 	cloudProviderWithRegions := []CloudProviderWithRegions{}
+	cachedCloudProviderWithRegions, cached := p.cache.Get("cloudProviderWithRegions")
+	if cached {
+		cloudProviderWithRegions, ok := cachedCloudProviderWithRegions.([]CloudProviderWithRegions)
+		if ok {
+			return cloudProviderWithRegions, nil
+		}
+		return nil, nil
+	}
+
 	var regionErr error
 
 	providerList, err := p.ocmClient.GetCloudProviders()
@@ -51,7 +63,8 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 
 		return true
 	})
-
+	p.cache.Set("cloudProviderWithRegions", cloudProviderWithRegions,
+		cache.DefaultExpiration)
 	return cloudProviderWithRegions, regionErr
 }
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
