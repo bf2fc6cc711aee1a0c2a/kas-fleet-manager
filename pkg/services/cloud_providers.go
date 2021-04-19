@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+//go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
 	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, error)
 	ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError)

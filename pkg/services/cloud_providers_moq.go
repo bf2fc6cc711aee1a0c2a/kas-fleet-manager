@@ -5,7 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -15,34 +15,34 @@ var _ CloudProvidersService = &CloudProvidersServiceMock{}
 
 // CloudProvidersServiceMock is a mock implementation of CloudProvidersService.
 //
-//     func TestSomethingThatUsesCloudProvidersService(t *testing.T) {
+// 	func TestSomethingThatUsesCloudProvidersService(t *testing.T) {
 //
-//         // make and configure a mocked CloudProvidersService
-//         mockedCloudProvidersService := &CloudProvidersServiceMock{
-//             GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, error) {
-// 	               panic("mock out the GetCloudProvidersWithRegions method")
-//             },
-//             ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *errors.ServiceError) {
-// 	               panic("mock out the ListCloudProviderRegions method")
-//             },
-//             ListCloudProvidersFunc: func() ([]api.CloudProvider, *errors.ServiceError) {
-// 	               panic("mock out the ListCloudProviders method")
-//             },
-//         }
+// 		// make and configure a mocked CloudProvidersService
+// 		mockedCloudProvidersService := &CloudProvidersServiceMock{
+// 			GetCloudProvidersWithRegionsFunc: func() ([]CloudProviderWithRegions, error) {
+// 				panic("mock out the GetCloudProvidersWithRegions method")
+// 			},
+// 			ListCloudProviderRegionsFunc: func(id string) ([]api.CloudRegion, *apiErrors.ServiceError) {
+// 				panic("mock out the ListCloudProviderRegions method")
+// 			},
+// 			ListCloudProvidersFunc: func() ([]api.CloudProvider, *apiErrors.ServiceError) {
+// 				panic("mock out the ListCloudProviders method")
+// 			},
+// 		}
 //
-//         // use mockedCloudProvidersService in code that requires CloudProvidersService
-//         // and then make assertions.
+// 		// use mockedCloudProvidersService in code that requires CloudProvidersService
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type CloudProvidersServiceMock struct {
 	// GetCloudProvidersWithRegionsFunc mocks the GetCloudProvidersWithRegions method.
 	GetCloudProvidersWithRegionsFunc func() ([]CloudProviderWithRegions, error)
 
 	// ListCloudProviderRegionsFunc mocks the ListCloudProviderRegions method.
-	ListCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *errors.ServiceError)
+	ListCloudProviderRegionsFunc func(id string) ([]api.CloudRegion, *apiErrors.ServiceError)
 
 	// ListCloudProvidersFunc mocks the ListCloudProviders method.
-	ListCloudProvidersFunc func() ([]api.CloudProvider, *errors.ServiceError)
+	ListCloudProvidersFunc func() ([]api.CloudProvider, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -90,7 +90,7 @@ func (mock *CloudProvidersServiceMock) GetCloudProvidersWithRegionsCalls() []str
 }
 
 // ListCloudProviderRegions calls ListCloudProviderRegionsFunc.
-func (mock *CloudProvidersServiceMock) ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError) {
+func (mock *CloudProvidersServiceMock) ListCloudProviderRegions(id string) ([]api.CloudRegion, *apiErrors.ServiceError) {
 	if mock.ListCloudProviderRegionsFunc == nil {
 		panic("CloudProvidersServiceMock.ListCloudProviderRegionsFunc: method is nil but CloudProvidersService.ListCloudProviderRegions was just called")
 	}
@@ -121,7 +121,7 @@ func (mock *CloudProvidersServiceMock) ListCloudProviderRegionsCalls() []struct 
 }
 
 // ListCloudProviders calls ListCloudProvidersFunc.
-func (mock *CloudProvidersServiceMock) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
+func (mock *CloudProvidersServiceMock) ListCloudProviders() ([]api.CloudProvider, *apiErrors.ServiceError) {
 	if mock.ListCloudProvidersFunc == nil {
 		panic("CloudProvidersServiceMock.ListCloudProvidersFunc: method is nil but CloudProvidersService.ListCloudProviders was just called")
 	}
