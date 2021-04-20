@@ -43,13 +43,13 @@ var StatusForValidCluster = []string{string(ClusterProvisioning), string(Cluster
 type Cluster struct {
 	Meta
 	CloudProvider      string        `json:"cloud_provider"`
-	ClusterID          string        `json:"cluster_id"`
+	ClusterID          string        `json:"cluster_id" gorm:"uniqueIndex"`
 	ExternalID         string        `json:"external_id"`
 	MultiAZ            bool          `json:"multi_az"`
 	Region             string        `json:"region"`
 	BYOC               bool          `json:"byoc"`
 	Managed            bool          `json:"managed"`
-	Status             ClusterStatus `json:"status"`
+	Status             ClusterStatus `json:"status" gorm:"index"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 }
 

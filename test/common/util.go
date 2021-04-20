@@ -61,42 +61,44 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
 		clusterID, _ = readClusterDetailsFromFile(h, t)
 	}
+	var foundCluster *api.Cluster
+	var err *ocmErrors.ServiceError
 	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
-		_, err := h.Env().Services.Cluster.Create(&api.Cluster{
-			CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-			Region:        mocks.MockCluster.Region().ID(),
-			MultiAZ:       mocks.MockMultiAZ,
-		})
+		// first check if there is an existing valid cluster that we can use
+		foundCluster, err = findFirstValidCluster(h)
 		if err != nil {
 			return "", err
 		}
-	}
-
-	if clusterID == "" {
-		foundClusters, svcErr := h.Env().Services.Cluster.FindAllClusters(services.FindClusterCriteria{
-			Region:   mocks.MockCluster.Region().ID(),
-			Provider: mocks.MockCluster.CloudProvider().ID(),
-		})
-		if svcErr != nil {
-			return "", svcErr
-		}
-		if len(foundClusters) == 0 {
-			return "", nil
-		}
-		var foundCluster *api.Cluster
-		for _, c := range foundClusters {
-			if c.Status.String() != api.ClusterDeprovisioning.String() {
-				t.Log(fmt.Sprintf("Found a cluster that is not being removed: %v", foundCluster))
+		if foundCluster == nil {
+			// create a new cluster
+			_, err := h.Env().Services.Cluster.Create(&api.Cluster{
+				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+				Region:        mocks.MockCluster.Region().ID(),
+				MultiAZ:       mocks.MockMultiAZ,
+			})
+			if err != nil {
+				return "", err
+			}
+			// need to wait for it to be assigned
+			waitErr := wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
+				c, findErr := findFirstValidCluster(h)
+				if findErr != nil {
+					return false, findErr
+				}
 				foundCluster = c
+				return foundCluster != nil && foundCluster.ClusterID != "", nil
+			})
+			if waitErr != nil {
+				return "", ocmErrors.GeneralError("error to find a valid cluster: %v", waitErr)
 			}
 		}
 		clusterID = foundCluster.ClusterID
+	}
 
-		if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-			err := PersistClusterStruct(*foundCluster)
-			if err != nil {
-				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
-			}
+	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+		pErr := PersistClusterStruct(*foundCluster)
+		if pErr != nil {
+			t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
 		}
 	}
 
@@ -107,6 +109,25 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		}
 	}
 	return clusterID, nil
+}
+
+func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceError) {
+	foundClusters, svcErr := h.Env().Services.Cluster.FindAllClusters(services.FindClusterCriteria{
+		Region:   mocks.MockCluster.Region().ID(),
+		Provider: mocks.MockCluster.CloudProvider().ID(),
+		MultiAZ:  mocks.MockMultiAZ,
+	})
+	if svcErr != nil {
+		return nil, svcErr
+	}
+	var foundCluster *api.Cluster
+	for _, c := range foundClusters {
+		if c.Status.String() != api.ClusterDeprovisioning.String() {
+			foundCluster = c
+			return foundCluster, nil
+		}
+	}
+	return foundCluster, nil
 }
 
 // fileExists checks if a file exists and is not a directory before we
@@ -154,7 +175,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 		}
 
 		dbConn := h.Env().DBFactory.New()
-		if err := dbConn.Save(cluster).Error; err != nil {
+		if err := dbConn.FirstOrCreate(cluster, &api.Cluster{ClusterID: cluster.ClusterID}).Error; err != nil {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to save cluster details to database: %v", err))
 		}
 		return cluster.ClusterID, nil
