@@ -265,6 +265,11 @@ parameters:
   description: The default value of maximum number of service accounts that can be created by users.
   value: "2"
 
+- name: MAX_LIMIT_FOR_SSO_GET_CLIENTS
+  displayName: Max clients fetch by get clients
+  description: The default value of maximum number of clients fetch from mas-sso.
+  value: "100"
+
 - name: ALLOW_ANY_REGISTERED_USERS
   displayName: Allow any registered users
   description: Enable to allow any registered users to access the service.
@@ -734,6 +739,7 @@ objects:
             - --mas-sso-base-url=${MAS_SSO_BASE_URL}
             - --mas-sso-realm=${MAS_SSO_REALM}
             - --max-allowed-service-accounts=${MAX_ALLOWED_SERVICE_ACCOUNTS}
+            - --max-limit-for-sso-get-clients=${MAX_LIMIT_FOR_SSO_GET_CLIENTS}
             - --osd-idp-mas-sso-realm=${OSD_IDP_MAS_SSO_REALM}
             - --osd-idp-mas-sso-client-id-file=/secrets/service/osd-idp-keycloak-service.clientId
             - --osd-idp-mas-sso-client-secret-file=/secrets/service/osd-idp-keycloak-service.clientSecret
