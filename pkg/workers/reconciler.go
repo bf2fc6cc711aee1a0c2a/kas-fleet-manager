@@ -99,4 +99,5 @@ func (r *Reconciler) Stop(worker Worker) {
 		close(*worker.GetStopChan()) //explicit close
 		worker.GetSyncGroup().Wait() //wait for in-flight job to finish
 	}
+	metrics.ResetMetricsForReconcilers()
 }

@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -59,12 +60,14 @@ func (c *ConnectorManager) GetWorkerType() string {
 
 // Start initializes the connector manager to reconcile connector requests
 func (k *ConnectorManager) Start() {
+	metrics.SetLeaderWorkerMetric(k.workerType, true)
 	k.reconciler.Start(k)
 }
 
 // Stop causes the process for reconciling connector requests to stop.
 func (k *ConnectorManager) Stop() {
 	k.reconciler.Stop(k)
+	metrics.SetLeaderWorkerMetric(k.workerType, false)
 }
 
 func (c *ConnectorManager) IsRunning() bool {
