@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
