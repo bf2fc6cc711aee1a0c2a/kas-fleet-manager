@@ -46,7 +46,7 @@ type ClusterService interface {
 	ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceError)
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
-	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters
+	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
 	// Cluster is not included in the result if it is not been used; otherwise, return the cluster id and the count
 	FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
@@ -370,12 +370,14 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafka
 	dbConn := c.connectionFactory.New()
 
 	var res []*ResKafkaInstanceCount
-	if err := dbConn.Model(&api.KafkaRequest{}).
-		Select("cluster_id as Clusterid, count(1) as Count ").
-		Where(" cluster_id in (?) ", clusterIDs).
-		Group(" cluster_id").Order("cluster_id asc").
-		Scan(&res).Error; err != nil {
-		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+	q := dbConn.Model(&api.KafkaRequest{}).Select("cluster_id as Clusterid, count(1) as Count")
+	if len(clusterIDs) > 0 {
+		q = q.Where("cluster_id in (?)", clusterIDs)
+	}
+	q = q.Group("cluster_id").Order("cluster_id asc").Scan(&res)
+
+	if err := q.Error; err != nil {
+		return nil, apiErrors.GeneralError("failed to query by cluster info: %s", err.Error())
 	}
 
 	return res, nil
