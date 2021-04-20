@@ -42,12 +42,14 @@ const (
 	ReconcilerSuccessCount = "reconciler_success_count"
 	ReconcilerFailureCount = "reconciler_failure_count"
 	ReconcilerErrorsCount  = "reconciler_errors_count"
-	labelReconcilerType    = "worker_type"
+	labelWorkerType        = "worker_type"
 
 	ClusterStatusSinceCreated = "cluster_status_since_created_in_seconds"
 	ClusterStatusCount        = "cluster_status_count"
 
 	KafkaPerClusterCount = "kafka_per_cluster_count"
+
+	LeaderWorker = "leader_worker"
 )
 
 // JobType metric to capture
@@ -102,7 +104,7 @@ var ClusterStatusCountMetricsLabels = []string{
 }
 
 var ReconcilerMetricsLabels = []string{
-	labelReconcilerType,
+	labelWorkerType,
 }
 
 // #### Metrics for Dataplane clusters - Start ####
@@ -356,7 +358,7 @@ var reconcilerDurationMetric = prometheus.NewGaugeVec(
 
 func UpdateReconcilerDurationMetric(reconcilerType string, elapsed time.Duration) {
 	labels := prometheus.Labels{
-		labelReconcilerType: reconcilerType,
+		labelWorkerType: reconcilerType,
 	}
 	reconcilerDurationMetric.With(labels).Set(float64(elapsed.Seconds()))
 }
@@ -370,7 +372,7 @@ var reconcilerSuccessCountMetric = prometheus.NewCounterVec(
 
 func IncreaseReconcilerSuccessCount(reconcilerType string) {
 	labels := prometheus.Labels{
-		labelReconcilerType: reconcilerType,
+		labelWorkerType: reconcilerType,
 	}
 	reconcilerSuccessCountMetric.With(labels).Inc()
 }
@@ -384,7 +386,7 @@ var reconcilerFailureCountMetric = prometheus.NewCounterVec(
 
 func IncreaseReconcilerFailureCount(reconcilerType string) {
 	labels := prometheus.Labels{
-		labelReconcilerType: reconcilerType,
+		labelWorkerType: reconcilerType,
 	}
 	reconcilerFailureCountMetric.With(labels).Inc()
 }
@@ -398,9 +400,29 @@ var reconcilerErrorsCountMetric = prometheus.NewCounterVec(
 
 func IncreaseReconcilerErrorsCount(reconcilerType string, numOfErr int) {
 	labels := prometheus.Labels{
-		labelReconcilerType: reconcilerType,
+		labelWorkerType: reconcilerType,
 	}
 	reconcilerErrorsCountMetric.With(labels).Add(float64(numOfErr))
+}
+
+var leaderWorkerMetric = prometheus.NewGaugeVec(
+	prometheus.GaugeOpts{
+		Subsystem: KasFleetManager,
+		Name:      LeaderWorker,
+		Help:      "metrics to indicate if the current process is the leader among the workers",
+	}, ReconcilerMetricsLabels)
+
+// SetLeaderWorkerMetric will set the metric value to 1 if the worker is the leader, and 0 if the worker is not the leader.
+// Then when the metrics is scraped, Prometheus will add additional information like pod name, which then can be used to display which pod is the leader.
+func SetLeaderWorkerMetric(workerType string, leader bool) {
+	labels := prometheus.Labels{
+		labelWorkerType: workerType,
+	}
+	val := 0
+	if leader {
+		val = 1
+	}
+	leaderWorkerMetric.With(labels).Set(float64(val))
 }
 
 // #### Metrics for Reconcilers - End ####
@@ -427,6 +449,30 @@ func init() {
 	prometheus.MustRegister(reconcilerSuccessCountMetric)
 	prometheus.MustRegister(reconcilerFailureCountMetric)
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
+}
+
+// ResetMetricsForKafkaManagers will reset the metrics for the KafkaManager background reconciler
+// This is needed because if current process is not the leader anymore, the metrics need to be reset otherwise staled data will be scraped
+func ResetMetricsForKafkaManagers() {
+	kafkaStatusSinceCreatedMetric.Reset()
+	KafkaStatusCountMetric.Reset()
+}
+
+// ResetMetricsForClusterManagers will reset the metrics for the ClusterManager background reconciler
+// This is needed because if current process is not the leader anymore, the metrics need to be reset otherwise staled data will be scraped
+func ResetMetricsForClusterManagers() {
+	clusterStatusSinceCreatedMetric.Reset()
+	clusterStatusCountMetric.Reset()
+	kafkaPerClusterCountMetric.Reset()
+}
+
+// ResetMetricsForReconcilers will reset the metrics related to the reconcilers
+// This is needed because if current process is not the leader anymore, the metrics need to be reset otherwise staled data will be scraped
+func ResetMetricsForReconcilers() {
+	reconcilerDurationMetric.Reset()
+	reconcilerSuccessCountMetric.Reset()
+	reconcilerFailureCountMetric.Reset()
+	reconcilerErrorsCountMetric.Reset()
 }
 
 // Reset the metrics we have defined. It is mainly used for testing.
