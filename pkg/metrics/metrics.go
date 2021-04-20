@@ -449,6 +449,7 @@ func init() {
 	prometheus.MustRegister(reconcilerSuccessCountMetric)
 	prometheus.MustRegister(reconcilerFailureCountMetric)
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
+	prometheus.MustRegister(leaderWorkerMetric)
 }
 
 // ResetMetricsForKafkaManagers will reset the metrics for the KafkaManager background reconciler
@@ -494,4 +495,5 @@ func Reset() {
 	reconcilerSuccessCountMetric.Reset()
 	reconcilerFailureCountMetric.Reset()
 	reconcilerErrorsCountMetric.Reset()
+	leaderWorkerMetric.Reset()
 }
