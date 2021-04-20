@@ -647,7 +647,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	Expect(resp8.Header.Get("Content-Type")).To(Equal("application/json"))
 }
 
-func TestKafkaAllowList_FixMGDSTRM_1052(t *testing.T) {
+func TestKafkaAllowList_MaxAllowedInstancesForUserWithoutOrganisation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
