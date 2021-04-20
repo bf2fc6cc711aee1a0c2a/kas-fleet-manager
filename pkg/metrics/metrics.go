@@ -429,6 +429,28 @@ func init() {
 	prometheus.MustRegister(reconcilerErrorsCountMetric)
 }
 
+// ResetMetricsForKafkaManagers will reset the metrics for the KafkaManager background reconciler
+// This is needed because if current process is not the leader anymore, we need to reset the metrics otherwise we will end up with an extra data points with staled data
+func ResetMetricsForKafkaManagers() {
+	kafkaStatusSinceCreatedMetric.Reset()
+	KafkaStatusCountMetric.Reset()
+}
+
+// ResetMetricsForClusterManagers will reset the metrics for the ClusterManager background reconciler
+// This is needed because if current process is not the leader anymore, we need to reset the metrics otherwise we will end up with an extra data points with staled data
+func ResetMetricsForClusterManagers() {
+	clusterStatusSinceCreatedMetric.Reset()
+	clusterStatusCountMetric.Reset()
+	kafkaPerClusterCountMetric.Reset()
+}
+
+func ResetMetricsForReconcilers() {
+	reconcilerDurationMetric.Reset()
+	reconcilerSuccessCountMetric.Reset()
+	reconcilerFailureCountMetric.Reset()
+	reconcilerErrorsCountMetric.Reset()
+}
+
 // Reset the metrics we have defined. It is mainly used for testing.
 func Reset() {
 	requestClusterCreationDurationMetric.Reset()

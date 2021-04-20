@@ -112,6 +112,7 @@ func (c *ClusterManager) Start() {
 // Stop causes the process for reconciling osd clusters to stop.
 func (c *ClusterManager) Stop() {
 	c.reconciler.Stop(c)
+	metrics.ResetMetricsForClusterManagers()
 }
 
 func (c *ClusterManager) IsRunning() bool {
