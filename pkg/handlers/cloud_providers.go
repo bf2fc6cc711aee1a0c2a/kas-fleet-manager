@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"github.com/patrickmn/go-cache"
 	"net/http"
+	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -13,12 +15,14 @@ import (
 type cloudProvidersHandler struct {
 	service services.CloudProvidersService
 	config  services.ConfigService
+	cache   *cache.Cache
 }
 
 func NewCloudProviderHandler(service services.CloudProvidersService, configService services.ConfigService) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service: service,
 		config:  configService,
+		cache:   cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
@@ -26,12 +30,14 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 	id := mux.Vars(r)["id"]
 
 	cfg := &handlerConfig{
-
 		Validate: []validate{
 			validateLength(&id, "id", &minRequiredFieldLength, nil),
 		},
-
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			cachedRegionList, cached := h.cache.Get(id)
+			if cached {
+				return cachedRegionList, nil
+			}
 			cloudRegions, err := h.service.ListCloudProviderRegions(id)
 			if err != nil {
 				return nil, err
@@ -47,6 +53,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 				converted := presenters.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}
+			h.cache.Set(id, regionList, cache.DefaultExpiration)
 			return regionList, nil
 		},
 		ErrorHandler: handleError,
@@ -55,10 +62,12 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 }
 
 func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http.Request) {
-
 	cfg := &handlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-
+			cachedCloudProviderList, cached := h.cache.Get("cloudProviderList")
+			if cached {
+				return cachedCloudProviderList, nil
+			}
 			cloudProviders, err := h.service.ListCloudProviders()
 			if err != nil {
 				return nil, err
@@ -75,7 +84,7 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)
 			}
-
+			h.cache.Set("cloudProviderList", cloudProviderList, cache.DefaultExpiration)
 			return cloudProviderList, nil
 		},
 		ErrorHandler: handleError,
