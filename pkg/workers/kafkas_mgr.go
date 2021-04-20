@@ -74,6 +74,7 @@ func (c *KafkaManager) GetWorkerType() string {
 
 // Start initializes the kafka manager to reconcile kafka requests
 func (k *KafkaManager) Start() {
+	metrics.SetLeaderWorkerMetric(k.workerType, true)
 	k.reconciler.Start(k)
 }
 
@@ -81,6 +82,7 @@ func (k *KafkaManager) Start() {
 func (k *KafkaManager) Stop() {
 	k.reconciler.Stop(k)
 	metrics.ResetMetricsForKafkaManagers()
+	metrics.SetLeaderWorkerMetric(k.workerType, false)
 }
 
 func (c *KafkaManager) IsRunning() bool {

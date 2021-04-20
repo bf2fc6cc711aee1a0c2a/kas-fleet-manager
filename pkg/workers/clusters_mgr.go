@@ -106,6 +106,7 @@ func (c *ClusterManager) GetWorkerType() string {
 
 // Start initializes the cluster manager to reconcile osd clusters
 func (c *ClusterManager) Start() {
+	metrics.SetLeaderWorkerMetric(c.workerType, true)
 	c.reconciler.Start(c)
 }
 
@@ -113,6 +114,7 @@ func (c *ClusterManager) Start() {
 func (c *ClusterManager) Stop() {
 	c.reconciler.Stop(c)
 	metrics.ResetMetricsForClusterManagers()
+	metrics.SetLeaderWorkerMetric(c.workerType, false)
 }
 
 func (c *ClusterManager) IsRunning() bool {
