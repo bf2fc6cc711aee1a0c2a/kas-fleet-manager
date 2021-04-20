@@ -61,16 +61,16 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 }
 
 func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
-	cloudProviderWithRegions, cached := p.cache.Get(keyCloudProvidersWithRegions)
+	cachedCloudProviderWithRegions, cached := p.cache.Get(keyCloudProvidersWithRegions)
 	if cached {
-		return convertToCloudProviderWithRegionsType(cloudProviderWithRegions)
+		return convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions)
 	}
 	cloudProviderWithRegions, err := p.GetCloudProvidersWithRegions()
 	if err != nil {
 		return nil, err
 	}
 	p.cache.Set(keyCloudProvidersWithRegions, cloudProviderWithRegions, cache.DefaultExpiration)
-	return convertToCloudProviderWithRegionsType(cloudProviderWithRegions)
+	return cloudProviderWithRegions, nil
 }
 
 func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interface{}) ([]CloudProviderWithRegions, error) {
