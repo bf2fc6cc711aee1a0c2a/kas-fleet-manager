@@ -277,7 +277,8 @@ func (k *KafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
 	}
 	if !isAllowed {
 		kafka.FailedReason = "Insufficient quota"
-		if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); executed && err != nil {
+		kafka.Status = constants.KafkaRequestStatusFailed.String()
+		if err := k.kafkaService.Update(kafka); err != nil {
 			return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
@@ -300,18 +301,8 @@ func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) e
 }
 
 func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
-	_, err := k.kafkaService.GetById(kafka.ID)
-	if err != nil {
-		sentry.CaptureException(err)
-		return fmt.Errorf("failed to find kafka request %s: %w", kafka.ID, err)
-	}
-
 	if err := k.kafkaService.Create(kafka); err != nil {
 		return k.handleKafkaRequestCreationError(kafka, err)
-	}
-	// consider the kafka in a provisioning state
-	if executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusProvisioning); executed && err != nil {
-		return fmt.Errorf("failed to update kafka %s to status provisioning: %w", kafka.ID, err)
 	}
 
 	return nil
@@ -329,17 +320,8 @@ func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error
 	}
 	if kafkaState.State == observatorium.ClusterStateReady {
 		glog.Infof("Kafka %s state %s", kafka.ID, kafkaState.State)
-
-		executed, err := k.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusReady)
-		if !executed {
-			if err != nil {
-				glog.Warningf("failed to update kafka %s to status ready: %s", kafka.ID, err.Reason)
-			} else {
-				glog.Warningf("failed to update kafka %s to status ready", kafka.ID)
-			}
-			return nil
-		}
-
+		kafka.Status = constants.KafkaRequestStatusReady.String()
+		err := k.kafkaService.Update(kafka)
 		if err != nil {
 			return fmt.Errorf("failed to update kafka %s to status ready: %w", kafka.ID, err)
 		}
@@ -363,7 +345,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
 		if durationSinceCreation > constants.KafkaMaxDurationWithProvisioningErrs {
 			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-			kafkaRequest.Status = string(constants.KafkaRequestStatusFailed)
+			kafkaRequest.Status = constants.KafkaRequestStatusFailed.String()
 			kafkaRequest.FailedReason = err.Reason
 			updateErr := k.kafkaService.Update(kafkaRequest)
 			if updateErr != nil {
@@ -376,7 +358,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		}
 	} else if err.IsClientErrorClass() {
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-		kafkaRequest.Status = string(constants.KafkaRequestStatusFailed)
+		kafkaRequest.Status = constants.KafkaRequestStatusFailed.String()
 		kafkaRequest.FailedReason = err.Reason
 		updateErr := k.kafkaService.Update(kafkaRequest)
 		if updateErr != nil {
