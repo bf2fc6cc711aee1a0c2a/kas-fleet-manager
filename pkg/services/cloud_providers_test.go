@@ -72,7 +72,7 @@ func Test_CloudProvider_List(t *testing.T) {
 func Test_CachedCloudProviderWithRegions(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
-		cache *cache.Cache
+		cache     *cache.Cache
 	}
 
 	tests := []struct {
@@ -111,7 +111,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := cloudProvidersService{
 				ocmClient: tt.fields.ocmClient,
-				cache: tt.fields.cache,
+				cache:     tt.fields.cache,
 			}
 			got, err := p.GetCachedCloudProvidersWithRegions()
 			if (err != nil) != tt.wantErr {
