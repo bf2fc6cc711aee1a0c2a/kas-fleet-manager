@@ -18,7 +18,7 @@ func addMissingIndexes() *gormigrate.Migration {
 				return err
 			}
 			// in case there are duplicated entries in the database that will prevent the unique index from being created
-			if err := tx.Table("clusters").Exec("DELETE from clusters WHERE deleted_at != NULL").Error; err != nil {
+			if err := tx.Table("clusters").Unscoped().Exec("DELETE from clusters WHERE deleted_at IS NOT NULL").Error; err != nil {
 				return err
 			}
 			// add the new index
