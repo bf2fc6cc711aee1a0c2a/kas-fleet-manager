@@ -301,7 +301,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 }
 
 func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("owner IN (?)", users).
+	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("owner IN (?) AND status NOT IN (?)", users, []string{constants.KafkaRequestStatusDeleted.String()}).
 		Update("status", constants.KafkaRequestStatusDeprovision)
 
 	err := dbConn.Error
@@ -322,7 +322,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 }
 
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("created_at  <=  ? AND id NOT IN (?)", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour), k.kafkaConfig.KafkaLifespan.LongLivedKafkas)
+	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("created_at  <=  ? AND id NOT IN (?) AND status NOT IN (?)", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour), k.kafkaConfig.KafkaLifespan.LongLivedKafkas, []string{constants.KafkaRequestStatusDeleted.String()})
 
 	db := dbConn.Update("status", constants.KafkaRequestStatusDeprovision)
 	err := db.Error
