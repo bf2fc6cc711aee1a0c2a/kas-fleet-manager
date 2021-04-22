@@ -48,9 +48,6 @@ const (
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
-	strimziAddonName                = "addon-managed-kafka"
-	strimziCatalogSourceName        = "addon-managed-kafka-catalog"
-	strimziCatalogSourceNamespace   = "openshift-marketplace"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
 )
@@ -309,7 +306,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) err
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
-	err := c.reconcileClusterSyncSet(cluster, true)
+	err := c.reconcileClusterSyncSet(cluster)
 	if err == nil {
 		err = c.reconcileClusterIdentityProvider(cluster)
 	}
@@ -363,7 +360,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	}
 
 	// SyncSet creation step
-	syncSetErr := c.reconcileClusterSyncSet(cluster, false) //OSD cluster itself
+	syncSetErr := c.reconcileClusterSyncSet(cluster) //OSD cluster itself
 	if syncSetErr != nil {
 		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	}
@@ -382,7 +379,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	return nil
 }
 
-func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster, isClusterReady bool) error {
+func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil || clusterDNS == "" {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
@@ -407,7 +404,7 @@ func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster, isClusterR
 		}
 	} else {
 		glog.V(10).Infof("SyncSet for cluster %s already created", cluster.ClusterID)
-		_, syncsetErr := c.updateSyncSet(cluster.ClusterID, clusterDNS, existingSyncset, isClusterReady)
+		_, syncsetErr := c.updateSyncSet(cluster.ClusterID, clusterDNS, existingSyncset)
 		if syncsetErr != nil {
 			return errors.WithMessagef(syncsetErr, "failed to update syncset on cluster %s: %s", cluster.ClusterID, syncsetErr.Error())
 		}
@@ -627,7 +624,7 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 	return nil
 }
 
-func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool, isClusterReady bool) (*clustersmgmtv1.Syncset, error) {
+func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clustersmgmtv1.Syncset, error) {
 	r := []interface{}{
 		c.buildStorageClass(),
 		c.buildIngressController(ingressDNS),
@@ -647,14 +644,9 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool, isClusterR
 	if s := c.buildImagePullSecret(kasFleetshardAddonNamespace); s != nil {
 		r = append(r, s)
 	}
-	if isClusterReady {
-		r = append(r, c.buildManagedKafkaSubscriptionResource())
-	}
-
 	b := clustersmgmtv1.NewSyncset().
 		Resources(r...)
 	if withId {
-
 		b = b.ID(syncsetName)
 	}
 	return b.Build()
@@ -663,7 +655,7 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool, isClusterR
 // createSyncSet creates the syncset during cluster terraforming
 func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
 	// terraforming phase
-	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, true, false)
+	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, true)
 
 	if sysnsetBuilderErr != nil {
 		return nil, fmt.Errorf("failed to create cluster terraforming sysncset: %s", sysnsetBuilderErr.Error())
@@ -672,9 +664,8 @@ func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*cl
 	return c.ocmClient.CreateSyncSet(clusterID, syncset)
 }
 
-func (c *ClusterManager) updateSyncSet(clusterID string, ingressDNS string, existingSyncset *clustersmgmtv1.Syncset, isClusterReady bool) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, false, isClusterReady)
-
+func (c *ClusterManager) updateSyncSet(clusterID string, ingressDNS string, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, false)
 	if sysnsetBuilderErr != nil {
 		return nil, fmt.Errorf("failed to build cluster sysncset: %s", sysnsetBuilderErr.Error())
 	}
@@ -795,25 +786,6 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			StartingCSV:            "observability-operator.v3.0.0",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
-		},
-	}
-}
-func (c *ClusterManager) buildManagedKafkaSubscriptionResource() *v1alpha1.Subscription {
-	return &v1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-			Kind:       "Subscription",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      strimziAddonName,
-			Namespace: strimziAddonNamespace,
-		},
-		Spec: &v1alpha1.SubscriptionSpec{
-			Package:                "managed-kafka",
-			CatalogSource:          strimziCatalogSourceName,
-			Channel:                "alpha",
-			CatalogSourceNamespace: strimziCatalogSourceNamespace,
-			InstallPlanApproval:    v1alpha1.ApprovalManual,
 		},
 	}
 }
