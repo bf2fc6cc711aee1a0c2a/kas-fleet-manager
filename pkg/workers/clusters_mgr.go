@@ -568,10 +568,39 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	if len(excessClusterIds) == 0 {
 		return nil
 	}
-	if err := c.clusterService.UpdateMultiClusterStatus(excessClusterIds, api.ClusterDeprovisioning); err != nil {
-		glog.Errorf("Failed to deprovisioning a cluster: %s, %s ", excessClusterIds, err.Error())
+
+	kafkaInstanceCount, err := c.clusterService.FindKafkaInstanceCount(excessClusterIds)
+	if err != nil {
+		glog.Errorf("Failed to find kafka count a cluster: %s, %s ", excessClusterIds, err.Error())
+		return err
+	}
+
+	var idsOfClustersToDeprovision []string
+
+	for _, excessClusterId := range excessClusterIds {
+		var found bool
+		for _, excessCluster := range kafkaInstanceCount {
+			if excessCluster.Clusterid == excessClusterId && excessCluster.Count > 0 {
+				found = true
+				glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", excessCluster.Clusterid, excessCluster.Count)
+				break
+			}
+		}
+
+		if !found {
+			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, excessClusterId)
+		}
+	}
+
+	if len(idsOfClustersToDeprovision) == 0 {
+		return nil
+	}
+
+	if err := c.clusterService.UpdateMultiClusterStatus(idsOfClustersToDeprovision, api.ClusterDeprovisioning); err != nil {
+		glog.Errorf("Failed to deprovisioning a cluster: %s, %s ", idsOfClustersToDeprovision, err.Error())
+		return err
 	} else {
-		glog.Infof("Deprovisioning clusters: not found in config file: %s ", excessClusterIds)
+		glog.Infof("Deprovisioning clusters: not found in config file: %s ", idsOfClustersToDeprovision)
 	}
 
 	return nil
