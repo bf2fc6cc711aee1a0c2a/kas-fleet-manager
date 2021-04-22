@@ -1,8 +1,9 @@
 package metrics
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
@@ -250,6 +251,7 @@ var requestKafkaCreationDurationMetric = prometheus.NewHistogramVec(
 			540.0,
 			570.0,
 			600.0,
+			900.0,
 			1200.0,
 			1800.0,
 			2400.0,
