@@ -946,6 +946,10 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 }
 
 func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
+	if cluster.IdentityProviderID != "" {
+		return nil
+	}
+	// identity provider not yet created, let's create a new one
 	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil {
@@ -958,28 +962,17 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}
 
-	if cluster.IdentityProviderID == "" { // identity provider not yet created, let's create a new one
-		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, true)
-		if buildErr != nil {
-			return buildErr
-		}
-		createdIdentyProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
-		if createIdentityProviderErr != nil {
-			return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
-		}
-		addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentyProvider.ID())
-		if addIdpErr != nil {
-			return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
-		}
-	} else { // identity provider created, let's update it
-		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, false)
-		if buildErr != nil {
-			return buildErr
-		}
-		_, updateIdentityProviderErr := c.ocmClient.UpdateIdentityProvider(cluster.ClusterID, cluster.IdentityProviderID, identityProvider)
-		if updateIdentityProviderErr != nil {
-			return errors.WithMessagef(updateIdentityProviderErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, updateIdentityProviderErr.Error())
-		}
+	identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, true)
+	if buildErr != nil {
+		return buildErr
+	}
+	createdIdentityProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
+	if createIdentityProviderErr != nil {
+		return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
+	}
+	addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentityProvider.ID())
+	if addIdpErr != nil {
+		return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
 	}
 	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
 	return nil
