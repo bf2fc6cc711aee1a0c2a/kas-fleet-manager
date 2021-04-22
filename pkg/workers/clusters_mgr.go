@@ -40,7 +40,7 @@ const (
 	observabilityNamespace          = "managed-application-services-observability"
 	openshiftIngressNamespace       = "openshift-ingress-operator"
 	observabilityDexCredentials     = "observatorium-dex-credentials"
-	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v3.0.0"
+	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v3.0.1"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
@@ -48,9 +48,6 @@ const (
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
-	strimziAddonName                = "addon-managed-kafka"
-	strimziCatalogSourceName        = "addon-managed-kafka-catalog"
-	strimziCatalogSourceNamespace   = "openshift-marketplace"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
 )
@@ -126,7 +123,7 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 }
 
 func (c *ClusterManager) reconcile() []error {
-	glog.V(5).Infoln("reconciling clusters")
+	glog.Infoln("reconciling clusters")
 	var errors []error
 
 	if err := c.reconcileClusterWithManualConfig(); err != nil {
@@ -135,6 +132,7 @@ func (c *ClusterManager) reconcile() []error {
 	}
 
 	// reconcile the status of existing clusters in a non-ready state
+	glog.Infoln("reconcile cloud providers and regions")
 	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
 	if err != nil {
 		glog.Error("Error retrieving cloud providers and regions", err)
@@ -161,9 +159,12 @@ func (c *ClusterManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list of deprovisioning clusters: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("deprovisioning clusters count = %d", len(deprovisioningClusters))
 	}
 
 	for _, cluster := range deprovisioningClusters {
+		glog.V(10).Infof("deprovision cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
 		if err := c.reconcileDeprovisioningCluster(cluster); err != nil {
 			glog.Errorf("failed to reconcile deprovisioning cluster %s: %s", cluster.ID, err.Error())
@@ -175,9 +176,12 @@ func (c *ClusterManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list accepted clusters: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("accepted clusters count = %d", len(acceptedClusters))
 	}
 
 	for _, cluster := range acceptedClusters {
+		glog.V(10).Infof("accepted cluster ClusterID = %s", cluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterAccepted)
 		if err := c.reconcileAcceptedCluster(&cluster); err != nil {
 			glog.Errorf("failed to reconcile accepted cluster %s: %s", cluster.ID, err.Error())
@@ -194,18 +198,20 @@ func (c *ClusterManager) reconcile() []error {
 	if listErr != nil {
 		glog.Errorf("failed to list pending clusters: %s", listErr.Error())
 		errors = append(errors, listErr)
+	} else {
+		glog.Infof("provisioning clusters count = %d", len(provisioningClusters))
 	}
 
 	// process each local pending cluster and compare to the underlying ocm cluster
 	for _, provisioningCluster := range provisioningClusters {
+		glog.V(10).Infof("provisioning cluster ClusterID = %s", provisioningCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisioningCluster, api.ClusterProvisioning)
-		reconciledCluster, err := c.reconcileClusterStatus(&provisioningCluster)
+		_, err := c.reconcileClusterStatus(&provisioningCluster)
 		if err != nil {
 			glog.Errorf("failed to reconcile cluster %s status: %s", provisioningCluster.ClusterID, err.Error())
 			errors = append(errors, err)
 			continue
 		}
-		glog.V(5).Infof("reconciled provisioning cluster %s state", reconciledCluster.ClusterID)
 	}
 
 	/*
@@ -215,10 +221,13 @@ func (c *ClusterManager) reconcile() []error {
 	if listErr != nil {
 		glog.Errorf("failed to list provisioned clusters: %s", listErr.Error())
 		errors = append(errors, listErr)
+	} else {
+		glog.Infof("provisioned clusters count = %d", len(provisionedClusters))
 	}
 
 	// process each local provisioned cluster and apply necessary terraforming
 	for _, provisionedCluster := range provisionedClusters {
+		glog.V(10).Infof("provisioned cluster ClusterID = %s", provisionedCluster.ClusterID)
 		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterProvisioned)
 		err := c.reconcileProvisionedCluster(provisionedCluster)
 		if err != nil {
@@ -226,7 +235,6 @@ func (c *ClusterManager) reconcile() []error {
 			errors = append(errors, err)
 			continue
 		}
-		glog.V(5).Infof("reconciled provisioned cluster %s terraforming", provisionedCluster.ClusterID)
 	}
 
 	// Keep SyncSet up to date for clusters that are ready
@@ -234,9 +242,12 @@ func (c *ClusterManager) reconcile() []error {
 	if listErr != nil {
 		glog.Errorf("failed to list ready clusters: %s", listErr.Error())
 		errors = append(errors, listErr)
+	} else {
+		glog.Infof("ready clusters count = %d", len(readyClusters))
 	}
 
 	for _, readyCluster := range readyClusters {
+		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
 		if c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
 			emptyClusterReconciled, err = c.reconcileEmptyCluster(readyCluster)
@@ -250,7 +261,6 @@ func (c *ClusterManager) reconcile() []error {
 			errors = append(errors, err)
 			continue
 		}
-		glog.V(5).Infof("reconciled ready cluster %s", readyCluster.ClusterID)
 	}
 
 	statusErr := c.setClusterStatusCountMetrics()
@@ -309,7 +319,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) err
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
-	err := c.reconcileClusterSyncSet(cluster, true)
+	err := c.reconcileClusterSyncSet(cluster)
 	if err == nil {
 		err = c.reconcileClusterIdentityProvider(cluster)
 	}
@@ -331,11 +341,13 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 
 // reconcileEmptyCluster checks wether a cluster is empty and mark it for deletion
 func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error) {
+	glog.V(10).Infof("check if cluster is empty, ClusterID = %s", cluster.ClusterID)
 	clusterFromDb, err := c.clusterService.FindNonEmptyClusterById(cluster.ClusterID)
 	if err != nil {
 		return false, err
 	}
 	if clusterFromDb != nil {
+		glog.V(10).Infof("cluster is not empty, ClusterID = %s", cluster.ClusterID)
 		return false, nil
 	}
 
@@ -350,6 +362,7 @@ func (c *ClusterManager) reconcileEmptyCluster(cluster api.Cluster) (bool, error
 
 	siblingClusterCount := clustersByRegionAndCloudProvider[0]
 	if siblingClusterCount.Count <= 1 { // sibling cluster not found
+		glog.V(10).Infof("no valid sibling found for cluster ClusterID = %s", cluster.ClusterID)
 		return false, nil
 	}
 
@@ -363,7 +376,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	}
 
 	// SyncSet creation step
-	syncSetErr := c.reconcileClusterSyncSet(cluster, false) //OSD cluster itself
+	syncSetErr := c.reconcileClusterSyncSet(cluster) //OSD cluster itself
 	if syncSetErr != nil {
 		return errors.WithMessagef(syncSetErr, "failed to reconcile cluster %s SyncSet: %s", cluster.ClusterID, syncSetErr.Error())
 	}
@@ -382,7 +395,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	return nil
 }
 
-func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster, isClusterReady bool) error {
+func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
 	if dnsErr != nil || clusterDNS == "" {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
@@ -407,7 +420,7 @@ func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster, isClusterR
 		}
 	} else {
 		glog.V(10).Infof("SyncSet for cluster %s already created", cluster.ClusterID)
-		_, syncsetErr := c.updateSyncSet(cluster.ClusterID, clusterDNS, existingSyncset, isClusterReady)
+		_, syncsetErr := c.updateSyncSet(cluster.ClusterID, clusterDNS, existingSyncset)
 		if syncsetErr != nil {
 			return errors.WithMessagef(syncsetErr, "failed to update syncset on cluster %s: %s", cluster.ClusterID, syncsetErr.Error())
 		}
@@ -535,9 +548,11 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 // A cluster will be deprovisioned if it is in database but not in config file
 func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
+		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
 		return nil
 	}
 
+	glog.Infoln("reconciling manual cluster configurations")
 	clusters, err := c.clusterService.ListAllClusterIds()
 	if err != nil {
 		return fmt.Errorf("failed to retrieve cluster ids from clusters: %s", err.Error())
@@ -568,10 +583,39 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	if len(excessClusterIds) == 0 {
 		return nil
 	}
-	if err := c.clusterService.UpdateMultiClusterStatus(excessClusterIds, api.ClusterDeprovisioning); err != nil {
-		glog.Errorf("Failed to deprovisioning a cluster: %s, %s ", excessClusterIds, err.Error())
+
+	kafkaInstanceCount, err := c.clusterService.FindKafkaInstanceCount(excessClusterIds)
+	if err != nil {
+		glog.Errorf("Failed to find kafka count a cluster: %s, %s ", excessClusterIds, err.Error())
+		return err
+	}
+
+	var idsOfClustersToDeprovision []string
+
+	for _, excessClusterId := range excessClusterIds {
+		var found bool
+		for _, excessCluster := range kafkaInstanceCount {
+			if excessCluster.Clusterid == excessClusterId && excessCluster.Count > 0 {
+				found = true
+				glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", excessCluster.Clusterid, excessCluster.Count)
+				break
+			}
+		}
+
+		if !found {
+			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, excessClusterId)
+		}
+	}
+
+	if len(idsOfClustersToDeprovision) == 0 {
+		return nil
+	}
+
+	if err := c.clusterService.UpdateMultiClusterStatus(idsOfClustersToDeprovision, api.ClusterDeprovisioning); err != nil {
+		glog.Errorf("Failed to deprovisioning a cluster: %s, %s ", idsOfClustersToDeprovision, err.Error())
+		return err
 	} else {
-		glog.Infof("Deprovisioning clusters: not found in config file: %s ", excessClusterIds)
+		glog.Infof("Deprovisioning clusters: not found in config file: %s ", idsOfClustersToDeprovision)
 	}
 
 	return nil
@@ -627,7 +671,7 @@ func (c *ClusterManager) reconcileClustersForRegions() error {
 	return nil
 }
 
-func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool, isClusterReady bool) (*clustersmgmtv1.Syncset, error) {
+func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clustersmgmtv1.Syncset, error) {
 	r := []interface{}{
 		c.buildStorageClass(),
 		c.buildIngressController(ingressDNS),
@@ -647,14 +691,9 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool, isClusterR
 	if s := c.buildImagePullSecret(kasFleetshardAddonNamespace); s != nil {
 		r = append(r, s)
 	}
-	if isClusterReady {
-		r = append(r, c.buildManagedKafkaSubscriptionResource())
-	}
-
 	b := clustersmgmtv1.NewSyncset().
 		Resources(r...)
 	if withId {
-
 		b = b.ID(syncsetName)
 	}
 	return b.Build()
@@ -663,7 +702,7 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool, isClusterR
 // createSyncSet creates the syncset during cluster terraforming
 func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
 	// terraforming phase
-	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, true, false)
+	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, true)
 
 	if sysnsetBuilderErr != nil {
 		return nil, fmt.Errorf("failed to create cluster terraforming sysncset: %s", sysnsetBuilderErr.Error())
@@ -672,14 +711,13 @@ func (c *ClusterManager) createSyncSet(clusterID string, ingressDNS string) (*cl
 	return c.ocmClient.CreateSyncSet(clusterID, syncset)
 }
 
-func (c *ClusterManager) updateSyncSet(clusterID string, ingressDNS string, existingSyncset *clustersmgmtv1.Syncset, isClusterReady bool) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, false, isClusterReady)
-
+func (c *ClusterManager) updateSyncSet(clusterID string, ingressDNS string, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+	syncset, sysnsetBuilderErr := c.buildSyncSet(ingressDNS, false)
 	if sysnsetBuilderErr != nil {
 		return nil, fmt.Errorf("failed to build cluster sysncset: %s", sysnsetBuilderErr.Error())
 	}
 	if syncsetResourcesChanged(existingSyncset, syncset) {
-		glog.V(10).Infof("SyncSet for cluster %s is changed, will update", clusterID)
+		glog.V(5).Infof("SyncSet for cluster %s is changed, will update", clusterID)
 		return c.ocmClient.UpdateSyncSet(clusterID, syncsetName, syncset)
 	}
 	glog.V(10).Infof("SyncSet for cluster %s is not changed, no update needed", clusterID)
@@ -792,28 +830,9 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v3.0.0",
+			StartingCSV:            "observability-operator.v3.0.1",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
-		},
-	}
-}
-func (c *ClusterManager) buildManagedKafkaSubscriptionResource() *v1alpha1.Subscription {
-	return &v1alpha1.Subscription{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
-			Kind:       "Subscription",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      strimziAddonName,
-			Namespace: strimziAddonNamespace,
-		},
-		Spec: &v1alpha1.SubscriptionSpec{
-			Package:                "managed-kafka",
-			CatalogSource:          strimziCatalogSourceName,
-			Channel:                "alpha",
-			CatalogSourceNamespace: strimziCatalogSourceNamespace,
-			InstallPlanApproval:    v1alpha1.ApprovalManual,
 		},
 	}
 }
@@ -1016,8 +1035,16 @@ func (c *ClusterManager) setClusterStatusCountMetrics() []error {
 		glog.Errorf("failed to count clusters by status: %s", err.Error())
 		errors = append(errors, err)
 	} else {
+		countersMap := map[api.ClusterStatus]int{}
 		for _, c := range counters {
-			metrics.UpdateClusterStatusCountMetric(c.Status, c.Count)
+			countersMap[c.Status] = c.Count
+		}
+		for _, s := range status {
+			if val, ok := countersMap[s]; ok {
+				metrics.UpdateClusterStatusCountMetric(s, val)
+			} else {
+				metrics.UpdateClusterStatusCountMetric(s, 0)
+			}
 		}
 	}
 	return errors

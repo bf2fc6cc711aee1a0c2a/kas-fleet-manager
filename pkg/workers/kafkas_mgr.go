@@ -94,11 +94,12 @@ func (c *KafkaManager) SetIsRunning(val bool) {
 }
 
 func (k *KafkaManager) reconcile() []error {
-	glog.V(5).Infoln("reconciling kafkas")
+	glog.Infoln("reconciling kafkas")
 	var errors []error
 
 	accessControlListConfig := k.configService.GetConfig().AccessControlList
 	if accessControlListConfig.EnableDenyList {
+		glog.Infoln("reconciling denied kafka owners")
 		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
 		if kafkaDeprovisioningForDeniedOwnersErr != nil {
 			glog.Errorf("Failed to deprovision kafka for denied owners %s: %s", accessControlListConfig.DenyList, kafkaDeprovisioningForDeniedOwnersErr.Error())
@@ -109,6 +110,7 @@ func (k *KafkaManager) reconcile() []error {
 	// cleaning up expired kafkas
 	kafkaConfig := k.configService.GetConfig().Kafka
 	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
+		glog.Infoln("deprovisioning expired kafkas")
 		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifespan.KafkaLifespanInHours)
 		if expiredKafkasError != nil {
 			glog.Errorf("failed to deprovision expired Kafka instances due to error: %s", expiredKafkasError.Error())
@@ -127,9 +129,12 @@ func (k *KafkaManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("deprovision kafkas count = %d", len(deprovisioningRequests))
 	}
 
 	for _, kafka := range deprovisioningRequests {
+		glog.V(10).Infof("deprovisioning kafka id = %s", kafka.ID)
 		if err := k.reconcileDeprovisioningRequest(kafka); err != nil {
 			glog.Errorf("failed to reconcile deprovisioning request %s: %s", kafka.ID, err.Error())
 			errors = append(errors, err)
@@ -142,8 +147,12 @@ func (k *KafkaManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("accepted kafkas count = %d", len(acceptedKafkas))
 	}
+
 	for _, kafka := range acceptedKafkas {
+		glog.V(10).Infof("accepted kafka id = %s", kafka.ID)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
@@ -157,8 +166,12 @@ func (k *KafkaManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("preparing kafkas count = %d", len(preparingKafkas))
 	}
+
 	for _, kafka := range preparingKafkas {
+		glog.V(10).Infof("preparing kafka id = %s", kafka.ID)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcilePreparedKafka(kafka); err != nil {
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
@@ -173,8 +186,11 @@ func (k *KafkaManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("provisioning kafkas count = %d", len(provisioningKafkas))
 	}
 	for _, kafka := range provisioningKafkas {
+		glog.V(10).Infof("provisioning kafka id = %s", kafka.ID)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		// only need to check if Kafka clusters are ready if kas-fleetshard sync is not enabled
 		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
@@ -191,10 +207,13 @@ func (k *KafkaManager) reconcile() []error {
 	if serviceErr != nil {
 		glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("ready kafkas count = %d", len(provisioningKafkas))
 	}
 	if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
 		for _, kafka := range readyKafkas {
 			if kafka.Status == string(constants.KafkaRequestStatusReady) {
+				glog.V(10).Infof("ready kafka id = %s", kafka.ID)
 				if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
 					glog.Errorf("failed to get provisioning kafkas sso client%s: %s", kafka.SsoClientID, err.Error())
 					errors = append(errors, err)
@@ -389,6 +408,7 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 		constants.KafkaRequestStatusProvisioning,
 		constants.KafkaRequestStatusReady,
 		constants.KafkaRequestStatusDeprovision,
+		constants.KafkaRequestStatusDeleted,
 		constants.KafkaRequestStatusFailed,
 	}
 	var errors []error
@@ -396,8 +416,19 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 		glog.Errorf("failed to count Kafkas by status: %s", err.Error())
 		errors = append(errors, err)
 	} else {
+		// if none of the Kafkas are in a particular status, that status won't be returned by CountByStatus, and we need to set that status to 0
+		// so need to create a map for the status returned by CountByStatus so that we can find out what status isn't returned
+		countersMap := map[constants.KafkaStatus]int{}
 		for _, c := range counters {
-			metrics.UpdateKafkaRequestsStatusCountMetric(c.Status, c.Count)
+			countersMap[c.Status] = c.Count
+		}
+		for _, s := range status {
+			if val, ok := countersMap[s]; ok {
+				metrics.UpdateKafkaRequestsStatusCountMetric(s, val)
+			} else {
+				// the status doesn't exist in the db, so its value should be 0
+				metrics.UpdateKafkaRequestsStatusCountMetric(s, 0)
+			}
 		}
 	}
 
