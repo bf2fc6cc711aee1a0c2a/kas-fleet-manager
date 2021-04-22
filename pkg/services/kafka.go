@@ -549,6 +549,21 @@ func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaSta
 	if err := dbConn.Model(&api.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
 		return nil, err
 	}
+
+	// if there is no count returned for a status from the above query because there is no kafkas in such a status,
+	// we should return the count for these as well to avoid any confusion
+	if len(status) > 0 {
+		countersMap := map[constants.KafkaStatus]int{}
+		for _, r := range results {
+			countersMap[r.Status] = r.Count
+		}
+		for _, s := range status {
+			if _, ok := countersMap[s]; !ok {
+				results = append(results, KafkaStatusCount{Status: s, Count: 0})
+			}
+		}
+	}
+
 	return results, nil
 }
 

@@ -591,19 +591,12 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	}
 
 	var idsOfClustersToDeprovision []string
-
-	for _, excessClusterId := range excessClusterIds {
-		var found bool
-		for _, excessCluster := range kafkaInstanceCount {
-			if excessCluster.Clusterid == excessClusterId && excessCluster.Count > 0 {
-				found = true
-				glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", excessCluster.Clusterid, excessCluster.Count)
-				break
-			}
-		}
-
-		if !found {
-			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, excessClusterId)
+	for _, c := range kafkaInstanceCount {
+		if c.Count > 0 {
+			glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", c.Clusterid, c.Count)
+		} else {
+			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
+			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
 		}
 	}
 
@@ -1035,16 +1028,8 @@ func (c *ClusterManager) setClusterStatusCountMetrics() []error {
 		glog.Errorf("failed to count clusters by status: %s", err.Error())
 		errors = append(errors, err)
 	} else {
-		countersMap := map[api.ClusterStatus]int{}
 		for _, c := range counters {
-			countersMap[c.Status] = c.Count
-		}
-		for _, s := range status {
-			if val, ok := countersMap[s]; ok {
-				metrics.UpdateClusterStatusCountMetric(s, val)
-			} else {
-				metrics.UpdateClusterStatusCountMetric(s, 0)
-			}
+			metrics.UpdateClusterStatusCountMetric(c.Status, c.Count)
 		}
 	}
 	return errors

@@ -129,9 +129,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []*ResKafkaInstanceCount, error *errors.ServiceError) {
-						var res2 []*ResKafkaInstanceCount
-						res2 = append(res2, &ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
+					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+						var res2 []ResKafkaInstanceCount
+						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
 						return res2, nil
 					},
 				},
@@ -157,9 +157,9 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []*ResKafkaInstanceCount, error *errors.ServiceError) {
-						var res2 []*ResKafkaInstanceCount
-						res2 = append(res2, &ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
+					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+						var res2 []ResKafkaInstanceCount
+						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
 						return res2, nil
 					},
 				},
@@ -187,10 +187,10 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						res = append(res, &api.Cluster{ClusterID: "test02"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []*ResKafkaInstanceCount, error *errors.ServiceError) {
-						var res2 []*ResKafkaInstanceCount
-						res2 = append(res2, &ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
-						res2 = append(res2, &ResKafkaInstanceCount{Clusterid: "test02", Count: 1})
+					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
+						var res2 []ResKafkaInstanceCount
+						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test01", Count: 1})
+						res2 = append(res2, ResKafkaInstanceCount{Clusterid: "test02", Count: 1})
 						return res2, nil
 					},
 				},
@@ -216,7 +216,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 						res = append(res, &api.Cluster{ClusterID: "test01"})
 						return res, nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []*ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
 						return nil, nil
 					},
 				},
@@ -239,7 +239,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 					FindAllClustersFunc: func(criteria FindClusterCriteria) (cluster []*api.Cluster, serviceError *errors.ServiceError) {
 						return nil, errors.NotFound("not found")
 					},
-					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []*ResKafkaInstanceCount, error *errors.ServiceError) {
+					FindKafkaInstanceCountFunc: func(clusterIds []string) (res []ResKafkaInstanceCount, error *errors.ServiceError) {
 						return nil, nil
 					},
 				},

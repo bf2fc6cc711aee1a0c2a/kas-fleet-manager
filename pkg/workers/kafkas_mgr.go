@@ -416,19 +416,8 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 		glog.Errorf("failed to count Kafkas by status: %s", err.Error())
 		errors = append(errors, err)
 	} else {
-		// if none of the Kafkas are in a particular status, that status won't be returned by CountByStatus, and we need to set that status to 0
-		// so need to create a map for the status returned by CountByStatus so that we can find out what status isn't returned
-		countersMap := map[constants.KafkaStatus]int{}
 		for _, c := range counters {
-			countersMap[c.Status] = c.Count
-		}
-		for _, s := range status {
-			if val, ok := countersMap[s]; ok {
-				metrics.UpdateKafkaRequestsStatusCountMetric(s, val)
-			} else {
-				// the status doesn't exist in the db, so its value should be 0
-				metrics.UpdateKafkaRequestsStatusCountMetric(s, 0)
-			}
+			metrics.UpdateKafkaRequestsStatusCountMetric(c.Status, c.Count)
 		}
 	}
 

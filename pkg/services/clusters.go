@@ -47,8 +47,7 @@ type ClusterService interface {
 	// FindAllClusters return all the valid clusters in array
 	FindAllClusters(criteria FindClusterCriteria) ([]*api.Cluster, *apiErrors.ServiceError)
 	// FindKafkaInstanceCount returns the kafka instance counts associated with the list of clusters. If the list is empty, it will list all clusterIds that have Kafka instances assigned.
-	// Cluster is not included in the result if it is not been used; otherwise, return the cluster id and the count
-	FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError)
+	FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError)
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
@@ -366,10 +365,10 @@ type ResKafkaInstanceCount struct {
 	Count     int
 }
 
-func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafkaInstanceCount, *apiErrors.ServiceError) {
+func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 
-	var res []*ResKafkaInstanceCount
+	var res []ResKafkaInstanceCount
 	q := dbConn.Model(&api.KafkaRequest{}).Select("cluster_id as Clusterid, count(1) as Count")
 	if len(clusterIDs) > 0 {
 		q = q.Where("cluster_id in (?)", clusterIDs)
@@ -378,6 +377,19 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]*ResKafka
 
 	if err := q.Error; err != nil {
 		return nil, apiErrors.GeneralError("failed to query by cluster info: %s", err.Error())
+	}
+	// the query above won't return a count for a clusterId if that cluster doesn't have any Kafkas,
+	// to keep things consistent and less confusing, we will identity these ids and set their count to 0
+	if len(clusterIDs) > 0 {
+		countersMap := map[string]int{}
+		for _, c := range res {
+			countersMap[c.Clusterid] = c.Count
+		}
+		for _, clusterId := range clusterIDs {
+			if _, ok := countersMap[clusterId]; !ok {
+				res = append(res, ResKafkaInstanceCount{Clusterid: clusterId, Count: 0})
+			}
+		}
 	}
 
 	return res, nil
@@ -449,5 +461,20 @@ func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStat
 	if err := dbConn.Model(&api.Cluster{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
 		return nil, err
 	}
+
+	// if there is no count returned for a status from the above query because there is no clusters in such a status,
+	// we should return the count for these as well to avoid any confusion
+	if len(status) > 0 {
+		countersMap := map[api.ClusterStatus]int{}
+		for _, c := range results {
+			countersMap[c.Status] = c.Count
+		}
+		for _, s := range status {
+			if _, ok := countersMap[s]; !ok {
+				results = append(results, ClusterStatusCount{Status: s, Count: 0})
+			}
+		}
+	}
+
 	return results, nil
 }
