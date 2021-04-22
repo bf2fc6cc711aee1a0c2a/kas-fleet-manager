@@ -67,6 +67,10 @@ If any kafka clusters were created during the test run, `test/performance/token_
 * `FILE_PATH` - absolute or relative path to the file with the resources IDs, e.g. `kafkas.txt`
 * `RESOURCE` - `kafkas` or `serviceaccounts` (must be the resource name used in the api url)
 
+It was proven that calling kafkas DELETE endpoint with high frequency caused App SRE alerts to fire due to too many simultaneous volume delete attempts. Hence there is a default delay of 2 seconds between each http call. To override it, provide timeout value with the following parameter:
+
+* `DELETE_DELAY`, e.g. DELETE_DELAY="2.0"
+
 ### Running the cleanup example
 ```
 API_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=kafkas.txt RESOURCE=kafkas python3 cleanup.py
