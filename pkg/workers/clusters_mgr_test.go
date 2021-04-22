@@ -1942,6 +1942,14 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]*services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []*services.ResKafkaInstanceCount{
+							{
+								Clusterid: "test02",
+								Count:     1,
+							},
+						}, nil
+					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: testOsdConfig,
@@ -1961,6 +1969,9 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					},
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
+					},
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]*services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []*services.ResKafkaInstanceCount{}, nil
 					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
