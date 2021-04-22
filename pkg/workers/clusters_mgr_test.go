@@ -1104,7 +1104,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				},
 				IdentityProviderID: "some-cluster-identityy-provider-id",
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 
