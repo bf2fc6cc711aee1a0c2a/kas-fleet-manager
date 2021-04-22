@@ -1852,7 +1852,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				CatalogSource:          observabilityCatalogSourceName,
 				Channel:                "alpha",
 				CatalogSourceNamespace: observabilityNamespace,
-				StartingCSV:            "observability-operator.v3.0.0",
+				StartingCSV:            "observability-operator.v3.0.1",
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
 			},

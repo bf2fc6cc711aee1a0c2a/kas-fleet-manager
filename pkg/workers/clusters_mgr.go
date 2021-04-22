@@ -40,7 +40,7 @@ const (
 	observabilityNamespace          = "managed-application-services-observability"
 	openshiftIngressNamespace       = "openshift-ingress-operator"
 	observabilityDexCredentials     = "observatorium-dex-credentials"
-	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v3.0.0"
+	observabilityCatalogSourceImage = "quay.io/integreatly/observability-operator-index:v3.0.1"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
@@ -792,7 +792,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v3.0.0",
+			StartingCSV:            "observability-operator.v3.0.1",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
