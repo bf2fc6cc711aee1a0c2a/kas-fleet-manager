@@ -40,11 +40,32 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer teardown()
 
+	// load existing cluster and assign kafka to it so that it is not deleted
+
+	db := h.Env().DBFactory.New()
+	clusterID := "cluster-id-that-should-not-be-deleted"
+
+	kafka := api.KafkaRequest{
+		ClusterID:     clusterID,
+		MultiAZ:       true,
+		Region:        "us-east-1",
+		CloudProvider: "aws",
+		Name:          "dummy-kafka",
+		Status:        constants.KafkaRequestStatusReady.String(),
+	}
+
+	if err := db.Save(&kafka).Error; err != nil {
+		t.Error("failed to create a dummy kafka request")
+		return
+	}
+
 	//*********************************************************************
 	//pre-create an cluster
 	//*********************************************************************
 	h.Env().Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
+		// this is a dummy cluster which will be auto created and should not be deleted because it has kafka in it
+		config.ManualCluster{ClusterId: clusterID, KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
 	})
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
@@ -79,8 +100,8 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
 	})
-	err3 := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
 
+	err3 := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
 		found, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
 			Provider: "aws",
 			Region:   "us-east-1",
@@ -93,7 +114,30 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		if found == nil {
 			return false, nil
 		}
-		return len(found) == 3, nil
+		return len(found) == 4, nil // make sure that the original cluster is there because it has kafka
+	})
+	Expect(err3).NotTo(HaveOccurred())
+
+	// Now delete the kafka from the original cluster to check for placement stratedy and wait for cluster deletion
+	if err := db.Delete(&kafka).Error; err != nil {
+		t.Error("failed to delete a dummy kafka request")
+		return
+	}
+
+	err3 = wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
+		found, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
+			Provider: "aws",
+			Region:   "us-east-1",
+			MultiAZ:  true,
+		})
+
+		if svcErr != nil {
+			return true, fmt.Errorf("failed to find OSD cluster with wanted status %s", svcErr)
+		}
+		if found == nil {
+			return false, nil
+		}
+		return len(found) == 3, nil // we should only have clusters in the manual config
 	})
 	Expect(err3).NotTo(HaveOccurred())
 
@@ -103,7 +147,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// Need to mark the clusters to be ready so that placement can actually happen
 	updateErr := clusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterReady)
 	Expect(updateErr).NotTo(HaveOccurred())
-	kafka := []*api.KafkaRequest{
+	kafkas := []*api.KafkaRequest{
 		{MultiAZ: true,
 			Region:        "us-east-1",
 			CloudProvider: "aws",
@@ -123,7 +167,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	keySrv := services.NewKeycloakService(h.Env().Config.Keycloak, h.Env().Config.Keycloak.KafkaRealm)
 	kafkaSrv := services.NewKafkaService(h.Env().DBFactory, services.NewSyncsetService(ocmClient), clusterService, keySrv, h.Env().Config.Kafka, h.Env().Config.AWS, services.NewQuotaService(ocmClient))
 
-	errK := kafkaSrv.RegisterKafkaJob(kafka[0])
+	errK := kafkaSrv.RegisterKafkaJob(kafkas[0])
 	if errK != nil {
 		Expect(errK).NotTo(HaveOccurred())
 		return
@@ -134,7 +178,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	Expect(kafkaErr).NotTo(HaveOccurred())
 	Expect(kafkaFound.ClusterID).To(Equal("test03"))
 
-	errK2 := kafkaSrv.RegisterKafkaJob(kafka[1])
+	errK2 := kafkaSrv.RegisterKafkaJob(kafkas[1])
 	if errK2 != nil {
 		Expect(errK2).NotTo(HaveOccurred())
 		return
