@@ -57,10 +57,9 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 
 	var cluster api.Cluster
-
 	// checking for cluster_id to be assigned to new cluster
-	err := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-
+	err := utils.Poll(interval, clusterIDAssignTimeout, func(attempt int, maxAttempts int) (done bool, err error) {
+		t.Logf("%d/%d - Waiting for cluster id to be assigned to the new cluster", attempt, maxAttempts)
 		foundCluster, svcErr := clusterService.FindCluster(services.FindClusterCriteria{
 			Region:   mocks.MockCluster.Region().ID(),
 			Provider: mocks.MockCluster.CloudProvider().ID(),
@@ -71,12 +70,14 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		}
 		cluster = *foundCluster
 		return foundCluster.ClusterID != "", nil
+	}, nil, func(attempt int, maxAttempts int, err error) {
+		t.Logf("%d/%d - Finished waiting for cluster id to be assigned to the new cluster", attempt, maxAttempts)
 	})
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	checkReadyErr := wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+	checkReadyErr := utils.Poll(interval, timeout, func(attempt int, maxAttempts int) (done bool, err error) {
 		foundCluster, findClusterErr := clusterService.FindClusterByID(cluster.ClusterID)
 		if findClusterErr != nil {
 			return true, fmt.Errorf("failed to find cluster with id %s: %s", cluster.ClusterID, err)
@@ -85,7 +86,15 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 			return false, nil
 		}
 		cluster = *foundCluster
+		if attempt%10 == 0 {
+			t.Logf("%d/%d - Waiting for status of cluster (%s) to be ready: %s", attempt, maxAttempts, cluster.ClusterID, cluster.Status)
+		}
 		return cluster.Status == api.ClusterReady, nil
+	}, func(maxAttempts int) error {
+		t.Logf("%d/%d - Waiting for status of cluster (%s) to be ready: %s", 1, maxAttempts, cluster.ClusterID, cluster.Status)
+		return nil
+	}, func(attempt int, maxAttempts int, err error) {
+		t.Logf("%d/%d - Waiting for status of cluster (%s) to be ready ended: %s", attempt, maxAttempts, cluster.ClusterID, cluster.Status)
 	})
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
