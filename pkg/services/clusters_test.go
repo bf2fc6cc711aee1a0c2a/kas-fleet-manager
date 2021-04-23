@@ -638,7 +638,7 @@ func Test_UpdateStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "successful status update by ClusterId",
+			name: "successful status update by ClusterID",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -1152,27 +1152,42 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 	type args struct {
 		clusterID []string
 	}
-	var testRes []*ResKafkaInstanceCount
+	var testRes []ResKafkaInstanceCount
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    []*ResKafkaInstanceCount
+		want    []ResKafkaInstanceCount
 		wantErr bool
 		setupFn func()
 	}{
 		{
-			name: "Instance count equals to 0",
+			name: "Instance count equals to 2",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				[]string{"test01"},
+				[]string{"test01", "test02"},
 			},
-			want:    []*ResKafkaInstanceCount{}, //zero valued
+			want: []ResKafkaInstanceCount{
+				{
+					Clusterid: "test01",
+					Count:     2,
+				},
+				{
+					Clusterid: "test02",
+					Count:     0,
+				},
+			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset()
+				counters := []map[string]interface{}{
+					{
+						"clusterid": "test01",
+						"count":     2,
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
 			},
 		},
 		{
@@ -1186,7 +1201,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 			want:    testRes,
 			wantErr: true,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
 			},
 		},
 	}
@@ -1384,7 +1399,7 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			name:   "should return the counts of clusters in different status",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []api.ClusterStatus{api.ClusterAccepted, api.ClusterReady},
+				status: []api.ClusterStatus{api.ClusterAccepted, api.ClusterReady, api.ClusterProvisioning},
 			},
 			wantErr: false,
 			setupFunc: func() {
@@ -1406,6 +1421,9 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			}, {
 				Status: api.ClusterReady,
 				Count:  1,
+			}, {
+				Status: api.ClusterProvisioning,
+				Count:  0,
 			}},
 		},
 		{
