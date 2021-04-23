@@ -1587,7 +1587,7 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			name:   "should return the counts of Kafkas in different status",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady},
+				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady, constants.KafkaRequestStatusProvisioning},
 			},
 			wantErr: false,
 			setupFunc: func() {
@@ -1609,6 +1609,9 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			}, {
 				Status: constants.KafkaRequestStatusReady,
 				Count:  1,
+			}, {
+				Status: constants.KafkaRequestStatusProvisioning,
+				Count:  0,
 			}},
 		},
 		{

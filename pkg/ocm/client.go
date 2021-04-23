@@ -234,7 +234,7 @@ func (c client) UpdateAddonParameters(clusterId string, addonInstallationId stri
 
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	if clusterID == "" {
-		return "", errors.New(errors.ErrorGeneral, "ClusterID cannot be empty")
+		return "", errors.New(errors.ErrorGeneral, "Clusterid cannot be empty")
 	}
 	ingresses, err := c.GetClusterIngresses(clusterID)
 	if err != nil {
