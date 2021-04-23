@@ -39,6 +39,35 @@ func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.C
 	return err
 }
 
+func Poll(interval time.Duration, timeout time.Duration,
+	onRetry func(attempt int, maxRetries int) (done bool, err error),
+	onStart func(maxRetries int) error,
+	onFinish func(attempt int, maxRetries int, err error)) error {
+	if onRetry == nil {
+		return fmt.Errorf("no retry handler has been specified")
+	}
+
+	maxAttempts := int(timeout / interval)
+
+	if onStart != nil {
+		if err := onStart(maxAttempts); err != nil {
+			return err
+		}
+	}
+
+	attempt := 0
+	err := wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		attempt++
+		return onRetry(attempt, maxAttempts)
+	})
+
+	if onFinish != nil {
+		onFinish(attempt, maxAttempts, err)
+	}
+
+	return err
+}
+
 // GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster.
 // If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
