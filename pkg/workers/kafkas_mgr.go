@@ -97,6 +97,13 @@ func (k *KafkaManager) reconcile() []error {
 	glog.Infoln("reconciling kafkas")
 	var errors []error
 
+	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
+	// will likely gone after one loop. Record them at the beginning should give us more accurate metrics
+	statusErrors := k.setKafkaStatusCountMetric()
+	if len(statusErrors) > 0 {
+		errors = append(errors, statusErrors...)
+	}
+
 	accessControlListConfig := k.configService.GetConfig().AccessControlList
 	if accessControlListConfig.EnableDenyList {
 		glog.Infoln("reconciling denied kafka owners")
@@ -221,11 +228,6 @@ func (k *KafkaManager) reconcile() []error {
 				}
 			}
 		}
-	}
-
-	statusErrors := k.setKafkaStatusCountMetric()
-	if len(statusErrors) > 0 {
-		errors = append(errors, statusErrors...)
 	}
 
 	return errors
