@@ -81,7 +81,7 @@ func NewClusterConfig(clusters ClusterList) *ClusterConfig {
 func (conf *ClusterConfig) IsNumberOfKafkaWithinClusterLimit(clusterId string, count int) bool {
 	if _, exist := conf.clusterConfigMap[clusterId]; exist {
 		limit := conf.clusterConfigMap[clusterId].KafkaInstanceLimit
-		return limit == -1 || count <= conf.clusterConfigMap[clusterId].KafkaInstanceLimit
+		return limit == -1 || count <= limit
 	}
 	return true
 }
