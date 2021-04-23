@@ -126,6 +126,17 @@ func (c *ClusterManager) reconcile() []error {
 	glog.Infoln("reconciling clusters")
 	var errors []error
 
+	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
+	// will likely gone after one loop. Record them at the beginning should give us more accurate metrics
+	statusErr := c.setClusterStatusCountMetrics()
+	if len(statusErr) > 0 {
+		errors = append(errors, statusErr...)
+	}
+
+	if err := c.setKafkaPerClusterCountMetrics(); err != nil {
+		errors = append(errors, err)
+	}
+
 	if err := c.reconcileClusterWithManualConfig(); err != nil {
 		glog.Errorf("failed to reconcile clusters with config file: %s", err.Error())
 		errors = append(errors, err)
@@ -261,15 +272,6 @@ func (c *ClusterManager) reconcile() []error {
 			errors = append(errors, err)
 			continue
 		}
-	}
-
-	statusErr := c.setClusterStatusCountMetrics()
-	if len(statusErr) > 0 {
-		errors = append(errors, statusErr...)
-	}
-
-	if err := c.setKafkaPerClusterCountMetrics(); err != nil {
-		errors = append(errors, err)
 	}
 
 	return errors
