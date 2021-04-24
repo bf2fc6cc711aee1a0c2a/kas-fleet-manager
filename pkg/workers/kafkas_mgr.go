@@ -130,7 +130,7 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	} else {
-		glog.Infof("deprovision kafkas count = %d", len(deprovisioningRequests))
+		glog.Infof("%s kafkas count = %d", deprovisionStatus.String(), len(deprovisioningRequests))
 	}
 
 	for _, kafka := range deprovisioningRequests {
@@ -208,7 +208,7 @@ func (k *KafkaManager) reconcile() []error {
 		glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	} else {
-		glog.Infof("ready kafkas count = %d", len(provisioningKafkas))
+		glog.Infof("ready kafkas count = %d", len(readyKafkas))
 	}
 	if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
 		for _, kafka := range readyKafkas {

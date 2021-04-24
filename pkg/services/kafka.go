@@ -31,6 +31,8 @@ import (
 
 const productId = "RHOSAKTrial"
 
+var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleted.String(), constants.KafkaRequestStatusDeprovision.String()}
+
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
@@ -301,7 +303,10 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 }
 
 func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("owner IN (?)", users).
+	dbConn := k.connectionFactory.New().
+		Model(&api.KafkaRequest{}).
+		Where("owner IN (?)", users).
+		Where("status NOT IN (?)", kafkaDeletionStatuses).
 		Update("status", constants.KafkaRequestStatusDeprovision)
 
 	err := dbConn.Error
@@ -322,7 +327,14 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 }
 
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.KafkaRequest{}).Where("created_at  <=  ? AND id NOT IN (?)", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour), k.kafkaConfig.KafkaLifespan.LongLivedKafkas)
+	dbConn := k.connectionFactory.New().
+		Model(&api.KafkaRequest{}).
+		Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour)).
+		Where("status NOT IN (?)", kafkaDeletionStatuses)
+
+	if len(k.kafkaConfig.KafkaLifespan.LongLivedKafkas) > 0 {
+		dbConn = dbConn.Where("id NOT IN (?)", k.kafkaConfig.KafkaLifespan.LongLivedKafkas)
+	}
 
 	db := dbConn.Update("status", constants.KafkaRequestStatusDeprovision)
 	err := db.Error
