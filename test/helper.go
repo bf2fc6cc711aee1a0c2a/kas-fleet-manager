@@ -520,9 +520,9 @@ func (helper *Helper) SkipIfShort() {
 	}
 }
 
-func (helper *Helper) Count(table string) int {
+func (helper *Helper) Count(table string) int64 {
 	gorm := helper.DBFactory.New()
-	var count int
+	var count int64
 	err := gorm.Table(table).Count(&count).Error
 	if err != nil {
 		helper.T.Errorf("error getting count for table %s: %v", table, err)

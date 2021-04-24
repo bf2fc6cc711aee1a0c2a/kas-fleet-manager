@@ -6,8 +6,8 @@ package db
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addClusterIdentityProviderID() *gormigrate.Migration {
@@ -17,16 +17,10 @@ func addClusterIdentityProviderID() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202103081539",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&Cluster{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.AutoMigrate(&Cluster{})
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.Table("clusters").DropColumn("identity_provider_id").Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropColumn(&Cluster{}, "identity_provider_id")
 		},
 	}
 }

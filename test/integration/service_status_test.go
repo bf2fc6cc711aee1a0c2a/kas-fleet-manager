@@ -84,11 +84,9 @@ func TestServiceStatus(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
 	serviceStatus, serviceStatusResp, err = client.DefaultApi.ServiceStatus(ctx)
 	Expect(err).ToNot(HaveOccurred())

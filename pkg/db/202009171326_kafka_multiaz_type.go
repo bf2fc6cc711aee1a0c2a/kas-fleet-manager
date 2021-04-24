@@ -6,8 +6,8 @@ package db
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 // NOTE: This migration is postgres specific as GORM could not handle the migration of types to boolean.

@@ -105,7 +105,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 	// ensure cluster is provisioned and terraformed successfully
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ID, checkReadyErr)
-	Expect(cluster.DeletedAt).To(BeNil(), fmt.Sprintf("Expected deleted_at property to be empty, instead got %s", cluster.DeletedAt))
+	Expect(cluster.DeletedAt.Valid).To(Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
 	ocmClusterStatus, err := ocmClient.GetClusterStatus(cluster.ClusterID)
