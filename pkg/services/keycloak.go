@@ -348,10 +348,9 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 			return errors.FailedToDeleteServiceAccount("failed to delete service account: %v", err)
 		}
 		return nil
-	} else {
-		sentry.CaptureException(err)
-		return errors.Forbidden("can not delete sso client due to permission error")
 	}
+
+	return errors.Forbidden("can not delete sso client due to permission error")
 }
 
 func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
