@@ -399,7 +399,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 
 func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
-	if dnsErr != nil || clusterDNS == "" {
+	if dnsErr != nil {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
 	}
 
@@ -948,7 +948,7 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
 	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
-	if dnsErr != nil || clusterDNS == "" {
+	if dnsErr != nil {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, dnsErr.Error())
 	}
 
