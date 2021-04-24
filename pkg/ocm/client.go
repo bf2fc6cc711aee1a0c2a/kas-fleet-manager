@@ -2,6 +2,7 @@ package ocm
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -234,11 +235,11 @@ func (c client) UpdateAddonParameters(clusterId string, addonInstallationId stri
 
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	if clusterID == "" {
-		return "", errors.New(errors.ErrorGeneral, "Clusterid cannot be empty")
+		return "", errors.GeneralError("Clusterid cannot be empty")
 	}
 	ingresses, err := c.GetClusterIngresses(clusterID)
 	if err != nil {
-		return "", errors.New(errors.ErrorGeneral, err.Error())
+		return "", errors.GeneralError(err.Error())
 	}
 
 	var clusterDNS string
@@ -249,6 +250,11 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 		}
 		return true
 	})
+
+	if clusterDNS == "" {
+		return "", errors.GeneralError(fmt.Sprintf("Cluster %s DNS is empty", clusterID))
+	}
+
 	return clusterDNS, nil
 }
 
