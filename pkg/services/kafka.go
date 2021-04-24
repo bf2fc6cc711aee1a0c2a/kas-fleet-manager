@@ -145,17 +145,17 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 
 	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
-	if err != nil || clusterDNS == "" {
+	if err != nil {
 		sentry.CaptureException(err)
 		return errors.GeneralError("error retrieving cluster DNS: %v", err)
 	}
+
 	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
-
 		_, err = k.ChangeKafkaCNAMErecords(kafkaRequest, clusterDNS, "CREATE")
 		if err != nil {
 			return err
@@ -165,7 +165,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
 		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
-		if err != nil || kafkaRequest.SsoClientSecret == "" {
+		if err != nil {
 			sentry.CaptureException(err)
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
@@ -375,7 +375,7 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 
 		if k.kafkaConfig.EnableKafkaExternalCertificate {
 			clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
-			if err != nil || clusterDNS == "" {
+			if err != nil {
 				sentry.CaptureException(err)
 				return errors.GeneralError("error retrieving cluster DNS: %v", err)
 			}
