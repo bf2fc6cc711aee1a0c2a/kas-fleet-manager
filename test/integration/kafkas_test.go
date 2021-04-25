@@ -1343,13 +1343,10 @@ func TestKafka_RemovingExpiredKafkas(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
-
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
