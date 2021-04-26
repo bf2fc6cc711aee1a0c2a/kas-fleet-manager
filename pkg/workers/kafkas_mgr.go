@@ -181,7 +181,7 @@ func (k *KafkaManager) reconcile() []error {
 	for _, kafka := range preparingKafkas {
 		glog.V(10).Infof("preparing kafka id = %s", kafka.ID)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
-		if err := k.reconcilePreparedKafka(kafka); err != nil {
+		if err := k.reconcilePreparingKafka(kafka); err != nil {
 			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
 			errors = append(errors, err)
 			continue
@@ -300,8 +300,8 @@ func (k *KafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) e
 	return nil
 }
 
-func (k *KafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
-	if err := k.kafkaService.Create(kafka); err != nil {
+func (k *KafkaManager) reconcilePreparingKafka(kafka *api.KafkaRequest) error {
+	if err := k.kafkaService.PrepareKafkaRequest(kafka); err != nil {
 		return k.handleKafkaRequestCreationError(kafka, err)
 	}
 

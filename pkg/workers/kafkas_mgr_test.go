@@ -15,14 +15,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
-func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
+func TestKafkaManager_reconcilePreparingKafka(t *testing.T) {
 	type fields struct {
-		ocmClient            ocm.Client
-		kafkaService         services.KafkaService
-		timer                *time.Timer
-		keycloakService      services.KeycloakService
-		observatoriumService services.ObservatoriumService
-		configService        services.ConfigService
+		kafkaService services.KafkaService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -32,167 +27,144 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 		fields              fields
 		args                args
 		wantErr             bool
+		wantErrMsg          string
 		expectedKafkaStatus constants.KafkaStatus
 	}{
 		{
-			name: "kafka request marked as failed when kafka creation fails with 5XX and maximum time limit has been reached",
+			name: "Encounter a 5xx error Kafka preparation and performed the retry",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.GeneralError("test")
-					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
+					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.GeneralError("simulate 5xx error")
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
-					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
 			},
 			args: args{
 				kafka: &api.KafkaRequest{
 					Meta: api.Meta{
-						CreatedAt: time.Now().Add(-(constants.KafkaMaxDurationWithProvisioningErrs + 1)),
-					},
-				},
-			},
-			wantErr:             true,
-			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
-		},
-		{
-			name: "kafka request marked as failed when kafka creation fails with 4XX error",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.BadRequest("test badrequest")
-					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				keycloakService: &services.KeycloakServiceMock{
-					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
-					},
-				},
-				observatoriumService: &services.ObservatoriumServiceMock{
-					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
-						return observatorium.KafkaState{}, nil
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
-			},
-			args: args{
-				kafka: &api.KafkaRequest{},
-			},
-			wantErr:             true,
-			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
-		},
-		{
-			name: "kafka creation returns error without marking kafka request as failed when kafka creation fails with 5XX error and no time limit is reached",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.GeneralError("test")
-					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				keycloakService: &services.KeycloakServiceMock{
-					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
-			},
-			args: args{
-				kafka: &api.KafkaRequest{
-					Meta: api.Meta{
-						CreatedAt: time.Now(),
+						CreatedAt: time.Now().Add(time.Minute * time.Duration(30)),
 					},
 					Status: string(constants.KafkaRequestStatusPreparing),
 				},
 			},
 			wantErr:             true,
+			wantErrMsg:          "",
 			expectedKafkaStatus: constants.KafkaRequestStatusPreparing,
 		},
 		{
-			name: "successful reconcile",
+			name: "Encounter a 5xx error Kafka preparation and skipped the retry",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.GeneralError("simulate 5xx error")
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return false, nil
+				},
+			},
+			args: args{
+				kafka: &api.KafkaRequest{
+					Meta: api.Meta{
+						CreatedAt: time.Now().Add(time.Minute * time.Duration(-30)),
 					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
+					Status: string(constants.KafkaRequestStatusPreparing),
+				},
+			},
+			wantErr:             true,
+			wantErrMsg:          "simulate 5xx error",
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+		},
+		{
+			name: "Encounter a Client error (4xx) in Kafka preparation",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.NotFound("simulate a 4xx error")
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
 					},
 				},
-				observatoriumService: &services.ObservatoriumServiceMock{
-					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
-						return observatorium.KafkaState{}, nil
+			},
+			args: args{
+				kafka: &api.KafkaRequest{
+					Status: string(constants.KafkaRequestStatusPreparing),
+				},
+			},
+			wantErr:             true,
+			wantErrMsg:          "simulate a 4xx error",
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+		},
+		{
+			name: "Encounter an SSO Client internal error in Kafka creation and performed the retry",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.FailedToCreateSSOClient("ErrorFailedToCreateSSOClientReason")
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
 					},
 				},
-				keycloakService: &services.KeycloakServiceMock{
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+			},
+			args: args{
+				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(30))}},
+			},
+			wantErr:    true,
+			wantErrMsg: "",
+		},
+		{
+			name: "Encounter an SSO Client internal error in Kafka creation and skipped the retry",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return errors.FailedToCreateSSOClient("ErrorFailedToCreateSSOClientReason")
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
+			},
+			args: args{
+				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(-30))}},
+			},
+			wantErr:             true,
+			wantErrMsg:          "ErrorFailedToCreateSSOClientReason",
+			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+		},
+		{
+			name: "Successful reconcile",
+			fields: fields{
+				kafkaService: &services.KafkaServiceMock{
+					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				},
 			},
 			args: args{
 				kafka: &api.KafkaRequest{},
 			},
+			wantErr:    false,
+			wantErrMsg: "",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
 			k := &KafkaManager{
-				ocmClient:            tt.fields.ocmClient,
-				kafkaService:         tt.fields.kafkaService,
-				timer:                tt.fields.timer,
-				keycloakService:      tt.fields.keycloakService,
-				observatoriumService: tt.fields.observatoriumService,
-				configService:        tt.fields.configService,
+				kafkaService: tt.fields.kafkaService,
 			}
-			if err := k.reconcilePreparedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
-				t.Errorf("reconcilePreparedKafka() error = %v, wantErr %v", err, tt.wantErr)
+
+			if err := k.reconcilePreparingKafka(tt.args.kafka); (err != nil) != tt.wantErr {
+				t.Errorf("reconcilePreparingKafka() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if string(tt.expectedKafkaStatus) != tt.args.kafka.Status {
-				t.Errorf("reconcilePreparedKafka() kafka status = %v, expectedKafkaStatus :%v", tt.args.kafka.Status, tt.expectedKafkaStatus)
-			}
+
+			gomega.Expect(tt.expectedKafkaStatus.String()).Should(gomega.Equal(tt.args.kafka.Status))
+			gomega.Expect(tt.args.kafka.FailedReason).Should(gomega.Equal(tt.wantErrMsg))
 		})
 	}
 }
@@ -414,12 +386,9 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "error when creating kafka fails",
+			name: "error when preparing kafka fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.GeneralError("test")
-					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
 					},
@@ -447,9 +416,6 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 			name: "error when updating kafka status fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return false, errors.GeneralError("test")
 					},
@@ -480,9 +446,6 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 			name: "error when kafka resource_creating status does not exist in the DB before creation",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						return false, nil
 					},
@@ -508,11 +471,8 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 			name: "successful reconcile",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
+					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil
@@ -612,132 +572,6 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 			}
 			err := k.reconcileDeniedKafkaOwners(tt.args.deniedAccounts)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
-		})
-	}
-}
-
-func TestKafkaManager_reconcilePreparedKafka(t *testing.T) {
-	type fields struct {
-		kafkaService services.KafkaService
-	}
-	type args struct {
-		kafka *api.KafkaRequest
-	}
-	tests := []struct {
-		name       string
-		fields     fields
-		args       args
-		wantErrMsg string
-		wantErr    bool
-	}{
-		{
-			name: "Encounter an SSO Client internal error in Kafka creation and skipped the retry",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.FailedToCreateSSOClient("ErrorFailedToCreateSSOClientReason")
-					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return true, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-			},
-			args: args{
-				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(-30))}},
-			},
-			wantErr:    true,
-			wantErrMsg: "ErrorFailedToCreateSSOClientReason",
-		},
-		{
-			name: "Encounter an SSO Client internal error in Kafka creation and performed the retry",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.FailedToCreateSSOClient("ErrorFailedToCreateSSOClientReason")
-					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return true, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-			},
-			args: args{
-				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(30))}},
-			},
-			wantErr:    true,
-			wantErrMsg: "",
-		},
-		{
-			name: "Encounter an Client error (4xx) in Kafka creation and skipped the retry",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.NotFound("simulate an 4xx error on purpose")
-					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return true, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-			},
-			args: args{
-				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(-30))}},
-			},
-			wantErr:    true,
-			wantErrMsg: "simulate an 4xx error on purpose",
-		},
-		{
-			name: "Successfully reconciled the prepared Kafka instance",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return true, nil
-					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-			},
-			args: args{
-				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(-30))}},
-			},
-			wantErr:    false,
-			wantErrMsg: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gomega.RegisterTestingT(t)
-			k := &KafkaManager{
-				kafkaService: tt.fields.kafkaService,
-			}
-			if err := k.reconcilePreparedKafka(tt.args.kafka); (err != nil) != tt.wantErr {
-				t.Errorf("reconcilePreparedKafka() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			gomega.Expect(tt.args.kafka.FailedReason).Should(gomega.Equal(tt.wantErrMsg))
-
 		})
 	}
 }
