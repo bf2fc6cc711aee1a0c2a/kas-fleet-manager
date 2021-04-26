@@ -8,9 +8,7 @@ import (
 
 	"time"
 
-	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/golang/glog"
-
 	"github.com/google/uuid"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
@@ -161,7 +159,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *erro
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		kafkaRequest.SsoClientID = BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
 		if err != nil {
 			sentry.CaptureException(err)
@@ -346,7 +344,7 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	if kafkaRequest.ClusterID != "" {
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-			clientId := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+			clientId := BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
 			if keycloakErr != nil {
 				return errors.GeneralError("error deleting sso client: %v", keycloakErr)
@@ -615,7 +613,7 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
-			CustomClaimCheck:       syncsetresources.BuildCustomClaimCheck(kafkaRequest),
+			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
 		}
 	}

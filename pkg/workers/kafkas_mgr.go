@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -323,7 +321,7 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 
 func (k *KafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequest) error {
 	if kafkaRequest.SsoClientID == "" && kafkaRequest.SsoClientSecret == "" {
-		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		kafkaRequest.SsoClientID = services.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		secret, err := k.keycloakService.GetKafkaClientSecret(kafkaRequest.SsoClientID)
 		if err != nil {
 			return fmt.Errorf("failed to get sso client id & secret for kafka cluster: %s: %w", kafkaRequest.SsoClientID, err)

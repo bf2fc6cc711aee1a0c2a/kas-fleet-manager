@@ -8,7 +8,6 @@ import (
 	"time"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	storagev1 "k8s.io/api/storage/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -1721,7 +1720,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				Kind:       "StorageClass",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: syncsetresources.KafkaStorageClass,
+				Name: KafkaStorageClass,
 			},
 			Parameters: map[string]string{
 				"encrypted": "false",
@@ -1745,7 +1744,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				Domain: ingressDNS,
 				RouteSelector: &metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+						IngressLabelName: IngressLabelValue,
 					},
 				},
 				EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{

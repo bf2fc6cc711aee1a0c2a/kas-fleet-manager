@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/pkg/errors"
 	storagev1 "k8s.io/api/storage/v1"
 
@@ -50,6 +49,9 @@ const (
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
+	KafkaStorageClass               = "mk-storageclass"
+	IngressLabelName                = "ingressType"
+	IngressLabelValue               = "sharded"
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -881,7 +883,7 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 			Domain: ingressDNS,
 			RouteSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+					IngressLabelName: IngressLabelValue,
 				},
 			},
 			EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
@@ -919,7 +921,7 @@ func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
 			Kind:       "StorageClass",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: syncsetresources.KafkaStorageClass,
+			Name: KafkaStorageClass,
 		},
 		Parameters: map[string]string{
 			"encrypted": "false",
