@@ -600,6 +600,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		syncsetService    SyncsetService
+		clusterService    ClusterService
 		keycloakService   KeycloakService
 		kafkaConfig       *config.KafkaConfig
 		quotaService      QuotaService
@@ -615,42 +616,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "error when syncset deletion fails",
+			name: "successfully deletes a Kafka request when it has not been assigned to an OSD cluster",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						return http.StatusInternalServerError, errors.GeneralError("error deleting syncset")
-					},
-				},
-				keycloakService: &KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							EnableAuthenticationOnKafka: true,
-						}
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
-					kafkaRequest.ID = testID
-				}),
-			},
-			wantErr: true,
-		},
-		{
-			name: "successful delete the kafka instance when synset delete successful",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						return http.StatusNoContent, nil
-					},
-				},
 				keycloakService: &KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
@@ -678,14 +646,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: "successful delete the kafka instance when synset not found",
+			name: "successfully deletes a Kafka request and cleans up all of its dependencies",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						return http.StatusNotFound, errors.GeneralError("syncset not found")
-					},
-				},
 				keycloakService: &KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
@@ -711,10 +674,87 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Region:        clusterservicetest.MockClusterRegion,
 					ClusterID:     clusterservicetest.MockClusterID,
 					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       false,
+					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
 			},
+		},
+		{
+			name: "fail to delete kafka request: error when deleting sso client",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return errors.FailedToDeleteSSOClient("failed to delete sso client")
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					MultiAZ:       true,
+					Status:        constants.KafkaRequestStatusPreparing.String(),
+				}))
+			},
+			wantErr: true,
+		},
+		{
+			name: "fail to delete kafka request: error when deleting CNAME records",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
+						return "", errors.GeneralError("failed to get cluster dns")
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					MultiAZ:       true,
+					Status:        constants.KafkaRequestStatusPreparing.String(),
+				}))
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -724,6 +764,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
+				clusterService:    tt.fields.clusterService,
 				syncsetService:    tt.fields.syncsetService,
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,

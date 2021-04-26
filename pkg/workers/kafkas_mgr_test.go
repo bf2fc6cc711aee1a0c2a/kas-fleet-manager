@@ -169,7 +169,7 @@ func TestKafkaManager_reconcilePreparingKafka(t *testing.T) {
 	}
 }
 
-func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
+func TestKafkaManager_reconcileDeletedKafkas(t *testing.T) {
 	type fields struct {
 		ocmClient            ocm.Client
 		kafkaService         services.KafkaService
@@ -196,7 +196,6 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeleteFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						//return errors.GeneralError("test")
 						return nil
 					},
 				},
@@ -244,8 +243,8 @@ func TestKafkaManager_reconcileDeprovisioningRequest(t *testing.T) {
 				quotaService:         tt.fields.quotaService,
 				configService:        tt.fields.configService,
 			}
-			if err := k.reconcileDeprovisioningRequest(tt.args.kafka); (err != nil) != tt.wantErr {
-				t.Errorf("reconcileDeprovisioningRequest() error = %v, wantErr %v", err, tt.wantErr)
+			if err := k.reconcileDeletedKafkas(tt.args.kafka); (err != nil) != tt.wantErr {
+				t.Errorf("reconcileDeletedKafkas() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
