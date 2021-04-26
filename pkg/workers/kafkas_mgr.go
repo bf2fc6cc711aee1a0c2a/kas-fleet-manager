@@ -7,7 +7,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -188,28 +187,6 @@ func (k *KafkaManager) reconcile() []error {
 
 	}
 
-	// handle provisioning kafkas state
-	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
-	if serviceErr != nil {
-		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
-	} else {
-		glog.Infof("provisioning kafkas count = %d", len(provisioningKafkas))
-	}
-	for _, kafka := range provisioningKafkas {
-		glog.V(10).Infof("provisioning kafka id = %s", kafka.ID)
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
-		// only need to check if Kafka clusters are ready if kas-fleetshard sync is not enabled
-		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
-		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-			if err := k.reconcileProvisioningKafka(kafka); err != nil {
-				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
-				errors = append(errors, err)
-				continue
-			}
-		}
-	}
-
 	readyKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusReady)
 	if serviceErr != nil {
 		glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
@@ -304,36 +281,6 @@ func (k *KafkaManager) reconcilePreparingKafka(kafka *api.KafkaRequest) error {
 		return k.handleKafkaRequestCreationError(kafka, err)
 	}
 
-	return nil
-}
-
-func (k *KafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error {
-	namespace, err := services.BuildNamespaceName(kafka)
-	if err != nil {
-		return err
-	}
-	kafkaState, err := k.observatoriumService.GetKafkaState(kafka.Name, namespace)
-	if err != nil {
-		sentry.CaptureException(fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err))
-		return fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err)
-	}
-	if kafkaState.State == observatorium.ClusterStateReady {
-		glog.Infof("Kafka %s state %s", kafka.ID, kafkaState.State)
-		kafka.Status = constants.KafkaRequestStatusReady.String()
-		err := k.kafkaService.Update(kafka)
-		if err != nil {
-			return fmt.Errorf("failed to update kafka %s to status ready: %w", kafka.ID, err)
-		}
-
-		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
-		/**TODO if there is a creation failure, total operations needs to be incremented: this info. is not available at this time.*/
-		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
-
-		return nil
-	}
-	glog.V(1).Infof("reconciled kafka %s state %s", kafka.ID, kafkaState.State)
 	return nil
 }
 
