@@ -3,7 +3,6 @@ package kafka_mgrs
 import (
 	"sync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
@@ -104,7 +103,7 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 
 func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequest) error {
 	if kafkaRequest.SsoClientID == "" && kafkaRequest.SsoClientSecret == "" {
-		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		kafkaRequest.SsoClientID = services.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		secret, err := k.keycloakService.GetKafkaClientSecret(kafkaRequest.SsoClientID)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get sso client id & secret for kafka cluster: %s", kafkaRequest.SsoClientID)
