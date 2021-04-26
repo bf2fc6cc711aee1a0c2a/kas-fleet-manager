@@ -166,7 +166,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	}
 
 	keySrv := services.NewKeycloakService(h.Env().Config.Keycloak, h.Env().Config.Keycloak.KafkaRealm)
-	kafkaSrv := services.NewKafkaService(h.Env().DBFactory, services.NewSyncsetService(ocmClient), clusterService, keySrv, h.Env().Config.Kafka, h.Env().Config.AWS, services.NewQuotaService(ocmClient))
+	kafkaSrv := services.NewKafkaService(h.Env().DBFactory, clusterService, keySrv, h.Env().Config.Kafka, h.Env().Config.AWS, services.NewQuotaService(ocmClient))
 
 	errK := kafkaSrv.RegisterKafkaJob(kafkas[0])
 	if errK != nil {
