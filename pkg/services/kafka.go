@@ -72,7 +72,6 @@ var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
 	connectionFactory *db.ConnectionFactory
-	syncsetService    SyncsetService
 	clusterService    ClusterService
 	keycloakService   KeycloakService
 	kafkaConfig       *config.KafkaConfig
@@ -81,10 +80,9 @@ type kafkaService struct {
 	mu                sync.Mutex
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
-		syncsetService:    syncsetService,
 		clusterService:    clusterService,
 		keycloakService:   keycloakService,
 		kafkaConfig:       kafkaConfig,
