@@ -29,9 +29,6 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			CountByStatusFunc: func(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
 // 			},
-// 			CreateFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
-// 				panic("mock out the Create method")
-// 			},
 // 			DeleteFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
 // 				panic("mock out the Delete method")
 // 			},
@@ -59,6 +56,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
 // 				panic("mock out the ListByStatus method")
 // 			},
+// 			PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
+// 				panic("mock out the PrepareKafkaRequest method")
+// 			},
 // 			RegisterKafkaDeprovisionJobFunc: func(ctx context.Context, id string) *apiErrors.ServiceError {
 // 				panic("mock out the RegisterKafkaDeprovisionJob method")
 // 			},
@@ -83,9 +83,6 @@ type KafkaServiceMock struct {
 
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
-
-	// CreateFunc mocks the Create method.
-	CreateFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
 
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
@@ -114,6 +111,9 @@ type KafkaServiceMock struct {
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError)
 
+	// PrepareKafkaRequestFunc mocks the PrepareKafkaRequest method.
+	PrepareKafkaRequestFunc func(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError
+
 	// RegisterKafkaDeprovisionJobFunc mocks the RegisterKafkaDeprovisionJob method.
 	RegisterKafkaDeprovisionJobFunc func(ctx context.Context, id string) *apiErrors.ServiceError
 
@@ -141,11 +141,6 @@ type KafkaServiceMock struct {
 		CountByStatus []struct {
 			// Status is the status argument value.
 			Status []constants.KafkaStatus
-		}
-		// Create holds details about calls to the Create method.
-		Create []struct {
-			// KafkaRequest is the kafkaRequest argument value.
-			KafkaRequest *api.KafkaRequest
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
@@ -194,6 +189,11 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status []constants.KafkaStatus
 		}
+		// PrepareKafkaRequest holds details about calls to the PrepareKafkaRequest method.
+		PrepareKafkaRequest []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *api.KafkaRequest
+		}
 		// RegisterKafkaDeprovisionJob holds details about calls to the RegisterKafkaDeprovisionJob method.
 		RegisterKafkaDeprovisionJob []struct {
 			// Ctx is the ctx argument value.
@@ -221,7 +221,6 @@ type KafkaServiceMock struct {
 	}
 	lockChangeKafkaCNAMErecords     sync.RWMutex
 	lockCountByStatus               sync.RWMutex
-	lockCreate                      sync.RWMutex
 	lockDelete                      sync.RWMutex
 	lockDeprovisionExpiredKafkas    sync.RWMutex
 	lockDeprovisionKafkaForUsers    sync.RWMutex
@@ -231,6 +230,7 @@ type KafkaServiceMock struct {
 	lockHasAvailableCapacity        sync.RWMutex
 	lockList                        sync.RWMutex
 	lockListByStatus                sync.RWMutex
+	lockPrepareKafkaRequest         sync.RWMutex
 	lockRegisterKafkaDeprovisionJob sync.RWMutex
 	lockRegisterKafkaJob            sync.RWMutex
 	lockUpdate                      sync.RWMutex
@@ -304,37 +304,6 @@ func (mock *KafkaServiceMock) CountByStatusCalls() []struct {
 	mock.lockCountByStatus.RLock()
 	calls = mock.calls.CountByStatus
 	mock.lockCountByStatus.RUnlock()
-	return calls
-}
-
-// Create calls CreateFunc.
-func (mock *KafkaServiceMock) Create(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
-	if mock.CreateFunc == nil {
-		panic("KafkaServiceMock.CreateFunc: method is nil but KafkaService.Create was just called")
-	}
-	callInfo := struct {
-		KafkaRequest *api.KafkaRequest
-	}{
-		KafkaRequest: kafkaRequest,
-	}
-	mock.lockCreate.Lock()
-	mock.calls.Create = append(mock.calls.Create, callInfo)
-	mock.lockCreate.Unlock()
-	return mock.CreateFunc(kafkaRequest)
-}
-
-// CreateCalls gets all the calls that were made to Create.
-// Check the length with:
-//     len(mockedKafkaService.CreateCalls())
-func (mock *KafkaServiceMock) CreateCalls() []struct {
-	KafkaRequest *api.KafkaRequest
-} {
-	var calls []struct {
-		KafkaRequest *api.KafkaRequest
-	}
-	mock.lockCreate.RLock()
-	calls = mock.calls.Create
-	mock.lockCreate.RUnlock()
 	return calls
 }
 
@@ -617,6 +586,37 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
+	return calls
+}
+
+// PrepareKafkaRequest calls PrepareKafkaRequestFunc.
+func (mock *KafkaServiceMock) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *apiErrors.ServiceError {
+	if mock.PrepareKafkaRequestFunc == nil {
+		panic("KafkaServiceMock.PrepareKafkaRequestFunc: method is nil but KafkaService.PrepareKafkaRequest was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *api.KafkaRequest
+	}{
+		KafkaRequest: kafkaRequest,
+	}
+	mock.lockPrepareKafkaRequest.Lock()
+	mock.calls.PrepareKafkaRequest = append(mock.calls.PrepareKafkaRequest, callInfo)
+	mock.lockPrepareKafkaRequest.Unlock()
+	return mock.PrepareKafkaRequestFunc(kafkaRequest)
+}
+
+// PrepareKafkaRequestCalls gets all the calls that were made to PrepareKafkaRequest.
+// Check the length with:
+//     len(mockedKafkaService.PrepareKafkaRequestCalls())
+func (mock *KafkaServiceMock) PrepareKafkaRequestCalls() []struct {
+	KafkaRequest *api.KafkaRequest
+} {
+	var calls []struct {
+		KafkaRequest *api.KafkaRequest
+	}
+	mock.lockPrepareKafkaRequest.RLock()
+	calls = mock.calls.PrepareKafkaRequest
+	mock.lockPrepareKafkaRequest.RUnlock()
 	return calls
 }
 

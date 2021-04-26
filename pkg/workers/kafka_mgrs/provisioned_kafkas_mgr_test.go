@@ -27,13 +27,8 @@ func TestProvisionedKafkaManager(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "error when creating kafka fails",
+			name: "error when preparing kafka fails",
 			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return errors.GeneralError("test")
-					},
-				},
 				observatoriumService: &services.ObservatoriumServiceMock{
 					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
 						return observatorium.KafkaState{}, errors.NotFound("Not Found")
@@ -52,9 +47,6 @@ func TestProvisionedKafkaManager(t *testing.T) {
 			name: "error when updating kafka status fails",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
 					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
@@ -77,9 +69,6 @@ func TestProvisionedKafkaManager(t *testing.T) {
 			name: "successful reconcile",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
 					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},

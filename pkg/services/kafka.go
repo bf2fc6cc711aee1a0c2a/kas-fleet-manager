@@ -37,7 +37,10 @@ var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.S
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
-	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	// PrepareKafkaRequest sets any required information (i.e. bootstrap server host, sso client id and secret)
+	// to the Kafka Request record in the database. The kafka request will also be updated with an updated_at
+	// timestamp and the corresponding cluster identifier.
+	PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	// Get method will retrieve the kafkaRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
 	Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
@@ -132,12 +135,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	return nil
 }
 
-// Create will create a new kafka cr with the given configuration,
-// and sync it via a syncset to an available cluster with capacity
-// in the desired region for the desired cloud provider.
-// The kafka object in the database will be updated with a updated_at
-// timestamp and the corresponding cluster identifier.
-func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
 	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
 	if replaceErr != nil {
@@ -166,21 +164,6 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
 		if err != nil {
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
-		}
-	}
-
-	// only use sync set if EnableKasFleetshardSync is set to false
-	if !k.kafkaConfig.EnableKasFleetshardSync {
-		// create the syncset builder
-		syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig())
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error creating kafka syncset builder")
-		}
-
-		// create the syncset
-		_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
-		if err != nil {
-			return err
 		}
 	}
 

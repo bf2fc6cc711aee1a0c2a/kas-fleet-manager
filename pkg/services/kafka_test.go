@@ -19,7 +19,6 @@ import (
 	"github.com/onsi/gomega"
 	"gorm.io/gorm"
 
-	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 )
 
@@ -68,7 +67,7 @@ func Test_kafkaService_Get(t *testing.T) {
 		syncsetService    SyncsetService
 	}
 	// args are the variables that will be provided to the function we're testing, in this case it's just the id we
-	// pass to kafkaService.Create
+	// pass to kafkaService.PrepareKafkaRequest
 	type args struct {
 		ctx context.Context
 		id  string
@@ -188,7 +187,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 		syncsetService    SyncsetService
 	}
 	// args are the variables that will be provided to the function we're testing, in this case it's just the id we
-	// pass to kafkaService.Create
+	// pass to kafkaService.PrepareKafkaRequest
 	type args struct {
 		id string
 	}
@@ -371,15 +370,9 @@ func Test_kafkaService_Create(t *testing.T) {
 		wantBootstrapServerHost string
 	}{
 		{
-			name: "successful syncset creation",
+			name: "successful kafka request preparation",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
-						return syncset, nil
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -408,51 +401,9 @@ func Test_kafkaService_Create(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "failed syncset creation",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						return nil, errors.New(errors.ErrorBadRequest, "")
-					},
-				},
-				clusterService: &ClusterServiceMock{
-					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
-						return "clusterDNS", nil
-					},
-				},
-				keycloakService: &KeycloakServiceMock{
-					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-						return "secret", nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
-								ClientID: "test",
-							},
-						}
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-			},
-			wantErr: true,
-		},
-		{
 			name: "failed clusterDNS retrieval",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
-						return syncset, nil
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "", errors.New(errors.ErrorBadRequest, "")
@@ -484,12 +435,6 @@ func Test_kafkaService_Create(t *testing.T) {
 			name: "validate BootstrapServerHost truncate",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
-						return syncset, nil
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -521,14 +466,9 @@ func Test_kafkaService_Create(t *testing.T) {
 			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
 		},
 		{
-			name: "should not create sync set if EnableKasFleetshardSync is true",
+			name: "failed SSO client creation",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						panic("this should not be called")
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -536,19 +476,18 @@ func Test_kafkaService_Create(t *testing.T) {
 				},
 				keycloakService: &KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-						return "secret", nil
+						return "", errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
 						return &config.KeycloakConfig{
 							KafkaRealm: &config.KeycloakRealmConfig{
 								ClientID: "test",
 							},
+							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{
-					EnableKasFleetshardSync: true,
-				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -556,7 +495,7 @@ func Test_kafkaService_Create(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -574,8 +513,8 @@ func Test_kafkaService_Create(t *testing.T) {
 				awsConfig:         config.NewAWSConfig(),
 			}
 
-			if err := k.Create(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
-				t.Errorf("Create() error = %v, wantErr = %v", err, tt.wantErr)
+			if err := k.PrepareKafkaRequest(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
+				t.Errorf("PrepareKafkaRequest() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 
 			if tt.wantBootstrapServerHost != "" && tt.args.kafkaRequest.BootstrapServerHost != tt.wantBootstrapServerHost {
