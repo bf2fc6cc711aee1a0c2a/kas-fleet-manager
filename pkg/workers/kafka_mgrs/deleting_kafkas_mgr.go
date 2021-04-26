@@ -79,44 +79,43 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling deleting kafkas")
 	var encounteredErrors []error
 
-	// List both status to keep backward compatibility. The "deleted" status should be removed soon
-	deletingStatus := []constants.KafkaStatus{constants.KafkaRequestStatusDeleting, constants.KafkaRequestStatusDeleted}
+	// handle deleting kafka requests
+	// Kafkas in a "deleting" state have been removed, along with all their resources (i.e. ManagedKafka, Kafka CRs),
+	// from the data plane cluster by the KAS Fleetshard operator. This reconcile phase ensures that any other
+	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Kafkas and their records soft deleted from the database.
 
-	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deletingStatus...)
+	// The "deleted" status has been replaced by "deleting" and should be removed soon. We need to list both status here to keep backward compatibility.
+	deletingStatus := []constants.KafkaStatus{constants.KafkaRequestStatusDeleting, constants.KafkaRequestStatusDeleted}
+	deletingKafkas, serviceErr := k.kafkaService.ListByStatus(deletingStatus...)
 	if serviceErr != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting kafka requests"))
 	} else {
-		glog.Infof("%s kafkas count = %d", deletingStatus[0].String(), len(deprovisioningRequests))
+		glog.Infof("%s kafkas count = %d", deletingStatus[0].String(), len(deletingKafkas))
 	}
 
 	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster
-	deprovisioningRequestsTemp, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
+	deprovisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
 	}
 
-	for _, deprovisioningKafka := range deprovisioningRequestsTemp {
-		// If the fleetshard sync is disabled, always rmeove deprovisioning Kafkas
-		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-			deprovisioningRequests = append(deprovisioningRequests, deprovisioningKafka)
-		}
-
+	for _, deprovisioningKafka := range deprovisioningKafkas {
 		// As long as one of the three fields checked below are empty, the Kafka wouldn't have been provisioned to an OSD cluster and should be deleted immediately
 		if deprovisioningKafka.BootstrapServerHost == "" {
-			deprovisioningRequests = append(deprovisioningRequests, deprovisioningKafka)
+			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 			continue
 		}
 
-		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to am OSD cluster
+		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to an OSD cluster
 		if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka && (deprovisioningKafka.SsoClientID == "" || deprovisioningKafka.SsoClientSecret == "") {
-			deprovisioningRequests = append(deprovisioningRequests, deprovisioningKafka)
+			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 		}
 	}
 
-	for _, kafka := range deprovisioningRequests {
-		glog.V(10).Infof("deprovisioning kafka id = %s", kafka.ID)
-		if err := k.reconcileDeprovisioningRequest(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deprovisioning request %s", kafka.ID))
+	for _, kafka := range deletingKafkas {
+		glog.V(10).Infof("deleting kafka id = %s", kafka.ID)
+		if err := k.reconcileDeletingKafkas(kafka); err != nil {
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deleting kafka request %s", kafka.ID))
 			continue
 		}
 	}
@@ -124,7 +123,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *DeletingKafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
+func (k *DeletingKafkaManager) reconcileDeletingKafkas(kafka *api.KafkaRequest) error {
 	if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId != "" {
 		if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
 			return errors.Wrapf(err, "failed to delete subscription id %s for kafka %s", kafka.SubscriptionId, kafka.ID)
