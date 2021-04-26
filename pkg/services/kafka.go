@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"sync"
 
@@ -47,6 +46,8 @@ type KafkaService interface {
 	// GetById method will retrieve the KafkaRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
 	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
+	// Delete cleans up all dependencies for a Kafka request and soft deletes the Kafka Request record from the database.
+	// The Kafka Request in the database will be updated with a deleted_at timestamp.
 	Delete(*api.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
@@ -333,11 +334,6 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 	return nil
 }
 
-// Delete deletes a kafka request and its corresponding syncset from
-// the associated cluster it was deployed on. Deleting the syncset will
-// delete all resources (Kafka CR, Project) associated with the syncset.
-// The kafka object in the database will be updated with a deleted_at
-// timestamp.
 func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
@@ -363,14 +359,6 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 			if err != nil {
 				return err
 			}
-		}
-
-		// delete the syncset
-		syncsetId := buildSyncsetIdentifier(kafkaRequest)
-		statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
-
-		if err != nil && statucCode != http.StatusNotFound {
-			return errors.GeneralError("error deleting syncset: %v", err)
 		}
 	}
 
