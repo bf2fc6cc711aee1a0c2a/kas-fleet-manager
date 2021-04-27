@@ -82,7 +82,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 					},
 				},
 			),
-			filterByOrganisation: false,
+			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
@@ -108,7 +108,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 				},
 			),
 			filterByOrganisation: false,
-			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
+			ctx:                  getAuthenticatedContext(authHelper, t, svcAcc, nil),
 		},
 		{
 			name: "returns 200 Ok response for external users",
@@ -122,7 +122,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 					},
 				},
 			),
-			filterByOrganisation: false,
+			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
@@ -144,7 +144,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 					},
 				},
 			),
-			filterByOrganisation: false,
+			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
@@ -438,14 +438,14 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 							},
 							ServiceAccounts: config.AllowedAccounts{
 								config.AllowedAccount{Username: "allowed-user-1"},
-								config.AllowedAccount{Username: "username"},
+								config.AllowedAccount{Username: "svc-acc-username"},
 							},
 						},
 					},
 				},
 			),
 			filterByOrganisation: false,
-			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
+			ctx:                  getAuthenticatedContext(authHelper, t, svcAcc, nil),
 		},
 		{
 			name: "returns 200 Ok response when token used is retrieved from sso.redhat.com and user is allowed access to the service",
