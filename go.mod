@@ -26,7 +26,6 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
 	github.com/itchyny/gojq v0.12.2
-	github.com/jinzhu/gorm v1.9.8
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
@@ -54,7 +53,6 @@ require (
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	golang.org/x/sys v0.0.0-20210414055047-fe65e336abe0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.0.8

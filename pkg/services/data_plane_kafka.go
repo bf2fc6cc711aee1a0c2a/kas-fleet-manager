@@ -66,7 +66,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(_ context.Context, c
 		case statusError:
 			e = d.setKafkaClusterFailed(kafka)
 		case statusDeleted:
-			e = d.setKafkaClusterDeleted(kafka)
+			e = d.setKafkaClusterDeleting(kafka)
 		case statusRejected:
 			e = d.reassignKafkaCluster(kafka)
 		case statusUnknown:
@@ -107,14 +107,14 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterDeleted(kafka *api.KafkaRequest) *errors.ServiceError {
-	// If the Kafka cluster is deleted from the data plane cluster, we will make it as "deleted" in db and the reconcilier will ensure it is cleaned up properly
-	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleted); ok {
+func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *api.KafkaRequest) *errors.ServiceError {
+	// If the Kafka cluster is deleted from the data plane cluster, we will make it as "deleting" in db and the reconcilier will ensure it is cleaned up properly
+	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleting); ok {
 		if updateErr != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleted, kafka.ID, updateErr)
+			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleting, kafka.ID, updateErr)
 			return updateErr
 		} else {
-			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusDeleted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusDeleting, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		}
 	}
 	return nil

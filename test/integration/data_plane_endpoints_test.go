@@ -301,6 +301,6 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusDeleted.String()))
+		Expect(c.Status).To(Equal(constants.KafkaRequestStatusDeleting.String()))
 	}
 }
