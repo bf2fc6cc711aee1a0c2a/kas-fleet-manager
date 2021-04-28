@@ -56,7 +56,7 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ListFunc: func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 // 				panic("mock out the List method")
 // 			},
-// 			ListByStatusFunc: func(status constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
+// 			ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
 // 				panic("mock out the ListByStatus method")
 // 			},
 // 			RegisterKafkaDeprovisionJobFunc: func(ctx context.Context, id string) *apiErrors.ServiceError {
@@ -112,7 +112,7 @@ type KafkaServiceMock struct {
 	ListFunc func(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
-	ListByStatusFunc func(status constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError)
+	ListByStatusFunc func(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError)
 
 	// RegisterKafkaDeprovisionJobFunc mocks the RegisterKafkaDeprovisionJob method.
 	RegisterKafkaDeprovisionJobFunc func(ctx context.Context, id string) *apiErrors.ServiceError
@@ -192,7 +192,7 @@ type KafkaServiceMock struct {
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// Status is the status argument value.
-			Status constants.KafkaStatus
+			Status []constants.KafkaStatus
 		}
 		// RegisterKafkaDeprovisionJob holds details about calls to the RegisterKafkaDeprovisionJob method.
 		RegisterKafkaDeprovisionJob []struct {
@@ -590,29 +590,29 @@ func (mock *KafkaServiceMock) ListCalls() []struct {
 }
 
 // ListByStatus calls ListByStatusFunc.
-func (mock *KafkaServiceMock) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) ListByStatus(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *apiErrors.ServiceError) {
 	if mock.ListByStatusFunc == nil {
 		panic("KafkaServiceMock.ListByStatusFunc: method is nil but KafkaService.ListByStatus was just called")
 	}
 	callInfo := struct {
-		Status constants.KafkaStatus
+		Status []constants.KafkaStatus
 	}{
 		Status: status,
 	}
 	mock.lockListByStatus.Lock()
 	mock.calls.ListByStatus = append(mock.calls.ListByStatus, callInfo)
 	mock.lockListByStatus.Unlock()
-	return mock.ListByStatusFunc(status)
+	return mock.ListByStatusFunc(status...)
 }
 
 // ListByStatusCalls gets all the calls that were made to ListByStatus.
 // Check the length with:
 //     len(mockedKafkaService.ListByStatusCalls())
 func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
-	Status constants.KafkaStatus
+	Status []constants.KafkaStatus
 } {
 	var calls []struct {
-		Status constants.KafkaStatus
+		Status []constants.KafkaStatus
 	}
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus

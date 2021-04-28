@@ -1370,7 +1370,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			},
 			args: args{
 				id:     testID,
-				status: constants.KafkaRequestStatusDeleted,
+				status: constants.KafkaRequestStatusDeleting,
 			},
 		},
 		{

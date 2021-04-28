@@ -31,7 +31,7 @@ import (
 
 const productId = "RHOSAKTrial"
 
-var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleted.String(), constants.KafkaRequestStatusDeprovision.String()}
+var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusDeleted.String()}
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
@@ -47,7 +47,7 @@ type KafkaService interface {
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
-	ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+	ListByStatus(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Kafka cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
 	// original status is 'deprovision' (cluster in deprovision state can't be change state) or if the final status is the
@@ -205,12 +205,15 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	return nil
 }
 
-func (k *kafkaService) ListByStatus(status constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
+	if len(status) == 0 {
+		return nil, errors.GeneralError("no status provided")
+	}
 	dbConn := k.connectionFactory.New()
 
 	var kafkas []*api.KafkaRequest
 
-	if err := dbConn.Model(&api.KafkaRequest{}).Where("status = ?", status).Scan(&kafkas).Error; err != nil {
+	if err := dbConn.Model(&api.KafkaRequest{}).Where("status IN (?)", status).Scan(&kafkas).Error; err != nil {
 		return nil, errors.GeneralError(err.Error())
 	}
 
@@ -288,7 +291,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	deprovisionStatus := constants.KafkaRequestStatusDeprovision
 	// If a Kafka instance has not been assigned an OSD cluster, we can safely skip the need to involve the syncronisher
 	if k.kafkaConfig.EnableKasFleetshardSync && kafkaRequest.ClusterID == "" {
-		deprovisionStatus = constants.KafkaRequestStatusDeleted
+		deprovisionStatus = constants.KafkaRequestStatusDeleting
 	}
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
@@ -511,7 +514,7 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 	} else {
 		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
 			// only allow to chnage the status to "deleted" if the cluster is already in "deprovision" status
-			if status != constants.KafkaRequestStatusDeleted {
+			if status != constants.KafkaRequestStatusDeleting && status != constants.KafkaRequestStatusDeleted {
 				return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
 			}
 		}
