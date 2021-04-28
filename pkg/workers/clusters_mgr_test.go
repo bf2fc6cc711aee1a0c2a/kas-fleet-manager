@@ -742,7 +742,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		ocmClient      ocm.Client
 		agentOperator  services.KasFleetshardOperatorAddon
 		clusterService services.ClusterService
-		kafkaConfig    *config.KafkaConfig
 	}
 	tests := []struct {
 		name    string
@@ -750,42 +749,14 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "agent operator is ready",
+			name: "successful strimzi and kas fleetshard operator addon installation",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return &clustersmgmtv1.Syncset{}, nil
-					},
-				},
-				agentOperator: &services.KasFleetshardOperatorAddonMock{
-					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
-						return true, nil
-					},
-				},
-				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						if status != api.ClusterReady {
-							t.Errorf("expect status to be ready but got %s", status)
-						}
-						return nil
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{EnableManagedKafkaCR: true},
-			},
-			wantErr: false,
-		},
-		{
-			name: "agent operator is not ready",
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
-					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return &clustersmgmtv1.Syncset{}, nil
+					CreateAddonFunc: func(clusterId, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						return clustersmgmtv1.NewAddOnInstallation().ID(addonId).State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
 					},
 				},
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
@@ -793,19 +764,23 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 						return false, nil
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableManagedKafkaCR: true},
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						if status != api.ClusterWaitingForKasFleetShardOperator {
+							t.Errorf("expect status to be %s but got %s", api.ClusterWaitingForKasFleetShardOperator.String(), status)
+						}
+						return nil
+					},
+				},
 			},
 			wantErr: false,
 		},
 		{
-			name: "check cluster state to be waiting_for_kas_fleetshard_operator when EnableKasFleetshardSync is enabled",
+			name: "skip addon installation if addon is already installed",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
 						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
-					},
-					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						return &clustersmgmtv1.Syncset{}, nil
 					},
 				},
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
@@ -821,9 +796,41 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 						return nil
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{EnableKasFleetshardSync: true},
 			},
 			wantErr: false,
+		},
+		{
+			name: "return an error if strimzi installation fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+						return &clustersmgmtv1.AddOnInstallation{}, nil
+					},
+					CreateAddonFunc: func(clusterId, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						return &clustersmgmtv1.AddOnInstallation{}, fmt.Errorf("failed to install %s", addonId)
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error if kas fleetshard operator installation fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+					},
+					CreateAddonFunc: func(clusterId, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						return clustersmgmtv1.NewAddOnInstallation().ID(addonId).State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
+					},
+				},
+				agentOperator: &services.KasFleetshardOperatorAddonMock{
+					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
+						return false, apiErrors.GeneralError("failed to provision kas fleetshard operator")
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
@@ -833,8 +840,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				ocmClient:      tt.fields.ocmClient,
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: tt.fields.kafkaConfig,
-					OCM:   &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OCM: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 				}),
 				kasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}
@@ -1960,25 +1966,6 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				Kind:       "ClusterRole",
 				Name:       dedicatedReadersRoleBindingName,
 				APIVersion: "rbac.authorization.k8s.io",
-			},
-		},
-		&k8sCoreV1.ConfigMap{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-				Kind:       "ConfigMap",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      observabilityKafkaConfiguration,
-				Namespace: observabilityNamespace,
-				Labels: map[string]string{
-					"configures": "observability-operator",
-				},
-			},
-			Data: map[string]string{
-				"access_token": observabilityConfig.ObservabilityConfigAccessToken,
-				"channel":      observabilityConfig.ObservabilityConfigChannel,
-				"repository":   observabilityConfig.ObservabilityConfigRepo,
-				"tag":          observabilityConfig.ObservabilityConfigTag,
 			},
 		},
 	}
