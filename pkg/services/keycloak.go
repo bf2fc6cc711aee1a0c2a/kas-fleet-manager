@@ -286,21 +286,18 @@ func (kc *keycloakService) buildServiceAccountIdentifier() string {
 func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return nil, errors.GeneralError("failed to get access token: %v", tokenErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get access token")
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.Unauthenticated("user not authenticated")
+		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
 	var sa []api.ServiceAccount
 	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
 	clients, err := kc.kcClient.GetClients(accessToken, first, max, searchAtt)
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.GeneralError("failed to check the sso client exists: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to check the sso client exists")
 	}
 	for _, client := range clients {
 		acc := api.ServiceAccount{}

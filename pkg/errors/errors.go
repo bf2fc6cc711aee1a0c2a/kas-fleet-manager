@@ -177,43 +177,43 @@ func Find(code ServiceErrorCode) (bool, *ServiceError) {
 
 func Errors() ServiceErrors {
 	return ServiceErrors{
-		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden},
-		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden},
-		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusTooManyRequests},
-		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests},
-		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict},
-		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound},
-		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest},
-		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError},
-		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed},
-		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden},
-		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden},
-		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized},
-		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest},
-		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest},
-		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusBadRequest},
-		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusNotFound},
-		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusNotFound},
-		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest},
-		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest},
-		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest},
-		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest},
-		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest},
-		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest},
-		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict},
-		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError},
-		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest},
-		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden},
-		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusForbidden},
-		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest},
-		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest},
-		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest},
+		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
+		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusTooManyRequests, nil},
+		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
+		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
+		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
+		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed, nil},
+		ServiceError{ErrorUnauthorized, ErrorUnauthorizedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorTermsNotAccepted, ErrorTermsNotAcceptedReason, http.StatusForbidden, nil},
+		ServiceError{ErrorUnauthenticated, ErrorUnauthenticatedReason, http.StatusUnauthorized, nil},
+		ServiceError{ErrorMalformedRequest, ErrorMalformedRequestReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorBadRequest, ErrorBadRequestReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorFailedToParseSearch, ErrorFailedToParseSearchReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorSyncActionNotSupported, ErrorSyncActionNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorFailedToCreateSSOClient, ErrorFailedToCreateSSOClientReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorFailedToGetSSOClientSecret, ErrorFailedToGetSSOClientSecretReason, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToGetSSOClient, ErrorFailedToGetSSOClientReason, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToDeleteSSOClient, ErrorFailedToDeleteSSOClientReason, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToCreateServiceAccount, ErrorFailedToCreateServiceAccountReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorFailedToGetServiceAccount, ErrorFailedToGetServiceAccountReason, http.StatusNotFound, nil},
+		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusNotFound, nil},
+		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict, nil},
+		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
+		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
+		ServiceError{ErrorFailedToCheckQuota, ErrorFailedToCheckQuotaReason, http.StatusForbidden, nil},
+		ServiceError{ErrorMalformedServiceAccountName, ErrorMalformedServiceAccountNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedServiceAccountDesc, ErrorMalformedServiceAccountDescReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedServiceAccountId, ErrorMalformedServiceAccountIdReason, http.StatusBadRequest, nil},
 	}
 }
 
@@ -265,17 +265,25 @@ type ServiceError struct {
 	Reason string
 	// HttopCode is the HttpCode associated with the error when the error is returned as an API response
 	HttpCode int
+	// The original error that is causing the ServiceError, can be used for inspection
+	cause error
 }
 
 // Reason can be a string with format verbs, which will be replace by the specified values
 func New(code ServiceErrorCode, reason string, values ...interface{}) *ServiceError {
+	return NewWithCause(code, nil, reason, values...)
+}
+
+func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...interface{}) *ServiceError {
 	// If the code isn't defined, use the general error code
 	var err *ServiceError
 	exists, err := Find(code)
 	if !exists {
 		glog.Errorf("Undefined error code used: %d", code)
-		err = &ServiceError{ErrorGeneral, "Unspecified error", 500}
+		err = &ServiceError{ErrorGeneral, "Unspecified error", 500, nil}
 	}
+
+	err.cause = cause
 
 	// If the reason is unspecified, use the default
 	if reason != "" {
@@ -285,7 +293,15 @@ func New(code ServiceErrorCode, reason string, values ...interface{}) *ServiceEr
 	return err
 }
 
+// Unwrap returns the original error that caused the ServiceError. Can be used with errors.Unwrap.
+func (e *ServiceError) Unwrap() error {
+	return e.cause
+}
+
 func (e *ServiceError) Error() string {
+	if e.cause != nil {
+		return fmt.Sprintf("%s: %s\n caused by: %s", CodeStr(e.Code), e.Reason, e.cause.Error())
+	}
 	return fmt.Sprintf("%s: %s", CodeStr(e.Code), e.Reason)
 }
 
