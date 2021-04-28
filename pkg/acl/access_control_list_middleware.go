@@ -44,27 +44,22 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 		}
 
 		orgId := auth.GetOrgIdFromClaims(claims)
-		org, _ := middleware.configService.GetOrganisationById(orgId)
-		userAllowedAsOrgMember := org.IsUserAllowed(username)
 
 		if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
-			var userIsAllowed bool
+			// check if user is in the allow list
+			org, _ := middleware.configService.GetOrganisationById(orgId)
+			userIsAnAllowListOrgMember := org.IsUserAllowed(username)
+			_, userIsAnAllowListServiceAccount := middleware.configService.GetServiceAccountByUsername(username)
 
-			if userAllowedAsOrgMember {
-				userIsAllowed = true
-			} else {
-				// check if user is allowed as a service account if they do not belong to an org
-				_, userIsAllowed = middleware.configService.GetServiceAccountByUsername(username)
-			}
-
-			if !userIsAllowed {
+			// If the user is not in the allow list as an org member or service account, they are not authorised
+			if !userIsAnAllowListServiceAccount && !userIsAnAllowListOrgMember {
 				shared.HandleError(r.Context(), w, errors.ErrorForbidden, fmt.Sprintf("User '%s' is not authorized to access the service.", username))
 				return
 			}
 		}
 
-		// If the user is allowed as an organisation member, resources should be filtered by their organisation. Otherwise, filter them by owner.
-		context = auth.SetFilterByOrganisationContext(context, userAllowedAsOrgMember)
+		// If the users claim has an orgId, resources should be filtered by their organisation. Otherwise, filter them by owner.
+		context = auth.SetFilterByOrganisationContext(context, orgId != "")
 		*r = *r.WithContext(context)
 
 		next.ServeHTTP(w, r)

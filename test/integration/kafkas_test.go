@@ -580,6 +580,13 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
+	kafka3 := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-3",
+		MultiAz:       testMultiAZ,
+	}
+
 	// create the first kafka
 	_, resp1, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
 
@@ -632,7 +639,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	externalUserSameOrgAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserSameOrgCtx := h.NewAuthenticatedContext(externalUserSameOrgAccount, nil)
 
-	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka1)
+	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka3)
 	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka2)
 
 	// verify that the first request was accepted
@@ -650,15 +657,12 @@ func TestKafkaAllowList_MaxAllowedInstancesForUserWithoutOrganisation(t *testing
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	// a random organisationId to make sure that it is set in context
-	orgId := "12345688097"
-
 	// the values are taken from config/allow-list-configuration.yaml
 	email1 := "testuser2@example.com"
 	email2 := "testuser3@example.com"
 
-	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, orgId)
-	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, orgId)
+	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, "")
+	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, "")
 
 	ctx1 := h.NewAuthenticatedContext(serviceAccount1, nil)
 	ctx2 := h.NewAuthenticatedContext(serviceAccount2, nil)
