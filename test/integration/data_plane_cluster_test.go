@@ -22,13 +22,6 @@ import (
 )
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
-
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
 	if err != nil {
@@ -39,7 +32,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -67,17 +60,10 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 }
 
 func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID := "test-cluster-id"
@@ -94,17 +80,10 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 }
 
 func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	privateAPIClient := h.NewPrivateAPIClient()
@@ -121,17 +100,10 @@ func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 }
 
 func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	privateAPIClient := h.NewPrivateAPIClient()
@@ -148,17 +120,10 @@ func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 }
 
 func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	privateAPIClient := h.NewPrivateAPIClient()
@@ -175,16 +140,10 @@ func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 }
 
 func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := utils.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -208,10 +167,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
 		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
@@ -322,10 +279,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
 		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
@@ -368,10 +323,8 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	var originalScalingType = new(string)
 	startHook := func(h *test.Helper) {
 		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 
@@ -500,10 +453,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	var originalScalingType *string = new(string)
 	startHook := func(h *test.Helper) {
 		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
 	}
 	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
 		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
 	}
 

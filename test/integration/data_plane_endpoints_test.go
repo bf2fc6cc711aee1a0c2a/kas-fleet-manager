@@ -35,13 +35,7 @@ type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.
 
 func setup(t *testing.T, claims claimsFunc) TestServer {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKasFleetshardSync = false
-	}
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, client, tearDown := test.RegisterIntegration(t, ocmServer)
 
 	clusterId, getClusterErr := utils.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {

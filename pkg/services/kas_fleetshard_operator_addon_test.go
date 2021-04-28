@@ -119,24 +119,13 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 
 func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 	type fields struct {
-		ssoService                KeycloakService
-		fleetshardOperatorEnabled bool
+		ssoService KeycloakService
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		wantErr bool
 	}{
-		{
-			name: "does not error when fleetshard operator feature is turned off",
-			fields: fields{
-				ssoService: &KeycloakServiceMock{
-					DeRegisterKasFleetshardOperatorServiceAccountFunc: nil, // set to nil as it not called
-				},
-				fleetshardOperatorEnabled: false,
-			},
-			wantErr: false,
-		},
 		{
 			name: "receives error during removal of the service account fails when fleetshard operator is turned on",
 			fields: fields{
@@ -145,7 +134,6 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 						return &errors.ServiceError{} // an error is returned
 					},
 				},
-				fleetshardOperatorEnabled: true,
 			},
 			wantErr: true,
 		},
@@ -157,7 +145,6 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 						return nil
 					},
 				},
-				fleetshardOperatorEnabled: true,
 			},
 			wantErr: false,
 		},
@@ -167,12 +154,6 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				ssoService: tt.fields.ssoService,
-				configService: NewConfigService(config.ApplicationConfig{
-					Kafka: &config.KafkaConfig{
-						EnableKasFleetshardSync: tt.fields.fleetshardOperatorEnabled,
-						EnableManagedKafkaCR:    tt.fields.fleetshardOperatorEnabled,
-					},
-				}),
 			}
 			err := agentOperatorAddon.RemoveServiceAccount(api.Cluster{
 				ClusterID: "test-cluster-id",
