@@ -192,11 +192,6 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
-- name: ENABLE_MANAGED_KAFKA_CR
-  displayName: Enable ManagedKafka CR
-  description: Enable the usage of the ManagedKafka CR instead of the Kafka CR
-  value: "false"
-
 - name: KAFKA_CANARY_IMAGE
   displayName: Kafka Canary Image
   description: Specifies a canary image
@@ -322,11 +317,6 @@ parameters:
   displayName: Compute machine type
   description: The compute machine type of each node on a new created cluster.
   value: "m5.4xlarge"
-
-- name: ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC
-  displayName: Enable direct data synchronisation with kas-fleetshard-operator
-  description: Enable direct data synchronisation with kas-fleetshard-operator
-  value: "false"
 
 - name: ENABLE_QUOTA_SERVICE
   displayName: Enable quota service with kas-fleetshard-operator
@@ -701,7 +691,6 @@ objects:
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
-            - --enable-managed-kafka-cr=${ENABLE_MANAGED_KAFKA_CR}
             - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
             - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
@@ -786,7 +775,6 @@ objects:
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
-            - --enable-kas-fleetshard-sync=${ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC}
             - --enable-quota-service=${ENABLE_QUOTA_SERVICE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}

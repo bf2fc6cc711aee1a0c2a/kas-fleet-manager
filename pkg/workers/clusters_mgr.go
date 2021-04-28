@@ -519,39 +519,24 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	isStrimziReady, err := c.reconcileStrimziOperator(provisionedCluster)
-	if err != nil {
+	// Install Strimzi Operator Addon
+	if _, err := c.reconcileStrimziOperator(provisionedCluster); err != nil {
 		return err
 	}
-	isFleetShardReady := true
-	if c.configService.GetConfig().Kafka.EnableManagedKafkaCR || c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		if c.kasFleetshardOperatorAddon != nil {
-			glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
-			if ready, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
-				return errs
-			} else {
-				isFleetShardReady = ready
-			}
-		}
-	}
-	if c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		// if kas-fleetshard sync is enabled, the cluster status will be reported by the kas-fleetshard
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
-		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
-			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-		}
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
-	} else if isStrimziReady && isFleetShardReady {
-		status := api.ClusterReady
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", status, provisionedCluster.ClusterID)
-		if err := c.clusterService.UpdateStatus(provisionedCluster, status); err != nil {
-			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-		}
 
-		// add entry for cluster creation metric
-		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterReady)
+	// Install KAS Fleetshard Operator Addon
+	glog.Infof("Provisioning kas-fleetshard-operator")
+	if _, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
+		return errs
 	}
+
+	// The cluster status will be reported by the kas-fleetshard operator
+	glog.V(5).Infof("Setting cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
+	if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
+		return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+	}
+	metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
+
 	return nil
 }
 
@@ -712,10 +697,9 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clusters
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
 	}
-	// If kas-fleetshard sync is enabled, the external config for the observability will be delivered to the kas-fleetshard directly
-	if !c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		r = append(r, c.buildObservabilityExternalConfigResource())
-	}
+	// The external config for the observability will be delivered to the kas-fleetshard directly
+	r = append(r, c.buildObservabilityExternalConfigResource())
+
 	if s := c.buildImagePullSecret(strimziAddonNamespace); s != nil {
 		r = append(r, s)
 	}
