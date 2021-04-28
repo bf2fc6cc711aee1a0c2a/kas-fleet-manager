@@ -36,7 +36,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			expectCounters: map[string]int{
 				"ready":    0,
 				"failed":   0,
-				"deleted":  0,
+				"deleting": 0,
 				"rejected": 0,
 			},
 		},
@@ -62,8 +62,8 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
 						if status == constants.KafkaRequestStatusReady {
 							c["ready"]++
-						} else if status == constants.KafkaRequestStatusDeleted {
-							c["deleted"]++
+						} else if status == constants.KafkaRequestStatusDeleting {
+							c["deleting"]++
 						} else if status == constants.KafkaRequestStatusFailed {
 							c["failed"]++
 						}
@@ -125,7 +125,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			expectCounters: map[string]int{
 				"ready":    1,
 				"failed":   1,
-				"deleted":  1,
+				"deleting": 1,
 				"rejected": 1,
 			},
 		},
@@ -136,7 +136,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			counter := map[string]int{
 				"ready":    0,
 				"failed":   0,
-				"deleted":  0,
+				"deleting": 0,
 				"rejected": 0,
 			}
 			s := NewDataPlaneKafkaService(tt.kafkaService(counter), tt.clusterService)

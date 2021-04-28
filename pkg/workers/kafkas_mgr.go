@@ -127,17 +127,18 @@ func (k *KafkaManager) reconcile() []error {
 
 	// handle deprovisioning requests
 	// if kas-fleetshard sync is not enabled, the status we should check is constants.KafkaRequestStatusDeprovision as control plane is responsible for deleting the data
-	// otherwise the status should be constants.KafkaRequestStatusDeleted as only at that point the control plane should clean it up
-	deprovisionStatus := constants.KafkaRequestStatusDeprovision
+	// otherwise the status should be constants.KafkaRequestStatusDeleting as only at that point the control plane should clean it up
+	deprovisionStatus := []constants.KafkaStatus{constants.KafkaRequestStatusDeprovision}
 	if k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		deprovisionStatus = constants.KafkaRequestStatusDeleted
+		// List both status to keep backward compatibility. The "deleted" status should be removed soon
+		deprovisionStatus = []constants.KafkaStatus{constants.KafkaRequestStatusDeleting, constants.KafkaRequestStatusDeleted}
 	}
-	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deprovisionStatus)
+	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deprovisionStatus...)
 	if serviceErr != nil {
 		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
 		errors = append(errors, serviceErr)
 	} else {
-		glog.Infof("%s kafkas count = %d", deprovisionStatus.String(), len(deprovisioningRequests))
+		glog.Infof("%s kafkas count = %d", deprovisionStatus[0].String(), len(deprovisioningRequests))
 	}
 
 	for _, kafka := range deprovisioningRequests {
@@ -410,7 +411,7 @@ func (k *KafkaManager) setKafkaStatusCountMetric() []error {
 		constants.KafkaRequestStatusProvisioning,
 		constants.KafkaRequestStatusReady,
 		constants.KafkaRequestStatusDeprovision,
-		constants.KafkaRequestStatusDeleted,
+		constants.KafkaRequestStatusDeleting,
 		constants.KafkaRequestStatusFailed,
 	}
 	var errors []error
