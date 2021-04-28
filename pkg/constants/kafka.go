@@ -21,6 +21,9 @@ const (
 	KafkaRequestStatusFailed KafkaStatus = "failed"
 	// KafkaRequestStatusDeprovision - kafka request status when to be deleted by kafka
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
+	// KafkaRequestStatusDeleting - external resources are being deleted for the kafka request
+	KafkaRequestStatusDeleting KafkaStatus = "deleting"
+	// TODO: remove the deleted status
 	// KafkaRequestStatusDeleted - kafka request is deleted
 	KafkaRequestStatusDeleted KafkaStatus = "deleted"
 
