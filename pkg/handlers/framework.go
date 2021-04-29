@@ -6,6 +6,7 @@ import (
 	"fmt"
 	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/getsentry/sentry-go"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -47,6 +48,7 @@ func handleError(ctx context.Context, w http.ResponseWriter, err *errors.Service
 		ulog.Infof(err.Error())
 	} else {
 		ulog.Errorf(err.Error())
+		sentry.CaptureException(err)
 	}
 	shared.WriteJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
 }
