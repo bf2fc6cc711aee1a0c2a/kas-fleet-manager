@@ -192,34 +192,60 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		}
 	})
 	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
 	var testKafkas = []*api.KafkaRequest{
 		{
-			ClusterID: testServer.ClusterID,
-			MultiAZ:   false,
-			Name:      mockKafkaName1,
-			Status:    constants.KafkaRequestStatusDeprovision.String(),
-			Version:   "2.7.0",
+			ClusterID:           testServer.ClusterID,
+			MultiAZ:             false,
+			Name:                mockKafkaName1,
+			Status:              constants.KafkaRequestStatusDeprovision.String(),
+			BootstrapServerHost: bootstrapServerHost,
+			SsoClientID:         ssoClientID,
+			SsoClientSecret:     ssoSecret,
+			Version:             "2.7.0",
 		},
 		{
-			ClusterID: testServer.ClusterID,
-			MultiAZ:   false,
-			Name:      mockKafkaName2,
-			Status:    constants.KafkaRequestStatusProvisioning.String(),
-			Version:   "2.6.0",
+			ClusterID:           testServer.ClusterID,
+			MultiAZ:             false,
+			Name:                mockKafkaName2,
+			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost: bootstrapServerHost,
+			SsoClientID:         ssoClientID,
+			SsoClientSecret:     ssoSecret,
+			Version:             "2.6.0",
 		},
 		{
-			ClusterID: testServer.ClusterID,
-			MultiAZ:   false,
-			Name:      mockKafkaName3,
-			Status:    constants.KafkaRequestStatusPreparing.String(),
-			Version:   "2.7.1",
+			ClusterID:           testServer.ClusterID,
+			MultiAZ:             false,
+			Name:                mockKafkaName3,
+			Status:              constants.KafkaRequestStatusPreparing.String(),
+			BootstrapServerHost: bootstrapServerHost,
+			SsoClientID:         ssoClientID,
+			SsoClientSecret:     ssoSecret,
+			Version:             "2.7.1",
 		},
 		{
-			ClusterID: testServer.ClusterID,
-			MultiAZ:   false,
-			Name:      mockKafkaName4,
-			Status:    constants.KafkaRequestStatusReady.String(),
-			Version:   "2.7.2",
+			ClusterID:           testServer.ClusterID,
+			MultiAZ:             false,
+			Name:                mockKafkaName4,
+			Status:              constants.KafkaRequestStatusReady.String(),
+			BootstrapServerHost: bootstrapServerHost,
+			SsoClientID:         ssoClientID,
+			SsoClientSecret:     ssoSecret,
+			Version:             "2.7.2",
+		},
+		{
+			ClusterID:           testServer.ClusterID,
+			MultiAZ:             false,
+			Name:                mockKafkaName4,
+			Status:              constants.KafkaRequestStatusFailed.String(),
+			BootstrapServerHost: bootstrapServerHost,
+			SsoClientID:         ssoClientID,
+			SsoClientSecret:     ssoSecret,
+			Version:             "2.7.2",
 		},
 	}
 
@@ -231,10 +257,25 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		return
 	}
 
+	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
+	// kafka failed in preparing state and should not be returned in the list
+	additionalKafka := &api.KafkaRequest{
+		ClusterID: testServer.ClusterID,
+		MultiAZ:   false,
+		Name:      mockKafkaName4,
+		Status:    constants.KafkaRequestStatusFailed.String(),
+		Version:   "2.7.2",
+	}
+
+	if err := db.Save(additionalKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
 	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(len(list.Items)).To(Equal(3))
+	Expect(len(list.Items)).To(Equal(4)) // only count valid Managed Kafka CR
 
 	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
 		for _, item := range slice {

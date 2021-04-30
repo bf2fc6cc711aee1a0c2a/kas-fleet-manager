@@ -32,6 +32,7 @@ import (
 const productId = "RHOSAKTrial"
 
 var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusDeleted.String()}
+var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusFailed.String()}
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
@@ -480,7 +481,17 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 }
 
 func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError) {
-	dbConn := k.connectionFactory.New().Where("cluster_id = ? AND status IN (?)", clusterID, []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusFailed.String()})
+	dbConn := k.connectionFactory.New().
+		Where("cluster_id = ?", clusterID).
+		Where("status IN (?)", kafkaManagedCRStatuses).
+		Where("bootstrap_server_host != ''")
+
+	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
+		dbConn = dbConn.
+			Where("sso_client_id != ''").
+			Where("sso_client_secret != ''")
+	}
+
 	var kafkaRequestList api.KafkaList
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
 		return nil, errors.GeneralError("Unable to list kafka requests %s", err)
