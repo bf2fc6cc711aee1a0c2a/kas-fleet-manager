@@ -367,9 +367,11 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 			kafkaRequest.FailedReason = err.Reason
 			updateErr := k.kafkaService.Update(kafkaRequest)
 			if updateErr != nil {
+				glog.Errorf("Failed to update kafka %s in failed state due to %s. Kafka failed reason %s", kafkaRequest.ID, updateErr.Error(), kafkaRequest.FailedReason)
 				return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
 			}
 			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+			glog.Errorf("Kafka %s is in server error failed state due to %s. Maximum attempts has been reached", kafkaRequest.ID, err.Error())
 			return fmt.Errorf("reached kafka %s max attempts", kafkaRequest.ID)
 		}
 	} else if err.IsClientErrorClass() {
@@ -378,13 +380,16 @@ func (k *KafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRe
 		kafkaRequest.FailedReason = err.Reason
 		updateErr := k.kafkaService.Update(kafkaRequest)
 		if updateErr != nil {
+			glog.Errorf("Failed to update kafka %s in failed state due to %s. Kafka failed reason %s", kafkaRequest.ID, updateErr.Error(), kafkaRequest.FailedReason)
 			return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 		sentry.CaptureException(err)
+		glog.Errorf("Kafka %s is in a client error failed state due to %s. ", kafkaRequest.ID, err.Error())
 		return fmt.Errorf("error creating kafka %s: %w", kafkaRequest.ID, err)
 	}
 
+	glog.Errorf("Kafka %s is in failed state due to %s", kafkaRequest.ID, err.Error())
 	return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafkaRequest.ID, kafkaRequest.ClusterID, err)
 }
 
