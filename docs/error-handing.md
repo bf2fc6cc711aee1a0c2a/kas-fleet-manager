@@ -86,12 +86,3 @@ if err := somefunc(); err != nil {
     return NewWithCause(ErrorGeneral, err, "unexpected error from somefunc()")
 }
 ```
-
-
-
-
-
-
-
-
-
