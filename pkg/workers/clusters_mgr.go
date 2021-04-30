@@ -183,6 +183,23 @@ func (c *ClusterManager) reconcile() []error {
 		}
 	}
 
+	cleanupClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterCleanup)
+	if serviceErr != nil {
+		glog.Errorf("failed to list of cleaup clusters: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
+	}
+
+	for _, cluster := range cleanupClusters {
+		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
+		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
+		if err := c.reconcileCleanupCluster(cluster); err != nil {
+			glog.Errorf("failed to reconcile cleanup cluster %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
+		}
+	}
+
 	acceptedClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterAccepted)
 	if serviceErr != nil {
 		glog.Errorf("failed to list accepted clusters: %s", serviceErr.Error())
@@ -296,27 +313,43 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) err
 		}
 	}
 
-	deleteHttpCode, deleteClusterErr := c.ocmClient.DeleteCluster(cluster.ClusterID)
-	if deleteClusterErr != nil && http.StatusNotFound != deleteHttpCode { // only log other errors by ignoring not found errors
+	code, deleteClusterErr := c.ocmClient.DeleteCluster(cluster.ClusterID)
+	if deleteClusterErr != nil && code != http.StatusNotFound { // only log other errors by ignoring not found errors
 		return deleteClusterErr
 	}
 
+	if code != http.StatusNotFound { // cluster delete request has been approved
+		return nil
+	}
+
+	// cluster has been removed from cluster service. Mark it for cleanup
+	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
+	updateStatusErr := c.clusterService.UpdateStatus(cluster, api.ClusterCleanup)
+	if updateStatusErr != nil {
+		return errors.Wrapf(updateStatusErr, "Failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
+	glog.Infof("Removing Dataplane cluster %s IDP client", cluster.ClusterID)
 	keycloakDeregistrationErr := c.osdIdpKeycloakService.DeRegisterClientInSSO(cluster.ID)
 	if keycloakDeregistrationErr != nil {
-		return keycloakDeregistrationErr
+		return errors.Wrapf(keycloakDeregistrationErr, "Failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
 	}
 
+	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
 	serviceAcountRemovalErr := c.kasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
 	if serviceAcountRemovalErr != nil {
-		return serviceAcountRemovalErr
+		return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)
 	}
 
-	// delete the db entry should be done at last to ensure things are cleaned up properly
-	deleteClusterFromDbErr := c.clusterService.DeleteByClusterID(cluster.ClusterID)
-	if deleteClusterFromDbErr != nil {
-		return deleteClusterFromDbErr
+	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
+	deleteError := c.clusterService.DeleteByClusterID(cluster.ClusterID)
+	if deleteError != nil {
+		return errors.Wrapf(deleteError, "Failed to soft delete Dataplance cluster %s from the database", cluster.ClusterID)
 	}
-
 	return nil
 }
 
