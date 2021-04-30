@@ -609,6 +609,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 		if findClusterByIdErr != nil {
 			return false, findClusterByIdErr
 		}
+
 		return clusterFromDb == nil, nil // cluster has been deleted
 	})
 
