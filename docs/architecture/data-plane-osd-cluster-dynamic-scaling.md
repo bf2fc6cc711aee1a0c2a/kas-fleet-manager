@@ -158,10 +158,10 @@ Once all of these conditions are met, it is safe to assume that deletion
 of `clusterA` shall not lead to any disruption of service and subsequently it's 
 status is changed to *deprovisioning*. 
 
-A call is then made to OCM to delete it. 
-`clusterA` is then *soft deleted* from from the database.
-`clusterA`'s external dependencies are then removed: 
-This step consists of removing the keycloak client created for this cluster's IDP along with removing the kas-fleetshard-operator service account.
+A call is then made to OCM to delete it. Once the cluster has been completely removed from OCM, 
+`clusterA`'s external dependencies are then removed. In this step, we are removing the keycloak 
+client created for this cluster's IDP along with removing the kas-fleetshard-operator service 
+account. At the end, `clusterA` is then *soft deleted* from from the database.
 
 ## OSD Cluster Scale-Up criteria and value calculation
 
