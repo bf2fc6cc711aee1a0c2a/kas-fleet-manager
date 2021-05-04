@@ -145,70 +145,6 @@ func TestKafkaManager_reconcileProvisionedKafka(t *testing.T) {
 			expectedKafkaStatus: constants.KafkaRequestStatusPreparing,
 		},
 		{
-			name: "error when updating kafka status fails",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return true, errors.GeneralError("test")
-					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
-					},
-				},
-				keycloakService: &services.KeycloakServiceMock{
-					IsKafkaClientExistFunc: func(clientId string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
-					},
-				},
-				observatoriumService: &services.ObservatoriumServiceMock{
-					GetKafkaStateFunc: func(name string, namespaceName string) (observatorium.KafkaState, error) {
-						return observatorium.KafkaState{}, nil
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
-			},
-			args: args{
-				kafka: &api.KafkaRequest{},
-			},
-			wantErr: true,
-		},
-		{
-			name: "error when kafka being provisioned does not exist in the DB before creation",
-			fields: fields{
-				kafkaService: &services.KafkaServiceMock{
-					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return false, nil
-					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, errors.NotFound("Not Found")
-					},
-				},
-				keycloakService: &services.KeycloakServiceMock{
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
-			},
-			args: args{
-				kafka: &api.KafkaRequest{},
-			},
-			wantErr: true,
-		},
-		{
 			name: "successful reconcile",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
@@ -575,8 +511,8 @@ func TestKafkaManager_reconcileProvisioningKafka(t *testing.T) {
 					CreateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
-						return true, nil
+					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+						return nil
 					},
 					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
 						return &api.KafkaRequest{}, nil

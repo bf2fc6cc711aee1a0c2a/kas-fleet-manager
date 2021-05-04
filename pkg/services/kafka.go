@@ -198,6 +198,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
 		SsoClientID:         kafkaRequest.SsoClientID,
 		SsoClientSecret:     kafkaRequest.SsoClientSecret,
+		Status:              constants.KafkaRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.GeneralError("failed to update kafka request: %v", err)
@@ -524,7 +525,7 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 		return true, errors.GeneralError("failed to update status: %s", err.Error())
 	} else {
 		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
-			// only allow to chnage the status to "deleted" if the cluster is already in "deprovision" status
+			// only allow to change the status to "deleted" if the cluster is already in "deprovision" status
 			if status != constants.KafkaRequestStatusDeleting && status != constants.KafkaRequestStatusDeleted {
 				return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
 			}
