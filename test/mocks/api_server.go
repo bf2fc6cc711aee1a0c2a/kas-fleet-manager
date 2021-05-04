@@ -430,7 +430,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 		EndpointKafkaDelete:              buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:              buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:             buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterDelete:            buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterDelete:            buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),
 		EndpointClusterSyncsetsPost:      buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetGet:        buildMockRequestHandler(MockSyncset, nil),
 		EndpointClusterSyncsetPatch:      buildMockRequestHandler(MockSyncset, nil),
