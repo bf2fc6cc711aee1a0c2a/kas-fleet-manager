@@ -2,6 +2,7 @@ package ocm
 
 import (
 	"fmt"
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
@@ -150,7 +151,7 @@ func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) 
 	providersCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders()
 	providersResponse, err := providersCollection.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.Wrap(err, "error retrieving cloud provider list")
 	}
 	cloudProviderList := providersResponse.Items()
 	return cloudProviderList, nil
@@ -160,7 +161,7 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	regionsCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders().CloudProvider(provider.ID()).Regions()
 	regionsResponse, err := regionsCollection.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.Wrap(err, "error retrieving cloud region list")
 	}
 
 	regionList := regionsResponse.Items()
