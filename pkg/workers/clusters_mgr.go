@@ -144,25 +144,6 @@ func (c *ClusterManager) reconcile() []error {
 		errors = append(errors, err)
 	}
 
-	// reconcile the status of existing clusters in a non-ready state
-	glog.Infoln("reconcile cloud providers and regions")
-	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
-	if err != nil {
-		glog.Error("Error retrieving cloud providers and regions", err)
-		errors = append(errors, err)
-	}
-
-	for _, cloudProvider := range cloudProviders {
-		// TODO add "|| provider.ID() == GcpCloudProviderID" to support GCP in the future
-		if cloudProvider.ID == AWSCloudProviderID {
-			cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
-				regionName := region.ID()
-				glog.V(10).Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
-				return true
-			})
-		}
-	}
-
 	if err := c.reconcileClustersForRegions(); err != nil {
 		glog.Errorf("failed to reconcile clusters by Region: %s", err.Error())
 		errors = append(errors, err)
@@ -566,9 +547,9 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 	return false, nil
 }
 
-// reconcileClusterWithConfig reconciles clusters with the config file
-// A new clusters will be registered if it is not yet in the database
-// A cluster will be deprovisioned if it is in database but not in config file
+// reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
+// New clusters will be registered if it is not yet in the database.
+// A cluster will be deprovisioned if it is in the database but not in the config file.
 func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
 		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
@@ -637,7 +618,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	return nil
 }
 
-// reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
+// reconcileClustersForRegions creates an OSD cluster for each supported cloud provider and region where no cluster exists.
 func (c *ClusterManager) reconcileClustersForRegions() error {
 	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		return nil
