@@ -1,11 +1,11 @@
 package workers
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
@@ -106,25 +106,27 @@ func (k *AcceptedKafkaManager) reconcile() []error {
 func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
 	cluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
 	if err != nil {
-		return fmt.Errorf("failed to find cluster for kafka request %s: %w", kafka.ID, err)
+		return errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
 	}
-	if cluster != nil {
-		kafka.ClusterID = cluster.ClusterID
-		if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId == "" {
-			err := k.reconcileQuota(kafka)
-			if err != nil {
-				return err
-			}
-		}
 
-		glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
-
-		kafka.Status = constants.KafkaRequestStatusPreparing.String()
-		if err2 := k.kafkaService.Update(kafka); err2 != nil {
-			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafka.ID, err2)
-		}
-	} else {
+	if cluster == nil {
 		glog.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
+		return nil
+	}
+
+	kafka.ClusterID = cluster.ClusterID
+	if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId == "" {
+		err := k.reconcileQuota(kafka)
+		if err != nil {
+			return err
+		}
+	}
+
+	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
+
+	kafka.Status = constants.KafkaRequestStatusPreparing.String()
+	if err2 := k.kafkaService.Update(kafka); err2 != nil {
+		return errors.Wrapf(err2, "failed to update kafka %s with cluster details", kafka.ID)
 	}
 	return nil
 }
@@ -134,13 +136,13 @@ func (k *AcceptedKafkaManager) reconcileQuota(kafka *api.KafkaRequest) error {
 	// external_cluster_id and cluster_id both should be mapped with kafka ID.
 	isAllowed, subscriptionId, err := k.quotaService.ReserveQuota("RHOSAKTrial", kafka.ID, kafka.ID, kafka.Owner, true, "single")
 	if err != nil {
-		return fmt.Errorf("failed to check quota for %s: %s", kafka.ID, err.Error())
+		return errors.Wrapf(err, "failed to check quota for %s", kafka.ID)
 	}
 	if !isAllowed {
 		kafka.FailedReason = "Insufficient quota"
 		kafka.Status = constants.KafkaRequestStatusFailed.String()
 		if err := k.kafkaService.Update(kafka); err != nil {
-			return fmt.Errorf("failed to update kafka %s to status: %s", kafka.ID, err)
+			return errors.Wrapf(err, "failed to update kafka %s to status", kafka.ID)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 
