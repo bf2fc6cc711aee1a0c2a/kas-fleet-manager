@@ -50,6 +50,7 @@ const (
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
+	ipdAlreadyCreatedErrorToCheck   = "Kafka_SRE already exists"
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -983,6 +984,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	if cluster.IdentityProviderID != "" {
 		return nil
 	}
+
 	// identity provider not yet created, let's create a new one
 	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
@@ -1002,6 +1004,24 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	}
 	createdIdentityProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
 	if createIdentityProviderErr != nil {
+		// check to see if identity provider with name 'Kafka_SRE' already exists, if so use it.
+		if strings.Contains(createIdentityProviderErr.Error(), ipdAlreadyCreatedErrorToCheck) {
+			identityProvidersList, identityProviderListErr := c.ocmClient.GetIdentityProviderList(cluster.ClusterID)
+			if identityProviderListErr != nil {
+				return errors.Errorf("failed to get list of identity providers for cluster with clusterId %s", cluster.ClusterID)
+			}
+
+			for _, identityProvider := range identityProvidersList.Slice() {
+				if identityProvider.Name() == openIDIdentityProviderName {
+					addIdpToClusterErr := c.clusterService.AddIdentityProviderID(cluster.ClusterID, identityProvider.ID())
+					if addIdpToClusterErr != nil {
+						return errors.Errorf("failed to add identity provider %v to cluster with clusterId %s", identityProvider.Name(), cluster.ClusterID)
+					}
+					glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
+					return nil
+				}
+			}
+		}
 		return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
 	}
 	addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentityProvider.ID())
