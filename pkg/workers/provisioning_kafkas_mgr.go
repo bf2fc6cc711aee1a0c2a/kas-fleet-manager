@@ -1,12 +1,12 @@
 package workers
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
@@ -113,15 +113,16 @@ func (k *ProvisioningKafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRe
 	}
 	kafkaState, err := k.observatoriumService.GetKafkaState(kafka.Name, namespace)
 	if err != nil {
-		sentry.CaptureException(fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err))
-		return fmt.Errorf("failed to get state from observatorium for kafka %s namespace %s cluster %s: %w", kafka.ID, namespace, kafka.ClusterID, err)
+		wrappedErr := errors.Wrapf(err, "failed to get state from observatorium for kafka %s namespace %s cluster %s", kafka.ID, namespace, kafka.ClusterID)
+		sentry.CaptureException(wrappedErr)
+		return wrappedErr
 	}
 	if kafkaState.State == observatorium.ClusterStateReady {
 		glog.Infof("Kafka %s state %s", kafka.ID, kafkaState.State)
 		kafka.Status = constants.KafkaRequestStatusReady.String()
 		err := k.kafkaService.Update(kafka)
 		if err != nil {
-			return fmt.Errorf("failed to update kafka %s to status ready: %w", kafka.ID, err)
+			return errors.Wrapf(err, "failed to update kafka %s to status ready", kafka.ID)
 		}
 
 		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
@@ -129,8 +130,6 @@ func (k *ProvisioningKafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRe
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationCreate)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
-
-		return nil
 	}
 	glog.V(1).Infof("reconciled kafka %s state %s", kafka.ID, kafkaState.State)
 	return nil

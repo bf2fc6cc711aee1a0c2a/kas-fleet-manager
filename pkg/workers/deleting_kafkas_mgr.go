@@ -1,10 +1,10 @@
 package workers
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
@@ -109,11 +109,11 @@ func (k *DeletingKafkaManager) reconcile() []error {
 func (k *DeletingKafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {
 	if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId != "" {
 		if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
-			return fmt.Errorf("failed to delete subscription id %s for kafka %s : %w", kafka.SubscriptionId, kafka.ID, err)
+			return errors.Wrapf(err, "failed to delete subscription id %s for kafka %s", kafka.SubscriptionId, kafka.ID)
 		}
 	}
 	if err := k.kafkaService.Delete(kafka); err != nil {
-		return fmt.Errorf("failed to delete kafka %s: %w", kafka.ID, err)
+		return errors.Wrapf(err, "failed to delete kafka %s", kafka.ID)
 	}
 	return nil
 }
