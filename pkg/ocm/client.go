@@ -43,6 +43,7 @@ type Client interface {
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
+	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
@@ -319,6 +320,19 @@ func (c client) UpdateIdentityProvider(clusterID string, identityProviderID stri
 		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update identity provider '%s': %s", identityProviderID, identityProviderErr)
 	}
 	return response.Body(), err
+}
+
+func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+	clusterResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, getIDPErr := clusterResource.Cluster(clusterID).
+		IdentityProviders().
+		List().
+		Send()
+
+	if getIDPErr != nil {
+		return nil, errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
+	}
+	return response.Items(), nil
 }
 
 func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
