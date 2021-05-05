@@ -70,6 +70,9 @@ var _ Client = &ClientMock{}
 // 			GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
 // 				panic("mock out the GetExistingClusterMetrics method")
 // 			},
+// 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+// 				panic("mock out the GetIdentityProviderList method")
+// 			},
 // 			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 // 				panic("mock out the GetRegions method")
 // 			},
@@ -154,6 +157,9 @@ type ClientMock struct {
 
 	// GetExistingClusterMetricsFunc mocks the GetExistingClusterMetrics method.
 	GetExistingClusterMetricsFunc func(clusterID string) (*amsv1.SubscriptionMetrics, error)
+
+	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
+	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
@@ -281,6 +287,11 @@ type ClientMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
+		// GetIdentityProviderList holds details about calls to the GetIdentityProviderList method.
+		GetIdentityProviderList []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// GetRegions holds details about calls to the GetRegions method.
 		GetRegions []struct {
 			// Provider is the provider argument value.
@@ -364,6 +375,7 @@ type ClientMock struct {
 	lockGetClusterIngresses        sync.RWMutex
 	lockGetClusterStatus           sync.RWMutex
 	lockGetExistingClusterMetrics  sync.RWMutex
+	lockGetIdentityProviderList    sync.RWMutex
 	lockGetRegions                 sync.RWMutex
 	lockGetRequiresTermsAcceptance sync.RWMutex
 	lockGetSyncSet                 sync.RWMutex
@@ -922,6 +934,37 @@ func (mock *ClientMock) GetExistingClusterMetricsCalls() []struct {
 	mock.lockGetExistingClusterMetrics.RLock()
 	calls = mock.calls.GetExistingClusterMetrics
 	mock.lockGetExistingClusterMetrics.RUnlock()
+	return calls
+}
+
+// GetIdentityProviderList calls GetIdentityProviderListFunc.
+func (mock *ClientMock) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+	if mock.GetIdentityProviderListFunc == nil {
+		panic("ClientMock.GetIdentityProviderListFunc: method is nil but Client.GetIdentityProviderList was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockGetIdentityProviderList.Lock()
+	mock.calls.GetIdentityProviderList = append(mock.calls.GetIdentityProviderList, callInfo)
+	mock.lockGetIdentityProviderList.Unlock()
+	return mock.GetIdentityProviderListFunc(clusterID)
+}
+
+// GetIdentityProviderListCalls gets all the calls that were made to GetIdentityProviderList.
+// Check the length with:
+//     len(mockedClient.GetIdentityProviderListCalls())
+func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockGetIdentityProviderList.RLock()
+	calls = mock.calls.GetIdentityProviderList
+	mock.lockGetIdentityProviderList.RUnlock()
 	return calls
 }
 
