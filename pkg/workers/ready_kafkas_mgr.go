@@ -1,10 +1,10 @@
 package workers
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
@@ -108,11 +108,11 @@ func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.Kafk
 		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		secret, err := k.keycloakService.GetKafkaClientSecret(kafkaRequest.SsoClientID)
 		if err != nil {
-			return fmt.Errorf("failed to get sso client id & secret for kafka cluster: %s: %w", kafkaRequest.SsoClientID, err)
+			return errors.Wrapf(err, "failed to get sso client id & secret for kafka cluster: %s", kafkaRequest.SsoClientID)
 		}
 		kafkaRequest.SsoClientSecret = secret
 		if err = k.kafkaService.Update(kafkaRequest); err != nil {
-			return fmt.Errorf("failed to update kafka %s with cluster details: %w", kafkaRequest.ID, err)
+			return errors.Wrapf(err, "failed to update kafka %s with cluster details", kafkaRequest.ID)
 		}
 	}
 	return nil

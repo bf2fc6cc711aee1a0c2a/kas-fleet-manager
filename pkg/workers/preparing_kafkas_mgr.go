@@ -1,19 +1,19 @@
 package workers
 
 import (
-	"fmt"
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
+
+	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 // PreparingKafkaManager represents a kafka manager that periodically reconciles kafka requests
@@ -108,7 +108,7 @@ func (k *PreparingKafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) 
 	return nil
 }
 
-func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRequest, err *errors.ServiceError) error {
+func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRequest, err *serviceErr.ServiceError) error {
 	if err.IsServerErrorClass() {
 		// retry the kafka creation request only if the failure is caused by server errors
 		// and the time elapsed since its db record was created is still within the threshold.
@@ -119,12 +119,10 @@ func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *ap
 			kafkaRequest.FailedReason = err.Reason
 			updateErr := k.kafkaService.Update(kafkaRequest)
 			if updateErr != nil {
-				glog.Errorf("Failed to update kafka %s in failed state due to %s. Kafka failed reason %s", kafkaRequest.ID, updateErr.Error(), kafkaRequest.FailedReason)
-				return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
+				return errors.Wrapf(updateErr, "Failed to update kafka %s in failed state. Kafka failed reason %s", kafkaRequest.ID, kafkaRequest.FailedReason)
 			}
 			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
-			glog.Errorf("Kafka %s is in server error failed state due to %s. Maximum attempts has been reached", kafkaRequest.ID, err.Error())
-			return fmt.Errorf("reached kafka %s max attempts", kafkaRequest.ID)
+			return errors.Wrapf(err, "Kafka %s is in server error failed state. Maximum attempts has been reached", kafkaRequest.ID)
 		}
 	} else if err.IsClientErrorClass() {
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
@@ -132,15 +130,12 @@ func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *ap
 		kafkaRequest.FailedReason = err.Reason
 		updateErr := k.kafkaService.Update(kafkaRequest)
 		if updateErr != nil {
-			glog.Errorf("Failed to update kafka %s in failed state due to %s. Kafka failed reason %s", kafkaRequest.ID, updateErr.Error(), kafkaRequest.FailedReason)
-			return fmt.Errorf("failed to update kafka %s: %w", kafkaRequest.ID, err)
+			return errors.Wrapf(err, "Failed to update kafka %s in failed state", kafkaRequest.ID)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 		sentry.CaptureException(err)
-		glog.Errorf("Kafka %s is in a client error failed state due to %s. ", kafkaRequest.ID, err.Error())
-		return fmt.Errorf("error creating kafka %s: %w", kafkaRequest.ID, err)
+		return errors.Wrapf(err, "error creating kafka %s", kafkaRequest.ID)
 	}
 
-	glog.Errorf("Kafka %s is in failed state due to %s", kafkaRequest.ID, err.Error())
-	return fmt.Errorf("failed to create kafka %s on cluster %s: %w", kafkaRequest.ID, kafkaRequest.ClusterID, err)
+	return errors.Wrapf(err, "failed to create kafka %s on cluster %s", kafkaRequest.ID, kafkaRequest.ClusterID)
 }
