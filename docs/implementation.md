@@ -35,19 +35,22 @@ requests, to obtain a short-lived token run:
 ocm token
 ```
 
-## Kafka Worker
+## Kafka Workers
 
-The Kafka Worker is responsible for reconciling Kafka resources requested by an end-user on to a
-cluster and updating the status of the Kafka resource to reflect it's current progress. It will
-periodically reconcile on all pending Kafka resources, attempt to find a valid OpenShift cluster to
-fit it's requirements (cloud provider, region, etc.) and provision a Kafka instance to the cluster.
+The Kafka Workers are responsible for reconciling Kafkas as requested by an end-user. 
+There are currently six kafka workers:
+- `kafka_mgr.go` responsible for reconciling kafka metrics and performing cleanup of trial kafkas, and cleanup of kafkas of denied owners. 
+- `deleting_kafka_mgr.go` responsible for handling the deletion of kafkas e.g removing resources like AWS Route53 entry, Keycloak secrets client
+- `accepted_kafka_mgr.go` responsible for checking if user is within Quota before provisioning a kafka. Afterwards, it will periodically reconcile on all pending Kafka resources, attempt to find a valid OpenShift cluster to fit it's requirements (cloud provider, region, etc.) and provision a Kafka instance to the cluster. Once a suitable Dataplane cluster has been found, we'll update the status of the Kafka resource to reflect it's current progress. 
+- `preparing_kafka_mgr.go` responsible for creating external resources e.g AWS Route53 DNS, Keycloak authentication secrets 
+- `provisioned_kafka_mgr.go` responsible for checking if a provisioned kafka is ready as reported by the fleetshard-operator
+- `ready_kafka_mgr` responsible for reconciling external resources of a ready kafka e.g keycloak client and secret
 
-Once the Kafka Worker has set up a Kafka resource, it will mark the Kafka request status as
-`ready`.
+Once the Kafka Workers have set up a Kafka resource, the status of the Kafka request will be `ready`.
+If provisioning of a kafka fails, the status will be `failed` and a failed reason will be capture in the database. 
+A deleted kafka has a final state of `deleting`, and it will appear in the database as a soft deleted record with a `deleted_at` timestamp different from `NULL`. 
 
-The end-user has no way to directly interact with the Kafka worker, management of Kafka resources
-should be handled through the REST API.
-
+The end-user has no way to directly interact with the Kafka worker, management of Kafka resources should be handled through the REST API.
 ## Cluster Worker
 
 The Cluster Worker is responsible for reconciling OpenShift clusters and ensuring they are in a

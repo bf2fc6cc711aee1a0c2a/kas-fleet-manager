@@ -980,12 +980,13 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
-	// Check status of soft deleted kafka request. Status should not be 'deprovision'
+	// Check status of soft deleted kafka request.
 	db := h.Env().DBFactory.New()
 	var kafkaRequest api.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find soft deleted kafka request")
 	}
+
 	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
 }
 

@@ -69,27 +69,32 @@ func runServe(cmd *cobra.Command, args []string) {
 	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
 	workerList = append(workerList, clusterManager)
 
-	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
-
 	// creates kafka worker
 	kafkaService := environments.Environment().Services.Kafka
 	observatoriumService := environments.Environment().Services.Observatorium
 	quotaService := environments.Environment().Services.Quota
 	clusterPlmtStrategy := env.Services.ClusterPlmtStrategy
 
-	//set Unique Id for each work to facilitate Leader Election process
-	kafkaManager := workers.NewKafkaManager(kafkaService, ocmClient, uuid.New().String(), keycloakService, observatoriumService, configService, quotaService, clusterPlmtStrategy)
-	workerList = append(workerList, kafkaManager)
+	//create kafka manager per type and assign them a Unique Id for each work to facilitate Leader Election process
+	kafkaManager := workers.NewKafkaManager(kafkaService, uuid.New().String(), configService)
+	acceptedKafkaManager := workers.NewAcceptedKafkaManager(kafkaService, uuid.New().String(), configService, quotaService, clusterPlmtStrategy)
+	preparingKafkaManager := workers.NewPreparingKafkaManager(kafkaService, uuid.New().String())
+	deletingKafkaManager := workers.NewDeletingKafkaManager(kafkaService, uuid.New().String(), configService, quotaService)
+	provisioningKafkaManager := workers.NewProvisioningKafkaManager(kafkaService, uuid.New().String(), observatoriumService, configService)
+	readyKafkaManager := workers.NewReadyKafkaManager(kafkaService, uuid.New().String(), keycloakService, configService)
+	workerList = append(workerList, kafkaManager, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
 
 	// add the connector manager worker
-	workerList = append(workerList, workers.NewConnectorManager(
+	connectorManager := workers.NewConnectorManager(
 		uuid.New().String(),
 		env.Services.ConnectorTypes,
 		env.Services.Connectors,
 		env.Services.ConnectorCluster,
 		env.Services.Observatorium,
 		env.Services.Vault,
-	))
+	)
+
+	workerList = append(workerList, connectorManager)
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
 	leaderElectionManager := workers.NewLeaderElectionManager(workerList, env.DBFactory)
