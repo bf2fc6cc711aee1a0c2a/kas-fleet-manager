@@ -988,6 +988,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return identityProvider, fmt.Errorf("some error")
 					},
 					UpdateIdentityProviderFunc: nil, // setting to nil because it won't be called
+					GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+						return nil, nil
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
@@ -1041,6 +1044,40 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			name: "should update identity provider from the idp list if the identity provider has already been already created",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					CreateIdentityProviderFunc: nil, // setting it to nil to make sure it not called
+					UpdateIdentityProviderFunc: func(clusterID, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+						return identityProvider, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+				osdIdpKeycloakService: &services.KeycloakServiceMock{
+					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
+						return "secret", nil
+					},
+					GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+						return &config.KeycloakRealmConfig{
+							ValidIssuerURI: "https://foo.bar",
+						}
+					},
+				},
+			},
+			arg: api.Cluster{
+				Meta: api.Meta{
+					ID: "cluster-id",
+				},
+				IdentityProviderID: "some-cluster-identityy-provider-id",
+			},
+		},
+
 		{
 			name: "should update identity provider when the identity provider has already been already created",
 			fields: fields{
@@ -1102,7 +1139,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				Meta: api.Meta{
 					ID: "cluster-id",
 				},
-				IdentityProviderID: "some-cluster-identityy-provider-id",
+				IdentityProviderID: "some-cluster-identity-provider-id",
 			},
 			wantErr: false,
 		},
