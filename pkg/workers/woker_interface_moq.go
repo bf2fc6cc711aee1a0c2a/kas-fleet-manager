@@ -335,7 +335,7 @@ func (mock *WorkerMock) StopCalls() []struct {
 }
 
 // reconcile calls reconcileFunc.
-func (mock *WorkerMock) reconcile() []error {
+func (mock *WorkerMock) Reconcile() []error {
 	if mock.reconcileFunc == nil {
 		panic("WorkerMock.reconcileFunc: method is nil but Worker.reconcile was just called")
 	}

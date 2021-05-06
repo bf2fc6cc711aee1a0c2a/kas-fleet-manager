@@ -1,9 +1,10 @@
-package workers
+package kafka_mgrs
 
 import (
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -23,7 +24,7 @@ type DeletingKafkaManager struct {
 	quotaService  services.QuotaService
 	imStop        chan struct{}
 	syncTeardown  sync.WaitGroup
-	reconciler    Reconciler
+	reconciler    workers.Reconciler
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
@@ -74,7 +75,7 @@ func (c *DeletingKafkaManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *DeletingKafkaManager) reconcile() []error {
+func (k *DeletingKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling deleting kafkas")
 	var errors []error
 

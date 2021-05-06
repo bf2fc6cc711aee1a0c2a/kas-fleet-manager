@@ -1,10 +1,11 @@
-package workers
+package kafka_mgrs
 
 import (
 	"sync"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -24,7 +25,7 @@ type AcceptedKafkaManager struct {
 	quotaService        services.QuotaService
 	imStop              chan struct{}
 	syncTeardown        sync.WaitGroup
-	reconciler          Reconciler
+	reconciler          workers.Reconciler
 	clusterPlmtStrategy services.ClusterPlacementStrategy
 }
 
@@ -77,7 +78,7 @@ func (c *AcceptedKafkaManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *AcceptedKafkaManager) reconcile() []error {
+func (k *AcceptedKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling accepted kafkas")
 	var errors []error
 
