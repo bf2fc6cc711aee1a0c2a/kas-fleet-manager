@@ -1,9 +1,10 @@
-package workers
+package kafka_mgrs
 
 import (
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -25,7 +26,7 @@ type ReadyKafkaManager struct {
 	configService   services.ConfigService
 	imStop          chan struct{}
 	syncTeardown    sync.WaitGroup
-	reconciler      Reconciler
+	reconciler      workers.Reconciler
 }
 
 // NewReadyKafkaManager creates a new kafka manager
@@ -76,7 +77,7 @@ func (c *ReadyKafkaManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *ReadyKafkaManager) reconcile() []error {
+func (k *ReadyKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling ready kafkas")
 	if !k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
 		return nil

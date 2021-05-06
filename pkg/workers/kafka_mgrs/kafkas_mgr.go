@@ -1,4 +1,4 @@
-package workers
+package kafka_mgrs
 
 import (
 	"sync"
@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -21,7 +22,7 @@ type KafkaManager struct {
 	configService services.ConfigService
 	imStop        chan struct{}
 	syncTeardown  sync.WaitGroup
-	reconciler    Reconciler
+	reconciler    workers.Reconciler
 }
 
 // NewKafkaManager creates a new kafka manager
@@ -71,7 +72,7 @@ func (c *KafkaManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *KafkaManager) reconcile() []error {
+func (k *KafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling kafkas")
 	var errors []error
 
