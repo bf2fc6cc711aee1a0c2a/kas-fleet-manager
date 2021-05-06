@@ -13,6 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -84,7 +85,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	Expect(len(*metricsList)).NotTo(Equal(0), "Should return length greater then zero")
 
 	// Delete created kafkas
-	deleteTestKafka(ctx, client, seedKafka.Id)
+	deleteTestKafka(h, ctx, client, "", seedKafka.Id)
 }
 
 func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
@@ -116,6 +117,21 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
+
+	// Wait until Kafka is in a provisioning state before updating to 'ready'
+	err = common.Poll(kafkaCheckInterval, kafkaReadyTimeout, func(attempt, maxRetries int) (done bool, err error) {
+		kafka, _, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return kafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+	}, nil, func(attempt, maxRetries int, err error) error {
+		if err != nil {
+			return err
+		}
+		return common.UpdateAllKafkaRequestStatus(h, clusterID)
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka status", err)
 
 	var foundKafka openapi.KafkaRequest
 	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
@@ -155,7 +171,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
-	deleteTestKafka(ctx, client, foundKafka.Id)
+	deleteTestKafka(h, ctx, client, clusterID, foundKafka.Id)
 }
 func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -186,6 +202,21 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
+
+	// Wait until Kafka is in a provisioning state before updating to 'ready'
+	err = common.Poll(kafkaCheckInterval, kafkaReadyTimeout, func(attempt, maxRetries int) (done bool, err error) {
+		kafka, _, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return kafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+	}, nil, func(attempt, maxRetries int, err error) error {
+		if err != nil {
+			return err
+		}
+		return common.UpdateAllKafkaRequestStatus(h, clusterID)
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka status", err)
 
 	var foundKafka openapi.KafkaRequest
 	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
@@ -225,5 +256,5 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
-	deleteTestKafka(ctx, client, foundKafka.Id)
+	deleteTestKafka(h, ctx, client, clusterID, foundKafka.Id)
 }

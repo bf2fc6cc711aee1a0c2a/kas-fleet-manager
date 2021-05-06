@@ -235,6 +235,6 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	Expect(searchNameInv.Items[0].Name).NotTo(Equal(mockKafkaName1))
 
 	for _, kafkaReq := range populatedKafkaList.Items {
-		deleteTestKafka(ctx, client, kafkaReq.Id)
+		deleteTestKafka(h, ctx, client, clusterID, kafkaReq.Id)
 	}
 }

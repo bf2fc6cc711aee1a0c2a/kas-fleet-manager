@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
@@ -43,7 +43,6 @@ const (
 // - kafka worker picks up on creation job
 // - cluster is found for kafka
 // - kafka is assigned cluster
-// - kafka becomes ready once syncset is created
 func TestKafkaCreate_Success(t *testing.T) {
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
@@ -91,8 +90,21 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
 
-	// wait until the kafka goes into a ready state
-	// the timeout here assumes a backing cluster has already been provisioned
+	// Wait until Kafka is in a provisioning state before updating to 'ready'
+	err = common.Poll(kafkaCheckInterval, kafkaReadyTimeout, func(attempt, maxRetries int) (done bool, err error) {
+		kafka, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return kafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+	}, nil, func(attempt, maxRetries int, err error) error {
+		if err != nil {
+			return err
+		}
+		return common.UpdateAllKafkaRequestStatus(h, clusterID)
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka status", err)
+
 	var foundKafka openapi.KafkaRequest
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
@@ -117,18 +129,17 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	db := h.Env().DBFactory.New()
 	var kafkaRequest api.KafkaRequest
-	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
+	if err := db.Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find kafka request")
 	}
 	Expect(kafkaRequest.SsoClientID).To(BeEmpty())
 	Expect(kafkaRequest.SsoClientSecret).To(BeEmpty())
 
-	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
 
 	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(ctx, client, foundKafka.Id)
+	deleteTestKafka(h, ctx, client, clusterID, foundKafka.Id)
 }
 
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
@@ -799,6 +810,21 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
 
+	// Wait until Kafka is in a provisioning state before updating to 'ready'
+	err = common.Poll(kafkaCheckInterval, kafkaReadyTimeout, func(attempt, maxRetries int) (done bool, err error) {
+		kafka, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return kafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+	}, nil, func(attempt, maxRetries int, err error) error {
+		if err != nil {
+			return err
+		}
+		return common.UpdateAllKafkaRequestStatus(h, clusterID)
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka status", err)
+
 	var foundKafka openapi.KafkaRequest
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
@@ -820,6 +846,9 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+
+	err = common.UpdateAllKafkaRequestStatus(h, clusterID)
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka request status")
 
 	// wait for kafka to be deleted
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
@@ -1054,6 +1083,21 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 
+	// Wait until Kafka is in a provisioning state before updating to 'ready'
+	err = common.Poll(kafkaCheckInterval, kafkaReadyTimeout, func(attempt, maxRetries int) (done bool, err error) {
+		kafka, _, err := client.DefaultApi.GetKafkaById(initCtx, kafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return kafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+	}, nil, func(attempt, maxRetries int, err error) error {
+		if err != nil {
+			return err
+		}
+		return common.UpdateAllKafkaRequestStatus(h, clusterID)
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka status", err)
+
 	var foundKafka openapi.KafkaRequest
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
 		foundKafka, _, err = client.DefaultApi.GetKafkaById(initCtx, kafka.Id)
@@ -1071,7 +1115,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 
 	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(initCtx, client, foundKafka.Id)
+	deleteTestKafka(h, initCtx, client, clusterID, foundKafka.Id)
 }
 
 // TestKafkaList_Success tests getting kafka requests list
@@ -1118,6 +1162,21 @@ func TestKafkaList_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
+
+	// Wait until Kafka is in a provisioning state before updating to 'ready'
+	err = common.Poll(kafkaCheckInterval, kafkaReadyTimeout, func(attempt, maxRetries int) (done bool, err error) {
+		kafka, _, err := client.DefaultApi.GetKafkaById(initCtx, seedKafka.Id)
+		if err != nil {
+			return true, err
+		}
+		return kafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
+	}, nil, func(attempt, maxRetries int, err error) error {
+		if err != nil {
+			return err
+		}
+		return common.UpdateAllKafkaRequestStatus(h, clusterID)
+	})
+	Expect(err).NotTo(HaveOccurred(), "Failed to update kafka status", err)
 
 	var foundKafka openapi.KafkaRequest
 	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
@@ -1196,7 +1255,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
 
 	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(initCtx, client, foundKafka.Id)
+	deleteTestKafka(h, initCtx, client, clusterID, foundKafka.Id)
 }
 
 // TestKafkaList_InvalidToken - tests listing kafkas with invalid token
@@ -1219,9 +1278,15 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	Expect(kafkaRequests.Total).To(Equal(int32(0)), "Expected Total == 0")
 }
 
-func deleteTestKafka(ctx context.Context, client *openapi.APIClient, kafkaID string) {
+func deleteTestKafka(h *test.Helper, ctx context.Context, client *openapi.APIClient, clusterID, kafkaID string) {
 	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+
+	// Only call update kafka status endpoint if kafka has been assigned to a cluster
+	if clusterID != "" {
+		err = common.UpdateAllKafkaRequestStatus(h, clusterID)
+		Expect(err).NotTo(HaveOccurred(), "Failed to update kafka request status via agent endpoint: %v", err)
+	}
 
 	// wait for kafka to be deleted
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {

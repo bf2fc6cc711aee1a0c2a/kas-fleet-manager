@@ -389,3 +389,44 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *openapi.DataPla
 		},
 	}
 }
+
+// Updates all current processable Kafka requests via the agent cluster endpoint.
+// If the Kafka request has a deprovisioning status, update it to 'deleted' to mimic Kafka deletion in the data plane cluster.
+// If the Kafka request has any other status (provisioning, failed and ready) update its status to 'ready'.
+func UpdateAllKafkaRequestStatus(h *test.Helper, clusterID string) error {
+	ctx := NewAuthenticatedContextForDataPlaneCluster(h, clusterID)
+	privateClient := h.NewPrivateAPIClient()
+
+	kafkaList, _, err := privateClient.AgentClustersApi.GetKafkas(ctx, clusterID)
+	if err != nil {
+		return err
+	}
+
+	kafkaStatusList := make(map[string]openapi.DataPlaneKafkaStatus)
+	for _, kafka := range kafkaList.Items {
+		id := kafka.Metadata.Annotations.Bf2OrgId
+		if kafka.Spec.Deleted {
+			kafkaStatusList[id] = openapi.DataPlaneKafkaStatus{
+				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
+					{
+						Type:   "Ready",
+						Reason: "Deleted",
+					},
+				},
+			}
+		} else {
+			// Update any other clusters not in a 'deprovisioning' state to 'ready'
+			kafkaStatusList[id] = openapi.DataPlaneKafkaStatus{
+				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
+					{
+						Type:   "Ready",
+						Status: "True",
+					},
+				},
+			}
+		}
+	}
+
+	_, err = privateClient.AgentClustersApi.UpdateKafkaClusterStatus(ctx, clusterID, kafkaStatusList)
+	return err
+}
