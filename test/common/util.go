@@ -38,10 +38,11 @@ func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.C
 			}
 			return foundCluster.Status.String() == expectedStatus.String(), nil
 		}).Build().Poll()
+
 	return err
 }
 
-// GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster.
+// GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster in a 'ready' state.
 // If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
 // If no such file is present, new cluster is created and its clusterID is retrieved.
@@ -59,67 +60,72 @@ func GetOSDClusterIDAndWaitForStatus(h *test.Helper, t *testing.T, expectedStatu
 // If no such file is present, new cluster is created and its clusterID is retrieved.
 // If expectedStatus is not nil then it will wait until expectedStatus is reached.
 func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterStatus) (string, *ocmErrors.ServiceError) {
-	var clusterID string
+	var foundCluster *api.Cluster
+	var err *ocmErrors.ServiceError
+
+	// get cluster details from persisted cluster file when running against a non-emulated server
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
-		clusterID, _ = readClusterDetailsFromFile(h, t)
+		clusterID, _ := readClusterDetailsFromFile(h, t)
+		foundCluster, err = h.Env().Services.Cluster.FindClusterByID(clusterID)
+		if err != nil {
+			return "", err
+		}
 	}
+
+	// get cluster details from database when running against an emulated server
 	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
-		// first check if there is an existing valid cluster that we can use
-		foundCluster, err := findFirstValidCluster(h)
+		foundCluster, err = findFirstValidCluster(h)
 		if err != nil {
 			return "", err
 		}
-		if foundCluster == nil {
-			// create a new cluster
-			_, err := h.Env().Services.Cluster.Create(&api.Cluster{
-				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-				Region:        mocks.MockCluster.Region().ID(),
-				MultiAZ:       mocks.MockMultiAZ,
-			})
-			if err != nil {
-				return "", err
-			}
-			// need to wait for it to be assigned
-			waitErr := NewPollerBuilder().
-				IntervalAndTimeout(1*time.Second, 5*time.Minute).
-				RetryLogMessage("Waiting for ID to be assigned to the new cluster").
-				OnRetry(func(attempt int, maxRetries int) (bool, error) {
-					c, findErr := findFirstValidCluster(h)
-					if findErr != nil {
-						return false, findErr
-					}
-					foundCluster = c
-					return foundCluster != nil && foundCluster.ClusterID != "", nil
-				}).Build().Poll()
-
-			if waitErr != nil {
-				return "", ocmErrors.GeneralError("error to find a valid cluster: %v", waitErr)
-			}
-		}
-		clusterID = foundCluster.ClusterID
 	}
 
-	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-		foundCluster, err := findFirstValidCluster(h)
+	// No existing cluster found
+	if foundCluster == nil {
+		// create a new cluster
+		_, err := h.Env().Services.Cluster.Create(&api.Cluster{
+			CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+			Region:        mocks.MockCluster.Region().ID(),
+			MultiAZ:       mocks.MockMultiAZ,
+		})
 		if err != nil {
 			return "", err
 		}
-		if foundCluster == nil {
-			return "", nil
+
+		// need to wait for it to be assigned
+		waitErr := NewPollerBuilder().
+			IntervalAndTimeout(1*time.Second, 5*time.Minute).
+			RetryLogMessage("Waiting for ID to be assigned to the new cluster").
+			OnRetry(func(attempt int, maxRetries int) (bool, error) {
+				c, findErr := findFirstValidCluster(h)
+				if findErr != nil {
+					return false, findErr
+				}
+				foundCluster = c
+				return foundCluster != nil && foundCluster.ClusterID != "", nil
+			}).Build().Poll()
+
+		if waitErr != nil {
+			return "", ocmErrors.GeneralError("error to find a valid cluster: %v", waitErr)
 		}
-		pErr := PersistClusterStruct(*foundCluster)
-		if pErr != nil {
-			t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
+
+		// Only persist new cluster if executing against real ocm
+		if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+			pErr := PersistClusterStruct(*foundCluster)
+			if pErr != nil {
+				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
+			}
 		}
 	}
 
 	if expectedStatus != nil {
-		err := waitForClusterStatus(h, clusterID, *expectedStatus)
+		err := waitForClusterStatus(h, foundCluster.ClusterID, *expectedStatus)
 		if err != nil {
-			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", clusterID, *expectedStatus, err)
+			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", foundCluster.ClusterID, *expectedStatus, err)
 		}
 	}
-	return clusterID, nil
+
+	return foundCluster.ClusterID, nil
 }
 
 func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceError) {
