@@ -13,6 +13,7 @@ import (
 	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
@@ -44,10 +45,10 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
-	clusterStatusUpdateRequest := sampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest := common.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
@@ -68,7 +69,7 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	defer tearDown()
 
 	testDataPlaneclusterID := "test-cluster-id"
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
@@ -155,7 +156,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 		t.Fatalf("Cluster not found")
 	}
 
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 	config, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -255,7 +256,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// before enabling the dynamic scaling logic
 	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
@@ -302,7 +303,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	// enable dynamic autoscaling
 	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
@@ -358,7 +359,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	// enable auto scaling
 	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
@@ -477,7 +478,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(count).To(Equal(int64(initialExpectedOSDClusters)))
 
-	ctx := newAuthenticatedContexForDataPlaneCluster(h, testDataPlaneclusterID)
+	ctx := common.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
@@ -567,21 +568,6 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }
 
-func newAuthenticatedContexForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
-	account := h.NewAllowedServiceAccount()
-	claims := jwt.MapClaims{
-		"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
-		"realm_access": map[string][]string{
-			"roles": {"kas_fleetshard_operator"},
-		},
-		"kas-fleetshard-operator-cluster-id": clusterID,
-	}
-	token := h.CreateJWTStringWithClaim(account, claims)
-	ctx := context.WithValue(context.Background(), openapi.ContextAccessToken, token)
-
-	return ctx
-}
-
 func newAuthContextWithNotAllowedRoleForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
@@ -608,44 +594,6 @@ func newAuthContextWithNotAllowedClusterIDForDataPlaneCluster(h *test.Helper) co
 	ctx := context.WithValue(context.Background(), openapi.ContextAccessToken, token)
 
 	return ctx
-}
-
-func sampleDataPlaneclusterStatusRequestWithAvailableCapacity() *openapi.DataPlaneClusterUpdateStatusRequest {
-	return &openapi.DataPlaneClusterUpdateStatusRequest{
-		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
-			openapi.DataPlaneClusterUpdateStatusRequestConditions{
-				Type:   "Ready",
-				Status: "True",
-			},
-		},
-		Total: openapi.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			Connections:                   &[]int32{1000000}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-			Partitions:                    &[]int32{1000000}[0],
-		},
-		NodeInfo: openapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
-			Ceiling:                &[]int32{20}[0],
-			Floor:                  &[]int32{3}[0],
-			Current:                &[]int32{5}[0],
-			CurrentWorkLoadMinimum: &[]int32{3}[0],
-		},
-		Remaining: openapi.DataPlaneClusterUpdateStatusRequestTotal{
-			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
-			Partitions:                    &[]int32{1000000}[0],
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-		},
-		ResizeInfo: openapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
-			NodeDelta: &[]int32{3}[0],
-			Delta: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
-				Connections:                   &[]int32{10000}[0],
-				Partitions:                    &[]int32{10000}[0],
-				IngressEgressThroughputPerSec: &[]string{"test"}[0],
-				DataRetentionSize:             &[]string{"test"}[0],
-			},
-		},
-	}
 }
 
 // sampleValidBaseDataPlaneClusterStatusRequest returns a valid

@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,14 +11,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -25,8 +30,19 @@ const (
 	testClusterPath = "test_cluster.json"
 )
 
-func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.ClusterStatus) error {
-	err := wait.PollImmediate(1*time.Second, 120*time.Minute, func() (bool, error) {
+func waitForClusterStatus(h *test.Helper, t *testing.T, clusterID string, expectedStatus api.ClusterStatus) error {
+	if expectedStatus == api.ClusterReady {
+		clusterReadyInterval := 2 * time.Minute
+		clusterReadyTimeout := 3 * time.Hour
+		if h.Env().Config.OCM.EnableMock {
+			clusterReadyInterval = 1 * time.Second
+			clusterReadyTimeout = 5 * time.Minute
+		}
+		if err := WaitForAndUpdateOSDClusterStatusToReady(h, t, clusterID, clusterReadyInterval, clusterReadyTimeout); err != nil {
+			return err
+		}
+	}
+	return wait.PollImmediate(1*time.Second, 120*time.Minute, func() (bool, error) {
 		foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
 		if err != nil {
 			return true, err
@@ -36,13 +52,12 @@ func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.C
 		}
 		return foundCluster.Status.String() == expectedStatus.String(), nil
 	})
-	return err
 }
 
 func Poll(interval time.Duration, timeout time.Duration,
 	onRetry func(attempt int, maxRetries int) (done bool, err error),
 	onStart func(maxRetries int) error,
-	onFinish func(attempt int, maxRetries int, err error)) error {
+	onFinish func(attempt int, maxRetries int, err error) error) error {
 	if onRetry == nil {
 		return fmt.Errorf("no retry handler has been specified")
 	}
@@ -62,13 +77,13 @@ func Poll(interval time.Duration, timeout time.Duration,
 	})
 
 	if onFinish != nil {
-		onFinish(attempt, maxAttempts, err)
+		return onFinish(attempt, maxAttempts, err)
 	}
 
 	return err
 }
 
-// GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster.
+// GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster in a 'ready' state.
 // If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
 // If no such file is present, new cluster is created and its clusterID is retrieved.
@@ -86,58 +101,130 @@ func GetOSDClusterIDAndWaitForStatus(h *test.Helper, t *testing.T, expectedStatu
 // If no such file is present, new cluster is created and its clusterID is retrieved.
 // If expectedStatus is not nil then it will wait until expectedStatus is reached.
 func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterStatus) (string, *ocmErrors.ServiceError) {
-	var clusterID string
-	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
-		clusterID, _ = readClusterDetailsFromFile(h, t)
-	}
 	var foundCluster *api.Cluster
 	var err *ocmErrors.ServiceError
+
+	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
+		clusterID, _ := readClusterDetailsFromFile(h, t)
+		foundCluster, err = h.Env().Services.Cluster.FindClusterByID(clusterID)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		// first check if there is an existing valid cluster that we can use
 		foundCluster, err = findFirstValidCluster(h)
 		if err != nil {
 			return "", err
 		}
-		if foundCluster == nil {
-			// create a new cluster
-			_, err := h.Env().Services.Cluster.Create(&api.Cluster{
-				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-				Region:        mocks.MockCluster.Region().ID(),
-				MultiAZ:       mocks.MockMultiAZ,
-			})
-			if err != nil {
-				return "", err
-			}
-			// need to wait for it to be assigned
-			waitErr := wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
-				c, findErr := findFirstValidCluster(h)
-				if findErr != nil {
-					return false, findErr
-				}
-				foundCluster = c
-				return foundCluster != nil && foundCluster.ClusterID != "", nil
-			})
-			if waitErr != nil {
-				return "", ocmErrors.GeneralError("error to find a valid cluster: %v", waitErr)
-			}
-		}
-		clusterID = foundCluster.ClusterID
 	}
 
-	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-		pErr := PersistClusterStruct(*foundCluster)
-		if pErr != nil {
-			t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
+	// No existing cluster found
+	if foundCluster == nil {
+		// create a new cluster
+		_, err := h.Env().Services.Cluster.Create(&api.Cluster{
+			CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+			Region:        mocks.MockCluster.Region().ID(),
+			MultiAZ:       mocks.MockMultiAZ,
+		})
+		if err != nil {
+			return "", err
+		}
+		// need to wait for it to be assigned
+		waitErr := wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
+			c, findErr := findFirstValidCluster(h)
+			if findErr != nil {
+				return false, findErr
+			}
+			foundCluster = c
+			return foundCluster != nil && foundCluster.ClusterID != "", nil
+		})
+		if waitErr != nil {
+			return "", ocmErrors.GeneralError("error to find a valid cluster: %v", waitErr)
+		}
+
+		// Only persist new cluster if executing against real ocm
+		if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+			pErr := PersistClusterStruct(*foundCluster)
+			if pErr != nil {
+				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
+			}
 		}
 	}
 
 	if expectedStatus != nil {
-		err := waitForClusterStatus(h, clusterID, *expectedStatus)
+		err := waitForClusterStatus(h, t, foundCluster.ClusterID, *expectedStatus)
 		if err != nil {
-			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", clusterID, *expectedStatus, err)
+			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", foundCluster.ClusterID, *expectedStatus, err)
 		}
 	}
-	return clusterID, nil
+
+	return foundCluster.ClusterID, nil
+}
+
+// Waits for the terraforming to be complete and updates the status of the OSD cluster once it's deemed to be 'ready'.
+//
+// An OSD cluster is deemed 'ready' when the managed-kafka and kas-fleetshard-operator addon have been installed.
+// Since the cluster agent cannot talk to the integration tests directly, this sends a request to the /agent-clusters/{id}/status endpoint to update
+// the status of the OSD cluster in the database.
+func WaitForAndUpdateOSDClusterStatusToReady(h *test.Helper, t *testing.T, clusterID string, interval time.Duration, timeout time.Duration) error {
+	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
+	return Poll(interval, timeout, func(attempt int, maxAttempts int) (bool, error) {
+		cluster, svcErr := h.Env().Services.Cluster.FindClusterByID(clusterID)
+		if svcErr != nil {
+			return true, fmt.Errorf("failed to get cluster details (id: %s) from the database: %v", clusterID, svcErr)
+		}
+
+		if osdClusterCanProcessStatusReports(cluster.Status) {
+			managedKafkaAddon, err := ocmClient.GetAddon(clusterID, api.ManagedKafkaAddonID)
+			if err != nil {
+				return true, fmt.Errorf("failed to get '%s' addon: %v", api.ManagedKafkaAddonID, err)
+			}
+
+			kasFleetShardOperatorAddon, err := ocmClient.GetAddon(clusterID, api.KasFleetshardOperatorAddonId)
+			if err != nil {
+				return true, fmt.Errorf("failed to get '%s' addon: %v", api.KasFleetshardOperatorAddonId, err)
+			}
+
+			if managedKafkaAddon.State() == clustersmgmtv1.AddOnInstallationStateReady &&
+				kasFleetShardOperatorAddon.State() == clustersmgmtv1.AddOnInstallationStateReady {
+				return true, nil
+			}
+		}
+
+		t.Logf("%d/%d - Waiting for terraforming to complete for cluster '%s'", attempt, maxAttempts, clusterID)
+		return false, nil
+	}, func(maxAttempts int) error {
+		t.Logf("Waiting for cluster '%s' to be ready. Max Attempts: %d, Interval Duration: %d", clusterID, maxAttempts, interval)
+		return nil
+	}, func(attempt, maxAttempts int, err error) error {
+		if err != nil {
+			return err
+		}
+
+		t.Logf("%d/%d - Finished waiting for cluster '%s' to be ready", attempt, maxAttempts, clusterID)
+
+		// Call endpoint to update cluster status to 'ready'
+		ctx := NewAuthenticatedContextForDataPlaneCluster(h, clusterID)
+		privateAPIClient := h.NewPrivateAPIClient()
+		clusterStatusUpdateRequest := SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+		if _, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, clusterID, *clusterStatusUpdateRequest); err != nil {
+			return fmt.Errorf("failed to update cluster status via agent endpoint: %v", err)
+		}
+		return nil
+	})
+}
+
+// Returns true/false whether an OSD cluster can process status reports. If false, status updates to the agent cluster endpoint will not be applied.
+func osdClusterCanProcessStatusReports(clusterStatus api.ClusterStatus) bool {
+	if clusterStatus == api.ClusterReady ||
+		clusterStatus == api.ClusterComputeNodeScalingUp ||
+		clusterStatus == api.ClusterFull ||
+		clusterStatus == api.ClusterWaitingForKasFleetShardOperator {
+		return true
+	}
+	return false
 }
 
 func findFirstValidCluster(h *test.Helper) (*api.Cluster, *ocmErrors.ServiceError) {
@@ -246,4 +333,59 @@ func CheckMetricExposed(h *test.Helper, t *testing.T, metric string) {
 func CheckMetric(h *test.Helper, t *testing.T, metric string, exist bool) {
 	resp := getMetrics(t)
 	Expect(strings.Contains(resp, metric)).To(Equal(exist))
+}
+
+// Returns an authenticated context to be used for calling the data plane endpoints
+func NewAuthenticatedContextForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
+	account := h.NewAllowedServiceAccount()
+	claims := jwt.MapClaims{
+		"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+		"realm_access": map[string][]string{
+			"roles": {"kas_fleetshard_operator"},
+		},
+		"kas-fleetshard-operator-cluster-id": clusterID,
+	}
+	token := h.CreateJWTStringWithClaim(account, claims)
+	ctx := context.WithValue(context.Background(), openapi.ContextAccessToken, token)
+
+	return ctx
+}
+
+// Returns a sample data plane cluster status request with available capacity
+func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *openapi.DataPlaneClusterUpdateStatusRequest {
+	return &openapi.DataPlaneClusterUpdateStatusRequest{
+		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Status: "True",
+			},
+		},
+		Total: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+			IngressEgressThroughputPerSec: &[]string{"test"}[0],
+			Connections:                   &[]int32{1000000}[0],
+			DataRetentionSize:             &[]string{"test"}[0],
+			Partitions:                    &[]int32{1000000}[0],
+		},
+		NodeInfo: openapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
+			Ceiling:                &[]int32{20}[0],
+			Floor:                  &[]int32{3}[0],
+			Current:                &[]int32{5}[0],
+			CurrentWorkLoadMinimum: &[]int32{3}[0],
+		},
+		Remaining: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
+			Partitions:                    &[]int32{1000000}[0],
+			IngressEgressThroughputPerSec: &[]string{"test"}[0],
+			DataRetentionSize:             &[]string{"test"}[0],
+		},
+		ResizeInfo: openapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
+			NodeDelta: &[]int32{3}[0],
+			Delta: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
+				Connections:                   &[]int32{10000}[0],
+				Partitions:                    &[]int32{10000}[0],
+				IngressEgressThroughputPerSec: &[]string{"test"}[0],
+				DataRetentionSize:             &[]string{"test"}[0],
+			},
+		},
+	}
 }
