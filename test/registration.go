@@ -31,6 +31,11 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, startHo
 	helper := NewHelper(t, server)
 	if startHook != nil {
 		startHook(helper)
+		// Ensure services are reloaded in case a config change in the start hook changes the way
+		// a service is loaded (i.e. cluster placement strategy service)
+		if err := helper.Env().LoadServices(); err != nil {
+			t.Fatal("failed to reload services")
+		}
 	}
 	if server != nil && helper.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		helper.SetServer(server)
