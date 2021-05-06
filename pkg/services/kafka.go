@@ -510,11 +510,14 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 }
 
 func (k *kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-	dbConn := k.connectionFactory.New()
+	dbConn := k.connectionFactory.New().
+		Model(kafkaRequest).
+		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
 
-	if err := dbConn.Model(kafkaRequest).Updates(kafkaRequest).Error; err != nil {
+	if err := dbConn.Updates(kafkaRequest).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
 	}
+
 	return nil
 }
 
