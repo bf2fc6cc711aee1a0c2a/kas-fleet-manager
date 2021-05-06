@@ -1,4 +1,4 @@
-package workers
+package kafka_mgrs
 
 import (
 	"testing"
