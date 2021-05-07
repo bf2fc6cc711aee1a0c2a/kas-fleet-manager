@@ -1042,7 +1042,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "should update identity provider from the idenetity providers list if the identity provider has already been already created in cluster service",
+			name: "should update identity provider from the identity providers list if the identity provider has already been already created in cluster service",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
