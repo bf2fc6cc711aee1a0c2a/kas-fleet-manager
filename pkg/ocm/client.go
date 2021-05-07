@@ -2,6 +2,7 @@ package ocm
 
 import (
 	"fmt"
+
 	pkgerrors "github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -42,7 +43,6 @@ type Client interface {
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
-	UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
@@ -302,22 +302,6 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 	var err error
 	if identityProviderErr != nil {
 		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to create identity provider: %s", identityProviderErr)
-	}
-	return response.Body(), err
-}
-
-func (c client) UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
-	response, identityProviderErr := clustersResource.Cluster(clusterID).
-		IdentityProviders().
-		IdentityProvider(identityProviderID).
-		Update().
-		Body(identityProvider).
-		Send()
-
-	var err error
-	if identityProviderErr != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update identity provider '%s': %s", identityProviderID, identityProviderErr)
 	}
 	return response.Body(), err
 }
