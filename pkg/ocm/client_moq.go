@@ -94,9 +94,6 @@ var _ Client = &ClientMock{}
 // 			UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the UpdateAddonParameters method")
 // 			},
-// 			UpdateIdentityProviderFunc: func(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-// 				panic("mock out the UpdateIdentityProvider method")
-// 			},
 // 			UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the UpdateSyncSet method")
 // 			},
@@ -181,9 +178,6 @@ type ClientMock struct {
 
 	// UpdateAddonParametersFunc mocks the UpdateAddonParameters method.
 	UpdateAddonParametersFunc func(clusterId string, addonId string, parameters []AddonParameter) (*clustersmgmtv1.AddOnInstallation, error)
-
-	// UpdateIdentityProviderFunc mocks the UpdateIdentityProvider method.
-	UpdateIdentityProviderFunc func(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
 
 	// UpdateSyncSetFunc mocks the UpdateSyncSet method.
 	UpdateSyncSetFunc func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
@@ -339,15 +333,6 @@ type ClientMock struct {
 			// Parameters is the parameters argument value.
 			Parameters []AddonParameter
 		}
-		// UpdateIdentityProvider holds details about calls to the UpdateIdentityProvider method.
-		UpdateIdentityProvider []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// IdentityProviderID is the identityProviderID argument value.
-			IdentityProviderID string
-			// IdentityProvider is the identityProvider argument value.
-			IdentityProvider *clustersmgmtv1.IdentityProvider
-		}
 		// UpdateSyncSet holds details about calls to the UpdateSyncSet method.
 		UpdateSyncSet []struct {
 			// ClusterID is the clusterID argument value.
@@ -383,7 +368,6 @@ type ClientMock struct {
 	lockScaleUpComputeNodes        sync.RWMutex
 	lockSetComputeNodes            sync.RWMutex
 	lockUpdateAddonParameters      sync.RWMutex
-	lockUpdateIdentityProvider     sync.RWMutex
 	lockUpdateSyncSet              sync.RWMutex
 }
 
@@ -1206,45 +1190,6 @@ func (mock *ClientMock) UpdateAddonParametersCalls() []struct {
 	mock.lockUpdateAddonParameters.RLock()
 	calls = mock.calls.UpdateAddonParameters
 	mock.lockUpdateAddonParameters.RUnlock()
-	return calls
-}
-
-// UpdateIdentityProvider calls UpdateIdentityProviderFunc.
-func (mock *ClientMock) UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-	if mock.UpdateIdentityProviderFunc == nil {
-		panic("ClientMock.UpdateIdentityProviderFunc: method is nil but Client.UpdateIdentityProvider was just called")
-	}
-	callInfo := struct {
-		ClusterID          string
-		IdentityProviderID string
-		IdentityProvider   *clustersmgmtv1.IdentityProvider
-	}{
-		ClusterID:          clusterID,
-		IdentityProviderID: identityProviderID,
-		IdentityProvider:   identityProvider,
-	}
-	mock.lockUpdateIdentityProvider.Lock()
-	mock.calls.UpdateIdentityProvider = append(mock.calls.UpdateIdentityProvider, callInfo)
-	mock.lockUpdateIdentityProvider.Unlock()
-	return mock.UpdateIdentityProviderFunc(clusterID, identityProviderID, identityProvider)
-}
-
-// UpdateIdentityProviderCalls gets all the calls that were made to UpdateIdentityProvider.
-// Check the length with:
-//     len(mockedClient.UpdateIdentityProviderCalls())
-func (mock *ClientMock) UpdateIdentityProviderCalls() []struct {
-	ClusterID          string
-	IdentityProviderID string
-	IdentityProvider   *clustersmgmtv1.IdentityProvider
-} {
-	var calls []struct {
-		ClusterID          string
-		IdentityProviderID string
-		IdentityProvider   *clustersmgmtv1.IdentityProvider
-	}
-	mock.lockUpdateIdentityProvider.RLock()
-	calls = mock.calls.UpdateIdentityProvider
-	mock.lockUpdateIdentityProvider.RUnlock()
 	return calls
 }
 
