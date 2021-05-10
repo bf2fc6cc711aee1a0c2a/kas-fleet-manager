@@ -123,7 +123,7 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (c *ClusterManager) reconcile() []error {
+func (c *ClusterManager) Reconcile() []error {
 	glog.Infoln("reconciling clusters")
 	var errors []error
 

@@ -1,12 +1,13 @@
 package integration
 
 import (
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"testing"
-	"time"
 )
 
 const (
@@ -21,7 +22,7 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	// wait and valida all workers are started.
+	// wait and validate all workers are started.
 	var clusterState bool
 	err := wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
 		clusterState = h.ClusterWorker.IsRunning()
@@ -30,11 +31,20 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
 	Expect(clusterState).To(Equal(true))
 
-	var kafkaState bool
+	kafkaState := false
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		kafkaState = h.KafkaWorker.IsRunning()
+		if len(h.KafkaWorkers) < 1 {
+			return false, nil
+		}
+		for _, worker := range h.KafkaWorkers {
+			if !worker.IsRunning() {
+				return false, nil
+			}
+		}
+		kafkaState = true
 		return kafkaState, nil
 	})
+
 	Expect(err).NotTo(HaveOccurred(), "", kafkaState, err)
 	Expect(kafkaState).To(Equal(true))
 

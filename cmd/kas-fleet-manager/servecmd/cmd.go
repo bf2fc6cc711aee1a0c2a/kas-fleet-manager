@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers/kafka_mgrs"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -69,27 +70,32 @@ func runServe(cmd *cobra.Command, args []string) {
 	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
 	workerList = append(workerList, clusterManager)
 
-	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
-
 	// creates kafka worker
 	kafkaService := environments.Environment().Services.Kafka
 	observatoriumService := environments.Environment().Services.Observatorium
 	quotaService := environments.Environment().Services.Quota
 	clusterPlmtStrategy := env.Services.ClusterPlmtStrategy
 
-	//set Unique Id for each work to facilitate Leader Election process
-	kafkaManager := workers.NewKafkaManager(kafkaService, ocmClient, uuid.New().String(), keycloakService, observatoriumService, configService, quotaService, clusterPlmtStrategy)
-	workerList = append(workerList, kafkaManager)
+	//create kafka manager per type and assign them a Unique Id for each work to facilitate Leader Election process
+	kafkaManager := kafka_mgrs.NewKafkaManager(kafkaService, uuid.New().String(), configService)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(kafkaService, uuid.New().String(), configService, quotaService, clusterPlmtStrategy)
+	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(kafkaService, uuid.New().String())
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(kafkaService, uuid.New().String(), configService, quotaService)
+	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(kafkaService, uuid.New().String(), observatoriumService, configService)
+	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(kafkaService, uuid.New().String(), keycloakService, configService)
+	workerList = append(workerList, kafkaManager, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
 
 	// add the connector manager worker
-	workerList = append(workerList, workers.NewConnectorManager(
+	connectorManager := workers.NewConnectorManager(
 		uuid.New().String(),
 		env.Services.ConnectorTypes,
 		env.Services.Connectors,
 		env.Services.ConnectorCluster,
 		env.Services.Observatorium,
 		env.Services.Vault,
-	))
+	)
+
+	workerList = append(workerList, connectorManager)
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
 	leaderElectionManager := workers.NewLeaderElectionManager(workerList, env.DBFactory)

@@ -3,8 +3,9 @@ package workers
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"sync"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -78,7 +79,7 @@ func (c *ConnectorManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (k *ConnectorManager) reconcile() []error {
+func (k *ConnectorManager) Reconcile() []error {
 	glog.V(5).Infoln("reconciling connectors")
 	var errs []error
 
