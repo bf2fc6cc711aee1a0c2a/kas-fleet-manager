@@ -129,6 +129,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 			Provider: "aws",
 			Region:   "us-east-1",
 			MultiAZ:  true,
+			Status:   api.ClusterReady,
 		})
 
 		if svcErr != nil {

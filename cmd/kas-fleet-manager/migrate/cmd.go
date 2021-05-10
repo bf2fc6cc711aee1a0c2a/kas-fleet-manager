@@ -4,7 +4,6 @@ import (
 	"flag"
 
 	"github.com/golang/glog"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/spf13/cobra"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"

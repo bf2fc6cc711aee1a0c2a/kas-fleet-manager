@@ -50,6 +50,7 @@ const (
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
+	ipdAlreadyCreatedErrorToCheck   = "Kafka_SRE already exists"
 )
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -122,7 +123,7 @@ func (c *ClusterManager) SetIsRunning(val bool) {
 	c.isRunning = val
 }
 
-func (c *ClusterManager) reconcile() []error {
+func (c *ClusterManager) Reconcile() []error {
 	glog.Infoln("reconciling clusters")
 	var errors []error
 
@@ -179,6 +180,23 @@ func (c *ClusterManager) reconcile() []error {
 		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterDeprovisioning)
 		if err := c.reconcileDeprovisioningCluster(cluster); err != nil {
 			glog.Errorf("failed to reconcile deprovisioning cluster %s: %s", cluster.ID, err.Error())
+			errors = append(errors, err)
+		}
+	}
+
+	cleanupClusters, serviceErr := c.clusterService.ListByStatus(api.ClusterCleanup)
+	if serviceErr != nil {
+		glog.Errorf("failed to list of cleaup clusters: %s", serviceErr.Error())
+		errors = append(errors, serviceErr)
+	} else {
+		glog.Infof("cleanup clusters count = %d", len(cleanupClusters))
+	}
+
+	for _, cluster := range cleanupClusters {
+		glog.V(10).Infof("cleanup cluster ClusterID = %s", cluster.ClusterID)
+		metrics.UpdateClusterStatusSinceCreatedMetric(cluster, api.ClusterCleanup)
+		if err := c.reconcileCleanupCluster(cluster); err != nil {
+			glog.Errorf("failed to reconcile cleanup cluster %s: %s", cluster.ID, err.Error())
 			errors = append(errors, err)
 		}
 	}
@@ -260,16 +278,17 @@ func (c *ClusterManager) reconcile() []error {
 	for _, readyCluster := range readyClusters {
 		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
+		var recErr error
 		if c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
-			emptyClusterReconciled, err = c.reconcileEmptyCluster(readyCluster)
+			emptyClusterReconciled, recErr = c.reconcileEmptyCluster(readyCluster)
 		}
-		if !emptyClusterReconciled && err == nil {
-			err = c.reconcileReadyCluster(readyCluster)
+		if !emptyClusterReconciled && recErr == nil {
+			recErr = c.reconcileReadyCluster(readyCluster)
 		}
 
-		if err != nil {
-			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, err.Error())
-			errors = append(errors, err)
+		if recErr != nil {
+			glog.Errorf("failed to reconcile ready cluster %s: %s", readyCluster.ClusterID, recErr.Error())
+			errors = append(errors, recErr)
 			continue
 		}
 	}
@@ -296,27 +315,43 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster api.Cluster) err
 		}
 	}
 
-	deleteHttpCode, deleteClusterErr := c.ocmClient.DeleteCluster(cluster.ClusterID)
-	if deleteClusterErr != nil && http.StatusNotFound != deleteHttpCode { // only log other errors by ignoring not found errors
+	code, deleteClusterErr := c.ocmClient.DeleteCluster(cluster.ClusterID)
+	if deleteClusterErr != nil && code != http.StatusNotFound { // only log other errors by ignoring not found errors
 		return deleteClusterErr
 	}
 
+	if code != http.StatusNotFound { // cluster delete request has been approved
+		return nil
+	}
+
+	// cluster has been removed from cluster service. Mark it for cleanup
+	glog.Infof("Cluster %s  has been removed from cluster service.", cluster.ClusterID)
+	updateStatusErr := c.clusterService.UpdateStatus(cluster, api.ClusterCleanup)
+	if updateStatusErr != nil {
+		return errors.Wrapf(updateStatusErr, "Failed to update deprovisioning cluster %s status to 'cleanup'", cluster.ClusterID)
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
+	glog.Infof("Removing Dataplane cluster %s IDP client", cluster.ClusterID)
 	keycloakDeregistrationErr := c.osdIdpKeycloakService.DeRegisterClientInSSO(cluster.ID)
 	if keycloakDeregistrationErr != nil {
-		return keycloakDeregistrationErr
+		return errors.Wrapf(keycloakDeregistrationErr, "Failed to removed Dataplance cluster %s IDP client", cluster.ClusterID)
 	}
 
+	glog.Infof("Removing Dataplane cluster %s fleetshard service account", cluster.ClusterID)
 	serviceAcountRemovalErr := c.kasFleetshardOperatorAddon.RemoveServiceAccount(cluster)
 	if serviceAcountRemovalErr != nil {
-		return serviceAcountRemovalErr
+		return errors.Wrapf(serviceAcountRemovalErr, "Failed to removed Dataplance cluster %s fleetshard service account", cluster.ClusterID)
 	}
 
-	// delete the db entry should be done at last to ensure things are cleaned up properly
-	deleteClusterFromDbErr := c.clusterService.DeleteByClusterID(cluster.ClusterID)
-	if deleteClusterFromDbErr != nil {
-		return deleteClusterFromDbErr
+	glog.Infof("Soft deleting the Dataplane cluster %s from the database", cluster.ClusterID)
+	deleteError := c.clusterService.DeleteByClusterID(cluster.ClusterID)
+	if deleteError != nil {
+		return errors.Wrapf(deleteError, "Failed to soft delete Dataplance cluster %s from the database", cluster.ClusterID)
 	}
-
 	return nil
 }
 
@@ -399,7 +434,7 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 
 func (c *ClusterManager) reconcileClusterSyncSet(cluster api.Cluster) error {
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
-	if dnsErr != nil || clusterDNS == "" {
+	if dnsErr != nil {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
 	}
 
@@ -593,19 +628,12 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	}
 
 	var idsOfClustersToDeprovision []string
-
-	for _, excessClusterId := range excessClusterIds {
-		var found bool
-		for _, excessCluster := range kafkaInstanceCount {
-			if excessCluster.Clusterid == excessClusterId && excessCluster.Count > 0 {
-				found = true
-				glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", excessCluster.Clusterid, excessCluster.Count)
-				break
-			}
-		}
-
-		if !found {
-			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, excessClusterId)
+	for _, c := range kafkaInstanceCount {
+		if c.Count > 0 {
+			glog.Infof("Excess cluster %s is not going to be deleted because it has %d kafka.", c.Clusterid, c.Count)
+		} else {
+			glog.Infof("Excess cluster is going to be deleted %s", c.Clusterid)
+			idsOfClustersToDeprovision = append(idsOfClustersToDeprovision, c.Clusterid)
 		}
 	}
 
@@ -953,9 +981,14 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 }
 
 func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) error {
+	if cluster.IdentityProviderID != "" {
+		return nil
+	}
+
+	// identity provider not yet created, let's create a new one
 	glog.Infof("Setting up the identity provider for cluster %s", cluster.ClusterID)
 	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
-	if dnsErr != nil || clusterDNS == "" {
+	if dnsErr != nil {
 		return errors.WithMessagef(dnsErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, dnsErr.Error())
 	}
 
@@ -965,28 +998,35 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}
 
-	if cluster.IdentityProviderID == "" { // identity provider not yet created, let's create a new one
-		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, true)
-		if buildErr != nil {
-			return buildErr
+	identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, true)
+	if buildErr != nil {
+		return buildErr
+	}
+	createdIdentityProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
+	if createIdentityProviderErr != nil {
+		// check to see if identity provider with name 'Kafka_SRE' already exists, if so use it.
+		if strings.Contains(createIdentityProviderErr.Error(), ipdAlreadyCreatedErrorToCheck) {
+			identityProvidersList, identityProviderListErr := c.ocmClient.GetIdentityProviderList(cluster.ClusterID)
+			if identityProviderListErr != nil {
+				return errors.Errorf("failed to get list of identity providers for cluster with clusterId %s", cluster.ClusterID)
+			}
+
+			for _, identityProvider := range identityProvidersList.Slice() {
+				if identityProvider.Name() == openIDIdentityProviderName {
+					addIdpToClusterErr := c.clusterService.AddIdentityProviderID(cluster.ClusterID, identityProvider.ID())
+					if addIdpToClusterErr != nil {
+						return errors.Errorf("failed to add identity provider %v to cluster with clusterId %s", identityProvider.Name(), cluster.ClusterID)
+					}
+					glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
+					return nil
+				}
+			}
 		}
-		createdIdentyProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
-		if createIdentityProviderErr != nil {
-			return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
-		}
-		addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentyProvider.ID())
-		if addIdpErr != nil {
-			return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
-		}
-	} else { // identity provider created, let's update it
-		identityProvider, buildErr := c.buildIdentityProvider(cluster, clientSecret, false)
-		if buildErr != nil {
-			return buildErr
-		}
-		_, updateIdentityProviderErr := c.ocmClient.UpdateIdentityProvider(cluster.ClusterID, cluster.IdentityProviderID, identityProvider)
-		if updateIdentityProviderErr != nil {
-			return errors.WithMessagef(updateIdentityProviderErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, updateIdentityProviderErr.Error())
-		}
+		return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
+	}
+	addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentityProvider.ID())
+	if addIdpErr != nil {
+		return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
 	}
 	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
 	return nil
@@ -1037,16 +1077,8 @@ func (c *ClusterManager) setClusterStatusCountMetrics() []error {
 		glog.Errorf("failed to count clusters by status: %s", err.Error())
 		errors = append(errors, err)
 	} else {
-		countersMap := map[api.ClusterStatus]int{}
 		for _, c := range counters {
-			countersMap[c.Status] = c.Count
-		}
-		for _, s := range status {
-			if val, ok := countersMap[s]; ok {
-				metrics.UpdateClusterStatusCountMetric(s, val)
-			} else {
-				metrics.UpdateClusterStatusCountMetric(s, 0)
-			}
+			metrics.UpdateClusterStatusCountMetric(c.Status, c.Count)
 		}
 	}
 	return errors

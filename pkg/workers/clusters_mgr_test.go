@@ -959,7 +959,6 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					CreateIdentityProviderFunc: nil, // setting it to nil because it should be called
-					UpdateIdentityProviderFunc: nil, // setting it to nil as it must not be called
 				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
@@ -987,7 +986,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
 						return identityProvider, fmt.Errorf("some error")
 					},
-					UpdateIdentityProviderFunc: nil, // setting to nil because it won't be called
+					GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+						return nil, nil
+					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
@@ -1014,7 +1015,6 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
 						return identityProvider, nil
 					},
-					UpdateIdentityProviderFunc: nil, // setting it to nil as it must not be called
 				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
@@ -1042,17 +1042,23 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "should update identity provider when the identity provider has already been already created",
+			name: "should update identity provider from the identity providers list if the identity provider has already been already created in cluster service",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					CreateIdentityProviderFunc: nil, // setting it to nil to make sure it not called
-					UpdateIdentityProviderFunc: func(clusterID, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-						return identityProvider, nil
+					CreateIdentityProviderFunc: func(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+						return nil, fmt.Errorf(ipdAlreadyCreatedErrorToCheck)
+					},
+					GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+						idp := clustersmgmtv1.NewIdentityProvider().Name(openIDIdentityProviderName).ID("test idp")
+						return clustersmgmtv1.NewIdentityProviderList().Items(idp).Build()
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
+					},
+					AddIdentityProviderIDFunc: func(clusterID, identityProviderId string) *apiErrors.ServiceError {
+						return nil
 					},
 				},
 				osdIdpKeycloakService: &services.KeycloakServiceMock{
@@ -1070,41 +1076,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 				Meta: api.Meta{
 					ID: "cluster-id",
 				},
-				IdentityProviderID: "some-cluster-identityy-provider-id",
 			},
-		},
-		{
-			name: "should receive an error when updating identity provider throws an error",
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					CreateIdentityProviderFunc: nil, // setting it to nil to make sure it not called
-					UpdateIdentityProviderFunc: func(clusterID, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-						return nil, fmt.Errorf("some error during update")
-					},
-				},
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test.com", nil
-					},
-				},
-				osdIdpKeycloakService: &services.KeycloakServiceMock{
-					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
-						return "secret", nil
-					},
-					GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
-						return &config.KeycloakRealmConfig{
-							ValidIssuerURI: "https://foo.bar",
-						}
-					},
-				},
-			},
-			arg: api.Cluster{
-				Meta: api.Meta{
-					ID: "cluster-id",
-				},
-				IdentityProviderID: "some-cluster-identityy-provider-id",
-			},
-			wantErr: true,
 		},
 	}
 
@@ -1125,11 +1097,9 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 
 func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 	type fields struct {
-		clusterService             services.ClusterService
-		ocmClient                  ocm.Client
-		osdIDPKeycloakService      services.KeycloakService
-		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
-		configService              services.ConfigService
+		clusterService services.ClusterService
+		ocmClient      ocm.Client
+		configService  services.ConfigService
 	}
 	tests := []struct {
 		name    string
@@ -1144,28 +1114,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, &apiErrors.ServiceError{}
 					},
-					UpdateStatusFunc:      nil, // set to nil as it should not be called
-					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
-			},
-			wantErr: true,
-		},
-		{
-			name: "should receive error when updating status fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return nil, nil
-					},
-					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return &apiErrors.ServiceError{} // update failed
-					},
+					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
@@ -1182,7 +1131,6 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, nil
 					},
-					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
@@ -1198,56 +1146,16 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 		{
 			name: "recieves an error when delete OCM cluster fails",
 			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					DeleteByClusterIDFunc: nil, // set to nil as it should not be called
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-				},
 				ocmClient: &ocm.ClientMock{
 					DeleteClusterFunc: func(clusterID string) (int, error) {
 						return 500, fmt.Errorf("ocm Error")
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
-			},
-			wantErr: true,
-		},
-		{
-			name: "recieves an error when soft delete cluster from database fails",
-			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
 					},
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-				},
-				ocmClient: &ocm.ClientMock{
-					DeleteClusterFunc: func(clusterID string) (int, error) {
-						return 204, nil
-					},
-				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return nil
-					},
+					UpdateStatusFunc: nil,
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
@@ -1258,14 +1166,11 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "recieves an error when deregistering the OSD IDP from keycloak fails",
+			name: "successful deletion of an OSD cluster when auto configuration is enabled",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
@@ -1273,86 +1178,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 				},
 				ocmClient: &ocm.ClientMock{
 					DeleteClusterFunc: func(clusterID string) (int, error) {
-						return 204, nil
-					},
-				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
-			},
-			wantErr: true,
-		},
-		{
-			name: "recieves an error when remove kas-fleetshard-operator service account fails",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-				},
-				ocmClient: &ocm.ClientMock{
-					DeleteClusterFunc: func(clusterID string) (int, error) {
-						return 204, nil
-					},
-				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return &apiErrors.ServiceError{}
-					},
-				},
-				configService: services.NewConfigService(config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
-			},
-			wantErr: true,
-		},
-		{
-			name: "successfull deletion of an OSD cluster",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return nil
-					},
-				},
-				ocmClient: &ocm.ClientMock{
-					DeleteClusterFunc: func(clusterID string) (int, error) {
-						return 204, nil
-					},
-				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
-					},
-				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return nil
+						return 404, nil
 					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
@@ -1367,30 +1193,52 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "successful deletion of an OSD cluster when manual configuration is enabled",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					FindClusterFunc: func(criteria services.FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError) {
-						// this should never be called when manual cluster configuration is used
-						return &api.Cluster{ClusterID: "dummy cluster"}, nil
-					},
-					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
-						return nil
-					},
+					FindClusterFunc: nil, // should not be called
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return &apiErrors.ServiceError{}
+						return nil
 					},
 				},
 				ocmClient: &ocm.ClientMock{
 					DeleteClusterFunc: func(clusterID string) (int, error) {
-						return 204, nil
+						return 404, nil
 					},
 				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
-						return nil
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "manual",
+					},
+				}),
+			},
+			wantErr: false,
+		},
+		{
+			name: "receives an error when the update status fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return fmt.Errorf("Some errors")
 					},
 				},
-				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
-					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
-						return nil
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 404, nil
+					},
+				},
+				configService: services.NewConfigService(config.ApplicationConfig{
+					OSDClusterConfig: &config.OSDClusterConfig{
+						DataPlaneClusterScalingType: "manual",
+					},
+				}),
+			},
+			wantErr: true,
+		},
+		{
+			name: "does not update cluster status when cluster has not been fully deleted from ClusterService",
+			fields: fields{
+				clusterService: nil, // should not be called
+				ocmClient: &ocm.ClientMock{
+					DeleteClusterFunc: func(clusterID string) (int, error) {
+						return 204, nil // deletion request accepted
 					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{
@@ -1407,14 +1255,121 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService:             tt.fields.clusterService,
-				ocmClient:                  tt.fields.ocmClient,
-				osdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
-				kasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
-				configService:              tt.fields.configService,
+				clusterService: tt.fields.clusterService,
+				ocmClient:      tt.fields.ocmClient,
+				configService:  tt.fields.configService,
 			}
 
 			err := c.reconcileDeprovisioningCluster(tt.arg)
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
+	type fields struct {
+		clusterService             services.ClusterService
+		osdIDPKeycloakService      services.KeycloakService
+		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+
+		{
+			name: "recieves an error when deregistering the OSD IDP from keycloak fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "recieves an error when remove kas-fleetshard-operator service account fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "recieves an error when soft delete cluster from database fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return &apiErrors.ServiceError{}
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "successfull deletion of an OSD cluster",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					DeleteByClusterIDFunc: func(clusterID string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				osdIDPKeycloakService: &services.KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+				kasFleetshardOperatorAddon: &services.KasFleetshardOperatorAddonMock{
+					RemoveServiceAccountFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				clusterService:             tt.fields.clusterService,
+				osdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
+				kasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+			}
+
+			err := c.reconcileCleanupCluster(tt.arg)
 			gomega.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
@@ -1942,8 +1897,8 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]*services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
-						return []*services.ResKafkaInstanceCount{
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{
 							{
 								Clusterid: "test02",
 								Count:     1,
@@ -1970,8 +1925,8 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
 						return nil
 					},
-					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]*services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
-						return []*services.ResKafkaInstanceCount{}, nil
+					FindKafkaInstanceCountFunc: func(clusterIDs []string) ([]services.ResKafkaInstanceCount, *apiErrors.ServiceError) {
+						return []services.ResKafkaInstanceCount{}, nil
 					},
 				},
 				configService: services.NewConfigService(config.ApplicationConfig{

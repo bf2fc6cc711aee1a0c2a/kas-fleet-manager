@@ -2,11 +2,12 @@ package workers
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/getsentry/sentry-go"
-	"sync"
-	"time"
 
 	"github.com/golang/glog"
 )
@@ -76,7 +77,7 @@ func (r *Reconciler) Start(worker Worker) {
 
 func (r *Reconciler) runReconcile(worker Worker) {
 	start := time.Now()
-	errors := worker.reconcile()
+	errors := worker.Reconcile()
 	if len(errors) == 0 {
 		metrics.IncreaseReconcilerSuccessCount(worker.GetWorkerType())
 	} else {

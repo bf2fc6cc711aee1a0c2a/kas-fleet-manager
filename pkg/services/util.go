@@ -6,10 +6,9 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-
-	"github.com/jinzhu/gorm"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	"gorm.io/gorm"
 
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -48,10 +47,14 @@ func handleGetError(resourceType, field string, value interface{}, err error) *e
 			break
 		}
 	}
-	if gorm.IsRecordNotFoundError(err) {
+	if IsRecordNotFoundError(err) {
 		return errors.NotFound("%s with %s='%v' not found", resourceType, field, value)
 	}
 	return errors.GeneralError("Unable to find %s with %s='%v': %s", resourceType, field, value, err)
+}
+
+func IsRecordNotFoundError(err error) bool {
+	return err == gorm.ErrRecordNotFound
 }
 
 func handleCreateError(resourceType string, err error) *errors.ServiceError {

@@ -80,19 +80,16 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *api.KafkaRequest) (*api
 		return nil, nil
 	}
 
-	//search for limit, cluster not in the result means it's never been used;
-	//otherwise its id and kafka instance count is returned
+	//search for limit
 	clusterWithinLimit, errf := f.findClusterKafkaInstanceCount(clusterSchIds)
 	if errf != nil {
 		return nil, errf
 	}
 
-	//#3 which schedulable cluster is also within the limit or never been associated w/ an kafka yet
+	//#3 which schedulable cluster is also within the limit
+	//we want to make sure the order of the ids configuration is always respected: e.g the first cluster in the configuration that passes all the checks should be picked first
 	for _, schClusterid := range clusterSchIds {
-		cnt, exists := clusterWithinLimit[schClusterid]
-		if !exists {
-			cnt = 0
-		}
+		cnt := clusterWithinLimit[schClusterid]
 		if osdClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
 			return searchClusterObjInArray(clusterObj, schClusterid), nil
 		}
@@ -112,15 +109,14 @@ func searchClusterObjInArray(clusters []*api.Cluster, clusterId string) *api.Clu
 }
 
 // findClusterKafkaInstanceCount searches DB for the number of Kafka instance associated with each OSD Clusters
-// If an OSD is not in the map, it means no kafka instance is created yet.
 func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, error) {
-	instanceLst, err := f.ClusterService.FindKafkaInstanceCount(clusterIDs)
-	if err != nil {
+	if instanceLst, err := f.ClusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
 		return nil, fmt.Errorf("failed to found kafka instance count for cluster %s : %w", clusterIDs, err)
+	} else {
+		clusterWithinLimitMap := make(map[string]int)
+		for _, c := range instanceLst {
+			clusterWithinLimitMap[c.Clusterid] = c.Count
+		}
+		return clusterWithinLimitMap, nil
 	}
-	clusterWithinLimitMap := make(map[string]int)
-	for _, c := range instanceLst {
-		clusterWithinLimitMap[c.Clusterid] = c.Count
-	}
-	return clusterWithinLimitMap, nil
 }

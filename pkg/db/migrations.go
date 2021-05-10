@@ -3,13 +3,13 @@ package db
 import (
 	"time"
 
+	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"gorm.io/gorm"
 )
 
 // gormigrate is a wrapper for gorm's migration functions that adds schema versioning and rollback capabilities.
-// For help writing migration steps, see the gorm documentation on migrations: http://doc.gorm.io/database.html#migration
+// For help writing migration steps, see the gorm documentation on migrations: https://gorm.io/docs/migration.html
 
 // Migration rules:
 //
@@ -44,6 +44,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	connectorApiChanges(),
 	addMissingIndexes(),
 	addClusterStatusIndex(),
+	addKafkaWorkersInLeaderLeases(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {
@@ -104,5 +105,5 @@ type Model struct {
 	ID        string `gorm:"primary_key"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt *time.Time `sql:"index"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }

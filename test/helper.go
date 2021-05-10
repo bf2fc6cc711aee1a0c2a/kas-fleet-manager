@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers/kafka_mgrs"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -59,7 +60,7 @@ type Helper struct {
 	MetricsServer     server.Server
 	HealthCheckServer server.Server
 	ConnectorWorker   *workers.ConnectorManager
-	KafkaWorker       *workers.KafkaManager
+	KafkaWorkers      []workers.Worker
 	ClusterWorker     *workers.ClusterManager
 	LeaderEleWorker   *workers.LeaderElectionManager
 	AuthHelper        *auth.AuthHelper
@@ -125,6 +126,8 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 
 		helper.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
 		helper.Env().Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+
+		db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
 		// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
 		jwkMockTeardown := helper.StartJWKCertServerMock()
@@ -208,23 +211,34 @@ func (helper *Helper) startHealthCheckServer() {
 	}()
 }
 
-func (helper *Helper) startKafkaWorker() {
-	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-	helper.KafkaWorker = workers.NewKafkaManager(helper.Env().Services.Kafka, ocmClient, uuid.New().String(),
-		helper.Env().Services.Keycloak, helper.Env().Services.Observatorium,
-		helper.Env().Services.Config, helper.Env().Services.Quota, helper.Env().Services.ClusterPlmtStrategy)
+func (helper *Helper) startKafkaWorkers() {
+	env := helper.Env()
+	var kafkaWorkerList []workers.Worker
+	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota, env.Services.ClusterPlmtStrategy)
+	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(env.Services.Kafka, uuid.New().String())
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota)
+	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Observatorium, env.Services.Config)
+	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Keycloak, env.Services.Config)
+	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
+
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
-		helper.KafkaWorker.Start()
+		for _, worker := range helper.KafkaWorkers {
+			worker.Start()
+		}
 		glog.V(10).Info("Test Metrics server stopped")
 	}()
 }
 
-func (helper *Helper) stopKafkaWorker() {
-	if helper.KafkaWorker == nil {
+func (helper *Helper) stopKafkaWorkers() {
+	if len(helper.KafkaWorkers) < 1 {
 		return
 	}
-	helper.KafkaWorker.Stop()
+
+	for _, worker := range helper.KafkaWorkers {
+		worker.Stop()
+	}
 }
 
 func (helper *Helper) startClusterWorker() {
@@ -290,10 +304,15 @@ func (helper *Helper) startLeaderElectionWorker() {
 	helper.ClusterWorker = workers.NewClusterManager(env.Services.Cluster, env.Services.CloudProviders,
 		ocmClient, env.Services.Config, uuid.New().String(), env.Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
 
-	ocmClient = ocm.NewClient(env.Clients.OCM.Connection)
+	var kafkaWorkerList []workers.Worker
+	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota, env.Services.ClusterPlmtStrategy)
+	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(env.Services.Kafka, uuid.New().String())
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota)
+	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Observatorium, env.Services.Config)
+	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Keycloak, env.Services.Config)
+	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
 
-	helper.KafkaWorker = workers.NewKafkaManager(env.Services.Kafka, ocmClient, uuid.New().String(),
-		env.Services.Keycloak, env.Services.Observatorium, env.Services.Config, env.Services.Quota, env.Services.ClusterPlmtStrategy)
 	helper.ConnectorWorker = workers.NewConnectorManager(
 		uuid.New().String(),
 		env.Services.ConnectorTypes,
@@ -303,12 +322,12 @@ func (helper *Helper) startLeaderElectionWorker() {
 		env.Services.Vault,
 	)
 
-	var workerLst []workers.Worker
-	workerLst = append(workerLst, helper.ClusterWorker)
-	workerLst = append(workerLst, helper.KafkaWorker)
-	workerLst = append(workerLst, helper.ConnectorWorker)
+	var workerList []workers.Worker
+	workerList = append(workerList, helper.ClusterWorker)
+	workerList = append(workerList, helper.KafkaWorkers...)
+	workerList = append(workerList, helper.ConnectorWorker)
 
-	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerLst, helper.DBFactory)
+	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerList, helper.DBFactory)
 	helper.LeaderEleWorker.Start()
 	glog.V(10).Info("Test Leader Election Manager started")
 }
@@ -346,12 +365,12 @@ func (helper *Helper) RestartServer() {
 }
 
 func (helper *Helper) StartKafkaWorker() {
-	helper.stopKafkaWorker()
-	helper.startKafkaWorker()
+	helper.stopKafkaWorkers()
+	helper.startKafkaWorkers()
 }
 
 func (helper *Helper) StopKafkaWorker() {
-	helper.stopKafkaWorker()
+	helper.stopKafkaWorkers()
 }
 
 func (helper *Helper) StartConnectorWorker() {
@@ -520,9 +539,9 @@ func (helper *Helper) SkipIfShort() {
 	}
 }
 
-func (helper *Helper) Count(table string) int {
+func (helper *Helper) Count(table string) int64 {
 	gorm := helper.DBFactory.New()
-	var count int
+	var count int64
 	err := gorm.Table(table).Count(&count).Error
 	if err != nil {
 		helper.T.Errorf("error getting count for table %s: %v", table, err)

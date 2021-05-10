@@ -6,10 +6,11 @@ package db
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addConnectorClusters() *gormigrate.Migration {
@@ -32,13 +33,17 @@ func addConnectorClusters() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202102190900",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&ConnectorClusters{}).Error; err != nil {
+			err := tx.AutoMigrate(&ConnectorClusters{})
+			if err != nil {
 				return err
 			}
-			if err := tx.AutoMigrate(&Connectors{}).Error; err != nil {
+
+			err = tx.AutoMigrate(&Connectors{})
+			if err != nil {
 				return err
 			}
-			if err := tx.Exec(`
+
+			if err = tx.Exec(`
                 CREATE FUNCTION connectors_version_trigger() RETURNS TRIGGER LANGUAGE plpgsql AS '
 					BEGIN
 					NEW.version := nextval(''connectors_version_seq'');
@@ -48,7 +53,7 @@ func addConnectorClusters() *gormigrate.Migration {
 			`).Error; err != nil {
 				return err
 			}
-			if err := tx.Exec(`
+			if err = tx.Exec(`
 				CREATE TRIGGER connectors_version_trigger BEFORE INSERT OR UPDATE ON connectors
 				FOR EACH ROW EXECUTE PROCEDURE connectors_version_trigger();
 			`).Error; err != nil {
@@ -56,7 +61,7 @@ func addConnectorClusters() *gormigrate.Migration {
 			}
 
 			now := time.Now().Add(-time.Minute) //set to a expired time
-			if err := tx.Create(&api.LeaderLease{
+			if err = tx.Create(&api.LeaderLease{
 				Expires:   &now,
 				LeaseType: "connector",
 			}).Error; err != nil {
@@ -75,23 +80,23 @@ func addConnectorClusters() *gormigrate.Migration {
 			if err := tx.Exec(`DROP FUNCTION connectors_version_trigger`).Error; err != nil {
 				return err
 			}
-			if err := tx.Table("connectors").DropColumn("version").Error; err != nil {
+			err := tx.Migrator().DropColumn(&Connectors{}, "version")
+			if err != nil {
 				return err
 			}
-			if err := tx.Table("connectors").DropColumn("target_kind").Error; err != nil {
+			err = tx.Migrator().DropColumn(&Connectors{}, "target_kind")
+			if err != nil {
 				return err
 			}
-			if err := tx.Table("connectors").DropColumn("addon_group").Error; err != nil {
+			err = tx.Migrator().DropColumn(&Connectors{}, "addon_group")
+			if err != nil {
 				return err
 			}
-			if err := tx.Table("connectors").DropColumn("organisation_id").Error; err != nil {
+			err = tx.Migrator().DropColumn(&Connectors{}, "organisation_id")
+			if err != nil {
 				return err
 			}
-
-			if err := tx.DropTable(&ConnectorClusters{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropTable(&ConnectorClusters{})
 		},
 	}
 }
