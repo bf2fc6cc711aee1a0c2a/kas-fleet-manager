@@ -3,11 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/gocloak/v8"
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -62,15 +62,19 @@ func NewKeycloakService(config *config.KeycloakConfig, realmConfig *config.Keycl
 func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return "", errors.GeneralError("failed to get access token for the sso client: %v", tokenErr)
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register Kafka Client in SSO")
 	}
 	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
 	if err != nil {
-		return "", errors.GeneralError("failed to check the sso client exists:%v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kafkaClusterName)
+
 	}
 	if internalClientId != "" {
 		glog.V(5).Infof("Existing Kafka Client %s found", kafkaClusterName)
-		secretValue, _ := kc.kcClient.GetClientSecret(internalClientId, accessToken)
+		secretValue, secretErr := kc.kcClient.GetClientSecret(internalClientId, accessToken)
+		if secretErr != nil {
+			return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, secretErr, "failed to get sso client secret")
+		}
 		return secretValue, nil
 	}
 	rhOrgIdAttributes := map[string]string{
@@ -87,11 +91,11 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	clientConfig := kc.kcClient.ClientConfig(c)
 	internalClient, err := kc.kcClient.CreateClient(clientConfig, accessToken)
 	if err != nil {
-		return "", errors.FailedToCreateSSOClient("failed to create the sso client: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, err, "failed to create sso client")
 	}
 	secretValue, err := kc.kcClient.GetClientSecret(internalClient, accessToken)
 	if err != nil {
-		return "", errors.FailedToGetSSOClientSecret("failed to get the sso client secret: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
 	glog.V(5).Infof("Kafka Client %s created successfully", kafkaClusterName)
 	return secretValue, nil
@@ -100,14 +104,12 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return "", errors.GeneralError("failed to get token for the sso client: %v", tokenErr)
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register OSD cluster Client in SSO")
 	}
 
 	internalClientId, err := kc.kcClient.IsClientExist(clusterId, accessToken)
 	if err != nil {
-		sentry.CaptureException(err)
-		return "", errors.GeneralError("failed to check the sso client exists: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clusterId)
 	}
 
 	if internalClientId != "" {
@@ -127,13 +129,11 @@ func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clust
 	clientConfig := kc.kcClient.ClientConfig(c)
 	internalClient, err := kc.kcClient.CreateClient(clientConfig, accessToken)
 	if err != nil {
-		sentry.CaptureException(err)
-		return "", errors.FailedToCreateSSOClient("failed to create the sso client: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, err, "failed to create sso client")
 	}
 	secretValue, err := kc.kcClient.GetClientSecret(internalClient, accessToken)
 	if err != nil {
-		sentry.CaptureException(err)
-		return "", errors.FailedToGetSSOClientSecret("failed to get the sso client secret: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
 
 	return secretValue, nil
@@ -142,8 +142,7 @@ func (kc *keycloakService) RegisterOSDClusterClientInSSO(clusterId string, clust
 func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.ServiceError {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return errors.GeneralError("failed to get access token to deregister OSD cluster client in sso: %v", tokenErr)
+		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to deregister OSD cluster client in SSO")
 	}
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
 	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
@@ -152,8 +151,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 	}
 	err := kc.kcClient.DeleteClient(internalClientID, accessToken)
 	if err != nil {
-		sentry.CaptureException(err)
-		return errors.FailedToDeleteSSOClient("failed to delete the sso client: %v", err)
+		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
 	}
 	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
 	return nil
@@ -170,24 +168,27 @@ func (kc *keycloakService) GetRealmConfig() *config.KeycloakRealmConfig {
 func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceError {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return errors.GeneralError("failed to get access token to check kafka clients' existance: %v", tokenErr)
+		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to check Kafka client existence")
 	}
 	_, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
-		return errors.FailedToGetSSOClient("failed to get the sso client: %v", err)
+		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clusterId)
 	}
 	return nil
 }
 
 func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
-	accessToken, _ := kc.kcClient.GetToken()
+	accessToken, tokenErr := kc.kcClient.GetToken()
+	if tokenErr != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get Kafka client secret")
+	}
 	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
-		return "", errors.FailedToGetSSOClient("failed to get the sso client: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", clusterId)
 	}
 	clientSecret, err := kc.kcClient.GetClientSecret(internalClientID, accessToken)
 	if err != nil {
-		return "", errors.FailedToGetSSOClientSecret("failed to get client secret: %v", err)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
 	return clientSecret, nil
 }
@@ -196,23 +197,21 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 	var serviceAcc api.ServiceAccount
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return nil, errors.GeneralError("failed to get access token: %v", tokenErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to create service account")
 	}
-	claims, err := auth.GetClaimsFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx) //http requester's info
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.Unauthenticated("user not authenticated")
+		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
 	ownerAccountId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
 	isAllowed, err := kc.checkAllowedServiceAccountsLimits(accessToken, kc.GetConfig().MaxAllowedServiceAccounts, ownerAccountId)
-	if err != nil {
-		return nil, errors.GeneralError("+%v", err)
+	if err != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create service account")
 	}
-	if !isAllowed {
-		return nil, errors.NewErrorFromHTTPStatusCode(403, "Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
+	if !isAllowed { //4xx over requesters' limit
+		return nil, errors.Forbidden("Max allowed number:%d of service accounts for user:%s has reached", kc.GetConfig().MaxAllowedServiceAccounts, owner)
 	}
 	glog.V(5).Infof("creating service accounts: user = %s", owner)
 	createdAt := time.Now().Format(time.RFC3339)
@@ -243,27 +242,25 @@ func (kc *keycloakService) CreateServiceAccount(serviceAccountRequest *api.Servi
 		Attributes:             rhOrgIdAttributes,
 	}
 	clientConfig := kc.kcClient.ClientConfig(c)
+	//step 1
 	internalClient, err := kc.kcClient.CreateClient(clientConfig, accessToken)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.FailedToCreateServiceAccount("failed to create the service account: %v", err)
+	if err != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, err, "failed to create service account")
 	}
 	clientSecret, err := kc.kcClient.GetClientSecret(internalClient, accessToken)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.FailedToGetSSOClientSecret("failed to get service account secret: %v", err)
+	if err != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get service account")
 	}
 	serviceAccountUser, err := kc.kcClient.GetClientServiceAccount(accessToken, internalClient)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.FailedToGetServiceAccount("failed fetch the service account user: %v", err)
+	if err != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorFailedToGetServiceAccount, err, "failed to fetch service account")
 	}
 	serviceAccountUser.Attributes = &rhAccountID
 	serAccUser := *serviceAccountUser
+	//step 2
 	updateErr := kc.kcClient.UpdateServiceAccountUser(accessToken, serAccUser)
-	if updateErr != nil {
-		sentry.CaptureException(updateErr)
-		return nil, errors.GeneralError("failed add attributes to service account user: %v", updateErr)
+	if updateErr != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, updateErr, "failed to create service account")
 	}
 	serviceAcc.ID = internalClient
 	serviceAcc.Owner = owner
@@ -286,22 +283,20 @@ func (kc *keycloakService) buildServiceAccountIdentifier() string {
 func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max int) ([]api.ServiceAccount, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return nil, errors.GeneralError("failed to get access token: %v", tokenErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to collect service account")
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.Unauthenticated("user not authenticated")
+	if err != nil { //4xx
+		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
-	var sa []api.ServiceAccount
 	searchAtt := fmt.Sprintf("rh-org-id:%s", orgId)
 	clients, err := kc.kcClient.GetClients(accessToken, first, max, searchAtt)
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.GeneralError("failed to check the sso client exists: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to collect service accounts")
 	}
+
+	var sa []api.ServiceAccount
 	for _, client := range clients {
 		acc := api.ServiceAccount{}
 		attributes := client.Attributes
@@ -325,59 +320,52 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 
 func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) *errors.ServiceError {
 	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return errors.GeneralError("failed to get access token to delete service account: %v", tokenErr)
+	if tokenErr != nil { //5xx
+		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to delete service account")
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		sentry.CaptureException(err)
-		return errors.Unauthenticated("user not authenticated")
+	if err != nil { //4xx
+		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+	}
+	//get service account info with keycloak service client id token
+	c, err := kc.kcClient.GetClientById(id, accessToken)
+	if err != nil { //5xx or 4xx
+		return handleKeyCloakGetClientError(err, id)
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
-	c, err := kc.kcClient.GetClientById(id, accessToken)
-	if err != nil {
-		sentry.CaptureException(err)
-		return errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
-	}
 	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
-		err = kc.kcClient.DeleteClient(id, accessToken)
-		if err != nil {
-			sentry.CaptureException(err)
-			return errors.FailedToDeleteServiceAccount("failed to delete service account: %v", err)
+		err = kc.kcClient.DeleteClient(id, accessToken) //id existence checked
+		if err != nil {                                 //5xx
+			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 		}
 		return nil
-	} else {
-		sentry.CaptureException(err)
-		return errors.Forbidden("can not delete sso client due to permission error")
 	}
+
+	return errors.NewWithCause(errors.ErrorForbidden, nil, "failed to delete service account")
 }
 
 func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
-	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return nil, errors.GeneralError("failed to get access token to reset service account credentials: %v", tokenErr)
+	if tokenErr != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to reset service account credentials")
 	}
 	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.Unauthenticated("user not authenticated")
+	if err != nil { //4xx
+		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
+	c, err := kc.kcClient.GetClientById(id, accessToken)
+	if err != nil { //5xx or 4xx
+		return nil, handleKeyCloakGetClientError(err, id)
+	}
+	//http request's info
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
-	c, err := kc.kcClient.GetClientById(id, accessToken)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
-	}
 	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		credRep, err := kc.kcClient.RegenerateClientSecret(accessToken, id)
-		if err != nil {
-			sentry.CaptureException(err)
-			return nil, errors.GeneralError("failed to regenerate service account secret: %v", err)
+		if err != nil { //5xx
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to reset service account credentials")
 		}
 		value := *credRep.Value
 		attributes := c.Attributes
@@ -395,30 +383,41 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 			Name:         safeString(c.Name),
 			Description:  safeString(c.Description),
 		}, nil
-	} else {
-		return nil, errors.Forbidden("can not regenerate service account secret due to permission error")
+	} else { //4xx
+		return nil, errors.NewWithCause(errors.ErrorForbidden, nil, "failed to reset service account credentials")
 	}
 }
 
+// return error object for API caller facing funcs: 5xx or 4xx
+func handleKeyCloakGetClientError(err error, id string) *errors.ServiceError {
+	if keyErr, ok := err.(*gocloak.APIError); ok {
+		if keyErr.Code == http.StatusNotFound {
+			return errors.NewWithCause(errors.ErrorServiceAccountNotFound, err, "service account not found %s", id)
+		}
+	}
+	return errors.NewWithCause(errors.ErrorFailedToGetServiceAccount, err, "failed to get the service account by id %s", id)
+}
+
 func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError) {
-	accessToken, tokenErr := kc.kcClient.GetToken()
+	accessToken, tokenErr := kc.kcClient.GetToken() //get keycloak service client id token
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return nil, errors.GeneralError("failed to get access token to retrieve service account by id: %v", tokenErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get service account by id")
+
 	}
-	claims, err := auth.GetClaimsFromContext(ctx)
+	claims, err := auth.GetClaimsFromContext(ctx) //gather http requester info.
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.Unauthenticated("user not authenticated")
+		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
+
 	}
+	//get service account info with keycloak service client id token
+	c, err := kc.kcClient.GetClientById(id, accessToken)
+	if err != nil { //5xx or 4xx
+		return nil, handleKeyCloakGetClientError(err, id)
+	}
+	//http requester's info.
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
-	c, err := kc.kcClient.GetClientById(id, accessToken)
-	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.FailedToGetServiceAccount("failed to check the service account exists: %v", err)
-	}
 	attributes := c.Attributes
 	att := *attributes
 	createdAt, err := time.Parse(time.RFC3339, att["created_at"])
@@ -435,7 +434,8 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 			Description: safeString(c.Description),
 		}, nil
 	} else {
-		return nil, errors.FailedToGetServiceAccount("failed to get service account due to permission error")
+		//http requester doesn't have the permission: 4xx
+		return nil, errors.NewWithCause(errors.ErrorForbidden, nil, "failed to get service account")
 	}
 }
 
@@ -447,19 +447,20 @@ func (kc *keycloakService) RegisterKasFleetshardOperatorServiceAccount(agentClus
 func (kc *keycloakService) DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError {
 	accessToken, err := kc.kcClient.GetToken()
 	if err != nil {
-		return errors.GeneralError("failed to get token: %s", err.Error())
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to deregister service account")
+
 	}
 	serviceAccountId := buildAgentOperatorServiceAccountId(agentClusterId)
 	internalServiceAccountId, err := kc.kcClient.IsClientExist(serviceAccountId, accessToken)
-	if err != nil {
-		return errors.FailedToGetServiceAccount("Failed to get service account %s due to error: %s", serviceAccountId, err.Error())
+	if err != nil { //5xx
+		return errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", serviceAccountId)
 	}
 	if internalServiceAccountId == "" {
 		return nil
 	}
 	err = kc.kcClient.DeleteClient(internalServiceAccountId, accessToken)
 	if err != nil {
-		return errors.FailedToDeleteServiceAccount("Failed to delete service account %s due to error: %s", internalServiceAccountId, err.Error())
+		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", internalServiceAccountId)
 	}
 	return nil
 }
@@ -470,10 +471,10 @@ func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(age
 }
 
 func (kc *keycloakService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+	//get keycloak service client id token
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		sentry.CaptureException(tokenErr)
-		return nil, errors.GeneralError("failed to get access token to register agent service account: %v", tokenErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register agent service account")
 	}
 	role, err := kc.createRealmRoleIfNotExists(accessToken, roleName)
 	if err != nil {
@@ -493,11 +494,11 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 	}
 	account, err := kc.createServiceAccountIfNotExists(accessToken, c)
 	if err != nil {
-		return nil, errors.GeneralError("failed to create service account: %v", err)
+		return nil, err
 	}
 	serviceAccountUser, getErr := kc.kcClient.GetClientServiceAccount(accessToken, account.ID)
 	if getErr != nil {
-		return nil, errors.GeneralError("failed to read service account user: %v", getErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, getErr, "failed to get agent service account")
 	}
 	if serviceAccountUser.Attributes == nil || !gocloak.UserAttributeContains(*serviceAccountUser.Attributes, clusterId, agentClusterId) {
 		glog.V(10).Infof("Client %s has no attribute %s, set it", serviceAccountId, clusterId)
@@ -506,19 +507,19 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 		}
 		updateErr := kc.kcClient.UpdateServiceAccountUser(accessToken, *serviceAccountUser)
 		if updateErr != nil {
-			return nil, errors.GeneralError("failed to update service account user: %v", updateErr)
+			return nil, errors.NewWithCause(errors.ErrorGeneral, updateErr, "failed to update agent service account")
 		}
 	}
 	glog.V(5).Infof("Attribute %s is added for client %s", clusterId, serviceAccountId)
 	hasRole, checkErr := kc.kcClient.UserHasRealmRole(accessToken, *serviceAccountUser.ID, roleName)
 	if checkErr != nil {
-		return nil, errors.GeneralError("failed to check if user has role: %v", checkErr)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, checkErr, "failed to update agent service account")
 	}
 	if hasRole == nil {
 		glog.V(10).Infof("Client %s has no role %s, adding", serviceAccountId, roleName)
 		addRoleErr := kc.kcClient.AddRealmRoleToUser(accessToken, *serviceAccountUser.ID, *role)
 		if addRoleErr != nil {
-			return nil, errors.GeneralError("failed to add role to user: %v", addRoleErr)
+			return nil, errors.NewWithCause(errors.ErrorGeneral, addRoleErr, "failed to add role to agent service account")
 		}
 	}
 	glog.V(5).Infof("Client %s created successfully", serviceAccountId)
@@ -529,13 +530,13 @@ func (kc *keycloakService) createRealmRoleIfNotExists(token string, roleName str
 	glog.V(5).Infof("Creating realm role %s", roleName)
 	role, err := kc.kcClient.GetRealmRole(token, roleName)
 	if err != nil {
-		return nil, errors.GeneralError("failed to get realm role: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get realm role")
 	}
 	if role == nil {
 		glog.V(10).Infof("No existing realm role %s found, creating a new one", roleName)
 		role, err = kc.kcClient.CreateRealmRole(token, roleName)
 		if err != nil {
-			return nil, errors.GeneralError("failed to create realm role: %v", err)
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create realm role")
 		}
 	}
 	glog.V(5).Infof("Realm role %s created. id = %s", roleName, *role.ID)
@@ -545,29 +546,29 @@ func (kc *keycloakService) createRealmRoleIfNotExists(token string, roleName str
 func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientRep keycloak.ClientRepresentation) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("Creating service account: clientId = %s", clientRep.ClientID)
 	client, err := kc.kcClient.GetClient(clientRep.ClientID, token)
-	if err != nil {
-		return nil, errors.GeneralError("failed to check if client exists: %v", err)
+	if err != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to check if client exists.")
 	}
+
+	//client exists
 	var internalClientId, clientSecret string
 	if client == nil {
 		glog.V(10).Infof("No exiting client found for %s, creating a new one", clientRep.ClientID)
 		clientConfig := kc.kcClient.ClientConfig(clientRep)
 		internalClientId, err = kc.kcClient.CreateClient(clientConfig, token)
-		if err != nil {
-			return nil, errors.FailedToCreateServiceAccount("failed to create the service account: %v", err)
-		}
-		clientSecret, err = kc.kcClient.GetClientSecret(internalClientId, token)
-		if err != nil {
-			return nil, errors.FailedToGetSSOClientSecret("failed to get service account secret: %v", err)
+		if err != nil { //5xx
+			return nil, errors.NewWithCause(errors.ErrorFailedToCreateServiceAccount, err, "failed to create service account")
 		}
 	} else {
 		glog.V(10).Infof("Existing client found for %s, internalId=%s", clientRep.ClientID, *client.ID)
 		internalClientId = *client.ID
-		clientSecret, err = kc.kcClient.GetClientSecret(internalClientId, token)
-		if err != nil {
-			return nil, errors.FailedToGetSSOClientSecret("failed to get service account secret: %v", err)
-		}
 	}
+
+	clientSecret, err = kc.kcClient.GetClientSecret(internalClientId, token)
+	if err != nil { //5xx
+		return nil, errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get service account secret")
+	}
+
 	serviceAcc := &api.ServiceAccount{
 		ID:           internalClientId,
 		ClientID:     clientRep.ClientID,
@@ -584,13 +585,12 @@ func (kc *keycloakService) checkAllowedServiceAccountsLimits(accessToken string,
 	searchAtt := fmt.Sprintf("rh-user-id:%s", userId)
 	clients, err := kc.kcClient.GetClients(accessToken, 0, maxAllowed, searchAtt)
 	if err != nil {
-		sentry.CaptureException(err)
-		return false, errors.GeneralError("failed to get clients for user %s:%v", userId, err)
+		return false, err
 	}
 	numOfClientsFound := len(clients) + 1
 	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the userId:%s", numOfClientsFound, maxAllowed, userId)
 	if numOfClientsFound > maxAllowed {
-		return false, nil
+		return false, nil //http requester's error
 	} else {
 		return true, nil
 	}

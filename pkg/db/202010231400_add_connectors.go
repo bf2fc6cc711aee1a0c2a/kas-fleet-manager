@@ -6,8 +6,8 @@ package db
 // is done here, even though the same type is defined in pkg/api
 
 import (
-	"github.com/jinzhu/gorm"
-	"gopkg.in/gormigrate.v1"
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
 )
 
 func addConnectors() *gormigrate.Migration {
@@ -28,16 +28,10 @@ func addConnectors() *gormigrate.Migration {
 	return &gormigrate.Migration{
 		ID: "202011231400",
 		Migrate: func(tx *gorm.DB) error {
-			if err := tx.AutoMigrate(&Connectors{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.AutoMigrate(&Connectors{})
 		},
 		Rollback: func(tx *gorm.DB) error {
-			if err := tx.DropTable(&Connectors{}).Error; err != nil {
-				return err
-			}
-			return nil
+			return tx.Migrator().DropTable(&Connectors{})
 		},
 	}
 }

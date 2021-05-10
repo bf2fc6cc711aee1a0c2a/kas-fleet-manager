@@ -2,11 +2,12 @@ package workers
 
 import (
 	"errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/jinzhu/gorm"
-	mocket "github.com/selvatico/go-mocket"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	mocket "github.com/selvatico/go-mocket"
+	"gorm.io/gorm"
 )
 
 func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
@@ -93,13 +94,14 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 			setupFn: func() {
 				mockEntry := map[string]interface{}{
 					"leader":  "000-003",
+					"id":      "leader-lease-id",
 					"expires": time.Now().Add(time.Second * 30),
 				}
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{mockEntry})
 			},
 		},
 		{
-			name: "valid least for another worker not to be acquired",
+			name: "valid lease for another worker not to be acquired",
 			args: args{
 				workerId:   "000-004",
 				workerType: "cluster",

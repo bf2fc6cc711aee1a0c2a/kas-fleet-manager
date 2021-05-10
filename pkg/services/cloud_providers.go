@@ -13,8 +13,8 @@ const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
 
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
-	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, error)
-	GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error)
+	GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)
+	GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError)
 	ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError)
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
@@ -36,12 +36,12 @@ type CloudProviderWithRegions struct {
 	RegionList *clustersmgmtv1.CloudRegionList
 }
 
-func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
+func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
 	cloudProviderWithRegions := []CloudProviderWithRegions{}
 	var regionErr error
 	providerList, err := p.ocmClient.GetCloudProviders()
 	if err != nil {
-		return nil, err
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
 	}
 	providerList.Each(func(provider *clustersmgmtv1.CloudProvider) bool {
 		var regions *clustersmgmtv1.CloudRegionList
@@ -57,10 +57,15 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 
 		return true
 	})
-	return cloudProviderWithRegions, regionErr
+
+	if regionErr != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, regionErr, "failed to retrieve cloud provider list")
+	}
+
+	return cloudProviderWithRegions, nil
 }
 
-func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, error) {
+func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
 	cachedCloudProviderWithRegions, cached := p.cache.Get(keyCloudProvidersWithRegions)
 	if cached {
 		return convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions)
@@ -73,7 +78,7 @@ func (p cloudProvidersService) GetCachedCloudProvidersWithRegions() ([]CloudProv
 	return cloudProviderWithRegions, nil
 }
 
-func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interface{}) ([]CloudProviderWithRegions, error) {
+func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interface{}) ([]CloudProviderWithRegions, *errors.ServiceError) {
 	cloudProviderWithRegions, ok := cachedCloudProviderWithRegions.([]CloudProviderWithRegions)
 	if ok {
 		return cloudProviderWithRegions, nil
@@ -86,7 +91,7 @@ func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *error
 	cloudProviderList := []api.CloudProvider{}
 	providerList, err := p.ocmClient.GetCloudProviders()
 	if err != nil {
-		return nil, errors.GeneralError("error retrieving cloud provider list: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
 	}
 
 	providerList.Each(func(cloudProvider *clustersmgmtv1.CloudProvider) bool {
@@ -108,7 +113,7 @@ func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudR
 	cloudRegionList := []api.CloudRegion{}
 	cloudProviders, err := p.GetCloudProvidersWithRegions()
 	if err != nil {
-		return nil, errors.GeneralError("error retrieving cloud provider list: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider regions")
 	}
 
 	for _, cloudProvider := range cloudProviders {

@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/onsi/gomega"
+	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -32,6 +34,9 @@ func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 	cluster := &api.Cluster{
 		Region:        testRegion,
 		CloudProvider: testProvider,
+		Meta: api.Meta{
+			DeletedAt: gorm.DeletedAt{Valid: true},
+		},
 	}
 	if modifyFn != nil {
 		modifyFn(cluster)
@@ -485,9 +490,15 @@ func Test_ListByStatus(t *testing.T) {
 			MultiAZ:       testMultiAZ,
 			Region:        testRegion,
 			Status:        testStatus,
+			Meta: api.Meta{
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+				DeletedAt: gorm.DeletedAt{Valid: true},
+			},
 		},
 	}
-	emptyClusterList := []api.Cluster{}
+
+	var emptyClusterList []api.Cluster
 
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
@@ -534,10 +545,7 @@ func Test_ListByStatus(t *testing.T) {
 			want:    emptyClusterList,
 			wantErr: false,
 			setupFn: func() {
-				response, err := dbConverters.ConvertClusterList(emptyClusterList)
-				if err != nil {
-					t.Errorf("Test_ListByStatus() failed to convert clusterList: %s", err.Error())
-				}
+				response := dbConverters.ConvertClusterList(emptyClusterList)
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
 			},
 		},
@@ -552,16 +560,14 @@ func Test_ListByStatus(t *testing.T) {
 			want:    nonEmptyClusterList,
 			wantErr: false,
 			setupFn: func() {
-				response, err := dbConverters.ConvertClusterList(nonEmptyClusterList)
-				if err != nil {
-					t.Errorf("Test_ListByStatus() failed to convert clusterList: %s", err.Error())
-				}
+				response := dbConverters.ConvertClusterList(nonEmptyClusterList)
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
@@ -573,6 +579,7 @@ func Test_ListByStatus(t *testing.T) {
 				t.Errorf("ListByStatus() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			gomega.Expect(got).To(gomega.Equal(tt.want))
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ListByStatus() got = %v, want %v", got, tt.want)
 			}
@@ -638,7 +645,7 @@ func Test_UpdateStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "successful status update by ClusterId",
+			name: "successful status update by ClusterID",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
@@ -705,8 +712,7 @@ func Test_RegisterClusterJob(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(nil)
-				mocket.Catcher.NewMock().WithExecException() // Fail on anything else
+				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(dbConverters.ConvertCluster(buildCluster(nil)))
 			},
 		},
 	}
@@ -858,10 +864,22 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 				regions:           []string{"us-east-1"},
 				status:            api.StatusForValidCluster,
 			},
-			want:    []*ResGroupCPRegion{},
+			want: []*ResGroupCPRegion{
+				{
+					Provider: "aws",
+					Region:   "east-1",
+					Count:    1,
+				},
+			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{
+					map[string]interface{}{
+						"Provider": "aws",
+						"Region":   "east-1",
+						"Count":    1,
+					},
+				})
 			},
 		},
 		{
@@ -1014,6 +1032,8 @@ func Test_DeleteByClusterId(t *testing.T) {
 }
 
 func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
+	now := time.Now()
+
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
@@ -1061,10 +1081,10 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			args: args{
 				clusterId: testClusterID,
 			},
-			want: &api.Cluster{ClusterID: testClusterID},
+			want: &api.Cluster{ClusterID: testClusterID, Meta: api.Meta{CreatedAt: now, UpdatedAt: now, DeletedAt: gorm.DeletedAt{Valid: true}}},
 			setupFn: func() {
-				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID}}
-				query := `SELECT * FROM "clusters"  WHERE "clusters"."deleted_at" IS NULL AND (("clusters"."cluster_id" = test-cluster-id) AND (cluster_id IN (SELECT "kafka_requests"."cluster_id" FROM kafka_requests WHERE "kafka_requests"."status" != 'failed' AND "kafka_requests"."deleted_at" IS NULL AND "kafka_requests"."cluster_id" != ''))) ORDER BY "clusters"."id" ASC LIMIT 1`
+				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID, "created_at": now, "updated_at": now, "deleted_at": gorm.DeletedAt{Valid: true}.Time}}
+				query := `SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1 AND cluster_id IN (SELECT "cluster_id" FROM "kafka_requests" WHERE (status != $2 AND cluster_id = $3) AND "kafka_requests"."deleted_at" IS NULL) AND "clusters"."deleted_at" IS NULL ORDER BY "clusters"."id" LIMIT 1%`
 				mocket.Catcher.Reset().NewMock().WithQuery(query).WithReply(mockedResponse)
 			},
 		},
@@ -1089,7 +1109,6 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 	}
-	emptyResult := []api.Cluster{}
 	var clusters []api.Cluster
 	clusters = append(clusters, api.Cluster{ClusterID: "test01"})
 
@@ -1105,7 +1124,10 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
-			want:  emptyResult,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+			},
+			want:  nil,
 			want1: nil,
 		},
 		{
@@ -1114,13 +1136,11 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				var res []api.Cluster
-				c := api.Cluster{
-					ClusterID: "test01",
-				}
-				res = append(res, c)
-				covRest, _ := dbConverters.ConvertClusterList(res)
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(covRest)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{
+					map[string]interface{}{
+						"cluster_id": "test01",
+					},
+				})
 			},
 			want:  clusters,
 			want1: nil,
@@ -1152,27 +1172,42 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 	type args struct {
 		clusterID []string
 	}
-	var testRes []*ResKafkaInstanceCount
+	var testRes []ResKafkaInstanceCount
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    []*ResKafkaInstanceCount
+		want    []ResKafkaInstanceCount
 		wantErr bool
 		setupFn func()
 	}{
 		{
-			name: "Instance count equals to 0",
+			name: "Instance count equals to 2",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			args: args{
-				[]string{"test01"},
+				[]string{"test01", "test02"},
 			},
-			want:    []*ResKafkaInstanceCount{}, //zero valued
+			want: []ResKafkaInstanceCount{
+				{
+					Clusterid: "test01",
+					Count:     2,
+				},
+				{
+					Clusterid: "test02",
+					Count:     0,
+				},
+			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset()
+				counters := []map[string]interface{}{
+					{
+						"clusterid": "test01",
+						"count":     2,
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
 			},
 		},
 		{
@@ -1186,7 +1221,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 			want:    testRes,
 			wantErr: true,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
 			},
 		},
 	}
@@ -1203,8 +1238,10 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 				t.Errorf("FindKafkaInstanceCount() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindKafkaInstanceCount() got = %v, want %v", got, tt.want)
+			for i, res := range got {
+				if !reflect.DeepEqual(res, tt.want[i]) {
+					t.Errorf("FindKafkaInstanceCount() got = %v, want %v", res, tt.want[i])
+				}
 			}
 		})
 	}
@@ -1220,9 +1257,12 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 		MultiAZ:  true,
 		Status:   api.ClusterReady,
 	}
-	emptyResult := []*api.Cluster{}
 	var clusters []*api.Cluster
-	clusters = append(clusters, &api.Cluster{ClusterID: "test01", Status: api.ClusterReady})
+	clusters = append(clusters, &api.Cluster{ClusterID: "test01", Status: api.ClusterReady, Meta: api.Meta{
+		DeletedAt: gorm.DeletedAt{
+			Valid: true,
+		},
+	}})
 
 	type args struct {
 		criteria FindClusterCriteria
@@ -1243,26 +1283,18 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 			args: args{
 				criteria: clusterReady,
 			},
-			want:    emptyResult,
 			wantErr: false,
 			setupFn: func() {
 				mocket.Catcher.Reset()
 			},
 		},
 		{
-			name: "List All cluster id",
+			name: "Find all clusters",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				var res []api.Cluster
-				c := api.Cluster{
-					ClusterID: "test01",
-					Status:    api.ClusterReady,
-				}
-				res = append(res, c)
-				covRest, _ := dbConverters.ConvertClusterList(res)
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(covRest)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertClusters(clusters))
 			},
 			args: args{
 				criteria: clusterReady,
@@ -1284,9 +1316,12 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 				t.Errorf("FindAllClusters() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindAllClusters() got = %v, want %v", got, tt.want)
+			for i, res := range got {
+				if !reflect.DeepEqual(*res, *tt.want[i]) {
+					t.Errorf("FindAllClusters() got = %v, want %v", *res, *tt.want[i])
+				}
 			}
+
 		})
 	}
 }
@@ -1384,7 +1419,7 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			name:   "should return the counts of clusters in different status",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []api.ClusterStatus{api.ClusterAccepted, api.ClusterReady},
+				status: []api.ClusterStatus{api.ClusterAccepted, api.ClusterReady, api.ClusterProvisioning},
 			},
 			wantErr: false,
 			setupFunc: func() {
@@ -1406,6 +1441,9 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			}, {
 				Status: api.ClusterReady,
 				Count:  1,
+			}, {
+				Status: api.ClusterProvisioning,
+				Count:  0,
 			}},
 		},
 		{

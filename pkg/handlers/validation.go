@@ -129,11 +129,20 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 		orgId := auth.GetOrgIdFromClaims(claims)
 		username := auth.GetUsernameFromClaims(claims)
 
+		listArgs := &services.ListArguments{
+			Page: 1,
+			Size: 1,
+			// we need to return the total Kafkas for this user only when they are not on the allow list or are a service account, otherwise the current max total of 1 would only allow an entire organisation to create 1 Kafka instance
+			Search: fmt.Sprintf("owner = %s", username),
+		}
+
 		message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, config.GetDefaultMaxAllowedInstances())
 		org, orgFound := configService.GetOrganisationById(orgId)
 		if orgFound && org.IsUserAllowed(username) {
 			allowListItem = org
 			message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
+			// In the allow list, for users in an organisation, maxAllowed is associated to an organisation, not an individual user. So we should not be filtering by owner to get the total Kafkas.
+			listArgs.Search = ""
 		} else {
 			user, userFound := configService.GetServiceAccountByUsername(username)
 			if userFound {
@@ -142,7 +151,7 @@ func validateMaxAllowedInstances(kafkaService services.KafkaService, configServi
 			}
 		}
 
-		_, pageMeta, svcErr := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1})
+		_, pageMeta, svcErr := kafkaService.List(context, listArgs)
 		if svcErr != nil {
 			return svcErr
 		}

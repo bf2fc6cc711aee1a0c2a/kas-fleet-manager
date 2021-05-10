@@ -8,16 +8,17 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/jinzhu/gorm"
-	"github.com/spyzhov/ajson"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/spyzhov/ajson"
+	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -131,7 +132,10 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *ListArgume
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
-	dbConn.Model(&resourceList).Count(&pagingMeta.Total)
+	total := int64(pagingMeta.Total)
+	dbConn.Model(&resourceList).Count(&total)
+	pagingMeta.Total = int(total)
+
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
 	}
@@ -239,7 +243,10 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
-	dbConn.Model(&resourceList).Count(&pagingMeta.Total)
+	total := int64(pagingMeta.Total)
+	dbConn.Model(&resourceList).Count(&total)
+	pagingMeta.Total = int(total)
+
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
 	}
@@ -275,7 +282,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	c := api.ConnectorStatus{
 		Phase: resource.Phase,
 	}
-	if err := dbConn.Model(&c).Where("id = ?", deployment.ConnectorID).Update(&c).Error; err != nil {
+	if err := dbConn.Model(&c).Where("id = ?", deployment.ConnectorID).Updates(&c).Error; err != nil {
 		return errors.GeneralError("failed to update connector status: %s", err.Error())
 	}
 

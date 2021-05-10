@@ -187,11 +187,9 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
 
 	k := openapi.KafkaRequestPayload{
@@ -528,11 +526,9 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
 
 	// also verify that any kafkas held by the first user has been deleted.
@@ -581,6 +577,13 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          "test-kafka-2",
+		MultiAz:       testMultiAZ,
+	}
+
+	kafka3 := openapi.KafkaRequestPayload{
+		Region:        mocks.MockCluster.Region().ID(),
+		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
+		Name:          "test-kafka-3",
 		MultiAz:       testMultiAZ,
 	}
 
@@ -636,7 +639,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	externalUserSameOrgAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserSameOrgCtx := h.NewAuthenticatedContext(externalUserSameOrgAccount, nil)
 
-	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka1)
+	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka3)
 	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka2)
 
 	// verify that the first request was accepted
@@ -654,15 +657,12 @@ func TestKafkaAllowList_MaxAllowedInstancesForUserWithoutOrganisation(t *testing
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	// a random organisationId to make sure that it is set in context
-	orgId := "12345688097"
-
 	// the values are taken from config/allow-list-configuration.yaml
 	email1 := "testuser2@example.com"
 	email2 := "testuser3@example.com"
 
-	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, orgId)
-	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, orgId)
+	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, "")
+	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, "")
 
 	ctx1 := h.NewAuthenticatedContext(serviceAccount1, nil)
 	ctx2 := h.NewAuthenticatedContext(serviceAccount2, nil)
@@ -980,12 +980,13 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
-	// Check status of soft deleted kafka request. Status should not be 'deprovision'
+	// Check status of soft deleted kafka request.
 	db := h.Env().DBFactory.New()
-	var kafkaRequest openapi.KafkaRequest
+	var kafkaRequest api.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find soft deleted kafka request")
 	}
+
 	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
 }
 
@@ -1283,12 +1284,21 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
 
-// TestKafka_RemovingExpiredKafkas tests that all kafkas are removed after their allocated life span has expired
-func TestKafka_RemovingExpiredKafkas(t *testing.T) {
+// TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
+func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
+	var originalLongLivedKafkas []string
+	startHook := func(h *test.Helper) {
+		originalLongLivedKafkas = h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas
+		h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{}
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas = originalLongLivedKafkas
+	}
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.RegisterIntegration(t, ocmServer)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
 	// create an account with values from config/allow-list-configuration.yaml
@@ -1299,6 +1309,7 @@ func TestKafka_RemovingExpiredKafkas(t *testing.T) {
 	db := h.Env().DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
+
 	kafkas := []*api.KafkaRequest{
 		{
 			MultiAZ:        false,
@@ -1333,9 +1344,77 @@ func TestKafka_RemovingExpiredKafkas(t *testing.T) {
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
+	}
+
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+	// also verify that any kafkas whose life has expired has been deleted.
+	account := h.NewRandAccount()
+	ctx := h.NewAuthenticatedContext(account, nil)
+	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
+		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+		return list.Size == 1, err
+	})
+
+	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
+}
+
+// TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
+func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
+	var originalLongLivedKafkas []string
+	startHook := func(h *test.Helper) {
+		originalLongLivedKafkas = h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas
+		h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{}
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas = originalLongLivedKafkas
+	}
+
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	defer ocmServer.Close()
+
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	defer tearDown()
+
+	// create an account with values from config/allow-list-configuration.yaml
+	testuser1 := "testuser1@example.com"
+	orgId := "13640203"
+
+	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
+	db := h.Env().DBFactory.New()
+	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
+	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
+	// set the long lived kafka id list at the beginning of the tests to avoid potential timing issues when testing its case
+	longLivedKafkaId := "123456"
+	h.Env().Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{longLivedKafkaId}
+
+	kafkas := []*api.KafkaRequest{
+		{
+			MultiAZ:        false,
+			Owner:          testuser1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
 		{
 			Meta: api.Meta{
-				ID:        "123456",
+				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
+			},
+			MultiAZ:        false,
+			Owner:          testuser1,
+			Region:         kafkaRegion,
+			CloudProvider:  kafkaCloudProvider,
+			Name:           "dummy-kafka-2",
+			OrganisationId: orgId,
+			Status:         constants.KafkaRequestStatusAccepted.String(),
+		},
+		{
+			Meta: api.Meta{
+				ID:        longLivedKafkaId,
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
 			MultiAZ:        false,
@@ -1348,13 +1427,10 @@ func TestKafka_RemovingExpiredKafkas(t *testing.T) {
 		},
 	}
 
-	for _, kafka := range kafkas {
-		if err := db.Save(kafka).Error; err != nil {
-			Expect(err).NotTo(HaveOccurred())
-			return
-		}
+	if err := db.Create(&kafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
 	}
-
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)

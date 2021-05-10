@@ -12,14 +12,13 @@ require (
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/cucumber/godog v0.11.0
-	github.com/denisenkom/go-mssqldb v0.0.0-20200428022330-06a60b6afbbc // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-sql-driver/mysql v1.5.0 // indirect
+	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.1.2
@@ -27,10 +26,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
 	github.com/itchyny/gojq v0.12.2
-	github.com/jinzhu/gorm v1.9.8
-	github.com/jinzhu/inflection v1.0.0 // indirect
-	github.com/jinzhu/now v1.1.1 // indirect
-	github.com/lib/pq v1.3.0
+	github.com/lib/pq v1.10.0
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/onsi/gomega v1.10.1
@@ -57,9 +53,10 @@ require (
 	golang.org/x/oauth2 v0.0.0-20191202225959-858c2ad4c8b6
 	golang.org/x/sys v0.0.0-20210414055047-fe65e336abe0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	gopkg.in/gormigrate.v1 v1.6.0
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
+	gorm.io/driver/postgres v1.0.8
+	gorm.io/gorm v1.21.7
 	k8s.io/api v0.19.3
 	k8s.io/apimachinery v0.19.3
 )

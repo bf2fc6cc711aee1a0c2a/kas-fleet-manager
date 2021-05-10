@@ -5,7 +5,7 @@ import (
 	goerrors "errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -175,7 +175,9 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 	}
 
 	// set total, limit and paging (based on https://gitlab.cee.redhat.com/service/api-guidelines#user-content-paging)
-	dbConn.Model(&resourceList).Count(&pagingMeta.Total)
+	total := int64(pagingMeta.Total)
+	dbConn.Model(&resourceList).Count(&total)
+	pagingMeta.Total = int(total)
 	if pagingMeta.Size > pagingMeta.Total {
 		pagingMeta.Size = pagingMeta.Total
 	}
@@ -205,7 +207,7 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 	}
 
 	dbConn := k.connectionFactory.New()
-	if err := dbConn.Model(resource).Update(resource).Error; err != nil {
+	if err := dbConn.Model(resource).Updates(resource).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
 	}
 
@@ -232,10 +234,13 @@ func (k connectorsService) SaveStatus(ctx context.Context, resource api.Connecto
 }
 
 func (k connectorsService) ForEach(f func(*api.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
-	dbConn := k.connectionFactory.New().Model(&api.Connector{})
-	rows, err := dbConn.Where(query, args...).
+	dbConn := k.connectionFactory.New()
+	rows, err := dbConn.
+		Model(&api.Connector{}).
+		Where(query, args...).
 		Joins("left join connector_statuses on connector_statuses.id = connectors.id").
 		Order("version").Rows()
+
 	if err != nil {
 		if goerrors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
@@ -254,7 +259,7 @@ func (k connectorsService) ForEach(f func(*api.Connector) *errors.ServiceError, 
 		}
 
 		resource.Status.ID = resource.ID
-		err = dbConn.First(&resource.Status).Error
+		err = dbConn.Model(&api.ConnectorStatus{}).First(&resource.Status).Error
 		if err != nil {
 			return errors.GeneralError("Unable to load connector status: %s", err)
 		}
@@ -262,6 +267,7 @@ func (k connectorsService) ForEach(f func(*api.Connector) *errors.ServiceError, 
 		if serr := f(&resource); serr != nil {
 			return serr
 		}
+
 	}
 	return nil
 }

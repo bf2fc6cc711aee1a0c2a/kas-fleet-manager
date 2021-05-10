@@ -2,6 +2,9 @@ package ocm
 
 import (
 	"fmt"
+
+	pkgerrors "github.com/pkg/errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -40,7 +43,7 @@ type Client interface {
 	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 	CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
-	UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error)
+	GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 	DeleteCluster(clusterID string) (int, error)
 	ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 	DeleteSubscription(id string) (int, error)
@@ -149,7 +152,7 @@ func (c *client) GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error) 
 	providersCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders()
 	providersResponse, err := providersCollection.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.Wrap(err, "error retrieving cloud provider list")
 	}
 	cloudProviderList := providersResponse.Items()
 	return cloudProviderList, nil
@@ -159,7 +162,7 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	regionsCollection := c.ocmClient.ClustersMgmt().V1().CloudProviders().CloudProvider(provider.ID()).Regions()
 	regionsResponse, err := regionsCollection.List().Send()
 	if err != nil {
-		return nil, err
+		return nil, pkgerrors.Wrap(err, "error retrieving cloud region list")
 	}
 
 	regionList := regionsResponse.Items()
@@ -234,11 +237,11 @@ func (c client) UpdateAddonParameters(clusterId string, addonInstallationId stri
 
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	if clusterID == "" {
-		return "", errors.New(errors.ErrorGeneral, "ClusterID cannot be empty")
+		return "", errors.GeneralError("Clusterid cannot be empty")
 	}
 	ingresses, err := c.GetClusterIngresses(clusterID)
 	if err != nil {
-		return "", errors.New(errors.ErrorGeneral, err.Error())
+		return "", errors.GeneralError(err.Error())
 	}
 
 	var clusterDNS string
@@ -249,6 +252,11 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 		}
 		return true
 	})
+
+	if clusterDNS == "" {
+		return "", errors.GeneralError(fmt.Sprintf("Cluster %s DNS is empty", clusterID))
+	}
+
 	return clusterDNS, nil
 }
 
@@ -298,20 +306,17 @@ func (c client) CreateIdentityProvider(clusterID string, identityProvider *clust
 	return response.Body(), err
 }
 
-func (c client) UpdateIdentityProvider(clusterID string, identityProviderID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
-	clustersResource := c.ocmClient.ClustersMgmt().V1().Clusters()
-	response, identityProviderErr := clustersResource.Cluster(clusterID).
+func (c client) GetIdentityProviderList(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
+	clusterResource := c.ocmClient.ClustersMgmt().V1().Clusters()
+	response, getIDPErr := clusterResource.Cluster(clusterID).
 		IdentityProviders().
-		IdentityProvider(identityProviderID).
-		Update().
-		Body(identityProvider).
+		List().
 		Send()
 
-	var err error
-	if identityProviderErr != nil {
-		err = errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to update identity provider '%s': %s", identityProviderID, identityProviderErr)
+	if getIDPErr != nil {
+		return nil, errors.NewErrorFromHTTPStatusCode(response.Status(), "ocm client failed to get list of identity providers, err: %s", getIDPErr.Error())
 	}
-	return response.Body(), err
+	return response.Items(), nil
 }
 
 func (c client) GetSyncSet(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {

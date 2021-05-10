@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 type ClusterStatus string
@@ -25,6 +25,8 @@ const (
 	ClusterReady ClusterStatus = "ready"
 	// ClusterDeprovisioning the cluster is empty and can be deprovisioned
 	ClusterDeprovisioning ClusterStatus = "deprovisioning"
+	// ClusterCleanup the cluster external resources are being removed
+	ClusterCleanup ClusterStatus = "cleanup"
 	// ClusterWaitingForKasFleetShardOperator the cluster is waiting for the KAS fleetshard operator to be ready
 	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
 	// ClusterFull the cluster is full and cannot accept more Kafka clusters
@@ -64,17 +66,14 @@ func (c ClusterList) Index() ClusterIndex {
 	return index
 }
 
-func (org *Cluster) BeforeCreate(scope *gorm.Scope) error {
-	if org.Status == "" {
-		if err := scope.SetColumn("status", ClusterAccepted); err != nil {
-			return err
-		}
+func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
+	if cluster.Status == "" {
+		cluster.Status = ClusterAccepted
 	}
 
-	id := org.ID
-	if id == "" {
-		id = NewID()
+	if cluster.ID == "" {
+		cluster.ID = NewID()
 	}
 
-	return scope.SetColumn("ID", id)
+	return nil
 }
