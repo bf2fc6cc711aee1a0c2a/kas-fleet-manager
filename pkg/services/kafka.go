@@ -291,7 +291,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 	}
 
 	if dbConn.RowsAffected >= 1 {
-		glog.Infof("%v kafkas have are deprovisioning for users %v", dbConn.RowsAffected, users)
+		glog.Infof("%v kafkas are now deprovisioning for users %v", dbConn.RowsAffected, users)
 		var counter int64 = 0
 		for ; counter < dbConn.RowsAffected; counter++ {
 			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
