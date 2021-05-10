@@ -31,7 +31,7 @@ type DeletingKafkaManager struct {
 func NewDeletingKafkaManager(kafkaService services.KafkaService, id string, configService services.ConfigService, quotaService services.QuotaService) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		id:            id,
-		workerType:    "deleting_kaka",
+		workerType:    "deleting_kafka",
 		kafkaService:  kafkaService,
 		configService: configService,
 		quotaService:  quotaService,
