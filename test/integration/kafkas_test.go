@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
@@ -535,9 +534,23 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			Owner:          username2,
 			Region:         kafkaRegion,
 			CloudProvider:  kafkaCloudProvider,
+			ClusterID:      clusterID,
 			Name:           "dummy-kafka-3",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants.KafkaRequestStatusPreparing.String(),
+		},
+		{
+			MultiAZ:             false,
+			Owner:               username2,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			BootstrapServerHost: "dummy-bootstrap-server-host",
+			Name:                "dummy-kafka-to-deprovision",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			OrganisationId:      orgId,
+			Status:              constants.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -555,7 +568,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 		return
 	}
 
-	// also verify that any kafkas held by the first user has been deleted.
+	// Verify all Kafkas that needs to be deleted are removed
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
