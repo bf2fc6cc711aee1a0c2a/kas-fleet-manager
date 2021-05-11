@@ -16,7 +16,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/getsentry/sentry-go"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
@@ -74,7 +73,7 @@ func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Cl
 func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
 	if err := dbConn.Save(clusterRequest).Error; err != nil {
-		return apiErrors.GeneralError("failed to create cluster job: %v", err)
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to register cluster job")
 	}
 	return nil
 }
@@ -88,14 +87,13 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	// Build a new OSD cluster object
 	newCluster, err := c.clusterBuilder.NewOCMClusterFromCluster(cluster)
 	if err != nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "error building cluster")
 	}
 
 	// Send POST request to /api/clusters_mgmt/v1/clusters to create a new OSD cluster
 	createdCluster, err := c.ocmClient.CreateCluster(newCluster)
 	if err != nil {
-		sentry.CaptureException(err)
-		return createdCluster, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+		return createdCluster, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "error creating a Dataplane cluster")
 	}
 
 	// convert the cluster to the cluster type this service understands before saving
@@ -108,7 +106,7 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	}
 
 	if err := dbConn.Save(convertedCluster).Error; err != nil {
-		return &clustersmgmtv1.Cluster{}, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+		return &clustersmgmtv1.Cluster{}, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update created cluster")
 	}
 
 	return createdCluster, nil
@@ -134,7 +132,7 @@ func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *
 	var clusters []api.Cluster
 
 	if err := dbConn.Model(&api.Cluster{}).Where("status = ?", status).Scan(&clusters).Error; err != nil {
-		return nil, apiErrors.GeneralError("failed to query by status: %s", err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by status")
 	}
 
 	return clusters, nil
@@ -164,7 +162,7 @@ func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStat
 	}
 
 	if err := dbConn.Model(&api.Cluster{}).Where(query, arg).Update("status", status).Error; err != nil {
-		return apiErrors.GeneralError("failed to update status: %s", err.Error())
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster status")
 	}
 
 	if status == api.ClusterReady {
@@ -195,7 +193,7 @@ func (c clusterService) ListGroupByProviderAndRegion(providers []string, regions
 		Where("region in (?)", regions).
 		Where("status in (?) ", status).
 		Group("cloud_provider, region").Scan(&grpResult).Error; err != nil {
-		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to list by cloud provider, regions and status")
 	}
 
 	return grpResult, nil
@@ -228,7 +226,7 @@ func (c clusterService) FindCluster(criteria FindClusterCriteria) (*api.Cluster,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.GeneralError("failed to find cluster with criteria: %s", err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster with criteria")
 	}
 
 	return &cluster, nil
@@ -250,7 +248,7 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.GeneralError("failed to find cluster with id: %s %s", clusterID, err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster with id: %s", clusterID)
 	}
 
 	return cluster, nil
@@ -300,7 +298,7 @@ func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*cluste
 func (c clusterService) AddIdentityProviderID(id string, identityProviderId string) *apiErrors.ServiceError {
 	dbConn := c.connectionFactory.New()
 	if err := dbConn.Model(&api.Cluster{Meta: api.Meta{ID: id}}).Update("identity_provider_id", identityProviderId).Error; err != nil {
-		return apiErrors.GeneralError("failed to update identity_provider_id for cluster %s: %s", id, err.Error())
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update identity_provider_id for cluster %s", id)
 	}
 
 	return nil
@@ -311,7 +309,7 @@ func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceEr
 	metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationDelete)
 
 	if err := dbConn.Delete(&api.Cluster{}, api.Cluster{ClusterID: clusterID}).Error; err != nil {
-		return apiErrors.GeneralError("Unable to delete cluster with cluster_id %s: %s", clusterID, err)
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "Unable to delete cluster with cluster_id %s", clusterID)
 	}
 
 	glog.Infof("Cluster %s deleted successful", clusterID)
@@ -333,7 +331,7 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.GeneralError("failed to find cluster with id: %s %s", clusterID, err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find cluster with id %s", clusterID)
 	}
 
 	return cluster, nil
@@ -353,7 +351,7 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 		Where("cluster_id != '' ").
 		Order("created_at asc ").
 		Scan(&res).Error; err != nil {
-		return nil, apiErrors.GeneralError("failed to query by cluster info.: %s", err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
 	}
 	return res, nil
 }
@@ -376,7 +374,7 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	query = query.Group("cluster_id").Order("cluster_id asc").Scan(&res)
 
 	if err := query.Error; err != nil {
-		return nil, apiErrors.GeneralError("failed to query by cluster info: %s", err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to query by cluster info")
 	}
 	// the query above won't return a count for a clusterId if that cluster doesn't have any Kafkas,
 	// to keep things consistent and less confusing, we will identity these ids and set their count to 0
@@ -415,7 +413,7 @@ func (c clusterService) FindAllClusters(criteria FindClusterCriteria) ([]*api.Cl
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
-		return nil, apiErrors.GeneralError("failed to find all clusters with criteria: %s", err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to find all clusters with criteria")
 	}
 
 	return cluster, nil
@@ -434,7 +432,7 @@ func (c clusterService) UpdateMultiClusterStatus(clusterIds []string, status api
 
 	if err := dbConn.Model(&api.Cluster{}).Where("cluster_id in (?)", clusterIds).
 		Update("status", status).Error; err != nil {
-		return apiErrors.GeneralError("failed to update status: %s %s", err.Error(), clusterIds)
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update status: %s", clusterIds)
 	}
 
 	for rows := dbConn.RowsAffected; rows > 0; rows-- {
@@ -459,7 +457,7 @@ func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStat
 	dbConn := c.connectionFactory.New()
 	var results []ClusterStatusCount
 	if err := dbConn.Model(&api.Cluster{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
-		return nil, err
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to count by status")
 	}
 
 	// if there is no count returned for a status from the above query because there is no clusters in such a status,

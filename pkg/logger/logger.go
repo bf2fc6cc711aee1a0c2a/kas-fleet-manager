@@ -15,9 +15,12 @@ type UHCLogger interface {
 	Infof(format string, args ...interface{})
 	Warningf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
+	Error(err error)
 	Fatalf(format string, args ...interface{})
 }
 
+// Logger is a logger with a background context
+var Logger = NewUHCLogger(context.Background())
 var _ UHCLogger = &logger{}
 
 type logger struct {
@@ -71,8 +74,6 @@ func (l *logger) V(level int32) UHCLogger {
 func (l *logger) Infof(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.V(glog.Level(l.level)).Infof(prefixed)
-	// TODO do we really _want_ info-level reporting to sentry?
-	// l.captureSentryEvent(sentry.LevelInfo, format, args...)
 }
 
 func (l *logger) Warningf(format string, args ...interface{}) {
@@ -87,6 +88,15 @@ func (l *logger) Errorf(format string, args ...interface{}) {
 	l.captureSentryEvent(sentry.LevelError, format, args...)
 }
 
+func (l *logger) Error(err error) {
+	glog.Error(err)
+	if l.sentryHub == nil {
+		sentry.CaptureException(err)
+		return
+	}
+	l.sentryHub.CaptureException(err)
+}
+
 func (l *logger) Fatalf(format string, args ...interface{}) {
 	prefixed := l.prepareLogPrefix(format, args...)
 	glog.Fatalln(prefixed)
@@ -98,7 +108,7 @@ func (l *logger) captureSentryEvent(level sentry.Level, format string, args ...i
 	event.Level = level
 	event.Message = fmt.Sprintf(format, args...)
 	if l.sentryHub == nil {
-		sentry.CaptureException(fmt.Errorf("Sentry hub not present in logger"))
+		glog.Warning("Sentry hub not present in logger")
 		sentry.CaptureEvent(event)
 		return
 	}
