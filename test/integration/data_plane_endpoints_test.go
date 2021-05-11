@@ -39,7 +39,7 @@ func setup(t *testing.T, claims claimsFunc) TestServer {
 
 	clusterId, getClusterErr := utils.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 
 	account := h.NewAllowedServiceAccount()
