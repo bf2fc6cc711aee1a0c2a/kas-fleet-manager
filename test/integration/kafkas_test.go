@@ -1292,7 +1292,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			Owner:          testuser1,
 			Region:         kafkaRegion,
 			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka",
+			Name:           "dummy-kafka-to-remain",
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
@@ -1300,25 +1300,33 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			Meta: api.Meta{
 				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-2",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-2",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			Meta: api.Meta{
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-3",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-3",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusReady.String(),
 		},
 	}
 
@@ -1326,6 +1334,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
+
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -1385,7 +1394,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			Owner:          testuser1,
 			Region:         kafkaRegion,
 			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka",
+			Name:           "dummy-kafka-not-yet-expired",
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
@@ -1393,26 +1402,34 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			Meta: api.Meta{
 				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-2",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-to-remove",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusReady.String(),
 		},
 		{
 			Meta: api.Meta{
 				ID:        longLivedKafkaId,
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-4",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-long-lived",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusReady.String(),
 		},
 	}
 
@@ -1420,6 +1437,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
+
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
