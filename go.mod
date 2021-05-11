@@ -4,11 +4,11 @@ go 1.15
 
 require (
 	github.com/Masterminds/squirrel v1.1.0
+	github.com/Nerzal/gocloak/v8 v8.5.0 // indirect
 	github.com/antihax/optional v1.0.0
 	github.com/auth0/go-jwt-middleware v0.0.0-20190805220309-36081240882b
 	github.com/aws/aws-sdk-go v1.36.5
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
-	github.com/bf2fc6cc711aee1a0c2a/gocloak/v8 v8.0.0-20210411123614-ed4f5c48fb9f
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
 	github.com/cucumber/godog v0.11.0
