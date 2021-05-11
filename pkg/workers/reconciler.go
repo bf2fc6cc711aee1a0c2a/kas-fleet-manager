@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/getsentry/sentry-go"
 
 	"github.com/golang/glog"
 )
@@ -86,8 +86,7 @@ func (r *Reconciler) runReconcile(worker Worker) {
 	}
 	metrics.UpdateReconcilerDurationMetric(worker.GetWorkerType(), time.Since(start))
 	for _, e := range errors {
-		// TODO: we can inspect the error and decide if they need to be send to sentry or not
-		sentry.CaptureException(e)
+		logger.Logger.Error(e)
 	}
 }
 

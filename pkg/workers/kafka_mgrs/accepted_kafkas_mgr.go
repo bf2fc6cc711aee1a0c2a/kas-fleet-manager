@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
@@ -80,13 +81,12 @@ func (c *AcceptedKafkaManager) SetIsRunning(val bool) {
 
 func (k *AcceptedKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling accepted kafkas")
-	var errors []error
+	var encounteredErrors []error
 
 	// handle accepted kafkas
 	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusAccepted)
 	if serviceErr != nil {
-		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted kafkas"))
 	} else {
 		glog.Infof("accepted kafkas count = %d", len(acceptedKafkas))
 	}
@@ -95,13 +95,12 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 		glog.V(10).Infof("accepted kafka id = %s", kafka.ID)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
-			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
-			errors = append(errors, err)
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted kafka %s", kafka.ID))
 			continue
 		}
 	}
 
-	return errors
+	return encounteredErrors
 }
 
 func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
@@ -111,7 +110,7 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) e
 	}
 
 	if cluster == nil {
-		glog.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
+		logger.Logger.Warningf("No available cluster found for Kafka instance with id %s", kafka.ID)
 		return nil
 	}
 

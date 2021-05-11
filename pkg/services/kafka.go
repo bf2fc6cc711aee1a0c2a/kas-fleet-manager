@@ -9,6 +9,7 @@ import (
 
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/golang/glog"
 
@@ -26,7 +27,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/getsentry/sentry-go"
 )
 
 const productId = "RHOSAKTrial"
@@ -94,7 +94,7 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	var count int64
 
 	if err := dbConn.Model(&api.KafkaRequest{}).Count(&count).Error; err != nil {
-		return false, errors.GeneralError("failed counting kafkas: %v", err)
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
 	}
 
 	glog.Infof("%d of %d kafka clusters currently instantiated", count, k.kafkaConfig.KafkaCapacity.MaxCapacity)
@@ -108,7 +108,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request")
 	} else if !hasCapacity {
-		glog.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
+		logger.Logger.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
 		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
 	}
 	//cluster id can't be nil. generating random temporary id.
@@ -141,14 +141,12 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
 	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
 	if replaceErr != nil {
-		sentry.CaptureException(replaceErr)
-		return errors.GeneralError("generated host is not valid: %v", replaceErr)
+		return errors.NewWithCause(errors.ErrorGeneral, replaceErr, "generated host is not valid")
 	}
 
 	clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 	if err != nil {
-		sentry.CaptureException(err)
-		return errors.GeneralError("error retrieving cluster DNS: %v", err)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
 
 	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
@@ -167,7 +165,6 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
 		if err != nil {
-			sentry.CaptureException(err)
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
 	}
@@ -177,14 +174,12 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		// create the syncset builder
 		syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig())
 		if err != nil {
-			sentry.CaptureException(err)
-			return errors.GeneralError("error creating kafka syncset builder: %v", err)
+			return errors.NewWithCause(errors.ErrorGeneral, err, "error creating kafka syncset builder")
 		}
 
 		// create the syncset
 		_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
 		if err != nil {
-			sentry.CaptureException(err)
 			return err
 		}
 	}
@@ -201,7 +196,7 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		Status:              constants.KafkaRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {
-		return errors.GeneralError("failed to update kafka request: %v", err)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka request")
 	}
 
 	return nil
@@ -216,7 +211,7 @@ func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*api.Kaf
 	var kafkas []*api.KafkaRequest
 
 	if err := dbConn.Model(&api.KafkaRequest{}).Where("status IN (?)", status).Scan(&kafkas).Error; err != nil {
-		return nil, errors.GeneralError(err.Error())
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list by status")
 	}
 
 	return kafkas, nil
@@ -316,7 +311,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 
 	err := dbConn.Error
 	if err != nil {
-		return errors.GeneralError("Unable to deprovision kafka requests for users %s", err)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to deprovision kafka requests for users")
 	}
 
 	if dbConn.RowsAffected >= 1 {
@@ -344,7 +339,7 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 	db := dbConn.Update("status", constants.KafkaRequestStatusDeprovision)
 	err := db.Error
 	if err != nil {
-		return errors.GeneralError("unable to deprovision expired kafkas: %v", err)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired kafkas")
 	}
 
 	if db.RowsAffected >= 1 {
@@ -374,15 +369,14 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 			clientId := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
 			if keycloakErr != nil {
-				return errors.GeneralError("error deleting sso client: %v", keycloakErr)
+				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting sso client")
 			}
 		}
 
 		if k.kafkaConfig.EnableKafkaExternalCertificate {
 			clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
 			if err != nil {
-				sentry.CaptureException(err)
-				return errors.GeneralError("error retrieving cluster DNS: %v", err)
+				return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 			}
 			clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 
@@ -397,14 +391,13 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
 
 		if err != nil && statucCode != http.StatusNotFound {
-			sentry.CaptureException(err)
 			return errors.GeneralError("error deleting syncset: %v", err)
 		}
 	}
 
 	// soft delete the kafka request
 	if err := dbConn.Delete(kafkaRequest).Error; err != nil {
-		return errors.GeneralError("unable to delete kafka request with id %s: %s", kafkaRequest.ID, err)
+		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete kafka request with id %s", kafkaRequest.ID)
 	}
 
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
@@ -495,7 +488,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 
 	var kafkaRequestList api.KafkaList
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
-		return nil, errors.GeneralError("Unable to list kafka requests %s", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka requests")
 	}
 
 	var res []managedkafka.ManagedKafka
@@ -515,7 +508,7 @@ func (k *kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
 
 	if err := dbConn.Updates(kafkaRequest).Error; err != nil {
-		return errors.GeneralError("failed to update: %s", err.Error())
+		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka")
 	}
 
 	return nil
@@ -525,7 +518,7 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 	dbConn := k.connectionFactory.New()
 
 	if kafka, err := k.GetById(id); err != nil {
-		return true, errors.GeneralError("failed to update status: %s", err.Error())
+		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 	} else {
 		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
 			// only allow to change the status to "deleted" if the cluster is already in "deprovision" status
@@ -541,7 +534,7 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 	}
 
 	if err := dbConn.Model(&api.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
-		return true, errors.GeneralError("failed to update status: %s", err.Error())
+		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka status")
 	}
 
 	return true, nil
@@ -557,14 +550,12 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, c
 	}
 	awsClient, err := aws.NewClient(awsConfig, kafkaRequest.Region)
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.GeneralError("Unable to create aws client: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
 
 	changeRecordsOutput, err := awsClient.ChangeResourceRecordSets(k.kafkaConfig.KafkaDomainName, domainRecordBatch)
 	if err != nil {
-		sentry.CaptureException(err)
-		return nil, errors.GeneralError("Unable to create domain record sets: %v", err)
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create domain record sets")
 	}
 
 	return changeRecordsOutput, nil
@@ -579,7 +570,7 @@ func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaSta
 	dbConn := k.connectionFactory.New()
 	var results []KafkaStatusCount
 	if err := dbConn.Model(&api.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
-		return nil, err
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
 	}
 
 	// if there is no count returned for a status from the above query because there is no kafkas in such a status,

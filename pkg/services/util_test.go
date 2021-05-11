@@ -37,7 +37,7 @@ func Test_handleGetError(t *testing.T) {
 				value:        "sample-id",
 				err:          gorm.ErrInvalidData,
 			},
-			want: errors.GeneralError("Unable to find %s with id='sample-id': %s", resourceType, gorm.ErrInvalidData.Error()),
+			want: errors.NewWithCause(errors.ErrorGeneral, gorm.ErrInvalidData, "Unable to find %s with id='sample-id'", resourceType),
 		},
 		{
 			name: "Handler should return a not found error if record was not found in the database",

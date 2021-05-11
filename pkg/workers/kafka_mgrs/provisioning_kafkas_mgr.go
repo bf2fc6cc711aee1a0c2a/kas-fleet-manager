@@ -13,7 +13,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 )
 
@@ -80,13 +79,12 @@ func (c *ProvisioningKafkaManager) SetIsRunning(val bool) {
 
 func (k *ProvisioningKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling kafkas")
-	var errors []error
+	var encounteredErrors []error
 
 	// handle provisioning kafkas state
 	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
-		glog.Errorf("failed to list provisioning kafkas: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning kafkas"))
 	} else {
 		glog.Infof("provisioning kafkas count = %d", len(provisioningKafkas))
 	}
@@ -97,14 +95,13 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 		// otherwise they will be set to be ready when kas-fleetshard reports status back to the control plane
 		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
 			if err := k.reconcileProvisioningKafka(kafka); err != nil {
-				glog.Errorf("reconcile provisioning %s: %s", kafka.ID, err.Error())
-				errors = append(errors, err)
+				encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "reconcile provisioning %s", kafka.ID))
 				continue
 			}
 		}
 	}
 
-	return errors
+	return encounteredErrors
 }
 
 func (k *ProvisioningKafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRequest) error {
@@ -114,9 +111,7 @@ func (k *ProvisioningKafkaManager) reconcileProvisioningKafka(kafka *api.KafkaRe
 	}
 	kafkaState, err := k.observatoriumService.GetKafkaState(kafka.Name, namespace)
 	if err != nil {
-		wrappedErr := errors.Wrapf(err, "failed to get state from observatorium for kafka %s namespace %s cluster %s", kafka.ID, namespace, kafka.ClusterID)
-		sentry.CaptureException(wrappedErr)
-		return wrappedErr
+		return errors.Wrapf(err, "failed to get state from observatorium for kafka %s namespace %s cluster %s", kafka.ID, namespace, kafka.ClusterID)
 	}
 	if kafkaState.State == observatorium.ClusterStateReady {
 		glog.Infof("Kafka %s state %s", kafka.ID, kafkaState.State)

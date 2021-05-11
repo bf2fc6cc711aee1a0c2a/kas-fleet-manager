@@ -22,7 +22,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/golang/glog"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
 type ConnectorTypesService interface {
@@ -188,18 +188,18 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 	for _, u := range urls {
 		xu, err := url.Parse(u)
 		if err != nil {
-			glog.Warningf("url parse failed: %v", err)
+			logger.Logger.Warningf("url parse failed: %v", err)
 			continue
 		}
 
 		response, err := getConnectorTypeCatalog(ctx, u)
 		if err != nil {
-			glog.Warningf("failed to get %s, %v", u, err)
+			logger.Logger.Warningf("failed to get %s, %v", u, err)
 			continue
 		}
 
 		if len(response.ConnectorTypeIds) == 0 {
-			glog.Warningf("no connector_type_ids defined in %v", u)
+			logger.Logger.Warningf("no connector_type_ids defined in %v", u)
 			continue
 		}
 
@@ -211,7 +211,7 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 			x := fmt.Sprintf("%s/api/managed-services-api/v1/kafka-connector-types/%s", base, id)
 			response, err := getConnectorType(ctx, x)
 			if err != nil {
-				glog.Warningf("failed to get %s, %v", x, err)
+				logger.Logger.Warningf("failed to get %s, %v", x, err)
 				continue
 			}
 

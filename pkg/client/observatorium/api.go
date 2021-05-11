@@ -2,8 +2,10 @@ package observatorium
 
 import (
 	"fmt"
-	"github.com/golang/glog"
 	"strings"
+
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
 )
 
 type APIObservatoriumService interface {
@@ -157,7 +159,7 @@ func (obs *ServiceObservatorium) fetchMetricsResult(rq *MetricsReqParams, f *fet
 	case Query:
 		result = c.Query(f.metric, f.labels)
 	default:
-		result = Metric{Err: fmt.Errorf("Unsupported Result Type %q", rq.ResultType)}
+		result = Metric{Err: errors.Errorf("Unsupported Result Type %q", rq.ResultType)}
 	}
 	return result
 }
