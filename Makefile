@@ -325,7 +325,7 @@ code/fix:
 
 run: install
 	kas-fleet-manager migrate
-	kas-fleet-manager serve
+	kas-fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
 .PHONY: run
 
 # Run Swagger and host the api docs
