@@ -359,8 +359,8 @@ db/generate/insert/cluster:
 	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, byoc, managed, status) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', true, true, 'cluster_provisioned');";
 .PHONY: db/generate/insert/cluster
 
-# Login to docker 
-docker/login: 
+# Login to docker
+docker/login:
 	docker --config="${DOCKER_CONFIG}" login -u "${QUAY_USER}" -p "${QUAY_TOKEN}" quay.io
 .PHONY: docker/login
 
@@ -396,7 +396,7 @@ image/push/internal:
 image/build/push/internal: image/build/internal image/push/internal
 .PHONY: image/build/push/internal
 
-# Build the binary and test image 
+# Build the binary and test image
 image/build/test: binary
 	docker build -t "$(test_image)" -f Dockerfile.integration.test .
 .PHONY: image/build/test
@@ -440,8 +440,8 @@ ocm/login:
 	@ocm login --url="$(SERVER_URL)" --token="$(OCM_OFFLINE_TOKEN)"
 .PHONY: ocm/login
 
-# Setup OCM_OFFLINE_TOKEN and 
-# OCM Client ID and Secret should be set only when running inside docker in integration ENV)  
+# Setup OCM_OFFLINE_TOKEN and
+# OCM Client ID and Secret should be set only when running inside docker in integration ENV)
 ocm/setup: OCM_CLIENT_ID ?= ocm-ams-testing
 ocm/setup: OCM_CLIENT_SECRET ?= 8f0c06c5-a558-4a78-a406-02deb1fd3f17
 ocm/setup:
