@@ -106,7 +106,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -186,7 +186,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
