@@ -18,7 +18,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -26,45 +25,19 @@ const (
 )
 
 func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.ClusterStatus) error {
-	err := wait.PollImmediate(1*time.Second, 120*time.Minute, func() (bool, error) {
-		foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
-		if err != nil {
-			return true, err
-		}
-		if foundCluster == nil {
-			return false, nil
-		}
-		return foundCluster.Status.String() == expectedStatus.String(), nil
-	})
-	return err
-}
-
-func Poll(interval time.Duration, timeout time.Duration,
-	onRetry func(attempt int, maxRetries int) (done bool, err error),
-	onStart func(maxRetries int) error,
-	onFinish func(attempt int, maxRetries int, err error)) error {
-	if onRetry == nil {
-		return fmt.Errorf("no retry handler has been specified")
-	}
-
-	maxAttempts := int(timeout / interval)
-
-	if onStart != nil {
-		if err := onStart(maxAttempts); err != nil {
-			return err
-		}
-	}
-
-	attempt := 0
-	err := wait.PollImmediate(interval, timeout, func() (done bool, err error) {
-		attempt++
-		return onRetry(attempt, maxAttempts)
-	})
-
-	if onFinish != nil {
-		onFinish(attempt, maxAttempts, err)
-	}
-
+	err := NewPollerBuilder().
+		IntervalAndTimeout(1*time.Second, 120*time.Minute).
+		RetryLogMessagef("Waiting for cluster '%s' to reach status '%s'", clusterID, expectedStatus.String()).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
+			if err != nil {
+				return true, err
+			}
+			if foundCluster == nil {
+				return false, nil
+			}
+			return foundCluster.Status.String() == expectedStatus.String(), nil
+		}).Build().Poll()
 	return err
 }
 
@@ -90,11 +63,9 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
 		clusterID, _ = readClusterDetailsFromFile(h, t)
 	}
-	var foundCluster *api.Cluster
-	var err *ocmErrors.ServiceError
 	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		// first check if there is an existing valid cluster that we can use
-		foundCluster, err = findFirstValidCluster(h)
+		foundCluster, err := findFirstValidCluster(h)
 		if err != nil {
 			return "", err
 		}
@@ -109,14 +80,18 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 				return "", err
 			}
 			// need to wait for it to be assigned
-			waitErr := wait.PollImmediate(1*time.Second, 5*time.Minute, func() (done bool, err error) {
-				c, findErr := findFirstValidCluster(h)
-				if findErr != nil {
-					return false, findErr
-				}
-				foundCluster = c
-				return foundCluster != nil && foundCluster.ClusterID != "", nil
-			})
+			waitErr := NewPollerBuilder().
+				IntervalAndTimeout(1*time.Second, 5*time.Minute).
+				RetryLogMessage("Waiting for ID to be assigned to the new cluster").
+				OnRetry(func(attempt int, maxRetries int) (bool, error) {
+					c, findErr := findFirstValidCluster(h)
+					if findErr != nil {
+						return false, findErr
+					}
+					foundCluster = c
+					return foundCluster != nil && foundCluster.ClusterID != "", nil
+				}).Build().Poll()
+
 			if waitErr != nil {
 				return "", ocmErrors.GeneralError("error to find a valid cluster: %v", waitErr)
 			}
@@ -125,6 +100,13 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	}
 
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+		foundCluster, err := findFirstValidCluster(h)
+		if err != nil {
+			return "", err
+		}
+		if foundCluster == nil {
+			return "", nil
+		}
 		pErr := PersistClusterStruct(*foundCluster)
 		if pErr != nil {
 			t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))

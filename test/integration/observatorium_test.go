@@ -16,7 +16,6 @@ import (
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
@@ -36,7 +35,6 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	err := h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 
-	defer h.Reset()
 	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
@@ -84,7 +82,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	Expect(len(*metricsList)).NotTo(Equal(0), "Should return length greater then zero")
 
 	// Delete created kafkas
-	deleteTestKafka(ctx, client, seedKafka.Id)
+	deleteTestKafka(t, h, ctx, client, seedKafka.Id)
 }
 
 func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
@@ -118,13 +116,18 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	}
 
 	var foundKafka openapi.KafkaRequest
-	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-	})
+	_ = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+			if err != nil {
+				return true, err
+			}
+			return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
+		}).
+		RetryLogMessage(fmt.Sprintf("Waiting for kafka (%s) to be ready", seedKafka.Id)).
+		Build().Poll()
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -155,7 +158,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
-	deleteTestKafka(ctx, client, foundKafka.Id)
+	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }
 func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -188,13 +191,19 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	}
 
 	var foundKafka openapi.KafkaRequest
-	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-	})
+
+	_ = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+			if err != nil {
+				return true, err
+			}
+			return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
+		}).
+		RetryLogMessage(fmt.Sprintf("Waiting for kafka (%s) to be ready", seedKafka.Id)).
+		Build().Poll()
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -225,5 +234,5 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
-	deleteTestKafka(ctx, client, foundKafka.Id)
+	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }

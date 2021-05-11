@@ -285,6 +285,39 @@ adding the new endpoint. Using the OCM `GET /api/clusters_mgmt/v1/clusters` endp
 - Register the default return handler in `getDefaultHandlerRegister()`
 - Allow overrides to be provided by adding an override function, `SetClusterGetResponse()`
 
+#### Polling
+When you need to poll to wait for an event to happen (for example, when you have to wait for a cluster to be ready), a
+poller object is provided in the `common` package.
+The simplest way to use it would be:
+```go
+package mytest
+import (
+    "testing"
+    "time"
+
+    utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
+)
+
+func MyTestFunction(t *testing.T) {
+    err := utils.NewPollerBuilder().
+        // test output should go to `t.Logf` instead of `fmt.Printf`
+        OutputFunction(t.Logf). 
+        // sets number of retries and interval between each retry
+        IntervalAndRetries(10 * time.Second, 10).
+        OnRetry(func(attempt int, maxAttempts int) (done bool, err error) { // function executed on each retry
+            // put your logic here 
+            return true, nil
+        }).
+        Build().Poll()
+    if err != nil { 
+        // ...
+    }
+    // ...
+}
+```
+> :warning: By default the logging is set to `short-verbose`. To be able to see the polling logs you must set the
+> `TEST_SUMMARY_FORMAT` environment variable to `default-verbose`
+
 ## Logging Standards & Best Practices
   * Log only actionable information, which will be read by a human or a machine for auditing or debugging purposes
     * Logs shall have context and meaning - a single log statement should be useful on its own

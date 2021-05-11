@@ -1,12 +1,12 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
@@ -50,6 +50,10 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
+	if env.helper.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+		t.SkipNow()
+	}
+
 	// setup pre-requisites to performing requests
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
@@ -71,13 +75,10 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
-	clusterID, getClusterErr := utils.GetRunningOsdClusterID(env.helper, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+	if env.helper.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+		t.SkipNow()
 	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
+
 	// setup pre-requisites to performing requests
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
