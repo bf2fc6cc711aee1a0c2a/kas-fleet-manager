@@ -26,17 +26,8 @@ const (
 	clusterIDAssignTimeout = 2 * time.Minute
 	clusterReadyTimeout    = 3 * time.Hour
 	interval               = 10 * time.Second
-	readyWaitTime          = 30 * time.Minute
 	clusterDeletionTimeout = 15 * time.Minute
 )
-
-func WaitForObservatoriumToBeReady(t *testing.T) {
-	iterations := int(readyWaitTime.Minutes())
-	for i := 0; i < iterations; i++ {
-		t.Logf("%d/%d - Waiting for Observatorium to be ready", i+1, iterations)
-		time.Sleep(1 * time.Minute)
-	}
-}
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
@@ -144,13 +135,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("failed to get cluster DNS from ocm")
 	}
 	Expect(cluster.ClusterDNS).To(Equal(ocmClusterDNS))
-
-	// observatorium needs to get ready and until we change the way kafka
-	// statuses are obtained, integration tests will fail without this wait time
-	// as their status may not be correctly scraped jut after the OSD cluster is created
-	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-		WaitForObservatoriumToBeReady(t)
-	}
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
 	common.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
