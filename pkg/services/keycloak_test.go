@@ -15,6 +15,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	pkgErr "github.com/pkg/errors"
 )
 
 const (
@@ -134,10 +136,12 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 }
 
 func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
+	tokenErr := pkgErr.New("token error")
+	failedToCreateClientErr := pkgErr.New("failed to create client")
+
 	type fields struct {
 		kcClient keycloak.KcClient
 	}
-
 	tests := []struct {
 		name    string
 		fields  fields
@@ -149,12 +153,12 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
-						return "", fmt.Errorf("%v", "token error")
+						return "", tokenErr
 					},
 				},
 			},
 			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorGeneral, fmt.Errorf("%v", "token error"), "failed to register OSD cluster Client in SSO"),
+			wantErr: errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register OSD cluster Client in SSO"),
 		},
 		{
 			name: "fetch osd client secret from sso when client already exists",
@@ -224,7 +228,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 						return secret, nil
 					},
 					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
-						return "", fmt.Errorf("%v", "some errors")
+						return "", failedToCreateClientErr
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
 						testID := "12221"
@@ -235,7 +239,7 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 				},
 			},
 			want:    "",
-			wantErr: errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, fmt.Errorf("%v", "some errors"), "failed to create sso client"),
+			wantErr: errors.NewWithCause(errors.ErrorFailedToCreateSSOClient, failedToCreateClientErr, "failed to create sso client"),
 		},
 	}
 
