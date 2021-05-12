@@ -83,12 +83,11 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 		return nil
 	}
 
-	var errors []error
+	var encounteredErrors []error
 
 	readyKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusReady)
 	if serviceErr != nil {
-		glog.Errorf("failed to list ready kafkas: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list ready kafkas"))
 	} else {
 		glog.Infof("ready kafkas count = %d", len(readyKafkas))
 	}
@@ -96,12 +95,11 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 	for _, kafka := range readyKafkas {
 		glog.V(10).Infof("ready kafka id = %s", kafka.ID)
 		if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
-			glog.Errorf("failed to get provisioning kafkas sso client%s: %s", kafka.SsoClientID, err.Error())
-			errors = append(errors, err)
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to get provisioning kafkas sso client: %s", kafka.ID))
 		}
 	}
 
-	return errors
+	return encounteredErrors
 }
 
 func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequest) error {

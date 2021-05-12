@@ -50,7 +50,7 @@ func handleGetError(resourceType, field string, value interface{}, err error) *e
 	if IsRecordNotFoundError(err) {
 		return errors.NotFound("%s with %s='%v' not found", resourceType, field, value)
 	}
-	return errors.GeneralError("Unable to find %s with %s='%v': %s", resourceType, field, value, err)
+	return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find %s with %s='%v'", resourceType, field, value)
 }
 
 func IsRecordNotFoundError(err error) bool {

@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -129,12 +130,12 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 	// - continue with their existing lease, if they are the leader and the lease expiry time is far away
 	var leaseList api.LeaderLeaseList
 	if err := dbConn.Raw("SELECT * FROM leader_leases where deleted_at is null and lease_type = ?  LIMIT 1", workerType).Scan(&leaseList).Error; err != nil {
-		return nil, fmt.Errorf("failed to retrieve leader leases: %w", err)
+		return nil, errors.Wrap(err, "failed to retrieve leader leases")
 	}
 
 	// we failed to read the current lease, we always expect a single lease to exist, create one so that worker can proceed.
 	if len(leaseList) == 0 {
-		return nil, fmt.Errorf("expected to find a lease entry, found none for :%s", workerType)
+		return nil, errors.Errorf("expected to find a lease entry, found none for :%s", workerType)
 	}
 
 	// the lease will be the first entry returned
@@ -153,7 +154,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 		// attempt to lock the leader lease
 		if err := leaderTx.Raw("SELECT * FROM leader_leases where deleted_at is null and lease_type = ? FOR UPDATE SKIP LOCKED LIMIT 1", workerType).Scan(&leaseList).Error; err != nil {
 			leaderTx.Rollback()
-			return nil, fmt.Errorf("failed to retrieve leader leases: %w", err)
+			return nil, errors.Wrap(err, "failed to retrieve leader leases")
 		}
 
 		/* if length is 0 we missed our opportunity, another worker has taken the lease for update:
@@ -176,7 +177,7 @@ func (s *LeaderElectionManager) acquireLeaderLease(workerId string, workerType s
 		if len(leaseList) > 0 {
 			if err := leaderTx.Model(&lease).Updates(map[string]interface{}{"leader": workerId, "expires": newExpiryTime}).Error; err != nil {
 				leaderTx.Rollback()
-				return nil, fmt.Errorf("failed to update leader lease: %w", err)
+				return nil, errors.Wrap(err, "failed to update leader lease")
 			}
 		}
 

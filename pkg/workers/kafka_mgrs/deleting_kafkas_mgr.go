@@ -77,7 +77,7 @@ func (c *DeletingKafkaManager) SetIsRunning(val bool) {
 
 func (k *DeletingKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling deleting kafkas")
-	var errors []error
+	var encounteredErrors []error
 
 	// handle deprovisioning requests
 	// if kas-fleetshard sync is not enabled, the status we should check is constants.KafkaRequestStatusDeprovision as control plane is responsible for deleting the data
@@ -89,8 +89,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	}
 	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deprovisionStatus...)
 	if serviceErr != nil {
-		glog.Errorf("failed to list kafka deprovisioning requests: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
 	} else {
 		glog.Infof("%s kafkas count = %d", deprovisionStatus[0].String(), len(deprovisioningRequests))
 	}
@@ -98,13 +97,12 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	for _, kafka := range deprovisioningRequests {
 		glog.V(10).Infof("deprovisioning kafka id = %s", kafka.ID)
 		if err := k.reconcileDeprovisioningRequest(kafka); err != nil {
-			glog.Errorf("failed to reconcile deprovisioning request %s: %s", kafka.ID, err.Error())
-			errors = append(errors, err)
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile deprovisioning request %s", kafka.ID))
 			continue
 		}
 	}
 
-	return errors
+	return encounteredErrors
 }
 
 func (k *DeletingKafkaManager) reconcileDeprovisioningRequest(kafka *api.KafkaRequest) error {

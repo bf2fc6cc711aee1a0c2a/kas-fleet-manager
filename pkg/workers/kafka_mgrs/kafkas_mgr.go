@@ -4,14 +4,26 @@ import (
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 )
+
+// we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
+var kafkaMetricsStatuses = []constants.KafkaStatus{
+	constants.KafkaRequestStatusAccepted,
+	constants.KafkaRequestStatusPreparing,
+	constants.KafkaRequestStatusProvisioning,
+	constants.KafkaRequestStatusReady,
+	constants.KafkaRequestStatusDeprovision,
+	constants.KafkaRequestStatusDeleting,
+	constants.KafkaRequestStatusFailed,
+}
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
@@ -74,13 +86,13 @@ func (c *KafkaManager) SetIsRunning(val bool) {
 
 func (k *KafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling kafkas")
-	var errors []error
+	var encounteredErrors []error
 
 	// record the metrics at the beginning of the reconcile loop as some of the states like "accepted"
 	// will likely gone after one loop. Record them at the beginning should give us more accurate metrics
 	statusErrors := k.setKafkaStatusCountMetric()
 	if len(statusErrors) > 0 {
-		errors = append(errors, statusErrors...)
+		encounteredErrors = append(encounteredErrors, statusErrors...)
 	}
 
 	// delete kafkas of denied owners
@@ -89,8 +101,8 @@ func (k *KafkaManager) Reconcile() []error {
 		glog.Infoln("reconciling denied kafka owners")
 		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
 		if kafkaDeprovisioningForDeniedOwnersErr != nil {
-			glog.Errorf("Failed to deprovision kafka for denied owners %s: %s", accessControlListConfig.DenyList, kafkaDeprovisioningForDeniedOwnersErr.Error())
-			errors = append(errors, kafkaDeprovisioningForDeniedOwnersErr)
+			wrappedError := errors.Wrapf(kafkaDeprovisioningForDeniedOwnersErr, "Failed to deprovision kafka for denied owners %s", accessControlListConfig.DenyList)
+			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
 
@@ -100,15 +112,15 @@ func (k *KafkaManager) Reconcile() []error {
 		glog.Infoln("deprovisioning expired kafkas")
 		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifespan.KafkaLifespanInHours)
 		if expiredKafkasError != nil {
-			glog.Errorf("failed to deprovision expired Kafka instances due to error: %s", expiredKafkasError.Error())
-			errors = append(errors, expiredKafkasError)
+			wrappedError := errors.Wrap(expiredKafkasError, "failed to deprovision expired Kafka instances")
+			encounteredErrors = append(encounteredErrors, wrappedError)
 		}
 	}
 
-	return errors
+	return encounteredErrors
 }
 
-func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers) *errors.ServiceError {
+func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers) *serviceErr.ServiceError {
 	if len(deniedUsers) < 1 {
 		return nil
 	}
@@ -117,25 +129,14 @@ func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers
 }
 
 func (k *KafkaManager) setKafkaStatusCountMetric() []error {
-	// we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
-	status := []constants.KafkaStatus{
-		constants.KafkaRequestStatusAccepted,
-		constants.KafkaRequestStatusPreparing,
-		constants.KafkaRequestStatusProvisioning,
-		constants.KafkaRequestStatusReady,
-		constants.KafkaRequestStatusDeprovision,
-		constants.KafkaRequestStatusDeleting,
-		constants.KafkaRequestStatusFailed,
-	}
-	var errors []error
-	if counters, err := k.kafkaService.CountByStatus(status); err != nil {
-		glog.Errorf("failed to count Kafkas by status: %s", err.Error())
-		errors = append(errors, err)
-	} else {
-		for _, c := range counters {
-			metrics.UpdateKafkaRequestsStatusCountMetric(c.Status, c.Count)
-		}
+	counters, err := k.kafkaService.CountByStatus(kafkaMetricsStatuses)
+	if err != nil {
+		return []error{errors.Wrap(err, "failed to count Kafkas by status")}
 	}
 
-	return errors
+	for _, c := range counters {
+		metrics.UpdateKafkaRequestsStatusCountMetric(c.Status, c.Count)
+	}
+
+	return nil
 }

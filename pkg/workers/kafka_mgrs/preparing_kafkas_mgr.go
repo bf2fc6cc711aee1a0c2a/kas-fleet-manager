@@ -11,7 +11,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -76,13 +75,12 @@ func (c *PreparingKafkaManager) SetIsRunning(val bool) {
 
 func (k *PreparingKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling preparing kafkas")
-	var errors []error
+	var encounteredErrors []error
 
 	// handle preparing kafkas
 	preparingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusPreparing)
 	if serviceErr != nil {
-		glog.Errorf("failed to list accepted kafkas: %s", serviceErr.Error())
-		errors = append(errors, serviceErr)
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list preparing kafkas"))
 	} else {
 		glog.Infof("preparing kafkas count = %d", len(preparingKafkas))
 	}
@@ -91,14 +89,13 @@ func (k *PreparingKafkaManager) Reconcile() []error {
 		glog.V(10).Infof("preparing kafka id = %s", kafka.ID)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcilePreparedKafka(kafka); err != nil {
-			glog.Errorf("failed to reconcile accepted kafka %s: %s", kafka.ID, err.Error())
-			errors = append(errors, err)
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile preparing kafka %s", kafka.ID))
 			continue
 		}
 
 	}
 
-	return errors
+	return encounteredErrors
 }
 
 func (k *PreparingKafkaManager) reconcilePreparedKafka(kafka *api.KafkaRequest) error {
@@ -134,7 +131,6 @@ func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *ap
 			return errors.Wrapf(err, "Failed to update kafka %s in failed state", kafkaRequest.ID)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
-		sentry.CaptureException(err)
 		return errors.Wrapf(err, "error creating kafka %s", kafkaRequest.ID)
 	}
 

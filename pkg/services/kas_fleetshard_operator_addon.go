@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -82,7 +83,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 		return errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
 	}
 	if addonInstallation == nil || addonInstallation.ID() == "" {
-		glog.Warningf("no valid installation for kas-fleetshard operator found on cluster %s", cluster.ClusterID)
+		logger.Logger.Warningf("no valid installation for kas-fleetshard operator found on cluster %s", cluster.ClusterID)
 		return errors.BadRequest("no valid kas-fleetshard addon for cluster %s", cluster.ClusterID)
 	}
 	glog.V(5).Infof("Found existing addon %s, updating parameters", addonInstallation.ID())

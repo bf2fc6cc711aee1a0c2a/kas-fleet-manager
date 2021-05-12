@@ -8,6 +8,8 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	pkgErr "github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -18,6 +20,7 @@ const (
 )
 
 func Test_handleGetError(t *testing.T) {
+	cause := pkgErr.WithStack(gorm.ErrInvalidData)
 	type args struct {
 		resourceType string
 		field        string
@@ -27,7 +30,7 @@ func Test_handleGetError(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *errors.ServiceError
+		want *serviceError.ServiceError
 	}{
 		{
 			name: "Handler should return a general error for any errors other than record not found",
@@ -35,9 +38,9 @@ func Test_handleGetError(t *testing.T) {
 				resourceType: resourceType,
 				field:        "id",
 				value:        "sample-id",
-				err:          gorm.ErrInvalidData,
+				err:          cause,
 			},
-			want: errors.GeneralError("Unable to find %s with id='sample-id': %s", resourceType, gorm.ErrInvalidData.Error()),
+			want: serviceError.NewWithCause(serviceError.ErrorGeneral, cause, "Unable to find %s with id='sample-id'", resourceType),
 		},
 		{
 			name: "Handler should return a not found error if record was not found in the database",
@@ -47,7 +50,7 @@ func Test_handleGetError(t *testing.T) {
 				value:        "sample-id",
 				err:          gorm.ErrRecordNotFound,
 			},
-			want: errors.NotFound("%s with id='sample-id' not found", resourceType),
+			want: serviceError.NotFound("%s with id='sample-id' not found", resourceType),
 		},
 		{
 			name: "Handler should redact sensitive fields from the error message",
@@ -57,7 +60,7 @@ func Test_handleGetError(t *testing.T) {
 				value:        "sample@example.com",
 				err:          gorm.ErrRecordNotFound,
 			},
-			want: errors.NotFound("%s with email='<redacted>' not found", resourceType),
+			want: serviceError.NotFound("%s with email='<redacted>' not found", resourceType),
 		},
 	}
 	for _, tt := range tests {

@@ -65,6 +65,7 @@ The main places where errors handled are:
 
 1. The [handError](../pkg/handlers/framework.go#L42) function. All errors for HTTP requested should be handled here, and it will log the error to logs and forward the error to Sentry.
 2. The [runReconcile](../pkg/workers/reconciler.go#L87) function. All errors occur in the background workers should be handled here.
+3. If the error is not returned to the caller, we should use an instance of the `UHCLogger` to log the error which will make sure it is captured by Sentry as well.
 
 #### Do
 
@@ -74,6 +75,10 @@ if err := somefunc(); err != nil {
     // just return the error to the caller
     return NewWithCause(ErrorGeneral, err, "unexpected error from somefunc()")
 }
+
+// example of error not returned to the caller
+err := someFunc();
+logger.Logger.Error(err)
 ```
 
 #### Don't
@@ -85,4 +90,8 @@ if err := somefunc(); err != nil {
     sentry.CaptureExeception(err)
     return NewWithCause(ErrorGeneral, err, "unexpected error from somefunc()")
 }
+
+// example of error not returned to the caller
+err := someFunc();
+glog.Error(err)
 ```

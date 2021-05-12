@@ -6,8 +6,9 @@ import (
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/pkg/errors"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
@@ -19,9 +20,9 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 		ctx, err := NewContext(r.Context())
 		if err != nil {
 			ulog := logger.NewUHCLogger(ctx)
-			ulog.Errorf("Could not create transaction: %v", err)
+			ulog.Error(errors.Wrap(err, "Could not create transaction"))
 			// use default error to avoid exposing internals to users
-			err := errors.GeneralError("")
+			err := serviceError.GeneralError("")
 			operationID := logger.GetOperationID(ctx)
 			writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
 			return
@@ -42,7 +43,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			err := Resolve(r.Context())
 			if err != nil {
 				ulog := logger.NewUHCLogger(ctx)
-				ulog.Errorf("%s", err)
+				ulog.Error(err)
 			}
 		}()
 
