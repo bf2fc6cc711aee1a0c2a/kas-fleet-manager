@@ -7,10 +7,11 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 )
 
 type kafkaStatus string
@@ -25,7 +26,7 @@ const (
 )
 
 type DataPlaneKafkaService interface {
-	UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*api.DataPlaneKafkaStatus) *errors.ServiceError
+	UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*api.DataPlaneKafkaStatus) *serviceError.ServiceError
 }
 
 type dataPlaneKafkaService struct {
@@ -40,26 +41,27 @@ func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService) 
 	}
 }
 
-func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(_ context.Context, clusterId string, status []*api.DataPlaneKafkaStatus) *errors.ServiceError {
+func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*api.DataPlaneKafkaStatus) *serviceError.ServiceError {
 	cluster, err := d.clusterService.FindClusterByID(clusterId)
+	log := logger.NewUHCLogger(ctx)
 	if err != nil {
 		return err
 	}
 	if cluster == nil {
 		// 404 is used for authenticated requests. So to distinguish the errors, we use 400 here
-		return errors.BadRequest("Cluster id %s not found", clusterId)
+		return serviceError.BadRequest("Cluster id %s not found", clusterId)
 	}
 	for _, ks := range status {
 		kafka, getErr := d.kafkaService.GetById(ks.KafkaClusterId)
 		if getErr != nil {
-			glog.Errorf("failed to get kafka cluster by id %s due to error: %v", ks.KafkaClusterId, getErr)
+			log.Error(errors.Wrapf(getErr, "failed to get kafka cluster by id %s", ks.KafkaClusterId))
 			continue
 		}
 		if kafka.ClusterID != clusterId {
-			glog.Warningf("clusterId for kafka cluster %s does not match clusterId. kafka clusterId = %s :: clusterId = %s", kafka.ID, kafka.ClusterID, clusterId)
+			log.Warningf("clusterId for kafka cluster %s does not match clusterId. kafka clusterId = %s :: clusterId = %s", kafka.ID, kafka.ClusterID, clusterId)
 			continue
 		}
-		var e *errors.ServiceError
+		var e *serviceError.ServiceError
 		switch s := getStatus(ks); s {
 		case statusReady:
 			e = d.setKafkaClusterReady(kafka)
@@ -70,22 +72,21 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(_ context.Context, c
 		case statusRejected:
 			e = d.reassignKafkaCluster(kafka)
 		case statusUnknown:
-			glog.Warningf("kafka cluster %s status is unknown", ks.KafkaClusterId)
+			log.Warningf("kafka cluster %s status is unknown", ks.KafkaClusterId)
 		default:
-			glog.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
+			log.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
 		}
 		if e != nil {
-			sentry.CaptureException(e)
+			log.Error(errors.Wrapf(e, "Error updating kafka %s status", ks.KafkaClusterId))
 		}
 	}
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *errors.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *serviceError.ServiceError {
 	if ok, err := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusReady); ok {
 		if err != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusReady, kafka.ID, err)
-			return err
+			return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants.KafkaRequestStatusReady, kafka.ID)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
@@ -95,11 +96,10 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *e
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *errors.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *serviceError.ServiceError {
 	if ok, err := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); ok {
 		if err != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusFailed, kafka.ID, err)
-			return err
+			return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants.KafkaRequestStatusFailed, kafka.ID)
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
@@ -107,12 +107,11 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *api.KafkaRequest) *errors.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *api.KafkaRequest) *serviceError.ServiceError {
 	// If the Kafka cluster is deleted from the data plane cluster, we will make it as "deleting" in db and the reconcilier will ensure it is cleaned up properly
 	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleting); ok {
 		if updateErr != nil {
-			glog.Errorf("failed to update status %s for kafka cluster %s due to error: %v", constants.KafkaRequestStatusDeleting, kafka.ID, updateErr)
-			return updateErr
+			return serviceError.NewWithCause(updateErr.Code, updateErr, "failed to update status %s for kafka cluster %s", constants.KafkaRequestStatusDeleting, kafka.ID)
 		} else {
 			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusDeleting, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		}
@@ -120,7 +119,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *api.KafkaRequest)
 	return nil
 }
 
-func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *api.KafkaRequest) *errors.ServiceError {
+func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *api.KafkaRequest) *serviceError.ServiceError {
 	if kafka.Status == constants.KafkaRequestStatusProvisioning.String() {
 		// If a Kafka cluster is rejected by the kas-fleetshard-operator, it should be assigned to another OSD cluster (via some scheduler service in the future).
 		// But now we only have one OSD cluster, so we need to change the placementId field so that the kas-fleetshard-operator will try it again

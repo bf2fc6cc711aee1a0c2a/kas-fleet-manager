@@ -4,13 +4,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/golang/glog"
-	pAPI "github.com/prometheus/client_golang/api"
-	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
-	pModel "github.com/prometheus/common/model"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/pkg/errors"
+	pAPI "github.com/prometheus/client_golang/api"
+	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
+	pModel "github.com/prometheus/common/model"
 )
 
 type ClientConfiguration struct {
@@ -95,7 +97,7 @@ func (p authRoundTripper) RoundTrip(request *http.Request) (*http.Response, erro
 	} else if p.config.Cookie != "" {
 		request.Header.Add("Cookie", p.config.Cookie)
 	} else {
-		return nil, fmt.Errorf("can't request metrics without auth")
+		return nil, errors.Errorf("can't request metrics without auth")
 	}
 	return p.wrapped.RoundTrip(request)
 }
@@ -128,7 +130,7 @@ func (c *Client) Query(queryTemplate string, label string) Metric {
 	values, warnings, err := c.send(queryString)
 
 	if len(warnings) > 0 {
-		glog.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
+		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
 	}
 	if err != nil {
 		return Metric{Err: err}
@@ -136,8 +138,8 @@ func (c *Client) Query(queryTemplate string, label string) Metric {
 
 	v, ok := values.(pModel.Vector)
 	if !ok {
-		glog.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
-		return Metric{Err: fmt.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)}
+		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)
+		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Vector", values)}
 	}
 	return Metric{Vector: v}
 }
@@ -146,7 +148,7 @@ func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range
 	queryString := fmt.Sprintf(queryTemplate, label)
 	values, warnings, err := c.sendRange(queryString, bounds)
 	if len(warnings) > 0 {
-		glog.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
+		logger.Logger.Warningf("Prometheus client got warnings %s", all(warnings, "and"))
 	}
 	if err != nil {
 		return Metric{Err: err}
@@ -154,8 +156,8 @@ func (c *Client) QueryRange(queryTemplate string, label string, bounds pV1.Range
 
 	m, ok := values.(pModel.Matrix)
 	if !ok {
-		glog.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)
-		return Metric{Err: fmt.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)}
+		logger.Logger.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)
+		return Metric{Err: errors.Errorf("Prometheus client got data of type %T, but expected model.Matrix", values)}
 
 	}
 	return Metric{Matrix: m}

@@ -180,7 +180,7 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 	if !reflect.DeepEqual(resource.Status, status) {
 		resource.Status = status
 		if err := dbConn.Save(&resource).Error; err != nil {
-			return errors.GeneralError("failed to update status: %s", err.Error())
+			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 		}
 		_ = db.AddPostCommitAction(ctx, func() {
 			// Wake up the reconcile loop...

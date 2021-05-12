@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/pkg/errors"
 )
 
 func NewLoggingWriter(w http.ResponseWriter, r *http.Request, f LogFormatter) *loggingWriter {
@@ -38,7 +39,7 @@ func (writer *loggingWriter) log(log string, err error) {
 	case nil:
 		ulog.V(LoggingThreshold).Infof(log)
 	default:
-		ulog.Errorf("Unable to format request/response for log. Error: %s", err.Error())
+		ulog.Error(errors.Wrap(err, "Unable to format request/response for log."))
 	}
 }
 

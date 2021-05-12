@@ -6,9 +6,14 @@ import (
 	"strconv"
 
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 )
+
+type stackTracer interface {
+	StackTrace() errors.StackTrace
+}
 
 const (
 	ERROR_CODE_PREFIX = "MGD-SERV-API"
@@ -290,6 +295,13 @@ func NewWithCause(code ServiceErrorCode, cause error, reason string, values ...i
 		err = &ServiceError{ErrorGeneral, "Unspecified error", http.StatusInternalServerError, nil}
 	}
 
+	// TODO - if cause is nil, should we use the reason as the cause?
+	if cause != nil {
+		_, ok := cause.(stackTracer)
+		if !ok {
+			cause = errors.WithStack(cause) // add stacktrace info
+		}
+	}
 	err.cause = cause
 
 	// If the reason is unspecified, use the default
@@ -305,10 +317,25 @@ func (e *ServiceError) Unwrap() error {
 	return e.cause
 }
 
+// StackTrace returns errors stacktrace.
+func (e *ServiceError) StackTrace() errors.StackTrace {
+	if e.cause == nil {
+		return nil
+	}
+
+	err, ok := e.cause.(stackTracer)
+	if !ok {
+		return nil
+	}
+
+	return err.StackTrace()
+}
+
 func (e *ServiceError) Error() string {
 	if e.cause != nil {
 		return fmt.Sprintf("%s: %s\n caused by: %s", CodeStr(e.Code), e.Reason, e.cause.Error())
 	}
+
 	return fmt.Sprintf("%s: %s", CodeStr(e.Code), e.Reason)
 }
 

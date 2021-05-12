@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
-	"github.com/getsentry/sentry-go"
-	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -47,8 +47,7 @@ func handleError(ctx context.Context, w http.ResponseWriter, err *errors.Service
 	if err.HttpCode >= 400 && err.HttpCode <= 499 {
 		ulog.Infof(err.Error())
 	} else {
-		ulog.Errorf(err.Error())
-		sentry.CaptureException(err)
+		ulog.Error(err)
 	}
 	shared.WriteJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
 }
@@ -181,7 +180,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 				if err.HttpCode >= 400 && err.HttpCode <= 499 {
 					ulog.Infof(err.Error())
 				} else {
-					ulog.Errorf(err.Error())
+					ulog.Error(err)
 				}
 				result := openapi.WatchEvent{
 					Type:  "error",

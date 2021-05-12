@@ -1,8 +1,8 @@
 package services
 
 import (
-	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/pkg/errors"
 )
 
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
@@ -38,7 +38,7 @@ func (f *FirstReadyCluster) FindCluster(kafka *api.KafkaRequest) (*api.Cluster, 
 
 	cluster, err := f.ClusterService.FindCluster(criteria)
 	if err != nil {
-		return nil, fmt.Errorf("failed to find cluster for kafka request %s: %w", kafka.ID, err)
+		return nil, errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
 	}
 
 	return cluster, nil
@@ -111,7 +111,7 @@ func searchClusterObjInArray(clusters []*api.Cluster, clusterId string) *api.Clu
 // findClusterKafkaInstanceCount searches DB for the number of Kafka instance associated with each OSD Clusters
 func (f *FirstSchedulableWithinLimit) findClusterKafkaInstanceCount(clusterIDs []string) (map[string]int, error) {
 	if instanceLst, err := f.ClusterService.FindKafkaInstanceCount(clusterIDs); err != nil {
-		return nil, fmt.Errorf("failed to found kafka instance count for cluster %s : %w", clusterIDs, err)
+		return nil, errors.Wrapf(err, "failed to found kafka instance count for cluster %s", clusterIDs)
 	} else {
 		clusterWithinLimitMap := make(map[string]int)
 		for _, c := range instanceLst {
