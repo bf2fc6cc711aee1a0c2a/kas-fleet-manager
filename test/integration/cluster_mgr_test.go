@@ -116,11 +116,14 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(cluster.DeletedAt.Valid).To(Equal(false), fmt.Sprintf("Expected deleted_at property to be non valid meaning cluster not soft deleted, instead got %v", cluster.DeletedAt))
 
 	// check the state of cluster on ocm to ensure cluster was provisioned successfully
-	ocmClusterStatus, err := ocmClient.GetClusterStatus(cluster.ClusterID)
+	ocmCluster, err := ocmClient.GetCluster(cluster.ClusterID)
 	if err != nil {
-		t.Fatalf("failed to get cluster status from ocm")
+		t.Fatalf("failed to get cluster from ocm")
 	}
-	Expect(ocmClusterStatus.State()).To(Equal(clustersmgmtv1.ClusterStateReady))
+	Expect(ocmCluster.Status().State()).To(Equal(clustersmgmtv1.ClusterStateReady))
+	// check the state of externalID in the DB to check that it has been set appropriately
+	Expect(cluster.ExternalID).NotTo(Equal(""))
+	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
 	addonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.StrimziOperatorAddonID)
