@@ -68,7 +68,7 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			SetComputeNodesFunc: func(clusterID string, numNodes int) (*cmv1.Cluster, *apiErrors.ServiceError) {
 // 				panic("mock out the SetComputeNodes method")
 // 			},
-// 			UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
+// 			UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 // 				panic("mock out the Update method")
 // 			},
 // 			UpdateMultiClusterStatusFunc: func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError {
@@ -133,7 +133,7 @@ type ClusterServiceMock struct {
 	SetComputeNodesFunc func(clusterID string, numNodes int) (*cmv1.Cluster, *apiErrors.ServiceError)
 
 	// UpdateFunc mocks the Update method.
-	UpdateFunc func(cluster *api.Cluster) *apiErrors.ServiceError
+	UpdateFunc func(cluster api.Cluster) *apiErrors.ServiceError
 
 	// UpdateMultiClusterStatusFunc mocks the UpdateMultiClusterStatus method.
 	UpdateMultiClusterStatusFunc func(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
@@ -234,7 +234,7 @@ type ClusterServiceMock struct {
 		// Update holds details about calls to the Update method.
 		Update []struct {
 			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
+			Cluster api.Cluster
 		}
 		// UpdateMultiClusterStatus holds details about calls to the UpdateMultiClusterStatus method.
 		UpdateMultiClusterStatus []struct {
@@ -784,12 +784,12 @@ func (mock *ClusterServiceMock) SetComputeNodesCalls() []struct {
 }
 
 // Update calls UpdateFunc.
-func (mock *ClusterServiceMock) Update(cluster *api.Cluster) *apiErrors.ServiceError {
+func (mock *ClusterServiceMock) Update(cluster api.Cluster) *apiErrors.ServiceError {
 	if mock.UpdateFunc == nil {
 		panic("ClusterServiceMock.UpdateFunc: method is nil but ClusterService.Update was just called")
 	}
 	callInfo := struct {
-		Cluster *api.Cluster
+		Cluster api.Cluster
 	}{
 		Cluster: cluster,
 	}
@@ -803,10 +803,10 @@ func (mock *ClusterServiceMock) Update(cluster *api.Cluster) *apiErrors.ServiceE
 // Check the length with:
 //     len(mockedClusterService.UpdateCalls())
 func (mock *ClusterServiceMock) UpdateCalls() []struct {
-	Cluster *api.Cluster
+	Cluster api.Cluster
 } {
 	var calls []struct {
-		Cluster *api.Cluster
+		Cluster api.Cluster
 	}
 	mock.lockUpdate.RLock()
 	calls = mock.calls.Update

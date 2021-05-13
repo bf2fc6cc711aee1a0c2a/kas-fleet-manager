@@ -2,12 +2,13 @@ package workers
 
 import (
 	"fmt"
-	authv1 "github.com/openshift/api/authorization/v1"
-	userv1 "github.com/openshift/api/user/v1"
-	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 	"time"
+
+	authv1 "github.com/openshift/api/authorization/v1"
+	userv1 "github.com/openshift/api/user/v1"
+	"github.com/pkg/errors"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
@@ -59,10 +60,10 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "error when getting cluster status from ocm fails",
+			name: "error when getting cluster from ocm fails",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetClusterStatusFunc: func(id string) (status *clustersmgmtv1.ClusterStatus, e error) {
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
 						return nil, errors.New("test")
 					},
 				},
@@ -75,20 +76,43 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "error when updating status in database fails",
+			name: "error when ocm cluster is ready but external ID is not available",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetClusterStatusFunc: func(id string) (status *clustersmgmtv1.ClusterStatus, e error) {
-						clusterStatus, err := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady).Build()
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						clusterStatusBuilder := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady)
+						res, err := clustersmgmtv1.NewCluster().Status(clusterStatusBuilder).Build()
 						if err != nil {
 							panic(err)
 						}
-						return clusterStatus, nil
+						return res, nil
+					},
+				},
+			},
+			args: args{
+				cluster: &api.Cluster{
+					ClusterID: "test",
+					Status:    api.ClusterProvisioning,
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when updating in database fails",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						clusterStatusBuilder := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady)
+						res, err := clustersmgmtv1.NewCluster().Status(clusterStatusBuilder).ExternalID("test-external-id").Build()
+						if err != nil {
+							panic(err)
+						}
+						return res, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
-						return errors.New("test")
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("test")
 					},
 				},
 			},
@@ -104,12 +128,13 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			name: "database update not invoked when update not needed",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetClusterStatusFunc: func(id string) (status *clustersmgmtv1.ClusterStatus, e error) {
-						clusterStatus, err := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateInstalling).Build()
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						clusterStatusBuilder := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateInstalling)
+						res, err := clustersmgmtv1.NewCluster().Status(clusterStatusBuilder).Build()
 						if err != nil {
 							panic(err)
 						}
-						return clusterStatus, nil
+						return res, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
@@ -131,19 +156,20 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			},
 		},
 		{
-			name: "pending state is set when internal cluster status is empty",
+			name: "provisioning state is set when internal cluster status is empty",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetClusterStatusFunc: func(id string) (status *clustersmgmtv1.ClusterStatus, e error) {
-						clusterStatus, err := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStatePending).Build()
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						clusterStatusBuilder := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStatePending)
+						res, err := clustersmgmtv1.NewCluster().Status(clusterStatusBuilder).Build()
 						if err != nil {
 							panic(err)
 						}
-						return clusterStatus, nil
+						return res, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
@@ -163,16 +189,17 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			name: "state is failed when underlying ocm cluster failed",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetClusterStatusFunc: func(id string) (status *clustersmgmtv1.ClusterStatus, e error) {
-						clusterStatus, err := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateError).Build()
+					GetClusterFunc: func(id string) (status *clustersmgmtv1.Cluster, e error) {
+						clusterStatusBuilder := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateError)
+						res, err := clustersmgmtv1.NewCluster().Status(clusterStatusBuilder).Build()
 						if err != nil {
 							panic(err)
 						}
-						return clusterStatus, nil
+						return res, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
@@ -192,16 +219,17 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 			name: "successful reconcile",
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
-					GetClusterStatusFunc: func(id string) (status *clustersmgmtv1.ClusterStatus, e error) {
-						clusterStatus, err := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady).Build()
+					GetClusterFunc: func(clusterID string) (*clustersmgmtv1.Cluster, error) {
+						clusterStatusBuilder := clustersmgmtv1.NewClusterStatus().State(clustersmgmtv1.ClusterStateReady)
+						res, err := clustersmgmtv1.NewCluster().Status(clusterStatusBuilder).ExternalID("test-external-id").Build()
 						if err != nil {
 							panic(err)
 						}
-						return clusterStatus, nil
+						return res, nil
 					},
 				},
 				clusterService: &services.ClusterServiceMock{
-					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
@@ -213,8 +241,9 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 				},
 			},
 			want: &api.Cluster{
-				ClusterID: "test",
-				Status:    api.ClusterProvisioned,
+				ClusterID:  "test",
+				ExternalID: "test-external-id",
+				Status:     api.ClusterProvisioned,
 			},
 		},
 	}
@@ -1055,7 +1084,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
@@ -1092,7 +1121,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
@@ -1162,7 +1191,7 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 			name: "should receive error when cluster service Update returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
+					UpdateFunc: func(cluster api.Cluster) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed")
 					},
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
