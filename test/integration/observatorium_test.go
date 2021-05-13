@@ -32,9 +32,6 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	// start servers
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
-	h.Env().Config.ObservabilityConfiguration.EnableMock = true
-	err := h.Env().LoadClients()
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 
 	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
@@ -69,9 +66,6 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	h.Env().Config.ObservabilityConfiguration.EnableMock = true
-	err = h.Env().LoadClients()
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
 	metricsList := &observatorium.KafkaMetrics{}
 	q := observatorium.MetricsReqParams{}
@@ -97,7 +91,6 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
-	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
@@ -161,8 +154,6 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	context := h.NewAuthenticatedContext(acc, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
-	h.Env().Config.ObservabilityConfiguration.EnableMock = true
-	err = h.Env().LoadClients()
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	filters := openapi.GetMetricsByRangeQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(context, kafka.Id, 5, 30, &filters)
@@ -177,7 +168,6 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
-	h.Env().Config.ObservabilityConfiguration.EnableMock = true
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
@@ -242,9 +232,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	context := h.NewAuthenticatedContext(acc, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
-	h.Env().Config.ObservabilityConfiguration.EnableMock = true
-	err = h.Env().LoadClients()
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
+
 	filters := openapi.GetMetricsByInstantQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(context, kafka.Id, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
