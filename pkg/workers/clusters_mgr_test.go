@@ -1,8 +1,8 @@
 package workers
 
 import (
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 	"time"
@@ -35,8 +35,9 @@ import (
 )
 
 var (
-	testRegion   = "us-west-1"
-	testProvider = "aws"
+	testRegion     = "us-west-1"
+	testProvider   = "aws"
+	strimziAddonID = "managed-kafka-test"
 )
 
 func TestClusterManager_reconcileClusterStatus(t *testing.T) {
@@ -277,7 +278,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).Build()
+						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).Build()
 						if err != nil {
 							panic(err)
 						}
@@ -292,7 +293,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateFailed).Build()
+						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateFailed).Build()
 						if err != nil {
 							panic(err)
 						}
@@ -307,7 +308,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 						if err != nil {
 							panic(err)
 						}
@@ -343,6 +344,35 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "strimizi addon id should match",
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
+						if addonId != strimziAddonID {
+							return nil, errors.Errorf("addon id %s does not match expected value %s", addonId, strimziAddonID)
+						}
+						managedKafkaAddon, err := clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+						if err != nil {
+							panic(err)
+						}
+						return managedKafkaAddon, nil
+					},
+					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						return &clustersmgmtv1.Syncset{}, nil
+					},
+				},
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "apps.example.com", nil
+					},
+					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
+						return nil
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -356,6 +386,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 						OSDClusterConfig:           &config.OSDClusterConfig{},
+						OCM:                        &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 					},
 				),
 			}
@@ -663,13 +694,14 @@ func TestClusterManager_createSyncSet(t *testing.T) {
 					ObservabilityConfiguration: &observabilityConfig,
 					OSDClusterConfig:           &tt.fields.clusterCreateConfig,
 					Kafka:                      &config.KafkaConfig{},
+					OCM:                        &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 				}),
 			}
 			wantSyncSet := tt.want.syncset()
 			got, err := c.createSyncSet("clusterId", ingressDNS)
 			Expect(got).To(Equal(wantSyncSet))
 			if err != nil {
-				Expect(err).To(MatchError(tt.want.err))
+				Expect(err.Error()).To(Equal(tt.want.err.Error()))
 			}
 		})
 	}
@@ -692,7 +724,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						return clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 						return &clustersmgmtv1.Syncset{}, nil
@@ -720,7 +752,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						return clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 						return &clustersmgmtv1.Syncset{}, nil
@@ -740,7 +772,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					GetAddonFunc: func(clusterId string, addonId string) (status *clustersmgmtv1.AddOnInstallation, e error) {
-						return clustersmgmtv1.NewAddOnInstallation().ID(api.ManagedKafkaAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
+						return clustersmgmtv1.NewAddOnInstallation().ID(strimziAddonID).State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
 					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
 						return &clustersmgmtv1.Syncset{}, nil
@@ -772,6 +804,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
 					Kafka: tt.fields.kafkaConfig,
+					OCM:   &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 				}),
 				kasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}

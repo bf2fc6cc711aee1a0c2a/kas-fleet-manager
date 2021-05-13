@@ -441,6 +441,16 @@ parameters:
   description: List of Kafkas that will not expire
   value: "[]"
 
+- name: STRIMZI_OPERATOR_ADDON_ID
+  displayName: Strimzi operator addon ID
+  description: ID of the Strimzi operator addon
+  value: "managed-kafka"
+
+- name: KAS_FLEETSHARD_ADDON_ID
+  displayName: kas-fleetshard addon ID
+  description: ID of the kas-fleetshard addon
+  value: "kas-fleetshard-operator"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -798,6 +808,8 @@ objects:
             - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
+            - --strimzi-operator-addon-id=${STRIMZI_OPERATOR_ADDON_ID}
+            - --kas-fleetshard-addon-id=${KAS_FLEETSHARD_ADDON_ID}
             - --alsologtostderr
             - -v=${GLOG_V}
             resources:

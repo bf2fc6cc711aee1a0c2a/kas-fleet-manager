@@ -115,7 +115,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(ocmClusterStatus.State()).To(Equal(clustersmgmtv1.ClusterStateReady))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
-	addonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, api.ManagedKafkaAddonID)
+	addonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get addonInstallation for cluster %s", cluster.ClusterID)
 	}
