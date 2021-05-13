@@ -19,10 +19,11 @@ const (
 	// KafkaCreateRequestDuration - name of kafka creation duration metric
 	KafkaCreateRequestDuration = "worker_kafka_duration"
 
-	labelJobType   = "jobType"
-	LabelID        = "id"
-	LabelStatus    = "status"
-	LabelClusterID = "cluster_id"
+	labelJobType           = "jobType"
+	LabelID                = "id"
+	LabelStatus            = "status"
+	LabelClusterID         = "cluster_id"
+	LabelClusterExternalID = "external_id"
 
 	// KafkaOperationsSuccessCount - name of the metric for Kafka-related successful operations
 	KafkaOperationsSuccessCount = "kafka_operations_success_count"
@@ -87,6 +88,7 @@ var KafkaOperationsCountMetricsLabels = []string{
 
 var KafkaPerClusterCountMetricsLabels = []string{
 	LabelClusterID,
+	LabelClusterExternalID,
 }
 
 // ClusterOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
@@ -214,9 +216,10 @@ var kafkaPerClusterCountMetric = prometheus.NewGaugeVec(
 	},
 	KafkaPerClusterCountMetricsLabels)
 
-func UpdateKafkaPerClusterCountMetric(clusterId string, count int) {
+func UpdateKafkaPerClusterCountMetric(clusterId string, clusterExternalID string, count int) {
 	labels := prometheus.Labels{
-		LabelClusterID: clusterId,
+		LabelClusterID:         clusterId,
+		LabelClusterExternalID: clusterExternalID,
 	}
 	kafkaPerClusterCountMetric.With(labels).Set(float64(count))
 }

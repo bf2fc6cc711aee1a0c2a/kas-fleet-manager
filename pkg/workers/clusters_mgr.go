@@ -1014,8 +1014,12 @@ func (c *ClusterManager) setKafkaPerClusterCountMetrics() error {
 	if counters, err := c.clusterService.FindKafkaInstanceCount([]string{}); err != nil {
 		return err
 	} else {
-		for _, c := range counters {
-			metrics.UpdateKafkaPerClusterCountMetric(c.Clusterid, c.Count)
+		for _, counter := range counters {
+			clusterExternalID, err := c.clusterService.GetExternalID(counter.Clusterid)
+			if err != nil {
+				return err
+			}
+			metrics.UpdateKafkaPerClusterCountMetric(counter.Clusterid, clusterExternalID, counter.Count)
 		}
 	}
 	return nil

@@ -63,6 +63,9 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError) {
 // 				panic("mock out the GetComputeNodes method")
 // 			},
+// 			GetExternalIDFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+// 				panic("mock out the GetExternalID method")
+// 			},
 // 			InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the InstallAddon method")
 // 			},
@@ -147,6 +150,9 @@ type ClusterServiceMock struct {
 
 	// GetComputeNodesFunc mocks the GetComputeNodes method.
 	GetComputeNodesFunc func(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError)
+
+	// GetExternalIDFunc mocks the GetExternalID method.
+	GetExternalIDFunc func(clusterID string) (string, *apiErrors.ServiceError)
 
 	// InstallAddonFunc mocks the InstallAddon method.
 	InstallAddonFunc func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
@@ -260,6 +266,11 @@ type ClusterServiceMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
+		// GetExternalID holds details about calls to the GetExternalID method.
+		GetExternalID []struct {
+			// ClusterID is the clusterID argument value.
+			ClusterID string
+		}
 		// InstallAddon holds details about calls to the InstallAddon method.
 		InstallAddon []struct {
 			// Cluster is the cluster argument value.
@@ -353,6 +364,7 @@ type ClusterServiceMock struct {
 	lockFindNonEmptyClusterById          sync.RWMutex
 	lockGetClusterDNS                    sync.RWMutex
 	lockGetComputeNodes                  sync.RWMutex
+	lockGetExternalID                    sync.RWMutex
 	lockInstallAddon                     sync.RWMutex
 	lockInstallAddonWithParams           sync.RWMutex
 	lockListAllClusterIds                sync.RWMutex
@@ -806,6 +818,37 @@ func (mock *ClusterServiceMock) GetComputeNodesCalls() []struct {
 	mock.lockGetComputeNodes.RLock()
 	calls = mock.calls.GetComputeNodes
 	mock.lockGetComputeNodes.RUnlock()
+	return calls
+}
+
+// GetExternalID calls GetExternalIDFunc.
+func (mock *ClusterServiceMock) GetExternalID(clusterID string) (string, *apiErrors.ServiceError) {
+	if mock.GetExternalIDFunc == nil {
+		panic("ClusterServiceMock.GetExternalIDFunc: method is nil but ClusterService.GetExternalID was just called")
+	}
+	callInfo := struct {
+		ClusterID string
+	}{
+		ClusterID: clusterID,
+	}
+	mock.lockGetExternalID.Lock()
+	mock.calls.GetExternalID = append(mock.calls.GetExternalID, callInfo)
+	mock.lockGetExternalID.Unlock()
+	return mock.GetExternalIDFunc(clusterID)
+}
+
+// GetExternalIDCalls gets all the calls that were made to GetExternalID.
+// Check the length with:
+//     len(mockedClusterService.GetExternalIDCalls())
+func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
+	ClusterID string
+} {
+	var calls []struct {
+		ClusterID string
+	}
+	mock.lockGetExternalID.RLock()
+	calls = mock.calls.GetExternalID
+	mock.lockGetExternalID.RUnlock()
 	return calls
 }
 
