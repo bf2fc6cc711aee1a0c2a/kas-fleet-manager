@@ -32,6 +32,9 @@ var _ Worker = &WorkerMock{}
 // 			IsRunningFunc: func() bool {
 // 				panic("mock out the IsRunning method")
 // 			},
+// 			ReconcileFunc: func() []error {
+// 				panic("mock out the Reconcile method")
+// 			},
 // 			SetIsRunningFunc: func(val bool)  {
 // 				panic("mock out the SetIsRunning method")
 // 			},
@@ -40,9 +43,6 @@ var _ Worker = &WorkerMock{}
 // 			},
 // 			StopFunc: func()  {
 // 				panic("mock out the Stop method")
-// 			},
-// 			reconcileFunc: func() []error {
-// 				panic("mock out the reconcile method")
 // 			},
 // 		}
 //
@@ -66,6 +66,9 @@ type WorkerMock struct {
 	// IsRunningFunc mocks the IsRunning method.
 	IsRunningFunc func() bool
 
+	// ReconcileFunc mocks the Reconcile method.
+	ReconcileFunc func() []error
+
 	// SetIsRunningFunc mocks the SetIsRunning method.
 	SetIsRunningFunc func(val bool)
 
@@ -74,9 +77,6 @@ type WorkerMock struct {
 
 	// StopFunc mocks the Stop method.
 	StopFunc func()
-
-	// reconcileFunc mocks the reconcile method.
-	reconcileFunc func() []error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -95,6 +95,9 @@ type WorkerMock struct {
 		// IsRunning holds details about calls to the IsRunning method.
 		IsRunning []struct {
 		}
+		// Reconcile holds details about calls to the Reconcile method.
+		Reconcile []struct {
+		}
 		// SetIsRunning holds details about calls to the SetIsRunning method.
 		SetIsRunning []struct {
 			// Val is the val argument value.
@@ -106,19 +109,16 @@ type WorkerMock struct {
 		// Stop holds details about calls to the Stop method.
 		Stop []struct {
 		}
-		// reconcile holds details about calls to the reconcile method.
-		reconcile []struct {
-		}
 	}
 	lockGetID         sync.RWMutex
 	lockGetStopChan   sync.RWMutex
 	lockGetSyncGroup  sync.RWMutex
 	lockGetWorkerType sync.RWMutex
 	lockIsRunning     sync.RWMutex
+	lockReconcile     sync.RWMutex
 	lockSetIsRunning  sync.RWMutex
 	lockStart         sync.RWMutex
 	lockStop          sync.RWMutex
-	lockreconcile     sync.RWMutex
 }
 
 // GetID calls GetIDFunc.
@@ -251,6 +251,32 @@ func (mock *WorkerMock) IsRunningCalls() []struct {
 	return calls
 }
 
+// Reconcile calls ReconcileFunc.
+func (mock *WorkerMock) Reconcile() []error {
+	if mock.ReconcileFunc == nil {
+		panic("WorkerMock.ReconcileFunc: method is nil but Worker.Reconcile was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockReconcile.Lock()
+	mock.calls.Reconcile = append(mock.calls.Reconcile, callInfo)
+	mock.lockReconcile.Unlock()
+	return mock.ReconcileFunc()
+}
+
+// ReconcileCalls gets all the calls that were made to Reconcile.
+// Check the length with:
+//     len(mockedWorker.ReconcileCalls())
+func (mock *WorkerMock) ReconcileCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockReconcile.RLock()
+	calls = mock.calls.Reconcile
+	mock.lockReconcile.RUnlock()
+	return calls
+}
+
 // SetIsRunning calls SetIsRunningFunc.
 func (mock *WorkerMock) SetIsRunning(val bool) {
 	if mock.SetIsRunningFunc == nil {
@@ -331,31 +357,5 @@ func (mock *WorkerMock) StopCalls() []struct {
 	mock.lockStop.RLock()
 	calls = mock.calls.Stop
 	mock.lockStop.RUnlock()
-	return calls
-}
-
-// reconcile calls reconcileFunc.
-func (mock *WorkerMock) Reconcile() []error {
-	if mock.reconcileFunc == nil {
-		panic("WorkerMock.reconcileFunc: method is nil but Worker.reconcile was just called")
-	}
-	callInfo := struct {
-	}{}
-	mock.lockreconcile.Lock()
-	mock.calls.reconcile = append(mock.calls.reconcile, callInfo)
-	mock.lockreconcile.Unlock()
-	return mock.reconcileFunc()
-}
-
-// reconcileCalls gets all the calls that were made to reconcile.
-// Check the length with:
-//     len(mockedWorker.reconcileCalls())
-func (mock *WorkerMock) reconcileCalls() []struct {
-} {
-	var calls []struct {
-	}
-	mock.lockreconcile.RLock()
-	calls = mock.calls.reconcile
-	mock.lockreconcile.RUnlock()
 	return calls
 }

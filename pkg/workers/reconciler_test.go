@@ -2,12 +2,13 @@ package workers
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	. "github.com/onsi/gomega"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	. "github.com/onsi/gomega"
 )
 
 func TestReconciler_Wakeup(t *testing.T) {
@@ -34,7 +35,7 @@ func TestReconciler_Wakeup(t *testing.T) {
 		GetWorkerTypeFunc: func() string {
 			return "test"
 		},
-		reconcileFunc: func() []error {
+		ReconcileFunc: func() []error {
 			var errors []error
 			reconcileChan <- time.Now()
 			return errors
