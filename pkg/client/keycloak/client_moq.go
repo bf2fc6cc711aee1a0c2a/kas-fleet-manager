@@ -37,6 +37,9 @@ var _ KcClient = &KcClientMock{}
 // 			DeleteClientFunc: func(internalClientID string, accessToken string) error {
 // 				panic("mock out the DeleteClient method")
 // 			},
+// 			GetCachedTokenFunc: func(tokenKey string) (string, error) {
+// 				panic("mock out the GetCachedToken method")
+// 			},
 // 			GetClientFunc: func(clientId string, accessToken string) (*gocloak.Client, error) {
 // 				panic("mock out the GetClient method")
 // 			},
@@ -66,6 +69,9 @@ var _ KcClient = &KcClientMock{}
 // 			},
 // 			IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 // 				panic("mock out the IsClientExist method")
+// 			},
+// 			isJWTTokenExpiredFunc: func(accessToken string) bool {
+// 				panic("mock out the isJWTTokenExpired method")
 // 			},
 // 			IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
 // 				panic("mock out the IsOwner method")
@@ -107,6 +113,9 @@ type KcClientMock struct {
 	// DeleteClientFunc mocks the DeleteClient method.
 	DeleteClientFunc func(internalClientID string, accessToken string) error
 
+	// GetCachedTokenFunc mocks the GetCachedToken method.
+	GetCachedTokenFunc func(tokenKey string) (string, error)
+
 	// GetClientFunc mocks the GetClient method.
 	GetClientFunc func(clientId string, accessToken string) (*gocloak.Client, error)
 
@@ -136,6 +145,9 @@ type KcClientMock struct {
 
 	// IsClientExistFunc mocks the IsClientExist method.
 	IsClientExistFunc func(clientId string, accessToken string) (string, error)
+
+	// isJWTTokenExpiredFunc mocks the isJWTTokenExpired method.
+	isJWTTokenExpiredFunc func(accessToken string) bool
 
 	// IsOwnerFunc mocks the IsOwner method.
 	IsOwnerFunc func(client *gocloak.Client, userId string) bool
@@ -193,6 +205,11 @@ type KcClientMock struct {
 			InternalClientID string
 			// AccessToken is the accessToken argument value.
 			AccessToken string
+		}
+		// GetCachedToken holds details about calls to the GetCachedToken method.
+		GetCachedToken []struct {
+			// TokenKey is the tokenKey argument value.
+			TokenKey string
 		}
 		// GetClient holds details about calls to the GetClient method.
 		GetClient []struct {
@@ -256,6 +273,11 @@ type KcClientMock struct {
 			// AccessToken is the accessToken argument value.
 			AccessToken string
 		}
+		// isJWTTokenExpired holds details about calls to the isJWTTokenExpired method.
+		isJWTTokenExpired []struct {
+			// AccessToken is the accessToken argument value.
+			AccessToken string
+		}
 		// IsOwner holds details about calls to the IsOwner method.
 		IsOwner []struct {
 			// Client is the client argument value.
@@ -300,6 +322,7 @@ type KcClientMock struct {
 	lockCreateProtocolMapperConfig sync.RWMutex
 	lockCreateRealmRole            sync.RWMutex
 	lockDeleteClient               sync.RWMutex
+	lockGetCachedToken             sync.RWMutex
 	lockGetClient                  sync.RWMutex
 	lockGetClientById              sync.RWMutex
 	lockGetClientSecret            sync.RWMutex
@@ -310,6 +333,7 @@ type KcClientMock struct {
 	lockGetRealmRole               sync.RWMutex
 	lockGetToken                   sync.RWMutex
 	lockIsClientExist              sync.RWMutex
+	lockisJWTTokenExpired          sync.RWMutex
 	lockIsOwner                    sync.RWMutex
 	lockIsSameOrg                  sync.RWMutex
 	lockRegenerateClientSecret     sync.RWMutex
@@ -520,6 +544,37 @@ func (mock *KcClientMock) DeleteClientCalls() []struct {
 	mock.lockDeleteClient.RLock()
 	calls = mock.calls.DeleteClient
 	mock.lockDeleteClient.RUnlock()
+	return calls
+}
+
+// GetCachedToken calls GetCachedTokenFunc.
+func (mock *KcClientMock) GetCachedToken(tokenKey string) (string, error) {
+	if mock.GetCachedTokenFunc == nil {
+		panic("KcClientMock.GetCachedTokenFunc: method is nil but KcClient.GetCachedToken was just called")
+	}
+	callInfo := struct {
+		TokenKey string
+	}{
+		TokenKey: tokenKey,
+	}
+	mock.lockGetCachedToken.Lock()
+	mock.calls.GetCachedToken = append(mock.calls.GetCachedToken, callInfo)
+	mock.lockGetCachedToken.Unlock()
+	return mock.GetCachedTokenFunc(tokenKey)
+}
+
+// GetCachedTokenCalls gets all the calls that were made to GetCachedToken.
+// Check the length with:
+//     len(mockedKcClient.GetCachedTokenCalls())
+func (mock *KcClientMock) GetCachedTokenCalls() []struct {
+	TokenKey string
+} {
+	var calls []struct {
+		TokenKey string
+	}
+	mock.lockGetCachedToken.RLock()
+	calls = mock.calls.GetCachedToken
+	mock.lockGetCachedToken.RUnlock()
 	return calls
 }
 
@@ -851,6 +906,37 @@ func (mock *KcClientMock) IsClientExistCalls() []struct {
 	mock.lockIsClientExist.RLock()
 	calls = mock.calls.IsClientExist
 	mock.lockIsClientExist.RUnlock()
+	return calls
+}
+
+// isJWTTokenExpired calls isJWTTokenExpiredFunc.
+func (mock *KcClientMock) isJWTTokenExpired(accessToken string) bool {
+	if mock.isJWTTokenExpiredFunc == nil {
+		panic("KcClientMock.isJWTTokenExpiredFunc: method is nil but KcClient.isJWTTokenExpired was just called")
+	}
+	callInfo := struct {
+		AccessToken string
+	}{
+		AccessToken: accessToken,
+	}
+	mock.lockisJWTTokenExpired.Lock()
+	mock.calls.isJWTTokenExpired = append(mock.calls.isJWTTokenExpired, callInfo)
+	mock.lockisJWTTokenExpired.Unlock()
+	return mock.isJWTTokenExpiredFunc(accessToken)
+}
+
+// isJWTTokenExpiredCalls gets all the calls that were made to isJWTTokenExpired.
+// Check the length with:
+//     len(mockedKcClient.isJWTTokenExpiredCalls())
+func (mock *KcClientMock) isJWTTokenExpiredCalls() []struct {
+	AccessToken string
+} {
+	var calls []struct {
+		AccessToken string
+	}
+	mock.lockisJWTTokenExpired.RLock()
+	calls = mock.calls.isJWTTokenExpired
+	mock.lockisJWTTokenExpired.RUnlock()
 	return calls
 }
 

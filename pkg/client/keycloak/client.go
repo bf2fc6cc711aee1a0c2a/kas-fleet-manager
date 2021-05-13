@@ -3,17 +3,30 @@ package keycloak
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"time"
+
 	"github.com/Nerzal/gocloak/v8"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/patrickmn/go-cache"
+	"github.com/pkg/errors"
+)
+
+const (
+	// gocloak access token duration before expiration
+	tokenLifeDuration    = 5 * time.Minute
+	cacheCleanupInterval = 5 * time.Minute
 )
 
 //go:generate moq -out client_moq.go . KcClient
 type KcClient interface {
 	CreateClient(client gocloak.Client, accessToken string) (string, error)
 	GetToken() (string, error)
-	GetClientSecret(internalClientId string, accessToken string) (string, error)
+	GetCachedToken(tokenKey string) (string, error)
 	DeleteClient(internalClientID string, accessToken string) error
+	GetClientSecret(internalClientId string, accessToken string) (string, error)
 	GetClient(clientId string, accessToken string) (*gocloak.Client, error)
 	IsClientExist(clientId string, accessToken string) (string, error)
 	GetConfig() *config.KeycloakConfig
@@ -51,6 +64,7 @@ type kcClient struct {
 	ctx         context.Context
 	config      *config.KeycloakConfig
 	realmConfig *config.KeycloakRealmConfig
+	cache       *cache.Cache
 }
 
 var _ KcClient = &kcClient{}
@@ -65,6 +79,7 @@ func NewClient(config *config.KeycloakConfig, realmConfig *config.KeycloakRealmC
 		ctx:         context.Background(),
 		config:      config,
 		realmConfig: realmConfig,
+		cache:       cache.New(tokenLifeDuration, cacheCleanupInterval),
 	}
 }
 
@@ -138,11 +153,28 @@ func (kc *kcClient) GetToken() (string, error) {
 		GrantType:    &kc.realmConfig.GrantType,
 		ClientSecret: &kc.realmConfig.ClientSecret,
 	}
+	cachedTokenKey := fmt.Sprintf("%s%s", kc.realmConfig.ValidIssuerURI, kc.realmConfig.ClientID)
+	cachedToken, _ := kc.GetCachedToken(cachedTokenKey)
+
+	if cachedToken != "" && !shared.IsJWTTokenExpired(cachedToken) {
+		return cachedToken, nil
+	}
 	tokenResp, err := kc.kcClient.GetToken(kc.ctx, kc.realmConfig.Realm, options)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to get new token from gocloak with error")
 	}
+
+	kc.cache.Set(cachedTokenKey, tokenResp.AccessToken, cacheCleanupInterval)
 	return tokenResp.AccessToken, nil
+}
+
+func (kc *kcClient) GetCachedToken(tokenKey string) (string, error) {
+	cachedToken, isCached := kc.cache.Get(tokenKey)
+	ct, _ := cachedToken.(string)
+	if isCached {
+		return ct, nil
+	}
+	return "", errors.Errorf("failed to retrieve cached token")
 }
 
 func (kc *kcClient) GetClientSecret(internalClientId string, accessToken string) (string, error) {
