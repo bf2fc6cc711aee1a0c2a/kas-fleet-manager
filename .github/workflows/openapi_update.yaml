@@ -3,13 +3,13 @@ on:
   push:
     branches: 
       - dispatch-changes-to-oas
-    # paths:
-    #   - "./openapi/kas-fleet-manager.yaml"
+    paths:
+      - "./openapi/kas-fleet-manager.yaml"
 
 jobs:
   dispatch:
     env:
-      TOKEN: "{{ secrets.GH_CI_TOKEN }}"
+      APP_SERVICES_CI_TOKEN: "{{ secrets.GH_CI_TOKEN }}"
     strategy:
       matrix:
         repo: ["redhat-developer/app-services-sdk-go"]
@@ -18,11 +18,14 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: "${{ env.TOKEN }}"
+          token: "${{ env.APP_SERVICES_CI_TOKEN }}"
           repository: ${{ matrix.repo }}
-          event-type: openapi-change
+          event-type: openapi-file-change
           client-payload: '{
-            "github_repository": "${{ github.repository }}",
+            "github": {
+              "repository": "${{ github.repository }}",
+              "ref": "${{ github.ref }}"
+            },
             "openapi": {
               "directory": "./openapi",
               "filename": "kas-fleet-manager.yaml"
