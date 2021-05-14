@@ -79,19 +79,38 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling deleting kafkas")
 	var encounteredErrors []error
 
-	// handle deprovisioning requests
-	// if kas-fleetshard sync is not enabled, the status we should check is constants.KafkaRequestStatusDeprovision as control plane is responsible for deleting the data
-	// otherwise the status should be constants.KafkaRequestStatusDeleting as only at that point the control plane should clean it up
-	deprovisionStatus := []constants.KafkaStatus{constants.KafkaRequestStatusDeprovision}
-	if k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		// List both status to keep backward compatibility. The "deleted" status should be removed soon
-		deprovisionStatus = []constants.KafkaStatus{constants.KafkaRequestStatusDeleting, constants.KafkaRequestStatusDeleted}
-	}
-	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deprovisionStatus...)
+	// List both status to keep backward compatibility. The "deleted" status should be removed soon
+	deletingStatus := []constants.KafkaStatus{constants.KafkaRequestStatusDeleting, constants.KafkaRequestStatusDeleted}
+
+	deprovisioningRequests, serviceErr := k.kafkaService.ListByStatus(deletingStatus...)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
 	} else {
-		glog.Infof("%s kafkas count = %d", deprovisionStatus[0].String(), len(deprovisioningRequests))
+		glog.Infof("%s kafkas count = %d", deletingStatus[0].String(), len(deprovisioningRequests))
+	}
+
+	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster
+	deprovisioningRequestsTemp, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
+	if serviceErr != nil {
+		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
+	}
+
+	for _, deprovisioningKafka := range deprovisioningRequestsTemp {
+		// If the fleetshard sync is disabled, always rmeove deprovisioning Kafkas
+		if !k.configService.GetConfig().Kafka.EnableKasFleetshardSync {
+			deprovisioningRequests = append(deprovisioningRequests, deprovisioningKafka)
+		}
+
+		// As long as one of the three fields checked below are empty, the Kafka wouldn't have been provisioned to an OSD cluster and should be deleted immediately
+		if deprovisioningKafka.BootstrapServerHost == "" {
+			deprovisioningRequests = append(deprovisioningRequests, deprovisioningKafka)
+			continue
+		}
+
+		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to am OSD cluster
+		if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka && (deprovisioningKafka.SsoClientID == "" || deprovisioningKafka.SsoClientSecret == "") {
+			deprovisioningRequests = append(deprovisioningRequests, deprovisioningKafka)
+		}
 	}
 
 	for _, kafka := range deprovisioningRequests {
