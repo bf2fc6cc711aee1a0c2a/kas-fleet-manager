@@ -20,7 +20,7 @@ jobs:
         with:
           token: "${{ env.APP_SERVICES_CI_TOKEN }}"
           repository: ${{ matrix.repo }}
-          event-type: openapi-file-change
+          event-type: openapi-spec-change
           client-payload: '{
             "github": {
               "repository": "${{ github.repository }}",
