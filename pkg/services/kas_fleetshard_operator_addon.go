@@ -47,8 +47,9 @@ type kasFleetshardOperatorAddon struct {
 }
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
-	glog.V(5).Infof("Provision kas-fleetshard-operator for cluster %s", cluster.ClusterID)
-	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, api.KasFleetshardOperatorAddonId)
+	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
+	glog.V(5).Infof("Provision addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, kasFleetshardAddonID)
 	if addonErr != nil {
 		return false, errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
 	}
@@ -58,8 +59,8 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 	}
 	params := o.buildAddonParams(acc, cluster.ClusterID)
 	if addonInstallation != nil && addonInstallation.ID() == "" {
-		glog.V(5).Infof("No existing %s addon found, create a new one", api.KasFleetshardOperatorAddonId)
-		addonInstallation, addonErr = o.ocm.CreateAddonWithParams(cluster.ClusterID, api.KasFleetshardOperatorAddonId, params)
+		glog.V(5).Infof("No existing %s addon found, create a new one", kasFleetshardAddonID)
+		addonInstallation, addonErr = o.ocm.CreateAddonWithParams(cluster.ClusterID, kasFleetshardAddonID, params)
 		if addonErr != nil {
 			return false, errors.GeneralError("failed to create addon for cluster %s due to error: %v", cluster.ClusterID, addonErr)
 		}
@@ -77,14 +78,15 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 }
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
-	glog.V(5).Infof("Reconcile parameters for kas-fleetshard operator on cluster %s", cluster.ClusterID)
-	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, api.KasFleetshardOperatorAddonId)
+	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
+	glog.V(5).Infof("Reconcile parameters for addon %s on cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, kasFleetshardAddonID)
 	if addonErr != nil {
 		return errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
 	}
 	if addonInstallation == nil || addonInstallation.ID() == "" {
-		logger.Logger.Warningf("no valid installation for kas-fleetshard operator found on cluster %s", cluster.ClusterID)
-		return errors.BadRequest("no valid kas-fleetshard addon for cluster %s", cluster.ClusterID)
+		logger.Logger.Warningf("no valid installation for addon %s found on cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+		return errors.BadRequest("no valid addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	}
 	glog.V(5).Infof("Found existing addon %s, updating parameters", addonInstallation.ID())
 	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)

@@ -228,6 +228,8 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `MAS_SSO_BASE_URL`: MAS SSO base url.
 - `MAS_SSO_REALM`: MAS SSO realm url.
 - `ALLOW_ANY_REGISTERED_USERS`: Enable to allow any registered users against redhat.com to access the service.
+- `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon.
+- `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon.
 
 The service can be accessed by via the host of the route created by the service deployment.
 ```
