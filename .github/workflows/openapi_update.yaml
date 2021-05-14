@@ -1,0 +1,33 @@
+name: Dispatch OpenAPI File Change event
+on:
+  push:
+    branches: 
+      - main
+    paths:
+      - "./openapi/kas-fleet-manager.yaml"
+
+jobs:
+  dispatch:
+    env:
+      APP_SERVICES_CI_TOKEN: "{{ secrets.GH_CI_TOKEN }}"
+    strategy:
+      matrix:
+        repo: ["redhat-developer/app-services-sdk-go"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: "${{ env.APP_SERVICES_CI_TOKEN }}"
+          repository: ${{ matrix.repo }}
+          event-type: openapi-spec-change
+          client-payload: '{
+            "github": {
+              "repository": "${{ github.repository }}",
+              "ref": "${{ github.ref }}"
+            },
+            "openapi": {
+              "directory": "./openapi",
+              "filename": "kas-fleet-manager.yaml"
+            }
+          }'
