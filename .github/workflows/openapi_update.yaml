@@ -1,8 +1,8 @@
-name: Dispatch OpenAPI Spec Change event
+name: Dispatch OpenAPI File Change event
 on:
   push:
     branches: 
-      - dispatch-changes-to-oas
+      - main
     paths:
       - "./openapi/kas-fleet-manager.yaml"
 
