@@ -13,7 +13,8 @@ import (
 )
 
 func TestAgentOperatorAddon_Provision(t *testing.T) {
-	addon, _ := clustersmgmtv1.NewAddOnInstallation().ID("test-id").Build()
+	addonId := "test-id"
+	addon, _ := clustersmgmtv1.NewAddOnInstallation().ID(addonId).Build()
 	type fields struct {
 		ocm        ocm.Client
 		ssoService KeycloakService
@@ -62,6 +63,32 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			result:  false,
 			wantErr: true,
 		},
+		{
+			name: "addId does match",
+			fields: fields{
+				ssoService: &KeycloakServiceMock{
+					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
+						return &api.ServiceAccount{}, nil
+					},
+				},
+				ocm: &ocm.ClientMock{
+					GetAddonFunc: func(clusterId string, requestAddonId string) (*clustersmgmtv1.AddOnInstallation, error) {
+						if requestAddonId != addonId {
+							return nil, errors.GeneralError("invalid addon id : %s", requestAddonId)
+						}
+						return addon, nil
+					},
+					CreateAddonWithParamsFunc: func(clusterId string, requestAddonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+						if requestAddonId != addonId {
+							return nil, errors.GeneralError("invalid addon id : %s", requestAddonId)
+						}
+						return &clustersmgmtv1.AddOnInstallation{}, nil
+					},
+				},
+			},
+			result:  false,
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -76,6 +103,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 					},
 					OSDClusterConfig:    &config.OSDClusterConfig{},
 					KasFleetShardConfig: &config.KasFleetshardConfig{},
+					OCM:                 &config.OCMConfig{KasFleetshardAddonID: addonId},
 				}),
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
@@ -234,6 +262,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 					OSDClusterConfig:           &config.OSDClusterConfig{},
 					KasFleetShardConfig:        &config.KasFleetshardConfig{},
+					OCM:                        &config.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
 				}),
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{

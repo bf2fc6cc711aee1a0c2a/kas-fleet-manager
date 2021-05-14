@@ -19,8 +19,6 @@ const (
 	ClusterProvisioned ClusterStatus = "cluster_provisioned"
 	// ClusterFailed the cluster failed to become ready
 	ClusterFailed ClusterStatus = "failed"
-	// ManagedKafkaAddonID the ID of the managed Kafka addon
-	ManagedKafkaAddonID = "managed-kafka"
 	// ClusterReady the cluster is terraformed and ready for kafka instances
 	ClusterReady ClusterStatus = "ready"
 	// ClusterDeprovisioning the cluster is empty and can be deprovisioned
@@ -33,9 +31,6 @@ const (
 	ClusterFull ClusterStatus = "full"
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
-
-	// KasFleetshardOperatorAddonId the ID of the kas-fleetshard-operator addon
-	KasFleetshardOperatorAddonId = "kas-fleetshard-operator"
 )
 
 // This represents the valid statuses of a OSD cluster

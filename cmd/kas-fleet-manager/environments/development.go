@@ -28,6 +28,9 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"enable-quota-service":              "false",
 	"enable-deletion-of-expired-kafka":  "true",
 	"dataplane-cluster-scaling-type":    "auto",
+	//TODO: change these values to the qe ones for development environment once they are available
+	"strimzi-operator-addon-id": "managed-kafka",
+	"kas-fleetshard-addon-id":   "kas-fleetshard-operator",
 }
 
 func loadDevelopment(env *Env) error {

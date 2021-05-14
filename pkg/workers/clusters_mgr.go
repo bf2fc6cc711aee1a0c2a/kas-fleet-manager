@@ -555,8 +555,9 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 
 // reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
 func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) (bool, error) {
+	strimziOperatorAddonID := c.configService.GetConfig().OCM.StrimziOperatorAddonID
 	clusterId := provisionedCluster.ClusterID
-	addonInstallation, err := c.ocmClient.GetAddon(clusterId, api.ManagedKafkaAddonID)
+	addonInstallation, err := c.ocmClient.GetAddon(clusterId, strimziOperatorAddonID)
 	if err != nil {
 		return false, errors.WithMessagef(err, "failed to get cluster %s addon: %s", clusterId, err.Error())
 	}
@@ -564,7 +565,7 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 	// Addon needs to be installed if addonInstallation doesn't exist
 	if addonInstallation.ID() == "" {
 		// Install the Stimzi operator
-		addonInstallation, err = c.ocmClient.CreateAddon(clusterId, api.ManagedKafkaAddonID)
+		addonInstallation, err = c.ocmClient.CreateAddon(clusterId, strimziOperatorAddonID)
 		if err != nil {
 			return false, errors.WithMessagef(err, "failed to create cluster %s addon: %s", clusterId, err.Error())
 		}
@@ -575,7 +576,7 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 		return true, nil
 	}
 
-	glog.V(5).Infof("%s addon on cluster %s is not ready yet. State: %s", api.ManagedKafkaAddonID, provisionedCluster.ClusterID, string(addonInstallation.State()))
+	glog.V(5).Infof("%s addon on cluster %s is not ready yet. State: %s", strimziOperatorAddonID, provisionedCluster.ClusterID, string(addonInstallation.State()))
 	return false, nil
 }
 
