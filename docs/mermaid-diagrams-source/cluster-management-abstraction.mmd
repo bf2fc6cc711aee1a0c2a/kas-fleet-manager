@@ -1,0 +1,44 @@
+classDiagram
+  
+  class ClusterProvider {
+      <<Interface>>
+      + CreateCluster()
+      + DeleteCluster()
+      + CreateResource()
+      + GetResource()
+      + DeleteResource()
+      + ScaleCluster()
+      + OtherMethods...()
+  }
+  class OCMClusterProvider{
+      -OCMClient ocmClient
+  }
+  class StaticFileClusterProvider {
+      -Array staticClusters
+  }
+  class ClusterRepository {
+      <<Service>>
+      + StoreCluster()
+      + FindCluster()
+      + UpdateCluster()
+      + DeleteCluster()
+      + OtherMethods...()
+  }
+  class ClusterService {
+      <<Service>>
+      + Create()
+      + Update()
+      + Delete()
+      + Find()
+      + UpdateStatus()
+  }
+
+  class ClusterManager {
+      + Reconcile()
+  }
+
+  ClusterProvider <|.. OCMClusterProvider: Implements
+  ClusterProvider <|.. StaticFileClusterProvider: Implements
+  ClusterService ..> ClusterProvider: Depends
+  ClusterService ..> ClusterRepository: Depends
+  ClusterManager ..> ClusterService: Depends

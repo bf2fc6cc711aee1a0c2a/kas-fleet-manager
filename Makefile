@@ -1,5 +1,6 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+DOCS_DIR := $(PROJECT_PATH)/docs
 include $(PROJECT_PATH)/test/performance/Makefile.mk
 
 .DEFAULT_GOAL := help
@@ -551,5 +552,12 @@ undeploy:
 		| oc delete -f - -n $(NAMESPACE)
 .PHONY: undeploy
 
+docs/generate/mermaid:
+	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \
+		echo Generating diagram for `basename $${f}`; \
+		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
+	done
+.PHONY: docs/generate/mermaid
+  
 # TODO CRC Deployment stuff
 
