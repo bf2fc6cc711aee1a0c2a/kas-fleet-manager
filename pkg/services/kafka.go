@@ -286,10 +286,6 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
 	deprovisionStatus := constants.KafkaRequestStatusDeprovision
-	// If a Kafka instance has not been assigned an OSD cluster, we can safely skip the need to involve the syncronisher
-	if k.kafkaConfig.EnableKasFleetshardSync && kafkaRequest.ClusterID == "" {
-		deprovisionStatus = constants.KafkaRequestStatusDeleting
-	}
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
