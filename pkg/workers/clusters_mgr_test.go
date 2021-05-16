@@ -2,11 +2,12 @@ package workers
 
 import (
 	"fmt"
+	authv1 "github.com/openshift/api/authorization/v1"
+	userv1 "github.com/openshift/api/user/v1"
+	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/pkg/errors"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
@@ -1901,6 +1902,36 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				StartingCSV:            "observability-operator.v3.0.1",
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
+			},
+		},
+		&userv1.Group{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: userv1.SchemeGroupVersion.String(),
+				Kind:       "Group",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: readOnlyGroupName,
+			},
+		},
+		&authv1.ClusterRoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "rbac.authorization.k8s.io/v1",
+				Kind:       "ClusterRoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkReadOnlyRoleBindingName,
+			},
+			Subjects: []k8sCoreV1.ObjectReference{
+				{
+					Kind:       "Group",
+					APIVersion: "rbac.authorization.k8s.io",
+					Name:       readOnlyGroupName,
+				},
+			},
+			RoleRef: k8sCoreV1.ObjectReference{
+				Kind:       "ClusterRole",
+				Name:       dedicatedReadersRoleBindingName,
+				APIVersion: "rbac.authorization.k8s.io",
 			},
 		},
 		&k8sCoreV1.ConfigMap{
