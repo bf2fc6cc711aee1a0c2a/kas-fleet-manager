@@ -1042,7 +1042,9 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 
 			for _, identityProvider := range identityProvidersList.Slice() {
 				if identityProvider.Name() == openIDIdentityProviderName {
-					addIdpToClusterErr := c.clusterService.AddIdentityProviderID(cluster.ClusterID, identityProvider.ID())
+					cluster.IdentityProviderID = identityProvider.ID()
+
+					addIdpToClusterErr := c.clusterService.Update(&cluster)
 					if addIdpToClusterErr != nil {
 						return errors.Errorf("failed to add identity provider %v to cluster with clusterId %s", identityProvider.Name(), cluster.ClusterID)
 					}
@@ -1053,7 +1055,9 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		}
 		return errors.WithMessagef(createIdentityProviderErr, "failed to create cluster identity provider %s: %s", cluster.ClusterID, createIdentityProviderErr.Error())
 	}
-	addIdpErr := c.clusterService.AddIdentityProviderID(cluster.ID, createdIdentityProvider.ID())
+
+	cluster.IdentityProviderID = createdIdentityProvider.ID()
+	addIdpErr := c.clusterService.Update(&cluster)
 	if addIdpErr != nil {
 		return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
 	}

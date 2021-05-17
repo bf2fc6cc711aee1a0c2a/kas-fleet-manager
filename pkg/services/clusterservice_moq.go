@@ -20,9 +20,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //
 // 		// make and configure a mocked ClusterService
 // 		mockedClusterService := &ClusterServiceMock{
-// 			AddIdentityProviderIDFunc: func(clusterID string, identityProviderId string) *apiErrors.ServiceError {
-// 				panic("mock out the AddIdentityProviderID method")
-// 			},
 // 			CountByStatusFunc: func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
 // 			},
@@ -87,9 +84,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //
 // 	}
 type ClusterServiceMock struct {
-	// AddIdentityProviderIDFunc mocks the AddIdentityProviderID method.
-	AddIdentityProviderIDFunc func(clusterID string, identityProviderId string) *apiErrors.ServiceError
-
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(clusterStatuss []api.ClusterStatus) ([]ClusterStatusCount, error)
 
@@ -149,13 +143,6 @@ type ClusterServiceMock struct {
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// AddIdentityProviderID holds details about calls to the AddIdentityProviderID method.
-		AddIdentityProviderID []struct {
-			// ClusterID is the clusterID argument value.
-			ClusterID string
-			// IdentityProviderId is the identityProviderId argument value.
-			IdentityProviderId string
-		}
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
 			// ClusterStatuss is the clusterStatuss argument value.
@@ -264,7 +251,6 @@ type ClusterServiceMock struct {
 			Status api.ClusterStatus
 		}
 	}
-	lockAddIdentityProviderID        sync.RWMutex
 	lockCountByStatus                sync.RWMutex
 	lockCreate                       sync.RWMutex
 	lockDeleteByClusterID            sync.RWMutex
@@ -284,41 +270,6 @@ type ClusterServiceMock struct {
 	lockUpdate                       sync.RWMutex
 	lockUpdateMultiClusterStatus     sync.RWMutex
 	lockUpdateStatus                 sync.RWMutex
-}
-
-// AddIdentityProviderID calls AddIdentityProviderIDFunc.
-func (mock *ClusterServiceMock) AddIdentityProviderID(clusterID string, identityProviderId string) *apiErrors.ServiceError {
-	if mock.AddIdentityProviderIDFunc == nil {
-		panic("ClusterServiceMock.AddIdentityProviderIDFunc: method is nil but ClusterService.AddIdentityProviderID was just called")
-	}
-	callInfo := struct {
-		ClusterID          string
-		IdentityProviderId string
-	}{
-		ClusterID:          clusterID,
-		IdentityProviderId: identityProviderId,
-	}
-	mock.lockAddIdentityProviderID.Lock()
-	mock.calls.AddIdentityProviderID = append(mock.calls.AddIdentityProviderID, callInfo)
-	mock.lockAddIdentityProviderID.Unlock()
-	return mock.AddIdentityProviderIDFunc(clusterID, identityProviderId)
-}
-
-// AddIdentityProviderIDCalls gets all the calls that were made to AddIdentityProviderID.
-// Check the length with:
-//     len(mockedClusterService.AddIdentityProviderIDCalls())
-func (mock *ClusterServiceMock) AddIdentityProviderIDCalls() []struct {
-	ClusterID          string
-	IdentityProviderId string
-} {
-	var calls []struct {
-		ClusterID          string
-		IdentityProviderId string
-	}
-	mock.lockAddIdentityProviderID.RLock()
-	calls = mock.calls.AddIdentityProviderID
-	mock.lockAddIdentityProviderID.RUnlock()
-	return calls
 }
 
 // CountByStatus calls CountByStatusFunc.
