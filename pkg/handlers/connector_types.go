@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
@@ -38,7 +39,6 @@ func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 			}
 			return presenters.PresentConnectorType(resource), nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -49,13 +49,13 @@ func (h connectorTypesHandler) ProxyToExtensionService(w http.ResponseWriter, r 
 
 	err := validation("connector_type_id", &connectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength))()
 	if err != nil {
-		handleError(r.Context(), w, err)
+		shared.HandleError(r.Context(), w, err)
 		return
 	}
 
 	resource, err := h.service.Get(connectorTypeId)
 	if err != nil {
-		handleError(r.Context(), w, err)
+		shared.HandleError(r.Context(), w, err)
 		return
 	}
 
@@ -95,7 +95,6 @@ func (h connectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			return resourceList, nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleList(w, r, cfg)
