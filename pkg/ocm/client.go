@@ -237,11 +237,11 @@ func (c client) UpdateAddonParameters(clusterId string, addonInstallationId stri
 
 func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	if clusterID == "" {
-		return "", errors.GeneralError("Clusterid cannot be empty")
+		return "", errors.Validation("clusterID cannot be empty")
 	}
 	ingresses, err := c.GetClusterIngresses(clusterID)
 	if err != nil {
-		return "", errors.GeneralError(err.Error())
+		return "", err
 	}
 
 	var clusterDNS string
@@ -254,7 +254,7 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 	})
 
 	if clusterDNS == "" {
-		return "", errors.GeneralError(fmt.Sprintf("Cluster %s DNS is empty", clusterID))
+		return "", errors.NotFound("Cluster %s: DNS is empty", clusterID)
 	}
 
 	return clusterDNS, nil
