@@ -22,6 +22,7 @@ import (
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
+	Update(cluster *api.Cluster) *apiErrors.ServiceError
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
@@ -112,13 +113,32 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	return createdCluster, nil
 }
 
+func (k *clusterService) Update(cluster *api.Cluster) *apiErrors.ServiceError {
+	dbConn := k.connectionFactory.New()
+
+	if err := dbConn.Model(cluster).Updates(cluster).Error; err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
+	}
+	return nil
+}
+
 // GetClusterDNS gets an OSD clusters DNS from OCM cluster service by ID
 //
 // Returns the DNS name
 func (c clusterService) GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError) {
+	cluster, serviceErr := c.FindClusterByID(clusterID)
+	if serviceErr != nil {
+		return "", serviceErr
+	}
+
+	if cluster != nil && cluster.ClusterDNS != "" {
+		return cluster.ClusterDNS, nil
+	}
+
+	// If the clusterDNS is not present in the database, retrieve it from OCM
 	clusterDNS, err := c.ocmClient.GetClusterDNS(clusterID)
 	if err != nil {
-		return "", apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+		return "", apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get cluster DNS from OCM")
 	}
 	return clusterDNS, nil
 }

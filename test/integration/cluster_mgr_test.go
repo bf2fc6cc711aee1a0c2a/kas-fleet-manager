@@ -121,6 +121,13 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 	Expect(addonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
+	// The cluster DNS should have been persisted
+	ocmClusterDNS, err := ocmClient.GetClusterDNS(cluster.ClusterID)
+	if err != nil {
+		t.Fatalf("failed to get cluster DNS from ocm")
+	}
+	Expect(cluster.ClusterDNS).To(Equal(ocmClusterDNS))
+
 	// observatorium needs to get ready and until we change the way kafka
 	// statuses are obtained, integration tests will fail without this wait time
 	// as their status may not be correctly scraped jut after the OSD cluster is created
