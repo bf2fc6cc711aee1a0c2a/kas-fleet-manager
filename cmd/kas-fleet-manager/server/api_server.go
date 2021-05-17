@@ -3,10 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	sdk "github.com/openshift-online/ocm-sdk-go"
@@ -33,9 +34,9 @@ import (
 )
 
 const (
-	managedServicesApi = "managed-services-api"
-	version            = "v1"
-	apiEndpoint        = "/api"
+	version                        = "v1"
+	apiEndpoint                    = "/api"
+	kafkasFleetManagementApiPrefix = "kafkas_mgmt"
 )
 
 type apiServer struct {
@@ -104,32 +105,32 @@ func NewAPIServer() Server {
 
 	authorizeMiddleware := acl.NewAccessControlListMiddleware(env().Services.Config).Authorize
 
-	//  /api/managed-services-api
-	apiRouter := mainRouter.PathPrefix("/api/managed-services-api").Subrouter()
+	//  /api/kafkas_mgmt
+	apiRouter := mainRouter.PathPrefix("/api/kafkas_mgmt").Subrouter()
 	apiRouter.HandleFunc("", api.SendAPI).Methods(http.MethodGet)
 	apiRouter.Use(MetricsMiddleware)
 	apiRouter.Use(db.TransactionMiddleware)
 	apiRouter.Use(gorillahandlers.CompressHandler)
 
-	//  /api/managed-services-api/v1
+	//  /api/kafkas_mgmt/v1
 	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
 	apiV1Router.HandleFunc("", api.SendAPIV1).Methods(http.MethodGet)
 	apiV1Router.HandleFunc("/", api.SendAPIV1).Methods(http.MethodGet)
 
-	//  /api/managed-services-api/v1/openapi
+	//  /api/kafkas_mgmt/v1/openapi
 	apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
-	//  /api/managed-services-api/v1/errors
+	//  /api/kafkas_mgmt/v1/errors
 	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
 	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
 	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
 
-	// /api/managed-services-api/v1/status
+	// /api/kafkas_mgmt/v1/status
 	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
 	apiV1Status.Use(ocmAuthzMiddlewareRequireIssuer)
 
-	//  /api/managed-services-api/v1/kafkas
+	//  /api/kafkas_mgmt/v1/kafkas
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
 
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
@@ -142,7 +143,7 @@ func NewAPIServer() Server {
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasCreateRouter.Use(ocmAuthzMiddlewareRequireTermsAcceptance)
 
-	//  /api/managed-services-api/v1/cloud_providers
+	//  /api/kafkas_mgmt/v1/cloud_providers
 	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
 	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
 	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
@@ -156,14 +157,14 @@ func NewAPIServer() Server {
 	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
 
-	//  /api/managed-services-api/v1/kafkas/{id}/metrics
+	//  /api/kafkas_mgmt/v1/kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
 	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
 	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
 
 	if env().Config.ConnectorsConfig.Enabled {
 
-		//  /api/managed-services-api/v1/kafka-connector-types
+		//  /api/kafkas_mgmt/v1/kafka-connector-types
 		connectorTypesHandler := handlers.NewConnectorTypesHandler(services.ConnectorTypes)
 		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/kafka-connector-types").Subrouter()
 		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", connectorTypesHandler.Get).Methods(http.MethodGet)
@@ -171,7 +172,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
 
-		//  /api/managed-services-api/v1/kafka-connectors
+		//  /api/kafkas_mgmt/v1/kafka-connectors
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorsRouter := apiV1Router.PathPrefix("/kafka-connectors").Subrouter()
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
@@ -181,7 +182,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Delete).Methods(http.MethodDelete)
 		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
-		//  /api/managed-services-api/v1/kafka-connectors-of/{connector_type_id}
+		//  /api/kafkas_mgmt/v1/kafka-connectors-of/{connector_type_id}
 		apiV1ConnectorsTypedRouter := apiV1Router.PathPrefix("/kafka-connectors-of/{connector_type_id}").Subrouter()
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
 		apiV1ConnectorsTypedRouter.HandleFunc("", connectorsHandler.List).Methods(http.MethodGet)
@@ -189,7 +190,7 @@ func NewAPIServer() Server {
 		apiV1ConnectorsRouter.HandleFunc("/{connector_id}", connectorsHandler.Patch).Methods(http.MethodPatch)
 		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
-		//  /api/managed-services-api/v1/kafka-connector-clusters
+		//  /api/kafkas_mgmt/v1/kafka-connector-clusters
 		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
@@ -201,7 +202,7 @@ func NewAPIServer() Server {
 
 		// This section adds the API's accessed by the connector agent...
 		{
-			//  /api/managed-services-api/v1/kafka-connector-agent-clusters/{id}
+			//  /api/kafkas_mgmt/v1/kafka-connector-agent-clusters/{id}
 			agentRouter := apiV1Router.PathPrefix("/kafka-connector-clusters/{connector_cluster_id}").Subrouter()
 			agentRouter.HandleFunc("/status", connectorClusterHandler.UpdateConnectorClusterStatus).Methods(http.MethodPut)
 			agentRouter.HandleFunc("/deployments", connectorClusterHandler.ListDeployments).Methods(http.MethodGet)
@@ -210,7 +211,7 @@ func NewAPIServer() Server {
 		}
 	}
 
-	///api/managed-services-api/v1/agent-clusters/{id}
+	///api/kafkas_mgmt/v1/agent-clusters/{id}
 	if env().Config.Kafka.EnableKasFleetshardSync {
 		dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(services.DataPlaneCluster, services.Config)
 		dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(services.DataPlaneKafkaService, services.Config, services.Kafka)
@@ -240,9 +241,9 @@ func NewAPIServer() Server {
 			KeysURL(env().Config.Keycloak.KafkaRealm.JwksEndpointURI). // mas-sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.ERROR_CODE_PREFIX).
-			Public(fmt.Sprintf("^%s/%s/?$", apiEndpoint, managedServicesApi)).
-			Public(fmt.Sprintf("^%s/%s/%s/?$", apiEndpoint, managedServicesApi, version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", apiEndpoint, managedServicesApi, version)).
+			Public(fmt.Sprintf("^%s/%s/?$", apiEndpoint, kafkasFleetManagementApiPrefix)).
+			Public(fmt.Sprintf("^%s/%s/%s/?$", apiEndpoint, kafkasFleetManagementApiPrefix, version)).
+			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", apiEndpoint, kafkasFleetManagementApiPrefix, version)).
 			Next(mainHandler).
 			Build()
 		check(err, "Unable to create authentication handler")

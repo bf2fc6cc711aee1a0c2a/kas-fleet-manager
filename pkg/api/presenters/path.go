@@ -2,12 +2,13 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
 const (
-	BasePath = "/api/managed-services-api/v1"
+	BasePath = "/api/kafkas_mgmt/v1"
 )
 
 func ObjectPath(id string, obj interface{}) string {

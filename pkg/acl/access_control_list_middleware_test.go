@@ -168,7 +168,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 
-			req, err := http.NewRequest("GET", "/api/managed-services/kafkas", nil)
+			req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -311,7 +311,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 
-			req, err := http.NewRequest("GET", "/api/managed-services/kafkas", nil)
+			req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -494,7 +494,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 
-			req, err := http.NewRequest("GET", "/api/managed-services/kafkas", nil)
+			req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
 			if err != nil {
 				t.Fatal(err)
 			}
