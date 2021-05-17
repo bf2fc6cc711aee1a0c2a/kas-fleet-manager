@@ -72,7 +72,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 		case statusRejected:
 			e = d.reassignKafkaCluster(kafka)
 		case statusUnknown:
-			log.Warningf("kafka cluster %s status is unknown", ks.KafkaClusterId)
+			log.Infof("kafka cluster %s status is unknown", ks.KafkaClusterId)
 		default:
 			log.V(5).Infof("kafka cluster %s is still installing", ks.KafkaClusterId)
 		}
