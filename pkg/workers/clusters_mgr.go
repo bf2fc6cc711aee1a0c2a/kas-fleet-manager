@@ -358,6 +358,11 @@ func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
 	if err == nil {
 		err = c.reconcileClusterIdentityProvider(cluster)
 	}
+
+	if err == nil {
+		err = c.reconcileClusterDNS(cluster)
+	}
+
 	if err == nil && c.kasFleetshardOperatorAddon != nil {
 		if e := c.kasFleetshardOperatorAddon.ReconcileParameters(cluster); e != nil {
 			if e.IsBadRequest() {
@@ -410,6 +415,10 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 		return err
 	}
 
+	if err := c.reconcileClusterDNS(cluster); err != nil {
+		return err
+	}
+
 	// SyncSet creation step
 	syncSetErr := c.reconcileClusterSyncSet(cluster) //OSD cluster itself
 	if syncSetErr != nil {
@@ -425,6 +434,26 @@ func (c *ClusterManager) reconcileProvisionedCluster(cluster api.Cluster) error 
 	addOnErr := c.reconcileAddonOperator(cluster)
 	if addOnErr != nil {
 		return errors.WithMessagef(addOnErr, "failed to reconcile cluster %s addon operator: %s", cluster.ClusterID, addOnErr.Error())
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
+	// Return if the clusterDNS is already set
+	if cluster.ClusterDNS != "" {
+		return nil
+	}
+
+	clusterDNS, dnsErr := c.clusterService.GetClusterDNS(cluster.ClusterID)
+	if dnsErr != nil {
+		return errors.WithMessagef(dnsErr, "failed to reconcile cluster %s: GetClusterDNS %s", cluster.ClusterID, dnsErr.Error())
+	}
+
+	cluster.ClusterDNS = clusterDNS
+	updateErr := c.clusterService.Update(&cluster)
+	if updateErr != nil {
+		return errors.WithMessagef(updateErr, "failed to reconcile cluster %s: Cluster update %s", cluster.ClusterID, updateErr.Error())
 	}
 
 	return nil

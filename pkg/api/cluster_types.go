@@ -48,6 +48,7 @@ type Cluster struct {
 	Managed            bool          `json:"managed"`
 	Status             ClusterStatus `json:"status" gorm:"index"`
 	IdentityProviderID string        `json:"identity_provider_id"`
+	ClusterDNS         string        `json:"cluster_dns"`
 }
 
 type ClusterList []*Cluster

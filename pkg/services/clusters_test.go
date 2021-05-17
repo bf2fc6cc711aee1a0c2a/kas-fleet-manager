@@ -250,7 +250,7 @@ func Test_GetClusterDNS(t *testing.T) {
 				clusterID: testClusterID,
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
 			},
 			wantErr: false,
 			want:    mockClusterDNS,
@@ -1474,6 +1474,63 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			}
 			if !reflect.DeepEqual(status, tt.want) {
 				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
+			}
+		})
+	}
+}
+
+func TestClusterService__Update(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		cluster *api.Cluster
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail when database returns an error",
+			args: args{
+				cluster: buildCluster(nil),
+			},
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+			},
+		},
+		{
+			name: "success",
+			args: args{
+				cluster: buildCluster(func(cluster *api.Cluster) {
+					cluster.ID = "test-id"
+				}),
+			},
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			k := clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			err := k.Update(tt.args.cluster)
+			if !tt.wantErr && err != nil {
+				t.Errorf("clusterService.Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
 			}
 		})
 	}

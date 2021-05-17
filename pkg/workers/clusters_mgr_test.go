@@ -2,10 +2,11 @@ package workers
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
@@ -1123,6 +1124,63 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 			}
 
 			err := c.reconcileClusterIdentityProvider(tt.arg)
+			gomega.Expect(err != nil).To(Equal(tt.wantErr))
+		})
+	}
+}
+
+func TestClusterManager_reconcileClusterDNS(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		arg     api.Cluster
+		wantErr bool
+	}{
+		{
+			name: "should return when clusterDNS is already set",
+			arg: api.Cluster{
+				ClusterDNS: "my-cluster-dns",
+			},
+			wantErr: false,
+		},
+		{
+			name: "should receive error when GetClusterDNSFunc returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "", apiErrors.GeneralError("failed")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "should receive error when cluster service Update returns error",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
+						return apiErrors.GeneralError("failed")
+					},
+					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
+						return "test.com", nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			c := &ClusterManager{
+				clusterService: tt.fields.clusterService,
+			}
+
+			err := c.reconcileClusterDNS(tt.arg)
 			gomega.Expect(err != nil).To(Equal(tt.wantErr))
 		})
 	}
