@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 type metricsHandler struct {
@@ -52,7 +53,6 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 
 			return metricList, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -82,7 +82,6 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 
 			return metricList, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }

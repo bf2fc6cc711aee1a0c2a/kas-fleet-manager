@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"github.com/patrickmn/go-cache"
 	"net/http"
 	"time"
+
+	"github.com/patrickmn/go-cache"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -56,7 +57,6 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			h.cache.Set(id, regionList, cache.DefaultExpiration)
 			return regionList, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -87,7 +87,6 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			h.cache.Set("cloudProviderList", cloudProviderList, cache.DefaultExpiration)
 			return cloudProviderList, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }

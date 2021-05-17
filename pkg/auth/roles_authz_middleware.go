@@ -28,15 +28,16 @@ func (m *rolesAuthMiddleware) RequireRealmRole(roleName string, code errors.Serv
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			ctx := request.Context()
 			claims, err := GetClaimsFromContext(ctx)
+			serviceErr := errors.New(code, "")
 			if err != nil {
-				shared.HandleError(ctx, writer, code, "")
+				shared.HandleError(ctx, writer, serviceErr)
 				return
 			}
 			roles := getRealmRolesClaim(claims)
 			if hasRole(roles, roleName) {
 				next.ServeHTTP(writer, request)
 			} else {
-				shared.HandleError(ctx, writer, code, "")
+				shared.HandleError(ctx, writer, serviceErr)
 				return
 			}
 		})
