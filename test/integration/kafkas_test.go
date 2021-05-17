@@ -128,7 +128,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
 
 	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(ctx, client, foundKafka.Id)
+	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }
 
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
@@ -1072,7 +1072,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	Expect(err).To(HaveOccurred())
 
 	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(initCtx, client, foundKafka.Id)
+	deleteTestKafka(t, h, initCtx, client, foundKafka.Id)
 }
 
 // TestKafkaList_Success tests getting kafka requests list
@@ -1197,7 +1197,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
 
 	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(initCtx, client, foundKafka.Id)
+	deleteTestKafka(t, h, initCtx, client, foundKafka.Id)
 }
 
 // TestKafkaList_InvalidToken - tests listing kafkas with invalid token
@@ -1220,21 +1220,23 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	Expect(kafkaRequests.Total).To(Equal(int32(0)), "Expected Total == 0")
 }
 
-func deleteTestKafka(ctx context.Context, client *openapi.APIClient, kafkaID string) {
+func deleteTestKafka(t *testing.T, h *test.Helper, ctx context.Context, client *openapi.APIClient, kafkaID string) {
 	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	// wait for kafka to be deleted
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafkaID); err != nil {
-			if err.Error() == "404 Not Found" {
-				return true, nil
+	err = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
+		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaID).
+		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			db := h.Env().DBFactory.New()
+			var kafkaRequest api.KafkaRequest
+			if err := db.Unscoped().Where("id = ?", kafkaID).First(&kafkaRequest).Error; err != nil {
+				return false, err
 			}
-
-			return false, err
-		}
-		return false, nil
-	})
+			return kafkaRequest.DeletedAt.Valid, nil
+		}).Build().Poll()
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }
 

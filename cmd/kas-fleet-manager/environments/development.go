@@ -27,7 +27,7 @@ var developmentConfigDefaults map[string]string = map[string]string{
 	"ingress-controller-replicas":       "3",
 	"enable-quota-service":              "false",
 	"enable-deletion-of-expired-kafka":  "true",
-	"dataplane-cluster-scaling-type":    "auto",
+	"dataplane-cluster-scaling-type":    "manual",
 	//TODO: change these values to the qe ones for development environment once they are available
 	"strimzi-operator-addon-id": "managed-kafka",
 	"kas-fleetshard-addon-id":   "kas-fleetshard-operator",

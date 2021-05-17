@@ -19,7 +19,6 @@ import (
 	. "github.com/onsi/gomega"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing.T) {
@@ -366,7 +365,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 }
 
 func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
-	var originalScalingType *string = new(string)
+	var originalScalingType = new(string)
 	startHook := func(h *test.Helper) {
 		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 		h.Env().Config.Kafka.EnableKasFleetshardSync = true
@@ -437,31 +436,39 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterComputeNodeScalingUp))
 
-	checkComputeNodesFunc := func(clusterID string, expectedNodes int) func() bool {
-		return func() bool {
+	checkComputeNodesFunc := func(clusterID string, expectedNodes int) func() (bool, error) {
+		return func() (bool, error) {
 			currOcmCluster, err := ocmClient.GetCluster(clusterID)
 			if err != nil {
-				return false
+				return false, err
 			}
 
 			if currOcmCluster.Nodes().Compute() != expectedNodes {
-				return false
+				return false, nil
 			}
 			metrics, err := ocmClient.GetExistingClusterMetrics(clusterID)
 			if err != nil {
-				return false
+				return false, err
 			}
 			if int(metrics.Nodes().Compute()) != expectedNodes {
-				return false
+				return false, nil
 			}
 
-			return true
+			return true, nil
 		}
 	}
 
 	// Check that desired and existing compute nodes end being the
 	// expected ones
-	Eventually(checkComputeNodesFunc(testDataPlaneclusterID, expectedNodesAfterScaleUp), 60*time.Minute, 5*time.Second).Should(BeTrue())
+	err = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(5*time.Second, 60*time.Minute).
+		RetryLogMessagef("Waiting for cluster '%s' to scale up to %d nodes", testDataPlaneclusterID, expectedNodesAfterScaleUp).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			return checkComputeNodesFunc(testDataPlaneclusterID, expectedNodesAfterScaleUp)()
+		}).Build().Poll()
+
+	Expect(err).ToNot(HaveOccurred())
 
 	// We force a scale-down by setting one of the remaining fields to be
 	// higher than the scale-down threshold.
@@ -478,7 +485,15 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 
 	// Check that desired and existing compute nodes end being the
 	// expected ones
-	Eventually(checkComputeNodesFunc(testDataPlaneclusterID, initialComputeNodes), 60*time.Minute, 5*time.Second).Should(BeTrue())
+	err = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(5*time.Second, 60*time.Minute).
+		RetryLogMessagef("Waiting for cluster '%s' to scale down to %d nodes", testDataPlaneclusterID, initialComputeNodes).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			return checkComputeNodesFunc(testDataPlaneclusterID, initialComputeNodes)()
+		}).Build().Poll()
+
+	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
@@ -531,10 +546,10 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
-	initialComputeNodes := ocmCluster.Nodes().Compute()
-	Expect(initialComputeNodes).NotTo(BeNil())
 	Expect(err).ToNot(HaveOccurred())
 
+	initialComputeNodes := ocmCluster.Nodes().Compute()
+	Expect(initialComputeNodes).NotTo(BeNil())
 	// Simulate there's no capacity and we've already reached ceiling to
 	// set status as full and force the cluster mgr reconciler to create a new
 	// OSD cluster
@@ -557,8 +572,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	ocmServerBuilder.SwapRouterResponse(mocks.EndpointPathClusters, http.MethodPost, newMockedCluster, nil)
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
@@ -579,21 +594,29 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	clusterCreationTimeout := 3 * time.Hour
 	var newCluster *api.Cluster
 	// Wait until new cluster is created and ClusterWaitingForKasFleetShardOperator in OCM
-	Eventually(func() bool {
-		clusters := []api.Cluster{}
-		db.Find(&clusters)
-		err := db.Where("cluster_id <> ?", testDataPlaneclusterID).Find(&clusters).Error
-		if err != nil {
-			return false
-		}
 
-		if len(clusters) != 1 {
-			return false
-		}
+	err = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(5*time.Second, clusterCreationTimeout).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			clusters := []api.Cluster{}
+			db.Find(&clusters)
+			err = db.Where("cluster_id <> ?", testDataPlaneclusterID).Find(&clusters).Error
+			if err != nil {
+				return false, err
+			}
 
-		newCluster = &clusters[0]
-		return newCluster.Status == api.ClusterWaitingForKasFleetShardOperator
-	}, clusterCreationTimeout, 5*time.Second).Should(BeTrue())
+			if len(clusters) != 1 {
+				return false, nil
+			}
+
+			newCluster = &clusters[0]
+			return newCluster.Status == api.ClusterWaitingForKasFleetShardOperator, nil
+		}).
+		RetryLogMessagef("Waiting for cluster '%s' to reach status '%s'", testDataPlaneclusterID, api.ClusterWaitingForKasFleetShardOperator.String()).
+		Build().Poll()
+
+	Expect(err).ToNot(HaveOccurred())
 
 	// We force status to 'ready' at DB level to ensure no cluster is recreated
 	// again when deleting the new cluster
@@ -604,14 +627,19 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", newCluster.ClusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
 
-	err = wait.PollImmediate(interval, clusterDeletionTimeout, func() (done bool, err error) {
-		clusterFromDb, findClusterByIdErr := clusterService.FindClusterByID(newCluster.ClusterID)
-		if findClusterByIdErr != nil {
-			return false, findClusterByIdErr
-		}
+	err = utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(interval, clusterDeletionTimeout).
+		OnRetry(func(attempt int, maxRetries int) (bool, error) {
+			clusterFromDb, findClusterByIdErr := clusterService.FindClusterByID(newCluster.ClusterID)
+			if findClusterByIdErr != nil {
+				return false, findClusterByIdErr
+			}
 
-		return clusterFromDb == nil, nil // cluster has been deleted
-	})
+			return clusterFromDb == nil, nil // cluster has been deleted
+		}).
+		RetryLogMessagef("Waiting for cluster '%s' to be deleted", newCluster.ClusterID).
+		Build().Poll()
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

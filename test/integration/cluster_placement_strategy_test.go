@@ -40,6 +40,10 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer teardown()
 
+	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+		t.SkipNow()
+	}
+
 	// load existing cluster and assign kafka to it so that it is not deleted
 
 	db := h.Env().DBFactory.New()
@@ -77,10 +81,6 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		if foundCluster, svcErr := clusterService.FindClusterByID(currentClusterId); svcErr != nil {
 			return true, fmt.Errorf("failed to find OSD cluster %s", svcErr)
 		} else {
-			if svcErr != nil {
-				return true, svcErr
-			}
-
 			if foundCluster == nil {
 				return false, nil
 			}

@@ -24,11 +24,19 @@ import (
 
 const (
 	clusterIDAssignTimeout = 2 * time.Minute
-	timeout                = 3 * time.Hour
+	clusterReadyTimeout    = 3 * time.Hour
 	interval               = 10 * time.Second
 	readyWaitTime          = 30 * time.Minute
-	clusterDeletionTimeout = 5 * time.Minute
+	clusterDeletionTimeout = 15 * time.Minute
 )
+
+func WaitForObservatoriumToBeReady(t *testing.T) {
+	iterations := int(readyWaitTime.Minutes())
+	for i := 0; i < iterations; i++ {
+		t.Logf("%d/%d - Waiting for Observatorium to be ready", i+1, iterations)
+		time.Sleep(1 * time.Minute)
+	}
+}
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
@@ -57,45 +65,45 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 
 	var cluster api.Cluster
-	// checking for cluster_id to be assigned to new cluster
-	err := utils.Poll(interval, clusterIDAssignTimeout, func(attempt int, maxAttempts int) (done bool, err error) {
-		t.Logf("%d/%d - Waiting for cluster id to be assigned to the new cluster", attempt, maxAttempts)
-		foundCluster, svcErr := clusterService.FindCluster(services.FindClusterCriteria{
-			Region:   mocks.MockCluster.Region().ID(),
-			Provider: mocks.MockCluster.CloudProvider().ID(),
-		})
 
-		if svcErr != nil || foundCluster == nil {
-			return true, fmt.Errorf("failed to find OSD cluster %s", svcErr)
-		}
-		cluster = *foundCluster
-		return foundCluster.ClusterID != "", nil
-	}, nil, func(attempt int, maxAttempts int, err error) {
-		t.Logf("%d/%d - Finished waiting for cluster id to be assigned to the new cluster", attempt, maxAttempts)
-	})
+	// checking for cluster_id to be assigned to new cluster
+	err := utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(interval, clusterIDAssignTimeout).
+		OnRetry(func(attempt int, maxAttempts int) (bool, error) {
+			foundCluster, svcErr := clusterService.FindCluster(services.FindClusterCriteria{
+				Region:   mocks.MockCluster.Region().ID(),
+				Provider: mocks.MockCluster.CloudProvider().ID(),
+			})
+
+			if svcErr != nil || foundCluster == nil {
+				return true, fmt.Errorf("failed to find OSD cluster %s", svcErr)
+			}
+			cluster = *foundCluster
+			return foundCluster.ClusterID != "", nil
+		}).
+		RetryLogMessage("Waiting ID to be assigned to the cluster").
+		Build().Poll()
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	checkReadyErr := utils.Poll(interval, timeout, func(attempt int, maxAttempts int) (done bool, err error) {
-		foundCluster, findClusterErr := clusterService.FindClusterByID(cluster.ClusterID)
-		if findClusterErr != nil {
-			return true, fmt.Errorf("failed to find cluster with id %s: %s", cluster.ClusterID, err)
-		}
-		if foundCluster == nil {
-			return false, nil
-		}
-		cluster = *foundCluster
-		if attempt%10 == 0 {
-			t.Logf("%d/%d - Waiting for status of cluster (%s) to be ready: %s", attempt, maxAttempts, cluster.ClusterID, cluster.Status)
-		}
-		return cluster.Status == api.ClusterReady, nil
-	}, func(maxAttempts int) error {
-		t.Logf("%d/%d - Waiting for status of cluster (%s) to be ready: %s", 1, maxAttempts, cluster.ClusterID, cluster.Status)
-		return nil
-	}, func(attempt int, maxAttempts int, err error) {
-		t.Logf("%d/%d - Waiting for status of cluster (%s) to be ready ended: %s", attempt, maxAttempts, cluster.ClusterID, cluster.Status)
-	})
+	checkReadyErr := utils.NewPollerBuilder().
+		OutputFunction(t.Logf).
+		IntervalAndTimeout(interval, clusterReadyTimeout).
+		OnRetry(func(attempt int, maxAttempts int) (bool, error) {
+			foundCluster, findClusterErr := clusterService.FindClusterByID(cluster.ClusterID)
+			if findClusterErr != nil {
+				return true, fmt.Errorf("failed to find cluster with id %s: %s", cluster.ClusterID, err)
+			}
+			if foundCluster == nil {
+				return false, nil
+			}
+			cluster = *foundCluster
+			return cluster.Status == api.ClusterReady, nil
+		}).
+		RetryLogMessage(fmt.Sprintf("Waiting for cluster (%s) to be ready", cluster.ClusterID)).
+		Build().Poll()
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
 	err = utils.PersistClusterStruct(cluster)
@@ -132,7 +140,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// statuses are obtained, integration tests will fail without this wait time
 	// as their status may not be correctly scraped jut after the OSD cluster is created
 	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-		time.Sleep(readyWaitTime)
+		WaitForObservatoriumToBeReady(t)
 	}
 
 	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
