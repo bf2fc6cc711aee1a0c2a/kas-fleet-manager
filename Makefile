@@ -189,7 +189,7 @@ help:
 	@echo "make openapi/validate     	validate openapi schema"
 	@echo "make image                	build docker image"
 	@echo "make push                 	push docker image"
-	@echo "make project              	create and use the UHC project"
+	@echo "make project              	create and use the managed-services project"
 	@echo "make clean                	delete temporary generated files"
 	@echo "make setup/git/hooks      	setup git hooks"
 	@echo "make keycloak/setup     	    setup mas sso clientId, clientSecret & crt"
