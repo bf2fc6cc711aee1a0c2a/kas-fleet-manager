@@ -3,13 +3,14 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -70,7 +71,6 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			}
 			return presenters.PresentConnectorCluster(convResource), nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	// return 202 status accepted
@@ -90,7 +90,6 @@ func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			}
 			return presenters.PresentConnectorCluster(resource), nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -105,7 +104,6 @@ func (h *connectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request)
 			err := h.service.Delete(r.Context(), connectorClusterId)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 	handleDelete(w, r, cfg, http.StatusNoContent)
 }
@@ -134,7 +132,6 @@ func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			return resourceList, nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleList(w, r, cfg)
@@ -169,7 +166,6 @@ func (h *connectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 			}
 			return result, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -239,7 +235,6 @@ func (h *connectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 			err := h.service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 	handle(w, r, cfg, http.StatusNoContent)
 }
@@ -377,7 +372,6 @@ func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				return getList()
 			}
 		},
-		ErrorHandler: handleError,
 	}
 	handleList(w, r, cfg)
 }
@@ -414,7 +408,6 @@ func (h *connectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 			err := h.service.UpdateConnectorDeploymentStatus(ctx, resource)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 	handle(w, r, cfg, http.StatusNoContent)
 }

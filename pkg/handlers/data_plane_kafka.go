@@ -37,7 +37,6 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 			err := h.service.UpdateDataPlaneKafkaService(ctx, clusterId, dataPlaneKafkaStatus)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 
 	handle(w, r, cfg, http.StatusOK)
@@ -66,7 +65,6 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 			}
 			return managedKafkaList, nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleGet(w, r, cfg)

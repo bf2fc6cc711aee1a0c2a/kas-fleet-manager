@@ -44,7 +44,6 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 
 			return serviceAccountList, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleList(w, r, cfg)
 }
@@ -80,7 +79,6 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 			}
 			return presenters.PresentServiceAccount(serviceAccount), nil
 		},
-		ErrorHandler: handleError,
 	}
 	handle(w, r, cfg, http.StatusAccepted)
 }
@@ -97,7 +95,6 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 			err := s.service.DeleteServiceAccount(ctx, id)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleDelete(w, r, cfg, http.StatusNoContent)
@@ -118,7 +115,6 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 			}
 			return presenters.PresentServiceAccount(sa), nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleGet(w, r, cfg)
@@ -139,7 +135,6 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 			}
 			return presenters.PresentServiceAccount(sa), nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleGet(w, r, cfg)

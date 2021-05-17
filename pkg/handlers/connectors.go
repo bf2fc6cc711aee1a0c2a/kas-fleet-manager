@@ -2,6 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
@@ -11,9 +15,6 @@ import (
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
-	"io/ioutil"
-	"net/http"
-	"reflect"
 )
 
 var (
@@ -89,7 +90,6 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 			return presenters.PresentConnector(convResource)
 		},
-		ErrorHandler: handleError,
 	}
 
 	// return 202 status accepted
@@ -183,7 +183,6 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 			return presenters.PresentConnector(p)
 		},
-		ErrorHandler: handleError,
 	}
 
 	// return 202 status accepted
@@ -247,7 +246,6 @@ func (h connectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 			return presenters.PresentConnector(resource)
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -275,7 +273,6 @@ func (h connectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 			return nil, nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleDelete(w, r, cfg, http.StatusNoContent)
 }
@@ -318,7 +315,6 @@ func (h connectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			return resourceList, nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleList(w, r, cfg)
