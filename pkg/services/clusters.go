@@ -36,7 +36,6 @@ type ClusterService interface {
 	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
-	AddIdentityProviderID(clusterID string, identityProviderId string) *apiErrors.ServiceError
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e kafka that are not in failure state.
@@ -313,15 +312,6 @@ func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*cluste
 		return nil, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
 	}
 	return cluster, nil
-}
-
-func (c clusterService) AddIdentityProviderID(id string, identityProviderId string) *apiErrors.ServiceError {
-	dbConn := c.connectionFactory.New()
-	if err := dbConn.Model(&api.Cluster{Meta: api.Meta{ID: id}}).Update("identity_provider_id", identityProviderId).Error; err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update identity_provider_id for cluster %s", id)
-	}
-
-	return nil
 }
 
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {

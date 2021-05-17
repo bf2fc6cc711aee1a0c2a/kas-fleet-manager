@@ -1054,8 +1054,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					AddIdentityProviderIDFunc: func(clusterId, identityProviderId string) *apiErrors.ServiceError {
-						return nil // do not return nil since the cluster details will be updated to include the newly created identity provider
+					UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
+						return nil
 					},
 				},
 				osdIdpKeycloakService: &services.KeycloakServiceMock{
@@ -1091,7 +1091,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					AddIdentityProviderIDFunc: func(clusterID, identityProviderId string) *apiErrors.ServiceError {
+					UpdateFunc: func(cluster *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
 				},
