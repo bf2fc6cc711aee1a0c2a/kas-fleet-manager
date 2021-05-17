@@ -3,6 +3,7 @@ package workers
 import (
 	"bytes"
 	"fmt"
+	authv1 "github.com/openshift/api/authorization/v1"
 	"net/http"
 	"reflect"
 	"strings"
@@ -34,6 +35,8 @@ import (
 	projectv1 "github.com/openshift/api/project/v1"
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	userv1 "github.com/openshift/api/user/v1"
 )
 
 const (
@@ -52,6 +55,9 @@ const (
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
 	ipdAlreadyCreatedErrorToCheck   = "Kafka_SRE already exists"
+	readOnlyGroupName               = "mk-readonly-access"
+	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
+	dedicatedReadersRoleBindingName = "dedicated-readers"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -739,6 +745,8 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clusters
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
+		c.buildReadOnlyGroupResource(),
+		c.buildDedicatedReaderClusterRoleBindingResource(),
 	}
 	// If kas-fleetshard sync is enabled, the external config for the observability will be delivered to the kas-fleetshard directly
 	if !c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
@@ -1006,6 +1014,44 @@ func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secre
 		},
 		Type: k8sCoreV1.SecretTypeDockercfg,
 		Data: dataMap,
+	}
+}
+
+// buildReadOnlyGroupResource creates a group to which read-only cluster users are added.
+func (c *ClusterManager) buildReadOnlyGroupResource() *userv1.Group {
+	return &userv1.Group{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: userv1.SchemeGroupVersion.String(),
+			Kind:       "Group",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: readOnlyGroupName,
+		},
+	}
+}
+
+// buildDedicatedReaderClusterRoleBindingResource creates a cluster role binding, associates it with the mk-readonly-access group, and attaches the dedicated-reader cluster role.
+func (c *ClusterManager) buildDedicatedReaderClusterRoleBindingResource() *authv1.ClusterRoleBinding {
+	return &authv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "ClusterRoleBinding",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: mkReadOnlyRoleBindingName,
+		},
+		Subjects: []k8sCoreV1.ObjectReference{
+			{
+				Kind:       "Group",
+				APIVersion: "rbac.authorization.k8s.io",
+				Name:       readOnlyGroupName,
+			},
+		},
+		RoleRef: k8sCoreV1.ObjectReference{
+			Kind:       "ClusterRole",
+			Name:       dedicatedReadersRoleBindingName,
+			APIVersion: "rbac.authorization.k8s.io",
+		},
 	}
 }
 
