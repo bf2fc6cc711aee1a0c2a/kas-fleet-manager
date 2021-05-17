@@ -57,7 +57,6 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			hasAvailableKafkaCapacity, capacityErr := h.kafkaService.HasAvailableCapacity()
 			return presenters.PresentServiceStatus(false, !hasAvailableKafkaCapacity), capacityErr
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }

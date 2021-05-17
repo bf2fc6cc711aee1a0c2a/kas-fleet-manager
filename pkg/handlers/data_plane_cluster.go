@@ -39,7 +39,6 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 			err := h.service.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 
 	// TODO do we always to return HTTP 204 No Content?
@@ -61,7 +60,6 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 			}
 			return presenters.PresentDataPlaneClusterConfig(dataClusterConfig), nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleGet(w, r, cfg)

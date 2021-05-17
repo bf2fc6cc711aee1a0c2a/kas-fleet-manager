@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
 )
 
@@ -72,13 +73,13 @@ func (h errorHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h errorHandler) Create(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("create"))
+	shared.HandleError(r.Context(), w, errors.NotImplemented("create"))
 }
 
 func (h errorHandler) Patch(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("path"))
+	shared.HandleError(r.Context(), w, errors.NotImplemented("path"))
 }
 
 func (h errorHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	handleError(r.Context(), w, errors.NotImplemented("delete"))
+	shared.HandleError(r.Context(), w, errors.NotImplemented("delete"))
 }

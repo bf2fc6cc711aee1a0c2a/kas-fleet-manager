@@ -40,21 +40,9 @@ type validate func() *errors.ServiceError
 type errorHandlerFunc func(ctx context.Context, w http.ResponseWriter, err *errors.ServiceError)
 type httpAction func() (interface{}, *errors.ServiceError)
 
-func handleError(ctx context.Context, w http.ResponseWriter, err *errors.ServiceError) {
-	ulog := logger.NewUHCLogger(ctx)
-	operationID := logger.GetOperationID(ctx)
-	// If this is a 400 error, its the user's issue, log as info rather than error
-	if err.HttpCode >= 400 && err.HttpCode <= 499 {
-		ulog.Infof(err.Error())
-	} else {
-		ulog.Error(err)
-	}
-	shared.WriteJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
-}
-
 func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = handleError
+		cfg.ErrorHandler = shared.HandleError
 	}
 
 	if cfg.MarshalInto != nil {
@@ -71,7 +59,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 		//err = json.Unmarshal(bytes, &cfg.MarshalInto)
 
 		if err != nil {
-			handleError(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
+			cfg.ErrorHandler(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
 			return
 		}
 	}
@@ -97,7 +85,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 
 func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = handleError
+		cfg.ErrorHandler = shared.HandleError
 	}
 	for _, v := range cfg.Validate {
 		err := v()
@@ -120,7 +108,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, ht
 
 func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = handleError
+		cfg.ErrorHandler = shared.HandleError
 	}
 
 	for _, v := range cfg.Validate {
@@ -142,7 +130,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 
 func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = handleError
+		cfg.ErrorHandler = shared.HandleError
 	}
 
 	ctx := r.Context()

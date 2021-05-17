@@ -55,7 +55,6 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			}
 			return presenters.PresentKafkaRequest(convKafka), nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	// return 202 status accepted
@@ -73,7 +72,6 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			}
 			return presenters.PresentKafkaRequest(kafkaRequest), nil
 		},
-		ErrorHandler: handleError,
 	}
 	handleGet(w, r, cfg)
 }
@@ -91,7 +89,6 @@ func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			err := h.service.RegisterKafkaDeprovisionJob(ctx, id)
 			return nil, err
 		},
-		ErrorHandler: handleError,
 	}
 	handleDelete(w, r, cfg, http.StatusAccepted)
 }
@@ -122,7 +119,6 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 
 			return kafkaRequestList, nil
 		},
-		ErrorHandler: handleError,
 	}
 
 	handleList(w, r, cfg)
