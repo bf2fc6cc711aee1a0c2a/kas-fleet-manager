@@ -89,7 +89,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
@@ -735,7 +735,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
@@ -797,7 +797,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
 	var foundKafka openapi.KafkaRequest
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
@@ -873,7 +873,7 @@ func TestKafkaDelete_FailSync(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
 	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, false)
 	Expect(err).To(HaveOccurred(), "Failed to delete kafka request: %v", err)
@@ -952,7 +952,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/managed-services-api/v1/kafkas/%s", kafka.Id)))
+	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
 	var foundKafka openapi.KafkaRequest
 	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {

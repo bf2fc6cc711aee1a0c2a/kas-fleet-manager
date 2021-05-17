@@ -16,10 +16,10 @@ type stackTracer interface {
 }
 
 const (
-	ERROR_CODE_PREFIX = "MGD-SERV-API"
+	ERROR_CODE_PREFIX = "KAFKAS-MGMT"
 
 	// HREF for API errors
-	ERROR_HREF = "/api/managed-services-api/v1/errors/"
+	ERROR_HREF = "/api/kafkas_mgmt/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4

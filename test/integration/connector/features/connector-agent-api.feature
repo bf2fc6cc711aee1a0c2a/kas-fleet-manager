@@ -5,7 +5,7 @@ Feature: connector agent API
   and update connector status.
 
   Background:
-    Given the path prefix is "/api/managed-services-api"
+    Given the path prefix is "/api/kafkas_mgmt"
     Given a user named "Jimmy"
     Given a user named "Agent"
     Given a user named "Agent2"
@@ -123,7 +123,7 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/managed-services-api/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
+          "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",
           "kind": "ConnectorDeployment",
           "metadata": {
@@ -187,7 +187,7 @@ Feature: connector agent API
       {
         "items": [
           {
-            "href": "/api/managed-services-api/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+            "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
             "kind": "ConnectorDeployment",
             "id": "${response.items[0].id}",
             "metadata": {
@@ -299,7 +299,7 @@ Feature: connector agent API
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
         },
-        "href": "/api/managed-services-api/v1/kafka-connectors/${connector_id}",
+        "href": "/api/kafkas_mgmt/v1/kafka-connectors/${connector_id}",
         "id": "${connector_id}",
         "kind": "Connector",
         "metadata": {
@@ -328,7 +328,7 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/managed-services-api/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
+          "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",
           "kind": "ConnectorDeployment",
           "metadata": {

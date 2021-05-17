@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager is a Rest API to manage kafka instances
     and connectors.
   title: Kafka Service Fleet Manager
-  version: 0.0.1
+  version: 1.0.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -21,7 +21,7 @@ tags:
   name: Connector Clusters Agent
 - name: Agent Clusters
 paths:
-  /api/managed-services-api/v1/kafka-connector-types/{connector_type_id}:
+  /api/kafkas_mgmt/v1/kafka-connector-types/{connector_type_id}:
     get:
       operationId: getConnectorTypeByID
       parameters:
@@ -72,7 +72,7 @@ paths:
       summary: Get a connector type by name and version
       tags:
       - Connector Types
-  /api/managed-services-api/v1/kafka-connector-types:
+  /api/kafkas_mgmt/v1/kafka-connector-types:
     get:
       operationId: listConnectorTypes
       parameters:
@@ -128,7 +128,7 @@ paths:
       summary: Returns a list of connector types
       tags:
       - Connector Types
-  /api/managed-services-api/v1/kafka-connectors:
+  /api/kafkas_mgmt/v1/kafka-connectors:
     get:
       operationId: listConnectors
       parameters:
@@ -266,7 +266,7 @@ paths:
       summary: Create a new connector
       tags:
       - Connectors
-  /api/managed-services-api/v1/kafkas-connectors/{connector_id}:
+  /api/kafkas_mgmt/v1/kafkas-connectors/{connector_id}:
     delete:
       operationId: deleteConnector
       parameters:
@@ -453,7 +453,7 @@ paths:
       summary: patch a connector
       tags:
       - Connectors
-  /api/managed-services-api/v1/kafka-connector-clusters:
+  /api/kafkas_mgmt/v1/kafka-connector-clusters:
     get:
       operationId: listConnectorClusters
       parameters:
@@ -575,7 +575,7 @@ paths:
       summary: Create a new connector cluster
       tags:
       - Connector Clusters
-  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}:
+  /api/kafkas_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}:
     delete:
       operationId: deleteConnectorCluster
       parameters:
@@ -676,7 +676,7 @@ paths:
       summary: Get a connector cluster
       tags:
       - Connector Clusters
-  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/addon-parameters:
+  /api/kafkas_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/addon-parameters:
     get:
       operationId: getConnectorClusterAddonParameters
       parameters:
@@ -728,7 +728,7 @@ paths:
       summary: Get a connector cluster's addon parameters
       tags:
       - Connector Clusters
-  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/status:
+  /api/kafkas_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/status:
     put:
       operationId: updateKafkaConnectorClusterStatus
       parameters:
@@ -773,7 +773,7 @@ paths:
       summary: Update the status of a connector cluster
       tags:
       - Connector Clusters Agent
-  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/deployments:
+  /api/kafkas_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments:
     get:
       operationId: listClusterAsignedConnectorDeployments
       parameters:
@@ -859,7 +859,7 @@ paths:
       summary: Returns a list of connector deployments assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  /api/managed-services-api/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{connector_id}/status:
+  /api/kafkas_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{connector_id}/status:
     put:
       operationId: updateConnectorDeploymentStatus
       parameters:
@@ -911,7 +911,7 @@ paths:
       summary: update the connector deployment status
       tags:
       - Connector Clusters Agent
-  /api/managed-services-api/v1/agent-clusters/{id}/status:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
       parameters:
@@ -956,7 +956,7 @@ paths:
       summary: Update the status of an agent cluster
       tags:
       - Agent Clusters
-  /api/managed-services-api/v1/agent-clusters/{id}/kafkas/status:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas/status:
     put:
       operationId: updateKafkaClusterStatus
       parameters:
@@ -1001,7 +1001,7 @@ paths:
       summary: Update the status of Kafka clusters on an agent cluster
       tags:
       - Agent Clusters
-  /api/managed-services-api/v1/agent-clusters/{id}/kafkas:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas:
     get:
       operationId: getKafkas
       parameters:
@@ -1043,7 +1043,7 @@ paths:
       summary: Get the list of ManagedaKafkas for the specified agent cluster
       tags:
       - Agent Clusters
-  /api/managed-services-api/v1/agent-clusters/{id}:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}:
     get:
       operationId: getKafkaAgent
       parameters:
@@ -1144,26 +1144,26 @@ components:
       value:
         id: "103"
         kind: Error
-        href: /api/managed-services-api/v1/errors/103
-        code: MGD-SERV-API-103
+        href: /api/kafkas_mgmt/v1/errors/103
+        code: KAFKAS-MGMT-103
         reason: Synchronous action is not supported, use async=true parameter
         operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
     "400CreationExample":
       value:
         id: "103"
         kind: Error
-        href: /api/managed-services-api/v1/errors/103
-        code: MGD-SERV-API-103
+        href: /api/kafkas_mgmt/v1/errors/103
+        code: KAFKAS-MGMT-103
         reason: Synchronous action is not supported, use async=true parameter
         operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
     "400InvalidQueryExample":
       value:
         id: "203"
         kind: Error
-        href: /api/managed-services-api/v1/errors/23
-        code: MGD-SERV-API-23
+        href: /api/kafkas_mgmt/v1/errors/23
+        code: KAFKAS-MGMT-23
         reason: 'Failed to parse search query: Unable to list kafka requests for api_kafka_service:
-          MGD-SERV-API-23: Failed to parse search query: Unsupported column name for
+          KAFKAS-MGMT-23: Failed to parse search query: Unsupported column name for
           search: ''id''. Supported column names are: region, name, cloud_provider,
           name, status. Query invalid: id = 123'
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
@@ -1171,71 +1171,71 @@ components:
       value:
         id: "203"
         kind: Error
-        href: /api/managed-services-api/v1/errors/21
-        code: MGD-SERV-API-21
+        href: /api/kafkas_mgmt/v1/errors/21
+        code: KAFKAS-MGMT-21
         reason: Bad request
         operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
     "404Example":
       value:
         id: "404"
         kind: Error
-        href: /api/managed-services-api/v1/errors/7
-        code: MGD-SERV-API-7
+        href: /api/kafkas_mgmt/v1/errors/7
+        code: KAFKAS-MGMT-7
         reason: The requested resource doesn't exist
     "404DeleteExample":
       value:
         id: "7"
         kind: Error
-        href: /api/managed-services-api/v1/errors/7
-        code: MGD-SERV-API-7
+        href: /api/kafkas_mgmt/v1/errors/7
+        code: KAFKAS-MGMT-7
         reason: KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found
         operation_id: 1iYO7g2g6HTdUKUa2ksH82kQD3y
     "401Example":
       value:
         id: "11"
         kind: Error
-        href: /api/managed-services-api/v1/errors/11
-        code: MGD-SERV-API-11
+        href: /api/kafkas_mgmt/v1/errors/11
+        code: KAFKAS-MGMT-11
         reason: 'Unable to verify JWT token: Required authorization token not found'
         operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
     "403Example":
       value:
         id: "4"
         kind: Error
-        href: /api/managed-services-api/v1/errors/4
-        code: MGD-SERV-API-4
+        href: /api/kafkas_mgmt/v1/errors/4
+        code: KAFKAS-MGMT-4
         reason: User 'foo-bar' is not authorized to access the service.
         operation_id: 1lY3UiEhznXBpWPfI2lNejpd4YC
     "403MaxAllowedInstanceReachedExample":
       value:
         id: "5"
         kind: Error
-        href: /api/managed-services-api/v1/errors/5
-        code: MGD-SERV-API-5
+        href: /api/kafkas_mgmt/v1/errors/5
+        code: KAFKAS-MGMT-5
         reason: User 'foo-bar' has reached a maximum number of 6 allowed instances.
         operation_id: 1lY3UiEkxnXBpVPeI2oNejd3XB
     "409NameConflictExample":
       value:
         id: "36"
         kind: Error
-        href: /api/managed-services-api/v1/errors/36
-        code: MGD-SERV-API-36
+        href: /api/kafkas_mgmt/v1/errors/36
+        code: KAFKAS-MGMT-36
         reason: Kafka cluster name is already used
         operation_id: 6kY0UiEkzkXCzWPeI2oYehd3ED
     "500Example":
       value:
         id: "9"
         kind: Error
-        href: /api/managed-services-api/v1/errors/9
-        code: MGD-SERV-API-9
+        href: /api/kafkas_mgmt/v1/errors/9
+        code: KAFKAS-MGMT-9
         reason: Unspecified error
         operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
     "500DeleteExample":
       value:
         id: "9"
         kind: Error
-        href: /api/managed-services-api/v1/errors/9
-        code: MGD-SERV-API-9
+        href: /api/kafkas_mgmt/v1/errors/9
+        code: KAFKAS-MGMT-9
         reason: 'error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
           is ''404'', code is ''CLUSTERS-MGMT-404'' and operation identifier is ''1g5or50viu07oealuehrkc26dgftj1ac'':
