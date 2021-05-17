@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/cucumber/godog"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 )
@@ -95,6 +96,9 @@ func TestMain(m *testing.M) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	cucumber.TestMain(m, h)
-
+	status := cucumber.TestMain(h)
+	if st := m.Run(); st > status {
+		status = st
+	}
+	os.Exit(status)
 }

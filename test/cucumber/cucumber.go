@@ -44,7 +44,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -157,6 +156,7 @@ type TestSession struct {
 	Header            http.Header
 	EventStream       bool
 	EventStreamEvents chan interface{}
+	Debug             bool
 }
 
 // RespJson returns the last http response body as json
@@ -164,6 +164,14 @@ func (s *TestSession) RespJson() (interface{}, error) {
 	if s.respJson == nil {
 		if err := json.Unmarshal(s.RespBytes, &s.respJson); err != nil {
 			return nil, fmt.Errorf("error parsing json response: %v\nbody: %s\n", err, string(s.RespBytes))
+		}
+
+		if s.Debug {
+			fmt.Println("response json:")
+			e := json.NewEncoder(os.Stdout)
+			e.SetIndent("", "  ")
+			_ = e.Encode(s.respJson)
+			fmt.Println("")
 		}
 	}
 	return s.respJson, nil
@@ -199,7 +207,7 @@ func init() {
 
 // TestMain runs the scenarios found in the "features" directory.  If m is not nil, it
 // also runs it's tests.  Panics if helper is nil.
-func TestMain(m *testing.M, helper *test.Helper) {
+func TestMain(helper *test.Helper) int {
 	helper.NewApiClient()
 	s := &TestSuite{
 		Helper:    helper,
@@ -230,18 +238,9 @@ func TestMain(m *testing.M, helper *test.Helper) {
 	flag.Parse()
 	opts.Paths = flag.Args()
 
-	status := godog.TestSuite{
+	return godog.TestSuite{
 		Name:                "godogs",
 		ScenarioInitializer: s.InitializeScenario,
 		Options:             &opts,
 	}.Run()
-
-	// Optional: Run `testing` package's logic besides godog.
-	if m != nil {
-		if st := m.Run(); st > status {
-			status = st
-		}
-	}
-
-	os.Exit(status)
 }
