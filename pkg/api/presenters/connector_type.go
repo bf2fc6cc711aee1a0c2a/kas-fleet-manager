@@ -2,10 +2,11 @@ package presenters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	connector_catalog "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector_catalog/openapi"
 )
 
-func ConvertConnectorType(from openapi.ConnectorType) *api.ConnectorType {
+func ConvertConnectorType(from connector_catalog.ConnectorType) *api.ConnectorType {
 
 	return &api.ConnectorType{
 		Meta: api.Meta{
@@ -15,6 +16,9 @@ func ConvertConnectorType(from openapi.ConnectorType) *api.ConnectorType {
 		Version:     from.Version,
 		Description: from.Description,
 		JsonSchema:  from.JsonSchema,
+		IconHref:    from.IconHref,
+		Labels:      from.Labels,
+		Channels:    from.Channels,
 	}
 }
 
@@ -28,5 +32,8 @@ func PresentConnectorType(from *api.ConnectorType) openapi.ConnectorType {
 		Version:     from.Version,
 		Description: from.Description,
 		JsonSchema:  from.JsonSchema,
+		IconHref:    from.IconHref,
+		Labels:      from.Labels,
+		Channels:    from.Channels,
 	}
 }
