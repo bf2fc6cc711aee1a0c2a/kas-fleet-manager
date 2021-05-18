@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	. "github.com/onsi/gomega"
 )
 
@@ -48,6 +49,11 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -92,6 +98,11 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
@@ -167,6 +178,11 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 	h.Env().Config.ObservabilityConfiguration.EnableMock = true
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {

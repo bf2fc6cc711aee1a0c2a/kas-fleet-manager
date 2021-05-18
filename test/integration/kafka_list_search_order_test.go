@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
@@ -36,6 +37,11 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	// ocm
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
+
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
 
 	// setup pre-requisites to performing requests
 	account := h.NewAccount(usernameWithSpecialChars, faker.Name(), faker.Email(), "13640203")
