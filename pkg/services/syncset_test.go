@@ -293,7 +293,7 @@ func TestSyncsetService_Create(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					CreateSyncSetFunc: func(clusterId string, syncset *v1.Syncset) (*v1.Syncset, error) {
-						return syncset, errors.New("MGD-SERV-API-9: failed to create syncset: test-syncset-id for cluster id: test-cluster-id")
+						return syncset, errors.New("KAFKAS-MGMT-9: failed to create syncset: test-syncset-id for cluster id: test-cluster-id")
 					},
 				},
 			},
@@ -363,7 +363,7 @@ func TestSyncsetService_Delete(t *testing.T) {
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					DeleteSyncSetFunc: func(clusterID string, syncsetId string) (int, error) {
-						return 0, errors.New("MGD-SERV-API-9: failed to delete syncset: test-syncset-id for cluster id")
+						return 0, errors.New("KAFKAS-MGMT-9: failed to delete syncset: test-syncset-id for cluster id")
 					},
 				},
 			},

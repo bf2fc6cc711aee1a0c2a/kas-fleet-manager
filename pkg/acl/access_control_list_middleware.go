@@ -27,7 +27,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 		context := r.Context()
 		claims, err := auth.GetClaimsFromContext(context)
 		if err != nil {
-			shared.HandleError(r.Context(), w, errors.NewWithCause(errors.ErrorForbidden, err, ""))
+			shared.HandleError(r, w, errors.NewWithCause(errors.ErrorForbidden, err, ""))
 			return
 		}
 
@@ -37,7 +37,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 		if accessControlListConfig.EnableDenyList {
 			userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
 			if userIsDenied {
-				shared.HandleError(r.Context(), w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
+				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
 				return
 			}
 		}
@@ -52,7 +52,7 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 
 			// If the user is not in the allow list as an org member or service account, they are not authorised
 			if !userIsAnAllowListServiceAccount && !userIsAnAllowListOrgMember {
-				shared.HandleError(r.Context(), w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
+				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
 				return
 			}
 		}

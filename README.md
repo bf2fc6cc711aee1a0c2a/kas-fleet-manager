@@ -167,7 +167,7 @@ follow this process again to generate a new token.
 
 8. Verify the local service is working
     ```
-    $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas
+    $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
    {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
     ```
 
@@ -345,7 +345,7 @@ Once auto scaling is enabled this will activate the scaling up/down of compute n
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
-$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
+$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
 
 # Login to the database
 $ make db/login
@@ -356,13 +356,13 @@ serviceapitests# select * from kafka_requests;
 # Verify the Kafka cluster was created successfully in the generated namespace with 4 routes (bootstrap + 3 broker routes) which is the same as the bootstrap server host
 
 # List a kafka request
-$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/<kafka_request_id> | jq
+$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id> | jq
 
 # List all kafka request
-$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas | jq
+$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq
 
 # Delete a kafka request
-$ curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/<kafka_request_id>
+$ curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
 ```
 
 #### Listing Connector Types
@@ -371,17 +371,17 @@ $ curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:800
 $ function curl { `which curl` -S -s -D /dev/stderr "$@" | jq; }
 
 # Lists all connector Types
-$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/connector-types
+$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/connector-types
 ```
 
 #### Creating a Connector Deployment
 
 ```
 # set KAFKA_ID to the ID of a Kafka cluster to do connector operations against
-$ KAFKA_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas | jq -r '.items[0].id')
+$ KAFKA_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq -r '.items[0].id')
 
 # create a new connector
-$ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/${KAFKA_ID}/connector-deployments?async=true -d \
+$ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments?async=true -d \
     '{
        "kind": "Connector",
        "metadata": {
@@ -402,13 +402,13 @@ $ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/
      }'
 
 # list all connector deployments
-$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/${KAFKA_ID}/connector-deployments
+$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments
 
 # set CONNECTOR_ID to the ID of the first connector delployment found
-$ CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
+$ CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
 
 # get a single connector deployment
-$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/managed-services-api/v1/kafkas/${KAFKA_ID}/connector-deployments/${CONNECTOR_ID}
+$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments/${CONNECTOR_ID}
 ```
 
 

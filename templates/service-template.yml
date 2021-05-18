@@ -821,7 +821,7 @@ objects:
                 memory: ${MEMORY_LIMIT}
             livenessProbe:
               httpGet:
-                path: /api/managed-services-api
+                path: /api/kafkas_mgmt
                 port: 8000
                 scheme: HTTPS
               initialDelaySeconds: 15

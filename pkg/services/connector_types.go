@@ -208,7 +208,7 @@ func (k *connectorTypesService) discoverExtensions(urls []string) {
 		base := bxu.String()
 
 		for _, id := range response.ConnectorTypeIds {
-			x := fmt.Sprintf("%s/api/managed-services-api/v1/kafka-connector-types/%s", base, id)
+			x := fmt.Sprintf("%s/api/kafkas_mgmt/v1/kafka-connector-types/%s", base, id)
 			response, err := getConnectorType(ctx, x)
 			if err != nil {
 				logger.Logger.Warningf("failed to get %s, %v", x, err)

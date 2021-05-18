@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -37,7 +36,7 @@ type eventStream struct {
 }
 
 type validate func() *errors.ServiceError
-type errorHandlerFunc func(ctx context.Context, w http.ResponseWriter, err *errors.ServiceError)
+type errorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.ServiceError)
 type httpAction func() (interface{}, *errors.ServiceError)
 
 func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStatus int) {
@@ -59,7 +58,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 		//err = json.Unmarshal(bytes, &cfg.MarshalInto)
 
 		if err != nil {
-			cfg.ErrorHandler(r.Context(), w, errors.MalformedRequest("Invalid request format: %s", err))
+			cfg.ErrorHandler(r, w, errors.MalformedRequest("Invalid request format: %s", err))
 			return
 		}
 	}
@@ -67,7 +66,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r.Context(), w, err)
+			cfg.ErrorHandler(r, w, err)
 			return
 		}
 	}
@@ -76,7 +75,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 
 	switch {
 	case serviceErr != nil:
-		cfg.ErrorHandler(r.Context(), w, serviceErr)
+		cfg.ErrorHandler(r, w, serviceErr)
 	default:
 		shared.WriteJSONResponse(w, httpStatus, result)
 	}
@@ -90,7 +89,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, ht
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r.Context(), w, err)
+			cfg.ErrorHandler(r, w, err)
 			return
 		}
 	}
@@ -99,7 +98,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, ht
 
 	switch {
 	case serviceErr != nil:
-		cfg.ErrorHandler(r.Context(), w, serviceErr)
+		cfg.ErrorHandler(r, w, serviceErr)
 	default:
 		shared.WriteJSONResponse(w, httpStatus, result)
 	}
@@ -114,7 +113,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(r.Context(), w, err)
+			cfg.ErrorHandler(r, w, err)
 			return
 		}
 	}
@@ -124,7 +123,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	case serviceErr == nil:
 		shared.WriteJSONResponse(w, http.StatusOK, result)
 	default:
-		cfg.ErrorHandler(r.Context(), w, serviceErr)
+		cfg.ErrorHandler(r, w, serviceErr)
 	}
 }
 
@@ -137,14 +136,14 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	for _, v := range cfg.Validate {
 		err := v()
 		if err != nil {
-			cfg.ErrorHandler(ctx, w, err)
+			cfg.ErrorHandler(r, w, err)
 			return
 		}
 	}
 
 	results, serviceError := cfg.Action()
 	if serviceError != nil {
-		cfg.ErrorHandler(ctx, w, serviceError)
+		cfg.ErrorHandler(r, w, serviceError)
 		return
 	}
 
@@ -154,7 +153,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 		}
 		flusher, ok := w.(http.Flusher)
 		if !ok {
-			cfg.ErrorHandler(ctx, w, errors.BadRequest("streaming unsupported"))
+			cfg.ErrorHandler(r, w, errors.BadRequest("streaming unsupported"))
 			return
 		}
 
@@ -172,7 +171,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 				}
 				result := openapi.WatchEvent{
 					Type:  "error",
-					Error: convertToPrivateError(err.AsOpenapiError(operationID)),
+					Error: convertToPrivateError(err.AsOpenapiError(operationID, r.RequestURI)),
 				}
 				_ = json.NewEncoder(w).Encode(result)
 				return

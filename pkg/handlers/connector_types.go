@@ -49,13 +49,13 @@ func (h connectorTypesHandler) ProxyToExtensionService(w http.ResponseWriter, r 
 
 	err := validation("connector_type_id", &connectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength))()
 	if err != nil {
-		shared.HandleError(r.Context(), w, err)
+		shared.HandleError(r, w, err)
 		return
 	}
 
 	resource, err := h.service.Get(connectorTypeId)
 	if err != nil {
-		shared.HandleError(r.Context(), w, err)
+		shared.HandleError(r, w, err)
 		return
 	}
 

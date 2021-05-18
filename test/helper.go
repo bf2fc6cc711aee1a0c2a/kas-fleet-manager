@@ -442,7 +442,7 @@ func (helper *Helper) RestURL(path string) string {
 	if helper.AppConfig.Server.EnableHTTPS {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s/api/managed-services-api/v1%s", protocol, helper.AppConfig.Server.BindAddress, path)
+	return fmt.Sprintf("%s://%s/api/kafkas_mgmt/v1%s", protocol, helper.AppConfig.Server.BindAddress, path)
 }
 
 func (helper *Helper) MetricsURL(path string) string {
