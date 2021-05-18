@@ -10,8 +10,6 @@ import (
 	"testing"
 )
 
-var m *testing.M = nil
-
 // In this example no scenarios are actually run because the "features" subdirectory does not exist.
 func Example() {
 
@@ -24,7 +22,7 @@ func Example() {
 		h, _, teardown := test.RegisterIntegration(&testing.T{}, ocmServer)
 		defer teardown()
 
-		cucumber.TestMain(m, h)
+		cucumber.TestMain(h)
 	}
 
 	// Output:
