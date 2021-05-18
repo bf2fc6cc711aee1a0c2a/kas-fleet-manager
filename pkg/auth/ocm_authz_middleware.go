@@ -39,12 +39,12 @@ func (m *ocmAuthorizationMiddleware) RequireIssuer(issuer string, code errors.Se
 			claims, err := GetClaimsFromContext(ctx)
 			serviceErr := errors.New(code, "")
 			if err != nil {
-				shared.HandleError(ctx, writer, serviceErr)
+				shared.HandleError(request, writer, serviceErr)
 				return
 			}
 			issuerMatches := claims.VerifyIssuer(issuer, true)
 			if !issuerMatches {
-				shared.HandleError(ctx, writer, serviceErr)
+				shared.HandleError(request, writer, serviceErr)
 				return
 			}
 
@@ -60,7 +60,7 @@ func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmCli
 				ctx := request.Context()
 				claims, err := GetClaimsFromContext(ctx)
 				if err != nil {
-					shared.HandleError(ctx, writer, errors.NewWithCause(code, err, ""))
+					shared.HandleError(request, writer, errors.NewWithCause(code, err, ""))
 					return
 				}
 				username := GetUsernameFromClaims(claims)
@@ -68,7 +68,7 @@ func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmCli
 				if !cached {
 					termsRequired, _, err = ocmClient.GetRequiresTermsAcceptance(username)
 					if err != nil {
-						shared.HandleError(ctx, writer, errors.NewWithCause(code, err, ""))
+						shared.HandleError(request, writer, errors.NewWithCause(code, err, ""))
 						return
 					}
 
@@ -76,7 +76,7 @@ func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmCli
 				}
 
 				if termsRequired.(bool) {
-					shared.HandleError(ctx, writer, errors.New(code, "required terms have not been accepted"))
+					shared.HandleError(request, writer, errors.New(code, "required terms have not been accepted"))
 					return
 				}
 			}
