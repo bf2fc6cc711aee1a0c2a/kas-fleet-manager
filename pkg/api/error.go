@@ -21,7 +21,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 		"The requested resource '%s' doesn't exist",
 		r.URL.Path,
 	)
-	apiError := errors.NotFound(reason).AsOpenapiError("")
+	apiError := errors.NotFound(reason).AsOpenapiError("", r.RequestURI)
 	data, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
@@ -42,7 +42,7 @@ func SendNotFound(w http.ResponseWriter, r *http.Request) {
 // SendMethodNotAllowed response
 func SendMethodNotAllowed(w http.ResponseWriter, r *http.Request) {
 	reason := fmt.Sprintf("Method: %s is not allowed or not yet implemented for %s", r.Method, r.URL.Path)
-	apiError := errors.NotImplemented(reason).AsOpenapiError("")
+	apiError := errors.NotImplemented(reason).AsOpenapiError("", r.RequestURI)
 	jsonPayload, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
@@ -66,7 +66,7 @@ func SendUnauthorized(w http.ResponseWriter, r *http.Request, message string) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
-	apiError := errors.Unauthorized(message).AsOpenapiError("")
+	apiError := errors.Unauthorized(message).AsOpenapiError("", r.RequestURI)
 	data, err := json.Marshal(apiError)
 	if err != nil {
 		SendPanic(w, r)
@@ -109,7 +109,7 @@ func init() {
 	var err error
 
 	// Create the panic error body:
-	apiError := errors.UnableToSendErrorResponse().AsOpenapiError("")
+	apiError := errors.UnableToSendErrorResponse().AsOpenapiError("", "")
 	panicBody, err = json.Marshal(apiError)
 	if err != nil {
 		err = fmt.Errorf(

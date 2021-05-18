@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -16,10 +17,14 @@ type stackTracer interface {
 }
 
 const (
-	ERROR_CODE_PREFIX = "KAFKAS-MGMT"
+	ERROR_CODE_PREFIX     = "KAFKAS-MGMT"
+	OLD_ERROR_CODE_PREFIX = "MDG-SERV-API"
 
 	// HREF for API errors
 	ERROR_HREF = "/api/kafkas_mgmt/v1/errors/"
+
+	// TODO - this is temporary for backward compatibility
+	oldErrorHref = "/api/managed-services-api/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
@@ -406,12 +411,20 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
 }
 
-func (e *ServiceError) AsOpenapiError(operationID string) openapi.Error {
+func (e *ServiceError) AsOpenapiError(operationID string, basePath string) openapi.Error {
+	href := Href(e.Code)
+	code := CodeStr(e.Code)
+	// TODO - temporary code added for backward compatibility
+	if strings.Contains(basePath, "/api/managed-services-api/") {
+		href = strings.Replace(href, ERROR_HREF, oldErrorHref, 1)
+		code = strings.Replace(code, ERROR_CODE_PREFIX, OLD_ERROR_CODE_PREFIX, 1)
+	}
+	// end-temporary code
 	return openapi.Error{
 		Kind:        "Error",
 		Id:          strconv.Itoa(int(e.Code)),
-		Href:        Href(e.Code),
-		Code:        CodeStr(e.Code),
+		Href:        href,
+		Code:        code,
 		Reason:      e.Reason,
 		OperationId: operationID,
 	}

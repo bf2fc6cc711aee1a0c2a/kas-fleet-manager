@@ -44,7 +44,7 @@ func (a authzMiddleware) AuthorizeApi(next http.Handler) http.Handler {
 
 		claims, err := GetClaimsFromContext(ctx)
 		if err != nil {
-			shared.HandleError(ctx, w, errors.NewWithCause(errors.ErrorUnauthenticated, err, ""))
+			shared.HandleError(r, w, errors.NewWithCause(errors.ErrorUnauthenticated, err, ""))
 			return
 		}
 

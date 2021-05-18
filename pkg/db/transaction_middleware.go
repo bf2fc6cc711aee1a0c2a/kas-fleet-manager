@@ -24,7 +24,7 @@ func TransactionMiddleware(next http.Handler) http.Handler {
 			// use default error to avoid exposing internals to users
 			err := serviceError.GeneralError("")
 			operationID := logger.GetOperationID(ctx)
-			writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID))
+			writeJSONResponse(w, err.HttpCode, err.AsOpenapiError(operationID, r.RequestURI))
 			return
 		}
 

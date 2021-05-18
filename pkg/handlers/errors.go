@@ -42,7 +42,7 @@ func (h errorHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 			for _, e := range list {
 				err := e.(errors.ServiceError)
-				errorList.Items = append(errorList.Items, presenters.PresentError(&err))
+				errorList.Items = append(errorList.Items, presenters.PresentError(&err, r.RequestURI))
 			}
 
 			return errorList, nil
@@ -65,7 +65,7 @@ func (h errorHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if !exists {
 				return nil, errors.NotFound("No error with id %s exists", id)
 			}
-			return presenters.PresentError(sErr), nil
+			return presenters.PresentError(sErr, r.RequestURI), nil
 		},
 	}
 
@@ -73,13 +73,13 @@ func (h errorHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h errorHandler) Create(w http.ResponseWriter, r *http.Request) {
-	shared.HandleError(r.Context(), w, errors.NotImplemented("create"))
+	shared.HandleError(r, w, errors.NotImplemented("create"))
 }
 
 func (h errorHandler) Patch(w http.ResponseWriter, r *http.Request) {
-	shared.HandleError(r.Context(), w, errors.NotImplemented("path"))
+	shared.HandleError(r, w, errors.NotImplemented("path"))
 }
 
 func (h errorHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	shared.HandleError(r.Context(), w, errors.NotImplemented("delete"))
+	shared.HandleError(r, w, errors.NotImplemented("delete"))
 }

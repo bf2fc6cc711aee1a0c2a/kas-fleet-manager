@@ -572,7 +572,7 @@ func marshalOCMType(t interface{}, w io.Writer) error {
 		//return amsv1.MarshalSubscriptionList(list.Slice(), w)
 	// handle ocm error type
 	case *ocmErrors.ServiceError:
-		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError(""))
+		return json.NewEncoder(w).Encode(t.(*ocmErrors.ServiceError).AsOpenapiError("", ""))
 	}
 	return fmt.Errorf("could not recognise type %s in ocm type marshaller", reflect.TypeOf(t).String())
 }
