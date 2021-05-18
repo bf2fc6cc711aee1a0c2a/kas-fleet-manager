@@ -3,36 +3,54 @@ package secrets
 import (
 	. "github.com/onsi/gomega"
 	"github.com/spyzhov/ajson"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"reflect"
 	"testing"
 )
 
 const exampleSchema1 = `
-  {
-	"properties": {
-	  "queueNameOrArn": {
-		"title": "Queue Name",
-		"description": "The SQS Queue name or ARN",
-		"type": "string"
-	  },
-	  "accessKey": {
-			"title": "Access Key",
-			"description": "The access key obtained from AWS",
-			"oneOf": [
-				{
-					"description": "The access key obtained from AWS",
-					"type": "string",
-					"format": "password"
-				},
-				{
-					"description": "An opaque reference to the access key",
-					"type": "object",
-					"properties": { }
-				}
-			]
-		}
-	}
+{
+  "properties": {
+    "queueNameOrArn": {
+      "title": "Queue Name",
+      "description": "The SQS Queue name or ARN",
+      "type": "string"
+    },
+    "accessKey": {
+      "title": "Access Key",
+      "description": "The access key obtained from AWS",
+      "oneOf": [
+        {
+          "description": "The access key obtained from AWS",
+          "type": "string",
+          "format": "password"
+        },
+        {
+          "description": "An opaque reference to the access key",
+          "type": "object",
+          "properties": {}
+        }
+      ]
+    },
+    "kafka.topic": {
+      "title": "Topic names",
+      "type": "string"
+    },
+    "kafka.secret": {
+      "title": "Topic secret",
+      "oneOf": [
+        {
+          "type": "string",
+          "format": "password"
+        },
+        {
+          "type": "object",
+          "properties": {}
+        }
+      ]
+    }
   }
+}
 `
 
 func Test_getSecretPaths(t *testing.T) {
@@ -51,7 +69,7 @@ func Test_getSecretPaths(t *testing.T) {
 			args: args{
 				schemaText: exampleSchema1,
 			},
-			want:    []string{".accessKey"},
+			want:    []string{`["accessKey"]`, `["kafka.secret"]`},
 			wantErr: false,
 		},
 	}
@@ -62,7 +80,8 @@ func Test_getSecretPaths(t *testing.T) {
 				t.Errorf("getPathsToPasswordFields() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+
+			if !reflect.DeepEqual(sets.NewString(got...), sets.NewString(tt.want...)) {
 				t.Errorf("getPathsToPasswordFields() got = %v, want %v", got, tt.want)
 			}
 		})
@@ -86,7 +105,12 @@ func Test_changePasswordFields(t *testing.T) {
 			name: "replace with empty object",
 			args: args{
 				schemaText: exampleSchema1,
-				doc:        `{"queueNameOrArn":"test","accessKey":"test"}`,
+				doc: `{
+					"queueNameOrArn": "test",
+					"accessKey": "test",
+					"kafka.topic": "test",
+					"kafka.secret": "test"
+				}`,
 				f: func(node *ajson.Node) error {
 					if node.Type() == ajson.String {
 						return node.SetObject(map[string]*ajson.Node{})
@@ -94,7 +118,12 @@ func Test_changePasswordFields(t *testing.T) {
 					return nil
 				},
 			},
-			want: `{"queueNameOrArn":"test","accessKey":{}}`,
+			want: `{
+				"queueNameOrArn": "test",
+				"accessKey": {},
+				"kafka.topic": "test",
+				"kafka.secret": {}
+			}`,
 		},
 	}
 	for _, tt := range tests {
