@@ -1,0 +1,164 @@
+openapi: 3.0.0
+info:
+  description: |
+    The endpoints of a Connector Catalog service are discover
+    connector type APIs that can be used by the Connector Catalog Manager.
+  title: Connector Catalog Service
+  version: 0.0.1
+servers:
+- description: localhost
+  url: http://localhost:8000
+- description: current domain
+  url: /
+paths:
+  /v1/kafka-connector-catalog:
+    get:
+      operationId: listConnectorCatalog
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorCatalog'
+          description: A list of connector types
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Returns a list of connector Catalog Entries
+  /v1/kafka-connector-types/{connector_type_id}:
+    get:
+      operationId: getConnectorTypeByID
+      parameters:
+      - description: The id of the connector type
+        explode: false
+        in: path
+        name: connector_type_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorType'
+          description: The connector type matching the request
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: No matching connector type exists
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      summary: Get a connector type by id
+components:
+  examples:
+    "500Example":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/9
+        code: KAFKAS-MGMT-9
+        reason: Unspecified error
+        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+    "404Example":
+      value:
+        id: "404"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/7
+        code: KAFKAS-MGMT-7
+        reason: The requested resource doesn't exist
+  schemas:
+    ConnectorCatalog:
+      items:
+        allOf:
+        - $ref: '#/components/schemas/ConnectorCatalogEntry'
+      type: array
+    ConnectorCatalogEntry:
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+        shard_metadata:
+          type: object
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
+    ConnectorType:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorType_allOf'
+      description: Represents a connector type supported by the API
+      required:
+      - json_schema
+      - name
+      - version
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+    ConnectorType_allOf:
+      properties:
+        name:
+          description: Name of the connector type.
+          type: string
+        version:
+          description: Version of the connector type.
+          type: string
+        channels:
+          description: Version of the connector type.
+          items:
+            type: string
+          type: array
+        description:
+          description: A description of the connector.
+          type: string
+        icon_href:
+          description: URL to an icon of the connector.
+          type: string
+        labels:
+          description: labels used to categorize the connector
+          items:
+            enum:
+            - sink
+            - source
+            type: string
+          type: array
+        json_schema:
+          description: A json schema that can be used to validate a connectors connector_spec
+            field.
+          type: object

@@ -32,3 +32,13 @@ pkg/api/private/openapi/docs/**.md
 pkg/api/private/openapi/**all_of.go
 pkg/api/private/openapi/go.mod
 pkg/api/private/openapi/go.sum
+pkg/api/connector/openapi/README.md
+pkg/api/connector/openapi/docs/**.md
+pkg/api/connector/openapi/**all_of.go
+pkg/api/connector/openapi/go.mod
+pkg/api/connector/openapi/go.sum
+pkg/api/connector_catalog/openapi/README.md
+pkg/api/connector_catalog/openapi/docs/**.md
+pkg/api/connector_catalog/openapi/**all_of.go
+pkg/api/connector_catalog/openapi/go.mod
+pkg/api/connector_catalog/openapi/go.sum

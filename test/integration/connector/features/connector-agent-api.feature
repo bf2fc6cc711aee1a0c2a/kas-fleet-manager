@@ -5,7 +5,7 @@ Feature: connector agent API
   and update connector status.
 
   Background:
-    Given the path prefix is "/api/kafkas_mgmt"
+    Given the path prefix is "/api/connector_mgmt"
     Given a user named "Jimmy"
     Given a user named "Agent"
     Given a user named "Agent2"
@@ -33,6 +33,7 @@ Feature: connector agent API
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
         },
+        "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
             "queueNameOrArn": "test",
@@ -78,7 +79,8 @@ Feature: connector agent API
             "created_at": "0001-01-01T00:00:00Z",
             "updated_at": "0001-01-01T00:00:00Z"
           },
-          "spec": {},
+          "spec": {
+          },
           "status": {}
         },
         "type": "BOOKMARK"
@@ -115,7 +117,6 @@ Feature: connector agent API
     Given I set the "Authorization" header to "Bearer ${agent_token}"
 
     Given I wait up to "5" seconds for a response event
-    Given I store the ".object.metadata.spec_checksum" selection from the response as ${deployment_spec_checksum}
     Given I store the ".object.id" selection from the response as ${connector_deployment_id}
     Then the response should match json:
       """
@@ -123,54 +124,38 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
-          "id": "${response.object.id}",
+          "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+          "id": "${connector_deployment_id}",
           "kind": "ConnectorDeployment",
           "metadata": {
             "created_at": "${response.object.metadata.created_at}",
             "resource_version": ${response.object.metadata.resource_version},
-            "spec_checksum": "${deployment_spec_checksum}",
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
+            "kafka_id": "${kafka_id}",
+            "shard_metadata": {
+              "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+              "operators": [
+                {
+                  "type": "camel-k",
+                  "versions": "[1.0.0,2.0.0]"
+                }
+              ]
+            },
             "connector_id": "${connector_id}",
-            "operator_ids": [
-              "example-operator:1.0.0"
-            ],
-            "resources": [
-              {
-                "apiVersion": "v1",
-                "data": {
-                  "extra": "YmFyCg==",
-                  "spec": {
-                    "accessKey": "test",
-                    "queueNameOrArn": "test",
-                    "region": "east",
-                    "secretKey": {
-                      "kind": "base64",
-                      "value": "dGVzdA=="
-                    }
-                  }
-                },
-                "kind": "Secret",
-                "metadata": {
-                  "annotations": {
-                    "kubernetes.io/service-account.name": "sa-name"
-                  },
-                  "name": "secret-sa-sample"
-                },
-                "type": "kubernetes.io/service-account-token"
+            "connector_resource_version": ${response.object.spec.connector_resource_version},
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "connector_spec": {
+              "accessKey": "test",
+              "queueNameOrArn": "test",
+              "region": "east",
+              "secretKey": {
+                "kind": "base64",
+                "value": "dGVzdA=="
               }
-            ],
-            "status_extractors": [
-              {
-                "apiVersion": "v1",
-                "conditionType": "Secret",
-                "jsonPath": "status",
-                "kind": "Secret",
-                "name": "secret-sa-sample"
-              }
-            ]
+            },
+            "desired_state": "ready"
           },
           "status": {}
         }
@@ -187,55 +172,38 @@ Feature: connector agent API
       {
         "items": [
           {
-            "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+            "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
             "kind": "ConnectorDeployment",
             "id": "${response.items[0].id}",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
               "resource_version": ${response.items[0].metadata.resource_version},
-              "spec_checksum": "${deployment_spec_checksum}",
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
             "spec": {
+              "kafka_id": "${kafka_id}",
+              "shard_metadata": {
+                "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+                "operators": [
+                  {
+                    "type": "camel-k",
+                    "versions": "[1.0.0,2.0.0]"
+                  }
+                ]
+              },
               "connector_id": "${connector_id}",
-              "operator_ids": [
-                "example-operator:1.0.0"
-              ],
-              "resources": [
-                {
-                  "apiVersion": "v1",
-                  "data": {
-                    "extra": "YmFyCg==",
-                    "spec": {
-                      "accessKey": "test",
-                      "queueNameOrArn": "test",
-                      "region": "east",
-                      "secretKey": {
-                        "kind": "base64",
-                        "value": "dGVzdA=="
-                      }
-                    }
-                  },
-                  "kind": "Secret",
-                  "metadata": {
-                    "annotations": {
-                      "kubernetes.io/service-account.name": "sa-name"
-                    },
-                    "name": "secret-sa-sample"
-                  },
-                  "type": "kubernetes.io/service-account-token"
+              "connector_resource_version": ${response.items[0].spec.connector_resource_version},
+              "connector_type_id": "aws-sqs-source-v1alpha1",
+              "connector_spec": {
+                "accessKey": "test",
+                "queueNameOrArn": "test",
+                "region": "east",
+                "secretKey": {
+                  "kind": "base64",
+                  "value": "dGVzdA=="
                 }
-              ],
-              "status_extractors": [
-                {
-                  "apiVersion": "v1",
-                  "conditionType": "Secret",
-                  "jsonPath": "status",
-                  "kind": "Secret",
-                  "name": "secret-sa-sample"
-                }
-              ]
-
+              },
+              "desired_state": "ready"
             },
             "status": {}
           }
@@ -246,12 +214,52 @@ Feature: connector agent API
         "total": 1
       }
       """
-
+    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+          "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+          "kind": "ConnectorDeployment",
+          "id": "${response.id}",
+          "metadata": {
+            "created_at": "${response.metadata.created_at}",
+            "resource_version": ${response.metadata.resource_version},
+            "updated_at": "${response.metadata.updated_at}"
+          },
+          "spec": {
+            "kafka_id": "${kafka_id}",
+            "shard_metadata": {
+              "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+              "operators": [
+                {
+                  "type": "camel-k",
+                  "versions": "[1.0.0,2.0.0]"
+                }
+              ]
+            },
+            "connector_id": "${connector_id}",
+            "connector_resource_version": ${response.spec.connector_resource_version},
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "connector_spec": {
+              "accessKey": "test",
+              "queueNameOrArn": "test",
+              "region": "east",
+              "secretKey": {
+                "kind": "base64",
+                "value": "dGVzdA=="
+              }
+            },
+            "desired_state": "ready"
+          },
+          "status": {}
+      }
+      """
     When I PUT path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"ready",
-        "spec_checksum": "${deployment_spec_checksum}",
+        "resource_version": 45,
         "conditions": [{
           "type": "Ready",
           "status": "True",
@@ -299,7 +307,7 @@ Feature: connector agent API
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
         },
-        "href": "/api/kafkas_mgmt/v1/kafka-connectors/${connector_id}",
+        "href": "/api/connector_mgmt/v1/kafka-connectors/${connector_id}",
         "id": "${connector_id}",
         "kind": "Connector",
         "metadata": {
@@ -310,8 +318,9 @@ Feature: connector agent API
           "updated_at": "${response.metadata.updated_at}",
           "resource_version": ${response.metadata.resource_version}
         },
+        "channel": "stable",
         "desired_state": "ready",
-        "status": "provisioning"
+        "status": "updating"
       }
       """
 
@@ -328,54 +337,38 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/kafkas_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
+          "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",
           "kind": "ConnectorDeployment",
           "metadata": {
             "created_at": "${response.object.metadata.created_at}",
             "resource_version": ${response.object.metadata.resource_version},
-            "spec_checksum": "${deployment_spec_checksum}",
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
+            "kafka_id": "${kafka_id}",
+            "shard_metadata": {
+              "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
+              "operators": [
+                {
+                  "type": "camel-k",
+                  "versions": "[1.0.0,2.0.0]"
+                }
+              ]
+            },
             "connector_id": "${connector_id}",
-            "operator_ids": [
-              "example-operator:1.0.0"
-            ],
-            "resources": [
-              {
-                "apiVersion": "v1",
-                "data": {
-                  "extra": "YmFyCg==",
-                  "spec": {
-                    "accessKey": "test",
-                    "queueNameOrArn": "I-GOT-PATCHED",
-                    "region": "east",
-                    "secretKey": {
-                      "kind": "base64",
-                      "value": "dGVzdA=="
-                    }
-                  }
-                },
-                "kind": "Secret",
-                "metadata": {
-                  "annotations": {
-                    "kubernetes.io/service-account.name": "sa-name"
-                  },
-                  "name": "secret-sa-sample"
-                },
-                "type": "kubernetes.io/service-account-token"
+            "connector_resource_version": ${response.object.spec.connector_resource_version},
+            "connector_type_id": "aws-sqs-source-v1alpha1",
+            "connector_spec": {
+              "accessKey": "test",
+              "queueNameOrArn": "I-GOT-PATCHED",
+              "region": "east",
+              "secretKey": {
+                "kind": "base64",
+                "value": "dGVzdA=="
               }
-            ],
-            "status_extractors": [
-              {
-                "apiVersion": "v1",
-                "conditionType": "Secret",
-                "jsonPath": "status",
-                "kind": "Secret",
-                "name": "secret-sa-sample"
-              }
-            ]
+            },
+            "desired_state": "ready"
           },
           "status": {
             "conditions": [
@@ -386,7 +379,7 @@ Feature: connector agent API
               }
             ],
             "phase": "ready",
-            "spec_checksum": "${response.object.status.spec_checksum}"
+            "resource_version": 45
           }
         }
       }

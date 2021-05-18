@@ -124,36 +124,52 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	if id == "" {
 		return errors.Validation("id is undefined")
 	}
-	claims, err := auth.GetClaimsFromContext(ctx)
-	if err != nil {
-		return errors.Unauthenticated("user not authenticated")
-	}
-	owner := auth.GetUsernameFromClaims(claims)
-	if owner == "" {
-		return errors.Unauthenticated("user not authenticated")
-	}
 
 	dbConn := k.connectionFactory.New()
+
 	var resource api.Connector
-	if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
+	if err := dbConn.Where("id = ?", id).First(&resource).Error; err != nil {
 		return handleGetError("Connector", "id", id, err)
 	}
-
-	// TODO: implement soft delete instead?
 	if err := dbConn.Delete(&resource).Error; err != nil {
 		return errors.GeneralError("unable to delete connector with id %s: %s", resource.ID, err)
 	}
 
-	_ = db.AddPostCommitAction(ctx, func() {
-		// Wake up the reconcile loop...
-		k.bus.Notify("reconcile:connector")
-	})
+	// delete the associated relations
+	if err := dbConn.Where("id = ?", id).Delete(&api.ConnectorStatus{}).Error; err != nil {
+		err := handleGetError("ConnectorStatus", "id", id, err)
+		if err != nil {
+			return err
+		}
+	}
+
+	var deployment api.ConnectorDeployment
+	if err := dbConn.Select("id").Where("connector_id = ?", id).First(&deployment).Error; err != nil {
+		return handleGetError("ConnectorDeployment", "connector_id", id, err)
+	}
+	if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeployment{}).Error; err != nil {
+		err := handleGetError("ConnectorDeployment", "id", deployment.ID, err)
+		if err != nil {
+			return err
+		}
+	}
+	if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeploymentStatus{}).Error; err != nil {
+		err := handleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
+		if err != nil {
+			return err
+		}
+	}
+
+	//_ = db.AddPostCommitAction(ctx, func() {
+	//	// Wake up the reconcile loop...
+	//	k.bus.Notify("reconcile:connector")
+	//})
 
 	return nil
 }
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList api.ConnectorList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Preload("Status")
@@ -162,7 +178,9 @@ func (k *connectorsService) List(ctx context.Context, kid string, listArgs *List
 		Size: listArgs.Size,
 	}
 
-	dbConn = dbConn.Where("kafka_id = ?", kid)
+	if kafka_id != "" {
+		dbConn = dbConn.Where("kafka_id = ?", kafka_id)
+	}
 
 	var err *errors.ServiceError
 	dbConn, err = filterToOwnerOrOrg(ctx, dbConn)

@@ -3,7 +3,7 @@ package presenters
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -33,6 +33,7 @@ func ConvertConnector(from openapi.Connector) (*api.Connector, *errors.ServiceEr
 		KafkaID:      from.Metadata.KafkaId,
 		Version:      from.Metadata.ResourceVersion,
 		DesiredState: from.DesiredState,
+		Channel:      from.Channel,
 	}, nil
 }
 
@@ -67,33 +68,6 @@ func PresentConnector(from *api.Connector) (openapi.Connector, *errors.ServiceEr
 		ConnectorSpec:   spec,
 		Status:          from.Status.Phase,
 		DesiredState:    from.DesiredState,
-	}, nil
-}
-
-func PresentConnectorDeployment(from api.ConnectorDeployment) (openapi.ConnectorDeployment, *errors.ServiceError) {
-	var conditions []openapi.MetaV1Condition
-	if from.Status.Conditions != nil {
-		err := json.Unmarshal([]byte(from.Status.Conditions), &conditions)
-		if err != nil {
-			return openapi.ConnectorDeployment{}, errors.BadRequest("invalid status conditions: %v", err)
-		}
-	}
-
-	reference := PresentReference(from.ID, from)
-	return openapi.ConnectorDeployment{
-		Id:   reference.Id,
-		Kind: reference.Kind,
-		Href: reference.Href,
-		Metadata: openapi.ConnectorDeploymentAllOfMetadata{
-			CreatedAt:       from.CreatedAt,
-			UpdatedAt:       from.UpdatedAt,
-			ResourceVersion: from.Version,
-			SpecChecksum:    from.SpecChecksum,
-		},
-		Status: openapi.ConnectorDeploymentStatus{
-			Phase:        from.Status.Phase,
-			SpecChecksum: from.Status.SpecChecksum,
-			Conditions:   conditions,
-		},
+		Channel:         from.Channel,
 	}, nil
 }

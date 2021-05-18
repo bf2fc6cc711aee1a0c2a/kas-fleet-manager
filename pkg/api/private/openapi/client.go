@@ -50,13 +50,7 @@ type APIClient struct {
 
 	AgentClustersApi *AgentClustersApiService
 
-	ConnectorClustersApi *ConnectorClustersApiService
-
 	ConnectorClustersAgentApi *ConnectorClustersAgentApiService
-
-	ConnectorTypesApi *ConnectorTypesApiService
-
-	ConnectorsApi *ConnectorsApiService
 }
 
 type service struct {
@@ -76,10 +70,7 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.AgentClustersApi = (*AgentClustersApiService)(&c.common)
-	c.ConnectorClustersApi = (*ConnectorClustersApiService)(&c.common)
 	c.ConnectorClustersAgentApi = (*ConnectorClustersAgentApiService)(&c.common)
-	c.ConnectorTypesApi = (*ConnectorTypesApiService)(&c.common)
-	c.ConnectorsApi = (*ConnectorsApiService)(&c.common)
 
 	return c
 }

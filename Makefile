@@ -45,6 +45,9 @@ OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 MAS_SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
 MAS_SSO_REALM ?="rhoas"
+ENABLE_CONNECTORS ?= false
+ENABLE_QUOTA_SERVICE ?= true
+VAULT_KIND ?= tmp
 
 GO := go
 GOFMT := gofmt
@@ -282,27 +285,36 @@ test/cluster/cleanup:
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
-	$(GOFMT) -w pkg/api/openapi
-	$(GOFMT) -w pkg/api/private/openapi
 .PHONY: generate
 
 # validate the openapi schema
 openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_catalog.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and data/generated/openapi/openapi.go
 openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
 	rm -rf pkg/api/private/openapi
+	rm -rf pkg/api/connector/openapi
+	rm -rf pkg/api/connector_catalog/openapi
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o pkg/api/connector/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_catalog.yaml -g go -o pkg/api/connector_catalog/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_catalog.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ -mode 420 -modtime 1 ./openapi
+	$(GOBINDATA) -o ./data/generated/connector/bindata.go -pkg connector -prefix ./pkg/api/connector/openapi/api -mode 420 -modtime 1 ./pkg/api/connector/openapi/api
 	$(GOFMT) -w pkg/api/openapi
 	$(GOFMT) -w pkg/api/private/openapi
+	$(GOFMT) -w pkg/api/connector/openapi
+	$(GOFMT) -w pkg/api/connector_catalog/openapi
 .PHONY: openapi/generate
 
 # clean up code and dependencies
@@ -319,7 +331,12 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" }, {url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
+	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
+		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
+		{url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
+		{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" }, {url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
+		{url: \"./openapi/connector_catalog.yaml\", name: \"Connector Catalog Service\"}]"\
+		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
@@ -512,6 +529,9 @@ deploy: deploy/db
 		-p ENABLE_MANAGED_KAFKA_CR="$(ENABLE_MANAGED_KAFKA_CR)" \
 		-p ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC="$(ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC)" \
 		-p ALLOW_ANY_REGISTERED_USERS="$(ALLOW_ANY_REGISTERED_USERS)" \
+		-p VAULT_KIND=$(VAULT_KIND) \
+		-p ENABLE_CONNECTORS=$(ENABLE_CONNECTORS) \
+		-p ENABLE_QUOTA_SERVICE=$(ENABLE_QUOTA_SERVICE) \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy

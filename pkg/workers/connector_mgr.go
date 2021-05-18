@@ -85,47 +85,50 @@ func (k *ConnectorManager) Reconcile() []error {
 
 	serviceErr := k.connectorService.ForEach(func(connector *api.Connector) *serviceError.ServiceError {
 		return InDBTransaction(func(ctx context.Context) error {
+			if err := db.AddPostCommitAction(ctx, func() {
+				k.lastVersion = connector.Version
+			}); err != nil {
+				return err
+			}
 			switch connector.Status.Phase {
 			case api.ConnectorStatusPhaseAssigning:
 				if err := k.reconcileAssigning(ctx, connector); err != nil {
-					return serviceError.GeneralError("failed to reconcile assigning connector %s: %v", connector.ID, err)
-				}
-			case api.ConnectorClusterPhaseDeleted:
-				if err := k.reconcileDeleted(ctx, connector); err != nil {
-					return serviceError.GeneralError("failed to reconcile deleted connector %s: %v", connector.ID, err.Error())
+					errs = append(errs, err)
+					glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
 				}
 			}
 			return nil
 		})
 	}, "phase IN (?)", []api.ConnectorStatusPhase{
 		api.ConnectorStatusPhaseAssigning,
-		api.ConnectorStatusPhaseDeleted,
 	})
 	if serviceErr != nil {
-		glog.Errorf("connector manager: %s", serviceErr.Error())
 		errs = append(errs, serviceErr)
 	}
 
 	// Process any connector updates...
 	serviceErr = k.connectorService.ForEach(func(connector *api.Connector) *serviceError.ServiceError {
 		return InDBTransaction(func(ctx context.Context) error {
+			switch connector.Status.Phase {
+			case api.ConnectorStatusPhaseAssigning:
+			case api.ConnectorClusterPhaseDeleted:
+				if err := k.reconcileDeleted(ctx, connector); err != nil {
+					errs = append(errs, err)
+					glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
+				}
+			default:
+				if err := k.reconcileAssigned(ctx, connector); err != nil {
+					return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
+				}
+			}
 			if err := db.AddPostCommitAction(ctx, func() {
 				k.lastVersion = connector.Version
 			}); err != nil {
 				return err
 			}
-			if err := k.reconcileAssigned(ctx, connector); err != nil {
-				return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
-			}
 			return nil
 		})
-	}, "version > ? AND phase IN (?) ", k.lastVersion, []api.ConnectorStatusPhase{
-		api.ConnectorStatusPhaseProvisioning,
-		api.ConnectorStatusPhaseAssigned,
-		api.ConnectorStatusPhaseFailed,
-		api.ConnectorStatusPhaseReady,
-	})
-
+	}, "version > ?", k.lastVersion)
 	if serviceErr != nil {
 		errs = append(errs, errors.Wrap(serviceErr, "connector manager"))
 	}
@@ -172,11 +175,6 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 			return nil
 		} else {
 
-			address, err := k.connectorTypesService.GetServiceAddress(connector.ConnectorTypeId)
-			if err != nil {
-				return errors.Wrapf(err, "failed to get service address for connector type %s", connector.ConnectorTypeId)
-			}
-
 			var status = api.ConnectorStatus{}
 			status.ID = connector.ID
 			status.ClusterID = cluster.ID
@@ -189,23 +187,11 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 				Meta: api.Meta{
 					ID: api.NewID(),
 				},
-				ConnectorID:          connector.ID,
-				ClusterID:            cluster.ID,
-				ConnectorTypeService: address,
-				SpecChecksum:         "",
-				Status:               api.ConnectorDeploymentStatus{},
+				ConnectorID:      connector.ID,
+				ClusterID:        cluster.ID,
+				ConnectorVersion: connector.Version,
+				Status:           api.ConnectorDeploymentStatus{},
 			}
-
-			spec, err := k.connectorClusterService.GetConnectorClusterSpec(ctx, deployment)
-			if err != nil {
-				return err
-			}
-
-			checksum, eerr := services.Checksum(spec)
-			if eerr != nil {
-				return errors.Wrapf(err, "could not checksum deployment sepc for connector %s", connector.ID)
-			}
-			deployment.SpecChecksum = checksum
 
 			if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
 				return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
@@ -222,25 +208,14 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *api.Connector) error {
 
 	// Get the deployment for the connector...
-	deployment, serr := k.connectorClusterService.GetDeployment(ctx, connector.ID)
+	deployment, serr := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
 	if serr != nil {
 		return serr
 	}
 
-	// reify the connector
-	spec, err := k.connectorClusterService.GetConnectorClusterSpec(ctx, deployment)
-	if err != nil {
-		return err
-	}
-
-	checksum, eerr := services.Checksum(spec)
-	if eerr != nil {
-		return errors.Wrapf(err, "could not checksum deployment sepc for connector %s", connector.ID)
-	}
-
-	if deployment.SpecChecksum != checksum {
-		deployment.SpecChecksum = checksum
-		if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
+	if deployment.ConnectorVersion != connector.Version {
+		deployment.ConnectorVersion = connector.Version
+		if err := k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
 			return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
 		}
 	}
@@ -248,6 +223,7 @@ func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *api
 }
 
 func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *api.Connector) error {
+
 	if err := k.connectorService.Delete(ctx, connector.ID); err != nil {
 		return errors.Wrapf(err, "failed to delete connector %s", connector.ID)
 	}
