@@ -47,7 +47,7 @@ func checkClusterId(actor Actor, clusterIdVar string) mux.MiddlewareFunc {
 			claims, err := GetClaimsFromContext(ctx)
 			if err != nil {
 				// deliberately return 404 here so that it will appear as the endpoint doesn't exist if requests are not authorised
-				shared.HandleError(ctx, writer, errors.NotFound(""))
+				shared.HandleError(request, writer, errors.NotFound(""))
 				return
 			}
 			if clusterIdInClaim, ok := claims[clusterIdClaimKey].(string); ok {
@@ -56,7 +56,7 @@ func checkClusterId(actor Actor, clusterIdVar string) mux.MiddlewareFunc {
 					return
 				}
 			}
-			shared.HandleError(ctx, writer, errors.NotFound(""))
+			shared.HandleError(request, writer, errors.NotFound(""))
 		})
 	}
 }

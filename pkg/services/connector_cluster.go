@@ -405,7 +405,7 @@ func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesServ
 func reify(ctx context.Context, serviceUrl string, typeId string, reifyRequest openapi.ConnectorReifyRequest) (openapi.ConnectorDeploymentSpec, error) {
 
 	result := openapi.ConnectorDeploymentSpec{}
-	endpoint := fmt.Sprintf("%s/api/managed-services-api/v1/kafka-connector-types/%s/reify/spec", serviceUrl, typeId)
+	endpoint := fmt.Sprintf("%s/api/kafkas_mgmt/v1/kafka-connector-types/%s/reify/spec", serviceUrl, typeId)
 
 	requestBytes, err := json.Marshal(reifyRequest)
 	if err != nil {

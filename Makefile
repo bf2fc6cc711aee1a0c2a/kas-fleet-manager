@@ -319,7 +319,7 @@ run: install
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
-	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
+	docker run -u $(shell id -u) --name swagger_ui_docs -d -p 80:8080 -e URLS="[{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" }, {url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"} ]" -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
 # Remove Swagger container
@@ -330,7 +330,7 @@ run/docs/teardown:
 
 cts/setup:
 	docker run --name camel-connector-type-service --rm -d -p 9091:8080 -e QUARKUS_LOG_CONSOLE_JSON=false quay.io/lburgazzoli/cts:quarkus
-	echo -n "http://localhost:9091/api/managed-services-api/v1/kafka-connector-types" > config/connector-types/cts
+	echo -n "http://localhost:9091/api/kafkas_mgmt/v1/kafka-connector-types" > config/connector-types/cts
 .PHONY: cts/setup
 
 cts/teardown:

@@ -18,8 +18,8 @@ PERF_TEST_KAFKAS_PER_WORKER ?= 0
 PERF_TEST_GET_ONLY ?= TRUE
 # wait time before creating another kafka by a worker (in seconds)
 PERF_TEST_KAFKA_POST_WAIT_TIME ?= 1
-# base API url e.g. '/api/managed-services-api/v1'
-PERF_TEST_BASE_API_URL ?= /api/managed-services-api/v1
+# base API url e.g. '/api/kafkas_mgmt/v1'
+PERF_TEST_BASE_API_URL ?= /api/kafkas_mgmt/v1
 # number of minutes from the test start to wait before attacking endpoints
 PERF_TEST_HIT_ENDPOINTS_HOLD_OFF ?= 0
 # if set to TRUE - kafka clusters and service accounts created by the tool will be removed in the cleanup stage

@@ -37,7 +37,7 @@ wait_time_in_minutes_string = os.environ['PERF_TEST_HIT_ENDPOINTS_HOLD_OFF']
 wait_time_in_minutes = int(wait_time_in_minutes_string)
 
 # set base url for the endpoints (if set via ENV var)
-url_base = '/api/managed-services-api/v1'
+url_base = '/api/kafkas_mgmt/v1'
 PERF_TEST_BASE_API_URL = os.getenv('PERF_TEST_BASE_API_URL')
 if str(PERF_TEST_BASE_API_URL) != 'None':
   url_base = PERF_TEST_BASE_API_URL

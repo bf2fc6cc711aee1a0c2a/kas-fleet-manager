@@ -1,5 +1,5 @@
 // Setting a path prefixed to subsequent http requests:
-//    Given the path prefix is "/api/managed-services-api"
+//    Given the path prefix is "/api/kafkas_mgmt"
 // Send an http request. Supports (GET|POST|PUT|DELETE|PATCH|OPTION):
 //    When I GET path "/v1/some/${kid}
 // Send an http request with a body. Supports (GET|POST|PUT|DELETE|PATCH|OPTION):
@@ -20,10 +20,11 @@ import (
 	"context"
 	"encoding/json"
 	fmt "fmt"
-	"github.com/cucumber/godog"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/cucumber/godog"
 )
 
 func init() {

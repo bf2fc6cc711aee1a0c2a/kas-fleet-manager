@@ -4,7 +4,7 @@ Feature: create a a connector
   I need to be able to manage connectors
 
   Background:
-    Given the path prefix is "/api/managed-services-api"
+    Given the path prefix is "/api/kafkas_mgmt"
     # Greg and Coworker Sally will end up in the same org
     Given a user named "Greg" in organization "13640203"
     Given a user named "Coworker Sally" in organization "13640203"
@@ -20,7 +20,7 @@ Feature: create a a connector
         "items": [
           {
             "description": "Receive data from AWS SQS",
-            "href": "/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
+            "href": "/api/kafkas_mgmt/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
             "id": "aws-sqs-source-v1alpha1",
             "json_schema": {
               "description": "Receive data from AWS SQS.",
@@ -117,8 +117,8 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "code": "MGD-SERV-API-21",
-        "href": "/api/managed-services-api/v1/errors/21",
+        "code": "KAFKAS-MGMT-21",
+        "href": "/api/kafkas_mgmt/v1/errors/21",
         "id": "21",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
@@ -173,7 +173,7 @@ Feature: create a a connector
               "cluster_id": "default",
               "kind": "addon"
             },
-            "href": "/api/managed-services-api/v1/kafka-connectors/${cid}",
+            "href": "/api/kafkas_mgmt/v1/kafka-connectors/${cid}",
             "id": "${cid}",
             "kind": "Connector",
             "metadata": {
@@ -204,7 +204,7 @@ Feature: create a a connector
       {
           "id": "${cid}",
           "kind": "Connector",
-          "href": "/api/managed-services-api/v1/kafka-connectors/${cid}",
+          "href": "/api/kafkas_mgmt/v1/kafka-connectors/${cid}",
           "metadata": {
               "kafka_id": "${kid}",
               "owner": "${response.metadata.owner}",
@@ -250,7 +250,7 @@ Feature: create a a connector
       {
           "id": "${cid}",
           "kind": "Connector",
-          "href": "/api/managed-services-api/v1/kafka-connectors/${cid}",
+          "href": "/api/kafkas_mgmt/v1/kafka-connectors/${cid}",
           "metadata": {
               "kafka_id": "${kid}",
               "owner": "${response.metadata.owner}",
