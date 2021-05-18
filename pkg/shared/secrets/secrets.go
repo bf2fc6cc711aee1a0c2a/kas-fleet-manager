@@ -27,10 +27,13 @@ func modifySecrets(schemaBytes []byte, doc []byte, f func(node *ajson.Node) erro
 		return nil, err
 	}
 
-	root, _ := ajson.Unmarshal(doc)
+	root, err := ajson.Unmarshal(doc)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, field := range fields {
-		nodes, _ := root.JSONPath("$." + field)
+		nodes, _ := root.JSONPath("$" + field)
 		for _, node := range nodes {
 			err := f(node)
 			if err != nil {
@@ -93,7 +96,8 @@ func findPathsMatching(s *jsonschema.Schema, p string, results map[string]bool, 
 
 	if s.Properties != nil {
 		for n, v := range s.Properties {
-			path := p + "." + n
+			data, _ := json.Marshal(n)
+			path := p + "[" + string(data) + "]"
 			findPathsMatching(v, path, results, matcher)
 		}
 	}
