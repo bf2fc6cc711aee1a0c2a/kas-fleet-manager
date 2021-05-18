@@ -210,15 +210,9 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 
 	// base path. Could be /api/kafkas_mgmt or /api/managed-services-api
 	apiRouter := mainRouter.PathPrefix(basePath).Subrouter()
-	apiRouter.HandleFunc("", api.SendAPI).Methods(http.MethodGet)
-	apiRouter.Use(MetricsMiddleware)
-	apiRouter.Use(db.TransactionMiddleware)
-	apiRouter.Use(gorillahandlers.CompressHandler)
 
 	// /v1
 	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
-	apiV1Router.HandleFunc("", api.SendAPIV1).Methods(http.MethodGet)
-	apiV1Router.HandleFunc("/", api.SendAPIV1).Methods(http.MethodGet)
 
 	//  /openapi
 	apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
@@ -233,7 +227,13 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
 	apiV1Status.Use(ocmAuthzMiddlewareRequireIssuer)
 
+	v1Collections := []api.CollectionMetadata{}
+
 	//  /kafkas
+	v1Collections = append(v1Collections, api.CollectionMetadata{
+		ID:   "kafkas",
+		Kind: "KafkaList",
+	})
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
@@ -245,11 +245,11 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
 	apiV1KafkasCreateRouter.Use(ocmAuthzMiddlewareRequireTermsAcceptance)
 
-	//  /cloud_providers
-	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
-	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
-	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
-
+	//  /serviceaccounts
+	v1Collections = append(v1Collections, api.CollectionMetadata{
+		ID:   "serviceaccounts",
+		Kind: "ServiceAccountList",
+	})
 	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/serviceaccounts").Subrouter()
 	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).Methods(http.MethodPost)
@@ -258,6 +258,15 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
 	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
+
+	//  /cloud_providers
+	v1Collections = append(v1Collections, api.CollectionMetadata{
+		ID:   "cloud_providers",
+		Kind: "CloudProviderList",
+	})
+	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
+	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
+	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
 
 	//  /kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()
@@ -274,10 +283,6 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 
 		//  /api/connector_mgmt
 		apiRouter := mainRouter.PathPrefix("/api/connector_mgmt").Subrouter()
-		apiRouter.HandleFunc("", api.SendAPI).Methods(http.MethodGet)
-		apiRouter.Use(MetricsMiddleware)
-		apiRouter.Use(db.TransactionMiddleware)
-		apiRouter.Use(gorillahandlers.CompressHandler)
 
 		//  /api/connector_mgmt/v1
 		apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
@@ -285,7 +290,13 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		//  /api/connector_mgmt/v1/openapi
 		apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
+		v1Collections := []api.CollectionMetadata{}
+
 		//  /api/connector_mgmt/v1/kafka-connector-types
+		v1Collections = append(v1Collections, api.CollectionMetadata{
+			ID:   "kafka-connector-types",
+			Kind: "ConnectorTypeList",
+		})
 		connectorTypesHandler := handlers.NewConnectorTypesHandler(services.ConnectorTypes)
 		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/kafka-connector-types").Subrouter()
 		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", connectorTypesHandler.Get).Methods(http.MethodGet)
@@ -294,6 +305,10 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
 
 		//  /api/connector_mgmt/v1/kafka-connectors
+		v1Collections = append(v1Collections, api.CollectionMetadata{
+			ID:   "kafka-connectors",
+			Kind: "ConnectorList",
+		})
 		connectorsHandler := handlers.NewConnectorsHandler(services.Kafka, services.Connectors, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorsRouter := apiV1Router.PathPrefix("/kafka-connectors").Subrouter()
 		apiV1ConnectorsRouter.HandleFunc("", connectorsHandler.Create).Methods(http.MethodPost)
@@ -312,6 +327,10 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		apiV1ConnectorsRouter.Use(authorizeMiddleware)
 
 		//  /api/connector_mgmt/v1/kafka-connector-clusters
+		v1Collections = append(v1Collections, api.CollectionMetadata{
+			ID:   "kafka-connector-clusters",
+			Kind: "ConnectorClusterList",
+		})
 		connectorClusterHandler := handlers.NewConnectorClusterHandler(services.SignalBus, services.ConnectorCluster, services.Config, services.Keycloak, services.ConnectorTypes, services.Vault)
 		apiV1ConnectorClustersRouter := apiV1Router.PathPrefix("/kafka-connector-clusters").Subrouter()
 		apiV1ConnectorClustersRouter.HandleFunc("", connectorClusterHandler.Create).Methods(http.MethodPost)
@@ -331,6 +350,24 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 			agentRouter.HandleFunc("/deployments/{deployment_id}/status", connectorClusterHandler.UpdateDeploymentStatus).Methods(http.MethodPut)
 			auth.UseOperatorAuthorisationMiddleware(agentRouter, auth.Connector, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "connector_cluster_id")
 		}
+
+		v1Metadata := api.VersionMetadata{
+			ID:          "v1",
+			Collections: v1Collections,
+		}
+		apiMetadata := api.Metadata{
+			ID: "connector_mgmt",
+			Versions: []api.VersionMetadata{
+				v1Metadata,
+			},
+		}
+
+		apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
+		apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
+
+		apiRouter.Use(MetricsMiddleware)
+		apiRouter.Use(db.TransactionMiddleware)
+		apiRouter.Use(gorillahandlers.CompressHandler)
 	}
 
 	///agent-clusters/{id}
@@ -345,6 +382,23 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 		auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, env().Services.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "id")
 	}
+
+	v1Metadata := api.VersionMetadata{
+		ID:          "v1",
+		Collections: v1Collections,
+	}
+	apiMetadata := api.Metadata{
+		ID: "kafkas_mgmt",
+		Versions: []api.VersionMetadata{
+			v1Metadata,
+		},
+	}
+	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
+	apiRouter.Use(MetricsMiddleware)
+	apiRouter.Use(db.TransactionMiddleware)
+	apiRouter.Use(gorillahandlers.CompressHandler)
+
+	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 }
 

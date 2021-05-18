@@ -27,24 +27,30 @@ import (
 	"github.com/golang/glog"
 )
 
-// SendAPI sends API documentation response.
-func SendAPI(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP sends API documentation response.
+func (m *Metadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
 	// Set the content type:
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
-	versions := []VersionMetadata{
-		{
-			ID:   "v1",
-			HREF: r.URL.Path + "/v1",
-		},
-	}
 	body := Metadata{
-		ID:       "ocm_example",
-		Kind:     "API",
-		HREF:     r.URL.Path,
-		Versions: versions,
+		ID:   m.ID,
+		Kind: "API",
+		HREF: r.URL.Path,
 	}
+	for _, v := range m.Versions {
+		href := v.HREF
+		if href == "" {
+			href = v.ID
+		}
+		body.Versions = append(body.Versions, VersionMetadata{
+			ID:   v.ID,
+			Kind: "APIVersion",
+			HREF: fmt.Sprintf("%s/%s", r.URL.Path, href),
+		})
+	}
+
 	data, err := json.Marshal(body)
 	if err != nil {
 		SendPanic(w, r)
@@ -61,36 +67,29 @@ func SendAPI(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SendAPIV1 sends API version v1 documentation response.
-func SendAPIV1(w http.ResponseWriter, r *http.Request) {
+// ServeHTTP sends API version v1 documentation response.
+func (v *VersionMetadata) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Set the content type:
 	w.Header().Set("Content-Type", "application/json")
 
 	// Prepare the body:
-	id := "v1"
-	collections := []CollectionMetadata{
-		{
-			ID:   "kafkas",
-			Kind: "KafkaList",
-			HREF: r.URL.Path + "/kafkas",
-		},
-		{
-			ID:   "serviceaccounts",
-			Kind: "ServiceAccountList",
-			HREF: r.URL.Path + "/serviceaccounts",
-		},
-		{
-			ID:   "cloud_providers",
-			Kind: "CloudProviderList",
-			HREF: r.URL.Path + "/cloud_providers",
-		},
-	}
 	body := VersionMetadata{
-		ID:          id,
-		Kind:        "APIVersion",
-		HREF:        r.URL.Path,
-		Collections: collections,
+		ID:   v.ID,
+		Kind: "APIVersion",
+		HREF: r.URL.Path,
 	}
+	for _, c := range v.Collections {
+		href := c.HREF
+		if href == "" {
+			href = c.ID
+		}
+		body.Collections = append(body.Collections, CollectionMetadata{
+			ID:   c.ID,
+			Kind: c.Kind,
+			HREF: fmt.Sprintf("%s/%s", r.URL.Path, href),
+		})
+	}
+
 	data, err := json.Marshal(body)
 	if err != nil {
 		SendPanic(w, r)
