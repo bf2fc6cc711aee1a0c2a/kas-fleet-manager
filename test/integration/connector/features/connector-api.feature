@@ -282,3 +282,98 @@ Feature: create a a connector
       }
       """
 
+  Scenario: Greg can discover the API endpoints
+    Given I am logged in as "Greg"
+    When I GET path ""
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "href": "/api/connector_mgmt",
+        "id": "connector_mgmt",
+        "kind": "API",
+        "versions": [
+          {
+            "collections": null,
+            "href": "/api/connector_mgmt/v1",
+            "id": "v1",
+            "kind": "APIVersion"
+          }
+        ]
+      }
+      """
+
+    When I GET path "/"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "href": "/api/connector_mgmt",
+        "id": "connector_mgmt",
+        "kind": "API",
+        "versions": [
+          {
+            "kind": "APIVersion",
+            "id": "v1",
+            "href": "/api/connector_mgmt/v1",
+            "collections": null
+          }
+        ]
+      }
+      """
+
+    When I GET path "/v1"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "kind": "APIVersion",
+        "id": "v1",
+        "href": "/api/connector_mgmt/v1",
+        "collections": [
+          {
+            "href": "/api/connector_mgmt/v1/kafka-connector-types",
+            "id": "kafka-connector-types",
+            "kind": "ConnectorTypeList"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka-connectors",
+            "id": "kafka-connectors",
+            "kind": "ConnectorList"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka-connector-clusters",
+            "id": "kafka-connector-clusters",
+            "kind": "ConnectorClusterList"
+          }
+        ]
+      }
+      """
+
+    When I GET path "/v1/"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "kind": "APIVersion",
+        "id": "v1",
+        "href": "/api/connector_mgmt/v1",
+        "collections": [
+          {
+            "href": "/api/connector_mgmt/v1/kafka-connector-types",
+            "id": "kafka-connector-types",
+            "kind": "ConnectorTypeList"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka-connectors",
+            "id": "kafka-connectors",
+            "kind": "ConnectorList"
+          },
+          {
+            "href": "/api/connector_mgmt/v1/kafka-connector-clusters",
+            "id": "kafka-connector-clusters",
+            "kind": "ConnectorClusterList"
+          }
+        ]
+      }
+      """
