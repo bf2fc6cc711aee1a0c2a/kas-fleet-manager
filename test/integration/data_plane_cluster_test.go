@@ -690,7 +690,7 @@ func newAuthContextWithNotAllowedClusterIDForDataPlaneCluster(h *test.Helper) co
 func sampleDataPlaneclusterStatusRequestWithAvailableCapacity() *openapi.DataPlaneClusterUpdateStatusRequest {
 	return &openapi.DataPlaneClusterUpdateStatusRequest{
 		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
-			openapi.DataPlaneClusterUpdateStatusRequestConditions{
+			{
 				Type:   "Ready",
 				Status: "True",
 			},
@@ -729,7 +729,7 @@ func sampleDataPlaneclusterStatusRequestWithAvailableCapacity() *openapi.DataPla
 func sampleValidBaseDataPlaneClusterStatusRequest() *openapi.DataPlaneClusterUpdateStatusRequest {
 	return &openapi.DataPlaneClusterUpdateStatusRequest{
 		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
-			openapi.DataPlaneClusterUpdateStatusRequestConditions{
+			{
 				Type:   "Ready",
 				Status: "True",
 			},
