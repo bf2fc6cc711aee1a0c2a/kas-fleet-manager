@@ -13,10 +13,9 @@ The following diagram describes the new architecture for cluster management func
 
 Compared to the current implementation, the main changes are:
 
-1. Introducing a new `ClusterProvider` interface. This new interface presents providers of OpenShift/Kubernetes clusters, and we will have two implementations for it: one for OCM, and another for clusters provided via static files.
+1. Introducing a new `ClusterProvider` interface. This new interface presents providers of OpenShift/Kubernetes clusters, and we will have two implementations for it: one for OCM, and another for standalone clusters which are already terraformed manually outside of kas-fleet-manager.
 2. Adding a new `ClusterRepository` class. This class is responsible for all the database interactions for clusters.
 3. Modify the [`ClusterService`](../../pkg/services/clusters.go) class to depend on the new `ClusterProvider` and `ClusterRepository` classes, and remove all dependencies on the OCM client.
 4. Modify the [`ClusterManager`](../../pkg/workers/clusters_mgr.go) class to only depend on the `ClusterService`. It should not have any direct dependencies on the OCM clients.
-
 
 

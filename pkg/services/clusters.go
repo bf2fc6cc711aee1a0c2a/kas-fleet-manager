@@ -1,7 +1,9 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -9,19 +11,15 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm/converters"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
-	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
+	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
@@ -56,18 +54,14 @@ type ClusterService interface {
 
 type clusterService struct {
 	connectionFactory *db.ConnectionFactory
-	ocmClient         ocm.Client
-	awsConfig         *config.AWSConfig
-	clusterBuilder    ocm.ClusterBuilder
+	providerFactory clusters.ProviderFactory
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Client, awsConfig *config.AWSConfig, osdClusterConfig *config.OSDClusterConfig) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory) ClusterService {
 	return &clusterService{
 		connectionFactory: connectionFactory,
-		ocmClient:         ocmClient,
-		awsConfig:         awsConfig,
-		clusterBuilder:    ocm.NewClusterBuilder(awsConfig, osdClusterConfig),
+		providerFactory: providerFactory,
 	}
 }
 
@@ -80,38 +74,39 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 	return nil
 }
 
-// Create creates a new OSD cluster
-//
+// Create Creates a new OpenShift/k8s cluster via the provider and save the details of the cluster in the database
 // Returns the newly created cluster object
-func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
-
-	// Build a new OSD cluster object
-	newCluster, err := c.clusterBuilder.NewOCMClusterFromCluster(cluster)
+	r := &clusters.ClusterRequest{
+		CloudProvider: cluster.CloudProvider,
+		Region:        cluster.Region,
+		MultiAZ:       cluster.MultiAZ,
+		AdditionalSpec: cluster.ProviderSpec,
+	}
+	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "error building cluster")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-
-	// Send POST request to /api/clusters_mgmt/v1/clusters to create a new OSD cluster
-	createdCluster, err := c.ocmClient.CreateCluster(newCluster)
+	clusterSpec, err := provider.Create(r)
 	if err != nil {
-		return createdCluster, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "error creating a Dataplane cluster")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to create cluster")
 	}
 
-	// convert the cluster to the cluster type this service understands before saving
-	convertedCluster := converters.ConvertCluster(createdCluster)
+	cluster.ClusterID = clusterSpec.InternalID
+	cluster.ExternalID = clusterSpec.ExternalID
+	cluster.Status = clusterSpec.Status
+	clusterInfo, err := json.Marshal(clusterSpec.AdditionalInfo)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to marshal JSON value")
+	}
+	cluster.ClusterSpec = clusterInfo
 
-	// if the passed in cluster object has an ID, it means we need to overwrite it
-	// because it was a cluster provisioning request (cluster_accepted status)
-	if cluster.ID != "" {
-		convertedCluster.ID = cluster.ID
+	if err := dbConn.Save(cluster).Error; err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to save data to db")
 	}
 
-	if err := dbConn.Save(convertedCluster).Error; err != nil {
-		return &clustersmgmtv1.Cluster{}, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update created cluster")
-	}
-
-	return createdCluster, nil
+	return cluster, nil
 }
 
 // GetClusterDNS gets an OSD clusters DNS from OCM cluster service by ID

@@ -5,6 +5,7 @@ import (
 )
 
 type ClusterStatus string
+type ClusterProviderType string
 
 func (k ClusterStatus) String() string {
 	return string(k)
@@ -31,6 +32,10 @@ const (
 	ClusterFull ClusterStatus = "full"
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
+
+	ClusterProviderOCM        ClusterProviderType = "ocm"
+	ClusterProviderAwsEKS        ClusterProviderType = "aws-eks"
+	ClusterProviderStandalone ClusterProviderType = "standalone"
 )
 
 // This represents the valid statuses of a OSD cluster
@@ -44,11 +49,15 @@ type Cluster struct {
 	ExternalID         string        `json:"external_id"`
 	MultiAZ            bool          `json:"multi_az"`
 	Region             string        `json:"region"`
-	BYOC               bool          `json:"byoc"`
-	Managed            bool          `json:"managed"`
 	Status             ClusterStatus `json:"status" gorm:"index"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 	ClusterDNS         string        `json:"cluster_dns"`
+	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
+	ProviderType ClusterProviderType `json:"provider_type"`
+	// store the provider-specific information that can be used to managed the openshift/k8s cluster
+	ProviderSpec JSON `json:"provider_spec"`
+	// store the specs of the openshift/k8s cluster which can be used to access the cluster
+	ClusterSpec JSON `json:"cluster_spec"`
 }
 
 type ClusterList []*Cluster
