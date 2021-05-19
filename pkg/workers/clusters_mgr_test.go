@@ -1934,10 +1934,10 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 				APIVersion: "rbac.authorization.k8s.io",
 			},
 		},
-		&k8sCoreV1.ConfigMap{
+		&k8sCoreV1.Secret{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-				Kind:       "ConfigMap",
+				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      observabilityKafkaConfiguration,
@@ -1946,7 +1946,7 @@ func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, cluster
 					"configures": "observability-operator",
 				},
 			},
-			Data: map[string]string{
+			StringData: map[string]string{
 				"access_token": observabilityConfig.ObservabilityConfigAccessToken,
 				"channel":      observabilityConfig.ObservabilityConfigChannel,
 				"repository":   observabilityConfig.ObservabilityConfigRepo,
