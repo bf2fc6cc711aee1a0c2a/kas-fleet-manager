@@ -15,44 +15,11 @@
 * If the changes could have an impact on the clients (either UI or CLI), a JIRA should be created for making the required changes on the client side and acknowledged by one of the client side team members.    
 * PR has been merged
 
-## Install Go
 
-### On OSX
-
-```sh
-brew install go@1.15
-
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin  # our binaries compile here
-```
-
-### On Other Linux Platforms
-
-```sh
-wget https://golang.org/dl/go1.15.8.linux-amd64.tar.gz # for latest versions check https://golang.org/dl/
-tar -xzf go1.15.8.linux-amd64.tar.gz
-mv go /usr/local
-
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin
-```
-
-## Project source
-
-Project source is to be found under `$GOPATH/src` by a distinct directory path.
-
+## Project Source
 Fork kas-fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/fork
 
-```sh
-cd $GOPATH
-git clone https://github.com/{username}/kas-fleet-manager.git src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
-
-cd $GOPATH/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
-git remote add upstream https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
-```
-
-Resulting workspace:
-
+Project source is to be found under `$GOPATH/src` by a distinct directory path.
 ```plain
 $GOPATH
   /bin
@@ -105,58 +72,8 @@ Set the following configuration in your **Launch.json** file.
     ]
 }
 ```
-
-## Generate OpenAPI code
-
-For more information: https://github.com/openapitools/openapi-generator
-
-### On OSX
-
-```sh
-# swagger-codegen 3.0 does not support Go w/ OpenAPI spec 3.0.
-# This tool supports Go:
-brew install openapi-generator
-# on other platforms, see https://github.com/openapitools/openapi-generator
-
-# The version of openapi-generator we used last is recorded here:
-cat pkg/api/openapi/.openapi-generator/VERSION
-
-# regenerate the API implementation from our swagger file
-# (rerun this on on any spec change e.g, you add a new field)
-make generate
-```
-
-### On Other Linux Platforms
-
-```sh
-VERSION=$(cat pkg/api/openapi/.openapi-generator/VERSION)
-
-# install openapi-generator with the same version
-npm install @openapitools/openapi-generator-cli@cli-$VERSION -g
-
-make generate
-```
-
-## Managing dependencies
-
-[Go Modules](https://github.com/golang/go/wiki/Modules) are used to manage dependencies.
-
-### Add a dependency
-
-To add a dependency, simply add a new import to any go file in the project and either build or install the application:
-```
-import (
-  "github.com/something/new"
-)
-
-...
-$ make install
-```
-
-The `go.mod` file we automatically be updated with the new required project, the `go.sum` file will be generated.
-
 ## Modifying the API definition
-The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio or Swagger.
+The services' OpenAPI specification is located in `openapi/kas-fleet-manager.yaml`. It can be modified using Apicurio Studio, Swagger or manually.
 
 Once you've made your changes, the second step is to validate it:
 
