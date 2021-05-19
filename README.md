@@ -1,73 +1,24 @@
-Managed Service API for Kafka
+Kafka Service Fleet Manager
 ---
+![build status badge](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/actions/workflows/ci.yaml/badge.svg)
 
 A service for provisioning and managing fleets of Kafka instances.
 
 For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
 ## Prerequisites
-* [OpenAPI Generator (4.3.1)](https://openapi-generator.tech/docs/installation/)
 * [Golang 1.15+](https://golang.org/dl/)
 * [Docker](https://docs.docker.com/get-docker/) - to create database
-* [go-bindata (3.1.2+)](https://github.com/go-bindata/go-bindata) - for code generation
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
-* [moq](https://github.com/matryer/moq) - for mock generation
 
-## User Account & Organization Setup
-
-- Setup your account in stage OCM:
-[Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812) (Skip this step if you have a service account)
+There are a number of prerequisites required for running kas-fleet-manager due to its interaction with external services. All of the below are required to run kas-fleet-manager locally.
+### User Account & Organization Setup
+1. Request additional permissions for your user account in OCM stage. [Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
     - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
-    - Once the MR is merged, retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token
-
-- Ensure that the organization's `external_id` appears in the [Allow List Configurations](config/allow-list-configuration.yaml). Follow the guide in [Allow List Configurations](#allow-list-configurations).
-
-- Ensure the organization your personal OCM account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
+3. Ensure the organization your account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
     - Find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs).
 
-## Access Control 
-### Allow List Configurations
-
-Access to the service is limited to certain organisations and users (given by their username) via the [allow list configuration](config/allow-list-configuration.yaml) by default. To disable this, set the property `allow_any_registered_users` to `true` to allow any registered users against redhat.com to access the service. 
-
-#### Adding organisations and users to the allow list
-
-To configure this list, you'll need to have the user's username and/or their organisation id.
-
-The username is the account in question.
-
-To get the org id:
-- Login to `cloud.redhat.com/openshift/token` with the account in question.
-- Use the supplied command to login to `ocm`,
-- Then run `ocm whoami` and get the organisations id from `external_id` field.
-
-#### Max allowed instances
-If the instance limit control is enabled, the service will enforce the `max_allowed_instances` configuration as the limit to how many instances (i.e. Kafka) a user can create. This configuration can be specified per user or per organisation in the allow list configuration. If not defined there, the service will take the default `max_allowed_instances` into account instead.
-
-Precedence of `max_allowed_instances` configuration: Org > User > Default.
-
->NOTE: Instance limit control is disabled in the development environment.
-### Deny List Configurations
-
-Users can be denied access to the service explicitly by adding their usernames in [the list of denied users](config/deny-list-configuration.yaml).
-
-The username is the account in question.
-
->NOTE: Once a user is in the deny list, all Kafkas created by this user will be deprovisioned.
-
-## Compile from main branch
-```
-# Change current directory to your source code folder (ie: cd <any_your_source_code_folder>)
-$ git clone https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager.git
-$ cd kas-fleet-manager
-$ git checkout main
-$ make binary
-$ ./kas-fleet-manager -h
-```
-
-> To compile the binary with an ocm token that will not expire, add your long-lived token retrieved from `cloud.redhat.com/openshift/token` into `secrets/ocm-service.token`.
-
-## Configuring Observability
+### Configuring Observability
 The Observability stack requires a Personal Access Token to read externalized configuration from within the bf2 organization.
 For development cycles, you will need to generate a personal token for your own GitHub user (with bf2 access) and place it within
 the `secrets/observability-config-access.token` file.
@@ -78,26 +29,56 @@ making sure to check **ONLY** the `repo` box at the top of the scopes/permission
 2. Copy the value of your Personal Access Token to a secure private location. Once you leave the page, you cannot access the value
 again & you will be forced to reset the token to receive a new value should you lose the original.
 3. Paste the token value in the `secrets/observability-config-access.token` file.
-4. Take care not to push your PAT to any repository as if you do, GitHub will automatically revoke your token as soon as you push and you'll need to
-follow this process again to generate a new token.
+
+### Data Plane OSD cluster setup
+Kas-fleet-manager can be started without a dataplane OSD cluster, however, no Kafkas will be placed or provisioned. To setup a data plane OSD cluster, please follow the `Using an existing OSD cluster with manual scaling enabled` option in the [data-plane-osd-cluster-options.md](docs/data-plane-osd-cluster-options.md) guide.
+
+### Populating Configuration
+1. Add your organization's `external_id` to the [Allow List Configurations](config/allow-list-configuration.yaml). Follow the guide in [Allow List Configurations](#allow-list-configurations).
+2. Retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token and save it to `secrets/ocm-service.token` 
+3. Setup AWS configuration
+```
+make aws/setup
+```
+4. Setup MAS SSO configuration
+    - keycloak cert
+    ```
+    echo "" | openssl s_client -servername identity.api.stage.openshift.com -connect identity.api.stage.openshift.com:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
+    ```
+    - mas sso client id & client secret
+    ```
+    make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> OSD_IDP_MAS_SSO_CLIENT_ID=<osd_idp_mas_sso_client_id> OSD_IDP_MAS_SSO_CLIENT_SECRET=<osd_idp_mas_sso_client_secret>
+    ```
+    > Values can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services-ci/show/managed-service-api/integration-tests).
+5. Setup Kafka TLS cert
+```
+make kafkacert/setup
+```
+6. Setup the image pull secret
+    - Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull), copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
+7. If the `--enable-kas-fleetshard-sync` flag on the serve command is set to true (it is set to false by default at the moment, so you need to explicitly enable it), you should follow the [extra steps](./docs/test-locally-with-fleetshard-sync.md) to allow the synchronizer to communicate with your local server. 
 
 ## Running the Service locally
+Please make sure you have followed all of the prerequisites above first.
 
-1. Set one of the OCM Env (See `Environments` section for list of environments)
+1. Compile the binary
+```
+make binary
+```
+2. Clean up and Creating the database
+    - If you have db already created execute
     ```
-    OCM_ENV=development
+    make db/teardown
     ```
-2. Clean up and Creating a database
-
+    - Create database tables
     ```
-    # If you have db already created execute
-    $ make db/teardown
-    # Create database tables
-    $ make db/setup
-    $ make db/migrate
-    # Verify tables and records are created
-    # Login to the database
-    $ make db/login
+    make db/setup && make db/migrate
+    ```
+    - Optional - Verify tables and records are created
+    ```
+    make db/login
+    ```
+    ```
     # List all the tables
     serviceapitests# \dt
                        List of relations
@@ -111,67 +92,16 @@ follow this process again to generate a new token.
     public | migrations         | table | kas_fleet_manager
     ```
 
-3.  Setup AWS credentials
-
-    #### Option A)
-    Needed when ENV != (testing|integration)
+3. Start the service
     ```
-    $ make aws/setup AWS_ACCOUNT_ID=<account_id> AWS_ACCESS_KEY=<aws-access-key> AWS_SECRET_ACCESS_KEY=<aws-secret-key>
+    ./kas-fleet-manager serve
     ```
-
-    #### Option B)
-    Works when ENV == (testing|integration)
+    >**NOTE**: The service has numerous cli flags. Please see the [feature flag](TODO) section to enable features disabled by default for the development environment
+4. Verify the local service is working
     ```
-    $ make aws/setup
-    ```
-    #### mas sso setup
-
-    ##### keycloak cert
-    ```
-    echo "" | openssl s_client -servername identity.api.stage.openshift.com -connect identity.api.stage.openshift.com:443 -prexit 2>/dev/null | sed -n -e '/BEGIN\ CERTIFICATE/,/END\ CERTIFICATE/ p' > secrets/keycloak-service.crt
-    ```
-    ##### mas sso client id & client secret
-    ```
-    $ make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> OSD_IDP_MAS_SSO_CLIENT_ID=<osd_idp_mas_sso_client_id> OSD_IDP_MAS_SSO_CLIENT_SECRET=<osd_idp_mas_sso_client_secret>
-    ```
-    > Values can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services-ci/show/managed-service-api/integration-tests).
-
-4. Setup external certificate for kafka brokers
-    #### Option A)
-    Needed when ENV != (stage|production)
-    ```
-    $ make kafkacert/setup
-    ```
-
-    #### Option B)
-    Works when ENV == (stage|production)
-    The certificate and private key can be retrieved from Vault
-    ```
-    $ make kafkacert/setup KAFKA_TLS_CERT=<kafka_tls_cert> KAFKA_TLS_KEY=<kafka_tls_key>
-    ```
-
-5. Generate a temporary ocm token
-    Generate a temporary ocm token and set it in the secrets/ocm-service.token file
-    > **Note**: This will need to be re-generated as this temporary token will expire within a few minutes.
-    ```
-    $ make ocm/setup OCM_OFFLINE_TOKEN="$(ocm token)" OCM_ENV=development
-    ```
-6. Setup the image pull secret
-    Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull),
-    copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
-
-7. Running the service locally
-    ```
-    $ ./kas-fleet-manager serve  (default: http://localhost:8000)
-    ```
-
-8. Verify the local service is working
-    ```
-    $ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
+    curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
    {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
     ```
-
-9. If the `--enable-kas-fleetshard-sync` flag is set to true (it is set to false by default at the moment, so you need to explicitly enable it), you should follow the [extra steps](./docs/test-locally-with-fleetshard-sync.md) to allow the synchronizer to communicate with your local server. 
 
 ## Running the Service on an OpenShift cluster
 ### Build and Push the Image to the OpenShift Image Registry
@@ -180,19 +110,19 @@ Login to the OpenShift internal image registry
 >**NOTE**: Ensure that the user used has the correct permissions to push to the OpenShift image registry. For more information, see the [accessing the registry](https://docs.openshift.com/container-platform/4.5/registry/accessing-the-registry.html#prerequisites) guide.
 ```
 # Login to the OpenShift cluster
-$ oc login <api-url> -u <username> -p <password>
+oc login <api-url> -u <username> -p <password>
 
 # Login to the OpenShift image registry
-$ make docker/login/internal
+make docker/login/internal
 ```
 
 Build and push the image
 ```
 # Create a namespace where the image will be pushed to.
-$ make deploy/project
+make deploy/project
 
 # Build and push the image to the OpenShift image registry.
-$ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
+GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 ```
 
 **Optional parameters**:
@@ -239,149 +169,47 @@ oc get route kas-fleet-manager
 ### Removing the Service Deployment from the OpenShift
 ```
 # Removes all resources created on service deployment
-$ make undeploy
+make undeploy
 ```
 
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the service deployment will be removed from. Defaults to managed-services-$USER.
 
 ## Using the Service
-#### Creating an OSD Cluster
-```
-# Create a new cluster (OSD).
-# The following command will register a cluster request which will be reconciled by the cluster worker
-$ ./kas-fleet-manager cluster create
-
-# Verify cluster record is created
-# Login to the database
-$ make db/login
-# Ensure the cluster exists in clusters table. Status will change to `cluster_provisioned` once the OSD is available and then to 'ready' after it has been terraformed and ready for use.
-serviceapitests# select * from clusters;
-
-# Alternatively, verify from ocm-cli
-$ ocm login --url=https://api.stage.openshift.com/ --token=<OCM_OFFLINE_TOKEN>
-# verify the cluster is in OCM
-$ ocm list clusters
-
-# Retrieve the OSD cluster login credentials
-$ ocm get /api/clusters_mgmt/v1/clusters/<cluster_id>/credentials | jq '.admin'
-
-# Login to the OSD cluster with the credentials you retrieved above
-# Verify the OSD cluster was created successfully and have strimzi-operator installed in namespace 'redhat-managed-kafka-operator'
-```
-#### Using an existing OSD Cluster
-
-Any OSD cluster can be used by the service, it does not have to be created with the service itself. If you already have an existing OSD
-cluster, you will need to register it in the database so that it can be used by the service for incoming Kafka requests.  The cluster must have been created with multizone availability.
-
-Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the CLI
-        - Run `ocm list clusters`
-        - The ID should be displayed under the ID column
-
->NOTE: By default the auto scaling feature is disabled in development mode. You can enable it by passing `--dataplane-cluster-scaling-type=auto` when starting a built binary. Or changing the default value in [default development environment flags file](cmd/kas-fleet-manager/environments/development.go) when using `make run` to start the API.
-
-#### Using an existing cluster with manual scaling enabled via `dataplane-cluster-scaling-type` flag set to `manual`
-
-You can manually add the cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file. 
-
-A content of the file is:
-
-- A list of clusters for kas fleet manager
-- All clusters are created with `cluster_provisioning` status if they are not already in kas fleet manager
-- All clusters in kas fleet manager DB already but are missing in the list will be marked as `deprovisioning` and will later be deleted.
-- This list is ordered, any new cluster should be appended at the end.
-
-From the cluster ID taken from step (1), use `ocm` CLI to get cluster details i.e `name`, `id` which is cluster_id, `multi_az`, `cloud_provider` and `region`.
-```shell
-ocm get /api/clusters_mgmt/v1/clusters/$ID | jq ' .name, .id, .multi_az, .cloud_provider.id, .region.id '
-
-"cluster-name"
-"1jp6kdr7k0sjbe5adck2prjur8f39378" # or a value matching your cluster ID 
-true
-"aws" # or any cloud provider
-"us-east-1" # or any region
-```
-
-From the above command, the resulting [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file content will
-```yaml
-clusters:
-  - name: cluster-name
-    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378
-    cloud_provider: aws
-    region: us-east-1
-    multi_az: true
-    schedulable: true # change this to false if you do not want the cluster to be schedulable
-    kafka_instance_limit: 2 # change this to match any value of configuration
-```
-
-#### Configuring OSD Cluster Creation and AutoScaling
-
-To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
-Once auto scaling is enabled this will activate the scaling up/down of compute nodes for exisiting clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md) 
-
-#### Registering an existing cluster in the Database
-
->NOTE: This should only be done if auto scaling is enabled. If manual scaling is enabled, please follow the guide for [using an existing cluster with manual scaling](#using-an-existing-cluster-with-manual-scaling-enabled-via-dataplane-cluster-scaling-type-flag-set-to-manual) instead.
-
-
-1. Register the cluster to the service
-    - Run the following command to generate an **INSERT** command:
-      ```
-      make db/generate/insert/cluster CLUSTER_ID=<your-cluster-id>
-      ```
-    - Run the command generated above in your local database:
-        - Login to the local database using `make db/login`
-        - Execute SQL command from previous steps (kas-fleet-manager will populate any blank values when it reconciles)
-        - Ensure that the **clusters** table is available.
-            - Create the binary by running `make binary`
-            - Run `./kas-fleet-manager migrate`
-        - Once the table is available, the generated **INSERT** command can now be run.
-
-2. Ensure the cluster is ready to be used for incoming Kafka requests.
-    - Take note of the status of the cluster, `cluster_provisioned`, when you registered it to the database in step 2. This means that the cluster has been successfully provisioned but still have remaining resources to set up (i.e. Strimzi operator installation).
-    - Run the service using `make run` and let it reconcile resources required in order to make the cluster ready to be used by Kafka requests.
-    - Once done, the cluster status in your database should have changed to `ready`. This means that the service can now assign this cluster to any incoming Kafka requests so that the service can process them.
-
+### Kafkas
 #### Creating a Kafka Cluster
 ```
 # Submit a new Kafka cluster creation request
-$ curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
-
-# Login to the database
-$ make db/login
-# Ensure the bootstrap_url column exists and is populated
-serviceapitests# select * from kafka_requests;
-
-# Login to the OSD cluster with the credentials you retrieved earlier
-# Verify the Kafka cluster was created successfully in the generated namespace with 4 routes (bootstrap + 3 broker routes) which is the same as the bootstrap server host
+curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
 
 # List a kafka request
-$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id> | jq
+curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id> | jq
 
 # List all kafka request
-$ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq
+curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq
 
 # Delete a kafka request
-$ curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
+curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
 ```
 
+### Connectors
 #### Listing Connector Types
 ```
 # (optional) Adjust the curl command so it renders results a little nicer (shows response headers and formats results with jq).
-$ function curl { `which curl` -S -s -D /dev/stderr "$@" | jq; }
+function curl { `which curl` -S -s -D /dev/stderr "$@" | jq; }
 
 # Lists all connector Types
-$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/connector-types
+curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/connector-types
 ```
 
 #### Creating a Connector Deployment
 
 ```
 # set KAFKA_ID to the ID of a Kafka cluster to do connector operations against
-$ KAFKA_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq -r '.items[0].id')
+KAFKA_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq -r '.items[0].id')
 
 # create a new connector
-$ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments?async=true -d \
+curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments?async=true -d \
     '{
        "kind": "Connector",
        "metadata": {
@@ -402,32 +230,32 @@ $ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/
      }'
 
 # list all connector deployments
-$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments
+curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments
 
 # set CONNECTOR_ID to the ID of the first connector delployment found
-$ CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
+CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
 
 # get a single connector deployment
-$ curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments/${CONNECTOR_ID}
+curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments/${CONNECTOR_ID}
 ```
-
-
-#### Clean up
-```
-# Delete the OSD Cluster from the OCM Console manually
-# Purge the database
-$ make db/teardown
-```
-## Running Swagger UI
+### View the API docs
 ```
 # Start Swagger UI container
-$ make run/docs
+make run/docs
 
 # Launch Swagger UI and Verify from a browser: http://localhost
 
 # Remove Swagger UI conainer
-$ make run/docs/teardown
+make run/docs/teardown
 ```
+## Additional CLI commands
+
+In addition to the REST API exposed via `make run`, there are additional commands to interact directly
+with the service (i.e. cluster creation/scaling, Kafka creation, Errors list, etc.) without having to use a REST API client.
+
+To use these commands, run `make binary` to create the `./kas-fleet-manager` CLI.
+
+Run `./kas-fleet-manager -h` for information on the additional commands.
 ## Environments
 
 The service can be run in a number of different environments. Environments are essentially bespoke
@@ -445,21 +273,10 @@ details.
    most development and is only used when the service is deployed.
 
 ## Contributing
-
 See the [contributing guide](CONTRIBUTING.md) for general guidelines.
 
-### Setup Git Hooks
-See the [setup git hooks](CONTRIBUTING.md#set-up-git-hooks) section in the contributing guide for more information.
 
-### Additional CLI commands
-
-In addition to the REST API exposed via `make run`, there are additional commands to interact directly
-with the service (i.e. cluster creation/scaling, Kafka creation, Errors list, etc.) without having to use a REST API client.
-
-To use these commands, run `make binary` to create the `./kas-fleet-manager` CLI.
-
-Run `./kas-fleet-manager -h` for information on the additional commands.
-
+## Running the Tests
 ### Running unit tests
 ```
 make test
@@ -495,24 +312,9 @@ To stop and remove the database container when finished, run:
 make db/teardown
 ```
 
-### Additional Checks
-
-In addition to the unit and integration tests, we should ensure that our code passes standard go checks.
-
-To verify that the code passes standard go checks, run:
-```
-make verify
-```
-
-To verify that the code passes lint checks, run:
-```
-make lint
-```
->**NOTE**: This uses golangci-lint which needs to be installed in your `GOPATH/bin`
-
 ### Running performance tests
 See this [README](./test/performance/README.md) for more info about performance tests
 
 ## Additional documentation:
-
+* [kas-fleet-manager Implementation](docs/implementation.md)
 * [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling)

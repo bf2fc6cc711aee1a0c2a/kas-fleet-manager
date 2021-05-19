@@ -13,7 +13,7 @@ binary:=kas-fleet-manager
 version:=$(shell date +%s)
 
 # Default namespace for local deployments
-NAMESPACE ?= managed-services-${USER}
+NAMESPACE ?= kas-fleet-manager-${USER}
 
 # The name of the image repository needs to start with the name of an existing
 # namespace because when the image is pushed to the internal registry of a
@@ -172,7 +172,7 @@ endif
 # Prints a list of useful targets.
 help:
 	@echo ""
-	@echo "OpenShift Managed Services API"
+	@echo "Kafka Service Fleet Manager make targets"
 	@echo ""
 	@echo "make verify               	verify source code"
 	@echo "make lint                 	run golangci-lint"
@@ -189,7 +189,7 @@ help:
 	@echo "make openapi/validate     	validate openapi schema"
 	@echo "make image                	build docker image"
 	@echo "make push                 	push docker image"
-	@echo "make project              	create and use the managed-services project"
+	@echo "make project              	create and use the kas-fleet-manager project"
 	@echo "make clean                	delete temporary generated files"
 	@echo "make setup/git/hooks      	setup git hooks"
 	@echo "make keycloak/setup     	    setup mas sso clientId, clientSecret & crt"
