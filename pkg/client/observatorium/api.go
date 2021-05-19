@@ -55,6 +55,14 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
+		//Check metrics for used disk space per broker
+		"kubelet_volume_stats_used_bytes": {
+			`kubelet_volume_stats_used_bytes{%s}`,
+			fmt.Sprintf(`persistentvolumeclaim=~"data-.*-kafka-[0-9]*$", namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
 		//Check metrics for messages in per topic
 		"kafka_server_brokertopicmetrics_messages_in_total": {
 			`kafka_server_brokertopicmetrics_messages_in_total{%s}`,
