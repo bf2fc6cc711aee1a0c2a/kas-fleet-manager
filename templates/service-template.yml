@@ -192,6 +192,11 @@ parameters:
   description: Enable the Kafka TLS certificate
   value: "false"
 
+- name: ENABLE_MANAGED_KAFKA_CR
+  displayName: Enable ManagedKafka CR
+  description: Enable the usage of the ManagedKafka CR instead of the Kafka CR
+  value: "false"
+
 - name: KAFKA_CANARY_IMAGE
   displayName: Kafka Canary Image
   description: Specifies a canary image
@@ -317,6 +322,11 @@ parameters:
   displayName: Compute machine type
   description: The compute machine type of each node on a new created cluster.
   value: "m5.4xlarge"
+
+- name: ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC
+  displayName: Enable direct data synchronisation with kas-fleetshard-operator
+  description: Enable direct data synchronisation with kas-fleetshard-operator
+  value: "false"
 
 - name: ENABLE_QUOTA_SERVICE
   displayName: Enable quota service with kas-fleetshard-operator

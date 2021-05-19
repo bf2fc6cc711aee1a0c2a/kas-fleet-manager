@@ -235,6 +235,67 @@ func MyTestFunction(t *testing.T) {
 > :warning: By default the logging is set to `short-verbose`. To be able to see the polling logs you must set the
 > `TEST_SUMMARY_FORMAT` environment variable to `default-verbose`
 
+#### Mock KAS Fleetshard Sync
+The mock [KAS Fleetshard Sync](test/mocks/kasfleetshardsync/kas-fleetshard-sync.go) is used to reconcile data plane and Kafka cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the KAS Fleetshard Sync in the data plane cluster cannot
+communicate to the KAS Fleet Manager during integration test runs. 
+
+The mock KAS Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Kafka cluster status. 
+
+**Example Usage:**
+```go
+package mytest
+import (
+    "testing"
+    "time"
+
+    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
+)
+
+func MyTestFunction(t *testing.T) {
+    // ...
+    ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+	  defer ocmServer.Close()
+
+    h, _, teardown := test.RegisterIntegration(t, ocmServer)
+  	defer teardown()
+
+    mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+    mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+    mockKasfFleetshardSync.Start()
+    defer mockKasfFleetshardSync.Stop()
+    // ...
+}
+```
+
+The default behaviour of how the status of a data plane and a Kafka cluster are updated are as follows:
+- **Data plane cluster update**: Retrieves all clusters in the database in a `waiting_for_kas_fleetshard_operator` state and updates it to `ready` once all of the addons are installed.
+- **Kafka cluster update**: Retrieves all Kafkas that can be processed by the KAS Fleetshard Operator (i.e. Kafkas not in an `accepted` or `preparing` state). Any Kafkas marked for deletion are updated to `deleting`. Kafkas with any other status are updated to `ready`.
+
+These default behaviours can be changed by setting the update status implementation. For example, the implementation for updating a data plane cluster status can be changed by calling the `SetUpdateDataplaneClusterStatusFunc` of the Mock KAS Fleetshard Sync builder:
+
+```go
+//...
+import(
+    //...
+
+    privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+)
+
+func MyTestFunction(t *testing.T) {
+    // ...
+    mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+    mockKasFleetshardSyncBuilder.SetUpdateDataplaneClusterStatusFunc(func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error {
+      // Custom data plane cluster status update implementation
+    })
+    mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+    mockKasfFleetshardSync.Start()
+    defer mockKasfFleetshardSync.Stop()
+    // ...
+}
+```
+
 ## Logging Standards & Best Practices
   * Log only actionable information, which will be read by a human or a machine for auditing or debugging purposes
     * Logs shall have context and meaning - a single log statement should be useful on its own
