@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"strconv"
+	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -241,9 +243,13 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 	}
 
 	if remainingCapacity && cluster.Status != api.ClusterReady {
+		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForKasFleetShardOperator
 		err := d.clusterService.UpdateStatus(*cluster, api.ClusterReady)
 		if err != nil {
 			return err
+		}
+		if clusterIsWaitingForFleetShardOperator {
+			metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(cluster.CreatedAt))
 		}
 		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterReady)
 	}
