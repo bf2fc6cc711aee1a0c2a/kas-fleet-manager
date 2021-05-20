@@ -12,14 +12,14 @@ Feature: expose a public api to manage kafka clusters
       """
       {
         "href": "/api/kafkas_mgmt",
-        "id": "ocm_example",
+        "id": "kafkas_mgmt",
         "kind": "API",
         "versions": [
           {
             "collections": null,
             "href": "/api/kafkas_mgmt/v1",
             "id": "v1",
-            "kind": ""
+            "kind": "APIVersion"
           }
         ]
       }
@@ -31,14 +31,14 @@ Feature: expose a public api to manage kafka clusters
       """
       {
         "href": "/api/kafkas_mgmt",
-        "id": "ocm_example",
+        "id": "kafkas_mgmt",
         "kind": "API",
         "versions": [
           {
             "collections": null,
             "href": "/api/kafkas_mgmt/v1",
             "id": "v1",
-            "kind": ""
+            "kind": "APIVersion"
           }
         ]
       }
