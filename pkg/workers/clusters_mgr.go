@@ -3,12 +3,13 @@ package workers
 import (
 	"bytes"
 	"fmt"
-	authv1 "github.com/openshift/api/authorization/v1"
 	"net/http"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
+
+	authv1 "github.com/openshift/api/authorization/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -360,28 +361,32 @@ func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
-	err := c.reconcileClusterSyncSet(cluster)
-	if err == nil {
-		err = c.reconcileClusterIdentityProvider(cluster)
+	var err error
+	err = c.reconcileClusterSyncSet(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	if err == nil {
-		err = c.reconcileClusterDNS(cluster)
+	err = c.reconcileClusterIdentityProvider(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
 	}
 
-	if err == nil && c.kasFleetshardOperatorAddon != nil {
-		if e := c.kasFleetshardOperatorAddon.ReconcileParameters(cluster); e != nil {
-			if e.IsBadRequest() {
+	err = c.reconcileClusterDNS(cluster)
+	if err != nil {
+		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
+	}
+
+	if c.kasFleetshardOperatorAddon != nil {
+		if err := c.kasFleetshardOperatorAddon.ReconcileParameters(cluster); err != nil {
+			if err.IsBadRequest() {
 				glog.Infof("kas-fleetshard operator is not found on cluster %s", cluster.ClusterID)
 			} else {
-				err = e
+				return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
 			}
 		}
 	}
 
-	if err != nil {
-		return errors.WithMessagef(err, "failed to reconcile ready cluster %s: %s", cluster.ClusterID, err.Error())
-	}
 	return nil
 }
 
@@ -457,7 +462,7 @@ func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
 	}
 
 	cluster.ClusterDNS = clusterDNS
-	updateErr := c.clusterService.Update(&cluster)
+	updateErr := c.clusterService.Update(cluster)
 	if updateErr != nil {
 		return errors.WithMessagef(updateErr, "failed to reconcile cluster %s: Cluster update %s", cluster.ClusterID, updateErr.Error())
 	}
@@ -522,10 +527,11 @@ func (c *ClusterManager) reconcileAcceptedCluster(cluster *api.Cluster) error {
 // reconcileClusterStatus updates the provided clusters stored status to reflect it's current state
 func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Cluster, error) {
 	// get current cluster state, if not pending, update
-	clusterStatus, err := c.ocmClient.GetClusterStatus(cluster.ClusterID)
+	ocmCluster, err := c.ocmClient.GetCluster(cluster.ClusterID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get cluster %s status", cluster.ClusterID)
+		return nil, errors.Wrapf(err, "failed to get cluster %s", cluster.ClusterID)
 	}
+	clusterStatus := ocmCluster.Status()
 	needsUpdate := false
 	if cluster.Status == "" {
 		cluster.Status = api.ClusterProvisioning
@@ -533,6 +539,13 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	}
 	// if cluster state is ready, update the local cluster state
 	if clusterStatus.State() == clustersmgmtv1.ClusterStateReady {
+		if cluster.ExternalID == "" {
+			externalID, ok := ocmCluster.GetExternalID()
+			if !ok {
+				return nil, errors.Errorf("External ID for cluster '%s' cannot be found", ocmCluster.ID())
+			}
+			cluster.ExternalID = externalID
+		}
 		cluster.Status = api.ClusterProvisioned
 		needsUpdate = true
 	}
@@ -544,8 +557,14 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	}
 	// if cluster is neither ready nor in an error state, assume it's pending
 	if needsUpdate {
-		if err = c.clusterService.UpdateStatus(*cluster, cluster.Status); err != nil {
-			return nil, errors.Wrapf(err, "failed to update local cluster %s status", cluster.ClusterID)
+		if cluster.Status == api.ClusterReady || cluster.Status == api.ClusterFailed {
+			metrics.IncreaseClusterTotalOperationsCountMetric(constants.ClusterOperationCreate)
+		}
+		if err := c.clusterService.Update(*cluster); err != nil {
+			return nil, errors.Wrapf(err, "failed to update local cluster %s", cluster.ClusterID)
+		}
+		if cluster.Status == api.ClusterReady {
+			metrics.IncreaseClusterSuccessOperationsCountMetric(constants.ClusterOperationCreate)
 		}
 	}
 	return cluster, nil
@@ -1090,7 +1109,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 				if identityProvider.Name() == openIDIdentityProviderName {
 					cluster.IdentityProviderID = identityProvider.ID()
 
-					addIdpToClusterErr := c.clusterService.Update(&cluster)
+					addIdpToClusterErr := c.clusterService.Update(cluster)
 					if addIdpToClusterErr != nil {
 						return errors.Errorf("failed to add identity provider %v to cluster with clusterId %s", identityProvider.Name(), cluster.ClusterID)
 					}
@@ -1103,7 +1122,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	}
 
 	cluster.IdentityProviderID = createdIdentityProvider.ID()
-	addIdpErr := c.clusterService.Update(&cluster)
+	addIdpErr := c.clusterService.Update(cluster)
 	if addIdpErr != nil {
 		return errors.WithMessagef(addIdpErr, "failed to update cluster identity provider in database %s: %s", cluster.ClusterID, addIdpErr.Error())
 	}
