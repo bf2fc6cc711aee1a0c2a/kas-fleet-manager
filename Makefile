@@ -250,14 +250,14 @@ install: verify lint
 #
 # Examples:
 #   make test TESTFLAGS="-run TestSomething"
-test: install gotestsum
+test: gotestsum
 	OCM_ENV=testing $(GOTESTSUM) --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
 		./pkg/... \
 		./cmd/...
 .PHONY: test
 
 # Precompile everything required for development/test.
-test/prepare: install
+test/prepare:
 	$(GO) test -i ./test/integration/...
 .PHONY: test/prepare
 
