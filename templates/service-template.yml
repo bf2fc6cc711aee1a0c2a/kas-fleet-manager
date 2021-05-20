@@ -6,7 +6,7 @@ metadata:
   annotations:
     openshift.io/display-name: Kas Fleet Manager API
     description: Kafka Services Fleet Manager API to managed Kafka and kafka connectors deployment
-    tags: golang,uhc,service-delivery
+    tags: golang
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
     template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
