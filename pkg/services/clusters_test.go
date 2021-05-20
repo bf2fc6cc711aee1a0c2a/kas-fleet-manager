@@ -587,6 +587,71 @@ func Test_ListByStatus(t *testing.T) {
 	}
 }
 
+func Test_ClusterService_Update(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	type args struct {
+		cluster api.Cluster
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    error
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "error when id is undefined",
+			args: args{
+				cluster: api.Cluster{},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error when database update returns an error",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+			},
+		},
+		{
+			name: "successful status update by id",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				cluster: api.Cluster{Meta: api.Meta{ID: testID}},
+			},
+			wantErr: false,
+			want:    nil,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (id =").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+			k := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			err := k.Update(tt.args.cluster)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
 func Test_UpdateStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
@@ -1414,63 +1479,6 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			}
 			if !reflect.DeepEqual(status, tt.want) {
 				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
-			}
-		})
-	}
-}
-
-func TestClusterService__Update(t *testing.T) {
-	type fields struct {
-		connectionFactory *db.ConnectionFactory
-	}
-	type args struct {
-		cluster *api.Cluster
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		setupFn func()
-	}{
-		{
-			name: "fail when database returns an error",
-			args: args{
-				cluster: buildCluster(nil),
-			},
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			wantErr: true,
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
-			},
-		},
-		{
-			name: "success",
-			args: args{
-				cluster: buildCluster(func(cluster *api.Cluster) {
-					cluster.ID = "test-id"
-				}),
-			},
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setupFn()
-			k := clusterService{
-				connectionFactory: tt.fields.connectionFactory,
-			}
-			err := k.Update(tt.args.cluster)
-			if !tt.wantErr && err != nil {
-				t.Errorf("clusterService.Update() error = %v, wantErr %v", err, tt.wantErr)
-				return
 			}
 		})
 	}

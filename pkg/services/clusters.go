@@ -22,10 +22,12 @@ import (
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
-	Update(cluster *api.Cluster) *apiErrors.ServiceError
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
+	// Update updates a Cluster. Only fields whose value is different than the
+	// zero-value of their corresponding type will be updated
+	Update(cluster api.Cluster) *apiErrors.ServiceError
 	FindCluster(criteria FindClusterCriteria) (*api.Cluster, *apiErrors.ServiceError)
 	// FindClusterByID returns the cluster corresponding to the provided clusterID.
 	// If the cluster has not been found nil is returned. If there has been an issue
@@ -112,15 +114,6 @@ func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *
 	return createdCluster, nil
 }
 
-func (k *clusterService) Update(cluster *api.Cluster) *apiErrors.ServiceError {
-	dbConn := k.connectionFactory.New()
-
-	if err := dbConn.Model(cluster).Updates(cluster).Error; err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
-	}
-	return nil
-}
-
 // GetClusterDNS gets an OSD clusters DNS from OCM cluster service by ID
 //
 // Returns the DNS name
@@ -157,8 +150,23 @@ func (c clusterService) ListByStatus(status api.ClusterStatus) ([]api.Cluster, *
 	return clusters, nil
 }
 
-func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
+func (c clusterService) Update(cluster api.Cluster) *apiErrors.ServiceError {
+	if cluster.ID == "" {
+		return apiErrors.Validation("id is undefined")
+	}
 
+	// by specifying the Model with a non-empty primary key we ensure
+	// only the record with that primary key is updated
+	dbConn := c.connectionFactory.New().Model(cluster)
+
+	if err := dbConn.Updates(cluster).Error; err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
+	}
+
+	return nil
+}
+
+func (c clusterService) UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error {
 	if status.String() == "" {
 		return apiErrors.Validation("status is undefined")
 	}

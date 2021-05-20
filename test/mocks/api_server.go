@@ -838,16 +838,24 @@ func GetMockCloudProviderRegionList(modifyFn func(*clustersmgmtv1.CloudRegionLis
 
 // GetMockClusterStatus for emulated OCM server
 func GetMockClusterStatus(modifyFn func(*clustersmgmtv1.ClusterStatus, error)) (*clustersmgmtv1.ClusterStatus, error) {
-	status, err := clustersmgmtv1.NewClusterStatus().
-		ID(MockClusterID).
-		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/status", MockClusterID)).
-		State(MockClusterState).
-		Description("").
-		Build()
+	status, err := GetMockClusterStatusBuilder(nil).Build()
 	if modifyFn != nil {
 		modifyFn(status, err)
 	}
 	return status, err
+}
+
+// GetMockClusterStatusBuilder for emulated OCM server
+func GetMockClusterStatusBuilder(modifyFn func(*clustersmgmtv1.ClusterStatusBuilder)) *clustersmgmtv1.ClusterStatusBuilder {
+	builder := clustersmgmtv1.NewClusterStatus().
+		ID(MockClusterID).
+		HREF(fmt.Sprintf("/api/clusters_mgmt/v1/clusters/%s/status", MockClusterID)).
+		State(MockClusterState).
+		Description("")
+	if modifyFn != nil {
+		modifyFn(builder)
+	}
+	return builder
 }
 
 // GetMockClusterAddonBuilder for emulated OCM server
@@ -906,10 +914,12 @@ func GetMockClusterNodesBuilder(modifyFn func(*clustersmgmtv1.ClusterNodesBuilde
 
 // GetMockClusterBuilder for emulated OCM server
 func GetMockClusterBuilder(modifyFn func(*clustersmgmtv1.ClusterBuilder)) *clustersmgmtv1.ClusterBuilder {
+	mockClusterStatusBuilder := GetMockClusterStatusBuilder(nil)
 	builder := clustersmgmtv1.NewCluster().
 		ID(MockClusterID).
 		ExternalID(MockClusterExternalID).
 		State(MockClusterState).
+		Status(mockClusterStatusBuilder).
 		MultiAZ(MockMultiAZ).
 		Nodes(GetMockClusterNodesBuilder(nil)).
 		CloudProvider(GetMockCloudProviderBuilder(nil)).
