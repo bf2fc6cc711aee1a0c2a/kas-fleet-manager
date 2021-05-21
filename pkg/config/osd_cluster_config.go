@@ -17,9 +17,10 @@ type OSDClusterConfig struct {
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType string         `json:"dataplane_cluster_scaling_type"`
-	DataPlaneClusterConfigFile  string         `json:"dataplane_cluster_config_file"`
-	ClusterConfig               *ClusterConfig `json:"clusters_config"`
+	DataPlaneClusterScalingType           string         `json:"dataplane_cluster_scaling_type"`
+	DataPlaneClusterConfigFile            string         `json:"dataplane_cluster_config_file"`
+	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
+	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 }
 
 type DynamicScalingConfig struct {
@@ -37,15 +38,16 @@ const (
 
 func NewOSDClusterConfig() *OSDClusterConfig {
 	return &OSDClusterConfig{
-		OpenshiftVersion:             "",
-		ComputeMachineType:           "m5.4xlarge",
-		StrimziOperatorVersion:       "v0.21.3",
-		ImagePullDockerConfigContent: "",
-		ImagePullDockerConfigFile:    "secrets/image-pull.dockerconfigjson",
-		IngressControllerReplicas:    9,
-		DataPlaneClusterConfigFile:   "config/dataplane-cluster-configuration.yaml",
-		DataPlaneClusterScalingType:  ManualScaling,
-		ClusterConfig:                &ClusterConfig{},
+		OpenshiftVersion:                      "",
+		ComputeMachineType:                    "m5.4xlarge",
+		StrimziOperatorVersion:                "v0.21.3",
+		ImagePullDockerConfigContent:          "",
+		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
+		IngressControllerReplicas:             9,
+		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
+		DataPlaneClusterScalingType:           ManualScaling,
+		ClusterConfig:                         &ClusterConfig{},
+		EnableReadyDataPlaneClustersReconcile: true,
 	}
 }
 
@@ -124,6 +126,10 @@ func (c *OSDClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == AutoScaling
 }
 
+func (c *OSDClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
+	return c.EnableReadyDataPlaneClustersReconcile
+}
+
 func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&s.OpenshiftVersion, "cluster-openshift-version", s.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
 	fs.StringVar(&s.ComputeMachineType, "cluster-compute-machine-type", s.ComputeMachineType, "The compute machine type")
@@ -132,6 +138,7 @@ func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&s.IngressControllerReplicas, "ingress-controller-replicas", s.IngressControllerReplicas, "The number of replicas for the IngressController")
 	fs.StringVar(&s.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", s.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
+	fs.BoolVar(&s.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", s.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 }
 
 func (s *OSDClusterConfig) ReadFiles() error {

@@ -344,6 +344,11 @@ func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
+	if !c.configService.GetConfig().OSDClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
+		glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", cluster.ClusterID)
+		return nil
+	}
+
 	var err error
 	err = c.reconcileClusterSyncSet(cluster)
 	if err != nil {
