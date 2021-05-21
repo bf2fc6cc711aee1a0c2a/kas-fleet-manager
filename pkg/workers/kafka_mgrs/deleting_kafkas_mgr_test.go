@@ -33,7 +33,6 @@ func TestDeletingKafkaManager(t *testing.T) {
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
 					DeleteFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						//return errors.GeneralError("test")
 						return nil
 					},
 				},
@@ -77,8 +76,8 @@ func TestDeletingKafkaManager(t *testing.T) {
 				quotaService:  tt.fields.quotaService,
 				configService: tt.fields.configService,
 			}
-			if err := k.reconcileDeprovisioningRequest(tt.args.kafka); (err != nil) != tt.wantErr {
-				t.Errorf("reconcileDeprovisioningRequest() error = %v, wantErr %v", err, tt.wantErr)
+			if err := k.reconcileDeletingKafkas(tt.args.kafka); (err != nil) != tt.wantErr {
+				t.Errorf("reconcileDeletingKafkas() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

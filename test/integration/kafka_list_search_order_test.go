@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )
@@ -37,6 +38,11 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	// setup pre-requisites to performing requests
 	account := h.NewAccount(usernameWithSpecialChars, faker.Name(), faker.Email(), "13640203")
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -51,7 +57,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")

@@ -3,28 +3,26 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -43,7 +41,6 @@ const (
 // - kafka worker picks up on creation job
 // - cluster is found for kafka
 // - kafka is assigned cluster
-// - kafka becomes ready once syncset is created
 func TestKafkaCreate_Success(t *testing.T) {
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
@@ -55,9 +52,14 @@ func TestKafkaCreate_Success(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -148,9 +150,14 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -475,6 +482,19 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, err := common.GetRunningOsdClusterID(h, t)
+	if err != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", err)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
 	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
 	// these values are taken from config/deny-list-configuration.yaml
 	username1 := "denied-test-user1@example.com"
@@ -511,9 +531,23 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			Owner:          username2,
 			Region:         kafkaRegion,
 			CloudProvider:  kafkaCloudProvider,
+			ClusterID:      clusterID,
 			Name:           "dummy-kafka-3",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants.KafkaRequestStatusPreparing.String(),
+		},
+		{
+			MultiAZ:             false,
+			Owner:               username2,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			BootstrapServerHost: "dummy-bootstrap-server-host",
+			Name:                "dummy-kafka-to-deprovision",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			OrganisationId:      orgId,
+			Status:              constants.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -531,7 +565,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 		return
 	}
 
-	// also verify that any kafkas held by the first user has been deleted.
+	// Verify all Kafkas that needs to be deleted are removed
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
@@ -767,9 +801,14 @@ func TestKafkaDelete_Success(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -843,9 +882,14 @@ func TestKafkaDelete_FailSync(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -899,30 +943,18 @@ func TestKafkaDelete_WithoutID(t *testing.T) {
 
 // TestKafkaDelete - test deleting kafka instance during creation
 func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
-	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	// Set a custom request handler for POST /syncsets with a delay so we can trigger the deletion during Kafka creation
-	ocmServerBuilder.SetClusterSyncsetPostRequestHandler(func() func(w http.ResponseWriter, r *http.Request) {
-		return func(w http.ResponseWriter, r *http.Request) {
-			time.Sleep(time.Second * 1)
-			w.Header().Set("Content-Type", "application/json")
-			if err := clustersmgmtv1.MarshalSyncset(mocks.MockSyncset, w); err != nil {
-				t.Error(err)
-			}
-		}
-	})
-	ocmServer := ocmServerBuilder.Build()
-
+	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	// cannot reproduce in real ocm environment, only run on mock mode.
-	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
-		t.SkipNow()
-	}
-
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
 	}
@@ -960,13 +992,13 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 		if err != nil {
 			return true, err
 		}
-		return foundKafka.Status == constants.KafkaRequestStatusPreparing.String(), nil
+		return foundKafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusPreparing.String()))
+	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusProvisioning.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 
-	// wait a few seconds to ensure that deletion is triggered during kafka syncset creation
+	// wait a few seconds to ensure that deletion is triggered during creation
 	time.Sleep(kafkaCheckInterval)
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
@@ -974,20 +1006,24 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	// Sleep for worker interval duration to ensure kafka manager reconciliation has finished: 1 time for
 	// updating the status to `deprovision` and one time for the real deletion
 	time.Sleep(workers.RepeatInterval * 2)
-	kafkaList, _, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
-	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
-	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
-	// Check status of soft deleted kafka request.
-	db := h.Env().DBFactory.New()
-	var kafkaRequest api.KafkaRequest
-	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
-		t.Error("failed to find soft deleted kafka request")
-	}
+	// wait for kafka to be deleted
+	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
+		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id); err != nil {
+			if err.Error() == "404 Not Found" {
+				return true, nil
+			}
 
-	Expect(kafkaRequest.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
+			return false, err
+		}
+		return false, nil
+	})
+
+	kafkaList, _, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
+	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
 }
 
 // TestKafkaDelete - tests fail kafka delete
@@ -1024,9 +1060,14 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -1087,6 +1128,11 @@ func TestKafkaList_Success(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
 	// setup pre-requisites to performing requests
 	account := h.NewRandAccount()
 	initCtx := h.NewAuthenticatedContext(account, nil)
@@ -1101,7 +1147,7 @@ func TestKafkaList_Success(t *testing.T) {
 
 	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
@@ -1303,6 +1349,19 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
 	// create an account with values from config/allow-list-configuration.yaml
 	testuser1 := "testuser1@example.com"
 	orgId := "13640203"
@@ -1318,7 +1377,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			Owner:          testuser1,
 			Region:         kafkaRegion,
 			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka",
+			Name:           "dummy-kafka-to-remain",
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
@@ -1326,25 +1385,33 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			Meta: api.Meta{
 				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-2",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-2",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			Meta: api.Meta{
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-3",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-3",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusReady.String(),
 		},
 	}
 
@@ -1352,6 +1419,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
+
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
@@ -1380,6 +1448,19 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer tearDown()
 
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasfFleetshardSync.Start()
+	defer mockKasfFleetshardSync.Stop()
+
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if clusterID == "" {
+		panic("No cluster found")
+	}
+
 	// create an account with values from config/allow-list-configuration.yaml
 	testuser1 := "testuser1@example.com"
 	orgId := "13640203"
@@ -1398,7 +1479,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			Owner:          testuser1,
 			Region:         kafkaRegion,
 			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka",
+			Name:           "dummy-kafka-not-yet-expired",
 			OrganisationId: orgId,
 			Status:         constants.KafkaRequestStatusAccepted.String(),
 		},
@@ -1406,26 +1487,34 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			Meta: api.Meta{
 				CreatedAt: time.Now().Add(time.Duration(-49 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-2",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-to-remove",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusReady.String(),
 		},
 		{
 			Meta: api.Meta{
 				ID:        longLivedKafkaId,
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
-			MultiAZ:        false,
-			Owner:          testuser1,
-			Region:         kafkaRegion,
-			CloudProvider:  kafkaCloudProvider,
-			Name:           "dummy-kafka-4",
-			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			MultiAZ:             false,
+			Owner:               testuser1,
+			Region:              kafkaRegion,
+			CloudProvider:       kafkaCloudProvider,
+			ClusterID:           clusterID,
+			Name:                "dummy-kafka-long-lived",
+			OrganisationId:      orgId,
+			BootstrapServerHost: "dummy-bootstrap-host",
+			SsoClientID:         "dummy-sso-client-id",
+			SsoClientSecret:     "dummy-sso-client-secret",
+			Status:              constants.KafkaRequestStatusReady.String(),
 		},
 	}
 
@@ -1433,6 +1522,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
+
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)

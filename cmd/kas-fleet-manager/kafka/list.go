@@ -58,10 +58,9 @@ func runList(cmd *cobra.Command, _ []string) {
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
 
 	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
-	syncsetService := services.NewSyncsetService(ocmClient)
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	QuotaService := services.NewQuotaService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, syncsetService, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
+	kafkaService := services.NewKafkaService(env.DBFactory, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

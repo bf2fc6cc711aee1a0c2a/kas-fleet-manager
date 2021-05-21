@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/pkg/errors"
 	storagev1 "k8s.io/api/storage/v1"
 
@@ -49,16 +48,18 @@ const (
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
-	observabilityKafkaConfiguration = "kafka-observability-configuration"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
-	ipdAlreadyCreatedErrorToCheck   = "Kafka_SRE already exists"
+	idpAlreadyCreatedErrorToCheck   = "Kafka_SRE already exists"
 	readOnlyGroupName               = "mk-readonly-access"
 	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
 	dedicatedReadersRoleBindingName = "dedicated-readers"
+	KafkaStorageClass               = "mk-storageclass"
+	IngressLabelName                = "ingressType"
+	IngressLabelValue               = "sharded"
 )
 
 var clusterMetricsStatuses = []api.ClusterStatus{
@@ -161,24 +162,6 @@ func (c *ClusterManager) Reconcile() []error {
 
 	if err := c.reconcileClusterWithManualConfig(); err != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(err, "failed to reconcile clusters with config file"))
-	}
-
-	// reconcile the status of existing clusters in a non-ready state
-	glog.Infoln("reconcile cloud providers and regions")
-	cloudProviders, err := c.cloudProvidersService.GetCloudProvidersWithRegions()
-	if err != nil {
-		encounteredErrors = append(encounteredErrors, errors.Wrap(err, "Error retrieving cloud providers and regions"))
-	}
-
-	for _, cloudProvider := range cloudProviders {
-		// TODO add "|| provider.ID() == GcpCloudProviderID" to support GCP in the future
-		if cloudProvider.ID == AWSCloudProviderID {
-			cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
-				regionName := region.ID()
-				glog.V(10).Infoln("Provider:", cloudProvider.ID, "=>", "Region:", regionName)
-				return true
-			})
-		}
 	}
 
 	if err := c.reconcileClustersForRegions(); err != nil {
@@ -571,39 +554,24 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 }
 
 func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) error {
-	isStrimziReady, err := c.reconcileStrimziOperator(provisionedCluster)
-	if err != nil {
+	// Install Strimzi Operator Addon
+	if _, err := c.reconcileStrimziOperator(provisionedCluster); err != nil {
 		return err
 	}
-	isFleetShardReady := true
-	if c.configService.GetConfig().Kafka.EnableManagedKafkaCR || c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		if c.kasFleetshardOperatorAddon != nil {
-			glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
-			if ready, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
-				return errs
-			} else {
-				isFleetShardReady = ready
-			}
-		}
-	}
-	if c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		// if kas-fleetshard sync is enabled, the cluster status will be reported by the kas-fleetshard
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
-		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
-			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-		}
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
-	} else if isStrimziReady && isFleetShardReady {
-		status := api.ClusterReady
-		glog.V(5).Infof("Set cluster status to %s for cluster %s", status, provisionedCluster.ClusterID)
-		if err := c.clusterService.UpdateStatus(provisionedCluster, status); err != nil {
-			return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
-		}
 
-		// add entry for cluster creation metric
-		metrics.UpdateClusterCreationDurationMetric(metrics.JobTypeClusterCreate, time.Since(provisionedCluster.CreatedAt))
-		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterReady)
+	// Install KAS Fleetshard Operator Addon
+	glog.Infof("Provisioning kas-fleetshard-operator")
+	if _, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
+		return errs
 	}
+
+	// The cluster status will be reported by the kas-fleetshard operator
+	glog.V(5).Infof("Setting cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
+	if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
+		return errors.WithMessagef(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+	}
+	metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
+
 	return nil
 }
 
@@ -634,9 +602,9 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 	return false, nil
 }
 
-// reconcileClusterWithConfig reconciles clusters with the config file
-// A new clusters will be registered if it is not yet in the database
-// A cluster will be deprovisioned if it is in database but not in config file
+// reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
+// New clusters will be registered if it is not yet in the database.
+// A cluster will be deprovisioned if it is in the database but not in the config file.
 func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
 		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
@@ -705,7 +673,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() error {
 	return nil
 }
 
-// reconcileClustersForRegions creates an OSD cluster for each region where no cluster exists
+// reconcileClustersForRegions creates an OSD cluster for each supported cloud provider and region where no cluster exists.
 func (c *ClusterManager) reconcileClustersForRegions() error {
 	if !c.configService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		return nil
@@ -767,10 +735,7 @@ func (c *ClusterManager) buildSyncSet(ingressDNS string, withId bool) (*clusters
 		c.buildReadOnlyGroupResource(),
 		c.buildDedicatedReaderClusterRoleBindingResource(),
 	}
-	// If kas-fleetshard sync is enabled, the external config for the observability will be delivered to the kas-fleetshard directly
-	if !c.configService.GetConfig().Kafka.EnableKasFleetshardSync {
-		r = append(r, c.buildObservabilityExternalConfigResource())
-	}
+
 	if s := c.buildImagePullSecret(strimziAddonNamespace); s != nil {
 		r = append(r, s)
 	}
@@ -938,7 +903,7 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 			Domain: ingressDNS,
 			RouteSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					syncsetresources.IngressLabelName: syncsetresources.IngressLabelValue,
+					IngressLabelName: IngressLabelValue,
 				},
 			},
 			EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
@@ -976,7 +941,7 @@ func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
 			Kind:       "StorageClass",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: syncsetresources.KafkaStorageClass,
+			Name: KafkaStorageClass,
 		},
 		Parameters: map[string]string{
 			"encrypted": "false",
@@ -986,29 +951,6 @@ func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
 		ReclaimPolicy:        &reclaimDelete,
 		AllowVolumeExpansion: &expansion,
 		VolumeBindingMode:    &consumer,
-	}
-}
-
-func (c *ClusterManager) buildObservabilityExternalConfigResource() *k8sCoreV1.ConfigMap {
-	observabilityConfig := c.configService.GetObservabilityConfiguration()
-	return &k8sCoreV1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilityKafkaConfiguration,
-			Namespace: observabilityNamespace,
-			Labels: map[string]string{
-				"configures": "observability-operator",
-			},
-		},
-		Data: map[string]string{
-			"access_token": observabilityConfig.ObservabilityConfigAccessToken,
-			"channel":      observabilityConfig.ObservabilityConfigChannel,
-			"repository":   observabilityConfig.ObservabilityConfigRepo,
-			"tag":          observabilityConfig.ObservabilityConfigTag,
-		},
 	}
 }
 
@@ -1099,7 +1041,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	createdIdentityProvider, createIdentityProviderErr := c.ocmClient.CreateIdentityProvider(cluster.ClusterID, identityProvider)
 	if createIdentityProviderErr != nil {
 		// check to see if identity provider with name 'Kafka_SRE' already exists, if so use it.
-		if strings.Contains(createIdentityProviderErr.Error(), ipdAlreadyCreatedErrorToCheck) {
+		if strings.Contains(createIdentityProviderErr.Error(), idpAlreadyCreatedErrorToCheck) {
 			identityProvidersList, identityProviderListErr := c.ocmClient.GetIdentityProviderList(cluster.ClusterID)
 			if identityProviderListErr != nil {
 				return errors.Errorf("failed to get list of identity providers for cluster with clusterId %s", cluster.ClusterID)
