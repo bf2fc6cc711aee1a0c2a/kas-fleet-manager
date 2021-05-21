@@ -3,29 +3,33 @@ package services
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"strings"
 )
 
-var validColumns = []string{"column_provider", "name", "owner", "region", "status"}
+var validColumns = []string{"region", "name", "cloud_provider", "status", "owner"}
 
-const BRACE_TOKEN = 0
-const OP_TOKEN = 1
-const LOGICAL_OP_TOKEN = 2
-const COLUMN_TOKEN = 3
-const VALUE_TOKEN = 4
-const QUOTED_VALUE_TOKEN = 5
-const START_TOKEN = 99
-const MAXIMUM_COMPLEXITY = 10
+const BraceToken = 0
+const OpToken = 1
+const LogicalOpToken = 2
+const ColumnToken = 3
+const ValueToken = 4
+const QuotedValueToken = 5
+const StartToken = 99
+
+const MaximumComplexity = 10
 
 type checkUnbalancedBraces func() error
 
+type DBQuery struct {
+	Query  string
+	Values []interface{}
+}
+
 type QueryParser interface {
-	Parse(sql string) error
-	GetQueryString() string
+	Parse(sql string) (*DBQuery, error)
 }
 
 type queryParser struct {
-	sqlstring string
+	dbqry DBQuery
 }
 
 var _ QueryParser = &queryParser{}
@@ -75,7 +79,7 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 
 	onNewToken := func(token *Token) error {
 		switch token.tokenType {
-		case BRACE_TOKEN:
+		case BraceToken:
 			if token.value == "(" {
 				braces++
 				return nil
@@ -86,68 +90,74 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 				}
 				return nil
 			}
-		case VALUE_TOKEN:
-			p.sqlstring = fmt.Sprintf("%s '%s'", p.sqlstring, strings.ReplaceAll(token.value, "'", `\'`))
+		case ValueToken:
+			p.dbqry.Query = fmt.Sprintf("%s ?", p.dbqry.Query)
+			p.dbqry.Values = append(p.dbqry.Values, token.value)
+			//p.sqlstring = fmt.Sprintf("%s '%s'", p.sqlstring, strings.ReplaceAll(token.value, "'", `\'`))
 			return nil
-		case QUOTED_VALUE_TOKEN:
-			p.sqlstring = fmt.Sprintf("%s '%s'", p.sqlstring, token.value)
+		case QuotedValueToken:
+			// todo: unescape
+			p.dbqry.Query = fmt.Sprintf("%s ?", p.dbqry.Query)
+			p.dbqry.Values = append(p.dbqry.Values, token.value)
+
+			//p.sqlstring = fmt.Sprintf("%s '%s'", p.sqlstring, token.value)
 			return nil
-		case LOGICAL_OP_TOKEN:
+		case LogicalOpToken:
 			complexity++
-			if complexity > MAXIMUM_COMPLEXITY {
-				return errors.Errorf("maximum number of permitted joins (%d) exceeded", MAXIMUM_COMPLEXITY)
+			if complexity > MaximumComplexity {
+				return errors.Errorf("maximum number of permitted joins (%d) exceeded", MaximumComplexity)
 			}
-			p.sqlstring = p.sqlstring + " " + token.value
+			p.dbqry.Query = p.dbqry.Query + " " + token.value
 			return nil
-		case COLUMN_TOKEN:
+		case ColumnToken:
 			if !contains(validColumns, token.value) {
 				return fmt.Errorf("invalid column name: '%s'", token.value)
 			}
-			p.sqlstring = p.sqlstring + " " + token.value
+			p.dbqry.Query = p.dbqry.Query + " " + token.value
 			return nil
 		default:
-			p.sqlstring = p.sqlstring + " " + token.value
+			p.dbqry.Query = p.dbqry.Query + " " + token.value
 			return nil
 		}
 	}
 
 	// TOKENS
-	start := NewStateBuilder(START_TOKEN).
+	start := NewStateBuilder(StartToken).
 		AcceptPattern(`^$`).
 		Build()
 
-	openBrace := NewStateBuilder(BRACE_TOKEN).
+	openBrace := NewStateBuilder(BraceToken).
 		AcceptPattern(`^\(\s*$`).
 		//Consumer(simpleConsumer).
 		OnNewToken(onNewToken).
 		Build()
 
-	closedBrace := NewStateBuilder(BRACE_TOKEN).
+	closedBrace := NewStateBuilder(BraceToken).
 		AcceptPattern(`^\)\s*$`).
 		Last().
 		OnNewToken(onNewToken).
 		Build()
 
 	// column
-	column := NewStateBuilder(COLUMN_TOKEN).
+	column := NewStateBuilder(ColumnToken).
 		AcceptPattern(`^[A-Za-z][A-Za-z0-9_]*\s*$`).
 		OnNewToken(onNewToken).
 		Build()
 
 	// value
-	value := NewStateBuilder(VALUE_TOKEN).AcceptPattern(`^[^ ^(^)]+\s*$`).OnNewToken(onNewToken).Last().Build()
+	value := NewStateBuilder(ValueToken).AcceptPattern(`^[^ ^(^)]+\s*$`).OnNewToken(onNewToken).Last().Build()
 
 	// quoted value
-	openQuote := NewStateBuilder(VALUE_TOKEN).AcceptPattern(`^'$`).Build()
-	quotedValue := NewStateBuilder(QUOTED_VALUE_TOKEN).AcceptPattern(`^([^']|\\')+$`).OnNewToken(onNewToken).Build()
-	closeQuote := NewStateBuilder(VALUE_TOKEN).AcceptPattern(`^'\s*$`).Last().Build()
+	openQuote := NewStateBuilder(ValueToken).AcceptPattern(`^'$`).Build()
+	quotedValue := NewStateBuilder(QuotedValueToken).AcceptPattern(`^([^']|\\')+$`).OnNewToken(onNewToken).Build()
+	closeQuote := NewStateBuilder(ValueToken).AcceptPattern(`^'\s*$`).Last().Build()
 
 	// operators
-	operatorEq := NewStateBuilder(OP_TOKEN).AcceptPattern(`^=\s*$`).OnNewToken(onNewToken).Build()
-	operatorNotEq := NewStateBuilder(OP_TOKEN).AcceptPattern(`^[<>]{1,2}\s*$`).ValidatePattern(`^\s*<>\s*$`).OnNewToken(onNewToken).Build()
-	operatorLike := NewStateBuilder(OP_TOKEN).AcceptPattern(`^[LlIiKkEe]{0,4}\s*$`).ValidatePattern(`^\s*[Ll][Ii][Kk][Ee]\s*$`).OnNewToken(onNewToken).Build()
-	operatorAnd := NewStateBuilder(LOGICAL_OP_TOKEN).AcceptPattern(`^[AaNnDd]{0,3}\s*$`).ValidatePattern(`^\s*[Aa][Nn][Dd]\s*$`).OnNewToken(onNewToken).Build()
-	operatorOr := NewStateBuilder(LOGICAL_OP_TOKEN).AcceptPattern(`^[OoRr]{0,2}\s*$`).ValidatePattern(`^\s*[Oo][Rr]\s*$`).OnNewToken(onNewToken).Build()
+	operatorEq := NewStateBuilder(OpToken).AcceptPattern(`^=\s*$`).OnNewToken(onNewToken).Build()
+	operatorNotEq := NewStateBuilder(OpToken).AcceptPattern(`^[<>]{1,2}\s*$`).ValidatePattern(`^\s*<>\s*$`).OnNewToken(onNewToken).Build()
+	operatorLike := NewStateBuilder(OpToken).AcceptPattern(`^[LlIiKkEe]{0,4}\s*$`).ValidatePattern(`^\s*[Ll][Ii][Kk][Ee]\s*$`).OnNewToken(onNewToken).Build()
+	operatorAnd := NewStateBuilder(LogicalOpToken).AcceptPattern(`^[AaNnDd]{0,3}\s*$`).ValidatePattern(`^\s*[Aa][Nn][Dd]\s*$`).OnNewToken(onNewToken).Build()
+	operatorOr := NewStateBuilder(LogicalOpToken).AcceptPattern(`^[OoRr]{0,2}\s*$`).ValidatePattern(`^\s*[Oo][Rr]\s*$`).OnNewToken(onNewToken).Build()
 
 	// state transitions
 
@@ -200,30 +210,26 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 	}
 }
 
-func (p *queryParser) Parse(sql string) error {
+func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	state, checkBalancedBraces := p.initStateMachine()
 	for i, c := range sql {
 		if next, err := state.parse(c); err != nil {
-			return errors.Errorf("[%d] error parsing the filter: %v", i+1, err)
+			return nil, errors.Errorf("[%d] error parsing the filter: %v", i+1, err)
 		} else {
 			state = next
 		}
 	}
 
 	if err := state.eof(); err != nil {
-		return err
+		return nil, err
 	}
 
 	if err := checkBalancedBraces(); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
-}
-
-func (p *queryParser) GetQueryString() string {
-	return p.sqlstring
+	return &p.dbqry, nil
 }
 
 func NewQueryParser() QueryParser {
-	return &queryParser{}
+	return &queryParser{dbqry: DBQuery{}}
 }
