@@ -39,7 +39,7 @@ func TestABC_QueryParser(t *testing.T) {
 		},
 		{
 			name:    "Complex query with braces",
-			qry:     "((column_provider = value and name = value1) and (owner = value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
+			qry:     "((cloud_provider = value and name = value1) and (owner = value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
 			wantErr: false,
 		},
 		{
@@ -75,7 +75,7 @@ func TestABC_QueryParser(t *testing.T) {
 		},
 		{
 			name:    "Complex query with unbalanced braces",
-			qry:     "((column_provider = value and name = value1) and (owner = value2 or region=b  ) or owner=c or name=e and region LIKE '%test%'",
+			qry:     "((cloud_provider = value and name = value1) and (owner = value2 or region=b  ) or owner=c or name=e and region LIKE '%test%'",
 			wantErr: true,
 		},
 		{
@@ -88,7 +88,7 @@ func TestABC_QueryParser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			err := NewQueryParser().Parse(tt.qry)
+			_, err := NewQueryParser().Parse(tt.qry)
 
 			if err != nil && !tt.wantErr {
 				t.Errorf("QueryParser() error = %v, wantErr = %v", err, tt.wantErr)
