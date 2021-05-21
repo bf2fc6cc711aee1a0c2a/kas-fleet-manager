@@ -6,9 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/flags"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -40,13 +37,7 @@ func runDelete(cmd *cobra.Command, _ []string) {
 	}
 
 	env := environments.Environment()
-
-	// setup required services
-	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
-	QuotaService := services.NewQuotaService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, clusterService, keycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
+	kafkaService := env.Services.Kafka
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

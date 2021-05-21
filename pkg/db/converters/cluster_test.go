@@ -13,8 +13,6 @@ var (
 	testMultiAZ       = true
 	testStatus        = api.ClusterProvisioned
 	testClusterID     = "123"
-	testBYOC          = true
-	testManaged       = true
 )
 
 // build a test cluster
@@ -25,9 +23,7 @@ func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 		MultiAZ:       testMultiAZ,
 		ClusterID:     testClusterID,
 		ExternalID:    testClusterID,
-		BYOC:          testBYOC,
 		Status:        testStatus,
-		Managed:       testManaged,
 	}
 	if modifyFn != nil {
 		modifyFn(cluster)
@@ -54,9 +50,7 @@ func Test_ConvertCluster(t *testing.T) {
 					"region":         testRegion,
 					"cloud_provider": testCloudProvider,
 					"multi_az":       testMultiAZ,
-					"managed":        testManaged,
 					"status":         testStatus,
-					"byoc":           testBYOC,
 					"cluster_id":     testClusterID,
 					"external_id":    testClusterID,
 				},
@@ -82,9 +76,7 @@ func Test_ConvertClusterList(t *testing.T) {
 			MultiAZ:       testMultiAZ,
 			ClusterID:     testClusterID,
 			ExternalID:    testClusterID,
-			BYOC:          testBYOC,
 			Status:        testStatus,
-			Managed:       testManaged,
 		},
 	}
 	type args struct {
@@ -105,9 +97,7 @@ func Test_ConvertClusterList(t *testing.T) {
 					"region":         testRegion,
 					"cloud_provider": testCloudProvider,
 					"multi_az":       testMultiAZ,
-					"managed":        testManaged,
 					"status":         testStatus,
-					"byoc":           testBYOC,
 					"cluster_id":     testClusterID,
 					"external_id":    testClusterID,
 				},

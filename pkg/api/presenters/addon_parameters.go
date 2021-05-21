@@ -2,7 +2,7 @@ package presenters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 )
 
 func PresentAddonParameter(from ocm.AddonParameter) openapi.AddonParameter {

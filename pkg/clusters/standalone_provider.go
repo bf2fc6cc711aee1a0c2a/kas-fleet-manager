@@ -1,55 +1,58 @@
 package clusters
 
-import "github.com/pkg/errors"
+import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/pkg/errors"
+)
 
 type StandaloneProvider struct {
 }
 
-func (s StandaloneProvider) Create(request *ClusterRequest) (*ClusterSpec, error) {
+func (s StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	return nil, errors.Errorf("Create is not supported for StandaloneProvider type")
 }
 
-func (s StandaloneProvider) Get(spec *ClusterSpec) (*ClusterSpec, error) {
+func (s StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) GetClusterDNS(clusterSpec *ClusterSpec) (string, error) {
+func (s StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) AddIdentityProvider(clusterSpec *ClusterSpec, identityProvider IdentityProvider) (*IdentityProvider, error) {
+func (s StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) ListIdentityProviders(clusterSpec *ClusterSpec) (*IdentityProviderList, error) {
+func (s StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) ApplyResources(clusterSpec *ClusterSpec, resources ResourceSet) (*ResourceSet, *error) {
+func (s StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) DeleteResources(clusterSpec *ClusterSpec, resources ResourceSet) error {
+func (s StandaloneProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) ScaleUp(clusterSpec *ClusterSpec, increment int) (*ClusterSpec, error) {
+func (s StandaloneProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) ScaleDown(clusterSpec *ClusterSpec, decrement int) (*ClusterSpec, error) {
+func (s StandaloneProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) SetComputeNodes(clusterSpec *ClusterSpec, numNodes int) (*ClusterSpec, error) {
+func (s StandaloneProvider) GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) CreateAddon(clusterSpec *ClusterSpec, info AddonInfo) (*ClusterSpec, error) {
+func (s StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	panic("implement me")
 }
 
-func (s StandaloneProvider) UpdateAddon(clusterSpec *ClusterSpec, info AddonInfo) (*ClusterSpec, error) {
+func (s StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 	panic("implement me")
 }
 

@@ -1,7 +1,7 @@
 package ocm
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
@@ -20,7 +20,7 @@ const (
 type ClusterBuilder interface {
 	// NewOCMClusterFromCluster create an OCM cluster definition that can be used to create a new cluster with the OCM
 	// Cluster Service.
-	NewOCMClusterFromCluster(clusterRequest *clusters.ClusterRequest) (*clustersmgmtv1.Cluster, error)
+	NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error)
 }
 
 var _ ClusterBuilder = &clusterBuilder{}
@@ -46,7 +46,7 @@ func NewClusterBuilder(awsConfig *config.AWSConfig, osdClusterConfig *config.OSD
 	}
 }
 
-func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *clusters.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
+func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
 	// pre-req nil checks
 	if err := r.validate(); err != nil {
 		return nil, err

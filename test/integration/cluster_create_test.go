@@ -5,8 +5,6 @@ import (
 
 	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -28,7 +26,7 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	}(h)
 	h.Env().Config.AWS.AccountID = "123456789012"
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocm.NewClient(h.Env().Clients.OCM.Connection), h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",
@@ -36,5 +34,5 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 		MultiAZ:       true,
 	})
 	Expect(err).To(HaveOccurred())
-	Expect(cluster.ID()).To(Equal(""))
+	Expect(cluster.ID).To(Equal(""))
 }

@@ -3,7 +3,6 @@ package servecmd
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers/kafka_mgrs"
@@ -54,9 +53,6 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	env.Services.SignalBus.(*signalbus.PgSignalBus).Start()
 
-	// Run the cluster manager
-	ocmClient := ocm.NewClient(env.Clients.OCM.Connection)
-
 	// creates cluster worker
 	cloudProviderService := env.Services.CloudProviders
 	clusterService := env.Services.Cluster
@@ -67,7 +63,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	kasFleetshardOperatorAddon := env.Services.KasFleetshardAddonService
 
 	//set Unique Id for each work to facilitate Leader Election process
-	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, ocmClient, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
+	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
 	workerList = append(workerList, clusterManager)
 
 	// creates kafka worker

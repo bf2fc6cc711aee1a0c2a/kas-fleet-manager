@@ -12,14 +12,13 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 			"region":         cluster.Region,
 			"cloud_provider": cluster.CloudProvider,
 			"multi_az":       cluster.MultiAZ,
-			"managed":        cluster.Managed,
 			"status":         cluster.Status,
-			"byoc":           cluster.BYOC,
 			"cluster_id":     cluster.ClusterID,
 			"external_id":    cluster.ExternalID,
 			"created_at":     cluster.Meta.CreatedAt,
 			"updated_at":     cluster.Meta.UpdatedAt,
 			"deleted_at":     cluster.Meta.DeletedAt.Time,
+			"provider_type":  cluster.ProviderType.String(),
 		},
 	}
 }

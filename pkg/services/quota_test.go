@@ -1,8 +1,8 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"reflect"
 	"testing"

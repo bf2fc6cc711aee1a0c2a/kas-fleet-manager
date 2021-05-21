@@ -5,8 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -36,10 +34,7 @@ func runProviderList(cmd *cobra.Command, _ []string) {
 	env := environments.Environment()
 	config := env.Services.Config
 
-	// setup required services
-	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-
-	clusterService := services.NewCloudProvidersService(ocmClient)
+	clusterService := env.Services.CloudProviders
 
 	cloudProviders, err := clusterService.ListCloudProviders()
 	if err != nil {

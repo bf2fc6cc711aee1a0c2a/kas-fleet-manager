@@ -68,16 +68,14 @@ func getClusterForScaleTest(replicas int) *clustersmgmtv1.Cluster {
 
 // scaleUpComputeNodes and confirm that it is scaled without error
 func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, increment int) {
-	cluster, err := h.Env().Services.Cluster.ScaleUpComputeNodes(clusterID, increment)
+	_, err := h.Env().Services.Cluster.ScaleUpComputeNodes(clusterID, increment)
 	Expect(err).To(BeNil())
-	Expect(cluster.Nodes().Compute()).To(Equal(expectedReplicas))
 }
 
 // scaleDownComputeNodes and confirm that it is scaled without error
 func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, decrement int) {
-	cluster, err := h.Env().Services.Cluster.ScaleDownComputeNodes(clusterID, decrement)
+	_, err := h.Env().Services.Cluster.ScaleDownComputeNodes(clusterID, decrement)
 	Expect(err).To(BeNil())
-	Expect(cluster.Nodes().Compute()).To(Equal(expectedReplicas))
 }
 
 // overrideClusterMockResponse - override mock response for Cluster patch

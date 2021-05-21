@@ -2,11 +2,11 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/golang/glog"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 const (
@@ -32,74 +32,87 @@ type KasFleetshardOperatorAddon interface {
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
 
-func NewKasFleetshardOperatorAddon(ssoService KeycloakService, ocm ocm.Client, configService ConfigService) KasFleetshardOperatorAddon {
+func NewKasFleetshardOperatorAddon(ssoService KeycloakService, configService ConfigService, providerFactory clusters.ProviderFactory) KasFleetshardOperatorAddon {
 	return &kasFleetshardOperatorAddon{
-		ssoService:    ssoService,
-		ocm:           ocm,
-		configService: configService,
+		ssoService:      ssoService,
+		configService:   configService,
+		providerFactory: providerFactory,
 	}
 }
 
 type kasFleetshardOperatorAddon struct {
-	ssoService    KeycloakService
-	ocm           ocm.Client
-	configService ConfigService
+	ssoService      KeycloakService
+	providerFactory clusters.ProviderFactory
+	configService   ConfigService
 }
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
+	if cluster.ProviderType != api.ClusterProviderOCM {
+		// TODO: in the future we can add implementations for other providers by applying the OLM resources for the kas fleetshard operator
+		return false, errors.NotImplemented("addon installation is not implemented for provider type %s", cluster.ProviderType)
+	}
+
 	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
+	params, paramsErr := o.getAddonParams(cluster)
+	if paramsErr != nil {
+		return false, paramsErr
+	}
+	p, err := o.providerFactory.GetAddonProvider(cluster.ProviderType)
+	if err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
+	}
 	glog.V(5).Infof("Provision addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
-	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, kasFleetshardAddonID)
-	if addonErr != nil {
-		return false, errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
+	spec := &types.ClusterSpec{
+		InternalID:     cluster.ClusterID,
+		ExternalID:     cluster.ExternalID,
+		Status:         cluster.Status,
+		AdditionalInfo: cluster.ClusterSpec,
 	}
-	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
-	if pErr != nil {
-		return false, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
+	if ready, err := p.InstallAddonWithParams(spec, kasFleetshardAddonID, params); err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+	} else {
+		return ready, nil
 	}
-	params := o.buildAddonParams(acc, cluster.ClusterID)
-	if addonInstallation != nil && addonInstallation.ID() == "" {
-		glog.V(5).Infof("No existing %s addon found, create a new one", kasFleetshardAddonID)
-		addonInstallation, addonErr = o.ocm.CreateAddonWithParams(cluster.ClusterID, kasFleetshardAddonID, params)
-		if addonErr != nil {
-			return false, errors.GeneralError("failed to create addon for cluster %s due to error: %v", cluster.ClusterID, addonErr)
-		}
-	}
-
-	if addonInstallation != nil && addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-		addonInstallation, addonErr = o.ocm.UpdateAddonParameters(cluster.ClusterID, addonInstallation.ID(), params)
-		if addonErr != nil {
-			return false, errors.GeneralError("failed to update parameters for addon %s on cluster %s due to error: %v", addonInstallation.ID(), cluster.ClusterID, addonErr)
-		}
-		return true, nil
-	}
-
-	return false, nil
 }
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
+	if cluster.ProviderType != api.ClusterProviderOCM {
+		// TODO: in the future we can add implementations for other providers by applying the OLM resources for the kas fleetshard operator
+		return errors.NotImplemented("addon installation is not implemented for provider type %s", cluster.ProviderType)
+	}
+
 	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
+	params, paramsErr := o.getAddonParams(cluster)
+	if paramsErr != nil {
+		return paramsErr
+	}
+	p, err := o.providerFactory.GetAddonProvider(cluster.ProviderType)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+
 	glog.V(5).Infof("Reconcile parameters for addon %s on cluster %s", kasFleetshardAddonID, cluster.ClusterID)
-	addonInstallation, addonErr := o.ocm.GetAddon(cluster.ClusterID, kasFleetshardAddonID)
-	if addonErr != nil {
-		return errors.GeneralError("failed to get existing addon status due to error: %v", addonErr)
+	spec := &types.ClusterSpec{
+		InternalID:     cluster.ClusterID,
+		ExternalID:     cluster.ExternalID,
+		Status:         cluster.Status,
+		AdditionalInfo: cluster.ClusterSpec,
 	}
-	if addonInstallation == nil || addonInstallation.ID() == "" {
-		logger.Logger.Warningf("no valid installation for addon %s found on cluster %s", kasFleetshardAddonID, cluster.ClusterID)
-		return errors.BadRequest("no valid addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+	if err := p.UpdateAddonWithParams(spec, kasFleetshardAddonID, params); err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
+	} else {
+		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", kasFleetshardAddonID, cluster.ClusterID)
+		return nil
 	}
-	glog.V(5).Infof("Found existing addon %s, updating parameters", addonInstallation.ID())
+}
+
+func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]ocm.AddonParameter, *errors.ServiceError) {
 	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
 	if pErr != nil {
-		return errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
+		return nil, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
 	}
 	params := o.buildAddonParams(acc, cluster.ClusterID)
-	addonInstallation, addonErr = o.ocm.UpdateAddonParameters(cluster.ClusterID, addonInstallation.ID(), params)
-	if addonErr != nil {
-		return errors.GeneralError("failed to update parameters for addon %s on cluster %s due to error: %v", addonInstallation.ID(), cluster.ClusterID, addonErr)
-	}
-	glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", addonInstallation.ID(), cluster.ClusterID)
-	return nil
+	return params, nil
 }
 
 func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {

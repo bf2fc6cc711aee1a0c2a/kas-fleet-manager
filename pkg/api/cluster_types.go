@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"gorm.io/gorm"
 )
 
@@ -9,6 +10,50 @@ type ClusterProviderType string
 
 func (k ClusterStatus) String() string {
 	return string(k)
+}
+
+func (k *ClusterStatus) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	err := unmarshal(&s)
+	if err != nil {
+		return err
+	}
+	switch s {
+	case ClusterAccepted.String():
+		*k = ClusterAccepted
+	case ClusterProvisioning.String():
+		*k = ClusterProvisioning
+	case ClusterProvisioned.String():
+		*k = ClusterProvisioned
+	case ClusterReady.String():
+		*k = ClusterReady
+	default:
+		return fmt.Errorf("invalid value %s", s)
+	}
+	return nil
+}
+
+func (p ClusterProviderType) String() string {
+	return string(p)
+}
+
+func (p *ClusterProviderType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	err := unmarshal(&s)
+	if err != nil {
+		return err
+	}
+	switch s {
+	case ClusterProviderOCM.String():
+		*p = ClusterProviderOCM
+	case ClusterProviderAwsEKS.String():
+		*p = ClusterProviderAwsEKS
+	case ClusterProviderStandalone.String():
+		*p = ClusterProviderStandalone
+	default:
+		return fmt.Errorf("invalid value %s", s)
+	}
+	return nil
 }
 
 const (
@@ -34,7 +79,7 @@ const (
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
 
 	ClusterProviderOCM        ClusterProviderType = "ocm"
-	ClusterProviderAwsEKS        ClusterProviderType = "aws-eks"
+	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 )
 

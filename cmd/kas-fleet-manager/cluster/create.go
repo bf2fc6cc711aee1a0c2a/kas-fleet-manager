@@ -4,8 +4,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/flags"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -39,10 +37,7 @@ func runCreate(cmd *cobra.Command, _ []string) {
 	}
 
 	env := environments.Environment()
-
-	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
+	clusterService := env.Services.Cluster
 
 	clusterRequest := api.Cluster{
 		CloudProvider: provider,

@@ -8,10 +8,9 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -52,8 +51,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -195,8 +193,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		t.Fatalf("Cluster not found")
 	}
 
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -312,8 +309,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -384,7 +380,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -527,7 +523,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())

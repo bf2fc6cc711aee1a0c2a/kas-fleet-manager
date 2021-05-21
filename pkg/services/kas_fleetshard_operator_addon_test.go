@@ -2,22 +2,21 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-
 	"testing"
 )
 
 func TestAgentOperatorAddon_Provision(t *testing.T) {
 	addonId := "test-id"
-	addon, _ := clustersmgmtv1.NewAddOnInstallation().ID(addonId).Build()
 	type fields struct {
-		ocm        ocm.Client
-		ssoService KeycloakService
+		providerFactory clusters.ProviderFactory
+		ssoService      KeycloakService
 	}
 	tests := []struct {
 		name    string
@@ -33,14 +32,13 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				ocm: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						return addon, nil
-					},
-					CreateAddonWithParamsFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						return &clustersmgmtv1.AddOnInstallation{}, nil
-					},
-				},
+				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
+					return &clusters.AddonProviderMock{
+						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+							return false, nil
+						},
+					}, nil
+				}},
 			},
 			// we can't change the state of AddOnInstallation to be ready as the field is private
 			result:  false,
@@ -54,48 +52,24 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return nil, errors.GeneralError("error")
 					},
 				},
-				ocm: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						return nil, nil
-					},
-				},
+				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
+					return &clusters.AddonProviderMock{
+						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+							return false, errors.GeneralError("error")
+						},
+					}, nil
+				}},
 			},
 			result:  false,
 			wantErr: true,
-		},
-		{
-			name: "addId does match",
-			fields: fields{
-				ssoService: &KeycloakServiceMock{
-					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-						return &api.ServiceAccount{}, nil
-					},
-				},
-				ocm: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, requestAddonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						if requestAddonId != addonId {
-							return nil, errors.GeneralError("invalid addon id : %s", requestAddonId)
-						}
-						return addon, nil
-					},
-					CreateAddonWithParamsFunc: func(clusterId string, requestAddonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						if requestAddonId != addonId {
-							return nil, errors.GeneralError("invalid addon id : %s", requestAddonId)
-						}
-						return &clustersmgmtv1.AddOnInstallation{}, nil
-					},
-				},
-			},
-			result:  false,
-			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				ssoService: tt.fields.ssoService,
-				ocm:        tt.fields.ocm,
+				ssoService:      tt.fields.ssoService,
+				providerFactory: tt.fields.providerFactory,
 				configService: NewConfigService(config.ApplicationConfig{
 					Server: &config.ServerConfig{},
 					Keycloak: &config.KeycloakConfig{
@@ -107,7 +81,8 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 				}),
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
-				ClusterID: "test-cluster-id",
+				ClusterID:    "test-cluster-id",
+				ProviderType: api.ClusterProviderOCM,
 			})
 			if err != nil && !tt.wantErr {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)
@@ -156,7 +131,8 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 				ssoService: tt.fields.ssoService,
 			}
 			err := agentOperatorAddon.RemoveServiceAccount(api.Cluster{
-				ClusterID: "test-cluster-id",
+				ClusterID:    "test-cluster-id",
+				ProviderType: api.ClusterProviderOCM,
 			})
 			gomega.Expect(err != nil).To(Equal(tt.wantErr))
 		})
@@ -164,10 +140,9 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 }
 
 func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
-	addon, _ := clustersmgmtv1.NewAddOnInstallation().ID("test-id").Build()
 	type fields struct {
-		ocm        ocm.Client
-		ssoService KeycloakService
+		providerFactory clusters.ProviderFactory
+		ssoService      KeycloakService
 	}
 	tests := []struct {
 		name    string
@@ -182,32 +157,15 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				ocm: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						return addon, nil
-					},
-					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						return &clustersmgmtv1.AddOnInstallation{}, nil
-					},
-				},
+				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
+					return &clusters.AddonProviderMock{
+						UpdateAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
+							return nil
+						},
+					}, nil
+				}},
 			},
 			wantErr: false,
-		},
-		{
-			name: "ReconcileParameters is failed because addon id is not valid",
-			fields: fields{
-				ssoService: &KeycloakServiceMock{
-					RegisterKasFleetshardOperatorServiceAccountFunc: func(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-						return &api.ServiceAccount{}, nil
-					},
-				},
-				ocm: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						return nil, nil
-					},
-				},
-			},
-			wantErr: true,
 		},
 		{
 			name: "ReconcileParameters is failed because UpdateAddonParameters failed",
@@ -217,14 +175,13 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				ocm: &ocm.ClientMock{
-					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-						return addon, nil
-					},
-					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
-						return nil, errors.GeneralError("test error")
-					},
-				},
+				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
+					return &clusters.AddonProviderMock{
+						UpdateAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
+							return errors.GeneralError("test error")
+						},
+					}, nil
+				}},
 			},
 			wantErr: true,
 		},
@@ -233,8 +190,8 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				ssoService: tt.fields.ssoService,
-				ocm:        tt.fields.ocm,
+				ssoService:      tt.fields.ssoService,
+				providerFactory: tt.fields.providerFactory,
 				configService: NewConfigService(config.ApplicationConfig{
 					Server: &config.ServerConfig{},
 					Keycloak: &config.KeycloakConfig{
@@ -247,7 +204,8 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 				}),
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{
-				ClusterID: "test-cluster-id",
+				ClusterID:    "test-cluster-id",
+				ProviderType: api.ClusterProviderOCM,
 			})
 			if err != nil && !tt.wantErr {
 				t.Errorf("Provision() error = %v, want = %v", err, tt.wantErr)

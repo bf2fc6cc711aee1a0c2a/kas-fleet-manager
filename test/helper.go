@@ -32,7 +32,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 )
@@ -242,11 +241,9 @@ func (helper *Helper) stopKafkaWorkers() {
 }
 
 func (helper *Helper) startClusterWorker() {
-	ocmClient := ocm.NewClient(environments.Environment().Clients.OCM.Connection)
-
 	// start cluster worker
 	helper.ClusterWorker = workers.NewClusterManager(helper.Env().Services.Cluster, helper.Env().Services.CloudProviders,
-		ocmClient, environments.Environment().Services.Config, uuid.New().String(), helper.Env().Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
+		environments.Environment().Services.Config, uuid.New().String(), helper.Env().Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.ClusterWorker.Start()
@@ -300,9 +297,8 @@ func (helper *Helper) stopSignalBusWorker() {
 func (helper *Helper) startLeaderElectionWorker() {
 
 	env := helper.Env()
-	ocmClient := ocm.NewClient(env.Clients.OCM.Connection)
 	helper.ClusterWorker = workers.NewClusterManager(env.Services.Cluster, env.Services.CloudProviders,
-		ocmClient, env.Services.Config, uuid.New().String(), env.Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
+		env.Services.Config, uuid.New().String(), env.Services.KasFleetshardAddonService, environments.Environment().Services.OsdIdpKeycloak)
 
 	var kafkaWorkerList []workers.Worker
 	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config)
