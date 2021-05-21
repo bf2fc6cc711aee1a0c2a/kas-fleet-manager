@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -21,6 +20,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	var clusterConfig *config.ClusterConfig
 	var originalScalingType string
 
+	// Start with no cluster config and manual scaling.
 	startHook := func(h *test.Helper) {
 		clusterConfig = h.Env().Config.OSDClusterConfig.ClusterConfig
 		originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
@@ -47,10 +47,10 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// load existing cluster and assign kafka to it so that it is not deleted
 
 	db := h.Env().DBFactory.New()
-	clusterID := "cluster-id-that-should-not-be-deleted"
+	clusterWithKafkaID := "cluster-id-that-should-not-be-deleted"
 
 	kafka := api.KafkaRequest{
-		ClusterID:     clusterID,
+		ClusterID:     clusterWithKafkaID,
 		MultiAZ:       true,
 		Region:        "us-east-1",
 		CloudProvider: "aws",
@@ -63,84 +63,66 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		return
 	}
 
+	clusterCriteria := services.FindClusterCriteria{
+		Provider: "aws",
+		Region:   "us-east-1",
+		MultiAZ:  true,
+	}
+
 	//*********************************************************************
-	//pre-create an cluster
+	// pre-create clusters
 	//*********************************************************************
 	h.Env().Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
+		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 		// this is a dummy cluster which will be auto created and should not be deleted because it has kafka in it
-		config.ManualCluster{ClusterId: clusterID, KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
+		config.ManualCluster{ClusterId: clusterWithKafkaID, KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 	})
 
 	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
 	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
 
-	currentClusterId := "test03"
-	err1 := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-
-		if foundCluster, svcErr := clusterService.FindClusterByID(currentClusterId); svcErr != nil {
-			return true, fmt.Errorf("failed to find OSD cluster %s", svcErr)
-		} else {
-			if foundCluster == nil {
-				return false, nil
-			}
-			cluster := *foundCluster
-			glog.Infof("Cluster found: %s %s %s", cluster.ClusterID, cluster.Status.String(), cluster.ID)
-
-			return foundCluster.ClusterID != "", nil
+	// Ensure both clusters in the config file have been created
+	pollErr := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
+		clusters, svcErr := clusterService.FindAllClusters(clusterCriteria)
+		if svcErr != nil {
+			return true, svcErr
 		}
+		t.Logf("%d clusters found in the database: ", len(clusters))
+		return len(clusters) == 2, nil
 	})
-	Expect(err1).NotTo(HaveOccurred())
+	Expect(pollErr).NotTo(HaveOccurred())
 
 	//*********************************************************************
 	//data plane cluster config - with new clusters
 	//*********************************************************************
 	h.Env().Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
-		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
-		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: "us-east-1", MultiAZ: true, CloudProvider: "aws", Schedulable: true},
+		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
+		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
+		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 	})
 
-	err3 := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-		found, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
-			Provider: "aws",
-			Region:   "us-east-1",
-			MultiAZ:  true,
-		})
-
+	pollErr = wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
+		found, svcErr := clusterService.FindAllClusters(clusterCriteria)
 		if svcErr != nil {
-			return true, fmt.Errorf("failed to find OSD cluster with wanted status %s", svcErr)
-		}
-		if found == nil {
-			return false, nil
+			return true, svcErr
 		}
 		return len(found) == 4, nil // make sure that the original cluster is there because it has kafka
 	})
-	Expect(err3).NotTo(HaveOccurred())
+	Expect(pollErr).NotTo(HaveOccurred())
 
-	// Now delete the kafka from the original cluster to check for placement stratedy and wait for cluster deletion
+	// Now delete the kafka from the original cluster to check for placement strategy and wait for cluster deletion
 	if err := db.Delete(&kafka).Error; err != nil {
-		t.Error("failed to delete a dummy kafka request")
-		return
+		t.Fatal("failed to delete a dummy kafka request")
 	}
 
-	err3 = wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-		found, svcErr := clusterService.FindAllClusters(services.FindClusterCriteria{
-			Provider: "aws",
-			Region:   "us-east-1",
-			MultiAZ:  true,
-			Status:   api.ClusterReady,
-		})
-
+	pollErr = wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
+		found, svcErr := clusterService.FindAllClusters(clusterCriteria)
 		if svcErr != nil {
-			return true, fmt.Errorf("failed to find OSD cluster with wanted status %s", svcErr)
-		}
-		if found == nil {
-			return false, nil
+			return true, svcErr
 		}
 		return len(found) == 3, nil // we should only have clusters in the manual config
 	})
-	Expect(err3).NotTo(HaveOccurred())
+	Expect(pollErr).NotTo(HaveOccurred())
 
 	//*********************************************************************
 	//Test kafka instance creation and OSD cluster placement
@@ -166,7 +148,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	}
 
 	keySrv := services.NewKeycloakService(h.Env().Config.Keycloak, h.Env().Config.Keycloak.KafkaRealm)
-	kafkaSrv := services.NewKafkaService(h.Env().DBFactory, services.NewSyncsetService(ocmClient), clusterService, keySrv, h.Env().Config.Kafka, h.Env().Config.AWS, services.NewQuotaService(ocmClient))
+	kafkaSrv := services.NewKafkaService(h.Env().DBFactory, clusterService, keySrv, h.Env().Config.Kafka, h.Env().Config.AWS, services.NewQuotaService(ocmClient))
 
 	errK := kafkaSrv.RegisterKafkaJob(kafkas[0])
 	if errK != nil {

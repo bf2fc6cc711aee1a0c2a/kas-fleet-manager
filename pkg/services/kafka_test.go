@@ -19,7 +19,6 @@ import (
 	"github.com/onsi/gomega"
 	"gorm.io/gorm"
 
-	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 )
 
@@ -33,7 +32,6 @@ var (
 	testKafkaRequestProvider = "aws"
 	testKafkaRequestName     = "test-cluster"
 	testClusterID            = "test-cluster-id"
-	testSyncsetID            = "test-syncset-id"
 	testID                   = "test"
 	testUser                 = "test-user"
 	kafkaRequestTableName    = "kafka_requests"
@@ -65,10 +63,9 @@ func Test_kafkaService_Get(t *testing.T) {
 	// fields are the variables on the struct that we're testing, in this case kafkaService
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 	}
 	// args are the variables that will be provided to the function we're testing, in this case it's just the id we
-	// pass to kafkaService.Create
+	// pass to kafkaService.PrepareKafkaRequest
 	type args struct {
 		ctx context.Context
 		id  string
@@ -162,7 +159,6 @@ func Test_kafkaService_Get(t *testing.T) {
 			// we're testing the kafkaService struct, so use the 'fields' to create one
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 			}
 			// we're testing the kafkaService.Get function so use the 'args' to provide arguments to the function
 			got, err := k.Get(tt.args.ctx, tt.args.id)
@@ -185,10 +181,9 @@ func Test_kafkaService_GetById(t *testing.T) {
 	// fields are the variables on the struct that we're testing, in this case kafkaService
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 	}
 	// args are the variables that will be provided to the function we're testing, in this case it's just the id we
-	// pass to kafkaService.Create
+	// pass to kafkaService.PrepareKafkaRequest
 	type args struct {
 		id string
 	}
@@ -262,7 +257,6 @@ func Test_kafkaService_GetById(t *testing.T) {
 			// we're testing the kafkaService struct, so use the 'fields' to create one
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 			}
 			// we're testing the kafkaService.Get function so use the 'args' to provide arguments to the function
 			got, err := k.GetById(tt.args.id)
@@ -351,7 +345,6 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 func Test_kafkaService_Create(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 		clusterService    ClusterService
 		keycloakService   KeycloakService
 		kafkaConfig       *config.KafkaConfig
@@ -371,15 +364,9 @@ func Test_kafkaService_Create(t *testing.T) {
 		wantBootstrapServerHost string
 	}{
 		{
-			name: "successful syncset creation",
+			name: "successful kafka request preparation",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
-						return syncset, nil
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -408,51 +395,9 @@ func Test_kafkaService_Create(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "failed syncset creation",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						return nil, errors.New(errors.ErrorBadRequest, "")
-					},
-				},
-				clusterService: &ClusterServiceMock{
-					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
-						return "clusterDNS", nil
-					},
-				},
-				keycloakService: &KeycloakServiceMock{
-					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-						return "secret", nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
-								ClientID: "test",
-							},
-						}
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-			},
-			wantErr: true,
-		},
-		{
 			name: "failed clusterDNS retrieval",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
-						return syncset, nil
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "", errors.New(errors.ErrorBadRequest, "")
@@ -484,12 +429,6 @@ func Test_kafkaService_Create(t *testing.T) {
 			name: "validate BootstrapServerHost truncate",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						syncset, _ := cmv1.NewSyncset().ID(testSyncsetID).Build()
-						return syncset, nil
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -521,14 +460,9 @@ func Test_kafkaService_Create(t *testing.T) {
 			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
 		},
 		{
-			name: "should not create sync set if EnableKasFleetshardSync is true",
+			name: "failed SSO client creation",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					CreateFunc: func(syncsetBuilder *cmv1.SyncsetBuilder, syncsetId string, clusterId string) (*cmv1.Syncset, *errors.ServiceError) {
-						panic("this should not be called")
-					},
-				},
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -536,19 +470,18 @@ func Test_kafkaService_Create(t *testing.T) {
 				},
 				keycloakService: &KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
-						return "secret", nil
+						return "", errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
 					GetConfigFunc: func() *config.KeycloakConfig {
 						return &config.KeycloakConfig{
 							KafkaRealm: &config.KeycloakRealmConfig{
 								ClientID: "test",
 							},
+							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config.KafkaConfig{
-					EnableKasFleetshardSync: true,
-				},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -556,7 +489,7 @@ func Test_kafkaService_Create(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -567,15 +500,14 @@ func Test_kafkaService_Create(t *testing.T) {
 
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
 				awsConfig:         config.NewAWSConfig(),
 			}
 
-			if err := k.Create(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
-				t.Errorf("Create() error = %v, wantErr = %v", err, tt.wantErr)
+			if err := k.PrepareKafkaRequest(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
+				t.Errorf("PrepareKafkaRequest() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 
 			if tt.wantBootstrapServerHost != "" && tt.args.kafkaRequest.BootstrapServerHost != tt.wantBootstrapServerHost {
@@ -660,7 +592,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 func Test_kafkaService_Delete(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
+		clusterService    ClusterService
 		keycloakService   KeycloakService
 		kafkaConfig       *config.KafkaConfig
 		quotaService      QuotaService
@@ -676,42 +608,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 		setupFn func()
 	}{
 		{
-			name: "error when syncset deletion fails",
+			name: "successfully deletes a Kafka request when it has not been assigned to an OSD cluster",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						return http.StatusInternalServerError, errors.GeneralError("error deleting syncset")
-					},
-				},
-				keycloakService: &KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							EnableAuthenticationOnKafka: true,
-						}
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
-					kafkaRequest.ID = testID
-				}),
-			},
-			wantErr: true,
-		},
-		{
-			name: "successful delete the kafka instance when synset delete successful",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						return http.StatusNoContent, nil
-					},
-				},
 				keycloakService: &KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
@@ -739,14 +638,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 			},
 		},
 		{
-			name: "successful delete the kafka instance when synset not found",
+			name: "successfully deletes a Kafka request and cleans up all of its dependencies",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService: &SyncsetServiceMock{
-					DeleteFunc: func(syncsetId string, clusterId string) (int, *errors.ServiceError) {
-						return http.StatusNotFound, errors.GeneralError("syncset not found")
-					},
-				},
 				keycloakService: &KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
@@ -772,10 +666,87 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Region:        clusterservicetest.MockClusterRegion,
 					ClusterID:     clusterservicetest.MockClusterID,
 					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       false,
+					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
 			},
+		},
+		{
+			name: "fail to delete kafka request: error when deleting sso client",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return errors.FailedToDeleteSSOClient("failed to delete sso client")
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					MultiAZ:       true,
+					Status:        constants.KafkaRequestStatusPreparing.String(),
+				}))
+			},
+			wantErr: true,
+		},
+		{
+			name: "fail to delete kafka request: error when deleting CNAME records",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService: &ClusterServiceMock{
+					GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
+						return "", errors.GeneralError("failed to get cluster dns")
+					},
+				},
+				keycloakService: &KeycloakServiceMock{
+					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
+						return nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return &config.KeycloakConfig{
+							EnableAuthenticationOnKafka: true,
+						}
+					},
+				},
+				kafkaConfig: &config.KafkaConfig{
+					EnableKafkaExternalCertificate: true,
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+					kafkaRequest.ID = testID
+				}),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+					Meta: api.Meta{
+						ID: testID,
+					},
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					MultiAZ:       true,
+					Status:        constants.KafkaRequestStatusPreparing.String(),
+				}))
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -785,7 +756,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
+				clusterService:    tt.fields.clusterService,
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
 				awsConfig:         config.NewAWSConfig(),
@@ -803,7 +774,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 		clusterService    ClusterService
 		quotaService      QuotaService
 	}
@@ -828,7 +798,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job succeeds",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
@@ -851,7 +820,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka too many instances",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
@@ -876,7 +844,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job fails: postgres error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
@@ -901,7 +868,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job fails: quota error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					ReserveQuotaFunc: func(productID string, clusterID string, kafkaID string, owner string, reserve bool, availability string) (bool, string, *errors.ServiceError) {
@@ -938,7 +904,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       &kafkaConf,
 				awsConfig:         config.NewAWSConfig(),
@@ -966,7 +931,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 func Test_kafkaService_List(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 	}
 	type args struct {
 		ctx      context.Context
@@ -1006,7 +970,6 @@ func Test_kafkaService_List(t *testing.T) {
 			name: "success: list with default values",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 			},
 			args: args{
 				ctx: authenticatedCtx,
@@ -1070,7 +1033,6 @@ func Test_kafkaService_List(t *testing.T) {
 			name: "success: list with specified size",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 			},
 			args: args{
 				ctx: authenticatedCtx,
@@ -1121,7 +1083,6 @@ func Test_kafkaService_List(t *testing.T) {
 			name: "success: return empty list if no kafka requests available for user",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 			},
 			args: args{
 				ctx: authenticatedCtx,
@@ -1157,7 +1118,6 @@ func Test_kafkaService_List(t *testing.T) {
 			name: "fail: user credentials not available in context",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 			},
 			args: args{
 				ctx: context.TODO(),
@@ -1187,7 +1147,6 @@ func Test_kafkaService_List(t *testing.T) {
 			name: "fail: database returns an error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				syncsetService:    nil,
 			},
 			args: args{
 				ctx: authenticatedCtx,
@@ -1215,7 +1174,6 @@ func Test_kafkaService_List(t *testing.T) {
 			tt.setupFn(tt.want.kafkaList)
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
 			}
@@ -1250,7 +1208,6 @@ func Test_kafkaService_List(t *testing.T) {
 func Test_kafkaService_ListByStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 		clusterService    ClusterService
 	}
 	type args struct {
@@ -1290,7 +1247,6 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			tt.setupFn()
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
@@ -1311,7 +1267,6 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 func Test_kafkaService_UpdateStatus(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 		clusterService    ClusterService
 	}
 	type args struct {
@@ -1394,7 +1349,6 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			tt.setupFn()
 			k := kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),
@@ -1415,7 +1369,6 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 func Test_kafkaService_Update(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		syncsetService    SyncsetService
 		clusterService    ClusterService
 	}
 	type args struct {
@@ -1459,7 +1412,6 @@ func Test_kafkaService_Update(t *testing.T) {
 			tt.setupFn()
 			k := kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				syncsetService:    tt.fields.syncsetService,
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       config.NewKafkaConfig(),
 				awsConfig:         config.NewAWSConfig(),

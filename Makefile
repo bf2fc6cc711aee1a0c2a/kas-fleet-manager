@@ -325,7 +325,7 @@ code/fix:
 
 run: install
 	kas-fleet-manager migrate
-	kas-fleet-manager serve
+	kas-fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
 .PHONY: run
 
 # Run Swagger and host the api docs
@@ -490,8 +490,6 @@ deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
 deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
-deploy: ENABLE_MANAGED_KAFKA_CR ?= "true"
-deploy: ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC ?= "false"
 deploy: deploy/db
 	@oc process -f ./templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="$(OCM_SERVICE_CLIENT_ID)" \
@@ -527,8 +525,6 @@ deploy: deploy/db
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
-		-p ENABLE_MANAGED_KAFKA_CR="$(ENABLE_MANAGED_KAFKA_CR)" \
-		-p ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC="$(ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC)" \
 		-p ALLOW_ANY_REGISTERED_USERS="$(ALLOW_ANY_REGISTERED_USERS)" \
 		-p VAULT_KIND=$(VAULT_KIND) \
 		-p ENABLE_CONNECTORS=$(ENABLE_CONNECTORS) \

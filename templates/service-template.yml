@@ -714,7 +714,6 @@ objects:
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
-            - --enable-managed-kafka-cr=${ENABLE_MANAGED_KAFKA_CR}
             - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
             - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
@@ -799,7 +798,6 @@ objects:
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
-            - --enable-kas-fleetshard-sync=${ENABLE_KAS_FLEETSHARD_OPERATOR_SYNC}
             - --enable-quota-service=${ENABLE_QUOTA_SERVICE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}

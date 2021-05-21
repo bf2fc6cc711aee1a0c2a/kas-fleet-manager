@@ -3,16 +3,12 @@ package services
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"sync"
 
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
-	syncsetresources "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/syncsetresources"
 	"github.com/golang/glog"
-
 	"github.com/google/uuid"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
@@ -26,6 +22,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 )
 
@@ -37,13 +34,18 @@ var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.S
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
-	Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	// PrepareKafkaRequest sets any required information (i.e. bootstrap server host, sso client id and secret)
+	// to the Kafka Request record in the database. The kafka request will also be updated with an updated_at
+	// timestamp and the corresponding cluster identifier.
+	PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	// Get method will retrieve the kafkaRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
 	Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
 	// GetById method will retrieve the KafkaRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
 	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
+	// Delete cleans up all dependencies for a Kafka request and soft deletes the Kafka Request record from the database.
+	// The Kafka Request in the database will be updated with a deleted_at timestamp.
 	Delete(*api.KafkaRequest) *errors.ServiceError
 	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
@@ -68,7 +70,6 @@ var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
 	connectionFactory *db.ConnectionFactory
-	syncsetService    SyncsetService
 	clusterService    ClusterService
 	keycloakService   KeycloakService
 	kafkaConfig       *config.KafkaConfig
@@ -77,10 +78,9 @@ type kafkaService struct {
 	mu                sync.Mutex
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, syncsetService SyncsetService, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
 	return &kafkaService{
 		connectionFactory: connectionFactory,
-		syncsetService:    syncsetService,
 		clusterService:    clusterService,
 		keycloakService:   keycloakService,
 		kafkaConfig:       kafkaConfig,
@@ -132,12 +132,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	return nil
 }
 
-// Create will create a new kafka cr with the given configuration,
-// and sync it via a syncset to an available cluster with capacity
-// in the desired region for the desired cloud provider.
-// The kafka object in the database will be updated with a updated_at
-// timestamp and the corresponding cluster identifier.
-func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
 	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
 	if replaceErr != nil {
@@ -162,25 +157,10 @@ func (k *kafkaService) Create(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-		kafkaRequest.SsoClientID = syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+		kafkaRequest.SsoClientID = BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		kafkaRequest.SsoClientSecret, err = k.keycloakService.RegisterKafkaClientInSSO(kafkaRequest.SsoClientID, kafkaRequest.OrganisationId)
 		if err != nil {
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
-		}
-	}
-
-	// only use sync set if EnableKasFleetshardSync is set to false
-	if !k.kafkaConfig.EnableKasFleetshardSync {
-		// create the syncset builder
-		syncsetBuilder, syncsetId, err := newKafkaSyncsetBuilder(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig())
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "error creating kafka syncset builder")
-		}
-
-		// create the syncset
-		_, err = k.syncsetService.Create(syncsetBuilder, syncsetId, kafkaRequest.ClusterID)
-		if err != nil {
-			return err
 		}
 	}
 
@@ -311,7 +291,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 	}
 
 	if dbConn.RowsAffected >= 1 {
-		glog.Infof("%v kafkas have are deprovisioning for users %v", dbConn.RowsAffected, users)
+		glog.Infof("%v kafkas are now deprovisioning for users %v", dbConn.RowsAffected, users)
 		var counter int64 = 0
 		for ; counter < dbConn.RowsAffected; counter++ {
 			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
@@ -350,11 +330,6 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 	return nil
 }
 
-// Delete deletes a kafka request and its corresponding syncset from
-// the associated cluster it was deployed on. Deleting the syncset will
-// delete all resources (Kafka CR, Project) associated with the syncset.
-// The kafka object in the database will be updated with a deleted_at
-// timestamp.
 func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
@@ -362,7 +337,7 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 	if kafkaRequest.ClusterID != "" {
 		// delete the kafka client in mas sso
 		if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
-			clientId := syncsetresources.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
+			clientId := BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
 			if keycloakErr != nil {
 				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting sso client")
@@ -380,14 +355,6 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 			if err != nil {
 				return err
 			}
-		}
-
-		// delete the syncset
-		syncsetId := buildSyncsetIdentifier(kafkaRequest)
-		statucCode, err := k.syncsetService.Delete(syncsetId, kafkaRequest.ClusterID)
-
-		if err != nil && statucCode != http.StatusNotFound {
-			return errors.GeneralError("error deleting syncset: %v", err)
 		}
 	}
 
@@ -636,7 +603,7 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			JwksEndpointURI:        keycloakConfig.KafkaRealm.JwksEndpointURI,
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
-			CustomClaimCheck:       syncsetresources.BuildCustomClaimCheck(kafkaRequest),
+			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
 		}
 	}
