@@ -3,7 +3,7 @@ info:
   title: Connector Catalog Service
   version: 0.0.1
   description: |
-    The endpoints of a Connector Catalog service are discover
+    The endpoints of a Connector Catalog service are used to discover
     connector type APIs that can be used by the Connector Catalog Manager.
 servers:
   - url: http://localhost:8000

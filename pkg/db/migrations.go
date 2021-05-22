@@ -49,6 +49,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addClusterDNS(),
 	connectorMigrations20210518(),
 	addExternalIDsToSpecificClusters(),
+	addKafkaConnectionSettingsToConnectors(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

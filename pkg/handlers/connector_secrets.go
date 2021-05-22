@@ -15,6 +15,7 @@ func stripSecretReferences(resource *api.Connector, cts services.ConnectorTypesS
 	}
 
 	// clear out secrets..
+	resource.Kafka.ClientSecret = ""
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
@@ -45,7 +46,14 @@ func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesServ
 	if err != nil {
 		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
 	}
+
 	// move secrets to a vault.
+	keyId := api.NewID()
+	if err := vault.SetSecretString(keyId, resource.Kafka.ClientSecret, "/vi/connector/"+resource.ID); err != nil {
+		return errors.GeneralError("could not store kafka client secret in the vault")
+	}
+	resource.Kafka.ClientSecret = keyId
+
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.String {

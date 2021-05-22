@@ -577,6 +577,8 @@ components:
           format: int64
         kafka_id:
           type: string
+        kafka:
+          $ref: 'connector_mgmt.yaml#/components/schemas/KafkaConnectionSettings'
         connector_type_id:
           type: string
         connector_spec:

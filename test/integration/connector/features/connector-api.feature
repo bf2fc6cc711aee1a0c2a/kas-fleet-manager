@@ -109,6 +109,11 @@ Feature: create a a connector
           "kind": "addon",
           "cluster_id": "default"
         },
+        "kafka": {
+          "bootstrap_server": "kafka.hostname",
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
         "connector_type_id": "aws-sqs-source-v1alpha1",
         "connector_spec": {
             "accessKey": "test",
@@ -147,6 +152,11 @@ Feature: create a a connector
           "cluster_id": "default"
         },
         "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "bootstrap_server": "kafka.hostname",
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
         "connector_spec": {
             "queueNameOrArn": "test",
             "accessKey": "test",
@@ -167,6 +177,10 @@ Feature: create a a connector
         "items": [
           {
             "channel": "stable",
+            "kafka": {
+              "bootstrap_server": "kafka.hostname",
+              "client_id": "myclient"
+            },
             "connector_spec": {
               "accessKey": "test",
               "queueNameOrArn": "test",
@@ -218,6 +232,10 @@ Feature: create a a connector
               "updated_at": "${response.metadata.updated_at}",
               "resource_version": ${response.metadata.resource_version}
           },
+          "kafka": {
+            "bootstrap_server": "kafka.hostname",
+            "client_id": "myclient"
+          },
           "deployment_location": {
               "kind": "addon",
               "cluster_id": "default"
@@ -264,6 +282,10 @@ Feature: create a a connector
               "created_at": "${response.metadata.created_at}",
               "updated_at": "${response.metadata.updated_at}",
               "resource_version": ${response.metadata.resource_version}
+          },
+          "kafka": {
+            "bootstrap_server": "kafka.hostname",
+            "client_id": "myclient"
           },
           "deployment_location": {
               "kind": "addon",
