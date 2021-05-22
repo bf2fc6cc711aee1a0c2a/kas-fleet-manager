@@ -11,14 +11,15 @@ package openapi
 
 // Connector A connector holds the configuration to connect a Kafka topic to another system.
 type Connector struct {
-	Id                 string                 `json:"id,omitempty"`
-	Kind               string                 `json:"kind,omitempty"`
-	Href               string                 `json:"href,omitempty"`
-	Metadata           ConnectorAllOfMetadata `json:"metadata,omitempty"`
-	DeploymentLocation ClusterTarget          `json:"deployment_location,omitempty"`
-	ConnectorTypeId    string                 `json:"connector_type_id,omitempty"`
-	ConnectorSpec      map[string]interface{} `json:"connector_spec,omitempty"`
-	Channel            string                 `json:"channel,omitempty"`
-	DesiredState       string                 `json:"desired_state,omitempty"`
-	Status             string                 `json:"status,omitempty"`
+	Id                 string                  `json:"id,omitempty"`
+	Kind               string                  `json:"kind,omitempty"`
+	Href               string                  `json:"href,omitempty"`
+	Metadata           ConnectorAllOfMetadata  `json:"metadata,omitempty"`
+	DeploymentLocation ClusterTarget           `json:"deployment_location,omitempty"`
+	Kafka              KafkaConnectionSettings `json:"kafka,omitempty"`
+	ConnectorTypeId    string                  `json:"connector_type_id,omitempty"`
+	ConnectorSpec      map[string]interface{}  `json:"connector_spec,omitempty"`
+	Channel            string                  `json:"channel,omitempty"`
+	DesiredState       string                  `json:"desired_state,omitempty"`
+	Status             string                  `json:"status,omitempty"`
 }

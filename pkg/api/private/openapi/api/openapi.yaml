@@ -600,6 +600,8 @@ components:
           type: integer
         kafka_id:
           type: string
+        kafka:
+          $ref: '#/components/schemas/KafkaConnectionSettings'
         connector_type_id:
           type: string
         connector_spec:
@@ -783,6 +785,14 @@ components:
         href:
           type: string
       type: object
+    KafkaConnectionSettings:
+      properties:
+        bootstrap_server:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
     List:
       properties:
         kind:

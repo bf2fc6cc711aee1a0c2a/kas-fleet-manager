@@ -336,6 +336,16 @@ func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesServ
 		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
 	}
 	// move secrets to a vault.
+
+	if resource.Kafka.ClientSecret != "" {
+		v, err := vault.GetSecretString(resource.Kafka.ClientSecret)
+		if err != nil {
+			return errors.GeneralError("could not get kafka client secrets from the vault")
+		}
+		encoded := base64.StdEncoding.EncodeToString([]byte(v))
+		resource.Kafka.ClientSecret = encoded
+	}
+
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
@@ -368,7 +378,7 @@ func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesServ
 			return nil
 		})
 		if err != nil {
-			return errors.GeneralError("could not store connectors secrets in the vault")
+			return errors.GeneralError("could not get connectors secrets from the vault")
 		}
 		resource.ConnectorSpec = updated
 	}
