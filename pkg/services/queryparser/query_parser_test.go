@@ -5,12 +5,14 @@ import (
 	"testing"
 )
 
-func TestABC_QueryParser(t *testing.T) {
+func Test_QueryParser(t *testing.T) {
 
 	tests := []struct {
-		name    string
-		qry     string
-		wantErr bool
+		name      string
+		qry       string
+		outQry    string
+		outValues []interface{}
+		wantErr   bool
 	}{
 		{
 			name:    "Testing just `=` sign",
@@ -40,7 +42,22 @@ func TestABC_QueryParser(t *testing.T) {
 		{
 			name:    "Complex query with braces",
 			qry:     "((cloud_provider = value and name = value1) and (owner = value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
+			outQry:  "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
 			wantErr: false,
+		},
+		{
+			name:      "Complex query with braces and quoted values with escaped quote",
+			qry:       `((cloud_provider = 'value' and name = 'val\'ue1') and (owner = value2 or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
+			outQry:    "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
+			outValues: []interface{}{"value", "val'ue1", "value2", "b", "c", "e", "%test%"},
+			wantErr:   false,
+		},
+		{
+			name:      "Complex query with braces and quoted values with spaces",
+			qry:       `((cloud_provider = 'value' and name = 'val ue1') and (owner = ' value2  ' or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
+			outQry:    "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
+			outValues: []interface{}{"value", "val ue1", " value2  ", "b", "c", "e", "%test%"},
+			wantErr:   false,
 		},
 		{
 			name: "10 JOINS (maximum allowed)",
@@ -88,12 +105,26 @@ func TestABC_QueryParser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			_, err := NewQueryParser().Parse(tt.qry)
+			qry, err := NewQueryParser().Parse(tt.qry)
 
 			if err != nil && !tt.wantErr {
 				t.Errorf("QueryParser() error = %v, wantErr = %v", err, tt.wantErr)
 			}
 			Expect(err != nil).To(Equal(tt.wantErr))
+
+			if err != nil {
+				t.Logf("qry: %s", tt.qry)
+				t.Logf("err: %v", err)
+			}
+
+			if err == nil && tt.outQry != "" {
+				if tt.outQry != "" {
+					Expect(qry.Query).To(Equal(tt.outQry))
+				}
+				if tt.outValues != nil {
+					Expect(qry.Values).To(Equal(tt.outValues))
+				}
+			}
 		})
 	}
 }
