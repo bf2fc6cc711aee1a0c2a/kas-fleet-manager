@@ -30,9 +30,11 @@ func Test_QueryParser(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "Testing escaped quote",
-			qry:     `name='test\'123'`,
-			wantErr: false,
+			name:      "Testing escaped quote",
+			qry:       `name='test\'123'`,
+			outQry:    "name = ?",
+			outValues: []interface{}{"test'123"},
+			wantErr:   false,
 		},
 		{
 			name:    "Testing wrong unescaped quote",
@@ -41,22 +43,29 @@ func Test_QueryParser(t *testing.T) {
 		},
 		{
 			name:    "Complex query with braces",
-			qry:     "((cloud_provider = value and name = value1) and (owner = value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
-			outQry:  "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
+			qry:     "((cloud_provider = Value and name = value1) and (owner <> value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
+			outQry:  "((cloud_provider = ? and name = ?) and (owner <> ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
 			wantErr: false,
 		},
 		{
 			name:      "Complex query with braces and quoted values with escaped quote",
-			qry:       `((cloud_provider = 'value' and name = 'val\'ue1') and (owner = value2 or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
+			qry:       `((cloud_provider = 'Value' and name = 'val\'ue1') and (owner = value2 or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
 			outQry:    "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
-			outValues: []interface{}{"value", "val'ue1", "value2", "b", "c", "e", "%test%"},
+			outValues: []interface{}{"Value", "val'ue1", "value2", "b", "c", "e", "%test%"},
 			wantErr:   false,
 		},
 		{
 			name:      "Complex query with braces and quoted values with spaces",
-			qry:       `((cloud_provider = 'value' and name = 'val ue1') and (owner = ' value2  ' or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
+			qry:       `((cloud_provider = 'Value' and name = 'val ue1') and (owner = ' value2  ' or region='b' ) ) or owner=c or name=e and region LIKE '%test%'`,
 			outQry:    "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
-			outValues: []interface{}{"value", "val ue1", " value2  ", "b", "c", "e", "%test%"},
+			outValues: []interface{}{"Value", "val ue1", " value2  ", "b", "c", "e", "%test%"},
+			wantErr:   false,
+		},
+		{
+			name:      "Complex query with braces and empty quoted values",
+			qry:       `((cloud_provider = 'Value' and name = '') and (owner = ' value2  ' or region='' ) ) or owner=c or name=e and region LIKE '%test%'`,
+			outQry:    "((cloud_provider = ? and name = ?) and (owner = ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
+			outValues: []interface{}{"Value", "", " value2  ", "", "c", "e", "%test%"},
 			wantErr:   false,
 		},
 		{
@@ -92,7 +101,7 @@ func Test_QueryParser(t *testing.T) {
 		},
 		{
 			name:    "Complex query with unbalanced braces",
-			qry:     "((cloud_provider = value and name = value1) and (owner = value2 or region=b  ) or owner=c or name=e and region LIKE '%test%'",
+			qry:     "((cloud_provider = Value and name = value1) and (owner = value2 or region=b  ) or owner=c or name=e and region LIKE '%test%'",
 			wantErr: true,
 		},
 		{
@@ -110,12 +119,11 @@ func Test_QueryParser(t *testing.T) {
 			if err != nil && !tt.wantErr {
 				t.Errorf("QueryParser() error = %v, wantErr = %v", err, tt.wantErr)
 			}
-			Expect(err != nil).To(Equal(tt.wantErr))
-
-			if err != nil {
+			if err != nil && !tt.wantErr {
 				t.Logf("qry: %s", tt.qry)
 				t.Logf("err: %v", err)
 			}
+			Expect(err != nil).To(Equal(tt.wantErr))
 
 			if err == nil && tt.outQry != "" {
 				if tt.outQry != "" {

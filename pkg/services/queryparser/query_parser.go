@@ -14,16 +14,13 @@ const (
 	LogicalOpTokenFamily   = "LOGICAL"
 	ColumnTokenFamily      = "COLUMN"
 	ValueTokenFamily       = "VALUE"
-	QuoteTokenFamily       = "QUOTE"
 	QuotedValueTokenFamily = "QUOTED"
 
 	OpenBrace   = "OPEN_BRACE"
 	ClosedBrace = "CLOSED_BRACE"
 	Column      = "COLUMN"
 	Value       = "VALUE"
-	OpenQuote   = "OPEN_QUOTE"
 	QuotedValue = "QUOTED_VALUE"
-	CloseQuote  = "CLOSE_QUOTE"
 	Eq          = "EQ"
 	NotEq       = "NOT_EQ"
 	LikeState   = "LIKE"
@@ -50,16 +47,13 @@ type queryParser struct {
 var _ QueryParser = &queryParser{}
 
 // initStateMachine
-// This will be our grammar (each token will eat the spaces after the token itself):
+// This will be our grammar (each Token will eat the spaces after the Token itself):
 // Tokens:
 // OPEN_BRACE       = (
 // CLOSED_BRACE     = )
 // COLUMN -         = [A-Za-z][A-Za-z0-9_]*
 // VALUE            = [^ ^(^)]+
-// QUOTED_VALUE     = OPEN_QUOTE Q_VALUE CLOSED_QUOTE
-//     OPEN_QUOTE   = '
-//     Q_VALUE      = ([^']|\\')+   - any character but `'` unless escaped (\')
-//     CLOSED_QUOTE = '
+// QUOTED_VALUE     = `'([^']|\\')*'`
 // EQ               = =
 // NOT_EQ           = <>
 // LIKE             = [Ll][Ii][Kk][Ee]
@@ -79,8 +73,8 @@ var _ QueryParser = &queryParser{}
 // AND          -> COLUMN | OPEN_BRACE
 // OR           -> COLUMN | OPEN_BRACE
 func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
-	// This variable counts the open braces
-	braces := 0
+
+	// counts the number of joins
 	complexity := 0
 
 	contains := func(s []string, value string) bool {
@@ -92,36 +86,49 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 		return false
 	}
 
-	onNewToken := func(token *Token) error {
+	// This variable counts the open openBraces
+	openBraces := 0
+	countOpenBraces := func(tok string) error {
+		switch tok {
+		case "(":
+			openBraces++
+		case ")":
+			openBraces--
+		}
+		if openBraces < 0 {
+			return errors.Errorf("unexpected ')'")
+		}
+		return nil
+	}
+
+	onNewToken := func(token *ParsedToken) error {
 		switch token.family {
 		case BraceTokenFamily:
-			if token.value == "(" {
-				braces++
-			} else {
-				braces--
-				if braces < 0 {
-					return errors.Errorf("unexpected ')'")
-				}
+			if err := countOpenBraces(token.value); err != nil {
+				return err
 			}
-
-			p.dbqry.Query = p.dbqry.Query + token.value
+			p.dbqry.Query += token.value
 			return nil
 		case ValueTokenFamily:
-			p.dbqry.Query = fmt.Sprintf("%s ?", p.dbqry.Query)
+			p.dbqry.Query += " ?"
 			p.dbqry.Values = append(p.dbqry.Values, token.value)
 			return nil
 		case QuotedValueTokenFamily:
-			p.dbqry.Query = fmt.Sprintf("%s ?", p.dbqry.Query)
+			p.dbqry.Query += " ?"
 			// unescape
-			p.dbqry.Values = append(p.dbqry.Values, strings.ReplaceAll(token.value, `\'`, "'"))
-
+			tmp := strings.ReplaceAll(token.value, `\'`, "'")
+			// remove quotes:
+			if len(tmp) > 1 {
+				tmp = string([]rune(tmp)[1 : len(tmp)-1])
+			}
+			p.dbqry.Values = append(p.dbqry.Values, tmp)
 			return nil
 		case LogicalOpTokenFamily:
 			complexity++
 			if complexity > MaximumComplexity {
 				return errors.Errorf("maximum number of permitted joins (%d) exceeded", MaximumComplexity)
 			}
-			p.dbqry.Query = p.dbqry.Query + " " + token.value + " "
+			p.dbqry.Query += " " + token.value + " "
 			return nil
 		case ColumnTokenFamily:
 			// we want column names to be lowercase
@@ -129,13 +136,10 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 			if !contains(validColumns, columnName) {
 				return fmt.Errorf("invalid column name: '%s'", token.value)
 			}
-			p.dbqry.Query = p.dbqry.Query + columnName
-			return nil
-		case QuoteTokenFamily:
-			// ignore: we don't need quotes in the parsed result
+			p.dbqry.Query += columnName
 			return nil
 		default:
-			p.dbqry.Query = p.dbqry.Query + " " + token.value
+			p.dbqry.Query += " " + token.value
 			return nil
 		}
 	}
@@ -145,29 +149,22 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 			{Name: OpenBrace, Family: BraceTokenFamily, AcceptPattern: `\(`},
 			{Name: ClosedBrace, Family: BraceTokenFamily, AcceptPattern: `\)`},
 			{Name: Column, Family: ColumnTokenFamily, AcceptPattern: `[A-Za-z][A-Za-z0-9_]*`},
-			{Name: Value, Family: ValueTokenFamily, AcceptPattern: `[^ ^(^)]+`},
-			/// START - quoted value
-			{Name: OpenQuote, Family: QuoteTokenFamily, AcceptPattern: `'`, EvaluateSpaces: true},
-			{Name: QuotedValue, Family: QuotedValueTokenFamily, AcceptPattern: `([^']|\\')+`, EvaluateSpaces: true},
-			{Name: CloseQuote, Family: QuoteTokenFamily, AcceptPattern: `'`},
-			/// END - quoted value
+			{Name: Value, Family: ValueTokenFamily, AcceptPattern: `[^'][^ ^(^)]*`},
+			{Name: QuotedValue, Family: QuotedValueTokenFamily, AcceptPattern: `'([^']|\\')*'`},
 			{Name: Eq, Family: OpTokenFamily, AcceptPattern: `=`},
-			{Name: NotEq, Family: OpTokenFamily, AcceptPattern: `[<>]{1,2}`, ValidatePattern: `<>`},
-			{Name: LikeState, Family: OpTokenFamily, AcceptPattern: `[LlIiKkEe]{0,4}`, ValidatePattern: `[Ll][Ii][Kk][Ee]`},
-			{Name: AndState, Family: LogicalOpTokenFamily, AcceptPattern: `[AaNnDd]{0,3}`, ValidatePattern: `[Aa][Nn][Dd]`},
-			{Name: OrState, Family: LogicalOpTokenFamily, AcceptPattern: `[OoRr]{0,2}`, ValidatePattern: `[Oo][Rr]`},
+			{Name: NotEq, Family: OpTokenFamily, AcceptPattern: `<>`},
+			{Name: LikeState, Family: OpTokenFamily, AcceptPattern: `[Ll][Ii][Kk][Ee]`},
+			{Name: AndState, Family: LogicalOpTokenFamily, AcceptPattern: `[Aa][Nn][Dd]`},
+			{Name: OrState, Family: LogicalOpTokenFamily, AcceptPattern: `[Oo][Rr]`},
 		},
 		Transitions: []TransitionDefinition{
 			{TokenName: StartState, ValidTransitions: []string{Column, OpenBrace}},
 			{TokenName: OpenBrace, ValidTransitions: []string{Column, OpenBrace}},
 			{TokenName: Column, ValidTransitions: []string{Eq, NotEq, LikeState}},
-			{TokenName: Eq, ValidTransitions: []string{OpenQuote, Value}},
-			{TokenName: NotEq, ValidTransitions: []string{OpenQuote, Value}},
-			{TokenName: LikeState, ValidTransitions: []string{OpenQuote, Value}},
-			{TokenName: OpenQuote, ValidTransitions: []string{QuotedValue, CloseQuote}},
-			{TokenName: OpenQuote, ValidTransitions: []string{QuotedValue, CloseQuote}},
-			{TokenName: QuotedValue, ValidTransitions: []string{CloseQuote}},
-			{TokenName: CloseQuote, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
+			{TokenName: Eq, ValidTransitions: []string{QuotedValue, Value}},
+			{TokenName: NotEq, ValidTransitions: []string{QuotedValue, Value}},
+			{TokenName: LikeState, ValidTransitions: []string{QuotedValue, Value}},
+			{TokenName: QuotedValue, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
 			{TokenName: Value, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
 			{TokenName: ClosedBrace, ValidTransitions: []string{OrState, AndState, ClosedBrace, EndState}},
 			{TokenName: AndState, ValidTransitions: []string{Column, OpenBrace}},
@@ -180,7 +177,7 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 		Build()
 
 	return start, func() error {
-		if braces > 0 {
+		if openBraces > 0 {
 			return fmt.Errorf("EOF while searching for closing brace ')'")
 		}
 
@@ -190,9 +187,13 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 
 func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	state, checkBalancedBraces := p.initStateMachine()
-	for i, c := range sql {
-		if next, err := state.parse(c); err != nil {
-			return nil, errors.Errorf("[%d] error parsing the filter: %v", i+1, err)
+
+	scanner := NewScanner()
+	scanner.Init(sql)
+
+	for scanner.Next() {
+		if next, err := state.parse(scanner.Token().Value); err != nil {
+			return nil, errors.Errorf("[%d] error parsing the filter: %v", scanner.Token().Position+1, err)
 		} else {
 			state = next
 		}

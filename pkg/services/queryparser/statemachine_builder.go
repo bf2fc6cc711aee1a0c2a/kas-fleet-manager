@@ -6,12 +6,10 @@ const (
 )
 
 type TokenDefinition struct {
-	Name            string
-	Family          string
-	AcceptPattern   string
-	ValidatePattern string
-	EvaluateSpaces  bool
-	OnNewToken      func(token *Token) error
+	Name          string
+	Family        string
+	AcceptPattern string
+	OnNewToken    func(token *ParsedToken) error
 }
 
 type TransitionDefinition struct {
@@ -24,7 +22,7 @@ type Grammar struct {
 	Transitions []TransitionDefinition
 }
 
-type NewTokenHandler func(token *Token) error
+type NewTokenHandler func(token *ParsedToken) error
 
 type StateMachineBuilder interface {
 	OnNewToken(handler NewTokenHandler) StateMachineBuilder
@@ -59,12 +57,8 @@ func (smb *stateMachineBuilder) Build() State {
 		b := NewStateBuilder(t.Name).
 			Family(t.Family).
 			AcceptPattern(t.AcceptPattern).
-			ValidatePattern(t.ValidatePattern).
 			OnNewToken(smb.onNewToken)
 
-		if t.EvaluateSpaces {
-			b.DontIgnoreSurroundingSpaces()
-		}
 		token := b.Build()
 		tokenMap[t.Name] = token
 	}
