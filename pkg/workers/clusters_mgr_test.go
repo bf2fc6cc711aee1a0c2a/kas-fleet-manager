@@ -540,8 +540,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *apiErrors.ServiceError {
-						return apiErrors.GeneralError("failed to configure IDP")
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return nil, apiErrors.GeneralError("failed to configure IDP")
 					},
 				},
 				osdIdpKeycloakService: &services.KeycloakServiceMock{
@@ -564,8 +564,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *apiErrors.ServiceError {
-						return nil
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+						return cluster, nil
 					},
 				},
 				osdIdpKeycloakService: &services.KeycloakServiceMock{

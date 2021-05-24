@@ -26,7 +26,7 @@ var _ ClusterService = &ClusterServiceMock{}
 //             CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the CheckClusterStatus method")
 //             },
-//             ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *errors.ServiceError {
+//             ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ConfigureAndSaveIdentityProvider method")
 //             },
 //             CountByStatusFunc: func(in1 []api.ClusterStatus) ([]ClusterStatusCount, *errors.ServiceError) {
@@ -109,7 +109,7 @@ type ClusterServiceMock struct {
 	CheckClusterStatusFunc func(cluster *api.Cluster) (*api.Cluster, *errors.ServiceError)
 
 	// ConfigureAndSaveIdentityProviderFunc mocks the ConfigureAndSaveIdentityProvider method.
-	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *errors.ServiceError
+	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *errors.ServiceError)
 
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(in1 []api.ClusterStatus) ([]ClusterStatusCount, *errors.ServiceError)
@@ -417,7 +417,7 @@ func (mock *ClusterServiceMock) CheckClusterStatusCalls() []struct {
 }
 
 // ConfigureAndSaveIdentityProvider calls ConfigureAndSaveIdentityProviderFunc.
-func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *errors.ServiceError {
+func (mock *ClusterServiceMock) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *errors.ServiceError) {
 	if mock.ConfigureAndSaveIdentityProviderFunc == nil {
 		panic("ClusterServiceMock.ConfigureAndSaveIdentityProviderFunc: method is nil but ClusterService.ConfigureAndSaveIdentityProvider was just called")
 	}

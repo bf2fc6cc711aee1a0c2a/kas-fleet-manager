@@ -52,7 +52,7 @@ type ClusterService interface {
 	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	RemoveClusterFromProvider(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *apiErrors.ServiceError
+	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
 	InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
 }
@@ -588,24 +588,24 @@ func (c clusterService) RemoveClusterFromProvider(cluster *api.Cluster) (bool, *
 	}
 }
 
-func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) *apiErrors.ServiceError {
+func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 	if cluster.IdentityProviderID != "" {
-		return nil
+		return cluster, nil
 	}
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 	providerInfo, err := p.AddIdentityProvider(buildClusterSpec(cluster), identityProviderInfo)
 	if err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to add identity provider")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to add identity provider")
 	}
 	// need to review this if multiple identity providers are supported
 	cluster.IdentityProviderID = providerInfo.OpenID.ID
 	if err := c.Update(*cluster); err != nil {
-		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
 	}
-	return nil
+	return cluster, nil
 }
 
 func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
@@ -624,11 +624,11 @@ func (c clusterService) InstallAddon(cluster *api.Cluster, addonID string) (bool
 		// TODO: in the future, we can add support for other providers by applying the OLM resources for an addon operator
 		return false, apiErrors.New(apiErrors.ErrorNotImplemented, "Addon installation is not implemented for provider type %s", cluster.ProviderType)
 	}
-	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	p, err := c.providerFactory.GetAddonProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if ready, err := p.(*clusters.OCMProvider).InstallAddon(buildClusterSpec(cluster), addonID); err != nil {
+	if ready, err := p.InstallAddon(buildClusterSpec(cluster), addonID); err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install addon %s for cluster %s", addonID, cluster.ClusterID)
 	} else {
 		return ready, nil

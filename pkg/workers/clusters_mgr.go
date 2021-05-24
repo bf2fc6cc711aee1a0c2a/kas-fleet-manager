@@ -928,7 +928,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 			Issuer:       c.osdIdpKeycloakService.GetRealmConfig().ValidIssuerURI,
 		},
 	}
-	if err := c.clusterService.ConfigureAndSaveIdentityProvider(&cluster, idpInfo); err != nil {
+	if _, err := c.clusterService.ConfigureAndSaveIdentityProvider(&cluster, idpInfo); err != nil {
 		return err
 	}
 	glog.Infof("Identity provider is set up for cluster %s", cluster.ClusterID)
