@@ -42,10 +42,11 @@ func Test_QueryParser(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "Complex query with braces",
-			qry:     "((cloud_provider = Value and name = value1) and (owner <> value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
-			outQry:  "((cloud_provider = ? and name = ?) and (owner <> ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
-			wantErr: false,
+			name:      "Complex query with braces",
+			qry:       "((cloud_provider = Value and name = value1) and (owner <> value2 or region=b ) ) or owner=c or name=e and region LIKE '%test%'",
+			outQry:    "((cloud_provider = ? and name = ?) and (owner <> ? or region = ?)) or owner = ? or name = ? and region LIKE ?",
+			outValues: []interface{}{"Value", "value1", "value2", "b", "c", "e", "%test%"},
+			wantErr:   false,
 		},
 		{
 			name:      "Complex query with braces and quoted values with escaped quote",
@@ -107,6 +108,11 @@ func Test_QueryParser(t *testing.T) {
 		{
 			name:    "Bad column name",
 			qry:     "badcolumn=test",
+			wantErr: true,
+		},
+		{
+			name:    "Bad column name in complex query",
+			qry:     "((cloud_provider = Value and name = value1) and (owner = value2 or region=b  ) or badcolumn=c or name=e and region LIKE '%test%'",
 			wantErr: true,
 		},
 	}
