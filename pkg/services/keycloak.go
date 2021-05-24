@@ -334,11 +334,13 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 	}
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
+	owner := auth.GetUsernameFromClaims(claims)
 	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
 		err = kc.kcClient.DeleteClient(id, accessToken) //id existence checked
 		if err != nil {                                 //5xx
 			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 		}
+		glog.V(5).Infof("deleted service account clientId = %s owned by user = %s", safeString(c.ClientID), owner)
 		return nil
 	}
 
