@@ -30,7 +30,7 @@ var _ Provider = &ProviderMock{}
 //             CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 // 	               panic("mock out the Create method")
 //             },
-//             DeleteFunc: func(spec *types.ClusterSpec) error {
+//             DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
 // 	               panic("mock out the Delete method")
 //             },
 //             GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
@@ -74,7 +74,7 @@ type ProviderMock struct {
 	CreateFunc func(request *types.ClusterRequest) (*types.ClusterSpec, error)
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(spec *types.ClusterSpec) error
+	DeleteFunc func(spec *types.ClusterSpec) (bool, error)
 
 	// GetCloudProviderRegionsFunc mocks the GetCloudProviderRegions method.
 	GetCloudProviderRegionsFunc func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error)
@@ -327,7 +327,7 @@ func (mock *ProviderMock) Delete(spec *types.ClusterSpec) (bool, error) {
 	mock.lockDelete.Lock()
 	mock.calls.Delete = append(mock.calls.Delete, callInfo)
 	mock.lockDelete.Unlock()
-	return false, mock.DeleteFunc(spec)
+	return mock.DeleteFunc(spec)
 }
 
 // DeleteCalls gets all the calls that were made to Delete.

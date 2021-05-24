@@ -42,7 +42,6 @@ type Provider interface {
 type AddonProvider interface {
 	InstallAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error)
 	InstallAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error)
-	UpdateAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error
 }
 
 // ProviderFactory used to return an instance of Provider implementation

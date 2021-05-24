@@ -98,10 +98,13 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-	if err := p.UpdateAddonWithParams(spec, kasFleetshardAddonID, params); err != nil {
+	if updated, err := p.InstallAddonWithParams(spec, kasFleetshardAddonID, params); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
-	} else {
+	} else if updated {
 		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", kasFleetshardAddonID, cluster.ClusterID)
+		return nil
+	} else {
+		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are not updated", kasFleetshardAddonID, cluster.ClusterID)
 		return nil
 	}
 }

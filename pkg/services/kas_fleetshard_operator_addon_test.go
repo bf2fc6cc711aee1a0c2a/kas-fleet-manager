@@ -159,8 +159,8 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 				},
 				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
 					return &clusters.AddonProviderMock{
-						UpdateAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
-							return nil
+						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+							return true, nil
 						},
 					}, nil
 				}},
@@ -177,8 +177,8 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 				},
 				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
 					return &clusters.AddonProviderMock{
-						UpdateAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
-							return errors.GeneralError("test error")
+						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+							return false, errors.GeneralError("test error")
 						},
 					}, nil
 				}},

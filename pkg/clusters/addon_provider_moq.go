@@ -25,9 +25,6 @@ var _ AddonProvider = &AddonProviderMock{}
 //             InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
 // 	               panic("mock out the InstallAddonWithParams method")
 //             },
-//             UpdateAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
-// 	               panic("mock out the UpdateAddonWithParams method")
-//             },
 //         }
 //
 //         // use mockedAddonProvider in code that requires AddonProvider
@@ -40,9 +37,6 @@ type AddonProviderMock struct {
 
 	// InstallAddonWithParamsFunc mocks the InstallAddonWithParams method.
 	InstallAddonWithParamsFunc func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error)
-
-	// UpdateAddonWithParamsFunc mocks the UpdateAddonWithParams method.
-	UpdateAddonWithParamsFunc func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -62,19 +56,9 @@ type AddonProviderMock struct {
 			// AddonParams is the addonParams argument value.
 			AddonParams []ocm.AddonParameter
 		}
-		// UpdateAddonWithParams holds details about calls to the UpdateAddonWithParams method.
-		UpdateAddonWithParams []struct {
-			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types.ClusterSpec
-			// AddonId is the addonId argument value.
-			AddonId string
-			// AddonParams is the addonParams argument value.
-			AddonParams []ocm.AddonParameter
-		}
 	}
 	lockInstallAddon           sync.RWMutex
 	lockInstallAddonWithParams sync.RWMutex
-	lockUpdateAddonWithParams  sync.RWMutex
 }
 
 // InstallAddon calls InstallAddonFunc.
@@ -148,44 +132,5 @@ func (mock *AddonProviderMock) InstallAddonWithParamsCalls() []struct {
 	mock.lockInstallAddonWithParams.RLock()
 	calls = mock.calls.InstallAddonWithParams
 	mock.lockInstallAddonWithParams.RUnlock()
-	return calls
-}
-
-// UpdateAddonWithParams calls UpdateAddonWithParamsFunc.
-func (mock *AddonProviderMock) UpdateAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
-	if mock.UpdateAddonWithParamsFunc == nil {
-		panic("AddonProviderMock.UpdateAddonWithParamsFunc: method is nil but AddonProvider.UpdateAddonWithParams was just called")
-	}
-	callInfo := struct {
-		ClusterSpec *types.ClusterSpec
-		AddonId     string
-		AddonParams []ocm.AddonParameter
-	}{
-		ClusterSpec: clusterSpec,
-		AddonId:     addonId,
-		AddonParams: addonParams,
-	}
-	mock.lockUpdateAddonWithParams.Lock()
-	mock.calls.UpdateAddonWithParams = append(mock.calls.UpdateAddonWithParams, callInfo)
-	mock.lockUpdateAddonWithParams.Unlock()
-	return mock.UpdateAddonWithParamsFunc(clusterSpec, addonId, addonParams)
-}
-
-// UpdateAddonWithParamsCalls gets all the calls that were made to UpdateAddonWithParams.
-// Check the length with:
-//     len(mockedAddonProvider.UpdateAddonWithParamsCalls())
-func (mock *AddonProviderMock) UpdateAddonWithParamsCalls() []struct {
-	ClusterSpec *types.ClusterSpec
-	AddonId     string
-	AddonParams []ocm.AddonParameter
-} {
-	var calls []struct {
-		ClusterSpec *types.ClusterSpec
-		AddonId     string
-		AddonParams []ocm.AddonParameter
-	}
-	mock.lockUpdateAddonWithParams.RLock()
-	calls = mock.calls.UpdateAddonWithParams
-	mock.lockUpdateAddonWithParams.RUnlock()
 	return calls
 }

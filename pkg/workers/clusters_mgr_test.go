@@ -2,8 +2,17 @@ package workers
 
 import (
 	"fmt"
+	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	authv1 "github.com/openshift/api/authorization/v1"
+	projectv1 "github.com/openshift/api/project/v1"
+	userv1 "github.com/openshift/api/user/v1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	errors "github.com/zgalor/weberr"
+	k8sCoreV1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -402,7 +411,12 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 }
 
 func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
+	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
+	clusterCreateConfig := config.OSDClusterConfig{
+		ImagePullDockerConfigContent: "image-pull-secret-test",
+		IngressControllerReplicas:    12,
+	}
 	type fields struct {
 		clusterService services.ClusterService
 	}
@@ -416,9 +430,11 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test.com", nil
+						return ingressDNS, nil
 					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+						want, _ := buildResourceSet(observabilityConfig, clusterCreateConfig, ingressDNS)
+						Expect(resources).To(Equal(want))
 						return nil
 					},
 				},
@@ -453,13 +469,14 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			RegisterTestingT(t)
 			c := &ClusterManager{
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
 					SupportedProviders:         &config.ProviderConfig{},
 					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
-					OSDClusterConfig:           &config.OSDClusterConfig{},
+					OSDClusterConfig:           &clusterCreateConfig,
 					Kafka:                      &config.KafkaConfig{},
 				}),
 			}
@@ -1025,168 +1042,6 @@ func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
 	}
 }
 
-//func TestSyncsetResourcesChanged(t *testing.T) {
-//	tests := []struct {
-//		name              string
-//		existingResources []interface{}
-//		newResources      []interface{}
-//		changed           bool
-//	}{
-//		{
-//			name: "resources should match",
-//			existingResources: []interface{}{
-//				map[string]interface{}{
-//					"kind":       "Project",
-//					"apiVersion": "project.openshift.io/v1",
-//					"metadata": map[string]string{
-//						"name": observabilityNamespace,
-//					},
-//				},
-//				map[string]interface{}{
-//					"kind":       "OperatorGroup",
-//					"apiVersion": "operators.coreos.com/v1alpha2",
-//					"metadata": map[string]string{
-//						"name":      observabilityOperatorGroupName,
-//						"namespace": observabilityNamespace,
-//					},
-//					"spec": map[string]interface{}{
-//						"targetNamespaces": []string{observabilityNamespace},
-//					},
-//				},
-//			},
-//			newResources: []interface{}{
-//				&projectv1.Project{
-//					TypeMeta: metav1.TypeMeta{
-//						APIVersion: "project.openshift.io/v1",
-//						Kind:       "Project",
-//					},
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name: observabilityNamespace,
-//					},
-//				},
-//				&v1alpha2.OperatorGroup{
-//					TypeMeta: metav1.TypeMeta{
-//						APIVersion: "operators.coreos.com/v1alpha2",
-//						Kind:       "OperatorGroup",
-//					},
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name:      observabilityOperatorGroupName,
-//						Namespace: observabilityNamespace,
-//					},
-//					Spec: v1alpha2.OperatorGroupSpec{
-//						TargetNamespaces: []string{observabilityNamespace},
-//					},
-//				},
-//			},
-//			changed: false,
-//		},
-//		{
-//			name: "resources should not match as lengths of resources are different",
-//			existingResources: []interface{}{
-//				map[string]interface{}{
-//					"kind":       "Project",
-//					"apiVersion": "project.openshift.io/v1",
-//					"metadata": map[string]string{
-//						"name": observabilityNamespace,
-//					},
-//				},
-//			},
-//			newResources: []interface{}{
-//				&projectv1.Project{
-//					TypeMeta: metav1.TypeMeta{
-//						APIVersion: "project.openshift.io/v1",
-//						Kind:       "Project",
-//					},
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name: observabilityNamespace,
-//					},
-//				},
-//				&v1alpha2.OperatorGroup{
-//					TypeMeta: metav1.TypeMeta{
-//						APIVersion: "operators.coreos.com/v1alpha2",
-//						Kind:       "OperatorGroup",
-//					},
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name:      observabilityOperatorGroupName,
-//						Namespace: observabilityNamespace,
-//					},
-//					Spec: v1alpha2.OperatorGroupSpec{
-//						TargetNamespaces: []string{observabilityNamespace},
-//					},
-//				},
-//			},
-//			changed: true,
-//		},
-//		{
-//			name: "resources should not match as some field values are changed",
-//			existingResources: []interface{}{
-//				map[string]interface{}{
-//					"kind":       "OperatorGroup",
-//					"apiVersion": "operators.coreos.com/v1alpha2",
-//					"metadata": map[string]string{
-//						"name":      observabilityOperatorGroupName + "updated",
-//						"namespace": observabilityNamespace,
-//					},
-//					"spec": map[string]interface{}{
-//						"targetNamespaces": []string{observabilityNamespace},
-//					},
-//				},
-//			},
-//			newResources: []interface{}{
-//				&v1alpha2.OperatorGroup{
-//					TypeMeta: metav1.TypeMeta{
-//						APIVersion: "operators.coreos.com/v1alpha2",
-//						Kind:       "OperatorGroup",
-//					},
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name:      observabilityOperatorGroupName,
-//						Namespace: observabilityNamespace,
-//					},
-//					Spec: v1alpha2.OperatorGroupSpec{
-//						TargetNamespaces: []string{observabilityNamespace},
-//					},
-//				},
-//			},
-//			changed: true,
-//		},
-//		{
-//			name: "resources should not match as type can not be converted",
-//			existingResources: []interface{}{
-//				map[string]interface{}{
-//					"kind":       "TestProject",
-//					"apiVersion": "testproject.openshift.io/v1",
-//					"metadata": map[string]string{
-//						"name": observabilityNamespace,
-//					},
-//				},
-//			},
-//			newResources: []interface{}{
-//				&projectv1.Project{
-//					TypeMeta: metav1.TypeMeta{
-//						APIVersion: "project.openshift.io/v1",
-//						Kind:       "Project",
-//					},
-//					ObjectMeta: metav1.ObjectMeta{
-//						Name: observabilityNamespace,
-//					},
-//				},
-//			},
-//			changed: true,
-//		},
-//	}
-//
-//	for _, tt := range tests {
-//		t.Run(tt.name, func(t *testing.T) {
-//			existingSyncset, _ := clustersmgmtv1.NewSyncset().Resources(tt.existingResources...).Build()
-//			newSyncset, _ := clustersmgmtv1.NewSyncset().Resources(tt.newResources...).Build()
-//			result := syncsetResourcesChanged(existingSyncset, newSyncset)
-//			if result != tt.changed {
-//				t.Errorf("result does not match expected value. result = %v and expected = %v", result, tt.changed)
-//			}
-//		})
-//	}
-//}
-
 // buildObservabilityConfig builds a observability config used for testing
 func buildObservabilityConfig() config.ObservabilityConfiguration {
 	observabilityConfig := config.ObservabilityConfiguration{
@@ -1204,206 +1059,204 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 	return observabilityConfig
 }
 
-// buildSyncSet builds a syncset used for testing
-//func buildSyncSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.OSDClusterConfig, ingressDNS string) (*clustersmgmtv1.Syncset, error) {
-//	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
-//	expansion := true
-//	consumer := storagev1.VolumeBindingWaitForFirstConsumer
-//	r := int32(clusterCreateConfig.IngressControllerReplicas)
-//	resources := []interface{}{
-//		&storagev1.StorageClass{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "storage.k8s.io/v1",
-//				Kind:       "StorageClass",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name: KafkaStorageClass,
-//			},
-//			Parameters: map[string]string{
-//				"encrypted": "false",
-//				"type":      "gp2",
-//			},
-//			Provisioner:          "kubernetes.io/aws-ebs",
-//			ReclaimPolicy:        &reclaimDelete,
-//			AllowVolumeExpansion: &expansion,
-//			VolumeBindingMode:    &consumer,
-//		},
-//		&ingressoperatorv1.IngressController{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "operator.openshift.io/v1",
-//				Kind:       "IngressController",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:      "sharded-nlb",
-//				Namespace: openshiftIngressNamespace,
-//			},
-//			Spec: ingressoperatorv1.IngressControllerSpec{
-//				Domain: ingressDNS,
-//				RouteSelector: &metav1.LabelSelector{
-//					MatchLabels: map[string]string{
-//						IngressLabelName: IngressLabelValue,
-//					},
-//				},
-//				EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
-//					LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
-//						ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
-//							AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
-//								Type: ingressoperatorv1.AWSNetworkLoadBalancer,
-//							},
-//							Type: ingressoperatorv1.AWSLoadBalancerProvider,
-//						},
-//						Scope: ingressoperatorv1.ExternalLoadBalancer,
-//					},
-//					Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
-//				},
-//				Replicas: &r,
-//				NodePlacement: &ingressoperatorv1.NodePlacement{
-//					NodeSelector: &metav1.LabelSelector{
-//						MatchLabels: map[string]string{
-//							"node-role.kubernetes.io/worker": "",
-//						},
-//					},
-//				},
-//			},
-//		},
-//		&projectv1.Project{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "project.openshift.io/v1",
-//				Kind:       "Project",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name: observabilityNamespace,
-//			},
-//		},
-//		&k8sCoreV1.Secret{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: metav1.SchemeGroupVersion.Version,
-//				Kind:       "Secret",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:      observabilityDexCredentials,
-//				Namespace: observabilityNamespace,
-//			},
-//			Type: k8sCoreV1.SecretTypeOpaque,
-//			StringData: map[string]string{
-//				"password": observabilityConfig.DexPassword,
-//				"secret":   observabilityConfig.DexSecret,
-//				"username": observabilityConfig.DexUsername,
-//			},
-//		},
-//		&v1alpha1.CatalogSource{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "operators.coreos.com/v1alpha1",
-//				Kind:       "CatalogSource",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:      observabilityCatalogSourceName,
-//				Namespace: observabilityNamespace,
-//			},
-//			Spec: v1alpha1.CatalogSourceSpec{
-//				SourceType: v1alpha1.SourceTypeGrpc,
-//				Image:      observabilityCatalogSourceImage,
-//			},
-//		},
-//		&v1alpha2.OperatorGroup{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "operators.coreos.com/v1alpha2",
-//				Kind:       "OperatorGroup",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:      observabilityOperatorGroupName,
-//				Namespace: observabilityNamespace,
-//			},
-//			Spec: v1alpha2.OperatorGroupSpec{
-//				TargetNamespaces: []string{observabilityNamespace},
-//			},
-//		},
-//		&v1alpha1.Subscription{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "operators.coreos.com/v1alpha1",
-//				Kind:       "Subscription",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:      observabilitySubscriptionName,
-//				Namespace: observabilityNamespace,
-//			},
-//			Spec: &v1alpha1.SubscriptionSpec{
-//				CatalogSource:          observabilityCatalogSourceName,
-//				Channel:                "alpha",
-//				CatalogSourceNamespace: observabilityNamespace,
-//				StartingCSV:            "observability-operator.v3.0.1",
-//				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
-//				Package:                observabilitySubscriptionName,
-//			},
-//		},
-//		&userv1.Group{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: userv1.SchemeGroupVersion.String(),
-//				Kind:       "Group",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name: readOnlyGroupName,
-//			},
-//		},
-//		&authv1.ClusterRoleBinding{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: "rbac.authorization.k8s.io/v1",
-//				Kind:       "ClusterRoleBinding",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name: mkReadOnlyRoleBindingName,
-//			},
-//			Subjects: []k8sCoreV1.ObjectReference{
-//				{
-//					Kind:       "Group",
-//					APIVersion: "rbac.authorization.k8s.io",
-//					Name:       readOnlyGroupName,
-//				},
-//			},
-//			RoleRef: k8sCoreV1.ObjectReference{
-//				Kind:       "ClusterRole",
-//				Name:       dedicatedReadersRoleBindingName,
-//				APIVersion: "rbac.authorization.k8s.io",
-//			},
-//		},
-//	}
-//	if clusterCreateConfig.ImagePullDockerConfigContent != "" {
-//		resources = append(resources, &k8sCoreV1.Secret{
-//			TypeMeta: metav1.TypeMeta{
-//				APIVersion: metav1.SchemeGroupVersion.Version,
-//				Kind:       "Secret",
-//			},
-//			ObjectMeta: metav1.ObjectMeta{
-//				Name:      imagePullSecretName,
-//				Namespace: strimziAddonNamespace,
-//			},
-//			Type: k8sCoreV1.SecretTypeDockercfg,
-//			Data: map[string][]byte{
-//				k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
-//			},
-//		},
-//			&k8sCoreV1.Secret{
-//				TypeMeta: metav1.TypeMeta{
-//					APIVersion: metav1.SchemeGroupVersion.Version,
-//					Kind:       "Secret",
-//				},
-//				ObjectMeta: metav1.ObjectMeta{
-//					Name:      imagePullSecretName,
-//					Namespace: kasFleetshardAddonNamespace,
-//				},
-//				Type: k8sCoreV1.SecretTypeDockercfg,
-//				Data: map[string][]byte{
-//					k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
-//				},
-//			})
-//	}
-//
-//	syncset, err := clustersmgmtv1.NewSyncset().
-//		ID(syncsetName).
-//		Resources(resources...).
-//		Build()
-//	return syncset, err
-//}
+func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.OSDClusterConfig, ingressDNS string) (types.ResourceSet, error) {
+	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
+	expansion := true
+	consumer := storagev1.VolumeBindingWaitForFirstConsumer
+	r := int32(clusterCreateConfig.IngressControllerReplicas)
+	resources := []interface{}{
+		&storagev1.StorageClass{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "storage.k8s.io/v1",
+				Kind:       "StorageClass",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: KafkaStorageClass,
+			},
+			Parameters: map[string]string{
+				"encrypted": "false",
+				"type":      "gp2",
+			},
+			Provisioner:          "kubernetes.io/aws-ebs",
+			ReclaimPolicy:        &reclaimDelete,
+			AllowVolumeExpansion: &expansion,
+			VolumeBindingMode:    &consumer,
+		},
+		&ingressoperatorv1.IngressController{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operator.openshift.io/v1",
+				Kind:       "IngressController",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "sharded-nlb",
+				Namespace: openshiftIngressNamespace,
+			},
+			Spec: ingressoperatorv1.IngressControllerSpec{
+				Domain: ingressDNS,
+				RouteSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						IngressLabelName: IngressLabelValue,
+					},
+				},
+				EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
+					LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
+						ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
+							AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
+								Type: ingressoperatorv1.AWSNetworkLoadBalancer,
+							},
+							Type: ingressoperatorv1.AWSLoadBalancerProvider,
+						},
+						Scope: ingressoperatorv1.ExternalLoadBalancer,
+					},
+					Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
+				},
+				Replicas: &r,
+				NodePlacement: &ingressoperatorv1.NodePlacement{
+					NodeSelector: &metav1.LabelSelector{
+						MatchLabels: map[string]string{
+							"node-role.kubernetes.io/worker": "",
+						},
+					},
+				},
+			},
+		},
+		&projectv1.Project{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "project.openshift.io/v1",
+				Kind:       "Project",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: observabilityNamespace,
+			},
+		},
+		&k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: metav1.SchemeGroupVersion.Version,
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityDexCredentials,
+				Namespace: observabilityNamespace,
+			},
+			Type: k8sCoreV1.SecretTypeOpaque,
+			StringData: map[string]string{
+				"password": observabilityConfig.DexPassword,
+				"secret":   observabilityConfig.DexSecret,
+				"username": observabilityConfig.DexUsername,
+			},
+		},
+		&v1alpha1.CatalogSource{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha1",
+				Kind:       "CatalogSource",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityCatalogSourceName,
+				Namespace: observabilityNamespace,
+			},
+			Spec: v1alpha1.CatalogSourceSpec{
+				SourceType: v1alpha1.SourceTypeGrpc,
+				Image:      observabilityCatalogSourceImage,
+			},
+		},
+		&v1alpha2.OperatorGroup{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha2",
+				Kind:       "OperatorGroup",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilityOperatorGroupName,
+				Namespace: observabilityNamespace,
+			},
+			Spec: v1alpha2.OperatorGroupSpec{
+				TargetNamespaces: []string{observabilityNamespace},
+			},
+		},
+		&v1alpha1.Subscription{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "operators.coreos.com/v1alpha1",
+				Kind:       "Subscription",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observabilitySubscriptionName,
+				Namespace: observabilityNamespace,
+			},
+			Spec: &v1alpha1.SubscriptionSpec{
+				CatalogSource:          observabilityCatalogSourceName,
+				Channel:                "alpha",
+				CatalogSourceNamespace: observabilityNamespace,
+				StartingCSV:            "observability-operator.v3.0.1",
+				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
+				Package:                observabilitySubscriptionName,
+			},
+		},
+		&userv1.Group{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: userv1.SchemeGroupVersion.String(),
+				Kind:       "Group",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: readOnlyGroupName,
+			},
+		},
+		&authv1.ClusterRoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "rbac.authorization.k8s.io/v1",
+				Kind:       "ClusterRoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkReadOnlyRoleBindingName,
+			},
+			Subjects: []k8sCoreV1.ObjectReference{
+				{
+					Kind:       "Group",
+					APIVersion: "rbac.authorization.k8s.io",
+					Name:       readOnlyGroupName,
+				},
+			},
+			RoleRef: k8sCoreV1.ObjectReference{
+				Kind:       "ClusterRole",
+				Name:       dedicatedReadersRoleBindingName,
+				APIVersion: "rbac.authorization.k8s.io",
+			},
+		},
+	}
+	if clusterCreateConfig.ImagePullDockerConfigContent != "" {
+		resources = append(resources, &k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: metav1.SchemeGroupVersion.Version,
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      imagePullSecretName,
+				Namespace: strimziAddonNamespace,
+			},
+			Type: k8sCoreV1.SecretTypeDockercfg,
+			Data: map[string][]byte{
+				k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
+			},
+		},
+			&k8sCoreV1.Secret{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: metav1.SchemeGroupVersion.Version,
+					Kind:       "Secret",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      imagePullSecretName,
+					Namespace: kasFleetshardAddonNamespace,
+				},
+				Type: k8sCoreV1.SecretTypeDockercfg,
+				Data: map[string][]byte{
+					k8sCoreV1.DockerConfigKey: []byte(clusterCreateConfig.ImagePullDockerConfigContent),
+				},
+			})
+	}
+
+	return types.ResourceSet{
+		Name:      syncsetName,
+		Resources: resources,
+	}, nil
+}
 
 func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	type fields struct {

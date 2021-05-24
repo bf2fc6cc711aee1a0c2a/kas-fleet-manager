@@ -234,21 +234,6 @@ func (o *OCMProvider) InstallAddonWithParams(clusterSpec *types.ClusterSpec, add
 	return false, nil
 }
 
-func (o *OCMProvider) UpdateAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) error {
-	addonInstallation, addonErr := o.ocmClient.GetAddon(clusterSpec.InternalID, addonId)
-	if addonErr != nil {
-		return errors.Wrapf(addonErr, "failed to get status for existing addon %s for cluster %s", addonId, clusterSpec.InternalID)
-	}
-	if addonInstallation == nil || addonInstallation.ID() == "" {
-		return errors.Errorf("no valid addon %s for cluster %s", addonId, clusterSpec.InternalID)
-	}
-	addonInstallation, addonErr = o.ocmClient.UpdateAddonParameters(clusterSpec.InternalID, addonInstallation.ID(), addonParams)
-	if addonErr != nil {
-		return errors.Wrapf(addonErr, "failed to update parameters for addon %s on cluster %s", addonInstallation.ID(), clusterSpec.InternalID)
-	}
-	return nil
-}
-
 func (o *OCMProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	list := types.CloudProviderInfoList{}
 	providerList, err := o.ocmClient.GetCloudProviders()
@@ -331,7 +316,7 @@ func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, 
 }
 
 func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.ResourceSet) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources).Build()
+	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources...).Build()
 
 	if sysnsetBuilderErr != nil {
 		return nil, errors.WithStack(sysnsetBuilderErr)
@@ -341,7 +326,7 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 }
 
 func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.ResourceSet, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources).ID(resourceSet.Name).Build()
+	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources...).ID(resourceSet.Name).Build()
 	if sysnsetBuilderErr != nil {
 		return nil, errors.WithStack(sysnsetBuilderErr)
 	}

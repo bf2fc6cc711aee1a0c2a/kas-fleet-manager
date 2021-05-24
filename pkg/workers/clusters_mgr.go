@@ -562,8 +562,8 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			Region:        p.Region,
 			MultiAZ:       p.MultiAZ,
 			ClusterID:     p.ClusterId,
-			Status:        api.ClusterProvisioning,
-			ProviderType:  api.ClusterProviderOCM,
+			Status:        p.Status,
+			ProviderType:  p.ProviderType,
 		}
 		if err := c.clusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}
