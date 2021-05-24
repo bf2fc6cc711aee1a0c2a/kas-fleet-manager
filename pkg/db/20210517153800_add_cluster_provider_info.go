@@ -17,6 +17,9 @@ func addClusterProviderInfo() *gormigrate.Migration {
 			if err := tx.AutoMigrate(&Cluster{}); err != nil {
 				return err
 			}
+			if err := tx.Table("clusters").Where("provider_type = ?", "").Update("provider_type", "ocm").Error; err != nil {
+				return err
+			}
 			if err := tx.Migrator().DropColumn(&Cluster{}, "byoc"); err != nil {
 				return err
 			}
@@ -32,10 +35,14 @@ func addClusterProviderInfo() *gormigrate.Migration {
 			if err := tx.Migrator().DropColumn(&Cluster{}, "cluster_spec"); err != nil {
 				return err
 			}
-			if err := tx.Exec(`ALTER TABLE clusters ADD COLUMN 'byoc' BOOLEAN DEFAULT FALSE`).Error; err != nil {
+			if err := tx.Migrator().DropColumn(&Cluster{}, "provider_spec"); err != nil {
 				return err
 			}
-			if err := tx.Exec(`ALTER TABLE clusters ADD COLUMN 'managed' BOOLEAN DEFAULT FALSE`).Error; err != nil {
+			type OriginalCluster struct {
+				BYOC    bool
+				Managed bool
+			}
+			if err := tx.AutoMigrate(&OriginalCluster{}); err != nil {
 				return err
 			}
 			return nil

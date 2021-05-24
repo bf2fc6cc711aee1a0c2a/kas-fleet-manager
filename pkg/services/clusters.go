@@ -620,10 +620,6 @@ func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.Res
 }
 
 func (c clusterService) InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
-	if cluster.ProviderType != api.ClusterProviderOCM {
-		// TODO: in the future, we can add support for other providers by applying the OLM resources for an addon operator
-		return false, apiErrors.New(apiErrors.ErrorNotImplemented, "Addon installation is not implemented for provider type %s", cluster.ProviderType)
-	}
 	p, err := c.providerFactory.GetAddonProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")

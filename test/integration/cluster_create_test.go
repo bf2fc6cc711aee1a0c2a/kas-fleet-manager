@@ -34,5 +34,5 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 		MultiAZ:       true,
 	})
 	Expect(err).To(HaveOccurred())
-	Expect(cluster.ID).To(Equal(""))
+	Expect(cluster).To(BeNil())
 }

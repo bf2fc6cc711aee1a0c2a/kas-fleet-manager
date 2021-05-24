@@ -47,11 +47,6 @@ type kasFleetshardOperatorAddon struct {
 }
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
-	if cluster.ProviderType != api.ClusterProviderOCM {
-		// TODO: in the future we can add implementations for other providers by applying the OLM resources for the kas fleetshard operator
-		return false, errors.NotImplemented("addon installation is not implemented for provider type %s", cluster.ProviderType)
-	}
-
 	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
@@ -76,11 +71,6 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 }
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
-	if cluster.ProviderType != api.ClusterProviderOCM {
-		// TODO: in the future we can add implementations for other providers by applying the OLM resources for the kas fleetshard operator
-		return errors.NotImplemented("addon installation is not implemented for provider type %s", cluster.ProviderType)
-	}
-
 	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {

@@ -70,6 +70,9 @@ func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.Applicati
 }
 
 func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderType) (Provider, error) {
+	if providerType == "" {
+		providerType = api.ClusterProviderOCM
+	}
 	switch providerType {
 	case api.ClusterProviderOCM:
 		if d.ocmProvider == nil {
@@ -88,6 +91,9 @@ func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderTyp
 }
 
 func (d *DefaultProviderFactory) GetAddonProvider(providerType api.ClusterProviderType) (AddonProvider, error) {
+	if providerType == "" {
+		providerType = api.ClusterProviderOCM
+	}
 	switch providerType {
 	case api.ClusterProviderOCM:
 		if d.ocmProvider == nil {
