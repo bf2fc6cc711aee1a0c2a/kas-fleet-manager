@@ -993,6 +993,7 @@ func (c *ClusterManager) buildReadOnlyGroupResource() *userv1.Group {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: readOnlyGroupName,
 		},
+		Users: c.configService.GetConfig().OSDClusterConfig.ReadOnlyUserList,
 	}
 }
 

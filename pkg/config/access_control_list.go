@@ -136,9 +136,7 @@ func (c *AccessControlListConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *AccessControlListConfig) ReadFiles() error {
-	var err error
-
-	err = readAllowListConfigFile(c.AllowListConfigFile, &c.AllowList)
+	err := readAllowListConfigFile(c.AllowListConfigFile, &c.AllowList)
 
 	if c.EnableDenyList && err == nil {
 		err = readDenyListConfigFile(c.DenyListConfigFile, &c.DenyList)

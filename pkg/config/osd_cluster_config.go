@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
@@ -17,8 +18,10 @@ type OSDClusterConfig struct {
 	// 'manual' to use OSD Cluster configuration file,
 	// 'auto' to use dynamic scaling
 	// 'none' to disabled scaling all together, useful in testing
-	DataPlaneClusterScalingType           string         `json:"dataplane_cluster_scaling_type"`
-	DataPlaneClusterConfigFile            string         `json:"dataplane_cluster_config_file"`
+	DataPlaneClusterScalingType           string `json:"dataplane_cluster_scaling_type"`
+	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
+	ReadOnlyUserList                      userv1.OptionalNames
+	ReadOnlyUserListFile                  string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 }
@@ -45,6 +48,7 @@ func NewOSDClusterConfig() *OSDClusterConfig {
 		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
 		IngressControllerReplicas:             9,
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
+		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
@@ -130,31 +134,37 @@ func (c *OSDClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-func (s *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVar(&s.OpenshiftVersion, "cluster-openshift-version", s.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
-	fs.StringVar(&s.ComputeMachineType, "cluster-compute-machine-type", s.ComputeMachineType, "The compute machine type")
-	fs.StringVar(&s.StrimziOperatorVersion, "strimzi-operator-version", s.StrimziOperatorVersion, "The version of the Strimzi operator to install")
-	fs.StringVar(&s.ImagePullDockerConfigFile, "image-pull-docker-config-file", s.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
-	fs.IntVar(&s.IngressControllerReplicas, "ingress-controller-replicas", s.IngressControllerReplicas, "The number of replicas for the IngressController")
-	fs.StringVar(&s.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", s.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
-	fs.StringVar(&s.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", s.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
-	fs.BoolVar(&s.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", s.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
+func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
+	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
+	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
+	fs.StringVar(&c.StrimziOperatorVersion, "strimzi-operator-version", c.StrimziOperatorVersion, "The version of the Strimzi operator to install")
+	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
+	fs.IntVar(&c.IngressControllerReplicas, "ingress-controller-replicas", c.IngressControllerReplicas, "The number of replicas for the IngressController")
+	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
+	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
+	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
+	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 }
 
-func (s *OSDClusterConfig) ReadFiles() error {
-	if s.ImagePullDockerConfigContent == "" && s.ImagePullDockerConfigFile != "" {
-		err := readFileValueString(s.ImagePullDockerConfigFile, &s.ImagePullDockerConfigContent)
+func (c *OSDClusterConfig) ReadFiles() error {
+	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
+		err := readFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
 		if err != nil {
 			return err
 		}
 	}
-	if s.IsDataPlaneManualScalingEnabled() {
-		list, err := readDataPlaneClusterConfig(s.DataPlaneClusterConfigFile)
+	if c.IsDataPlaneManualScalingEnabled() {
+		list, err := readDataPlaneClusterConfig(c.DataPlaneClusterConfigFile)
 		if err == nil {
-			s.ClusterConfig = NewClusterConfig(list)
+			c.ClusterConfig = NewClusterConfig(list)
 		} else {
 			return err
 		}
+	}
+
+	err := readOnlyUserListFile(c.ReadOnlyUserListFile, &c.ReadOnlyUserList)
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -175,4 +185,14 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	} else {
 		return c.ClusterList, nil
 	}
+}
+
+// Read the users in the file into the read-only user list config
+func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
+	fileContents, err := readFile(file)
+	if err != nil {
+		return err
+	}
+
+	return yaml.UnmarshalStrict([]byte(fileContents), val)
 }
