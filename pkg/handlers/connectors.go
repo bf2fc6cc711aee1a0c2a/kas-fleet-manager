@@ -46,9 +46,12 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Validate: []validate{
 			validateAsyncEnabled(r, "creating connector"),
 			validation("channel", &resource.Channel, withDefault("stable"), maxLen(40)),
-			validation("name", &resource.Metadata.Name,
+			validation("metadata.name", &resource.Metadata.Name,
 				withDefault("New Connector"), minLen(1), maxLen(100)),
-			validation("kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
+			validation("metadata.kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
+			validation("kafka.bootstrap_server", &resource.Kafka.BootstrapServer, minLen(1)),
+			validation("kafka.client_id", &resource.Kafka.ClientId, minLen(1)),
+			validation("kafka.client_secret", &resource.Kafka.ClientSecret, minLen(1)),
 			validation("connector_type_id", &resource.ConnectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength)),
 			validation("desired_state", &resource.DesiredState, withDefault("ready"), isOneOf("ready", "stopped")),
 			validateConnectorSpec(h.connectorTypesService, &resource, tid),
@@ -136,15 +139,26 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			// But we don't want to allow the user to update ALL fields.. so copy
 			// over the fields that they are allowed to modify..
 			resource.Metadata.Name = patch.Metadata.Name
+			resource.Metadata.KafkaId = patch.Metadata.KafkaId
 			resource.ConnectorTypeId = patch.ConnectorTypeId
 			resource.ConnectorSpec = patch.ConnectorSpec
 			resource.DesiredState = patch.DesiredState
 			resource.Metadata.ResourceVersion = patch.Metadata.ResourceVersion
+			resource.Kafka = patch.Kafka
+
+			// If we didn't change anything, then just skip the update...
+			originalResource, _ := presenters.PresentConnector(dbresource)
+			if reflect.DeepEqual(originalResource, resource) {
+				return originalResource, nil
+			}
 
 			// revalidate
 			validates := []validate{
 				validation("name", &resource.Metadata.Name, minLen(1), maxLen(100)),
 				validation("connector_type_id", &resource.ConnectorTypeId, minLen(1), maxLen(maxKafkaNameLength)),
+				validation("kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
+				validation("Kafka client_id", &resource.Kafka.ClientId, minLen(1)),
+				validation("Kafka client_secret", &resource.Kafka.ClientSecret, minLen(1)),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
@@ -155,10 +169,12 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnector(dbresource)
-			if reflect.DeepEqual(originalResource, resource) {
-				return originalResource, nil
+			// did the kafka instance change? verify we can use it...
+			if resource.Metadata.KafkaId != originalResource.Metadata.KafkaId {
+				_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			p, svcErr := presenters.ConvertConnector(resource)

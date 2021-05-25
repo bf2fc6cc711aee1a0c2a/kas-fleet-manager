@@ -47,10 +47,11 @@ type Connector struct {
 	KafkaID        string `json:"kafka_id"`
 	Version        int64  `json:"version"`
 
-	ConnectorTypeId string `json:"connector_type_id,omitempty"`
-	ConnectorSpec   JSON   `json:"connector_spec"`
-	DesiredState    string `json:"desired_state"`
-	Channel         string `json:"channel,omitempty"`
+	ConnectorTypeId string                  `json:"connector_type_id,omitempty"`
+	ConnectorSpec   JSON                    `json:"connector_spec"`
+	DesiredState    string                  `json:"desired_state"`
+	Channel         string                  `json:"channel,omitempty"`
+	Kafka           KafkaConnectionSettings `json:"kafka,omitempty" gorm:"embedded;embeddedPrefix:kafka_"`
 
 	Status ConnectorStatus `json:"status" gorm:"foreignKey:ID"`
 }
@@ -90,4 +91,10 @@ type ConnectorDeploymentSpecStatusExtractors struct {
 	Name          string `json:"name,omitempty"`
 	JsonPath      string `json:"jsonPath,omitempty"`
 	ConditionType string `json:"conditionType,omitempty"`
+}
+
+type KafkaConnectionSettings struct {
+	BootstrapServer string `json:"bootstrap_server,omitempty"`
+	ClientId        string `json:"client_id,omitempty"`
+	ClientSecret    string `json:"client_secret,omitempty"`
 }

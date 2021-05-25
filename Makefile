@@ -346,7 +346,7 @@ run/docs/teardown:
 .PHONY: run/docs/teardown
 
 cos-fleet-catalog-camel/setup:
-	docker run --name cos-fleet-catalog-camel --rm -d -p 9091:80 quay.io/lburgazzoli/ccs:latest
+	docker run --name cos-fleet-catalog-camel --rm -d -p 9091:8080 quay.io/lburgazzoli/ccs:latest
 	mkdir -p config/connector-types
 	echo -n "http://localhost:9091" > config/connector-types/cos-fleet-catalog-camel
 .PHONY: cos-fleet-catalog-camel/setup

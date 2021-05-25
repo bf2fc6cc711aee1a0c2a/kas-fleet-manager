@@ -35,6 +35,11 @@ Feature: connector agent API
         },
         "channel":"stable",
         "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "bootstrap_server": "kafka.hostname",
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
         "connector_spec": {
             "queueNameOrArn": "test",
             "accessKey": "test",
@@ -80,6 +85,8 @@ Feature: connector agent API
             "updated_at": "0001-01-01T00:00:00Z"
           },
           "spec": {
+            "kafka": {
+            }
           },
           "status": {}
         },
@@ -134,6 +141,11 @@ Feature: connector agent API
           },
           "spec": {
             "kafka_id": "${kafka_id}",
+            "kafka": {
+              "bootstrap_server": "kafka.hostname",
+              "client_id": "myclient",
+              "client_secret": "dGVzdA=="
+            },
             "shard_metadata": {
               "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
               "operators": [
@@ -182,6 +194,11 @@ Feature: connector agent API
             },
             "spec": {
               "kafka_id": "${kafka_id}",
+              "kafka": {
+                "bootstrap_server": "kafka.hostname",
+                "client_id": "myclient",
+                "client_secret": "dGVzdA=="
+              },
               "shard_metadata": {
                 "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
                 "operators": [
@@ -229,6 +246,11 @@ Feature: connector agent API
           },
           "spec": {
             "kafka_id": "${kafka_id}",
+            "kafka": {
+              "bootstrap_server": "kafka.hostname",
+              "client_id": "myclient",
+              "client_secret": "dGVzdA=="
+            },
             "shard_metadata": {
               "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
               "operators": [
@@ -309,6 +331,10 @@ Feature: connector agent API
         },
         "href": "/api/connector_mgmt/v1/kafka-connectors/${connector_id}",
         "id": "${connector_id}",
+        "kafka": {
+          "bootstrap_server": "kafka.hostname",
+          "client_id": "myclient"
+        },
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
@@ -347,6 +373,11 @@ Feature: connector agent API
           },
           "spec": {
             "kafka_id": "${kafka_id}",
+            "kafka": {
+              "bootstrap_server": "kafka.hostname",
+              "client_id": "myclient",
+              "client_secret": "dGVzdA=="
+            },
             "shard_metadata": {
               "meta_image": "quay.io/mock-image:77c0b8763729a9167ddfa19266d83a3512b7aa8124ca53e381d5d05f7d197a24",
               "operators": [
