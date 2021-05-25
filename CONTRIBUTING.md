@@ -315,6 +315,7 @@ Log to this level any error based information that might want to be brought to s
 
 #### Error
 Log to this level any error that is fatal to the given transaction and affects expected user operation. This may or may not include failed connections, missing expected data, or other unrecoverable outcomes.
+Error handling should be implemented by following these best practices as laid out in [this guide](docs/error-handing.md).
 
 #### Fatal
 Log to this level any error that is fatal to the service and requires the service to be immediately shutdown in order to prevent data loss or other unrecoverable states. This should be limited to scripts and fail-fast scenarios in service startup *only* and *never* because of a user operation in an otherwise healthy servce.
