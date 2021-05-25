@@ -290,6 +290,11 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		//  /api/connector_mgmt/v1/openapi
 		apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
+		//  /api/connector_mgmt/v1/errors
+		apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
+		apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
+		apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
+
 		v1Collections := []api.CollectionMetadata{}
 
 		//  /api/connector_mgmt/v1/kafka-connector-types

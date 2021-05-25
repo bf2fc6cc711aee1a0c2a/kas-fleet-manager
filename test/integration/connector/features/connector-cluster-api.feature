@@ -78,8 +78,8 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "code": "KAFKAS-MGMT-7",
-        "href": "/api/kafkas_mgmt/v1/errors/7",
+        "code": "CONNECTOR-MGMT-7",
+        "href": "/api/connector_mgmt/v1/errors/7",
         "id": "7",
         "kind": "Error",
         "operation_id": "${response.operation_id}",
