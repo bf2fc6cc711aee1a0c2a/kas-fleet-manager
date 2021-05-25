@@ -22,12 +22,6 @@ jobs:
           repository: ${{ matrix.repo }}
           event-type: openapi-spec-change
           client-payload: '{
-            "github": {
-              "repository": "${{ github.repository }}",
-              "ref": "${{ github.ref }}"
-            },
-            "openapi": {
-              "directory": "./openapi",
-              "filename": "kas-fleet-manager.yaml"
-            }
+            "id": "kafka-mgmt/v1",
+            "openapi": "./openapi/kas-fleet-manager.yaml"
           }'
