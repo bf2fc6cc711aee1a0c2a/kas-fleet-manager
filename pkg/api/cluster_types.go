@@ -19,8 +19,6 @@ func (k *ClusterStatus) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	switch s {
-	case ClusterAccepted.String():
-		*k = ClusterAccepted
 	case ClusterProvisioning.String():
 		*k = ClusterProvisioning
 	case ClusterProvisioned.String():

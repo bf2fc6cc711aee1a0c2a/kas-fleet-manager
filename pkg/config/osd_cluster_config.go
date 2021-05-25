@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
@@ -79,6 +80,9 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	*c = ManualCluster(temp)
+	if c.ClusterId == "" {
+		return fmt.Errorf("cluster_id is empty")
+	}
 	return nil
 }
 

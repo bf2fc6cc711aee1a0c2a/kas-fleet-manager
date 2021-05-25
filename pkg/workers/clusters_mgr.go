@@ -647,6 +647,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 					Region:        v.Name,
 					MultiAZ:       true,
 					Status:        api.ClusterAccepted,
+					ProviderType:  api.ClusterProviderOCM,
 				}
 				if err := c.clusterService.RegisterClusterJob(&clusterRequest); err != nil {
 					errs = append(errs, errors.Wrapf(err, "Failed to auto-create cluster request in %s, region: %s", p.Name, v.Name))

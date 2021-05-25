@@ -9,4 +9,6 @@ const (
 	FlagClusterID = "cluster-id"
 	// FlagMultiAZ is a flag representing a whether a cluster is multi AZ
 	FlagMultiAZ = "multi-az"
+	// FlagProviderType is a flag representing the provider type.
+	FlagProviderType = "provider-type"
 )

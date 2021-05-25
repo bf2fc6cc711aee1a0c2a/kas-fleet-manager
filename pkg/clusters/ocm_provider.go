@@ -316,7 +316,7 @@ func (o *OCMProvider) addOpenIDIdentityProvider(clusterSpec *types.ClusterSpec, 
 }
 
 func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.ResourceSet) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources...).Build()
+	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().ID(resourceSet.Name).Resources(resourceSet.Resources...).Build()
 
 	if sysnsetBuilderErr != nil {
 		return nil, errors.WithStack(sysnsetBuilderErr)
@@ -326,7 +326,7 @@ func (o *OCMProvider) createSyncSet(clusterID string, resourceSet types.Resource
 }
 
 func (o *OCMProvider) updateSyncSet(clusterID string, resourceSet types.ResourceSet, existingSyncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources...).ID(resourceSet.Name).Build()
+	syncset, sysnsetBuilderErr := clustersmgmtv1.NewSyncset().Resources(resourceSet.Resources...).Build()
 	if sysnsetBuilderErr != nil {
 		return nil, errors.WithStack(sysnsetBuilderErr)
 	}

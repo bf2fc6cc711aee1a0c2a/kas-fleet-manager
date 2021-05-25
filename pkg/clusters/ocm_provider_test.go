@@ -517,6 +517,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 						return nil, apiErrors.NotFound("not found error")
 					},
 					CreateSyncSetFunc: func(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+						Expect(syncset.ID()).To(Equal(resources.Name))
 						Expect(syncset.Resources()).To(Equal(resources.Resources))
 						return nil, nil
 					},
@@ -547,7 +548,6 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 						return nil, errors.New("CreateSyncSet should not be called")
 					},
 					UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
-						Expect(syncset.ID()).To(Equal(resources.Name))
 						Expect(syncset.Resources()).To(Equal(resources.Resources))
 						return nil, nil
 					},
