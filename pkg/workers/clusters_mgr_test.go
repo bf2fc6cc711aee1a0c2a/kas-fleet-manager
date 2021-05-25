@@ -1196,7 +1196,7 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 				Kind:       "Group",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: readOnlyGroupName,
+				Name: mkReadOnlyGroupName,
 			},
 		},
 		&authv1.ClusterRoleBinding{
@@ -1211,12 +1211,42 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 				{
 					Kind:       "Group",
 					APIVersion: "rbac.authorization.k8s.io",
-					Name:       readOnlyGroupName,
+					Name:       mkReadOnlyGroupName,
 				},
 			},
 			RoleRef: k8sCoreV1.ObjectReference{
 				Kind:       "ClusterRole",
 				Name:       dedicatedReadersRoleBindingName,
+				APIVersion: "rbac.authorization.k8s.io",
+			},
+		},
+		&userv1.Group{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: userv1.SchemeGroupVersion.String(),
+				Kind:       "Group",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkSREGroupName,
+			},
+		},
+		&authv1.ClusterRoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "rbac.authorization.k8s.io/v1",
+				Kind:       "ClusterRoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkSRERoleBindingName,
+			},
+			Subjects: []k8sCoreV1.ObjectReference{
+				{
+					Kind:       "Group",
+					APIVersion: "rbac.authorization.k8s.io",
+					Name:       mkSREGroupName,
+				},
+			},
+			RoleRef: k8sCoreV1.ObjectReference{
+				Kind:       "ClusterRole",
+				Name:       clusterAdminRoleName,
 				APIVersion: "rbac.authorization.k8s.io",
 			},
 		},

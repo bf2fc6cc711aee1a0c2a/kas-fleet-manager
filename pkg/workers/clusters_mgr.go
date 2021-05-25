@@ -40,9 +40,12 @@ const (
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
 	openIDIdentityProviderName      = "Kafka_SRE"
-	readOnlyGroupName               = "mk-readonly-access"
+	mkReadOnlyGroupName             = "mk-readonly-access"
+	mkSREGroupName                  = "kafka-sre"
 	mkReadOnlyRoleBindingName       = "mk-dedicated-readers"
+	mkSRERoleBindingName            = "kafka-sre-cluster-admin"
 	dedicatedReadersRoleBindingName = "dedicated-readers"
+	clusterAdminRoleName            = "cluster-admin"
 	KafkaStorageClass               = "mk-storageclass"
 	IngressLabelName                = "ingressType"
 	IngressLabelValue               = "sharded"
@@ -672,6 +675,8 @@ func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 		c.buildObservabilitySubscriptionResource(),
 		c.buildReadOnlyGroupResource(),
 		c.buildDedicatedReaderClusterRoleBindingResource(),
+		c.buildKafkaSREGroupResource(),
+		c.buildKafkaSreClusterRoleBindingResource(),
 	}
 
 	if s := c.buildImagePullSecret(strimziAddonNamespace); s != nil {
@@ -872,7 +877,7 @@ func (c *ClusterManager) buildReadOnlyGroupResource() *userv1.Group {
 			Kind:       "Group",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: readOnlyGroupName,
+			Name: mkReadOnlyGroupName,
 		},
 		Users: c.configService.GetConfig().OSDClusterConfig.ReadOnlyUserList,
 	}
@@ -892,12 +897,51 @@ func (c *ClusterManager) buildDedicatedReaderClusterRoleBindingResource() *authv
 			{
 				Kind:       "Group",
 				APIVersion: "rbac.authorization.k8s.io",
-				Name:       readOnlyGroupName,
+				Name:       mkReadOnlyGroupName,
 			},
 		},
 		RoleRef: k8sCoreV1.ObjectReference{
 			Kind:       "ClusterRole",
 			Name:       dedicatedReadersRoleBindingName,
+			APIVersion: "rbac.authorization.k8s.io",
+		},
+	}
+}
+
+// buildReadOnlyGroupResource creates a group to which read-only cluster users are added.
+func (c *ClusterManager) buildKafkaSREGroupResource() *userv1.Group {
+	return &userv1.Group{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: userv1.SchemeGroupVersion.String(),
+			Kind:       "Group",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: mkSREGroupName,
+		},
+		Users: c.configService.GetConfig().OSDClusterConfig.KafkaSREUsers,
+	}
+}
+
+// buildClusterAdminClusterRoleBindingResource creates a cluster role binding, associates it with the kafka-sre group, and attaches the cluster-admin role.
+func (c *ClusterManager) buildKafkaSreClusterRoleBindingResource() *authv1.ClusterRoleBinding {
+	return &authv1.ClusterRoleBinding{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "rbac.authorization.k8s.io/v1",
+			Kind:       "ClusterRoleBinding",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: mkSRERoleBindingName,
+		},
+		Subjects: []k8sCoreV1.ObjectReference{
+			{
+				Kind:       "Group",
+				APIVersion: "rbac.authorization.k8s.io",
+				Name:       mkSREGroupName,
+			},
+		},
+		RoleRef: k8sCoreV1.ObjectReference{
+			Kind:       "ClusterRole",
+			Name:       clusterAdminRoleName,
 			APIVersion: "rbac.authorization.k8s.io",
 		},
 	}
