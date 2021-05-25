@@ -1,6 +1,12 @@
 classDiagram
-  
-  class ClusterProvider {
+  class Cluster {
+      +ProviderType providerType
+      +ProviderSpec JSON
+      +ClusterSpec JSON
+      +OtherFields...
+  }
+
+  class Provider {
       <<Interface>>
       + Create()
       + Get()
@@ -12,12 +18,26 @@ classDiagram
       + ScaleDown()
       + OtherMethods...()
   }
-  class OCMClusterProvider{
+
+  class AddonProvider {
+      <<Interface>>
+      + InstallAddon()
+      + InstallAddonWithParams()
+  }
+
+  class ProviderFactory {
+      <<Interface>>
+      +GetProvider(providerType) Provider
+      +GetAddonProvider(providerType) AddonProvider
+  }
+
+  class OCMProvider{
       -OCMClient ocmClient
   }
-  class StandaloneClusterProvider {
+  class StandaloneProvider {
 
   }
+
   class ConnectionFactory {
       <<Service>>
   }
@@ -29,14 +49,18 @@ classDiagram
       + Delete()
       + Find()
       + UpdateStatus()
+      + OtherMethods...
   }
 
   class ClusterManager {
       + Reconcile()
   }
 
-  ClusterProvider <|.. OCMClusterProvider: Implements
-  ClusterProvider <|.. StandaloneClusterProvider: Implements
-  ClusterService ..> ClusterProvider: Depends
+  Provider <|.. OCMProvider: Implements
+  Provider <|.. StandaloneProvider: Implements
+  AddonProvider <|.. OCMProvider: Implements
+  ProviderFactory --|> Provider: Return concrete impl based on ProviderType
+  ProviderFactory --|> AddonProvider: Return concrete impl based on ProviderType
+  ClusterService ..> ProviderFactory: Depends
   ClusterService ..> ConnectionFactory: Depends
   ClusterManager ..> ClusterService: Depends

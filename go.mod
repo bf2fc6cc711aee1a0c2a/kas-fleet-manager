@@ -19,7 +19,6 @@ require (
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
-	github.com/go-errors/errors v1.0.1
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
