@@ -290,6 +290,11 @@ parameters:
   description: A list of denied users that are not allowed to access the service. A user is identified by its username.
   value: "[]"
 
+- name: READ_ONLY_USERS
+  displayName: A list of read only users given by their usernames
+  description: A list of read only users. A user is identified by its username.
+  value: "[]"
+
 - name: MAS_SSO_DEBUG
   displayName: MAS SSO API Debug mode
   description: Debug mode for MAS SSO API client
@@ -492,6 +497,15 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
+      name: ocm-managed-services-read-only-user-list
+      annotations:
+        qontract.recycle: "true"
+    data:
+      read-only-user-list.yaml: |-
+        ${READ_ONLY_USERS}
+  - kind: ConfigMap
+    apiVersion: v1
+    metadata:
       name: ocm-managed-services-long-lived-kafkas
       annotations:
         qontract.recycle: "true"
@@ -626,6 +640,9 @@ objects:
           - name: ocm-managed-services-denied-users-config
             configMap:
               name: ocm-managed-services-denied-users-config
+          - name: ocm-managed-services-read-only-user-list
+            configMap:
+              name: ocm-managed-services-read-only-user-list
           - name: ocm-managed-services-connector-types-config
             configMap:
               name: ocm-managed-services-connector-types-config
@@ -696,6 +713,9 @@ objects:
             - name: ocm-managed-services-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
+            - name: ocm-managed-services-read-only-user-list
+              mountPath: /config/read-only-user-list.yaml
+              subPath: read-only-user-list.yaml
             - name: ocm-managed-services-connector-types-config
               mountPath: /config/connector-types
             - name: ocm-managed-services-kafka-capacity-config
@@ -723,6 +743,7 @@ objects:
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
+            - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
             - --kafka-lifespan=${KAFKA_LIFE_SPAN}
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
