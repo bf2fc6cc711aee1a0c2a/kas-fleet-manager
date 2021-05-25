@@ -455,6 +455,10 @@ parameters:
   description: The type of vault to use to store secrets
   value: tmp
 
+- name: ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE
+  description: Enables reconciliation for data plane clusters in the 'Ready' state
+  value: "true"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -778,6 +782,7 @@ objects:
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --enable-metrics-https=${ENABLE_METRICS_HTTPS}
             - --enable-ocm-mock=${ENABLE_OCM_MOCK}
+            - --enable-ready-dataplane-clusters-reconcile=${ENABLE_READY_DATA_PLANE_CLUSTERS_RECONCILE}
             - --ocm-mock-mode=${OCM_MOCK_MODE}
             - --enable-sentry=${ENABLE_SENTRY}
             - --enable-sentry-debug=${ENABLE_SENTRY_DEBUG}
