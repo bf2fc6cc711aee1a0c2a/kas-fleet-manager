@@ -18,22 +18,27 @@ func ConvertConnector(from openapi.Connector) (*api.Connector, *errors.ServiceEr
 		Meta: api.Meta{
 			ID: from.Id,
 		},
-		ConnectorTypeId: from.ConnectorTypeId,
-		ConnectorSpec:   spec,
 		TargetKind:      from.DeploymentLocation.Kind,
 		AddonClusterId:  from.DeploymentLocation.ClusterId,
-		Region:          from.DeploymentLocation.Region,
 		CloudProvider:   from.DeploymentLocation.CloudProvider,
+		Region:          from.DeploymentLocation.Region,
 		MultiAZ:         from.DeploymentLocation.MultiAz,
 		Name:            from.Metadata.Name,
+		Owner:           from.Metadata.Owner,
+		KafkaID:         from.Metadata.KafkaId,
+		Version:         from.Metadata.ResourceVersion,
+		ConnectorTypeId: from.ConnectorTypeId,
+		ConnectorSpec:   spec,
+		DesiredState:    from.DesiredState,
+		Channel:         from.Channel,
+		Kafka: api.KafkaConnectionSettings{
+			BootstrapServer: from.Kafka.BootstrapServer,
+			ClientId:        from.Kafka.ClientId,
+			ClientSecret:    from.Kafka.ClientSecret,
+		},
 		Status: api.ConnectorStatus{
 			Phase: from.Status,
 		},
-		Owner:        from.Metadata.Owner,
-		KafkaID:      from.Metadata.KafkaId,
-		Version:      from.Metadata.ResourceVersion,
-		DesiredState: from.DesiredState,
-		Channel:      from.Channel,
 	}, nil
 }
 
@@ -69,5 +74,10 @@ func PresentConnector(from *api.Connector) (openapi.Connector, *errors.ServiceEr
 		Status:          from.Status.Phase,
 		DesiredState:    from.DesiredState,
 		Channel:         from.Channel,
+		Kafka: openapi.KafkaConnectionSettings{
+			BootstrapServer: from.Kafka.BootstrapServer,
+			ClientId:        from.Kafka.ClientId,
+			ClientSecret:    from.Kafka.ClientSecret,
+		},
 	}, nil
 }

@@ -77,8 +77,8 @@ func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				for _, resource := range resources {
 					converted, serviceError := h.presentDeployment(r, resource)
 					if serviceError != nil {
-						sentry.CaptureException(err)
-						glog.Errorf("failed to present connector deployment %s: %v", resource.ID, err)
+						sentry.CaptureException(serviceError)
+						glog.Errorf("failed to present connector deployment %s: %v", resource.ID, serviceError)
 					} else {
 						list.Items = append(list.Items, converted)
 					}
@@ -186,6 +186,11 @@ func (h *connectorClusterHandler) presentDeployment(r *http.Request, resource ap
 	converted.Spec.DesiredState = pc.DesiredState
 	converted.Spec.ConnectorId = pc.Id
 	converted.Spec.KafkaId = pc.Metadata.KafkaId
+	converted.Spec.Kafka = openapi.KafkaConnectionSettings{
+		BootstrapServer: pc.Kafka.BootstrapServer,
+		ClientId:        pc.Kafka.ClientId,
+		ClientSecret:    pc.Kafka.ClientSecret,
+	}
 	converted.Spec.ConnectorTypeId = pc.ConnectorTypeId
 	return converted, nil
 }
