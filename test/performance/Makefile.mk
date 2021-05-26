@@ -46,6 +46,10 @@ else
 endif
 .PHONY: test/performance
 
+.PHONY: test/performance/process/csv
+test/performance/process/csv:
+	python3 test/performance/scripts/process_results.py
+
 .PHONY: test/performance/image/build
 test/performance/image/build:
 	docker build -t ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST}  -f $(PWD)/test/performance/Dockerfile .

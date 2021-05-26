@@ -1,0 +1,403 @@
+{
+  "$schema": "http://kfmperf.com/schema#",
+  "endpoints": [
+    {
+      "/kafkas/[id]": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        },
+        "delete": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/kafkas": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        },
+        "post": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/kafkas?search": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/openapi": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/cloud_providers": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/cloud_providers/aws/regions": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/serviceaccounts": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        },
+        "post": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/serviceaccounts/[id]": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        },
+        "delete": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/serviceaccounts/[id]/reset-credentials": {
+        "post": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/kafkas/[id]/metrics/query_range": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "/kafkas/[id]/metrics/query": {
+        "get": {
+          "request count": "undefined",
+          "failure count": "undefined",
+          "median response time": "undefined",
+          "average response time": "undefined",
+          "min response time": "undefined",
+          "max response time": "undefined",
+          "average content size": "undefined",
+          "requests/s": "undefined",
+          "failures/s": "undefined",
+          "50%": "undefined",
+          "66%": "undefined",
+          "75%": "undefined",
+          "80%": "undefined",
+          "90%": "undefined",
+          "95%": "undefined",
+          "98%": "undefined",
+          "99%": "undefined",
+          "99.9%": "undefined",
+          "99.99%": "undefined",
+          "100%": "undefined"
+        }
+      }
+    },
+    {
+      "aggregated": {
+        "request count": "undefined",
+        "failure count": "undefined",
+        "median response time": "undefined",
+        "average response time": "undefined",
+        "min response time": "undefined",
+        "max response time": "undefined",
+        "average content size": "undefined",
+        "requests/s": "undefined",
+        "failures/s": "undefined",
+        "50%": "undefined",
+        "66%": "undefined",
+        "75%": "undefined",
+        "80%": "undefined",
+        "90%": "undefined",
+        "95%": "undefined",
+        "98%": "undefined",
+        "99%": "undefined",
+        "99.9%": "undefined",
+        "99.99%": "undefined",
+        "100%": "undefined"
+      }
+    }
+  ]
+}
