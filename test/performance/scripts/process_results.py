@@ -23,28 +23,27 @@ lines = text.lower()
 with open(csv_file_name, 'w') as out:
   out.writelines(lines)
 
+with open(json_template_file_name) as json_data:
+  schema_data = json.load(json_data)
+
 # read csv 
 with open(csv_file_name) as csvRaw:
   csvReader = csv.DictReader(csvRaw)
   for result in csvReader:
-    key = result['name']
-    raw_results[key] = result
-
-# read json template and construct json to which data will be injected
-with open(json_template_file_name) as json_data:
-  schema_data = json.load(json_data)
-
-# iterate over csv results and inject values into the JSON template
-for endpoint, metrics in raw_results.items():
-  for schema_endpoint in schema_data['endpoints']:
-    for k,v in metrics.items():
-      if 'aggregated' in schema_endpoint and endpoint == 'aggregated':
+    # populate aggregated stats
+    if result['type'] == '' and result['name'] == 'aggregated':
+      for k, v in result.items():
         if k != 'name' and k != 'type':
-          schema_endpoint['aggregated'][k] = float(v)
-    if endpoint in schema_endpoint and metrics['type'] in schema_endpoint[endpoint]:
-      for k,v in metrics.items():
-        if k != 'name' and k != 'type':
-          schema_endpoint[endpoint][metrics['type']][k] = float(v)
+          for schema_endpoint in schema_data['endpoints']:
+            if 'aggregated' in schema_endpoint:
+              schema_endpoint['aggregated'][k] = float(v)
+  
+    # populate endpoints stats
+    for schema_endpoint in schema_data['endpoints']:
+      if result['name'] in schema_endpoint and result['type'] in schema_endpoint[result['name']]:
+        for k,v in result.items():
+          if k != 'name' and k != 'type':
+            schema_endpoint[result['name']][result['type']][k] = float(v)
 
 # persist processed JSON results
 with open(processed_json_data, 'w') as outfile:
