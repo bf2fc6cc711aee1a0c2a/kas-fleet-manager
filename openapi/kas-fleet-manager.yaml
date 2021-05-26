@@ -50,6 +50,8 @@ paths:
   /api/kafkas_mgmt/v1/kafkas/{id}:
     get:
       operationId: getKafkaById
+      tags:
+        - kafka
       responses:
         "200":
           content:
@@ -103,6 +105,8 @@ paths:
       summary: Get a kafka request by id
     delete:
       operationId: deleteKafkaById
+      tags:
+        - kafka
       parameters:
         - in: query
           name: async
@@ -172,6 +176,8 @@ paths:
   /api/kafkas_mgmt/v1/kafkas:
     post:
       operationId: createKafka
+      tags:
+        - kafka
       parameters:
         - in: query
           name: async
@@ -263,6 +269,8 @@ paths:
     get:
       summary: Returns a list of Kafka requests
       operationId: listKafkas
+      tags:
+        - kafka
       security:
         - Bearer: []
       responses:
@@ -421,6 +429,8 @@ paths:
       security:
         - Bearer: []
       operationId: listServiceAccounts
+      tags:
+        - security
       summary: List service accounts
     post:
       requestBody:
@@ -473,6 +483,8 @@ paths:
       security:
         - Bearer: []
       operationId: createServiceAccount
+      tags:
+        - security
       summary: Create a service account
   '/api/kafkas_mgmt/v1/serviceaccounts/{id}':
     get:
@@ -491,6 +503,8 @@ paths:
       security:
         - Bearer: []
       operationId: getServiceAccountById
+      tags:
+        - security
       summary: get service account by id
     summary: Get service account by id
     description: Get the service account with the given id
@@ -533,6 +547,8 @@ paths:
       security:
         - Bearer: []
       operationId: deleteServiceAccount
+      tags:
+        - security
       summary: Delete service account
   '/api/kafkas_mgmt/v1/serviceaccounts/{id}/reset-credentials':
     post:
@@ -577,6 +593,8 @@ paths:
       security:
         - Bearer: []
       operationId: resetServiceAccountCreds
+      tags:
+        - security
       summary: reset credentials for the service account
   #
   # These are the user-facing related endpoints
@@ -585,6 +603,8 @@ paths:
     get:
       summary: Get metrics with timeseries range query by kafka id.
       operationId: GetMetricsByRangeQuery
+      tags:
+        - metrics
       security:
         - Bearer: []
       responses:
@@ -621,6 +641,8 @@ paths:
     get:
       summary: Get metrics with instant query by kafka id.
       operationId: GetMetricsByInstantQuery
+      tags:
+        - metrics
       security:
         - Bearer: []
       responses:
