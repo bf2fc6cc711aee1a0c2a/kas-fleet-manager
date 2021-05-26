@@ -50,8 +50,6 @@ paths:
   /api/kafkas_mgmt/v1/kafkas/{id}:
     get:
       operationId: getKafkaById
-      tags:
-        - kafka
       responses:
         "200":
           content:
@@ -105,8 +103,6 @@ paths:
       summary: Get a kafka request by id
     delete:
       operationId: deleteKafkaById
-      tags:
-        - kafka
       parameters:
         - in: query
           name: async
@@ -176,8 +172,6 @@ paths:
   /api/kafkas_mgmt/v1/kafkas:
     post:
       operationId: createKafka
-      tags:
-        - kafka
       parameters:
         - in: query
           name: async
@@ -269,8 +263,6 @@ paths:
     get:
       summary: Returns a list of Kafka requests
       operationId: listKafkas
-      tags:
-        - kafka
       security:
         - Bearer: []
       responses:
@@ -603,8 +595,6 @@ paths:
     get:
       summary: Get metrics with timeseries range query by kafka id.
       operationId: GetMetricsByRangeQuery
-      tags:
-        - metrics
       security:
         - Bearer: []
       responses:
@@ -641,8 +631,6 @@ paths:
     get:
       summary: Get metrics with instant query by kafka id.
       operationId: GetMetricsByInstantQuery
-      tags:
-        - metrics
       security:
         - Bearer: []
       responses:
