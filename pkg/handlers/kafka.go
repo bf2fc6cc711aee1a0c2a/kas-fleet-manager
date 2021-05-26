@@ -99,6 +99,11 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
 			listArgs := services.NewListArguments(r.URL.Query())
+
+			if err := listArgs.Validate(); err != nil {
+				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list kafka requests")
+			}
+
 			kafkaRequests, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
