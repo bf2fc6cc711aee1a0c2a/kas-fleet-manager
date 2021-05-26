@@ -15,22 +15,22 @@ var _ AddonProvider = &AddonProviderMock{}
 
 // AddonProviderMock is a mock implementation of AddonProvider.
 //
-//     func TestSomethingThatUsesAddonProvider(t *testing.T) {
+// 	func TestSomethingThatUsesAddonProvider(t *testing.T) {
 //
-//         // make and configure a mocked AddonProvider
-//         mockedAddonProvider := &AddonProviderMock{
-//             InstallAddonFunc: func(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
-// 	               panic("mock out the InstallAddon method")
-//             },
-//             InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
-// 	               panic("mock out the InstallAddonWithParams method")
-//             },
-//         }
+// 		// make and configure a mocked AddonProvider
+// 		mockedAddonProvider := &AddonProviderMock{
+// 			InstallAddonFunc: func(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
+// 				panic("mock out the InstallAddon method")
+// 			},
+// 			InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+// 				panic("mock out the InstallAddonWithParams method")
+// 			},
+// 		}
 //
-//         // use mockedAddonProvider in code that requires AddonProvider
-//         // and then make assertions.
+// 		// use mockedAddonProvider in code that requires AddonProvider
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type AddonProviderMock struct {
 	// InstallAddonFunc mocks the InstallAddon method.
 	InstallAddonFunc func(clusterSpec *types.ClusterSpec, addonID string) (bool, error)

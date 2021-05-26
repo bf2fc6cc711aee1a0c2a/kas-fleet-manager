@@ -1,11 +1,21 @@
 package converters
 
 import (
+	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
 // ConvertCluster from *api.Cluster to []map[string]interface{}
 func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
+	var p, c *[]byte
+	if cluster.ProviderSpec != nil {
+		bytes, _ := json.Marshal(cluster.ProviderSpec)
+		p = &bytes
+	}
+	if cluster.ClusterSpec != nil {
+		bytes, _ := json.Marshal(cluster.ClusterSpec)
+		c = &bytes
+	}
 	return []map[string]interface{}{
 		{
 			"id":             cluster.Meta.ID,
@@ -19,6 +29,8 @@ func ConvertCluster(cluster *api.Cluster) []map[string]interface{} {
 			"updated_at":     cluster.Meta.UpdatedAt,
 			"deleted_at":     cluster.Meta.DeletedAt.Time,
 			"provider_type":  cluster.ProviderType.String(),
+			"provider_spec":  p,
+			"cluster_spec":   c,
 		},
 	}
 }

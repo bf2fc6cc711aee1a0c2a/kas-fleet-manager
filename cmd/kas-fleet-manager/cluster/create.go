@@ -46,7 +46,7 @@ func runCreate(cmd *cobra.Command, _ []string) {
 		Region:        region,
 		MultiAZ:       multiAZ,
 		Status:        api.ClusterAccepted,
-		ProviderType: api.ClusterProviderType(providerType),
+		ProviderType:  api.ClusterProviderType(providerType),
 	}
 
 	if err := clusterService.RegisterClusterJob(&clusterRequest); err != nil {

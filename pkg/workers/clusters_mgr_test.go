@@ -699,7 +699,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return &api.Cluster{ClusterID: "dummy cluster"}, nil
 					},
 					UpdateStatusFunc: nil,
-					RemoveClusterFromProviderFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to remove cluster")
 					},
 				},
@@ -721,7 +721,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
-					RemoveClusterFromProviderFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
 				},
@@ -741,7 +741,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
-					RemoveClusterFromProviderFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
 				},
@@ -760,7 +760,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return fmt.Errorf("Some errors")
 					},
-					RemoveClusterFromProviderFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return true, nil
 					},
 				},
@@ -776,7 +776,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			name: "does not update cluster status when cluster has not been fully deleted from ClusterService",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					RemoveClusterFromProviderFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+					DeleteFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {

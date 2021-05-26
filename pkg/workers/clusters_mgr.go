@@ -324,7 +324,7 @@ func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) er
 		}
 	}
 
-	deleted, deleteClusterErr := c.clusterService.RemoveClusterFromProvider(cluster)
+	deleted, deleteClusterErr := c.clusterService.Delete(cluster)
 	if deleteClusterErr != nil {
 		return deleteClusterErr
 	}

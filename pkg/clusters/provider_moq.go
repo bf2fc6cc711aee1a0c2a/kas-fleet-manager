@@ -14,52 +14,52 @@ var _ Provider = &ProviderMock{}
 
 // ProviderMock is a mock implementation of Provider.
 //
-//     func TestSomethingThatUsesProvider(t *testing.T) {
+// 	func TestSomethingThatUsesProvider(t *testing.T) {
 //
-//         // make and configure a mocked Provider
-//         mockedProvider := &ProviderMock{
-//             AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-// 	               panic("mock out the AddIdentityProvider method")
-//             },
-//             ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-// 	               panic("mock out the ApplyResources method")
-//             },
-//             CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
-// 	               panic("mock out the CheckClusterStatus method")
-//             },
-//             CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
-// 	               panic("mock out the Create method")
-//             },
-//             DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
-// 	               panic("mock out the Delete method")
-//             },
-//             GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-// 	               panic("mock out the GetCloudProviderRegions method")
-//             },
-//             GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-// 	               panic("mock out the GetCloudProviders method")
-//             },
-//             GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
-// 	               panic("mock out the GetClusterDNS method")
-//             },
-//             GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
-// 	               panic("mock out the GetComputeNodes method")
-//             },
-//             ScaleDownFunc: func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
-// 	               panic("mock out the ScaleDown method")
-//             },
-//             ScaleUpFunc: func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
-// 	               panic("mock out the ScaleUp method")
-//             },
-//             SetComputeNodesFunc: func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
-// 	               panic("mock out the SetComputeNodes method")
-//             },
-//         }
+// 		// make and configure a mocked Provider
+// 		mockedProvider := &ProviderMock{
+// 			AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
+// 				panic("mock out the AddIdentityProvider method")
+// 			},
+// 			ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
+// 				panic("mock out the ApplyResources method")
+// 			},
+// 			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
+// 				panic("mock out the CheckClusterStatus method")
+// 			},
+// 			CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
+// 				panic("mock out the Create method")
+// 			},
+// 			DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
+// 				panic("mock out the Delete method")
+// 			},
+// 			GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
+// 				panic("mock out the GetCloudProviderRegions method")
+// 			},
+// 			GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+// 				panic("mock out the GetCloudProviders method")
+// 			},
+// 			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
+// 				panic("mock out the GetClusterDNS method")
+// 			},
+// 			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
+// 				panic("mock out the GetComputeNodes method")
+// 			},
+// 			ScaleDownFunc: func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
+// 				panic("mock out the ScaleDown method")
+// 			},
+// 			ScaleUpFunc: func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
+// 				panic("mock out the ScaleUp method")
+// 			},
+// 			SetComputeNodesFunc: func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
+// 				panic("mock out the SetComputeNodes method")
+// 			},
+// 		}
 //
-//         // use mockedProvider in code that requires Provider
-//         // and then make assertions.
+// 		// use mockedProvider in code that requires Provider
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type ProviderMock struct {
 	// AddIdentityProviderFunc mocks the AddIdentityProvider method.
 	AddIdentityProviderFunc func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)

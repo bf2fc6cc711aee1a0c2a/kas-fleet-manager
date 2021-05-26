@@ -1,7 +1,6 @@
 ---
 #- A list of clusters for kas fleet manager
 #- The `cluster_id` field can not be empty
-#- The valid values for the `status` field are `cluster_provisioning`, `cluster_provisioned` and `ready`. If not specified, `cluster_provisioned` will be set.
 #- All clusters in kas fleet manager DB already but are missing in the list will be marked as
 #  'deprovisioning' and will later be deleted.
 #- This list is ordered, any new cluster should be appended at the end.
@@ -14,6 +13,6 @@
 #    multi_az: true
 #    schedulable: true
 #    kafka_instance_limit: 2
-#    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioned` will be used if not specified.
+#    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioning` will be used if not specified.
 #    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
 clusters: []

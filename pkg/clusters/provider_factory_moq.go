@@ -14,22 +14,22 @@ var _ ProviderFactory = &ProviderFactoryMock{}
 
 // ProviderFactoryMock is a mock implementation of ProviderFactory.
 //
-//     func TestSomethingThatUsesProviderFactory(t *testing.T) {
+// 	func TestSomethingThatUsesProviderFactory(t *testing.T) {
 //
-//         // make and configure a mocked ProviderFactory
-//         mockedProviderFactory := &ProviderFactoryMock{
-//             GetAddonProviderFunc: func(providerType api.ClusterProviderType) (AddonProvider, error) {
-// 	               panic("mock out the GetAddonProvider method")
-//             },
-//             GetProviderFunc: func(providerType api.ClusterProviderType) (Provider, error) {
-// 	               panic("mock out the GetProvider method")
-//             },
-//         }
+// 		// make and configure a mocked ProviderFactory
+// 		mockedProviderFactory := &ProviderFactoryMock{
+// 			GetAddonProviderFunc: func(providerType api.ClusterProviderType) (AddonProvider, error) {
+// 				panic("mock out the GetAddonProvider method")
+// 			},
+// 			GetProviderFunc: func(providerType api.ClusterProviderType) (Provider, error) {
+// 				panic("mock out the GetProvider method")
+// 			},
+// 		}
 //
-//         // use mockedProviderFactory in code that requires ProviderFactory
-//         // and then make assertions.
+// 		// use mockedProviderFactory in code that requires ProviderFactory
+// 		// and then make assertions.
 //
-//     }
+// 	}
 type ProviderFactoryMock struct {
 	// GetAddonProviderFunc mocks the GetAddonProvider method.
 	GetAddonProviderFunc func(providerType api.ClusterProviderType) (AddonProvider, error)

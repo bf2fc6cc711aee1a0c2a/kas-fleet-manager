@@ -1758,13 +1758,13 @@ func TestClusterService_RemoveClusterFromProvider(t *testing.T) {
 				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 
-			got, err := c.RemoveClusterFromProvider(tt.args.cluster)
+			got, err := c.Delete(tt.args.cluster)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("RemoveClusterFromProvider() error = %v, wantErr = %v", err, tt.wantErr)
+				t.Errorf("Delete() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("RemoveClusterFromProvider() want %v but got %v", tt.want, got)
+				t.Errorf("Delete() want %v but got %v", tt.want, got)
 			}
 		})
 	}

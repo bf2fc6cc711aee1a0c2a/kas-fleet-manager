@@ -1,7 +1,7 @@
 package api
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -26,7 +26,7 @@ func (k *ClusterStatus) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	case ClusterReady.String():
 		*k = ClusterReady
 	default:
-		return fmt.Errorf("invalid value %s", s)
+		return errors.Errorf("invalid value %s", s)
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func (p *ClusterProviderType) UnmarshalYAML(unmarshal func(interface{}) error) e
 	case ClusterProviderStandalone.String():
 		*p = ClusterProviderStandalone
 	default:
-		return fmt.Errorf("invalid value %s", s)
+		return errors.Errorf("invalid value %s", s)
 	}
 	return nil
 }

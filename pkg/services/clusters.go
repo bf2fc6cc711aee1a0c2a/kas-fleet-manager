@@ -36,6 +36,7 @@ type ClusterService interface {
 	GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
+	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e kafka that are not in failure state.
@@ -51,7 +52,8 @@ type ClusterService interface {
 	// CountByStatus returns the count of clusters for each given status in the database
 	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
-	RemoveClusterFromProvider(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
+	// Delete will delete the cluster from the provider
+	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
 	InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
@@ -576,7 +578,7 @@ func (c clusterService) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, 
 	return cluster, nil
 }
 
-func (c clusterService) RemoveClusterFromProvider(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
