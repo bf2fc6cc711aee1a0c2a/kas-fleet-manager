@@ -421,6 +421,8 @@ paths:
       security:
         - Bearer: []
       operationId: listServiceAccounts
+      tags:
+        - security
       summary: List service accounts
     post:
       requestBody:
@@ -473,6 +475,8 @@ paths:
       security:
         - Bearer: []
       operationId: createServiceAccount
+      tags:
+        - security
       summary: Create a service account
   '/api/kafkas_mgmt/v1/serviceaccounts/{id}':
     get:
@@ -491,6 +495,8 @@ paths:
       security:
         - Bearer: []
       operationId: getServiceAccountById
+      tags:
+        - security
       summary: get service account by id
     summary: Get service account by id
     description: Get the service account with the given id
@@ -533,6 +539,8 @@ paths:
       security:
         - Bearer: []
       operationId: deleteServiceAccount
+      tags:
+        - security
       summary: Delete service account
   '/api/kafkas_mgmt/v1/serviceaccounts/{id}/reset-credentials':
     post:
@@ -577,6 +585,8 @@ paths:
       security:
         - Bearer: []
       operationId: resetServiceAccountCreds
+      tags:
+        - security
       summary: reset credentials for the service account
   #
   # These are the user-facing related endpoints
