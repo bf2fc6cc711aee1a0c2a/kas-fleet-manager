@@ -1,5 +1,6 @@
 MKFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 PROJECT_PATH := $(patsubst %/,%,$(dir $(MKFILE_PATH)))
+DOCS_DIR := $(PROJECT_PATH)/docs
 include $(PROJECT_PATH)/test/performance/Makefile.mk
 
 .DEFAULT_GOAL := help
@@ -378,7 +379,7 @@ db/login:
 
 db/generate/insert/cluster:
 	@read -r id external_id provider region multi_az<<<"$(shell ocm get /api/clusters_mgmt/v1/clusters/${CLUSTER_ID} | jq '.id, .external_id, .cloud_provider.id, .region.id, .multi_az' | tr -d \" | xargs -n2 echo)";\
-	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, byoc, managed, status) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', true, true, 'cluster_provisioned');";
+	echo -e "Run this command in your database:\n\nINSERT INTO clusters (id, created_at, updated_at, cloud_provider, cluster_id, external_id, multi_az, region, status, provider_type) VALUES ('"$$id"', current_timestamp, current_timestamp, '"$$provider"', '"$$id"', '"$$external_id"', "$$multi_az", '"$$region"', 'cluster_provisioned', 'ocm');";
 .PHONY: db/generate/insert/cluster
 
 # Login to docker
@@ -551,5 +552,12 @@ undeploy:
 		| oc delete -f - -n $(NAMESPACE)
 .PHONY: undeploy
 
+docs/generate/mermaid:
+	@for f in $(shell ls $(DOCS_DIR)/mermaid-diagrams-source/*.mmd); do \
+		echo Generating diagram for `basename $${f}`; \
+		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
+	done
+.PHONY: docs/generate/mermaid
+  
 # TODO CRC Deployment stuff
 

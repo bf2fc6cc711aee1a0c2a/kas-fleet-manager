@@ -1,16 +1,18 @@
 ---
 #- A list of clusters for kas fleet manager
-#- All clusters are created with 'cluster_provisioning' status if they are not already in kas fleet manager
+#- The `cluster_id` field can not be empty
 #- All clusters in kas fleet manager DB already but are missing in the list will be marked as
 #  'deprovisioning' and will later be deleted.
 #- This list is ordered, any new cluster should be appended at the end.
 #e.g.:
 #clusters:
 #  - name: anyname
-#    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378
+#    cluster_id: 1jp6kdr7k0sjbe5adck2prjur8f39378  #This field is required
 #    cloud_provider: aws
 #    region: us-east-1
 #    multi_az: true
 #    schedulable: true
 #    kafka_instance_limit: 2
+#    status: "cluster_provisioning" #Valid values are `cluster_provisioning`, `cluster_provisioned` and `ready`. `cluster_provisioning` will be used if not specified.
+#    provider_type: "ocm" #Valid values are `ocm` and `standalone`. `ocm` will be used if not specified.
 clusters: []

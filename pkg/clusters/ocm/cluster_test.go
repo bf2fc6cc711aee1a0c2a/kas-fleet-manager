@@ -1,10 +1,10 @@
 package ocm
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"reflect"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -33,7 +33,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	}
 
 	type args struct {
-		cluster *api.Cluster
+		clusterRequest *types.ClusterRequest
 	}
 	tests := []struct {
 		name    string
@@ -50,7 +50,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
-				cluster: &api.Cluster{},
+				clusterRequest: &types.ClusterRequest{},
 			},
 			wantErr: true,
 		},
@@ -62,7 +62,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				osdClusterConfig: nil,
 			},
 			args: args{
-				cluster: &api.Cluster{},
+				clusterRequest: &types.ClusterRequest{},
 			},
 			wantErr: true,
 		},
@@ -74,7 +74,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
-				cluster: nil,
+				clusterRequest: nil,
 			},
 			wantErr: true,
 		},
@@ -86,7 +86,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
-				cluster: &api.Cluster{},
+				clusterRequest: &types.ClusterRequest{},
 			},
 			wantErr: true,
 		},
@@ -102,13 +102,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				osdClusterConfig: osdClusterConfig,
 			},
 			args: args{
-				cluster: &api.Cluster{
+				clusterRequest: &types.ClusterRequest{
 					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					ClusterID:     clusterservicetest.MockClusterID,
-					ExternalID:    clusterservicetest.MockClusterExternalID,
 					Region:        clusterservicetest.MockClusterRegion,
-					BYOC:          clusterservicetest.MockClusterBYOC,
-					Managed:       clusterservicetest.MockClusterManaged,
 					MultiAZ:       clusterservicetest.MockClusterMultiAZ,
 				},
 			},
@@ -144,7 +140,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				awsConfig:        tt.fields.awsConfig,
 				osdClusterConfig: tt.fields.osdClusterConfig,
 			}
-			got, err := r.NewOCMClusterFromCluster(tt.args.cluster)
+			got, err := r.NewOCMClusterFromCluster(tt.args.clusterRequest)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewOCMClusterFromCluster() error = %v, wantErr %v", err, tt.wantErr)
 				return

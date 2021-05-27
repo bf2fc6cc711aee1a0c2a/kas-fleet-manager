@@ -7,7 +7,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -78,8 +77,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		config.ManualCluster{ClusterId: clusterWithKafkaID, KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 	})
 
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := services.NewClusterService(h.Env().DBFactory, ocmClient, h.Env().Config.AWS, h.Env().Config.OSDClusterConfig)
+	clusterService := h.Env().Services.Cluster
 
 	// Ensure both clusters in the config file have been created
 	pollErr := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
@@ -147,8 +145,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		},
 	}
 
-	keySrv := services.NewKeycloakService(h.Env().Config.Keycloak, h.Env().Config.Keycloak.KafkaRealm)
-	kafkaSrv := services.NewKafkaService(h.Env().DBFactory, clusterService, keySrv, h.Env().Config.Kafka, h.Env().Config.AWS, services.NewQuotaService(ocmClient))
+	kafkaSrv := h.Env().Services.Kafka
 
 	errK := kafkaSrv.RegisterKafkaJob(kafkas[0])
 	if errK != nil {

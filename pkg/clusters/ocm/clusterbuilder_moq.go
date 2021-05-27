@@ -4,7 +4,7 @@
 package ocm
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"sync"
 )
@@ -19,7 +19,7 @@ var _ ClusterBuilder = &ClusterBuilderMock{}
 //
 // 		// make and configure a mocked ClusterBuilder
 // 		mockedClusterBuilder := &ClusterBuilderMock{
-// 			NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error) {
+// 			NewOCMClusterFromClusterFunc: func(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
 // 				panic("mock out the NewOCMClusterFromCluster method")
 // 			},
 // 		}
@@ -30,43 +30,43 @@ var _ ClusterBuilder = &ClusterBuilderMock{}
 // 	}
 type ClusterBuilderMock struct {
 	// NewOCMClusterFromClusterFunc mocks the NewOCMClusterFromCluster method.
-	NewOCMClusterFromClusterFunc func(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error)
+	NewOCMClusterFromClusterFunc func(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// NewOCMClusterFromCluster holds details about calls to the NewOCMClusterFromCluster method.
 		NewOCMClusterFromCluster []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
+			// ClusterRequest is the clusterRequest argument value.
+			ClusterRequest *types.ClusterRequest
 		}
 	}
 	lockNewOCMClusterFromCluster sync.RWMutex
 }
 
 // NewOCMClusterFromCluster calls NewOCMClusterFromClusterFunc.
-func (mock *ClusterBuilderMock) NewOCMClusterFromCluster(cluster *api.Cluster) (*clustersmgmtv1.Cluster, error) {
+func (mock *ClusterBuilderMock) NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
 	if mock.NewOCMClusterFromClusterFunc == nil {
 		panic("ClusterBuilderMock.NewOCMClusterFromClusterFunc: method is nil but ClusterBuilder.NewOCMClusterFromCluster was just called")
 	}
 	callInfo := struct {
-		Cluster *api.Cluster
+		ClusterRequest *types.ClusterRequest
 	}{
-		Cluster: cluster,
+		ClusterRequest: clusterRequest,
 	}
 	mock.lockNewOCMClusterFromCluster.Lock()
 	mock.calls.NewOCMClusterFromCluster = append(mock.calls.NewOCMClusterFromCluster, callInfo)
 	mock.lockNewOCMClusterFromCluster.Unlock()
-	return mock.NewOCMClusterFromClusterFunc(cluster)
+	return mock.NewOCMClusterFromClusterFunc(clusterRequest)
 }
 
 // NewOCMClusterFromClusterCalls gets all the calls that were made to NewOCMClusterFromCluster.
 // Check the length with:
 //     len(mockedClusterBuilder.NewOCMClusterFromClusterCalls())
 func (mock *ClusterBuilderMock) NewOCMClusterFromClusterCalls() []struct {
-	Cluster *api.Cluster
+	ClusterRequest *types.ClusterRequest
 } {
 	var calls []struct {
-		Cluster *api.Cluster
+		ClusterRequest *types.ClusterRequest
 	}
 	mock.lockNewOCMClusterFromCluster.RLock()
 	calls = mock.calls.NewOCMClusterFromCluster

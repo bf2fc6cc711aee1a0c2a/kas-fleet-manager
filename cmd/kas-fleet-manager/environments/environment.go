@@ -2,6 +2,7 @@ package environments
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"os"
 	"sync"
 
@@ -14,9 +15,9 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
@@ -156,15 +157,16 @@ func (env *Env) LoadServices() error {
 
 	signalBus := signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
 	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
+	clusterProviderFactory := clusters.NewDefaultProviderFactory(ocmClient, env.Config)
+	clusterService := services.NewClusterService(env.DBFactory, clusterProviderFactory)
 	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	OsdIdpKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
 	QuotaService := services.NewQuotaService(ocmClient)
 	kafkaService := services.NewKafkaService(env.DBFactory, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
-	cloudProviderService := services.NewCloudProvidersService(ocmClient)
+	cloudProviderService := services.NewCloudProvidersService(clusterProviderFactory)
 	configService := services.NewConfigService(*env.Config)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
-	kasFleetshardAddonService := services.NewKasFleetshardOperatorAddon(kafkaKeycloakService, ocmClient, configService)
+	kasFleetshardAddonService := services.NewKasFleetshardOperatorAddon(kafkaKeycloakService, configService, clusterProviderFactory)
 	clusterPlmtStrategy := services.NewClusterPlacementStrategy(configService, clusterService)
 
 	env.Services.Kafka = kafkaService
@@ -184,7 +186,7 @@ func (env *Env) LoadServices() error {
 	}
 	env.Services.Vault = vaultService
 
-	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, ocmClient, env.Config)
+	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, env.Config)
 	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
 	env.Services.DataPlaneCluster = dataPlaneClusterService
 	env.Services.DataPlaneKafkaService = dataPlaneKafkaService

@@ -1,8 +1,10 @@
 package services
 
 import (
-	"errors"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 	"time"
@@ -13,11 +15,8 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	mocket "github.com/selvatico/go-mocket"
 )
 
@@ -34,6 +33,8 @@ func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 	cluster := &api.Cluster{
 		Region:        testRegion,
 		CloudProvider: testProvider,
+		MultiAZ:       testMultiAZ,
+		ProviderType:  api.ClusterProviderOCM,
 		Meta: api.Meta{
 			DeletedAt: gorm.DeletedAt{Valid: true},
 		},
@@ -44,19 +45,34 @@ func buildCluster(modifyFn func(cluster *api.Cluster)) *api.Cluster {
 	return cluster
 }
 
-func Test_Cluster_Create(t *testing.T) {
-	awsConfig := &config.AWSConfig{
-		AccountID:       "dummy",
-		AccessKey:       "dummy",
-		SecretAccessKey: "dummy",
+func checkClusterFields(this *api.Cluster, that *api.Cluster) bool {
+	if this == that {
+		return true
 	}
-	wantedCluster, _ := v1.NewCluster().Build()
+	if this.ClusterID != that.ClusterID || this.ExternalID != that.ExternalID || this.Region != that.Region || this.MultiAZ != that.MultiAZ || this.ProviderType != that.ProviderType || this.Status != that.Status || this.CloudProvider != that.CloudProvider {
+		return false
+	}
+	return true
+}
+
+func Test_Cluster_Create(t *testing.T) {
+	testClusterInternalId := "test-cluster-id"
+	testClusterExternalId := "test-cluster-external-id"
+	wantedCluster := &api.Cluster{
+		CloudProvider: testProvider,
+		ClusterID:     testClusterInternalId,
+		ExternalID:    testClusterExternalId,
+		MultiAZ:       testMultiAZ,
+		Region:        testRegion,
+		Status:        api.ClusterProvisioning,
+		ProviderType:  api.ClusterProviderOCM,
+		ProviderSpec:  nil,
+		ClusterSpec:   nil,
+	}
 
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		ocmClient         ocm.Client
-		awsConfig         *config.AWSConfig
-		clusterBuilder    ocm.ClusterBuilder
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
 	}
 	type args struct {
 		cluster *api.Cluster
@@ -67,25 +83,23 @@ func Test_Cluster_Create(t *testing.T) {
 		args    args
 		setupFn func()
 		wantErr bool
-		want    *v1.Cluster
+		want    *api.Cluster
 	}{
 		{
 			name: "successful cluster creation from cluster request job",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				ocmClient: &ocm.ClientMock{
-					CreateClusterFunc: func(Cluster *v1.Cluster) (*v1.Cluster, error) {
-						newCluster, _ := v1.NewCluster().Build()
-						return newCluster, nil
-					},
-				},
-				awsConfig: awsConfig,
-				clusterBuilder: &ocm.ClusterBuilderMock{
-					NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
-						newCluster, _ := v1.NewCluster().Build()
-						return newCluster, nil
-					},
-				},
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
+							return &types.ClusterSpec{
+								InternalID: testClusterInternalId,
+								ExternalID: testClusterExternalId,
+								Status:     api.ClusterProvisioning,
+							}, nil
+						},
+					}, nil
+				}},
 			},
 			args: args{
 				cluster: buildCluster(nil),
@@ -97,66 +111,16 @@ func Test_Cluster_Create(t *testing.T) {
 			want:    wantedCluster,
 		},
 		{
-			name: "successful cluster creation without cluster request job",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				ocmClient: &ocm.ClientMock{
-					CreateClusterFunc: func(Cluster *v1.Cluster) (*v1.Cluster, error) {
-						newCluster, _ := v1.NewCluster().Build()
-						return newCluster, nil
-					},
-				},
-				awsConfig: awsConfig,
-				clusterBuilder: &ocm.ClusterBuilderMock{
-					NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
-						newCluster, _ := v1.NewCluster().Build()
-						return newCluster, nil
-					},
-				},
-			},
-			args: args{
-				cluster: buildCluster(func(cluster *api.Cluster) {
-					cluster.ID = ""
-				}),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithReply(nil)
-				mocket.Catcher.NewMock().WithExecException()
-			},
-			wantErr: false,
-			want:    wantedCluster,
-		},
-		{
-			name: "NewOCMClusterFromCluster failure",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				clusterBuilder: &ocm.ClusterBuilderMock{
-					NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
-						return nil, errors.New("test NewOCMClusterFromCluster cluster creation failure")
-					},
-				},
-			},
-			args: args{
-				cluster: buildCluster(nil),
-			},
-			wantErr: true,
-		},
-		{
 			name: "CreateCluster failure",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				ocmClient: &ocm.ClientMock{
-					CreateClusterFunc: func(Cluster *v1.Cluster) (*v1.Cluster, error) {
-						return nil, errors.New("CreateCluster failure")
-					},
-				},
-				awsConfig: awsConfig,
-				clusterBuilder: &ocm.ClusterBuilderMock{
-					NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
-						newCluster, _ := v1.NewCluster().Build()
-						return newCluster, nil
-					},
-				},
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
+							return nil, errors.New("CreateCluster failure")
+						},
+					}, nil
+				}},
 			},
 			args: args{
 				cluster: buildCluster(nil),
@@ -170,23 +134,23 @@ func Test_Cluster_Create(t *testing.T) {
 			name: "Database error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				ocmClient: &ocm.ClientMock{
-					CreateClusterFunc: func(Cluster *v1.Cluster) (*v1.Cluster, error) {
-						return nil, errors.New("CreateCluster failure due to db connection issue")
-					},
-				},
-				awsConfig: awsConfig,
-				clusterBuilder: &ocm.ClusterBuilderMock{
-					NewOCMClusterFromClusterFunc: func(cluster *api.Cluster) (*v1.Cluster, error) {
-						return nil, errors.New("NewOCMClusterFromCluster failure due to db connection issue")
-					},
-				},
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
+							return &types.ClusterSpec{
+								InternalID: testClusterInternalId,
+								ExternalID: testClusterExternalId,
+								Status:     api.ClusterProvisioning,
+							}, nil
+						},
+					}, nil
+				}},
 			},
 			args: args{
 				cluster: buildCluster(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+				mocket.Catcher.Reset().NewMock().WithQuery("INSERT").WithExecException()
 			},
 			wantErr: true,
 		},
@@ -199,9 +163,7 @@ func Test_Cluster_Create(t *testing.T) {
 
 			c := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
-				ocmClient:         tt.fields.ocmClient,
-				awsConfig:         tt.fields.awsConfig,
-				clusterBuilder:    tt.fields.clusterBuilder,
+				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 
 			got, err := c.Create(tt.args.cluster)
@@ -209,7 +171,7 @@ func Test_Cluster_Create(t *testing.T) {
 				t.Errorf("Create() error = %v, wantErr = %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if !checkClusterFields(got, tt.want) {
 				t.Errorf("Create() got = %+v, want %+v", got, tt.want)
 			}
 		})
@@ -220,10 +182,8 @@ func Test_GetClusterDNS(t *testing.T) {
 	mockClusterDNS := testDNS
 
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		ocmClient         ocm.Client
-		awsConfig         *config.AWSConfig
-		clusterBuilder    ocm.ClusterBuilder
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
 	}
 	type args struct {
 		clusterID string
@@ -240,17 +200,24 @@ func Test_GetClusterDNS(t *testing.T) {
 			name: "successful retrieval of clusterDNS",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				ocmClient: &ocm.ClientMock{
-					GetClusterDNSFunc: func(clusterID string) (string, error) {
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
 						return mockClusterDNS, nil
-					},
-				},
+					}}, nil
+				}},
 			},
 			args: args{
 				clusterID: testClusterID,
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				res := []map[string]interface{}{
+					{
+						"id":          "testid",
+						"cluster_id":  "testid",
+						"cluster_dns": "",
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
 			},
 			wantErr: false,
 			want:    mockClusterDNS,
@@ -259,17 +226,24 @@ func Test_GetClusterDNS(t *testing.T) {
 			name: "error when passing empty clusterID",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				ocmClient: &ocm.ClientMock{
-					GetClusterDNSFunc: func(clusterID string) (string, error) {
-						return "", errors.New("ClusterID cannot be empty")
-					},
-				},
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
+						return mockClusterDNS, nil
+					}}, nil
+				}},
 			},
 			args: args{
 				clusterID: "",
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				res := []map[string]interface{}{
+					{
+						"id":          "testid",
+						"cluster_id":  "testid",
+						"cluster_dns": "",
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(res)
 			},
 			wantErr: true,
 		},
@@ -282,9 +256,7 @@ func Test_GetClusterDNS(t *testing.T) {
 
 			c := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
-				ocmClient:         tt.fields.ocmClient,
-				awsConfig:         tt.fields.awsConfig,
-				clusterBuilder:    tt.fields.clusterBuilder,
+				providerFactory:   tt.fields.clusterProviderFactory,
 			}
 
 			got, err := c.GetClusterDNS(tt.args.clusterID)
@@ -402,9 +374,6 @@ func Test_FindCluster(t *testing.T) {
 
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		ocmClient         ocm.Client
-		awsConfig         *config.AWSConfig
-		clusterBuilder    ocm.ClusterBuilder
 	}
 	type args struct {
 		criteria FindClusterCriteria
@@ -466,9 +435,6 @@ func Test_FindCluster(t *testing.T) {
 
 			c := &clusterService{
 				connectionFactory: tt.fields.connectionFactory,
-				ocmClient:         tt.fields.ocmClient,
-				awsConfig:         tt.fields.awsConfig,
-				clusterBuilder:    tt.fields.clusterBuilder,
 			}
 
 			got, err := c.FindCluster(tt.args.criteria)
@@ -772,7 +738,6 @@ func Test_RegisterClusterJob(t *testing.T) {
 					ExternalID:    "",
 					MultiAZ:       false,
 					Region:        "",
-					BYOC:          false,
 				},
 			},
 			wantErr: false,
@@ -802,7 +767,8 @@ func Test_RegisterClusterJob(t *testing.T) {
 func Test_ScaleUpComputeNodes(t *testing.T) {
 	testNodeIncrement := 3
 	type fields struct {
-		ocmClient ocm.Client
+		clusterProviderFactory clusters.ProviderFactory
+		connectionFactory      *db.ConnectionFactory
 	}
 	type args struct {
 		clusterID string
@@ -827,11 +793,22 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 				clusterID: "test",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					ScaleUpComputeNodesFunc: func(clusterID string, increment int) (*v1.Cluster, error) {
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{ScaleUpFunc: func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 						return nil, errors.New("test ScaleUpComputeNodes failure")
+					}}, nil
+				}},
+			},
+			setupFn: func() {
+				res := []map[string]interface{}{
+					{
+						"id":          "testid",
+						"cluster_id":  "testid",
+						"cluster_dns": "",
 					},
-				},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
 			},
 			wantErr: true,
 		},
@@ -842,7 +819,8 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 				tt.setupFn()
 			}
 			k := &clusterService{
-				ocmClient: tt.fields.ocmClient,
+				providerFactory:   tt.fields.clusterProviderFactory,
+				connectionFactory: tt.fields.connectionFactory,
 			}
 			_, err := k.ScaleUpComputeNodes(tt.args.clusterID, testNodeIncrement)
 			if (err != nil) != tt.wantErr {
@@ -856,7 +834,8 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 func Test_ScaleDownComputeNodes(t *testing.T) {
 	testNodeDecrement := 3
 	type fields struct {
-		ocmClient ocm.Client
+		clusterProviderFactory clusters.ProviderFactory
+		connectionFactory      *db.ConnectionFactory
 	}
 	type args struct {
 		clusterID string
@@ -881,11 +860,22 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 				clusterID: "test",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*v1.Cluster, error) {
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{ScaleDownFunc: func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 						return nil, errors.New("test ScaleDownComputeNodes failure")
+					}}, nil
+				}},
+			},
+			setupFn: func() {
+				res := []map[string]interface{}{
+					{
+						"id":          "testid",
+						"cluster_id":  "testid",
+						"cluster_dns": "",
 					},
-				},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
 			},
 			wantErr: true,
 		},
@@ -896,7 +886,8 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 				tt.setupFn()
 			}
 			k := &clusterService{
-				ocmClient: tt.fields.ocmClient,
+				providerFactory:   tt.fields.clusterProviderFactory,
+				connectionFactory: tt.fields.connectionFactory,
 			}
 			_, err := k.ScaleDownComputeNodes(tt.args.clusterID, testNodeDecrement)
 			if (err != nil) != tt.wantErr {
@@ -1479,6 +1470,610 @@ func TestClusterService_CountByStatus(t *testing.T) {
 			}
 			if !reflect.DeepEqual(status, tt.want) {
 				t.Errorf("CountByStatus want = %v, got = %v", tt.want, status)
+			}
+		})
+	}
+}
+
+func TestClusterService_GetComputeNodes(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+	type args struct {
+		clusterID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    *types.ComputeNodesInfo
+	}{
+		{
+			name: "successful get compute nodes info",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
+							return &types.ComputeNodesInfo{
+								Actual:  3,
+								Desired: 3,
+							}, nil
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				clusterID: testClusterID,
+			},
+			setupFn: func() {
+				res := []map[string]interface{}{
+					{
+						"id":          "testid",
+						"cluster_id":  "testid",
+						"cluster_dns": "",
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
+			},
+			wantErr: false,
+			want: &types.ComputeNodesInfo{
+				Actual:  3,
+				Desired: 3,
+			},
+		},
+		{
+			name: "error when passing empty clusterID",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return nil, errors.Errorf("this function should not called")
+				}},
+			},
+			args: args{
+				clusterID: "",
+			},
+			setupFn: func() {
+				res := []map[string]interface{}{
+					{
+						"id":          "testid",
+						"cluster_id":  "testid",
+						"cluster_dns": "",
+					},
+				}
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(res)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			got, err := c.GetComputeNodes(tt.args.clusterID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetComputeNodes() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetComputeNodes() want %v but got %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestClusterService_CheckClusterStatus(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+	type args struct {
+		cluster *api.Cluster
+	}
+
+	clusterId := "test-internal-id"
+	clusterExternalId := "test-external-id"
+	clusterStatus := api.ClusterProvisioning
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    *api.Cluster
+	}{
+		{
+			name: "successfully check cluster status",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
+							return &types.ClusterSpec{
+								InternalID: clusterId,
+								ExternalID: clusterExternalId,
+								Status:     api.ClusterProvisioned,
+							}, nil
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: &api.Cluster{
+					Meta: api.Meta{
+						ID: clusterId,
+					},
+					ExternalID: clusterExternalId,
+					ClusterID:  clusterId,
+					Status:     clusterStatus,
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: false,
+			want: &api.Cluster{
+				Meta:       api.Meta{ID: clusterId},
+				ClusterID:  clusterId,
+				ExternalID: clusterExternalId,
+				Status:     api.ClusterProvisioned,
+			},
+		},
+		{
+			name: "error when failed to check cluster status",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
+							return nil, errors.Errorf("failed to get cluster status")
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: &api.Cluster{
+					Meta: api.Meta{
+						ID: clusterId,
+					},
+					ExternalID: clusterExternalId,
+					ClusterID:  clusterId,
+					Status:     clusterStatus,
+				},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			got, err := c.CheckClusterStatus(tt.args.cluster)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CheckClusterStatus() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CheckClusterStatus() want %v but got %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestClusterService_RemoveClusterFromProvider(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+	type args struct {
+		cluster *api.Cluster
+	}
+
+	clusterId := "test-internal-id"
+	clusterExternalId := "test-external-id"
+	clusterStatus := api.ClusterProvisioning
+
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: clusterId,
+		},
+		ExternalID: clusterExternalId,
+		ClusterID:  clusterId,
+		Status:     clusterStatus,
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "successfully delete cluster",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
+							return true, nil
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: cluster,
+			},
+			wantErr: false,
+			want:    true,
+		},
+		{
+			name: "error when failed to delete cluster",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
+							return false, errors.Errorf("failed to delete cluster")
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: cluster,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			got, err := c.Delete(tt.args.cluster)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Delete() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Delete() want %v but got %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+	type args struct {
+		cluster          *api.Cluster
+		identityProvider types.IdentityProviderInfo
+	}
+
+	clusterId := "test-internal-id"
+	clusterExternalId := "test-external-id"
+	clusterStatus := api.ClusterProvisioning
+
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: clusterId,
+		},
+		ExternalID: clusterExternalId,
+		ClusterID:  clusterId,
+		Status:     clusterStatus,
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    *api.Cluster
+	}{
+		{
+			name: "successfully configured identity provider",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
+							return &types.IdentityProviderInfo{
+								OpenID: &types.OpenIDIdentityProviderInfo{
+									ID: "test-id",
+								},
+							}, nil
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: &api.Cluster{
+					Meta: api.Meta{
+						ID: clusterId,
+					},
+					ExternalID: clusterExternalId,
+					ClusterID:  clusterId,
+					Status:     clusterStatus,
+				},
+				identityProvider: types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
+					Name:         "test-name",
+					ClientID:     "test-client-id",
+					ClientSecret: "test-client-secret",
+					Issuer:       "test-issuer",
+				}},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: false,
+			want: &api.Cluster{
+				Meta: api.Meta{
+					ID: clusterId,
+				},
+				ExternalID:         clusterExternalId,
+				ClusterID:          clusterId,
+				Status:             clusterStatus,
+				IdentityProviderID: "test-id",
+			},
+		},
+		{
+			name: "error when failed to add identity provider",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
+							return nil, errors.Errorf("failed to add identity provider")
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: cluster,
+				identityProvider: types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
+					Name:         "test-name",
+					ClientID:     "test-client-id",
+					ClientSecret: "test-client-secret",
+					Issuer:       "test-issuer",
+				}},
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			got, err := c.ConfigureAndSaveIdentityProvider(tt.args.cluster, tt.args.identityProvider)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigureAndSaveIdentityProvider() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConfigureAndSaveIdentityProvider() want %v but got %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func TestClusterService_ApplyResources(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+	type args struct {
+		cluster   *api.Cluster
+		resources types.ResourceSet
+	}
+
+	clusterId := "test-internal-id"
+	clusterExternalId := "test-external-id"
+	clusterStatus := api.ClusterProvisioning
+
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: clusterId,
+		},
+		ExternalID: clusterExternalId,
+		ClusterID:  clusterId,
+		Status:     clusterStatus,
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+	}{
+		{
+			name: "successfully applied resources",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
+							return nil, nil
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: cluster,
+				resources: types.ResourceSet{
+					Name:      "test-resources",
+					Resources: nil,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "error when failed to apply resources",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
+							return nil, errors.Errorf("failed to apply resources")
+						},
+					}, nil
+				}},
+			},
+			args: args{
+				cluster: cluster,
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			err := c.ApplyResources(tt.args.cluster, tt.args.resources)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ApplyResources() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestClusterService_InstallAddon(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+	type args struct {
+		cluster *api.Cluster
+		addonID string
+	}
+
+	clusterId := "test-internal-id"
+	clusterExternalId := "test-external-id"
+	clusterStatus := api.ClusterProvisioning
+
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: clusterId,
+		},
+		ExternalID:   clusterExternalId,
+		ClusterID:    clusterId,
+		Status:       clusterStatus,
+		ProviderType: api.ClusterProviderOCM,
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "successfully install addon",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{
+					GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
+						return &clusters.AddonProviderMock{InstallAddonFunc: func(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
+							return true, nil
+						}}, nil
+					},
+				},
+			},
+			args: args{
+				cluster: cluster,
+				addonID: "test-id",
+			},
+			wantErr: false,
+			want:    true,
+		},
+		{
+			name: "error when failed to install addon",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{
+					GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
+						return &clusters.AddonProviderMock{InstallAddonFunc: func(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
+							return false, errors.Errorf("failed to install addon")
+						}}, nil
+					},
+				},
+			},
+			args: args{
+				cluster: cluster,
+				addonID: "test-addon-id",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			got, err := c.InstallAddon(tt.args.cluster, tt.args.addonID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("InstallAddon() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("InstallAddon want %v, but got %v", tt.want, got)
 			}
 		})
 	}

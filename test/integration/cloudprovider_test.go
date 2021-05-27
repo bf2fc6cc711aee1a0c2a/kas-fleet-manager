@@ -7,7 +7,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 func TestCloudProviderRegions(t *testing.T) {
@@ -26,23 +25,18 @@ func TestCloudProviderRegions(t *testing.T) {
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
 		if regions.ID == "aws" || regions.ID == "azure" || regions.ID == "gcp" {
-			Expect(regions.RegionList.Len()).NotTo(Equal(0))
+			Expect(len(regions.RegionList.Items)).NotTo(Equal(0))
 		}
-		regions.RegionList.Each(func(item *clustersmgmtv1.CloudRegion) bool {
-			href := item.HREF()
-			id := item.ID()
-			name := item.DisplayName()
-			multiAz := item.SupportsMultiAZ()
+		for _, r := range regions.RegionList.Items {
+			id := r.ID
+			name := r.DisplayName
+			multiAz := r.SupportsMultiAZ
 
 			Expect(regions.ID).NotTo(Equal(nil))
-			Expect(href).NotTo(Equal(nil))
 			Expect(id).NotTo(Equal(nil))
 			Expect(name).NotTo(Equal(nil))
-			Expect(href).NotTo(Equal(nil))
 			Expect(multiAz).NotTo(Equal(nil))
-			return true
-		})
-
+		}
 	}
 
 }
@@ -63,23 +57,18 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
 		if regions.ID == "aws" || regions.ID == "azure" || regions.ID == "gcp" {
-			Expect(regions.RegionList.Len()).NotTo(Equal(0))
+			Expect(len(regions.RegionList.Items)).NotTo(Equal(0))
 		}
-		regions.RegionList.Each(func(item *clustersmgmtv1.CloudRegion) bool {
-			href := item.HREF()
-			id := item.ID()
-			name := item.DisplayName()
-			multiAz := item.SupportsMultiAZ()
+		for _, r := range regions.RegionList.Items {
+			id := r.ID
+			name := r.DisplayName
+			multiAz := r.SupportsMultiAZ
 
 			Expect(regions.ID).NotTo(Equal(nil))
-			Expect(href).NotTo(Equal(nil))
 			Expect(id).NotTo(Equal(nil))
 			Expect(name).NotTo(Equal(nil))
-			Expect(href).NotTo(Equal(nil))
 			Expect(multiAz).NotTo(Equal(nil))
-			return true
-		})
-
+		}
 	}
 
 }

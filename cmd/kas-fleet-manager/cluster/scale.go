@@ -1,14 +1,10 @@
 package cluster
 
 import (
-	"bytes"
-
+	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/flags"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/spf13/cobra"
 )
 
@@ -60,8 +56,7 @@ func runScaleUp(cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
 	env := environments.Environment()
-	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
+	clusterService := env.Services.Cluster
 
 	// scale up compute nodes
 	cluster, err := clusterService.ScaleUpComputeNodes(clusterID, DefaultClusterNodeScaleIncrement)
@@ -70,11 +65,11 @@ func runScaleUp(cmd *cobra.Command, _ []string) {
 	}
 
 	// print the output
-	indentedCluster := new(bytes.Buffer)
-	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
+	if indentedCluster, err := json.Marshal(cluster); err != nil {
 		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
+	} else {
+		glog.V(10).Infof("%s", string(indentedCluster))
 	}
-	glog.V(10).Infof("%s", indentedCluster.String())
 }
 
 func runScaleDown(cmd *cobra.Command, _ []string) {
@@ -83,8 +78,7 @@ func runScaleDown(cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
 	env := environments.Environment()
-	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterService := services.NewClusterService(env.DBFactory, ocmClient, env.Config.AWS, env.Config.OSDClusterConfig)
+	clusterService := env.Services.Cluster
 
 	// scale down compute nodes
 	cluster, err := clusterService.ScaleDownComputeNodes(clusterID, DefaultClusterNodeScaleIncrement)
@@ -93,9 +87,9 @@ func runScaleDown(cmd *cobra.Command, _ []string) {
 	}
 
 	// print the outputs
-	indentedCluster := new(bytes.Buffer)
-	if err := clustersmgmtv1.MarshalCluster(cluster, indentedCluster); err != nil {
+	if indentedCluster, err := json.Marshal(cluster); err != nil {
 		glog.Fatalf("Unable to marshal cluster: %s", err.Error())
+	} else {
+		glog.V(10).Infof("%s", string(indentedCluster))
 	}
-	glog.V(10).Infof("%s", indentedCluster.String())
 }
