@@ -35,7 +35,7 @@ func TestServiceStatus(t *testing.T) {
 	deniedCtx := h.NewAuthenticatedContext(deniedAccount, nil)
 
 	// since this user is in the deny list and not authorized to access the service, kafkas maximum capacity should be set to true
-	serviceStatus, serviceStatusResp, err := client.DefaultApi.ServiceStatus(deniedCtx)
+	serviceStatus, serviceStatusResp, err := client.DefaultApi.GetServiceStatus(deniedCtx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
@@ -46,7 +46,7 @@ func TestServiceStatus(t *testing.T) {
 	notAllowedUser := "user@not-allowed.com"
 	notAllowAccount := h.NewAccount(notAllowedUser, notAllowedUser, notAllowedUser, orgId)
 	notAllowedCtx := h.NewAuthenticatedContext(notAllowAccount, nil)
-	serviceStatus, serviceStatusResp, err = client.DefaultApi.ServiceStatus(notAllowedCtx)
+	serviceStatus, serviceStatusResp, err = client.DefaultApi.GetServiceStatus(notAllowedCtx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
@@ -54,7 +54,7 @@ func TestServiceStatus(t *testing.T) {
 	// now create another user who has access to the service to perform the remaining two cases
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	serviceStatus, serviceStatusResp, err = client.DefaultApi.ServiceStatus(ctx)
+	serviceStatus, serviceStatusResp, err = client.DefaultApi.GetServiceStatus(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(false))
@@ -88,7 +88,7 @@ func TestServiceStatus(t *testing.T) {
 		Expect(err).NotTo(HaveOccurred())
 		return
 	}
-	serviceStatus, serviceStatusResp, err = client.DefaultApi.ServiceStatus(ctx)
+	serviceStatus, serviceStatusResp, err = client.DefaultApi.GetServiceStatus(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))

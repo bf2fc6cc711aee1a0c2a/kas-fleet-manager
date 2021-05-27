@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: Connector Service Fleet Manager is a Rest API to manage connectors.
   title: Connector Service Fleet Manager
-  version: 0.0.1
+  version: 0.0.2
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -17,7 +17,7 @@ tags:
 - name: Connectors
 - name: Connector Clusters
 paths:
-  /api/connector_mgmt/v1/kafka-connector-types/{connector_type_id}:
+  /api/connector_mgmt/v1/kafka_connector_types/{connector_type_id}:
     get:
       operationId: getConnectorTypeByID
       parameters:
@@ -68,7 +68,7 @@ paths:
       summary: Get a connector type by id
       tags:
       - Connector Types
-  /api/connector_mgmt/v1/kafka-connector-types:
+  /api/connector_mgmt/v1/kafka_connector_types:
     get:
       operationId: listConnectorTypes
       parameters:
@@ -120,7 +120,7 @@ paths:
       summary: Returns a list of connector types
       tags:
       - Connector Types
-  /api/connector_mgmt/v1/kafka-connectors:
+  /api/connector_mgmt/v1/kafka_connectors:
     get:
       operationId: listConnectors
       parameters:
@@ -246,7 +246,7 @@ paths:
       summary: Create a new connector
       tags:
       - Connectors
-  /api/connector_mgmt/v1/kafkas-connectors/{connector_id}:
+  /api/connector_mgmt/v1/kafkas_connectors/{connector_id}:
     delete:
       operationId: deleteConnector
       parameters:
@@ -433,7 +433,7 @@ paths:
       summary: patch a connector
       tags:
       - Connectors
-  /api/connector_mgmt/v1/kafka-connector-clusters:
+  /api/connector_mgmt/v1/kafka_connector_clusters:
     get:
       operationId: listConnectorClusters
       parameters:
@@ -551,7 +551,7 @@ paths:
       summary: Create a new connector cluster
       tags:
       - Connector Clusters
-  /api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}:
     delete:
       operationId: deleteConnectorCluster
       parameters:
@@ -652,7 +652,7 @@ paths:
       summary: Get a connector cluster
       tags:
       - Connector Clusters
-  /api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/addon-parameters:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/addon_parameters:
     get:
       operationId: getConnectorClusterAddonParameters
       parameters:

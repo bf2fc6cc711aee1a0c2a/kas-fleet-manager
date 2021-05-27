@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager is a Rest API to manage kafka instances
     and connectors.
   title: Kafka Service Fleet Manager
-  version: 1.0.0
+  version: 1.1.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -16,7 +16,7 @@ servers:
 paths:
   /api/kafkas_mgmt/v1:
     get:
-      operationId: versionMetadata
+      operationId: getVersionMetadata
       responses:
         "200":
           content:
@@ -27,7 +27,7 @@ paths:
       summary: Retrieves the version metadata
   /api/kafkas_mgmt/v1/status:
     get:
-      operationId: serviceStatus
+      operationId: getServiceStatus
       responses:
         "200":
           content:
@@ -187,7 +187,7 @@ paths:
       summary: Get a kafka request by id
   /api/kafkas_mgmt/v1/kafkas:
     get:
-      operationId: listKafkas
+      operationId: getKafkas
       parameters:
       - description: Page index
         examples:
@@ -416,7 +416,7 @@ paths:
       summary: Create a new kafka Request
   /api/kafkas_mgmt/v1/cloud_providers:
     get:
-      operationId: listCloudProviders
+      operationId: getCloudProviders
       parameters:
       - description: Page index
         examples:
@@ -470,7 +470,7 @@ paths:
       summary: Retrieves the list of supported cloud providers.
   /api/kafkas_mgmt/v1/cloud_providers/{id}/regions:
     get:
-      operationId: listCloudProviderRegions
+      operationId: getCloudProviderRegions
       parameters:
       - description: The id of record
         explode: false
@@ -530,9 +530,9 @@ paths:
       security:
       - Bearer: []
       summary: Retrieves the list of supported regions of the supported cloud provider.
-  /api/kafkas_mgmt/v1/serviceaccounts:
+  /api/kafkas_mgmt/v1/service_accounts:
     get:
-      operationId: listServiceAccounts
+      operationId: getServiceAccounts
       responses:
         "200":
           content:
@@ -570,6 +570,8 @@ paths:
       security:
       - Bearer: []
       summary: List service accounts
+      tags:
+      - security
     post:
       operationId: createServiceAccount
       requestBody:
@@ -622,9 +624,11 @@ paths:
       security:
       - Bearer: []
       summary: Create a service account
-  /api/kafkas_mgmt/v1/serviceaccounts/{id}:
+      tags:
+      - security
+  /api/kafkas_mgmt/v1/service_accounts/{id}:
     delete:
-      operationId: deleteServiceAccount
+      operationId: deleteServiceAccountById
       parameters:
       - description: The id of record
         explode: false
@@ -670,6 +674,8 @@ paths:
       security:
       - Bearer: []
       summary: Delete service account
+      tags:
+      - security
     description: Get the service account with the given id
     get:
       operationId: getServiceAccountById
@@ -695,8 +701,10 @@ paths:
       security:
       - Bearer: []
       summary: get service account by id
+      tags:
+      - security
     summary: Get service account by id
-  /api/kafkas_mgmt/v1/serviceaccounts/{id}/reset-credentials:
+  /api/kafkas_mgmt/v1/service_accounts/{id}/reset_credentials:
     post:
       operationId: resetServiceAccountCreds
       parameters:
@@ -747,9 +755,11 @@ paths:
       security:
       - Bearer: []
       summary: reset credentials for the service account
+      tags:
+      - security
   /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query_range:
     get:
-      operationId: GetMetricsByRangeQuery
+      operationId: getMetricsByRangeQuery
       parameters:
       - description: The id of record
         explode: false
@@ -831,7 +841,7 @@ paths:
       summary: Get metrics with timeseries range query by kafka id.
   /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query:
     get:
-      operationId: GetMetricsByInstantQuery
+      operationId: getMetricsByInstantQuery
       parameters:
       - description: The id of record
         explode: false

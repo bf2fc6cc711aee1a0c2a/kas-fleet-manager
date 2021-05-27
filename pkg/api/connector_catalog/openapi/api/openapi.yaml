@@ -4,14 +4,14 @@ info:
     The endpoints of a Connector Catalog service are used to discover
     connector type APIs that can be used by the Connector Catalog Manager.
   title: Connector Catalog Service
-  version: 0.0.1
+  version: 0.0.2
 servers:
 - description: localhost
   url: http://localhost:8000
 - description: current domain
   url: /
 paths:
-  /v1/kafka-connector-catalog:
+  /v1/kafka_connector_catalog:
     get:
       operationId: listConnectorCatalog
       responses:
@@ -31,7 +31,7 @@ paths:
                 $ref: '#/components/schemas/Error'
           description: Unexpected error occurred
       summary: Returns a list of connector Catalog Entries
-  /v1/kafka-connector-types/{connector_type_id}:
+  /v1/kafka_connector_types/{connector_type_id}:
     get:
       operationId: getConnectorTypeByID
       parameters:
