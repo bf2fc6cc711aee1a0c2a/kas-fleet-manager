@@ -2,6 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	"github.com/spyzhov/ajson"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -79,7 +84,12 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convResource.Owner = auth.GetUsernameFromClaims(claims)
 			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
 
-			err = moveSecretsToVault(convResource, h.connectorTypesService, h.vaultService)
+			ct, err := h.connectorTypesService.Get(resource.ConnectorTypeId)
+			if err != nil {
+				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
+			}
+
+			err = moveSecretsToVault(convResource, ct, h.vaultService, true)
 			if err != nil {
 				return nil, err
 			}
@@ -88,7 +98,7 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 
-			if err := stripSecretReferences(convResource, h.connectorTypesService); err != nil {
+			if err := stripSecretReferences(convResource, ct); err != nil {
 				return nil, err
 			}
 
@@ -124,10 +134,26 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
+			ct, serr := h.connectorTypesService.Get(dbresource.ConnectorTypeId)
+			if serr != nil {
+				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
+			}
+
+			originalSecrets, err := getSecretRefs(dbresource, ct)
+			if err != nil {
+				return nil, errors.GeneralError("could not get existing secrets: %v", err)
+			}
+
 			// Apply the patch..
 			patchBytes, err := ioutil.ReadAll(r.Body)
 			if err != nil {
 				return nil, errors.BadRequest("failed to get patch bytes")
+			}
+
+			// Don't allow updating connector secrets with values like {"ref": "something"}
+			serr = validateConnectorPatch(patchBytes, ct)
+			if serr != nil {
+				return nil, serr
 			}
 
 			patch := openapi.Connector{}
@@ -140,7 +166,6 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			// over the fields that they are allowed to modify..
 			resource.Metadata.Name = patch.Metadata.Name
 			resource.Metadata.KafkaId = patch.Metadata.KafkaId
-			resource.ConnectorTypeId = patch.ConnectorTypeId
 			resource.ConnectorSpec = patch.ConnectorSpec
 			resource.DesiredState = patch.DesiredState
 			resource.Metadata.ResourceVersion = patch.Metadata.ResourceVersion
@@ -158,7 +183,6 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				validation("connector_type_id", &resource.ConnectorTypeId, minLen(1), maxLen(maxKafkaNameLength)),
 				validation("kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
 				validation("Kafka client_id", &resource.Kafka.ClientId, minLen(1)),
-				validation("Kafka client_secret", &resource.Kafka.ClientSecret, minLen(1)),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
@@ -182,19 +206,43 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, svcErr
 			}
 
+			svcErr = moveSecretsToVault(p, ct, h.vaultService, false)
+			if svcErr != nil {
+				return nil, svcErr
+			}
+
 			serr = h.connectorsService.Update(r.Context(), p)
 			if serr != nil {
 				return nil, serr
 			}
 
-			dbresource.Status.Phase = api.ConnectorStatusPhaseUpdating
-			p.Status.Phase = api.ConnectorStatusPhaseUpdating
-			serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
-			if serr != nil {
-				return nil, serr
+			if originalResource.Status != api.ConnectorStatusPhaseAssigning {
+				dbresource.Status.Phase = api.ConnectorStatusPhaseUpdating
+				p.Status.Phase = api.ConnectorStatusPhaseUpdating
+				serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
+				if serr != nil {
+					return nil, serr
+				}
 			}
 
-			if err := stripSecretReferences(p, h.connectorTypesService); err != nil {
+			newSecrets, err := getSecretRefs(p, ct)
+			if err != nil {
+				return nil, errors.GeneralError("could not get existing secrets: %v", err)
+			}
+
+			staleSecrets := StringListSubtract(originalSecrets, newSecrets...)
+			if len(staleSecrets) > 0 {
+				_ = db.AddPostCommitAction(r.Context(), func() {
+					for _, s := range staleSecrets {
+						err = h.vaultService.DeleteSecretString(s)
+						if err != nil {
+							logger.Logger.Errorf("failed to delete vault secret key '%s': %v", s, err)
+						}
+					}
+				})
+			}
+
+			if err := stripSecretReferences(p, ct); err != nil {
 				return nil, err
 			}
 
@@ -204,6 +252,46 @@ func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 	// return 202 status accepted
 	handle(w, r, cfg, http.StatusAccepted)
+}
+
+func validateConnectorPatch(bytes []byte, ct *api.ConnectorType) *errors.ServiceError {
+	type Connector struct {
+		ConnectorSpec api.JSON `json:"connector_spec,omitempty"`
+	}
+	c := Connector{}
+	err := json.Unmarshal(bytes, &c)
+	if err != nil {
+		return errors.BadRequest("invalid patch: %v", err)
+	}
+
+	if len(c.ConnectorSpec) > 0 {
+		_, err := secrets.ModifySecrets(ct.JsonSchema, c.ConnectorSpec, func(node *ajson.Node) error {
+			if node.Type() == ajson.Object {
+				if len(node.Keys()) > 0 {
+					return fmt.Errorf("attempting to change opaque connector secret")
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return errors.BadRequest("invalid patch: %v", err)
+		}
+	}
+	return nil
+}
+
+func StringListSubtract(l []string, items ...string) (result []string) {
+	m := make(map[string]struct{}, len(l))
+	for _, x := range l {
+		m[x] = struct{}{}
+	}
+	for _, item := range items {
+		delete(m, item)
+	}
+	for item := range m {
+		result = append(result, item)
+	}
+	return result
 }
 
 func PatchResource(resource interface{}, patchType string, patchBytes []byte, patched interface{}) *errors.ServiceError {
@@ -257,7 +345,12 @@ func (h connectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			if err := stripSecretReferences(resource, h.connectorTypesService); err != nil {
+			ct, serr := h.connectorTypesService.Get(resource.ConnectorTypeId)
+			if serr != nil {
+				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
+			}
+
+			if err := stripSecretReferences(resource, ct); err != nil {
 				return nil, err
 			}
 
@@ -318,7 +411,13 @@ func (h connectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				if err := stripSecretReferences(resource, h.connectorTypesService); err != nil {
+
+				ct, serr := h.connectorTypesService.Get(resource.ConnectorTypeId)
+				if serr != nil {
+					return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
+				}
+
+				if err := stripSecretReferences(resource, ct); err != nil {
 					return nil, err
 				}
 				converted, err := presenters.PresentConnector(resource)

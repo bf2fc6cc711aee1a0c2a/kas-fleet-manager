@@ -3,6 +3,9 @@ package services
 import (
 	"context"
 	goerrors "errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	"github.com/spyzhov/ajson"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"gorm.io/gorm"
@@ -26,14 +29,18 @@ type ConnectorsService interface {
 var _ ConnectorsService = &connectorsService{}
 
 type connectorsService struct {
-	connectionFactory *db.ConnectionFactory
-	bus               signalbus.SignalBus
+	connectionFactory     *db.ConnectionFactory
+	bus                   signalbus.SignalBus
+	vaultService          VaultService
+	connectorTypesService ConnectorTypesService
 }
 
-func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus) *connectorsService {
+func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
 	return &connectorsService{
-		connectionFactory: connectionFactory,
-		bus:               bus,
+		connectionFactory:     connectionFactory,
+		bus:                   bus,
+		vaultService:          vaultService,
+		connectorTypesService: connectorTypesService,
 	}
 }
 
@@ -137,33 +144,63 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 
 	// delete the associated relations
 	if err := dbConn.Where("id = ?", id).Delete(&api.ConnectorStatus{}).Error; err != nil {
-		err := handleGetError("ConnectorStatus", "id", id, err)
-		if err != nil {
-			return err
-		}
+		return handleGetError("ConnectorStatus", "id", id, err)
 	}
 
 	var deployment api.ConnectorDeployment
-	if err := dbConn.Select("id").Where("connector_id = ?", id).First(&deployment).Error; err != nil {
+	err := dbConn.Select("id").Where("connector_id = ?", id).First(&deployment).Error
+	if err == gorm.ErrRecordNotFound {
+		// connector will not have a deployment if it has not been assigned.
+
+		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeployment{}).Error; err != nil {
+			err := handleGetError("ConnectorDeployment", "id", deployment.ID, err)
+			if err != nil {
+				return err
+			}
+		}
+		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeploymentStatus{}).Error; err != nil {
+			err := handleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
+			if err != nil {
+				return err
+			}
+		}
+	} else if err != nil {
 		return handleGetError("ConnectorDeployment", "connector_id", id, err)
 	}
-	if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeployment{}).Error; err != nil {
-		err := handleGetError("ConnectorDeployment", "id", deployment.ID, err)
-		if err != nil {
-			return err
-		}
-	}
-	if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeploymentStatus{}).Error; err != nil {
-		err := handleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
-		if err != nil {
-			return err
-		}
-	}
 
-	//_ = db.AddPostCommitAction(ctx, func() {
-	//	// Wake up the reconcile loop...
-	//	k.bus.Notify("reconcile:connector")
-	//})
+	_ = db.AddPostCommitAction(ctx, func() {
+		// delete related distributed resources...
+
+		if resource.Kafka.ClientSecretRef != "" {
+			err = k.vaultService.DeleteSecretString(resource.Kafka.ClientSecretRef)
+			if err != nil {
+				logger.Logger.Errorf("failed to delete vault secret key '%s': %v", resource.Kafka.ClientSecretRef, err)
+			}
+		}
+
+		if len(resource.ConnectorSpec) != 0 {
+			if ct, err := k.connectorTypesService.Get(resource.ConnectorTypeId); err == nil {
+				_, _ = secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
+					if node.Type() != ajson.Object {
+						return nil
+					}
+					ref, err := node.GetKey("ref")
+					if err != nil {
+						return nil
+					}
+					r, err := ref.GetString()
+					if err != nil {
+						return nil
+					}
+					err = k.vaultService.DeleteSecretString(r)
+					if err != nil {
+						logger.Logger.Errorf("failed to delete vault secret key '%s': %v", r, err)
+					}
+					return nil
+				})
+			}
+		}
+	})
 
 	return nil
 }

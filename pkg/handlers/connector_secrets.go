@@ -8,14 +8,10 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-func stripSecretReferences(resource *api.Connector, cts services.ConnectorTypesService) *errors.ServiceError {
-	ct, err := cts.Get(resource.ConnectorTypeId)
-	if err != nil {
-		return errors.GeneralError("invalid connector type id: %s", resource.ConnectorTypeId)
-	}
-
+func stripSecretReferences(resource *api.Connector, ct *api.ConnectorType) *errors.ServiceError {
 	// clear out secrets..
 	resource.Kafka.ClientSecret = ""
+	resource.Kafka.ClientSecretRef = ""
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
@@ -41,18 +37,17 @@ func stripSecretReferences(resource *api.Connector, cts services.ConnectorTypesS
 	return nil
 }
 
-func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesService, vault services.VaultService) *errors.ServiceError {
-	ct, err := cts.Get(resource.ConnectorTypeId)
-	if err != nil {
-		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
-	}
+func moveSecretsToVault(resource *api.Connector, ct *api.ConnectorType, vault services.VaultService, errorOnObject bool) *errors.ServiceError {
 
 	// move secrets to a vault.
-	keyId := api.NewID()
-	if err := vault.SetSecretString(keyId, resource.Kafka.ClientSecret, "/vi/connector/"+resource.ID); err != nil {
-		return errors.GeneralError("could not store kafka client secret in the vault")
+	if resource.Kafka.ClientSecret != "" {
+		keyId := api.NewID()
+		if err := vault.SetSecretString(keyId, resource.Kafka.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
+			return errors.GeneralError("could not store kafka client secret in the vault")
+		}
+		resource.Kafka.ClientSecret = ""
+		resource.Kafka.ClientSecretRef = keyId
 	}
-	resource.Kafka.ClientSecret = keyId
 
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
@@ -62,7 +57,7 @@ func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesServ
 				if err != nil {
 					return err
 				}
-				err = vault.SetSecretString(keyId, s, "/vi/connector/"+resource.ID)
+				err = vault.SetSecretString(keyId, s, "/v1/connector/"+resource.ID)
 				if err != nil {
 					return err
 				}
@@ -75,7 +70,7 @@ func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesServ
 				}
 			} else if node.Type() == ajson.Null {
 				// don't change..
-			} else {
+			} else if errorOnObject {
 				return errors.BadRequest("secret field must be set to a string: " + node.Path())
 			}
 			return nil
@@ -91,4 +86,39 @@ func moveSecretsToVault(resource *api.Connector, cts services.ConnectorTypesServ
 		resource.ConnectorSpec = updated
 	}
 	return nil
+}
+
+func getSecretRefs(resource *api.Connector, ct *api.ConnectorType) (result []string, err error) {
+
+	if resource.Kafka.ClientSecretRef != "" {
+		result = append(result, resource.Kafka.ClientSecretRef)
+	}
+
+	// find the existing secrets...
+	if len(resource.ConnectorSpec) != 0 {
+		_, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
+			if node.Type() != ajson.Object {
+				return nil
+			}
+			ref, err := node.GetKey("ref")
+			if err != nil {
+				return nil
+			}
+			key, err := ref.GetString()
+			if err != nil {
+				return nil
+			}
+			result = append(result, key)
+			return nil
+		})
+		if err != nil {
+			switch err := err.(type) {
+			case *errors.ServiceError:
+				return result, err
+			default:
+				return result, errors.GeneralError("could not store connectors secrets in the vault")
+			}
+		}
+	}
+	return
 }
