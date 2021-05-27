@@ -617,9 +617,11 @@ components:
         - name
         - version
         - json_schema
+      additionalProperties: true
       allOf:
         - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
         - type: object
+          additionalProperties: true
           properties:
             name:
               description: Name of the connector type.
@@ -635,6 +637,7 @@ components:
             description:
               description: A description of the connector.
               type: string
+              nullable: true
             icon_href:
               description: URL to an icon of the connector.
               type: string
@@ -643,12 +646,13 @@ components:
               type: array
               items:
                 type: string
-                enum: [ sink, source ]
+                enum: [ sink, source ] ## could this be a free list of labels (for UI search capabilities) instead of an enum, else it should not be named labels if it's for distinguishing the connector type
             json_schema:
               description: >-
                 A json schema that can be used to validate a connectors
                 connector_spec field.
               type: object # todo: replace with better type
+              additionalProperties: true
 
     ConnectorTypeList:
       allOf:

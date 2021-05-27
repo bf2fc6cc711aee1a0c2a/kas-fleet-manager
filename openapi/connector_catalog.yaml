@@ -75,8 +75,7 @@ components:
     ConnectorCatalog:
       type: array
       items:
-        allOf:
-          - $ref: '#/components/schemas/ConnectorCatalogEntry'
+        $ref: '#/components/schemas/ConnectorCatalogEntry'
     ConnectorCatalogEntry:
       type: object
       properties:
@@ -84,5 +83,10 @@ components:
           type: string
         channel:
           type: string
+        revision:
+          type: string
+        connector_image:
+          type: string
         shard_metadata:
           type: object
+          additionalProperties: true

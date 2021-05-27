@@ -667,6 +667,11 @@ components:
   schemas:
     ObjectReference:
       type: object
+      additionalProperties: true
+      required:
+        - id
+        - kind
+        - href
       properties:
         id:
           type: string
