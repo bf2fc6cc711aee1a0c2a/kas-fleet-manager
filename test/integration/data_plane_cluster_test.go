@@ -56,6 +56,11 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterReady))
+
+	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
+	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
@@ -160,6 +165,8 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(config.Spec.Observability.Repository).ShouldNot(BeEmpty())
 	Expect(config.Spec.Observability.Channel).ShouldNot(BeEmpty())
+	Expect(config.Spec.Observability.DeprecatedAccessToken).ShouldNot(BeNil())
+	Expect(config.Spec.Observability.AccessToken).ShouldNot(BeNil())
 }
 
 func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(t *testing.T) {
@@ -635,7 +642,7 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *openapi.DataPlaneClusterUpd
 			DataRetentionSize:             &[]string{""}[0],
 			Partitions:                    &[]int32{0}[0],
 		},
-		NodeInfo: openapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
+		NodeInfo: &openapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{0}[0],
 			Floor:                  &[]int32{0}[0],
 			Current:                &[]int32{0}[0],
@@ -647,7 +654,7 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *openapi.DataPlaneClusterUpd
 			IngressEgressThroughputPerSec: &[]string{""}[0],
 			DataRetentionSize:             &[]string{""}[0],
 		},
-		ResizeInfo: openapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
+		ResizeInfo: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
 			Delta: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{0}[0],
@@ -689,4 +696,43 @@ func mockedClusterWithClusterID(clusterID string) (*clustersmgmtv1.Cluster, erro
 	clusterBuilder := mocks.GetMockClusterBuilder(nil)
 	clusterBuilder.ID(clusterID)
 	return clusterBuilder.Build()
+}
+
+// Returns a sample data plane cluster status request with available capacity
+func sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity() *openapi.DataPlaneClusterUpdateStatusRequest {
+	return &openapi.DataPlaneClusterUpdateStatusRequest{
+		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Status: "True",
+			},
+		},
+		Total: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+			IngressEgressThroughputPerSec: &[]string{"test"}[0],
+			Connections:                   &[]int32{1000000}[0],
+			DataRetentionSize:             &[]string{"test"}[0],
+			Partitions:                    &[]int32{1000000}[0],
+		},
+		DeprecatedNodeInfo: &openapi.DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo{
+			Ceiling:                          &[]int32{20}[0],
+			Floor:                            &[]int32{3}[0],
+			Current:                          &[]int32{5}[0],
+			DeprecatedCurrentWorkLoadMinimum: &[]int32{3}[0],
+		},
+		Remaining: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
+			Partitions:                    &[]int32{1000000}[0],
+			IngressEgressThroughputPerSec: &[]string{"test"}[0],
+			DataRetentionSize:             &[]string{"test"}[0],
+		},
+		DeprecatedResizeInfo: &openapi.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo{
+			DeprecatedNodeDelta: &[]int32{3}[0],
+			Delta: &openapi.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfoDelta{
+				Connections:                             &[]int32{10000}[0],
+				Partitions:                              &[]int32{10000}[0],
+				DeprecatedIngressEgressThroughputPerSec: &[]string{"test"}[0],
+				DeprecatedDataRetentionSize:             &[]string{"test"}[0],
+			},
+		},
+	}
 }

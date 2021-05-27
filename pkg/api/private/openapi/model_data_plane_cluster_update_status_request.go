@@ -15,6 +15,10 @@ type DataPlaneClusterUpdateStatusRequest struct {
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
 	Total      DataPlaneClusterUpdateStatusRequestTotal        `json:"total,omitempty"`
 	Remaining  DataPlaneClusterUpdateStatusRequestTotal        `json:"remaining,omitempty"`
-	NodeInfo   DataPlaneClusterUpdateStatusRequestNodeInfo     `json:"nodeInfo,omitempty"`
-	ResizeInfo DataPlaneClusterUpdateStatusRequestResizeInfo   `json:"resizeInfo,omitempty"`
+	// Deprecated
+	DeprecatedNodeInfo *DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo `json:"nodeInfo,omitempty"`
+	NodeInfo           *DataPlaneClusterUpdateStatusRequestNodeInfo           `json:"node_info,omitempty"`
+	// Deprecated
+	DeprecatedResizeInfo *DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo `json:"resizeInfo,omitempty"`
+	ResizeInfo           *DataPlaneClusterUpdateStatusRequestResizeInfo           `json:"resize_info,omitempty"`
 }

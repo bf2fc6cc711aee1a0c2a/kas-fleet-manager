@@ -52,16 +52,20 @@ func convertSample(from *pmod.Sample) openapi.InstantQuery {
 		labelSet[string(k)] = string(v)
 	}
 	return openapi.InstantQuery{
-		Metric:    labelSet,
-		Timestamp: int64(from.Timestamp),
-		Value:     float64(from.Value),
+		Metric:              labelSet,
+		Timestamp:           int64(from.Timestamp),
+		Value:               float64(from.Value),
+		DeprecatedTimestamp: int64(from.Timestamp),
+		DeprecatedValue:     float64(from.Value),
 	}
 }
 
 func convertSamplePair(from *pmod.SamplePair) openapi.Values {
 	return openapi.Values{
-		Timestamp: int64(from.Timestamp),
-		Value:     float64(from.Value),
+		Timestamp:           int64(from.Timestamp),
+		Value:               float64(from.Value),
+		DeprecatedTimestamp: int64(from.Timestamp),
+		DeprecatedValue:     float64(from.Value),
 	}
 }
 func PresentMetricsByRangeQuery(metrics *observatorium.KafkaMetrics) ([]openapi.RangeQuery, *errors.ServiceError) {

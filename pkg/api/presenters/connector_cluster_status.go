@@ -24,12 +24,18 @@ func PresentConnectorClusterStatus(from api.ConnectorClusterStatus) openapi.Conn
 func ConvertConditions(in []openapi.MetaV1Condition) []api.Condition {
 	out := make([]api.Condition, len(in))
 	for i, v := range in {
+		var t string
+		if v.LastTransitionTime != "" {
+			t = v.LastTransitionTime
+		} else {
+			t = v.DeprecatedLastTransitionTime
+		}
 		out[i] = api.Condition{
 			Type:               v.Type,
 			Reason:             v.Reason,
 			Message:            v.Message,
 			Status:             v.Status,
-			LastTransitionTime: v.LastTransitionTime,
+			LastTransitionTime: t,
 		}
 	}
 	return out
@@ -38,11 +44,12 @@ func PresentConditions(in []api.Condition) []openapi.MetaV1Condition {
 	out := make([]openapi.MetaV1Condition, len(in))
 	for i, v := range in {
 		out[i] = openapi.MetaV1Condition{
-			Type:               v.Type,
-			Reason:             v.Reason,
-			Message:            v.Message,
-			Status:             v.Status,
-			LastTransitionTime: v.LastTransitionTime,
+			Type:                         v.Type,
+			Reason:                       v.Reason,
+			Message:                      v.Message,
+			Status:                       v.Status,
+			LastTransitionTime:           v.LastTransitionTime,
+			DeprecatedLastTransitionTime: v.LastTransitionTime,
 		}
 	}
 	return out

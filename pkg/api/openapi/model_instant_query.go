@@ -11,7 +11,11 @@ package openapi
 
 // InstantQuery struct for InstantQuery
 type InstantQuery struct {
-	Metric    map[string]string `json:"metric,omitempty"`
-	Timestamp int64             `json:"Timestamp,omitempty"`
-	Value     float64           `json:"Value"`
+	Metric map[string]string `json:"metric,omitempty"`
+	// Deprecated
+	DeprecatedTimestamp int64 `json:"Timestamp,omitempty"`
+	Timestamp           int64 `json:"timestamp,omitempty"`
+	// Deprecated
+	DeprecatedValue float64 `json:"Value,omitempty"`
+	Value           float64 `json:"value"`
 }

@@ -109,6 +109,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
+	Expect(foundKafka.DeprecatedBootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.Version).To(Equal(h.AppConfig.Kafka.DefaultKafkaVersion))
 
 	// checking kafka_request bootstrap server port number being present
@@ -850,6 +851,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
+	Expect(foundKafka.DeprecatedBootstrapServerHost).To(Not(BeEmpty()))
 
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)

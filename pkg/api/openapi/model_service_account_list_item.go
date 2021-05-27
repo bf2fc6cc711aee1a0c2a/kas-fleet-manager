@@ -20,7 +20,10 @@ type ServiceAccountListItem struct {
 	Kind string `json:"kind,omitempty"`
 	Href string `json:"href,omitempty"`
 	// client id of the service account
-	ClientID string `json:"clientID,omitempty"`
+	// Deprecated
+	DeprecatedClientID string `json:"clientID,omitempty"`
+	// client id of the service account
+	ClientId string `json:"client_id,omitempty"`
 	// name of the service account
 	Name string `json:"name,omitempty"`
 	// owner of the service account
