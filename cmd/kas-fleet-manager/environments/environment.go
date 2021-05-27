@@ -189,7 +189,7 @@ func (env *Env) LoadServices() error {
 	env.Services.DataPlaneCluster = dataPlaneClusterService
 	env.Services.DataPlaneKafkaService = dataPlaneKafkaService
 
-	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus)
+	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
 	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
 	if env.Config.ConnectorsConfig.Enabled {

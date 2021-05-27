@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-var _ VaultService = &tmpVaultService{}
+var _ VaultService = &TmpVaultService{}
 var NotFound = fmt.Errorf("Not Found")
 
 type tmpSecret struct {
@@ -14,24 +14,55 @@ type tmpSecret struct {
 	owningResource string
 }
 
-type tmpVaultService struct {
-	secrets map[string]tmpSecret
-	mu      sync.Mutex
+type TmpVaultService struct {
+	mu            sync.Mutex
+	secrets       map[string]tmpSecret
+	deleteCounter int64
+	insertCounter int64
+	updateCounter int64
+	getCounter    int64
+	missCounter   int64
 }
 
-func NewTmpVaultService() (*tmpVaultService, error) {
-	return &tmpVaultService{
+type Counters struct {
+	Deletes int64
+	Inserts int64
+	Updates int64
+	Gets    int64
+	Misses  int64
+}
+
+func NewTmpVaultService() (*TmpVaultService, error) {
+	return &TmpVaultService{
 		secrets: map[string]tmpSecret{},
 	}, nil
 }
 
-func (k *tmpVaultService) Kind() string {
+func (k *TmpVaultService) Kind() string {
 	return "tmp"
 }
 
-func (k *tmpVaultService) SetSecretString(name string, value string, owningResource string) error {
+func (k *TmpVaultService) Counters() Counters {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+	return Counters{
+		Deletes: k.deleteCounter,
+		Inserts: k.insertCounter,
+		Updates: k.updateCounter,
+		Gets:    k.getCounter,
+		Misses:  k.missCounter,
+	}
+}
+
+func (k *TmpVaultService) SetSecretString(name string, value string, owningResource string) error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if _, found := k.secrets[name]; found {
+		k.updateCounter += 1
+	} else {
+		k.insertCounter += 1
+	}
 	k.secrets[name] = tmpSecret{
 		name:           name,
 		value:          value,
@@ -40,23 +71,32 @@ func (k *tmpVaultService) SetSecretString(name string, value string, owningResou
 	return nil
 }
 
-func (k *tmpVaultService) GetSecretString(name string) (string, error) {
+func (k *TmpVaultService) GetSecretString(name string) (string, error) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	if entry, ok := k.secrets[name]; ok {
+	entry, found := k.secrets[name]
+	if found {
+		k.getCounter += 1
 		return entry.value, nil
+	} else {
+		k.missCounter += 1
+		return "", NotFound
 	}
-	return "", NotFound
 }
 
-func (k *tmpVaultService) DeleteSecretString(name string) error {
+func (k *TmpVaultService) DeleteSecretString(name string) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+
+	if _, ok := k.secrets[name]; ok {
+		k.deleteCounter += 1
+	}
+
 	delete(k.secrets, name)
 	return nil
 }
 
-func (k *tmpVaultService) ForEachSecret(f func(name string, owningResource string) bool) error {
+func (k *TmpVaultService) ForEachSecret(f func(name string, owningResource string) bool) error {
 
 	// Copy the secrets to an array...
 	k.mu.Lock()
