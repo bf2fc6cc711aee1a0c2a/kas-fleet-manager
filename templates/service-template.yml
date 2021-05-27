@@ -516,11 +516,9 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-connector-types-config
+      name: ocm-managed-services-connector-catalog
       annotations:
         qontract.recycle: "true"
-    data:
-      mcs-camel-type-catalog: http://mcs-camel-type-catalog:8080/api/managed-services-api/v1/kafka-connector-types
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -647,9 +645,9 @@ objects:
           - name: ocm-managed-services-kafka-sre-user-list
             configMap:
               name: ocm-managed-services-kafka-sre-user-list
-          - name: ocm-managed-services-connector-types-config
+          - name: ocm-managed-services-connector-catalog
             configMap:
-              name: ocm-managed-services-connector-types-config
+              name: ocm-managed-services-connector-catalog
           - name: ocm-managed-services-kafka-capacity-config
             configMap:
               name: ocm-managed-services-kafka-capacity-config
@@ -723,8 +721,8 @@ objects:
             - name: ocm-managed-services-kafka-sre-user-list
               mountPath: /config/kafka-sre-user-list.yaml
               subPath: kafka-sre-user-list.yaml
-            - name: ocm-managed-services-connector-types-config
-              mountPath: /config/connector-types
+            - name: ocm-managed-services-connector-catalog
+              mountPath: /config/connector-catalog
             - name: ocm-managed-services-kafka-capacity-config
               mountPath: /config/kafka-capacity-config.yaml
               subPath: kafka-capacity-config.yaml
@@ -819,6 +817,7 @@ objects:
             - --sentry-timeout=${SENTRY_TIMEOUT}
             - --sentry-key-file=/secrets/service/sentry.key
             - --enable-connectors=${ENABLE_CONNECTORS}
+            - --connector-catalog=/config/connector-catalog
             - --http-read-timeout=${HTTP_READ_TIMEOUT}
             - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
             - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}

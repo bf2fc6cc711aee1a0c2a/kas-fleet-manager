@@ -1,6 +1,9 @@
 package config
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"io/ioutil"
@@ -10,47 +13,75 @@ import (
 )
 
 type ConnectorsConfig struct {
-	Enabled              bool     `json:"enabled"`
-	ConnectorTypesDir    string   `json:"connector_types"`
-	ConnectorTypeSvcUrls []string `json:"connector_type_urls"`
+	Enabled              bool                    `json:"enabled"`
+	ConnectorCatalogDirs []string                `json:"connector_types"`
+	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
+}
+
+type ConnectorChannelConfig struct {
+	Revision      int64                  `json:"revision,omitempty"`
+	ShardMetadata map[string]interface{} `json:"shard_metadata,omitempty"`
+}
+
+type ConnectorCatalogEntry struct {
+	Channels      map[string]*ConnectorChannelConfig `json:"channels,omitempty"`
+	ConnectorType openapi.ConnectorType              `json:"connector_type"`
 }
 
 func NewConnectorsConfig() *ConnectorsConfig {
 	return &ConnectorsConfig{
-		Enabled:           false,
-		ConnectorTypesDir: "config/connector-types",
+		Enabled:              false,
+		ConnectorCatalogDirs: []string{"config/connector-types"},
 	}
 }
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Enabled, "enable-connectors", c.Enabled, "Enable connectors")
-	fs.StringVar(&c.ConnectorTypesDir, "connector-types", c.ConnectorTypesDir, "Directory containing connector types service URLs")
+	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
-	if c.ConnectorTypesDir == "" {
-		return nil
-	}
-
-	files, err := ioutil.ReadDir(c.ConnectorTypesDir)
-	if err != nil {
-		return err
-	}
-
-	glog.Info("loading connector types")
-	var values []string
-	for _, f := range files {
-		if f.IsDir() || strings.HasPrefix(f.Name(), ".") {
-			continue
-		}
-		value := ""
-		err := readFileValueString(filepath.Join(c.ConnectorTypesDir, f.Name()), &value)
+	typesLoaded := map[string]string{}
+	var values []ConnectorCatalogEntry
+	for _, dir := range c.ConnectorCatalogDirs {
+		dir = BuildFullFilePath(dir)
+		files, err := ioutil.ReadDir(dir)
 		if err != nil {
 			return err
 		}
-		values = append(values, value)
+
+		for _, f := range files {
+
+			// skip over hidden files and dirs..
+			if f.IsDir() || strings.HasPrefix(f.Name(), ".") {
+				continue
+			}
+
+			file := filepath.Join(dir, f.Name())
+
+			// Read the file
+			buf, err := ioutil.ReadFile(file)
+			if err != nil {
+				return err
+			}
+
+			entry := ConnectorCatalogEntry{}
+			err = json.Unmarshal(buf, &entry)
+			if err != nil {
+				return err
+			}
+
+			if prev, found := typesLoaded[entry.ConnectorType.Id]; found {
+				return fmt.Errorf("connector type '%s' defined in '%s' and '%s'", entry.ConnectorType.Id, file, prev)
+			}
+			typesLoaded[entry.ConnectorType.Id] = file
+			values = append(values, entry)
+		}
 	}
-	sort.Strings(values)
-	c.ConnectorTypeSvcUrls = values
+	sort.Slice(values, func(i, j int) bool {
+		return values[i].ConnectorType.Id < values[j].ConnectorType.Id
+	})
+	glog.Infof("loaded %d connector types", len(values))
+	c.CatalogEntries = values
 	return nil
 }
