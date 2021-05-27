@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -11,7 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 )
@@ -30,7 +28,6 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	ocmClient           ocm.Client
 	clusterService      ClusterService
 	kafkaConfig         *config.KafkaConfig
 	observabilityConfig *config.ObservabilityConfiguration
@@ -42,9 +39,8 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 	Partitions  int
 }
 
-func NewDataPlaneClusterService(clusterService ClusterService, ocmClient ocm.Client, config *config.ApplicationConfig) *dataPlaneClusterService {
+func NewDataPlaneClusterService(clusterService ClusterService, config *config.ApplicationConfig) *dataPlaneClusterService {
 	return &dataPlaneClusterService{
-		ocmClient:           ocmClient,
 		clusterService:      clusterService,
 		kafkaConfig:         config.Kafka,
 		observabilityConfig: config.ObservabilityConfiguration,
@@ -131,39 +127,14 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 }
 
 func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *api.Cluster, status *api.DataPlaneClusterStatus) (bool, error) {
-	ocmCluster, err := d.ocmClient.GetCluster(cluster.ClusterID)
+	nodesInfo, err := d.clusterService.GetComputeNodes(cluster.ClusterID)
 	if err != nil {
-		return false, err
-	}
-	metrics, err := d.ocmClient.GetExistingClusterMetrics(cluster.ClusterID)
-	if err != nil {
-		return false, err
-	}
-	if metrics == nil {
-		return false, fmt.Errorf("cluster ID %s has no metrics", cluster.ClusterID)
-	}
-	existingNodes, ok := metrics.GetNodes()
-	if !ok {
-		return false, fmt.Errorf("Cluster ID %s has no node metrics", cluster.ClusterID)
+		return false, errors.ToServiceError(err)
 	}
 
-	existingComputeNodes, ok := existingNodes.GetCompute()
-	if !ok {
-		return false, fmt.Errorf("Cluster ID %s has no compute node metrics", cluster.ClusterID)
-	}
+	glog.V(10).Infof("Cluster ID %s has %d desired compute nodes and %d existing compute nodes", cluster.ClusterID, nodesInfo.Desired, nodesInfo.Actual)
 
-	desiredNodes, ok := ocmCluster.GetNodes()
-	if !ok {
-		return false, fmt.Errorf("Cluster ID %s has no desired node information", cluster.ClusterID)
-	}
-	desiredComputeNodes, ok := desiredNodes.GetCompute()
-	if !ok {
-		return false, fmt.Errorf("Cluster ID %s has no desired compute node information", cluster.ClusterID)
-	}
-
-	glog.V(10).Infof("Cluster ID %s has %d desired compute nodes and %d existing compute nodes", cluster.ClusterID, desiredComputeNodes, int(existingComputeNodes))
-
-	return int(existingComputeNodes) != desiredComputeNodes, nil
+	return nodesInfo.Actual != nodesInfo.Desired, nil
 }
 
 // updateDataPlaneClusterNodes performs node scale-up and scale-down actions on

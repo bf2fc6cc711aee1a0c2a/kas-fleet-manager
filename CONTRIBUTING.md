@@ -373,3 +373,6 @@ To manually run the check, execute this command from the root of this repository
 ```sh
 make lint
 ```
+## Writing Docs
+
+Please see the [README](./docs/README.md) in `docs` directory.

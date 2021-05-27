@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
@@ -57,13 +58,32 @@ func NewOSDClusterConfig() *OSDClusterConfig {
 
 //manual cluster configuration
 type ManualCluster struct {
-	Name               string `yaml:"name"`
-	ClusterId          string `yaml:"cluster_id"`
-	CloudProvider      string `yaml:"cloud_provider"`
-	Region             string `yaml:"region"`
-	MultiAZ            bool   `yaml:"multi_az"`
-	Schedulable        bool   `yaml:"schedulable"`
-	KafkaInstanceLimit int    `yaml:"kafka_instance_limit"`
+	Name               string                  `yaml:"name"`
+	ClusterId          string                  `yaml:"cluster_id"`
+	CloudProvider      string                  `yaml:"cloud_provider"`
+	Region             string                  `yaml:"region"`
+	MultiAZ            bool                    `yaml:"multi_az"`
+	Schedulable        bool                    `yaml:"schedulable"`
+	KafkaInstanceLimit int                     `yaml:"kafka_instance_limit"`
+	Status             api.ClusterStatus       `yaml:"status"`
+	ProviderType       api.ClusterProviderType `yaml:"provider_type"`
+}
+
+func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type t ManualCluster
+	temp := t{
+		Status:       api.ClusterProvisioning,
+		ProviderType: api.ClusterProviderOCM,
+	}
+	err := unmarshal(&temp)
+	if err != nil {
+		return err
+	}
+	*c = ManualCluster(temp)
+	if c.ClusterId == "" {
+		return fmt.Errorf("cluster_id is empty")
+	}
+	return nil
 }
 
 type ClusterList []ManualCluster
@@ -180,7 +200,7 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 		ClusterList ClusterList `yaml:"clusters"`
 	}{}
 
-	if err = yaml.UnmarshalStrict([]byte(fileContents), &c); err != nil {
+	if err = yaml.Unmarshal([]byte(fileContents), &c); err != nil {
 		return nil, err
 	} else {
 		return c.ClusterList, nil

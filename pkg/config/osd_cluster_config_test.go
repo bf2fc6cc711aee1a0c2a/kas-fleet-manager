@@ -1,6 +1,7 @@
 package config
 
 import (
+	"gopkg.in/yaml.v2"
 	"reflect"
 	"testing"
 
@@ -294,6 +295,114 @@ func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
 			conf := NewClusterConfig(tt.fields.ClusterList)
 			if got := conf.ExcessClusters(tt.args.clusterList); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ExcessClusters() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestClusterConfig_UnmarshalYAML(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		output  ManualCluster
+		wantErr bool
+	}{
+		{
+			name: "should have default value set",
+			input: `
+---
+name: "test"
+cluster_id: "test"
+cloud_provider: "aws"
+region: "east-1"
+multi_az: true
+schedulable: true
+kafka_instance_limit: 1
+`,
+			output: ManualCluster{
+				Name:               "test",
+				ClusterId:          "test",
+				CloudProvider:      "aws",
+				Region:             "east-1",
+				MultiAZ:            true,
+				Schedulable:        true,
+				KafkaInstanceLimit: 1,
+				Status:             api.ClusterProvisioning,
+				ProviderType:       api.ClusterProviderOCM,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should use the provided value if they are set",
+			input: `
+---
+name: "test"
+cluster_id: "test"
+cloud_provider: "aws"
+region: "east-1"
+multi_az: true
+schedulable: true
+kafka_instance_limit: 1
+status: "ready"
+provider_type: "aws_eks"
+`,
+			output: ManualCluster{
+				Name:               "test",
+				ClusterId:          "test",
+				CloudProvider:      "aws",
+				Region:             "east-1",
+				MultiAZ:            true,
+				Schedulable:        true,
+				KafkaInstanceLimit: 1,
+				Status:             api.ClusterReady,
+				ProviderType:       api.ClusterProviderAwsEKS,
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error because invalid status value",
+			input: `
+---
+name: "test"
+cluster_id: "test"
+cloud_provider: "aws"
+region: "east-1"
+multi_az: true
+schedulable: true
+kafka_instance_limit: 1
+status: "not_valid"
+provider_type: "aws_eks"
+`,
+			output:  ManualCluster{},
+			wantErr: true,
+		},
+		{
+			name: "should return error because invalid provider_type value",
+			input: `
+---
+name: "test"
+cluster_id: "test"
+cloud_provider: "aws"
+region: "east-1"
+multi_az: true
+schedulable: true
+kafka_instance_limit: 1
+status: "ready"
+provider_type: "invalid"
+`,
+			output:  ManualCluster{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var v ManualCluster
+			err := yaml.Unmarshal([]byte(tt.input), &v)
+			if err != nil && !tt.wantErr {
+				t.Errorf("unexpected error %v", err)
+			}
+			if !reflect.DeepEqual(v, tt.output) {
+				t.Errorf("want %v but got %v", tt.output, v)
 			}
 		})
 	}

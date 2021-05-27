@@ -1,13 +1,57 @@
 package api
 
 import (
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
 type ClusterStatus string
+type ClusterProviderType string
 
 func (k ClusterStatus) String() string {
 	return string(k)
+}
+
+func (k *ClusterStatus) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	err := unmarshal(&s)
+	if err != nil {
+		return err
+	}
+	switch s {
+	case ClusterProvisioning.String():
+		*k = ClusterProvisioning
+	case ClusterProvisioned.String():
+		*k = ClusterProvisioned
+	case ClusterReady.String():
+		*k = ClusterReady
+	default:
+		return errors.Errorf("invalid value %s", s)
+	}
+	return nil
+}
+
+func (p ClusterProviderType) String() string {
+	return string(p)
+}
+
+func (p *ClusterProviderType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	err := unmarshal(&s)
+	if err != nil {
+		return err
+	}
+	switch s {
+	case ClusterProviderOCM.String():
+		*p = ClusterProviderOCM
+	case ClusterProviderAwsEKS.String():
+		*p = ClusterProviderAwsEKS
+	case ClusterProviderStandalone.String():
+		*p = ClusterProviderStandalone
+	default:
+		return errors.Errorf("invalid value %s", s)
+	}
+	return nil
 }
 
 const (
@@ -31,6 +75,10 @@ const (
 	ClusterFull ClusterStatus = "full"
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"
+
+	ClusterProviderOCM        ClusterProviderType = "ocm"
+	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
+	ClusterProviderStandalone ClusterProviderType = "standalone"
 )
 
 // This represents the valid statuses of a OSD cluster
@@ -44,11 +92,15 @@ type Cluster struct {
 	ExternalID         string        `json:"external_id"`
 	MultiAZ            bool          `json:"multi_az"`
 	Region             string        `json:"region"`
-	BYOC               bool          `json:"byoc"`
-	Managed            bool          `json:"managed"`
 	Status             ClusterStatus `json:"status" gorm:"index"`
 	IdentityProviderID string        `json:"identity_provider_id"`
 	ClusterDNS         string        `json:"cluster_dns"`
+	// the provider type for the cluster, e.g. OCM, AWS, GCP, Standalone etc
+	ProviderType ClusterProviderType `json:"provider_type"`
+	// store the provider-specific information that can be used to managed the openshift/k8s cluster
+	ProviderSpec JSON `json:"provider_spec"`
+	// store the specs of the openshift/k8s cluster which can be used to access the cluster
+	ClusterSpec JSON `json:"cluster_spec"`
 }
 
 type ClusterList []*Cluster

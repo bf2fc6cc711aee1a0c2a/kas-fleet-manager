@@ -1,27 +1,24 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
-
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
 
 	"gorm.io/gorm"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm/converters"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 //go:generate moq -out clusterservice_moq.go . ClusterService
 type ClusterService interface {
-	Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
+	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
@@ -33,11 +30,13 @@ type ClusterService interface {
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
 	FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
-	ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
-	SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError)
+	ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError)
+	ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError)
+	SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError)
+	GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
+	// DeleteByClusterID will delete the cluster from the database
 	DeleteByClusterID(clusterID string) *apiErrors.ServiceError
 	// FindNonEmptyClusterById returns a cluster if it present and it is not empty.
 	// Cluster emptiness is determined by checking whether the cluster contains Kafkas that have been provisioned, are being provisioned on it, or are being deprovisioned from it i.e kafka that are not in failure state.
@@ -51,23 +50,25 @@ type ClusterService interface {
 	// UpdateMultiClusterStatus updates a list of clusters' status to a status
 	UpdateMultiClusterStatus(clusterIds []string, status api.ClusterStatus) *apiErrors.ServiceError
 	// CountByStatus returns the count of clusters for each given status in the database
-	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, error)
+	CountByStatus([]api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError)
+	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
+	// Delete will delete the cluster from the provider
+	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
+	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
+	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
+	InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
 }
 
 type clusterService struct {
 	connectionFactory *db.ConnectionFactory
-	ocmClient         ocm.Client
-	awsConfig         *config.AWSConfig
-	clusterBuilder    ocm.ClusterBuilder
+	providerFactory   clusters.ProviderFactory
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(connectionFactory *db.ConnectionFactory, ocmClient ocm.Client, awsConfig *config.AWSConfig, osdClusterConfig *config.OSDClusterConfig) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory) ClusterService {
 	return &clusterService{
 		connectionFactory: connectionFactory,
-		ocmClient:         ocmClient,
-		awsConfig:         awsConfig,
-		clusterBuilder:    ocm.NewClusterBuilder(awsConfig, osdClusterConfig),
+		providerFactory:   providerFactory,
 	}
 }
 
@@ -80,38 +81,41 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 	return nil
 }
 
-// Create creates a new OSD cluster
-//
+// Create Creates a new OpenShift/k8s cluster via the provider and save the details of the cluster in the database
 // Returns the newly created cluster object
-func (c clusterService) Create(cluster *api.Cluster) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
-
-	// Build a new OSD cluster object
-	newCluster, err := c.clusterBuilder.NewOCMClusterFromCluster(cluster)
+	r := &types.ClusterRequest{
+		CloudProvider:  cluster.CloudProvider,
+		Region:         cluster.Region,
+		MultiAZ:        cluster.MultiAZ,
+		AdditionalSpec: cluster.ProviderSpec,
+	}
+	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
-		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "error building cluster")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-
-	// Send POST request to /api/clusters_mgmt/v1/clusters to create a new OSD cluster
-	createdCluster, err := c.ocmClient.CreateCluster(newCluster)
+	clusterSpec, err := provider.Create(r)
 	if err != nil {
-		return createdCluster, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "error creating a Dataplane cluster")
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to create cluster")
 	}
 
-	// convert the cluster to the cluster type this service understands before saving
-	convertedCluster := converters.ConvertCluster(createdCluster)
-
-	// if the passed in cluster object has an ID, it means we need to overwrite it
-	// because it was a cluster provisioning request (cluster_accepted status)
-	if cluster.ID != "" {
-		convertedCluster.ID = cluster.ID
+	cluster.ClusterID = clusterSpec.InternalID
+	cluster.ExternalID = clusterSpec.ExternalID
+	cluster.Status = clusterSpec.Status
+	if clusterSpec.AdditionalInfo != nil {
+		clusterInfo, err := json.Marshal(clusterSpec.AdditionalInfo)
+		if err != nil {
+			return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to marshal JSON value")
+		}
+		cluster.ClusterSpec = clusterInfo
 	}
 
-	if err := dbConn.Save(convertedCluster).Error; err != nil {
-		return &clustersmgmtv1.Cluster{}, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update created cluster")
+	if err := dbConn.Save(cluster).Error; err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to save data to db")
 	}
 
-	return createdCluster, nil
+	return cluster, nil
 }
 
 // GetClusterDNS gets an OSD clusters DNS from OCM cluster service by ID
@@ -127,10 +131,19 @@ func (c clusterService) GetClusterDNS(clusterID string) (string, *apiErrors.Serv
 		return cluster.ClusterDNS, nil
 	}
 
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return "", apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+
 	// If the clusterDNS is not present in the database, retrieve it from OCM
-	clusterDNS, err := c.ocmClient.GetClusterDNS(clusterID)
+	clusterDNS, err := p.GetClusterDNS(buildClusterSpec(cluster))
 	if err != nil {
 		return "", apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get cluster DNS from OCM")
+	}
+	cluster.ClusterDNS = clusterDNS
+	if err := c.Update(*cluster); err != nil {
+		return "", apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster DNS")
 	}
 	return clusterDNS, nil
 }
@@ -282,44 +295,95 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 }
 
 // ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
 
-	// scale up compute nodes
-	cluster, err := c.ocmClient.ScaleUpComputeNodes(clusterID, increment)
-	if err != nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+	cluster, serviceErr := c.FindClusterByID(clusterID)
+	if serviceErr != nil {
+		return nil, serviceErr
 	}
-	return cluster, nil
+
+	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+
+	// scale up compute nodes
+	clusterSpec, err := provider.ScaleUp(buildClusterSpec(cluster), increment)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to scale up cluster")
+	}
+	return clusterSpec, nil
 }
 
 // ScaleDownComputeNodes removes three compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
+	}
+
+	cluster, serviceErr := c.FindClusterByID(clusterID)
+	if serviceErr != nil {
+		return nil, serviceErr
+	}
+
+	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 
 	// scale up compute nodes
-	cluster, err := c.ocmClient.ScaleDownComputeNodes(clusterID, decrement)
+	clusterSpec, err := provider.ScaleDown(buildClusterSpec(cluster), decrement)
 	if err != nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to scale down cluster")
 	}
-	return cluster, nil
+	return clusterSpec, nil
 }
 
-func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
 
-	// set number of compute nodes
-	cluster, err := c.ocmClient.SetComputeNodes(clusterID, numNodes)
-	if err != nil {
-		return nil, apiErrors.New(apiErrors.ErrorGeneral, err.Error())
+	cluster, serviceErr := c.FindClusterByID(clusterID)
+	if serviceErr != nil {
+		return nil, serviceErr
 	}
-	return cluster, nil
+
+	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+
+	// set number of compute nodes
+	clusterSpec, err := provider.SetComputeNodes(buildClusterSpec(cluster), numNodes)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to set compute nodes")
+	}
+	return clusterSpec, nil
+}
+
+func (c clusterService) GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError) {
+	if clusterID == "" {
+		return nil, apiErrors.Validation("clusterID is undefined")
+	}
+
+	cluster, serviceErr := c.FindClusterByID(clusterID)
+	if serviceErr != nil {
+		return nil, serviceErr
+	}
+
+	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	nodesInfo, err := provider.GetComputeNodes(buildClusterSpec(cluster))
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get compute nodes info from provider")
+	}
+	return nodesInfo, nil
 }
 
 func (c clusterService) DeleteByClusterID(clusterID string) *apiErrors.ServiceError {
@@ -471,7 +535,7 @@ type ClusterStatusCount struct {
 	Count  int
 }
 
-func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStatusCount, error) {
+func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStatusCount, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
 	var results []ClusterStatusCount
 	if err := dbConn.Model(&api.Cluster{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
@@ -493,4 +557,87 @@ func (c clusterService) CountByStatus(status []api.ClusterStatus) ([]ClusterStat
 	}
 
 	return results, nil
+}
+
+func (c clusterService) CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+
+	clusterSpec, err := p.CheckClusterStatus(buildClusterSpec(cluster))
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to check cluster status")
+	}
+
+	cluster.Status = clusterSpec.Status
+	cluster.ClusterSpec = clusterSpec.AdditionalInfo
+	if err := c.Update(*cluster); err != nil {
+		return nil, err
+	}
+	return cluster, nil
+}
+
+func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	if removed, err := p.Delete(buildClusterSpec(cluster)); err != nil {
+		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to delete the cluster from the provider")
+	} else {
+		return removed, nil
+	}
+}
+
+func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+	if cluster.IdentityProviderID != "" {
+		return cluster, nil
+	}
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	providerInfo, err := p.AddIdentityProvider(buildClusterSpec(cluster), identityProviderInfo)
+	if err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to add identity provider")
+	}
+	// need to review this if multiple identity providers are supported
+	cluster.IdentityProviderID = providerInfo.OpenID.ID
+	if err := c.Update(*cluster); err != nil {
+		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to update cluster")
+	}
+	return cluster, nil
+}
+
+func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	if _, err := p.ApplyResources(buildClusterSpec(cluster), resources); err != nil {
+		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to apply resources %s", resources.Name)
+	}
+	return nil
+}
+
+func (c clusterService) InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetAddonProvider(cluster.ProviderType)
+	if err != nil {
+		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	if ready, err := p.InstallAddon(buildClusterSpec(cluster), addonID); err != nil {
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install addon %s for cluster %s", addonID, cluster.ClusterID)
+	} else {
+		return ready, nil
+	}
+}
+
+func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
+	return &types.ClusterSpec{
+		InternalID:     cluster.ClusterID,
+		ExternalID:     cluster.ExternalID,
+		Status:         cluster.Status,
+		AdditionalInfo: cluster.ClusterSpec,
+	}
 }

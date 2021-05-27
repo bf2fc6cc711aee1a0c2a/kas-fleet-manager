@@ -2,16 +2,13 @@ package services
 
 import (
 	"context"
-	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	v1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
@@ -28,17 +25,12 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			clusterID:     testClusterID,
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				ocmClient := &ocm.ClientMock{
-					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
-						return &v1.Cluster{}, nil
-					},
-				}
 				clusterService := &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: true,
 		},
@@ -58,26 +50,6 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			},
 			wantErr: false,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-
-				ocmClient := &ocm.ClientMock{
-					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
-						clusterBuilder := clustersmgmtv1.NewCluster()
-						clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
-						clusterNodeBuilder.Compute(6)
-						clusterBuilder.Nodes(clusterNodeBuilder)
-						return clusterBuilder.Build()
-					},
-					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-						clusterMetricsBuilder := amsv1.NewSubscriptionMetrics()
-						clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
-						clusterMetricsNodeBuilder.Compute(6)
-
-						clusterMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
-						metrics, _ := clusterMetricsBuilder.Build()
-
-						return metrics, nil
-					},
-				}
 				clusterService := &ClusterServiceMock{
 					FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 						return &api.Cluster{
@@ -91,8 +63,14 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
+							Actual:  6,
+							Desired: 6,
+						}, nil
+					},
 				}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 		},
 	}
@@ -135,9 +113,8 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -145,7 +122,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					},
 				}
 				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, kafkaConfig)
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, kafkaConfig)
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -168,16 +145,15 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -199,16 +175,15 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -238,9 +213,8 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -248,7 +222,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					},
 				}
 
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -277,13 +251,12 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -313,13 +286,12 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -350,13 +322,12 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -389,13 +360,12 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -440,33 +410,15 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 			name:          "When desired compute nodes equals existing compute nodes no scaling action is in progress",
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				clusterBuilder := clustersmgmtv1.NewCluster()
-				clusterBuilder.ID(testClusterID)
-				clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
-				clusterNodeBuilder.Compute(6)
-				clusterBuilder.Nodes(clusterNodeBuilder)
-				cluster, err := clusterBuilder.Build()
-				if err != nil {
-					return nil
-				}
-
-				ocmClient := &ocm.ClientMock{
-					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
-						return cluster, nil
-					},
-					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-						clusterMetricsBuilder := amsv1.NewSubscriptionMetrics()
-						clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
-						clusterMetricsNodeBuilder.Compute(6)
-
-						clusterMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
-						metrics, _ := clusterMetricsBuilder.Build()
-
-						return metrics, nil
+				clusterService := &ClusterServiceMock{
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
+							Actual:  6,
+							Desired: 6,
+						}, nil
 					},
 				}
-				clusterService := &ClusterServiceMock{}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want:    false,
 			wantErr: false,
@@ -475,35 +427,15 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 			name:          "When desired compute nodes does not equal existing compute nodes scaling action is in progress",
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				clusterBuilder := clustersmgmtv1.NewCluster()
-				clusterBuilder.ID(testClusterID)
-				clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
-				clusterNodeBuilder.Compute(6)
-				clusterBuilder.Nodes(clusterNodeBuilder)
-				clusterNodeBuilderExisting := clustersmgmtv1.NewClusterNodes()
-				clusterNodeBuilderExisting.Compute(8)
-				cluster, err := clusterBuilder.Build()
-				if err != nil {
-					return nil
-				}
-
-				ocmClient := &ocm.ClientMock{
-					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
-						return cluster, nil
-					},
-					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-						clusterMetricsBuilder := amsv1.NewSubscriptionMetrics()
-						clusterMetricsNodeBuilder := amsv1.NewClusterMetricsNodes()
-						clusterMetricsNodeBuilder.Compute(8)
-
-						clusterMetricsBuilder.Nodes(clusterMetricsNodeBuilder)
-						metrics, _ := clusterMetricsBuilder.Build()
-
-						return metrics, nil
+				clusterService := &ClusterServiceMock{
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
+							Actual:  6,
+							Desired: 8,
+						}, nil
 					},
 				}
-				clusterService := &ClusterServiceMock{}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want:    true,
 			wantErr: false,
@@ -512,26 +444,12 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 			name:          "When some node information is missing an error is returned",
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				clusterBuilder := clustersmgmtv1.NewCluster()
-				clusterBuilder.ID(testClusterID)
-				clusterNodeBuilder := clustersmgmtv1.NewClusterNodes()
-				clusterNodeBuilder.Compute(6)
-				clusterBuilder.Nodes(clusterNodeBuilder)
-				cluster, err := clusterBuilder.Build()
-				if err != nil {
-					return nil
-				}
-
-				ocmClient := &ocm.ClientMock{
-					GetClusterFunc: func(clusterID string) (*v1.Cluster, error) {
-						return cluster, nil
-					},
-					GetExistingClusterMetricsFunc: func(clusterID string) (*amsv1.SubscriptionMetrics, error) {
-						return nil, nil
+				clusterService := &ClusterServiceMock{
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return nil, errors.GeneralError("failed to get compute nodes info")
 					},
 				}
-				clusterService := &ClusterServiceMock{}
-				return NewDataPlaneClusterService(clusterService, ocmClient, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(clusterService, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want:    false,
 			wantErr: true,
@@ -578,7 +496,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: false,
 			want:    true,
@@ -594,7 +512,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: false,
 			want:    false,
@@ -605,7 +523,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				Conditions: []api.DataPlaneClusterStatusCondition{},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: false,
 			want:    false,
@@ -621,7 +539,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 				},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			wantErr: true,
 			want:    false,
@@ -659,7 +577,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterReady,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -669,7 +587,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterFull,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -679,7 +597,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterWaitingForKasFleetShardOperator,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -689,7 +607,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterComputeNodeScalingUp,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: true,
 		},
@@ -699,7 +617,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterProvisioning,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -709,7 +627,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterFailed,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -719,7 +637,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterAccepted,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -729,7 +647,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 				Status: api.ClusterProvisioned,
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
-				return NewDataPlaneClusterService(nil, nil, sampleValidApplicationConfigForDataPlaneClusterTest())
+				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
 			},
 			want: false,
 		},
@@ -813,7 +731,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := NewDataPlaneClusterService(tt.fields.clusterService, nil, tt.fields.config)
+			s := NewDataPlaneClusterService(tt.fields.clusterService, tt.fields.config)
 			config, err := s.GetDataPlaneClusterConfig(context.TODO(), "test-cluster-id")
 			if err != nil && !tt.wantErr {
 				t.Fatalf("unexpected error %v", err)
@@ -853,11 +771,10 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterFull,
 				}
-				ocmClient := &ocm.ClientMock{}
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -871,7 +788,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 						return nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, applicationConfig)
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -896,11 +813,10 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -914,7 +830,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 						return nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, applicationConfig)
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -940,11 +856,10 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterWaitingForKasFleetShardOperator,
 				}
-				ocmClient := &ocm.ClientMock{}
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -958,7 +873,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 						return nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, applicationConfig)
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,
@@ -983,11 +898,10 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 					MultiAZ:   true,
 					Status:    api.ClusterReady,
 				}
-				ocmClient := &ocm.ClientMock{}
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*v1.Cluster, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -1001,7 +915,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 						return nil
 					},
 				}
-				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, ocmClient, applicationConfig)
+				dataPlaneClusterService := NewDataPlaneClusterService(clusterService, applicationConfig)
 				return &input{
 					status:                  testStatus,
 					cluster:                 apiCluster,

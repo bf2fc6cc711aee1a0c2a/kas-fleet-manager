@@ -2,9 +2,9 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/ocm"
-	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/patrickmn/go-cache"
 	"time"
 )
@@ -19,47 +19,43 @@ type CloudProvidersService interface {
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
-func NewCloudProvidersService(ocmClient ocm.Client) CloudProvidersService {
+func NewCloudProvidersService(providerFactory clusters.ProviderFactory) CloudProvidersService {
 	return &cloudProvidersService{
-		ocmClient: ocmClient,
-		cache:     cache.New(5*time.Minute, 10*time.Minute),
+		providerFactory: providerFactory,
+		cache:           cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
 type cloudProvidersService struct {
-	ocmClient ocm.Client
-	cache     *cache.Cache
+	providerFactory clusters.ProviderFactory
+	cache           *cache.Cache
 }
 
 type CloudProviderWithRegions struct {
 	ID         string
-	RegionList *clustersmgmtv1.CloudRegionList
+	RegionList *types.CloudProviderRegionInfoList
 }
 
 func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
-	cloudProviderWithRegions := []CloudProviderWithRegions{}
-	var regionErr error
-	providerList, err := p.ocmClient.GetCloudProviders()
+	var cloudProviderWithRegions []CloudProviderWithRegions
+	// TODO: when there are multiple provider types, we can list them from the db first and then call out to each of the implementation to get their provider and region info
+	provider, err := p.providerFactory.GetProvider(api.ClusterProviderOCM)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
+	}
+	providerList, err := provider.GetCloudProviders()
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
 	}
-	providerList.Each(func(provider *clustersmgmtv1.CloudProvider) bool {
-		var regions *clustersmgmtv1.CloudRegionList
-		regions, regionErr = p.ocmClient.GetRegions(provider)
+	for _, cp := range providerList.Items {
+		regions, regionErr := provider.GetCloudProviderRegions(cp)
 		if regionErr != nil {
-			return false
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud regions")
 		}
-
 		cloudProviderWithRegions = append(cloudProviderWithRegions, CloudProviderWithRegions{
-			ID:         provider.ID(),
+			ID:         cp.ID,
 			RegionList: regions,
 		})
-
-		return true
-	})
-
-	if regionErr != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, regionErr, "failed to retrieve cloud provider list")
 	}
 
 	return cloudProviderWithRegions, nil
@@ -87,29 +83,28 @@ func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interf
 }
 
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
-
 	cloudProviderList := []api.CloudProvider{}
-	providerList, err := p.ocmClient.GetCloudProviders()
+	// TODO: when there are multiple provider types, we can list them from the db first and then call out to each of the implementation to get their provider and region info
+	provider, err := p.providerFactory.GetProvider(api.ClusterProviderOCM)
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
+	}
+	providerList, err := provider.GetCloudProviders()
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
 	}
-
-	providerList.Each(func(cloudProvider *clustersmgmtv1.CloudProvider) bool {
-
+	for _, cp := range providerList.Items {
 		cloudProviderList = append(cloudProviderList, api.CloudProvider{
-			Id:          cloudProvider.ID(),
-			Name:        cloudProvider.Name(),
-			DisplayName: setDisplayName(cloudProvider.ID(), cloudProvider.DisplayName()),
+			Id:          cp.ID,
+			Name:        cp.Name,
+			DisplayName: setDisplayName(cp.ID, cp.DisplayName),
 		})
-
-		return true
-	})
+	}
 
 	return cloudProviderList, nil
 }
 
 func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError) {
-
 	cloudRegionList := []api.CloudRegion{}
 	cloudProviders, err := p.GetCloudProvidersWithRegions()
 	if err != nil {
@@ -118,16 +113,14 @@ func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudR
 
 	for _, cloudProvider := range cloudProviders {
 		if cloudProvider.ID == id {
-			cloudProvider.RegionList.Each(func(region *clustersmgmtv1.CloudRegion) bool {
-
+			for _, r := range cloudProvider.RegionList.Items {
 				cloudRegionList = append(cloudRegionList, api.CloudRegion{
-					Id:            region.ID(),
-					CloudProvider: cloudProvider.ID,
-					DisplayName:   region.DisplayName(),
+					Id:            r.ID,
+					CloudProvider: r.CloudProviderID,
+					DisplayName:   r.DisplayName,
 				})
-
-				return true
-			})
+			}
+			break
 		}
 	}
 
