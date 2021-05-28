@@ -1185,7 +1185,7 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 				CatalogSource:          observabilityCatalogSourceName,
 				Channel:                "alpha",
 				CatalogSourceNamespace: observabilityNamespace,
-				StartingCSV:            "observability-operator.v3.0.1",
+				StartingCSV:            "observability-operator.v3.0.2",
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
 			},
