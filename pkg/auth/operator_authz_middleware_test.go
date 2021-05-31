@@ -123,8 +123,8 @@ func TestOperatorAuthzMiddleware_CheckOCMToken(t *testing.T) {
 			route.Use(func(handler http.Handler) http.Handler {
 				return setContextToken(handler, tt.token)
 			})
-			ocmAuthMiddleware := NewOCMAuthorizationMiddleware()
-			route.Use(ocmAuthMiddleware.RequireIssuer(JWKSEndpoint, errors.ErrorNotFound))
+			requireIssuerMiddleware := NewRequireIssuerMiddleware()
+			route.Use(requireIssuerMiddleware.RequireIssuer(JWKSEndpoint, errors.ErrorNotFound))
 			req := httptest.NewRequest("GET", "http://example.com/agent-cluster/"+tt.clusterId, nil)
 			recorder := httptest.NewRecorder()
 			route.ServeHTTP(recorder, req)
