@@ -3,9 +3,10 @@ package services
 import (
 	"context"
 	"fmt"
-	services "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 	"strings"
 	"sync"
+
+	services "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 
 	"time"
 
@@ -29,7 +30,7 @@ import (
 
 const productId = "RHOSAKTrial"
 
-var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusDeleted.String()}
+var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String()}
 var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusFailed.String()}
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
@@ -483,11 +484,9 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 	if kafka, err := k.GetById(id); err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 	} else {
-		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() {
-			// only allow to change the status to "deleted" if the cluster is already in "deprovision" status
-			if status != constants.KafkaRequestStatusDeleting && status != constants.KafkaRequestStatusDeleted {
-				return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
-			}
+		// only allow to change the status to "deleting" if the cluster is already in "deprovision" status
+		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() && status != constants.KafkaRequestStatusDeleting {
+			return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
 		}
 
 		if kafka.Status == status.String() {

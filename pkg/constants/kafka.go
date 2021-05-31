@@ -23,10 +23,6 @@ const (
 	KafkaRequestStatusDeprovision KafkaStatus = "deprovision"
 	// KafkaRequestStatusDeleting - external resources are being deleted for the kafka request
 	KafkaRequestStatusDeleting KafkaStatus = "deleting"
-	// TODO: remove the deleted status
-	// KafkaRequestStatusDeleted - kafka request is deleted
-	KafkaRequestStatusDeleted KafkaStatus = "deleted"
-
 	// KafkaOperationCreate - Kafka cluster create operations
 	KafkaOperationCreate KafkaOperation = "create"
 	// KafkaOperationDelete = Kafka cluster delete operations
