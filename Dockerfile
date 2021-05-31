@@ -1,11 +1,4 @@
-FROM quay.io/centos/centos:8
-
-RUN \
-    yum install -y \
-    openssl \
-    postgresql \
-    && \
-    yum clean all
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.4
 
 COPY \
     kas-fleet-manager \
