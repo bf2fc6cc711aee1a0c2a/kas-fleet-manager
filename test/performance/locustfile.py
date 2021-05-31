@@ -139,7 +139,7 @@ def create_svc_acc_for_kafka(self, kafka_id):
     svc_acc_json_payload = svc_acc_json(url_base)
     svc_acc_id = ''
     while svc_acc_id == '':
-      service_acc_json = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts', True)
+      service_acc_json = handle_post(self, f'{url_base}/service_accounts', svc_acc_json_payload, '/service_accounts', True)
       if service_acc_json != '' and 'id' in service_acc_json:
         svc_acc_id = service_acc_json['id']
         kafka_assoc_svc_accs.append({'kafka_id': kafka_id, 'svc_acc_json': service_acc_json})
@@ -238,17 +238,17 @@ def wait_for_kafkas_ready(self):
 
 # perf tests against service account endpoints
 def service_accounts(self, get_only):
-  handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
+  handle_get(self, f'{url_base}/service_accounts', '/service_accounts')
   if get_only != 'TRUE':
     if len(service_acc_list) > 0:
-      remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
-      handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts')
+      remove_resource(self, service_acc_list, '/service_accounts/[id]')
+      handle_get(self, f'{url_base}/service_accounts', '/service_accounts')
     else:
       svc_acc_json_payload = svc_acc_json(url_base)
-      svc_acc_id = handle_post(self, f'{url_base}/serviceaccounts', svc_acc_json_payload, '/serviceaccounts')
+      svc_acc_id = handle_post(self, f'{url_base}/service_accounts', svc_acc_json_payload, '/service_accounts')
       if svc_acc_id != '':
         svc_acc_json_payload['clientSecret'] = generate_random_svc_acc_secret()
-        handle_post(self, f'{url_base}/serviceaccounts/{svc_acc_id}/reset-credentials', svc_acc_json_payload, '/serviceaccounts/[id]/reset-credentials')
+        handle_post(self, f'{url_base}/service_accounts/{svc_acc_id}/reset_credentials', svc_acc_json_payload, '/service_accounts/[id]/reset_credentials')
         service_acc_list.append(svc_acc_id)
 
 # get the list of left over service accounts and kafka clusters and delete them
@@ -264,20 +264,20 @@ def check_leftover_resources(self):
       remove_resource(self, kafkas_list, '/kafkas/[id]', kafka_id)
 
   time.sleep(random.uniform(1.0, 5.0))
-  left_over_svc_accs = handle_get(self, f'{url_base}/serviceaccounts', '/serviceaccounts', True)
+  left_over_svc_accs = handle_get(self, f'{url_base}/service_accounts', '/service_accounts', True)
   # delete all kafkas created by the token used in the performance test
   items = get_items_from_json_response(left_over_svc_accs)
   if len(items) > 0:
     for svc_acc_id in get_ids_from_list(items):
       if created_by_perf_test(svc_acc_id, items) == True:
         service_acc_list.append(svc_acc_id)
-        remove_resource(self, service_acc_list, '/serviceaccounts/[id]', svc_acc_id)
+        remove_resource(self, service_acc_list, '/service_accounts/[id]', svc_acc_id)
   if (len(kafkas_list) == 0 and len(service_acc_list) == 0):
     resources_cleaned_up = True
 
 # cleanup created kafka clusters and service accounts 1 minute before the test completion
 def cleanup(self):
-  remove_resource(self, service_acc_list, '/serviceaccounts/[id]')
+  remove_resource(self, service_acc_list, '/service_accounts/[id]')
   if kafkas_to_create > 0: # only delete kafkas, if some were created
     remove_resource(self, kafkas_list, '/kafkas/[id]')
 
@@ -288,8 +288,8 @@ def remove_resource(self, list, name, resource_id = ""):
       resource_id = get_random_id(list)
     if 'kafka' in name:
       url = f'{url_base}/kafkas/{resource_id}?async=true'
-    elif 'serviceaccounts' in name:
-      url = f'{url_base}/serviceaccounts/{resource_id}'
+    elif 'service_accounts' in name:
+      url = f'{url_base}/service_accounts/{resource_id}'
     status_code = 500
     retry_attempt = 0
     while status_code > 204 and status_code != 404:

@@ -12,7 +12,7 @@ Feature: connector agent API
 
     Given I am logged in as "Jimmy"
 
-    When I POST path "/v1/kafka-connector-clusters" with json body:
+    When I POST path "/v1/kafka_connector_clusters" with json body:
       """
       {}
       """
@@ -21,7 +21,7 @@ Feature: connector agent API
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
     Given I have created a kafka cluster as ${kafka_id}
-    When I POST path "/v1/kafka-connectors?async=true" with json body:
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
@@ -53,7 +53,7 @@ Feature: connector agent API
     Given I store the ".id" selection from the response as ${connector_id}
 
 
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/addon-parameters"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${agent_token}
 
@@ -64,12 +64,12 @@ Feature: connector agent API
     Given I set the "Authorization" header to "Bearer ${agent_token}"
 
     # There should be no deployments assigned yet, since the cluster status is unconnected
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorDeploymentList"
     And the ".total" selection from the response should match "0"
 
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments?watch=true&gt_version=0" as a json event stream
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments?watch=true&gt_version=0" as a json event stream
     Then the response code should be 200
     And the response header "Content-Type" should match "application/json;stream=watch"
 
@@ -98,7 +98,7 @@ Feature: connector agent API
     Given I am logged in as "Agent2"
     Given I set the "Authorization" header to "Bearer ${agent_token}"
 
-    When I PUT path "/v1/kafka-connector-clusters/${connector_cluster_id}/status" with json body:
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -131,7 +131,7 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+          "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
           "id": "${connector_deployment_id}",
           "kind": "ConnectorDeployment",
           "metadata": {
@@ -177,14 +177,14 @@ Feature: connector agent API
     # Now that the cluster is ready, a worker should assign the connector to the cluster for deployment.
     Given I am logged in as "Agent2"
     Given I set the "Authorization" header to "Bearer ${agent_token}"
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the response should match json:
       """
       {
         "items": [
           {
-            "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+            "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
             "kind": "ConnectorDeployment",
             "id": "${response.items[0].id}",
             "metadata": {
@@ -231,12 +231,12 @@ Feature: connector agent API
         "total": 1
       }
       """
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
     Then the response code should be 200
     And the response should match json:
       """
       {
-          "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
+          "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}",
           "kind": "ConnectorDeployment",
           "id": "${response.id}",
           "metadata": {
@@ -277,7 +277,7 @@ Feature: connector agent API
           "status": {}
       }
       """
-    When I PUT path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
         "phase":"ready",
@@ -293,19 +293,19 @@ Feature: connector agent API
     And the response should match ""
 
     # Verify the connector deployment status is updated.
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200
     And the ".items[0].status.phase" selection from the response should match "ready"
 
     # Jimmy should now see his connector's status update.
     Given I am logged in as "Jimmy"
-    When I GET path "/v1/kafka-connectors/${connector_id}"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status" selection from the response should match "ready"
 
     # Updating the connector config should update the deployment.
     Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+    When I PATCH path "/v1/kafka_connectors/${connector_id}" with json body:
       """
       {
         "connector_spec": {
@@ -329,7 +329,7 @@ Feature: connector agent API
           "kind": "addon",
           "cluster_id": "${connector_cluster_id}"
         },
-        "href": "/api/connector_mgmt/v1/kafka-connectors/${connector_id}",
+        "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
         "id": "${connector_id}",
         "kafka": {
           "bootstrap_server": "kafka.hostname",
@@ -363,7 +363,7 @@ Feature: connector agent API
         "type": "CHANGE",
         "error": {},
         "object": {
-          "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${connector_cluster_id}/deployments/${response.object.id}",
+          "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${response.object.id}",
           "id": "${response.object.id}",
           "kind": "ConnectorDeployment",
           "metadata": {

@@ -11,7 +11,7 @@ const SQSConnectorSchemaText = `
 {
   "id": "aws-sqs-source-v1alpha1",
   "kind": "ConnectorType",
-  "href": "/api/managed-services-api/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
+  "href": "/api/managed-services-api/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
   "name": "aws-sqs-source",
   "version": "v1alpha1",
   "title": "AWS SQS Source",
@@ -76,7 +76,7 @@ const SQSConnectorSchemaText = `
 
 func NewConnectorTypeMock(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/kafka-connector-catalog",
+	mux.HandleFunc("/v1/kafka_connector_catalog",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = fmt.Fprintln(w, `
@@ -111,7 +111,7 @@ func NewConnectorTypeMock(t *testing.T) *httptest.Server {
 			`)
 		},
 	)
-	mux.HandleFunc("/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
+	mux.HandleFunc("/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = fmt.Fprintln(w, SQSConnectorSchemaText)

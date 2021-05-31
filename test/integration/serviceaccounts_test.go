@@ -26,7 +26,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	//verify list
-	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	currTime := time.Now().Format(time.RFC3339)
@@ -36,7 +36,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 		Name:        "managed-service-integration-test-account",
 		Description: "created by the managed service integration tests",
 	}
-	sa, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientID).NotTo(BeEmpty())
@@ -47,7 +47,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	// verify get by id
 	id := sa.Id
-	sa, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
+	sa, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientID).NotTo(BeEmpty())
@@ -58,7 +58,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	//verify reset
 	oldSecret := sa.ClientSecret
-	sa, _, err = client.DefaultApi.ResetServiceAccountCreds(ctx, id)
+	sa, _, err = client.SecurityApi.ResetServiceAccountCreds(ctx, id)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
@@ -67,15 +67,15 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
 
 	//verify delete
-	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
 	Expect(err).ShouldNot(HaveOccurred())
 
 	// verify deletion of non-existent service account throws http status code 404
-	_, resp, _ = client.DefaultApi.DeleteServiceAccount(ctx, id)
+	_, resp, _ = client.SecurityApi.DeleteServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	f := false
-	accounts, _, _ := client.DefaultApi.ListServiceAccounts(ctx)
+	accounts, _, _ := client.SecurityApi.GetServiceAccounts(ctx)
 	for _, a := range accounts.Items {
 		if a.Id == id {
 			f = true
@@ -95,7 +95,7 @@ func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	//verify list
-	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
@@ -104,23 +104,23 @@ func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
 		Name:        "managed-service-integration-test-account",
 		Description: "created by the managed service integration tests",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
 	// verify get by id
 	id := faker.ID
-	_, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
+	_, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(err).Should(HaveOccurred())
 
 	//verify reset
-	_, _, err = client.DefaultApi.ResetServiceAccountCreds(ctx, id)
+	_, _, err = client.SecurityApi.ResetServiceAccountCreds(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(err).Should(HaveOccurred())
 
 	//verify delete
-	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, id)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(err).Should(HaveOccurred())
 }
@@ -143,7 +143,7 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
@@ -166,7 +166,7 @@ func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.DefaultApi.ListServiceAccounts(ctx)
+	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
@@ -188,7 +188,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "length-more-than-50-is-not-allowed-managed-service-integration-test",
 		Description: "created by the managed service integration",
 	}
-	_, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -197,7 +197,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "<script>alert(\"TEST\");</script>",
 		Description: "created by the managed service integration",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -206,7 +206,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "test-svc-1",
 		Description: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -215,7 +215,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "",
 		Description: "test",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
@@ -224,7 +224,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "test",
 		Description: "",
 	}
-	sa, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientID).NotTo(BeEmpty())
@@ -232,7 +232,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	//verify delete
-	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
 	Expect(err).ShouldNot(HaveOccurred())
 
 	// certain characters are allowed in the description
@@ -240,7 +240,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "test",
 		Description: "Created by the managed-services integration tests.,",
 	}
-	sa, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	sa, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientID).NotTo(BeEmpty())
@@ -248,7 +248,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	//verify delete
-	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
 	Expect(err).ShouldNot(HaveOccurred())
 
 	//xss prevention
@@ -256,13 +256,13 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 		Name:        "service-account-1",
 		Description: "created by the managed service integration #$@#$#@$#@$$#",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	// verify malformed  id
 	id := faker.ID
-	_, resp, err = client.DefaultApi.GetServiceAccountById(ctx, id)
+	_, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 	Expect(err).Should(HaveOccurred())
 }
@@ -284,7 +284,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 		Description: "created by the managed service integration tests",
 	}
 
-	sa, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientID).NotTo(BeEmpty())
@@ -296,7 +296,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 		Name:        "test-account-acc-2",
 		Description: "created by the managed service integration tests",
 	}
-	sa2, resp, err := client.DefaultApi.CreateServiceAccount(ctx, r)
+	sa2, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa2.ClientID).NotTo(BeEmpty())
@@ -309,14 +309,14 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 		Name:        "test-account-acc-3",
 		Description: "created by the managed service integration tests",
 	}
-	_, resp, err = client.DefaultApi.CreateServiceAccount(ctx, r)
+	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
 	//cleanup
-	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa.Id)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa.Id)
 	Expect(err).ShouldNot(HaveOccurred())
 
-	_, _, err = client.DefaultApi.DeleteServiceAccount(ctx, sa2.Id)
+	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, sa2.Id)
 	Expect(err).ShouldNot(HaveOccurred())
 }

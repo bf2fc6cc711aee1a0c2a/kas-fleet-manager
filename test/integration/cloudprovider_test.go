@@ -83,7 +83,7 @@ func TestListCloudProviders(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviders(ctx, nil)
+	cloudProviderList, resp, err := client.DefaultApi.GetCloudProviders(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers: %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud providers list")
@@ -100,13 +100,13 @@ func TestListCloudProviderRegions(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	cloudProviderList, resp, err := client.DefaultApi.ListCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
+	cloudProviderList, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud provider regions list")
 
 	//test with wrong provider id
-	cloudProviderList, resp, err = client.DefaultApi.ListCloudProviderRegions(ctx, "wrong_provider_id", nil)
+	cloudProviderList, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "wrong_provider_id", nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(cloudProviderList.Items).To(BeEmpty(), "Expected cloud providers regions list empty")

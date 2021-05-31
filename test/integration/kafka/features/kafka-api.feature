@@ -56,8 +56,8 @@ Feature: expose a public api to manage kafka clusters
             "kind": "KafkaList"
           },
           {
-            "href": "/api/kafkas_mgmt/v1/serviceaccounts",
-            "id": "serviceaccounts",
+            "href": "/api/kafkas_mgmt/v1/service_accounts",
+            "id": "service_accounts",
             "kind": "ServiceAccountList"
           },
           {
@@ -84,8 +84,8 @@ Feature: expose a public api to manage kafka clusters
             "kind": "KafkaList"
           },
           {
-            "href": "/api/kafkas_mgmt/v1/serviceaccounts",
-            "id": "serviceaccounts",
+            "href": "/api/kafkas_mgmt/v1/service_accounts",
+            "id": "service_accounts",
             "kind": "ServiceAccountList"
           },
           {

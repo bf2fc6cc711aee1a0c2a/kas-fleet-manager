@@ -16,19 +16,19 @@ func ObjectPath(id string, obj interface{}) string {
 	case api.KafkaRequest, *api.KafkaRequest:
 		return fmt.Sprintf("%s/kafkas/%s", BasePath, id)
 	case api.Connector, *api.Connector:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka-connectors/%s", id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connectors/%s", id)
 	case api.ConnectorType, *api.ConnectorType:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka-connector-types/%s", id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_types/%s", id)
 	case api.ConnectorCluster, *api.ConnectorCluster:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka-connector-clusters/%s", id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s", id)
 	case api.ConnectorDeployment:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka-connector-clusters/%s/deployments/%s", obj.ClusterID, id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
 	case *api.ConnectorDeployment:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka-connector-clusters/%s/deployments/%s", obj.ClusterID, id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
 	case errors.ServiceError, *errors.ServiceError:
 		return fmt.Sprintf("%s/errors/%s", BasePath, id)
 	case api.ServiceAccount, *api.ServiceAccount:
-		return fmt.Sprintf("%s/serviceaccounts/%s", BasePath, id)
+		return fmt.Sprintf("%s/service_accounts/%s", BasePath, id)
 	default:
 		return ""
 	}

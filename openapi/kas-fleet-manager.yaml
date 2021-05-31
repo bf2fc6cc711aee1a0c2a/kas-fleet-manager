@@ -2,7 +2,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
 info:
   title: Kafka Service Fleet Manager
-  version: 1.0.0
+  version: 1.1.0
   description: Kafka Service Fleet Manager is a Rest API to manage kafka instances and connectors.
 servers:
   - url: https://api.openshift.com
@@ -16,7 +16,7 @@ servers:
 paths:
   /api/kafkas_mgmt/v1:
     get:
-      operationId: versionMetadata
+      operationId: getVersionMetadata
       responses:
         "200":
           content:
@@ -27,7 +27,7 @@ paths:
       summary: Retrieves the version metadata
   /api/kafkas_mgmt/v1/status:
     get:
-      operationId: serviceStatus
+      operationId: getServiceStatus
       responses:
         "200":
           content:
@@ -262,7 +262,7 @@ paths:
       summary: Create a new kafka Request
     get:
       summary: Returns a list of Kafka requests
-      operationId: listKafkas
+      operationId: getKafkas
       security:
         - Bearer: []
       responses:
@@ -316,7 +316,7 @@ paths:
   /api/kafkas_mgmt/v1/cloud_providers:
     get:
       summary: Retrieves the list of supported cloud providers.
-      operationId: listCloudProviders
+      operationId: getCloudProviders
       security:
         - Bearer: []
       responses:
@@ -350,7 +350,7 @@ paths:
   /api/kafkas_mgmt/v1/cloud_providers/{id}/regions:
     get:
       summary: Retrieves the list of supported regions of the supported cloud provider.
-      operationId: listCloudProviderRegions
+      operationId: getCloudProviderRegions
       security:
         - Bearer: []
       responses:
@@ -382,7 +382,7 @@ paths:
         - $ref: "#/components/parameters/id"
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
-  /api/kafkas_mgmt/v1/serviceaccounts:
+  /api/kafkas_mgmt/v1/service_accounts:
     get:
       responses:
         '200':
@@ -420,9 +420,9 @@ paths:
           description: Unexpected error occurred
       security:
         - Bearer: []
-      operationId: listServiceAccounts
       tags:
         - security
+      operationId: getServiceAccounts
       summary: List service accounts
     post:
       requestBody:
@@ -478,7 +478,7 @@ paths:
       tags:
         - security
       summary: Create a service account
-  '/api/kafkas_mgmt/v1/serviceaccounts/{id}':
+  '/api/kafkas_mgmt/v1/service_accounts/{id}':
     get:
       parameters:
         - $ref: "#/components/parameters/id"
@@ -538,11 +538,11 @@ paths:
           description: Unexpected error occurred
       security:
         - Bearer: []
-      operationId: deleteServiceAccount
+      operationId: deleteServiceAccountById
       tags:
         - security
       summary: Delete service account
-  '/api/kafkas_mgmt/v1/serviceaccounts/{id}/reset-credentials':
+  '/api/kafkas_mgmt/v1/service_accounts/{id}/reset_credentials':
     post:
       parameters:
         - $ref: "#/components/parameters/id"
@@ -594,7 +594,7 @@ paths:
   /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query_range:
     get:
       summary: Get metrics with timeseries range query by kafka id.
-      operationId: GetMetricsByRangeQuery
+      operationId: getMetricsByRangeQuery
       security:
         - Bearer: []
       responses:
@@ -630,7 +630,7 @@ paths:
   /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query:
     get:
       summary: Get metrics with instant query by kafka id.
-      operationId: GetMetricsByInstantQuery
+      operationId: getMetricsByInstantQuery
       security:
         - Bearer: []
       responses:

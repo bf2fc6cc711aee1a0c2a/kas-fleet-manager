@@ -365,7 +365,7 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 		{
 			name: "HTTP 403 when listing kafkas",
 			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+				_, resp, _ := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 				return resp
 			},
 		},
@@ -429,7 +429,7 @@ func TestKafkaDenyList_UnauthorizedValidation(t *testing.T) {
 		{
 			name: "HTTP 403 when listing kafkas",
 			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+				_, resp, _ := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 				return resp
 			},
 		},
@@ -569,7 +569,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
-		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+		list, _, err := client.DefaultApi.GetKafkas(ctx, nil)
 		return list.Size == 1, err
 	})
 
@@ -727,14 +727,14 @@ func TestKafkaAllowList_MaxAllowedInstancesForUserWithoutOrganisation(t *testing
 	Expect(respGet2.StatusCode).To(Equal(http.StatusNotFound))
 
 	// check the list of kafkas size for the first service account to equal one
-	list1, list1Resp, list1Err := client.DefaultApi.ListKafkas(ctx1, nil)
+	list1, list1Resp, list1Err := client.DefaultApi.GetKafkas(ctx1, nil)
 	Expect(list1Err).NotTo(HaveOccurred())
 	Expect(list1Resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list1.Size).To(Equal(int32(1)))
 	Expect(list1.Total).To(Equal(int32(1)))
 
 	// check the list of kafkas size for the second service account to equal one
-	list2, list2Resp, list2Err := client.DefaultApi.ListKafkas(ctx2, nil)
+	list2, list2Resp, list2Err := client.DefaultApi.GetKafkas(ctx2, nil)
 	Expect(list2Err).NotTo(HaveOccurred())
 	Expect(list2Resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(list2.Size).To(Equal(int32(1)))
@@ -1021,7 +1021,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 		return false, nil
 	})
 
-	kafkaList, _, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+	kafkaList, _, err := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
 }
@@ -1138,7 +1138,7 @@ func TestKafkaList_Success(t *testing.T) {
 	initCtx := h.NewAuthenticatedContext(account, nil)
 
 	// get initial list (should be empty)
-	initList, resp, err := client.DefaultApi.ListKafkas(initCtx, nil)
+	initList, resp, err := client.DefaultApi.GetKafkas(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(initList.Items).To(BeEmpty(), "Expected empty kafka requests list")
@@ -1176,7 +1176,7 @@ func TestKafkaList_Success(t *testing.T) {
 	})
 
 	// get populated list of kafka requests
-	afterPostList, _, err := client.DefaultApi.ListKafkas(initCtx, nil)
+	afterPostList, _, err := client.DefaultApi.GetKafkas(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -1205,7 +1205,7 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// get populated list of kafka requests
 
-	afterPostList, _, err = client.DefaultApi.ListKafkas(ctx, nil)
+	afterPostList, _, err = client.DefaultApi.GetKafkas(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -1235,7 +1235,7 @@ func TestKafkaList_Success(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(account, nil)
 
 	// expecting empty list for user that hasn't created any kafkas yet
-	newUserList, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+	newUserList, _, err := client.DefaultApi.GetKafkas(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(newUserList.Items)).To(Equal(0), "Expected kafka requests list length to be 0")
@@ -1258,7 +1258,7 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	// create empty context
 	ctx := context.Background()
 
-	kafkaRequests, resp, err := client.DefaultApi.ListKafkas(ctx, nil)
+	kafkaRequests, resp, err := client.DefaultApi.GetKafkas(ctx, nil)
 	Expect(err).To(HaveOccurred()) // expecting an error here due unauthenticated user
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(kafkaRequests.Items).To(BeNil())
@@ -1304,7 +1304,7 @@ func TestKafkaList_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+	_, resp, err := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
@@ -1327,7 +1327,7 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.DefaultApi.ListKafkas(ctx, &openapi.ListKafkasOpts{})
+	_, resp, err := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
@@ -1424,7 +1424,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
-		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+		list, _, err := client.DefaultApi.GetKafkas(ctx, nil)
 		return list.Size == 1, err
 	})
 
@@ -1527,7 +1527,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
-		list, _, err := client.DefaultApi.ListKafkas(ctx, nil)
+		list, _, err := client.DefaultApi.GetKafkas(ctx, nil)
 		return list.Size == 2, err
 	})
 
