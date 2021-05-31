@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.0.0
+  version: 1.1.0
   description: Kafka Service Fleet Manager is a Rest API to manage kafka instances and connectors.
 servers:
   - url: https://api.openshift.com
@@ -23,7 +23,7 @@ tags:
     description: ""
 
 paths:
-  '/api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/status':
+  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -68,7 +68,7 @@ paths:
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
 
-  '/api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments':
+  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -81,7 +81,7 @@ paths:
         - Connector Clusters Agent
       security:
         - Bearer: [ ]
-      operationId: listClusterAsignedConnectorDeployments
+      operationId: getClusterAsignedConnectorDeployments
       summary: Returns a list of connector deployments assigned to the cluster.
       parameters:
         - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
@@ -127,7 +127,7 @@ paths:
                   $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
           description: Unexpected error occurred
 
-  '/api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{deployment_id}':
+  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -146,7 +146,7 @@ paths:
         - Connector Clusters Agent
       security:
         - Bearer: [ ]
-      operationId: getClusterAsignedConnectorDeployments
+      operationId: getClusterAsignedConnectorDeploymentById
       summary: Returns a list of connector deployments assigned to the cluster.
       responses:
         '200':
@@ -174,7 +174,7 @@ paths:
                   $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
           description: Unexpected error occurred
 
-  '/api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{deployment_id}/status':
+  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -225,7 +225,7 @@ paths:
           description: Auth token is not valid.
 
   # Endpoints for data plane communications
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}/status':
+  '/api/kafkas_mgmt/v1/agent_clusters/{id}/status':
     put:
       tags:
         - Agent Clusters
@@ -265,7 +265,7 @@ paths:
       operationId: updateAgentClusterStatus
       summary: Update the status of an agent cluster
 
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas/status':
+  '/api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas/status':
     put:
       tags:
         - Agent Clusters
@@ -305,7 +305,7 @@ paths:
       operationId: updateKafkaClusterStatus
       summary: Update the status of Kafka clusters on an agent cluster
 
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas':
+  '/api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas':
     get:
       tags:
         - Agent Clusters
@@ -342,7 +342,7 @@ paths:
       operationId: getKafkas
       summary: Get the list of ManagedaKafkas for the specified agent cluster
 
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}':
+  '/api/kafkas_mgmt/v1/agent_clusters/{id}':
     get:
       tags:
         - Agent Clusters

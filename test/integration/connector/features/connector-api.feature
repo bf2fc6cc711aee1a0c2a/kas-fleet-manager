@@ -12,7 +12,7 @@ Feature: create a a connector
 
   Scenario: Greg lists all connector types
     Given I am logged in as "Greg"
-    When I GET path "/v1/kafka-connector-types"
+    When I GET path "/v1/kafka_connector_types"
     Then the response code should be 200
     And the response should match json:
       """
@@ -20,7 +20,7 @@ Feature: create a a connector
         "items": [
           {
             "description": "Receive data from AWS SQS",
-            "href": "/api/connector_mgmt/v1/kafka-connector-types/aws-sqs-source-v1alpha1",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
             "id": "aws-sqs-source-v1alpha1",
             "channels": [
               "stable",
@@ -97,7 +97,7 @@ Feature: create a a connector
   Scenario: Greg tries to create a connector with an invalid configuration spec
     Given I am logged in as "Greg"
     Given I have created a kafka cluster as ${kid}
-    When I POST path "/v1/kafka-connectors?async=true" with json body:
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
@@ -139,7 +139,7 @@ Feature: create a a connector
   but Coworker Sally can.
     Given I am logged in as "Greg"
     Given I have created a kafka cluster as ${kid}
-    When I POST path "/v1/kafka-connectors?async=true" with json body:
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
@@ -169,7 +169,7 @@ Feature: create a a connector
     And the ".status" selection from the response should match "assigning"
 
     Given I store the ".id" selection from the response as ${cid}
-    When I GET path "/v1/kafka-connectors?kafka_id=${kid}"
+    When I GET path "/v1/kafka_connectors?kafka_id=${kid}"
     Then the response code should be 200
     And the response should match json:
       """
@@ -192,7 +192,7 @@ Feature: create a a connector
               "cluster_id": "default",
               "kind": "addon"
             },
-            "href": "/api/connector_mgmt/v1/kafka-connectors/${cid}",
+            "href": "/api/connector_mgmt/v1/kafka_connectors/${cid}",
             "id": "${cid}",
             "kind": "Connector",
             "metadata": {
@@ -214,7 +214,7 @@ Feature: create a a connector
       }
       """
 
-    When I GET path "/v1/kafka-connectors/${cid}"
+    When I GET path "/v1/kafka_connectors/${cid}"
     Then the response code should be 200
     And the ".status" selection from the response should match "assigning"
     And the ".id" selection from the response should match "${cid}"
@@ -223,7 +223,7 @@ Feature: create a a connector
       {
           "id": "${cid}",
           "kind": "Connector",
-          "href": "/api/connector_mgmt/v1/kafka-connectors/${cid}",
+          "href": "/api/connector_mgmt/v1/kafka_connectors/${cid}",
           "metadata": {
               "kafka_id": "${kid}",
               "owner": "${response.metadata.owner}",
@@ -255,26 +255,26 @@ Feature: create a a connector
 
     # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
-    When I GET path "/v1/kafka-connectors/${cid}"
+    When I GET path "/v1/kafka_connectors/${cid}"
     Then the response code should be 200
 
     Given I am logged in as "Evil Bob"
-    When I GET path "/v1/kafka-connectors/${cid}"
+    When I GET path "/v1/kafka_connectors/${cid}"
     Then the response code should be 404
 
     Given I am logged in as "Greg"
-    When I DELETE path "/v1/kafka-connectors/${cid}"
+    When I DELETE path "/v1/kafka_connectors/${cid}"
     Then the response code should be 204
     And the response should match ""
 
-    When I GET path "/v1/kafka-connectors/${cid}"
+    When I GET path "/v1/kafka_connectors/${cid}"
     Then the response code should be 200
     And the response should match json:
       """
       {
           "id": "${cid}",
           "kind": "Connector",
-          "href": "/api/connector_mgmt/v1/kafka-connectors/${cid}",
+          "href": "/api/connector_mgmt/v1/kafka_connectors/${cid}",
           "metadata": {
               "kafka_id": "${kid}",
               "owner": "${response.metadata.owner}",
@@ -354,18 +354,18 @@ Feature: create a a connector
         "href": "/api/connector_mgmt/v1",
         "collections": [
           {
-            "href": "/api/connector_mgmt/v1/kafka-connector-types",
-            "id": "kafka-connector-types",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types",
+            "id": "kafka_connector_types",
             "kind": "ConnectorTypeList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka-connectors",
-            "id": "kafka-connectors",
+            "href": "/api/connector_mgmt/v1/kafka_connectors",
+            "id": "kafka_connectors",
             "kind": "ConnectorList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka-connector-clusters",
-            "id": "kafka-connector-clusters",
+            "href": "/api/connector_mgmt/v1/kafka_connector_clusters",
+            "id": "kafka_connector_clusters",
             "kind": "ConnectorClusterList"
           }
         ]
@@ -382,18 +382,18 @@ Feature: create a a connector
         "href": "/api/connector_mgmt/v1",
         "collections": [
           {
-            "href": "/api/connector_mgmt/v1/kafka-connector-types",
-            "id": "kafka-connector-types",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types",
+            "id": "kafka_connector_types",
             "kind": "ConnectorTypeList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka-connectors",
-            "id": "kafka-connectors",
+            "href": "/api/connector_mgmt/v1/kafka_connectors",
+            "id": "kafka_connectors",
             "kind": "ConnectorList"
           },
           {
-            "href": "/api/connector_mgmt/v1/kafka-connector-clusters",
-            "id": "kafka-connector-clusters",
+            "href": "/api/connector_mgmt/v1/kafka_connector_clusters",
+            "id": "kafka_connector_clusters",
             "kind": "ConnectorClusterList"
           }
         ]

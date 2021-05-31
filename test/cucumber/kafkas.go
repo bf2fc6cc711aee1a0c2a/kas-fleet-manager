@@ -21,7 +21,7 @@ func (s *TestScenario) iHaveCreatedAKafkaClusterAs(id string) error {
 	defer session.TestUser.Mu.Unlock()
 
 	apiClient := s.Suite.Helper.NewApiClient()
-	kafkas, _, err := apiClient.DefaultApi.ListKafkas(session.TestUser.Ctx, &openapi.ListKafkasOpts{})
+	kafkas, _, err := apiClient.DefaultApi.GetKafkas(session.TestUser.Ctx, &openapi.GetKafkasOpts{})
 	if err != nil {
 		return err
 	}

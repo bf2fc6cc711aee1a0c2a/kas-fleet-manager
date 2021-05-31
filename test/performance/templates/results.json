@@ -202,7 +202,7 @@
       }
     },
     {
-      "/serviceaccounts": {
+      "/service_accounts": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",
@@ -250,7 +250,7 @@
       }
     },
     {
-      "/serviceaccounts/[id]": {
+      "/service_accounts/[id]": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",
@@ -298,7 +298,7 @@
       }
     },
     {
-      "/serviceaccounts/[id]/reset-credentials": {
+      "/service_accounts/[id]/reset_credentials": {
         "post": {
           "request count": "undefined",
           "failure count": "undefined",

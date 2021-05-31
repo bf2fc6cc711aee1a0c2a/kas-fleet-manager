@@ -111,7 +111,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		searchOpts     *openapi.ListKafkasOpts
+		searchOpts     *openapi.GetKafkasOpts
 		wantErr        bool
 		expectedErr    string
 		expectedSize   int32
@@ -122,7 +122,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	}{
 		{
 			name:          "Order By Name Asc",
-			searchOpts:    &openapi.ListKafkasOpts{OrderBy: optional.NewString("name asc")},
+			searchOpts:    &openapi.GetKafkasOpts{OrderBy: optional.NewString("name asc")},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -130,7 +130,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Order By Name Desc",
-			searchOpts:    &openapi.ListKafkasOpts{OrderBy: optional.NewString("name desc")},
+			searchOpts:    &openapi.GetKafkasOpts{OrderBy: optional.NewString("name desc")},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -138,7 +138,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Name",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", mockKafkaName1))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", mockKafkaName1))},
 			wantErr:       false,
 			expectedSize:  1,
 			expectedTotal: 1,
@@ -146,14 +146,14 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Name Not In",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))},
 			wantErr:       false,
 			expectedSize:  0,
 			expectedTotal: 0,
 		},
 		{
 			name:          "Filter By Name Not Equal",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", mockKafkaName1))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", mockKafkaName1))},
 			wantErr:       false,
 			expectedSize:  2,
 			expectedTotal: 2,
@@ -161,7 +161,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Name Not Equal Non Existent Name",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", nonExistentKafkaName))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", nonExistentKafkaName))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -169,7 +169,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Owner With Special Characters",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("owner = %s", usernameWithSpecialChars))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("owner = %s", usernameWithSpecialChars))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -183,48 +183,48 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:       "Filter By Invalid Column Name",
-			searchOpts: &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("%s <> %s", nonExistentColumnName, mockKafkaName1))},
+			searchOpts: &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("%s <> %s", nonExistentColumnName, mockKafkaName1))},
 			wantErr:    true,
 		},
 		{
 			name:       "Filter By Incomplete Query",
-			searchOpts: &openapi.ListKafkasOpts{Search: optional.NewString("name <>")},
+			searchOpts: &openapi.GetKafkasOpts{Search: optional.NewString("name <>")},
 			wantErr:    true,
 		},
 		{
 			name:       "Filter By Incomplete Composed Query",
-			searchOpts: &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and %s", mockKafkaName1, sqlDeleteQuery))},
+			searchOpts: &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and %s", mockKafkaName1, sqlDeleteQuery))},
 			wantErr:    true,
 		},
 		{
 			name:       "Filter By Invalid Join",
-			searchOpts: &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or_maybe name = %s", nonExistentKafkaName, mockKafkaName1))},
+			searchOpts: &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or_maybe name = %s", nonExistentKafkaName, mockKafkaName1))},
 			wantErr:    true,
 		},
 		{
 			name:          "Filter By Or Join",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name = %s", nonExistentKafkaName, mockKafkaName1))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name = %s", nonExistentKafkaName, mockKafkaName1))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name:          "Filter By And Join",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID()))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID()))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name:          "Filter By Two Joins",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s and region = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID(), mocks.MockCluster.Region().ID()))},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s and region = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID(), mocks.MockCluster.Region().ID()))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name: "Filter By Too Many Joins",
-			searchOpts: &openapi.ListKafkasOpts{Search: optional.NewString(
+			searchOpts: &openapi.GetKafkasOpts{Search: optional.NewString(
 				fmt.Sprintf(
 					"name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s or name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s",
 					nonExistentKafkaName,
@@ -243,14 +243,14 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Like (%xxx%)",
-			searchOpts:    &openapi.ListKafkasOpts{Search: optional.NewString("name LIKE %kafka1")},
+			searchOpts:    &openapi.GetKafkasOpts{Search: optional.NewString("name LIKE %kafka1")},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name:        "MGDSTRM-2956 - Order By Invalid Fields",
-			searchOpts:  &openapi.ListKafkasOpts{Search: optional.NewString("( SELECT generate_series(1,4);)--")},
+			searchOpts:  &openapi.GetKafkasOpts{Search: optional.NewString("( SELECT generate_series(1,4);)--")},
 			wantErr:     true,
 			expectedErr: "400 Bad Request",
 		},
@@ -259,7 +259,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			list, _, err := env.client.DefaultApi.ListKafkas(env.ctx, tc.searchOpts)
+			list, _, err := env.client.DefaultApi.GetKafkas(env.ctx, tc.searchOpts)
 			if tc.wantErr {
 				Expect(err).To(HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
 

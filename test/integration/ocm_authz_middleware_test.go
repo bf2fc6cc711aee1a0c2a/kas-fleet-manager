@@ -104,7 +104,7 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	_, resp, err := env.client.DefaultApi.ListKafkas(ctx, nil)
+	_, resp, err := env.client.DefaultApi.GetKafkas(ctx, nil)
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))

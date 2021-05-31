@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager is a Rest API to manage kafka instances
     and connectors.
   title: Kafka Service Fleet Manager
-  version: 1.0.0
+  version: 1.1.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -18,7 +18,7 @@ tags:
   name: Connector Clusters Agent
 - name: Agent Clusters
 paths:
-  /api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/status:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status:
     put:
       operationId: updateKafkaConnectorClusterStatus
       parameters:
@@ -63,9 +63,9 @@ paths:
       summary: Update the status of a connector cluster
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments:
     get:
-      operationId: listClusterAsignedConnectorDeployments
+      operationId: getClusterAsignedConnectorDeployments
       parameters:
       - description: The id of the connector cluster
         explode: false
@@ -145,9 +145,9 @@ paths:
       summary: Returns a list of connector deployments assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{deployment_id}:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}:
     get:
-      operationId: getClusterAsignedConnectorDeployments
+      operationId: getClusterAsignedConnectorDeploymentById
       parameters:
       - description: The id of the connector cluster
         explode: false
@@ -195,7 +195,7 @@ paths:
       summary: Returns a list of connector deployments assigned to the cluster.
       tags:
       - Connector Clusters Agent
-  /api/connector_mgmt/v1/kafka-connector-clusters/{connector_cluster_id}/deployments/{deployment_id}/status:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status:
     put:
       operationId: updateConnectorDeploymentStatus
       parameters:
@@ -247,7 +247,7 @@ paths:
       summary: update the connector deployment status
       tags:
       - Connector Clusters Agent
-  /api/kafkas_mgmt/v1/agent-clusters/{id}/status:
+  /api/kafkas_mgmt/v1/agent_clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
       parameters:
@@ -290,7 +290,7 @@ paths:
       summary: Update the status of an agent cluster
       tags:
       - Agent Clusters
-  /api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas/status:
+  /api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas/status:
     put:
       operationId: updateKafkaClusterStatus
       parameters:
@@ -333,7 +333,7 @@ paths:
       summary: Update the status of Kafka clusters on an agent cluster
       tags:
       - Agent Clusters
-  /api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas:
+  /api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas:
     get:
       operationId: getKafkas
       parameters:
@@ -373,7 +373,7 @@ paths:
       summary: Get the list of ManagedaKafkas for the specified agent cluster
       tags:
       - Agent Clusters
-  /api/kafkas_mgmt/v1/agent-clusters/{id}:
+  /api/kafkas_mgmt/v1/agent_clusters/{id}:
     get:
       operationId: getKafkaAgent
       parameters:

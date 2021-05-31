@@ -12,7 +12,7 @@ Feature: create a a connector
   Scenario: Greg creates lists and deletes a connector addon cluster
     Given I am logged in as "Greg"
     Given I have created a kafka cluster as ${kid}
-    When I POST path "/v1/kafka-connector-clusters" with json body:
+    When I POST path "/v1/kafka_connector_clusters" with json body:
       """
       {}
       """
@@ -21,7 +21,7 @@ Feature: create a a connector
     And the response should match json:
       """
       {
-        "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${cluster_id}",
+        "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
         "metadata": {
@@ -34,19 +34,19 @@ Feature: create a a connector
       }
       """
 
-    When I GET path "/v1/kafka-connector-clusters"
+    When I GET path "/v1/kafka_connector_clusters"
     Then the response code should be 200
     And the ".kind" selection from the response should match "ConnectorClusterList"
     And the ".page" selection from the response should match "1"
     And the ".size" selection from the response should match "1"
     And the ".total" selection from the response should match "1"
 
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}"
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
     And the response should match json:
       """
       {
-        "href": "/api/connector_mgmt/v1/kafka-connector-clusters/${cluster_id}",
+        "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${cluster_id}",
         "id": "${cluster_id}",
         "kind": "ConnectorCluster",
         "metadata": {
@@ -61,19 +61,19 @@ Feature: create a a connector
 
     # Before deleting the connector, lets make sure the access control works as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}"
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 200
 
     Given I am logged in as "Evil Bob"
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}"
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 404
 
     Given I am logged in as "Greg"
-    When I DELETE path "/v1/kafka-connector-clusters/${cluster_id}"
+    When I DELETE path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 204
     And the response should match ""
 
-    When I GET path "/v1/kafka-connector-clusters/${cluster_id}"
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
     Then the response code should be 404
     And the response should match json:
       """
