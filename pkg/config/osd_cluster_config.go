@@ -23,6 +23,8 @@ type OSDClusterConfig struct {
 	DataPlaneClusterConfigFile            string `json:"dataplane_cluster_config_file"`
 	ReadOnlyUserList                      userv1.OptionalNames
 	ReadOnlyUserListFile                  string
+	KafkaSREUsers                         userv1.OptionalNames
+	KafkaSREUsersFile                     string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 }
@@ -50,6 +52,7 @@ func NewOSDClusterConfig() *OSDClusterConfig {
 		IngressControllerReplicas:             9,
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
 		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
+		KafkaSREUsersFile:                     "config/kafka-sre-user-list.yaml",
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
@@ -163,6 +166,7 @@ func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
+	fs.StringVar(&c.KafkaSREUsersFile, "kafka-sre-user-list-file", c.KafkaSREUsersFile, "File contains a list of kafka-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 }
 
@@ -187,6 +191,11 @@ func (c *OSDClusterConfig) ReadFiles() error {
 		return err
 	}
 
+	err = readKafkaSREUserFile(c.KafkaSREUsersFile, &c.KafkaSREUsers)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -207,8 +216,18 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	}
 }
 
-// Read the users in the file into the read-only user list config
+// Read the read-only users in the file into the read-only user list config
 func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
+	fileContents, err := readFile(file)
+	if err != nil {
+		return err
+	}
+
+	return yaml.UnmarshalStrict([]byte(fileContents), val)
+}
+
+// Read the kafka-sre users from the file into the kafka-sre user list config
+func readKafkaSREUserFile(file string, val *userv1.OptionalNames) error {
 	fileContents, err := readFile(file)
 	if err != nil {
 		return err

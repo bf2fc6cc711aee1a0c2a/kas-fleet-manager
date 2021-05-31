@@ -1,0 +1,5 @@
+---
+# A list of kafka-sre users with cluster-admin permissions for data plane clusters
+# A kafka-sre user is represented in the below list by their Kerboros ID
+- kafka-sre-user-1
+- kafka-sre-user-2
