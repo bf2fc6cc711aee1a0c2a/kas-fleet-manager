@@ -11,49 +11,26 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
-type OCMAuthorizationMiddleware interface {
-	// RequireIssuer will check that the given issuer is set as part of the JWT
-	// claims in the request and return code ServiceErrorCode in case it doesn't
-	RequireIssuer(issuer string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
-	// RequireTermsAcceptance will check that the user has accepted the required terms
+type RequireTermsAcceptanceMiddleware interface {
+	// RequireTermsAcceptance will check that the user has accepted the required terms.
+	// The current implementation is backed by OCM and can be disabled with the "enabled" flag set to false.
 	RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
 
-type ocmAuthorizationMiddleware struct {
+type requireTermsAcceptanceMiddleware struct {
 	cache *cache.Cache
 }
 
-var _ OCMAuthorizationMiddleware = &ocmAuthorizationMiddleware{}
+var _ RequireTermsAcceptanceMiddleware = &requireTermsAcceptanceMiddleware{}
 
-func NewOCMAuthorizationMiddleware() OCMAuthorizationMiddleware {
-	return &ocmAuthorizationMiddleware{
+func NewRequireTermsAcceptanceMiddleware() RequireTermsAcceptanceMiddleware {
+	return &requireTermsAcceptanceMiddleware{
 		// entries will expire in 5 minutes and will be evicted every 10 minutes
 		cache: cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
-func (m *ocmAuthorizationMiddleware) RequireIssuer(issuer string, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			ctx := request.Context()
-			claims, err := GetClaimsFromContext(ctx)
-			serviceErr := errors.New(code, "")
-			if err != nil {
-				shared.HandleError(request, writer, serviceErr)
-				return
-			}
-			issuerMatches := claims.VerifyIssuer(issuer, true)
-			if !issuerMatches {
-				shared.HandleError(request, writer, serviceErr)
-				return
-			}
-
-			next.ServeHTTP(writer, request)
-		})
-	}
-}
-
-func (m *ocmAuthorizationMiddleware) RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			if enabled {
