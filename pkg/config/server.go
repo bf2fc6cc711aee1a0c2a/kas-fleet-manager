@@ -18,8 +18,6 @@ type ServerConfig struct {
 	EnableAuthz   bool          `json:"enable_authz"`
 	JwksURL       string        `json:"jwks_url"`
 	JwksFile      string        `json:"jwks_file"`
-	JwkCertCA     string        `json:"jwk_cert_ca"`
-	JwkCertCAFile string        `json:"jwk_cert_ca_file"`
 	// The public http host URL to access the service
 	// For staging it is "https://api.stage.openshift.com"
 	// For production it is "https://api.openshift.com"
@@ -38,8 +36,6 @@ func NewServerConfig() *ServerConfig {
 		EnableAuthz:   true,
 		JwksURL:       "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs",
 		JwksFile:      "config/jwks-file.json",
-		JwkCertCA:     "",
-		JwkCertCAFile: "secrets/rhsm.ca",
 		HTTPSCertFile: "",
 		HTTPSKeyFile:  "",
 		PublicHostURL: "http://localhost",
@@ -59,16 +55,10 @@ func (s *ServerConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&s.EnableAuthz, "enable-authz", s.EnableAuthz, "Enable Authorization on endpoints, should only be disabled for debug")
 	fs.StringVar(&s.JwksURL, "jwks-url", s.JwksURL, "The URL of the JSON web token signing certificates.")
 	fs.StringVar(&s.JwksFile, "jwks-file", s.JwksFile, "File containing the the JSON web token signing certificates.")
-	fs.StringVar(&s.JwkCertCAFile, "jwk-cert-ca-file", s.JwkCertCAFile, "JWK Certificate CA file")
 	fs.StringVar(&s.PublicHostURL, "public-host-url", s.PublicHostURL, "Public http host URL of the service")
 }
 
 func (s *ServerConfig) ReadFiles() error {
-	err := readFileValueString(s.JwkCertCAFile, &s.JwkCertCA)
-	if err != nil {
-		return err
-	}
-
 	s.JwksFile = BuildFullFilePath(s.JwksFile)
 
 	return nil
