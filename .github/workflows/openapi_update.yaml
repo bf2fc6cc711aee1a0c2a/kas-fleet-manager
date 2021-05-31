@@ -21,4 +21,4 @@ jobs:
           token: "${{ env.APP_SERVICES_CI_TOKEN }}"
           repository: ${{ matrix.repo }}
           event-type: openapi-spec-change
-          client-payload: '{ "id": "kafka-mgmt/v1", "openapi": "./openapi/kas-fleet-manager.yaml"}'
+          client-payload: '{ "id": "kafka-mgmt/v1", "openapi": "./openapi/kas-fleet-manager.yaml", "download":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/main/openapi/kas-fleet-manager.yaml"}'
