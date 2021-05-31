@@ -204,9 +204,8 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	serviceStatusHandler := handlers.NewServiceStatusHandler(services.Kafka, services.Config)
 
 	authorizeMiddleware := acl.NewAccessControlListMiddleware(env().Services.Config).Authorize
-	ocmAuthzMiddleware := auth.NewOCMAuthorizationMiddleware()
-	ocmAuthzMiddlewareRequireIssuer := ocmAuthzMiddleware.RequireIssuer(env().Config.OCM.TokenIssuerURL, errors.ErrorUnauthenticated)
-	ocmAuthzMiddlewareRequireTermsAcceptance := ocmAuthzMiddleware.RequireTermsAcceptance(env().Config.Server.EnableTermsAcceptance, ocm.NewClient(env().Clients.OCM.Connection), errors.ErrorTermsNotAccepted)
+	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(env().Config.OCM.TokenIssuerURL, errors.ErrorUnauthenticated)
+	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(env().Config.Server.EnableTermsAcceptance, ocm.NewClient(env().Clients.OCM.Connection), errors.ErrorTermsNotAccepted)
 
 	// base path. Could be /api/kafkas_mgmt or /api/managed-services-api
 	apiRouter := mainRouter.PathPrefix(basePath).Subrouter()
@@ -225,7 +224,7 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	// /status
 	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
-	apiV1Status.Use(ocmAuthzMiddlewareRequireIssuer)
+	apiV1Status.Use(requireIssuer)
 
 	v1Collections := []api.CollectionMetadata{}
 
@@ -238,12 +237,12 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
-	apiV1KafkasRouter.Use(ocmAuthzMiddlewareRequireIssuer)
+	apiV1KafkasRouter.Use(requireIssuer)
 	apiV1KafkasRouter.Use(authorizeMiddleware)
 
 	apiV1KafkasCreateRouter := apiV1KafkasRouter.NewRoute().Subrouter()
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
-	apiV1KafkasCreateRouter.Use(ocmAuthzMiddlewareRequireTermsAcceptance)
+	apiV1KafkasCreateRouter.Use(requireTermsAcceptance)
 
 	//  /serviceaccounts
 	v1Collections = append(v1Collections, api.CollectionMetadata{
@@ -256,7 +255,7 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset-credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
-	apiV1ServiceAccountsRouter.Use(ocmAuthzMiddlewareRequireIssuer)
+	apiV1ServiceAccountsRouter.Use(requireIssuer)
 	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
 
 	//  /cloud_providers
