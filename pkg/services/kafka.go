@@ -587,7 +587,7 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			Versions: managedkafka.VersionsSpec{
 				Kafka: kafkaRequest.Version,
 				//TODO: we should remove the strimzi version as it should not be specified here
-				Strimzi: "0.21.1",
+				Strimzi: "0.22.1",
 			},
 			Deleted: kafkaRequest.Status == constants.KafkaRequestStatusDeprovision.String(),
 		},
