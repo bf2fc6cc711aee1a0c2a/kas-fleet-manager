@@ -51,6 +51,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addExternalIDsToSpecificClusters(),
 	addKafkaConnectionSettingsToConnectors(),
 	addClusterProviderInfo(),
+	changeKafkaDeleteStatusToDeleting(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {

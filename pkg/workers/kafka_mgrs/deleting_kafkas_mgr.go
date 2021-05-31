@@ -84,13 +84,11 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	// from the data plane cluster by the KAS Fleetshard operator. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Kafkas and their records soft deleted from the database.
 
-	// The "deleted" status has been replaced by "deleting" and should be removed soon. We need to list both status here to keep backward compatibility.
-	deletingStatus := []constants.KafkaStatus{constants.KafkaRequestStatusDeleting, constants.KafkaRequestStatusDeleted}
-	deletingKafkas, serviceErr := k.kafkaService.ListByStatus(deletingStatus...)
+	deletingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeleting)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting kafka requests"))
 	} else {
-		glog.Infof("%s kafkas count = %d", deletingStatus[0].String(), len(deletingKafkas))
+		glog.Infof("%s kafkas count = %d", constants.KafkaRequestStatusDeleting.String(), len(deletingKafkas))
 	}
 
 	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster
