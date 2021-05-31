@@ -505,7 +505,7 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      read-only-user-list.yaml: |-
+      kafka-sre-user-list.yaml: |-
         ${KAFKA_SRE_USERS}
   - kind: ConfigMap
     apiVersion: v1
