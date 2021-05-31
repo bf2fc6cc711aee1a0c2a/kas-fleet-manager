@@ -6,18 +6,19 @@ import (
 )
 
 func addClusterProviderInfo() *gormigrate.Migration {
-	type Cluster struct {
-		ProviderType string
-		ProviderSpec string
-		ClusterSpec  string
-	}
+
 	return &gormigrate.Migration{
 		ID: "20210517153800",
 		Migrate: func(tx *gorm.DB) error {
+			type Cluster struct {
+				ProviderType string
+				ProviderSpec string
+				ClusterSpec  string
+			}
 			if err := tx.AutoMigrate(&Cluster{}); err != nil {
 				return err
 			}
-			if err := tx.Table("clusters").Where("provider_type = ?", "").Update("provider_type", "ocm").Error; err != nil {
+			if err := tx.Exec(`UPDATE clusters SET provider_type = 'ocm' WHERE provider_type IS NULL`).Error; err != nil {
 				return err
 			}
 			if err := tx.Migrator().DropColumn(&Cluster{}, "byoc"); err != nil {
@@ -29,6 +30,10 @@ func addClusterProviderInfo() *gormigrate.Migration {
 			return nil
 		},
 		Rollback: func(tx *gorm.DB) error {
+			type Cluster struct {
+				BYOC    bool
+				Managed bool
+			}
 			if err := tx.Migrator().DropColumn(&Cluster{}, "provider_type"); err != nil {
 				return err
 			}
@@ -38,11 +43,8 @@ func addClusterProviderInfo() *gormigrate.Migration {
 			if err := tx.Migrator().DropColumn(&Cluster{}, "provider_spec"); err != nil {
 				return err
 			}
-			type OriginalCluster struct {
-				BYOC    bool
-				Managed bool
-			}
-			if err := tx.AutoMigrate(&OriginalCluster{}); err != nil {
+
+			if err := tx.AutoMigrate(&Cluster{}); err != nil {
 				return err
 			}
 			return nil
