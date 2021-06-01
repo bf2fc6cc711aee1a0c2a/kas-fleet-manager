@@ -52,8 +52,8 @@ func NewListArguments(params url.Values) *ListArguments {
 }
 
 func (la *ListArguments) Validate() error {
-	if la.Page < 1 {
-		return errors.Errorf("page must be equal or greater than 1")
+	if la.Page < 0 {
+		return errors.Errorf("page must be equal or greater than 0")
 	}
 	if la.Size < 1 {
 		return errors.Errorf("size must be equal or greater than 1")
