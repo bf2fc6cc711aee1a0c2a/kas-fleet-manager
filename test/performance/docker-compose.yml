@@ -5,6 +5,7 @@ services:
     image: "quay.io/rhoas/kas-fleet-manager-token-refresh:latest"
     environment:
       - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
+      - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
     ports:
       - "8099:8099"
     volumes:
