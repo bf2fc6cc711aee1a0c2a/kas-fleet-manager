@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
@@ -27,10 +28,6 @@ type OSDClusterConfig struct {
 	KafkaSREUsersFile                     string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
-}
-
-type DynamicScalingConfig struct {
-	Enabled bool `json:"enabled"`
 }
 
 const (
