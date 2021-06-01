@@ -94,6 +94,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `providers-config-file` [Required]: The path to the file containing a list of supported cloud providers that the service can provision dataplane clusters to (default: `'config/provider-configuration.yaml'`, example: [provider-configuration.yaml](../config/provider-configuration.yaml)).
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.4xlarge`).
         - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used). 
+- **cluster-logging-operator-addon-id**: Enables the Cluster Logging Operator addon with Cloud Watch and application level logs enabled. (default: `""`, An empty string indicates that the operator should not be installed).
 
 ## Sentry
 - **enable-sentry**: Enables Sentry error reporting.

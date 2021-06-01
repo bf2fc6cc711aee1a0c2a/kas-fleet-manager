@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	authv1 "github.com/openshift/api/authorization/v1"
@@ -60,6 +61,25 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterFull,
 	api.ClusterFailed,
 	api.ClusterDeprovisioning,
+}
+
+var clusterLoggingOperatorAddonParams = []ocm.AddonParameter{
+	{
+		Id:    "use-cloudwatch",
+		Value: "true",
+	},
+	{
+		Id:    "use-app-logs",
+		Value: "true",
+	},
+	{
+		Id:    "use-infra-logs",
+		Value: "false",
+	},
+	{
+		Id:    "use-audit-logs",
+		Value: "false",
+	},
 }
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
@@ -514,15 +534,30 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 	if _, err := c.reconcileStrimziOperator(provisionedCluster); err != nil {
 		return err
 	}
+
+	clusterLoggingOperatorIsReady := false
+
+	if c.configService.GetConfig().OCM.ClusterLoggingOperatorAddonID != "" {
+		ready, err := c.reconcileClusterLoggingOperator(provisionedCluster)
+		if err != nil {
+			return err
+		}
+		clusterLoggingOperatorIsReady = ready
+	}
+
 	glog.Infof("Provisioning kas-fleetshard-operator as it is enabled")
 	if _, errs := c.kasFleetshardOperatorAddon.Provision(provisionedCluster); errs != nil {
 		return errs
 	}
-	glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
-	if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
-		return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+
+	if clusterLoggingOperatorIsReady || c.configService.GetConfig().OCM.ClusterLoggingOperatorAddonID == "" {
+		glog.V(5).Infof("Set cluster status to %s for cluster %s", api.ClusterWaitingForKasFleetShardOperator, provisionedCluster.ClusterID)
+		if err := c.clusterService.UpdateStatus(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator); err != nil {
+			return errors.Wrapf(err, "failed to update local cluster %s status: %s", provisionedCluster.ClusterID, err.Error())
+		}
+		metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
+		return nil
 	}
-	metrics.UpdateClusterStatusSinceCreatedMetric(provisionedCluster, api.ClusterWaitingForKasFleetShardOperator)
 	return nil
 }
 
@@ -534,6 +569,17 @@ func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster
 		return false, err
 	}
 	glog.V(5).Infof("ready status of %s addon on cluster %s is %t", strimziOperatorAddonID, provisionedCluster.ClusterID, ready)
+	return ready, nil
+}
+
+// reconcileClusterLoggingOperator installs the cluster logging operator on provisioned clusters
+func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.Cluster) (bool, error) {
+	clusterLoggingOperatorAddonID := c.configService.GetConfig().OCM.ClusterLoggingOperatorAddonID
+	ready, err := c.clusterService.InstallAddonWithParams(&provisionedCluster, clusterLoggingOperatorAddonID, clusterLoggingOperatorAddonParams)
+	if err != nil {
+		return false, err
+	}
+	glog.V(5).Infof("ready status of %s addon on cluster %s is %t", clusterLoggingOperatorAddonID, provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 
