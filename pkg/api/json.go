@@ -24,7 +24,7 @@ func (j *JSON) Scan(value interface{}) error {
 
 // Value return json value, implement driver.Valuer interface
 func (j JSON) Value() (driver.Value, error) {
-	if len(j) == 0 {
+	if len(j) == 0 || string(j) == "null" {
 		return nil, nil
 	}
 	return json.RawMessage(j).MarshalJSON()
