@@ -119,19 +119,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	var foundKafka openapi.KafkaRequest
-	_ = utils.NewPollerBuilder().
-		OutputFunction(t.Logf).
-		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
-		OnRetry(func(attempt int, maxRetries int) (bool, error) {
-			foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
-			if err != nil {
-				return true, err
-			}
-			return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-		}).
-		RetryLogMessage(fmt.Sprintf("Waiting for kafka (%s) to be ready", seedKafka.Id)).
-		Build().Poll()
+	foundKafka, _ := utils.WaitForKafkaToReachStatus(ctx, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -196,21 +184,8 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	var foundKafka openapi.KafkaRequest
-
-	_ = utils.NewPollerBuilder().
-		OutputFunction(t.Logf).
-		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
-		OnRetry(func(attempt int, maxRetries int) (bool, error) {
-			foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
-			if err != nil {
-				return true, err
-			}
-			return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-		}).
-		RetryLogMessage(fmt.Sprintf("Waiting for kafka (%s) to be ready", seedKafka.Id)).
-		Build().Poll()
-
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)

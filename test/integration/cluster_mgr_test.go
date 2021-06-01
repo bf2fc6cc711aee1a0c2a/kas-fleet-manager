@@ -3,7 +3,6 @@ package integration
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -19,14 +18,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-)
-
-const (
-	clusterIDAssignTimeout = 2 * time.Minute
-	clusterReadyTimeout    = 3 * time.Hour
-	interval               = 10 * time.Second
-	clusterDeletionTimeout = 15 * time.Minute
 )
 
 // Tests a successful cluster reconcile
@@ -60,51 +51,20 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}
 
-	var clusterID string
-
-	// checking for cluster_id to be assigned to new cluster
-	err := utils.NewPollerBuilder().
-		OutputFunction(t.Logf).
-		IntervalAndTimeout(interval, clusterIDAssignTimeout).
-		OnRetry(func(attempt int, maxAttempts int) (bool, error) {
-			foundCluster, svcErr := clusterService.FindCluster(services.FindClusterCriteria{
-				Region:   mocks.MockCluster.Region().ID(),
-				Provider: mocks.MockCluster.CloudProvider().ID(),
-			})
-
-			if svcErr != nil || foundCluster == nil {
-				return true, fmt.Errorf("failed to find OSD cluster %s", svcErr)
-			}
-			clusterID = foundCluster.ClusterID
-			return foundCluster.ClusterID != "", nil
-		}).
-		RetryLogMessage("Waiting for an ID to be assigned to the cluster").
-		Build().Poll()
+	clusterID, err := utils.WaitForClusterIDToBeAssigned(&clusterService, &services.FindClusterCriteria{
+		Region:   mocks.MockCluster.Region().ID(),
+		Provider: mocks.MockCluster.CloudProvider().ID(),
+	},
+	)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
-	var cluster api.Cluster
 	// waiting for cluster state to become `ready`
-	checkReadyErr := utils.NewPollerBuilder().
-		OutputFunction(t.Logf).
-		IntervalAndTimeout(interval, clusterReadyTimeout).
-		OnRetry(func(attempt int, maxAttempts int) (bool, error) {
-			foundCluster, findClusterErr := clusterService.FindClusterByID(clusterID)
-			if findClusterErr != nil {
-				return true, fmt.Errorf("failed to find cluster with id %s: %s", clusterID, err)
-			}
-			if foundCluster == nil {
-				return false, nil
-			}
-			cluster = *foundCluster
-			return cluster.Status == api.ClusterReady, nil
-		}).
-		RetryLogMessage(fmt.Sprintf("Waiting for cluster (%s) to be ready", clusterID)).
-		Build().Poll()
+	cluster, checkReadyErr := utils.WaitForClusterStatus(&clusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
-	err = common.PersistClusterStruct(cluster)
+	err = common.PersistClusterStruct(*cluster)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
@@ -220,13 +180,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
-	err := wait.PollImmediate(interval, clusterDeletionTimeout, func() (done bool, err error) {
-		clusterFromDb, findClusterByIdErr := clusterService.FindClusterByID(dummyCluster.ClusterID)
-		if findClusterByIdErr != nil {
-			return false, findClusterByIdErr
-		}
-		return clusterFromDb == nil, nil // cluster has been deleted
-	})
+	err := utils.WaitForClusterToBeDeleted(&clusterService, dummyCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }
