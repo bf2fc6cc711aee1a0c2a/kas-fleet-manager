@@ -2,7 +2,11 @@ package common
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
+	"github.com/olekukonko/tablewriter"
+	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"os"
 	"strings"
 	"time"
 )
@@ -19,15 +23,19 @@ var defaultLogFunction = func(pattern string, args ...interface{}) {
 	fmt.Printf(p, args...)
 }
 
-// defaultMaxRetryLogs - Maximum number of retry log to show. The waiting period between each of the logs is
-// calculated so that at maximum `defaultMaxRetryLogs` statements are logged if reaching the last attempt
-const defaultMaxRetryLogs = 50
+const (
+	defaultPollInterval     = 30 * time.Second
+	defaultKafkaPollTimeout = 20 * time.Minute
+	// defaultMaxRetryLogs - Maximum number of retry log to show. The waiting period between each of the logs is
+	// calculated so that at maximum `defaultMaxRetryLogs` statements are logged if reaching the last attempt
+	defaultMaxRetryLogs = 50
 
-// defaultLogMessage - The default log message is no custom log message is provided
-const defaultLogMessage = "Retrying..."
+	// defaultLogMessage - The default log message is no custom log message is provided
+	defaultLogMessage = "Retrying..."
 
-// defaultLogEnabled - sets weather by default the polling logs are enabled ot not
-const defaultLogEnabled = true
+	// defaultLogEnabled - sets weather by default the polling logs are enabled ot not
+	defaultLogEnabled = true
+)
 
 type ShouldLogFunc func(attempt int, maxRetries int, maxRetryLogs int) bool
 
@@ -41,6 +49,11 @@ type Poller interface {
 	Poll() error
 }
 
+type dbDumper struct {
+	columns []string
+	filter  string
+}
+
 type poller struct {
 	attempts        int
 	interval        time.Duration
@@ -49,10 +62,13 @@ type poller struct {
 	onFinish        OnFinishFunc
 	logEnabled      bool
 	retryLogMessage string
-	customLog       func(retry int, maxRetry int)
+	customLog       func(retry int, maxRetry int) string
 	outputFunction  func(pattern string, args ...interface{})
 	maxRetryLogs    int
 	shouldLog       ShouldLogFunc
+
+	db     *gorm.DB
+	dbDump map[string]dbDumper
 }
 
 var _ Poller = &poller{}
@@ -69,6 +85,7 @@ func (poller *poller) Poll() error {
 	attempt := 0
 	err := wait.PollImmediate(poller.interval, poller.interval*time.Duration(poller.attempts), func() (done bool, err error) {
 		attempt++
+
 		poller.logRetry(attempt, maxAttempts, start)
 		return poller.onRetry(attempt, maxAttempts)
 	})
@@ -85,15 +102,59 @@ func (poller *poller) Poll() error {
 	return err
 }
 
+func (poller *poller) dumpDB() {
+	// database dump
+	for key, value := range poller.dbDump {
+		poller.outputFunction("DUMPING '%s' with filter '%s'", key, value.filter)
+		// query the resource
+		var results []map[string]interface{}
+		if err := poller.db.Table(key).Find(&results, value.filter).Error; err != nil {
+			poller.outputFunction("Error dumping the database: %+v - %s", err, key)
+		} else {
+			if len(results) > 0 {
+				var columns []string
+				if value.columns != nil && len(value.columns) > 0 {
+					columns = value.columns
+				} else {
+					columns = make([]string, 0, len(results[0]))
+					for k := range results[0] {
+						columns = append(columns, k)
+					}
+				}
+				table := tablewriter.NewWriter(os.Stdout)
+				table.SetHeader(columns)
+
+				for _, v := range results {
+					row := make([]string, len(columns))
+					for i, col := range columns {
+						row[i] = fmt.Sprintf("%v", v[col])
+					}
+					table.Append(row)
+				}
+
+				table.Render()
+			} else {
+				poller.outputFunction("{{ EMPTY }}")
+			}
+		}
+	}
+}
+
 func (poller *poller) logRetry(attempt int, maxAttempts int, start time.Time) {
 	// log every maxAttempts/maxRetryLogs attempts and log first and last attempt
 	if poller.logEnabled && poller.shouldLog(attempt, maxAttempts, poller.maxRetryLogs) {
+		elapsed := time.Since(start).Round(time.Second)
+
+		poller.dumpDB()
+		var msg string
+
 		if poller.customLog != nil {
-			poller.customLog(attempt, maxAttempts)
+			msg = poller.customLog(attempt, maxAttempts)
 		} else {
-			elapsed := time.Since(start).Round(time.Second)
-			poller.outputFunction("%d/%d [%s] - %s", attempt, maxAttempts, elapsed, poller.retryLogMessage)
+			msg = poller.retryLogMessage
 		}
+
+		poller.outputFunction("%d/%d [%s] - %s", attempt, maxAttempts, elapsed, msg)
 	}
 }
 
@@ -122,7 +183,7 @@ type PollerBuilder interface {
 	// For more advanced logging, use RetryLogFunction
 	RetryLogMessagef(format string, params ...interface{}) PollerBuilder
 	// RetryLogFunction - The function to be called each time the poller desires to show some log. Default: 'Retrying...'
-	RetryLogFunction(logFunction func(retry int, maxRetry int)) PollerBuilder
+	RetryLogFunction(logFunction func(retry int, maxRetry int) string) PollerBuilder
 	// OutputFunction - Useful only if RetryLogFunction is not used. Sets the function the poller must use to
 	// output the log. Defaults to fmt.Printf
 	OutputFunction(logFunction LogFunctionType) PollerBuilder
@@ -132,6 +193,8 @@ type PollerBuilder interface {
 	// ShouldLog - To be used to customise when a log should be shown or not. The default function tries to respect the
 	// MaxRetryLogs value.
 	ShouldLog(shouldLog ShouldLogFunc) PollerBuilder
+	DumpCluster(id string) PollerBuilder
+	DumpDB(name string, filter string, columns ...string) PollerBuilder
 	// Build - Builds the poller
 	Build() Poller
 }
@@ -196,7 +259,7 @@ func (b *pollerBuilder) RetryLogMessage(msg string) PollerBuilder {
 	return b
 }
 
-func (b *pollerBuilder) RetryLogFunction(logFunction func(retry int, maxRetry int)) PollerBuilder {
+func (b *pollerBuilder) RetryLogFunction(logFunction func(retry int, maxRetry int) string) PollerBuilder {
 	b.p.customLog = logFunction
 	return b
 }
@@ -213,6 +276,22 @@ func (b *pollerBuilder) MaxRetryLogs(maxRetryLogs int) PollerBuilder {
 
 func (b *pollerBuilder) ShouldLog(shouldLog ShouldLogFunc) PollerBuilder {
 	b.p.shouldLog = shouldLog
+	return b
+}
+
+func (b *pollerBuilder) DumpCluster(id string) PollerBuilder {
+	return b.DumpDB("clusters", fmt.Sprintf("cluster_id = '%s'", id), "cluster_id", "status", "updated_at")
+}
+
+func (b *pollerBuilder) DumpDB(name string, filter string, columns ...string) PollerBuilder {
+	if b.p.dbDump == nil {
+		b.p.dbDump = make(map[string]dbDumper)
+		b.p.db = environments.Environment().DBFactory.New()
+	}
+	b.p.dbDump[name] = dbDumper{
+		filter:  filter,
+		columns: columns,
+	}
 	return b
 }
 

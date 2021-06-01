@@ -24,24 +24,6 @@ const (
 	testClusterPath = "test_cluster.json"
 )
 
-func waitForClusterStatus(h *test.Helper, clusterID string, expectedStatus api.ClusterStatus) error {
-	err := NewPollerBuilder().
-		IntervalAndTimeout(1*time.Second, 120*time.Minute).
-		RetryLogMessagef("Waiting for cluster '%s' to reach status '%s'", clusterID, expectedStatus.String()).
-		OnRetry(func(attempt int, maxRetries int) (bool, error) {
-			foundCluster, err := h.Env().Services.Cluster.FindClusterByID(clusterID)
-			if err != nil {
-				return true, err
-			}
-			if foundCluster == nil {
-				return false, nil
-			}
-			return foundCluster.Status.String() == expectedStatus.String(), nil
-		}).Build().Poll()
-
-	return err
-}
-
 // GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster in a 'ready' state.
 // If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
@@ -119,7 +101,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	}
 
 	if expectedStatus != nil {
-		err := waitForClusterStatus(h, foundCluster.ClusterID, *expectedStatus)
+		_, err := WaitForClusterStatus(&h.Env().Services.Cluster, foundCluster.ClusterID, *expectedStatus)
 		if err != nil {
 			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", foundCluster.ClusterID, *expectedStatus, err)
 		}
