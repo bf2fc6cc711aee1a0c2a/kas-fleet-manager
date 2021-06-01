@@ -60,7 +60,11 @@ func (o *OCMProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.Cluste
 
 	if clusterStatus.State() == clustersmgmtv1.ClusterStateReady {
 		if spec.ExternalID == "" {
-			spec.ExternalID = ocmCluster.ExternalID()
+			externalId, ok := ocmCluster.GetExternalID()
+			if !ok {
+				return nil, errors.Errorf("External ID for cluster %s cannot be found", ocmCluster.ID())
+			}
+			spec.ExternalID = externalId
 		}
 		spec.Status = api.ClusterProvisioned
 	}
