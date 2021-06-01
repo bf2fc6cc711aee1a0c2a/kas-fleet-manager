@@ -73,8 +73,12 @@ func TestDeletingKafkaManager(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &DeletingKafkaManager{
 				kafkaService:  tt.fields.kafkaService,
-				quotaService:  tt.fields.quotaService,
 				configService: tt.fields.configService,
+				quotaServiceFactory: &services.QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+						return tt.fields.quotaService, nil
+					},
+				},
 			}
 			if err := k.reconcileDeletingKafkas(tt.args.kafka); (err != nil) != tt.wantErr {
 				t.Errorf("reconcileDeletingKafkas() error = %v, wantErr %v", err, tt.wantErr)

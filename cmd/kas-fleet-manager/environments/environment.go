@@ -2,9 +2,11 @@ package environments
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"os"
 	"sync"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 
@@ -33,11 +35,12 @@ const (
 )
 
 type Env struct {
-	Name      string
-	Config    *config.ApplicationConfig
-	Services  Services
-	Clients   Clients
-	DBFactory *db.ConnectionFactory
+	Name                string
+	Config              *config.ApplicationConfig
+	Services            Services
+	Clients             Clients
+	DBFactory           *db.ConnectionFactory
+	QuotaServiceFactory services.QuotaServiceFactory
 }
 
 type Services struct {
@@ -56,7 +59,6 @@ type Services struct {
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
 	SignalBus                 signalbus.SignalBus
 	Vault                     services.VaultService
-	Quota                     services.QuotaService
 	ClusterPlmtStrategy       services.ClusterPlacementStrategy
 }
 
@@ -161,13 +163,15 @@ func (env *Env) LoadServices() error {
 	clusterService := services.NewClusterService(env.DBFactory, clusterProviderFactory)
 	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
 	OsdIdpKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
-	QuotaService := services.NewQuotaService(ocmClient)
-	kafkaService := services.NewKafkaService(env.DBFactory, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS, QuotaService)
-	cloudProviderService := services.NewCloudProvidersService(clusterProviderFactory)
 	configService := services.NewConfigService(*env.Config)
+	quotaServiceFactory := quota.NewDefaultQuotaServiceFactory(ocmClient, env.DBFactory, configService)
+	kafkaService := services.NewKafkaService(env.DBFactory, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS, quotaServiceFactory)
+	cloudProviderService := services.NewCloudProvidersService(clusterProviderFactory)
 	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
 	kasFleetshardAddonService := services.NewKasFleetshardOperatorAddon(kafkaKeycloakService, configService, clusterProviderFactory)
 	clusterPlmtStrategy := services.NewClusterPlacementStrategy(configService, clusterService)
+
+	env.QuotaServiceFactory = quotaServiceFactory
 
 	env.Services.Kafka = kafkaService
 	env.Services.Cluster = clusterService
@@ -177,7 +181,6 @@ func (env *Env) LoadServices() error {
 	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
 	env.Services.KasFleetshardAddonService = kasFleetshardAddonService
 	env.Services.SignalBus = signalBus
-	env.Services.Quota = QuotaService
 	env.Services.ClusterPlmtStrategy = clusterPlmtStrategy
 
 	vaultService, err := services.NewVaultService(env.Config.Vault)

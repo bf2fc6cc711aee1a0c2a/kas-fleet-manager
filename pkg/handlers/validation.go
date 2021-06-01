@@ -12,8 +12,6 @@ import (
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
@@ -106,64 +104,6 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 		if !regionSupported {
 			provider, _ := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
 			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
-		}
-
-		return nil
-	}
-}
-
-// validateMaxAllowedInstances returns a validator that validate that the current connected user has not
-// reached the max number of allowed instances that can be created for this user if any or the global max allowed defaults
-func validateMaxAllowedInstances(kafkaService services.KafkaService, configService services.ConfigService, context context.Context) validate {
-	return func() *errors.ServiceError {
-		if !configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
-			return nil
-		}
-
-		var allowListItem config.AllowedListItem
-		claims, err := auth.GetClaimsFromContext(context)
-		if err != nil {
-			return errors.Unauthenticated("user not authenticated")
-		}
-
-		orgId := auth.GetOrgIdFromClaims(claims)
-		username := auth.GetUsernameFromClaims(claims)
-
-		listArgs := &services.ListArguments{
-			Page: 1,
-			Size: 1,
-			// we need to return the total Kafkas for this user only when they are not on the allow list or are a service account, otherwise the current max total of 1 would only allow an entire organisation to create 1 Kafka instance
-			Search: fmt.Sprintf("owner = %s", username),
-		}
-
-		message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, config.GetDefaultMaxAllowedInstances())
-		org, orgFound := configService.GetOrganisationById(orgId)
-		if orgFound && org.IsUserAllowed(username) {
-			allowListItem = org
-			message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
-			// In the allow list, for users in an organisation, maxAllowed is associated to an organisation, not an individual user. So we should not be filtering by owner to get the total Kafkas.
-			listArgs.Search = ""
-		} else {
-			user, userFound := configService.GetServiceAccountByUsername(username)
-			if userFound {
-				allowListItem = user
-				message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
-			}
-		}
-
-		_, pageMeta, svcErr := kafkaService.List(context, listArgs)
-		if svcErr != nil {
-			return svcErr
-		}
-
-		maxInstanceReached := pageMeta.Total >= config.GetDefaultMaxAllowedInstances()
-		// check instance limit for internal users (users and orgs listed in allow list config)
-		if allowListItem != nil {
-			maxInstanceReached = !allowListItem.IsInstanceCountWithinLimit(pageMeta.Total)
-		}
-
-		if maxInstanceReached {
-			return errors.MaximumAllowedInstanceReached(message)
 		}
 
 		return nil

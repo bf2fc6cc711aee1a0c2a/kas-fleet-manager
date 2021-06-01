@@ -2,8 +2,9 @@ package services
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 var validColumns = []string{"region", "name", "cloud_provider", "status", "owner"}

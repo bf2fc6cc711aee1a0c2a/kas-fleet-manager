@@ -214,9 +214,9 @@ func (helper *Helper) startKafkaWorkers() {
 	env := helper.Env()
 	var kafkaWorkerList []workers.Worker
 	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota, env.Services.ClusterPlmtStrategy)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.ClusterPlmtStrategy)
 	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(env.Services.Kafka, uuid.New().String())
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota)
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory)
 	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Observatorium, env.Services.Config)
 	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Keycloak, env.Services.Config)
 	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
@@ -302,9 +302,9 @@ func (helper *Helper) startLeaderElectionWorker() {
 
 	var kafkaWorkerList []workers.Worker
 	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota, env.Services.ClusterPlmtStrategy)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.ClusterPlmtStrategy)
 	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(env.Services.Kafka, uuid.New().String())
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.Quota)
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory)
 	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Observatorium, env.Services.Config)
 	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Keycloak, env.Services.Config)
 	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)

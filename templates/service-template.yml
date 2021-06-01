@@ -325,10 +325,10 @@ parameters:
   description: The compute machine type of each node on a new created cluster.
   value: "m5.4xlarge"
 
-- name: ENABLE_QUOTA_SERVICE
-  displayName: Enable quota service with kas-fleetshard-operator
-  description: Enable quota service with kas-fleetshard-operator
-  value: "true"
+- name: QUOTA_TYPE
+  displayName: Quota type
+  description: Tye type of quota management service to be used. Available options are 'ams' and "allow-list"
+  value: "allow-list"
 
 - name: KAS_FLEETSHARD_POLL_INTERVAL
   displayName: Kas-fleetshard-operator poll interval
@@ -831,7 +831,7 @@ objects:
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
-            - --enable-quota-service=${ENABLE_QUOTA_SERVICE}
+            - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
             - --observability-config-access-token-file=/secrets/service/observability-config-access.token
