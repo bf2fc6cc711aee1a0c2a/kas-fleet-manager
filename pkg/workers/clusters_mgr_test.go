@@ -2,6 +2,8 @@ package workers
 
 import (
 	"fmt"
+	"testing"
+
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	authv1 "github.com/openshift/api/authorization/v1"
@@ -13,7 +15,6 @@ import (
 	k8sCoreV1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 
@@ -197,10 +198,9 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 
 func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 	type fields struct {
-		providerLst          []string
-		clusterService       services.ClusterService
-		providersConfig      config.ProviderConfig
-		dynamicScalingConfig config.DynamicScalingConfig
+		providerLst     []string
+		clusterService  services.ClusterService
+		providersConfig config.ProviderConfig
 	}
 
 	tests := []struct {
@@ -220,9 +220,6 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 					RegisterClusterJobFunc: func(clusterReq *api.Cluster) *apiErrors.ServiceError {
 						return nil
 					},
-				},
-				dynamicScalingConfig: config.DynamicScalingConfig{
-					Enabled: true,
 				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
@@ -254,9 +251,6 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						return apiErrors.GeneralError("failed to create cluster request")
 					},
 				},
-				dynamicScalingConfig: config.DynamicScalingConfig{
-					Enabled: true,
-				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
 						SupportedProviders: config.ProviderList{
@@ -282,9 +276,6 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 					ListGroupByProviderAndRegionFunc: func(providers []string, regions []string, status []string) (m []*services.ResGroupCPRegion, e *ocmErrors.ServiceError) {
 						return nil, ocmErrors.New(ocmErrors.ErrorGeneral, "Database retrieval failed")
 					},
-				},
-				dynamicScalingConfig: config.DynamicScalingConfig{
-					Enabled: true,
 				},
 				providersConfig: config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
