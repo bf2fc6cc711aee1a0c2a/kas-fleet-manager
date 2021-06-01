@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	"github.com/google/uuid"
 
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,8 +26,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 )
-
-const productId = "RHOSAKTrial"
 
 var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String()}
 var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusFailed.String()}
@@ -71,23 +68,23 @@ type KafkaService interface {
 var _ KafkaService = &kafkaService{}
 
 type kafkaService struct {
-	connectionFactory *db.ConnectionFactory
-	clusterService    ClusterService
-	keycloakService   KeycloakService
-	kafkaConfig       *config.KafkaConfig
-	awsConfig         *config.AWSConfig
-	quotaService      QuotaService
-	mu                sync.Mutex
+	connectionFactory   *db.ConnectionFactory
+	clusterService      ClusterService
+	keycloakService     KeycloakService
+	kafkaConfig         *config.KafkaConfig
+	awsConfig           *config.AWSConfig
+	quotaServiceFactory QuotaServiceFactory
+	mu                  sync.Mutex
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaService QuotaService) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService KeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory) *kafkaService {
 	return &kafkaService{
-		connectionFactory: connectionFactory,
-		clusterService:    clusterService,
-		keycloakService:   keycloakService,
-		kafkaConfig:       kafkaConfig,
-		awsConfig:         awsConfig,
-		quotaService:      quotaService,
+		connectionFactory:   connectionFactory,
+		clusterService:      clusterService,
+		keycloakService:     keycloakService,
+		kafkaConfig:         kafkaConfig,
+		awsConfig:           awsConfig,
+		quotaServiceFactory: quotaServiceFactory,
 	}
 }
 
@@ -115,18 +112,24 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	}
 	//cluster id can't be nil. generating random temporary id.
 	//reserve is false, checking whether a user can reserve a quota or not
-	if k.kafkaConfig.EnableQuotaService {
-		isAllowed, _, err := k.quotaService.ReserveQuota(productId, kafkaRequest.ClusterID, uuid.New().String(), kafkaRequest.Owner, false, "single")
-		if err != nil {
-			return errors.NewWithCause(errors.ErrorFailedToCheckQuota, err, "failed to create kafka request")
-		}
-		if !isAllowed {
-			return errors.InsufficientQuotaError("Insufficient Quota")
-		}
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unabled to check quota")
 	}
+	err := quotaService.CheckQuota(kafkaRequest)
+	if err != nil {
+		return err
+	}
+
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.Version = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
+
+	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
+	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
+	// the API is restarted this time changing the --quota-type flag to allow-list, when kafka A is deleted at this point,
+	// we want to use the correct quota to perform the deletion.
+	kafkaRequest.QuotaType = k.kafkaConfig.Quota.Type
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}

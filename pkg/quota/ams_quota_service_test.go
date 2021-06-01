@@ -1,47 +1,38 @@
-package services
+package quota
 
 import (
+	"fmt"
+	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	"reflect"
-	"testing"
 )
 
-func Test_Reserve_Quota(t *testing.T) {
-
+func Test_AMSCheckQuota(t *testing.T) {
 	type fields struct {
 		ocmClient ocm.Client
 	}
 	type args struct {
-		productID    string
-		clusterID    string
-		kafkaID      string
-		reserve      bool
-		owner        string
-		availability string
+		kafkaID string
+		reserve bool
+		owner   string
 	}
 	tests := []struct {
-		// name is just a description of the test
-		name   string
-		fields fields
-		args   args
-		// want (there can be more than one) is the outputs that we expect, they can be compared after the test
-		// function has been executed
-		want bool
-		// wantErr is similar to want, but instead of testing the actual returned error, we're just testing than any
-		// error has been returned
+		name    string
+		fields  fields
+		args    args
+		want    bool
 		wantErr bool
 	}{
 		{
-			name: "Is owner allowed to reserve a quota",
+			name: "owner allowed to reserve quota",
 			args: args{
-				"RHOSAKTrial",
-				"",
 				"",
 				false,
 				"testUser",
-				"single",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -51,42 +42,14 @@ func Test_Reserve_Quota(t *testing.T) {
 					},
 				},
 			},
-			want:    true,
 			wantErr: false,
 		},
 		{
-			name: "reserve a quota & get subscription id",
+			name: "owner not allowed to reserve quota",
 			args: args{
-				"RHOSAKTrial",
-				"123",
-				"12231",
-				true,
-				"testUser",
-				"single",
-			},
-			fields: fields{
-				ocmClient: &ocm.ClientMock{
-					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
-						sub := v1.SubscriptionBuilder{}
-						sub.ID("12334")
-						sub.Status("Active")
-						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
-						return ca, nil
-					},
-				},
-			},
-			want:    true,
-			wantErr: false,
-		},
-		{
-			name: "failed to reserve a quota",
-			args: args{
-				"RHOSAKTrial",
-				"123",
-				"12231",
+				"",
 				false,
 				"testUser",
-				"single",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -96,23 +59,113 @@ func Test_Reserve_Quota(t *testing.T) {
 					},
 				},
 			},
-			want:    false,
-			wantErr: false,
+			wantErr: true,
+		},
+		{
+			name: "failed to reserve quota",
+			args: args{
+				"12231",
+				false,
+				"testUser",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						return nil, fmt.Errorf("some errors")
+					},
+				},
+			},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			QuotaService := quotaService{
-				tt.fields.ocmClient,
+			gomega.RegisterTestingT(t)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
+			kafka := &api.KafkaRequest{
+				Meta: api.Meta{
+					ID: tt.args.kafkaID,
+				},
+				Owner: tt.args.owner,
 			}
-			got, _, err := QuotaService.ReserveQuota(tt.args.productID, tt.args.clusterID, tt.args.kafkaID, tt.args.owner, tt.args.reserve, tt.args.availability)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ReserveQuota() error = %v, wantErr %v", err, tt.wantErr)
+			err := quotaService.CheckQuota(kafka)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
+		})
+	}
+}
+
+func Test_AMSReserveQuota(t *testing.T) {
+	type fields struct {
+		ocmClient ocm.Client
+	}
+	type args struct {
+		kafkaID string
+		reserve bool
+		owner   string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "reserve a quota & get subscription id",
+			args: args{
+				"12231",
+				true,
+				"testUser",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						sub := v1.SubscriptionBuilder{}
+						sub.ID("1234")
+						sub.Status("Active")
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Subscription(&sub).Build()
+						return ca, nil
+					},
+				},
+			},
+			want:    "1234",
+			wantErr: false,
+		},
+		{
+			name: "failed to reserve a quota",
+			args: args{
+				"12231",
+				false,
+				"testUser",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
+						return ca, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
+			kafka := &api.KafkaRequest{
+				Meta: api.Meta{
+					ID: tt.args.kafkaID,
+				},
+				Owner: tt.args.owner,
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ReserveQuota() got = %+v, want %+v", got, tt.want)
-			}
+			subId, err := quotaService.ReserveQuota(kafka)
+			gomega.Expect(subId).To(gomega.Equal(tt.want))
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
@@ -167,10 +220,9 @@ func Test_Delete_Quota(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			QuotaService := quotaService{
-				tt.fields.ocmClient,
-			}
-			err := QuotaService.DeleteQuota(tt.args.subscriptionId)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
+			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteQuota() error = %v, wantErr %v", err, tt.wantErr)
 			}

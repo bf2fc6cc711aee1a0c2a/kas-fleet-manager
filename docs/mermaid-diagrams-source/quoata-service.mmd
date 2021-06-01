@@ -1,0 +1,41 @@
+classDiagram
+  class QuotaService {
+      <<Interface>>
+      + CheckQuota(kafka)
+      + ReserveQuota(kafka)
+      + DeleteQuota(subscriptionId)
+  }
+
+  class QuotaServiceFactory {
+      <<Interface>>
+      +GetQuotaService(type QuotaType) QuotaService
+  }
+
+  class AmsQuotaService {
+      -OCMClient ocmClient
+  }
+  class AllowListQuotaService {
+      - KafkaService kafkaService
+  }
+
+  class KafkaService {
+      <<Service>>
+      + RegisterKafkaJob()
+      + OtherMethods...
+  }
+
+  class AcceptedKafkaManager {
+      + Reconcile()
+  }
+
+  class DeletingKafkaManager {
+      + Reconcile()
+  }
+
+  QuotaService <|.. AmsQuotaService: Implements
+  QuotaService <|.. AllowListQuotaService: Implements
+  KafkaService ..> QuotaServiceFactory: Depends
+  QuotaServiceFactory --|> QuotaService: Return concrete impl based on QuotaService
+  AcceptedKafkaManager ..> QuotaServiceFactory: Depends
+  DeletingKafkaManager ..> QuotaServiceFactory: Depends
+  

@@ -3,11 +3,12 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
@@ -124,6 +125,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	}
 	Expect(kafkaRequest.SsoClientID).To(BeEmpty())
 	Expect(kafkaRequest.SsoClientSecret).To(BeEmpty())
+	Expect(kafkaRequest.QuotaType).To(Equal(h.Env().Config.Kafka.Quota.Type))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
