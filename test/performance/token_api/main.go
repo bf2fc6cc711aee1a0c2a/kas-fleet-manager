@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -100,14 +102,30 @@ func checkKafkaCreateContainerId(w http.ResponseWriter, r *http.Request) {
 
 // run the server
 func runServer() {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	http.HandleFunc("/ocm_token", getToken)
 	http.HandleFunc("/write_kafka_config", writeKafkaConfig)
 	http.HandleFunc("/write_kafka_id", writeKafkaId)
 	http.HandleFunc("/write_svc_acc_id", writeSvcAccId)
 	http.HandleFunc("/kafka_create_container_id", checkKafkaCreateContainerId)
-	err := http.ListenAndServe(":8099", nil)
+
+	srv := &http.Server{Addr: ":8099"}
+	go func() {
+		err := srv.ListenAndServe()
+		if err != http.ErrServerClosed {
+			log.Fatalf("Unable to start the server: %s", err.Error())
+		}
+	}()
+
+	time.AfterFunc(getRunningTime(), func() { cancel() })
+
+	<-ctx.Done()
+
+	// shutdown the server after perf test is complete
+	err := srv.Shutdown(context.Background())
 	if err != nil {
-		log.Fatalf("Unable to start the server: %s", err.Error())
+		log.Fatalf("Unable to stop the server: %s", err.Error())
 	}
 }
 
@@ -201,8 +219,23 @@ func returnError(w http.ResponseWriter, err string, statusCode int) {
 	w.Write([]byte(err))      //nolint
 }
 
+func getRunningTime() time.Duration {
+	runTimeStr := os.Getenv("PERF_TEST_RUN_TIME")
+	if !strings.HasSuffix(string(runTimeStr), "m") { // <number_of_minutes>m format expected
+		log.Fatal(fmt.Printf("Unable to get run time length variable %s", runTimeStr))
+	}
+	runes := []rune(runTimeStr)
+	runTimeMinutes := string(runes[0 : len(runTimeStr)-1])
+	if parsedMinutes, err := strconv.Atoi(runTimeMinutes); err == nil {
+		return time.Duration(parsedMinutes*60+30) * time.Second // 30 seconds extra to allow perf test to complete
+	} else {
+		return 0 * time.Second
+	}
+}
+
 // login to ocm and serve an endpoint to retrieve short living ocm tokens
 func main() {
 	loginToOcm()
+	getRunningTime()
 	runServer()
 }
