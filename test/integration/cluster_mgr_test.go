@@ -22,13 +22,20 @@ import (
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
+	startHook := func(h *test.Helper) {
+		h.Env().Config.OCM.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.OCM.ClusterLoggingOperatorAddonID = ""
+	}
+
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
 	defer teardown()
 
 	// setup required services
@@ -83,11 +90,18 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
-	addonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.StrimziOperatorAddonID)
+	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.StrimziOperatorAddonID)
 	if err != nil {
-		t.Fatalf("failed to get addonInstallation for cluster %s", cluster.ClusterID)
+		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
-	Expect(addonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
+	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
+
+	// check the state of the cluster logging operator addon on ocm to ensure it was installed successfully
+	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.ClusterLoggingOperatorAddonID)
+	if err != nil {
+		t.Fatalf("failed to get the cluster logging addon installation for cluster %s", cluster.ClusterID)
+	}
+	Expect(clusterLoggingOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// The cluster DNS should have been persisted
 	ocmClusterDNS, err := ocmClient.GetClusterDNS(cluster.ClusterID)

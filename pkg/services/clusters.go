@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -57,6 +58,7 @@ type ClusterService interface {
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
 	InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
+	InstallAddonWithParams(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError)
 }
 
 type clusterService struct {
@@ -631,6 +633,18 @@ func (c clusterService) InstallAddon(cluster *api.Cluster, addonID string) (bool
 	}
 	if ready, err := p.InstallAddon(buildClusterSpec(cluster), addonID); err != nil {
 		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install addon %s for cluster %s", addonID, cluster.ClusterID)
+	} else {
+		return ready, nil
+	}
+}
+
+func (c clusterService) InstallAddonWithParams(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetAddonProvider(cluster.ProviderType)
+	if err != nil {
+		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	if ready, err := p.InstallAddonWithParams(buildClusterSpec(cluster), addonID, addonParams); err != nil {
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install addon with parameters %s for cluster %s", addonID, cluster.ClusterID)
 	} else {
 		return ready, nil
 	}
