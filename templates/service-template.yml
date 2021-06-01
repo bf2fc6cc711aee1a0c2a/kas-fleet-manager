@@ -59,9 +59,6 @@ parameters:
 - name: JWKS_URL
   displayName: JWK Token Certificate URL
 
-- name: JWKS_CA
-  displayName: JWK Token Certificate CA
-
 - name: OCM_BASE_URL
   displayName: OCM API Base URL
   description: Base path for all OCM APIs
@@ -800,7 +797,6 @@ objects:
             - --https-key-file=/secrets/tls/tls.key
             - --jwks-url=${JWKS_URL}
             - --jwks-file=/config/authentication/jwks.json
-            - --jwk-cert-ca-file=${JWKS_CA}
             - --enable-jwt=${ENABLE_JWT}
             - --enable-https=${ENABLE_HTTPS}
             - --api-server-hostname=${API_SERVER_HOSTNAME}
