@@ -9,7 +9,7 @@ on:
 jobs:
   dispatch:
     env:
-      APP_SERVICES_CI_TOKEN: "${{ secrets.GH_CI_TOKEN }}"
+      APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
       matrix:
         repo: ["redhat-developer/app-services-sdk-go", "redhat-developer/app-services-sdk-js"]
@@ -18,7 +18,7 @@ jobs:
       - name: Repository Dispatch
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: "${{ env.APP_SERVICES_CI_TOKEN }}"
+          token: ${{ env.APP_SERVICES_CI_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: openapi-spec-change
           client-payload: '{ "id": "kafka-mgmt/v1", "download_url":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/main/openapi/kas-fleet-manager.yaml"}'
