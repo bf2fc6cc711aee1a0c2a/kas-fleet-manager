@@ -102,16 +102,6 @@ parameters:
   description: Health check server bind adddress
   value: :8083
 
-- name: API_SERVER_HOSTNAME
-  displayName: API Server Hostname
-  description: Server's public hostname
-  value: ""
-
-- name: ENABLE_AUTHZ
-  displayName: Enable Authz
-  description: Enable Authorization on endpoints, should only be disabled for debug
-  value: "true"
-
 - name: DB_MAX_OPEN_CONNS
   displayName: Maximum Open Database Connections
   description: Maximum number of open database connections per pod
@@ -141,21 +131,6 @@ parameters:
   displayName: OCM mock mode
   description: OCM mock mode
   value: "emulate-server"
-
-- name: HTTP_READ_TIMEOUT
-  displayName: HTTP Read Timeout
-  description: HTTP server read timeout
-  value: 5s
-
-- name: HTTP_WRITE_TIMEOUT
-  displayName: HTTP Write Timeout
-  description: HTTP server write timeout
-  value: 30s
-
-- name: LABEL_METRICS_INCLUSION_DURATION
-  displayName: Label metrics inclusion duration
-  description: A cluster's last telemetry date needs be within in this duration in order to have labels collected
-  value: "168h"
 
 - name: ENABLE_SENTRY
   displayName: Enable Sentry Error Reporting
@@ -188,16 +163,6 @@ parameters:
   displayName: Enable Kafka TLS
   description: Enable the Kafka TLS certificate
   value: "false"
-
-- name: KAFKA_CANARY_IMAGE
-  displayName: Kafka Canary Image
-  description: Specifies a canary image
-  value: "quay.io/ppatierno/strimzi-canary:0.0.1-1"
-
-- name: KAFKA_ADMIN_SERVER_IMAGE
-  displayName: Kafka Admin Server Image
-  description: Specifies an admin server image
-  value: "quay.io/sknot/strimzi-admin:0.0.3"
 
 - name: DEX_URL
   displayName: Dex url
@@ -745,8 +710,6 @@ objects:
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
-            - --kafka-canary-image=${KAFKA_CANARY_IMAGE}
-            - --kafka-admin-server-image=${KAFKA_ADMIN_SERVER_IMAGE}
             - --providers-config-file=/config/provider-configuration.yaml
             - --allow-list-config-file=/config/allow-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
@@ -799,14 +762,12 @@ objects:
             - --jwks-file=/config/authentication/jwks.json
             - --enable-jwt=${ENABLE_JWT}
             - --enable-https=${ENABLE_HTTPS}
-            - --api-server-hostname=${API_SERVER_HOSTNAME}
             - --api-server-bindaddress=${API_SERVER_BINDADDRESS}
             - --metrics-server-bindaddress=${METRICS_SERVER_BINDADDRESS}
             - --health-check-server-bindaddress=${HEALTH_CHECK_SERVER_BINDADDRESS}
             - --enable-health-check-https=${ENABLE_HTTPS}
             - --db-sslmode=${DB_SSLMODE}
             - --db-max-open-connections=${DB_MAX_OPEN_CONNS}
-            - --enable-authz=${ENABLE_AUTHZ}
             - --enable-db-debug=${ENABLE_DB_DEBUG}
             - --enable-metrics-https=${ENABLE_METRICS_HTTPS}
             - --enable-ocm-mock=${ENABLE_OCM_MOCK}
@@ -819,13 +780,10 @@ objects:
             - --sentry-timeout=${SENTRY_TIMEOUT}
             - --sentry-key-file=/secrets/service/sentry.key
             - --enable-connectors=${ENABLE_CONNECTORS}
-            - --http-read-timeout=${HTTP_READ_TIMEOUT}
-            - --http-write-timeout=${HTTP_WRITE_TIMEOUT}
             - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}
             - --enable-deny-list=${ENABLE_DENY_LIST}
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
             - --max-allowed-instances=${MAX_ALLOWED_INSTANCES}
-            - --label-metrics-inclusion-duration=${LABEL_METRICS_INCLUSION_DURATION}
             - --cluster-openshift-version=${CLUSTER_OPENSHIFT_VERSION}
             - --cluster-compute-machine-type=${CLUSTER_COMPUTE_MACHINE_TYPE}
             - --dataplane-cluster-config-file=/config/dataplane-cluster-configuration.yaml
