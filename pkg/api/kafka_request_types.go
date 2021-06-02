@@ -23,6 +23,8 @@ type KafkaRequest struct {
 	// PlacementId field should be updated every time when a KafkaRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
 	Version     string `json:"version"`
+	// the quota service type for the kafka, e.g. ams, allow-list
+	QuotaType string `json:"quota_type"`
 }
 
 type KafkaList []*KafkaRequest

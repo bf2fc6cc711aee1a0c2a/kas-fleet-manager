@@ -16,25 +16,25 @@ import (
 
 // DeletingKafkaManager represents a kafka manager that periodically reconciles kafka requests
 type DeletingKafkaManager struct {
-	id            string
-	workerType    string
-	isRunning     bool
-	kafkaService  services.KafkaService
-	configService services.ConfigService
-	quotaService  services.QuotaService
-	imStop        chan struct{}
-	syncTeardown  sync.WaitGroup
-	reconciler    workers.Reconciler
+	id                  string
+	workerType          string
+	isRunning           bool
+	kafkaService        services.KafkaService
+	configService       services.ConfigService
+	quotaServiceFactory services.QuotaServiceFactory
+	imStop              chan struct{}
+	syncTeardown        sync.WaitGroup
+	reconciler          workers.Reconciler
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, id string, configService services.ConfigService, quotaService services.QuotaService) *DeletingKafkaManager {
+func NewDeletingKafkaManager(kafkaService services.KafkaService, id string, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
-		id:            id,
-		workerType:    "deleting_kafka",
-		kafkaService:  kafkaService,
-		configService: configService,
-		quotaService:  quotaService,
+		id:                  id,
+		workerType:          "deleting_kafka",
+		kafkaService:        kafkaService,
+		configService:       configService,
+		quotaServiceFactory: quotaServiceFactory,
 	}
 }
 
@@ -122,11 +122,15 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 }
 
 func (k *DeletingKafkaManager) reconcileDeletingKafkas(kafka *api.KafkaRequest) error {
-	if k.configService.GetConfig().Kafka.EnableQuotaService && kafka.SubscriptionId != "" {
-		if err := k.quotaService.DeleteQuota(kafka.SubscriptionId); err != nil {
-			return errors.Wrapf(err, "failed to delete subscription id %s for kafka %s", kafka.SubscriptionId, kafka.ID)
-		}
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(kafka.QuotaType))
+	if factoryErr != nil {
+		return factoryErr
 	}
+	err := quotaService.DeleteQuota(kafka.SubscriptionId)
+	if err != nil {
+		return errors.Wrapf(err, "failed to delete subscription id %s for kafka %s", kafka.SubscriptionId, kafka.ID)
+	}
+
 	if err := k.kafkaService.Delete(kafka); err != nil {
 		return errors.Wrapf(err, "failed to delete kafka %s", kafka.ID)
 	}

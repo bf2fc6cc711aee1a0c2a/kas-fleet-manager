@@ -69,14 +69,13 @@ func runServe(cmd *cobra.Command, args []string) {
 	// creates kafka worker
 	kafkaService := environments.Environment().Services.Kafka
 	observatoriumService := environments.Environment().Services.Observatorium
-	quotaService := environments.Environment().Services.Quota
 	clusterPlmtStrategy := env.Services.ClusterPlmtStrategy
 
 	//create kafka manager per type and assign them a Unique Id for each work to facilitate Leader Election process
 	kafkaManager := kafka_mgrs.NewKafkaManager(kafkaService, uuid.New().String(), configService)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(kafkaService, uuid.New().String(), configService, quotaService, clusterPlmtStrategy)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(kafkaService, uuid.New().String(), configService, env.QuotaServiceFactory, clusterPlmtStrategy)
 	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(kafkaService, uuid.New().String())
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(kafkaService, uuid.New().String(), configService, quotaService)
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(kafkaService, uuid.New().String(), configService, env.QuotaServiceFactory)
 	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(kafkaService, uuid.New().String(), observatoriumService, configService)
 	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(kafkaService, uuid.New().String(), keycloakService, configService)
 	workerList = append(workerList, kafkaManager, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)

@@ -28,7 +28,7 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"enable-kafka-external-certificate": "false",
 	"cluster-compute-machine-type":      "m5.xlarge",
 	"ingress-controller-replicas":       "3",
-	"enable-quota-service":              "false",
+	"quota-type":                        "allow-list",
 	"enable-deletion-of-expired-kafka":  "true",
 	"dataplane-cluster-scaling-type":    "auto", // need to set this to 'auto' for integration environment as some tests rely on this
 	//TODO: change these values to the qe ones for development environment once they are available
