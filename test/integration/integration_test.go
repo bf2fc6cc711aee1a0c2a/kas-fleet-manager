@@ -2,6 +2,7 @@ package integration
 
 import (
 	"flag"
+	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"os"
 	"runtime"
 	"testing"
@@ -14,9 +15,12 @@ import (
 func TestMain(m *testing.M) {
 	flag.Parse()
 	glog.V(10).Infof("Starting integration test using go version %s", runtime.Version())
-	helper := test.NewHelper(&testing.T{}, nil)
+	t := &testing.T{}
+	helper := test.NewHelper(t, nil)
 	helper.ResetDB()
 	exitCode := m.Run()
 	helper.Teardown()
+	// this can't be called from `helper.Teardown` as it will cause cycle imports. Refactoring is required to support this.
+	utils.RemoveClusterFile(t)
 	os.Exit(exitCode)
 }
