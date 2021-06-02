@@ -16,20 +16,21 @@ type KafkaCapacityConfig struct {
 }
 
 type KafkaConfig struct {
-	KafkaTLSCert                   string               `json:"kafka_tls_cert"`
-	KafkaTLSCertFile               string               `json:"kafka_tls_cert_file"`
-	KafkaTLSKey                    string               `json:"kafka_tls_key"`
-	KafkaTLSKeyFile                string               `json:"kafka_tls_key_file"`
-	EnableKafkaExternalCertificate bool                 `json:"enable_kafka_external_certificate"`
-	NumOfBrokers                   int                  `json:"num_of_brokers"`
-	KafkaDomainName                string               `json:"kafka_domain_name"`
-	KafkaCanaryImage               string               `json:"kafka_canary_image"`
-	KafkaAdminServerImage          string               `json:"kafka_admin_server_image"`
-	KafkaCapacity                  KafkaCapacityConfig  `json:"kafka_capacity_config"`
-	KafkaCapacityConfigFile        string               `json:"kafka_capacity_config_file"`
-	EnableQuotaService             bool                 `json:"enable_quota_service"`
-	DefaultKafkaVersion            string               `json:"default_kafka_version"`
-	KafkaLifespan                  *KafkaLifespanConfig `json:"kafka_lifespan"`
+	KafkaTLSCert                   string              `json:"kafka_tls_cert"`
+	KafkaTLSCertFile               string              `json:"kafka_tls_cert_file"`
+	KafkaTLSKey                    string              `json:"kafka_tls_key"`
+	KafkaTLSKeyFile                string              `json:"kafka_tls_key_file"`
+	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
+	NumOfBrokers                   int                 `json:"num_of_brokers"`
+	KafkaDomainName                string              `json:"kafka_domain_name"`
+	KafkaCanaryImage               string              `json:"kafka_canary_image"`
+	KafkaAdminServerImage          string              `json:"kafka_admin_server_image"`
+	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
+	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
+
+	DefaultKafkaVersion string               `json:"default_kafka_version"`
+	KafkaLifespan       *KafkaLifespanConfig `json:"kafka_lifespan"`
+	Quota               *KafkaQuotaConfig    `json:"kafka_qouta"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -42,9 +43,9 @@ func NewKafkaConfig() *KafkaConfig {
 		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1-1",
 		KafkaAdminServerImage:          "quay.io/sknot/kafka-admin-api:0.0.4",
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
-		EnableQuotaService:             false,
 		DefaultKafkaVersion:            "2.7.0",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
+		Quota:                          NewKafkaQuotaConfig(),
 	}
 }
 
@@ -55,13 +56,12 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaCanaryImage, "kafka-canary-image", c.KafkaCanaryImage, "Specifies a canary image")
 	fs.StringVar(&c.KafkaAdminServerImage, "kafka-admin-server-image", c.KafkaAdminServerImage, "Specifies an admin server image")
 	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
-	fs.BoolVar(&c.EnableQuotaService, "enable-quota-service", c.EnableQuotaService, "Enable quota service")
 	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
 	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
 	fs.StringVar(&c.KafkaLifespan.LongLivedKafkaConfigFile, "long-lived-kafkas-config-file", c.KafkaLifespan.LongLivedKafkaConfigFile, "The file containing the long lived kafkas")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
-
+	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'allow-list' for allow list backed implementation (default).")
 }
 
 func (c *KafkaConfig) ReadFiles() error {

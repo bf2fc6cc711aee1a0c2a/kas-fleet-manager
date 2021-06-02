@@ -2,6 +2,7 @@ package ocm
 
 import (
 	"fmt"
+	"net/http"
 
 	pkgerrors "github.com/pkg/errors"
 
@@ -450,7 +451,8 @@ func (c client) ClusterAuthorization(cb *amsv1.ClusterAuthorizationRequest) (*am
 	r, err := c.ocmClient.AccountsMgmt().V1().
 		ClusterAuthorizations().
 		Post().Request(cb).Send()
-	if err != nil {
+	if err != nil && r.Status() != http.StatusTooManyRequests {
+		err = errors.NewErrorFromHTTPStatusCode(r.Status(), "OCM client failed to create cluster authorization")
 		return nil, err
 	}
 	resp, _ := r.GetResponse()
