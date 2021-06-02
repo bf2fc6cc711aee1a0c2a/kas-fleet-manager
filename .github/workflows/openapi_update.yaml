@@ -9,7 +9,7 @@ on:
 jobs:
   dispatch:
     env:
-      APP_SERVICES_CI_TOKEN: "{{ secrets.GH_CI_TOKEN }}"
+      APP_SERVICES_CI_TOKEN: "${{ secrets.GH_CI_TOKEN }}"
     strategy:
       matrix:
         repo: ["redhat-developer/app-services-sdk-go", "redhat-developer/app-services-sdk-js"]
