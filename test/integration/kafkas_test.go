@@ -24,13 +24,11 @@ import (
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 const (
 	mockKafkaName      = "test-kafka1"
 	kafkaReadyTimeout  = time.Minute * 10
-	kafkaDeleteTimeout = time.Minute * 10
 	kafkaCheckInterval = time.Second * 1
 	testMultiAZ        = true
 	invalidKafkaName   = "Test_Cluster9"
@@ -77,15 +75,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	var kafka openapi.KafkaRequest
-	var resp *http.Response
-	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
-		if err != nil {
-			return true, err
-		}
-		return resp.StatusCode == http.StatusAccepted, err
-	})
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
 
 	// kafka successfully registered with database
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
@@ -96,14 +86,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
-	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-	})
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	// final check on the status
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
@@ -570,11 +553,8 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	// Verify all Kafkas that needs to be deleted are removed
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
-		list, _, err := client.DefaultApi.GetKafkas(ctx, nil)
-		return list.Size == 1, err
-	})
 
+	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, client, 1)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for first kafka deletion: %v", kafkaDeletionErr)
 }
 
@@ -824,15 +804,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	var kafka openapi.KafkaRequest
-	var resp *http.Response
-	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
-		if err != nil {
-			return true, err
-		}
-		return resp.StatusCode == http.StatusAccepted, err
-	})
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -840,14 +812,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
-	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-	})
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
@@ -863,16 +828,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
 	// wait for kafka to be deleted
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id); err != nil {
-			if err.Error() == "404 Not Found" {
-				return true, nil
-			}
-
-			return false, err
-		}
-		return false, nil
-	})
+	err = utils.WaitForKafkaToBeDeleted(ctx, client, kafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }
 
@@ -905,15 +861,7 @@ func TestKafkaDelete_FailSync(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	var kafka openapi.KafkaRequest
-	var resp *http.Response
-	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
-		if err != nil {
-			return true, err
-		}
-		return resp.StatusCode == http.StatusAccepted, err
-	})
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -972,15 +920,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	var kafka openapi.KafkaRequest
-	var resp *http.Response
-	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
-		if err != nil {
-			return true, err
-		}
-		return resp.StatusCode == http.StatusAccepted, err
-	})
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -988,14 +928,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
-	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusProvisioning.String(), nil
-	})
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusProvisioning)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
 	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusProvisioning.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
@@ -1012,17 +945,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
 	// wait for kafka to be deleted
-	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafka.Id); err != nil {
-			if err.Error() == "404 Not Found" {
-				return true, nil
-			}
-
-			return false, err
-		}
-		return false, nil
-	})
-
+	_ = utils.WaitForKafkaToBeDeleted(ctx, client, kafka.Id)
 	kafkaList, _, err := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
@@ -1084,28 +1007,13 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	var kafka openapi.KafkaRequest
-	var resp *http.Response
-	err := wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		kafka, resp, err = client.DefaultApi.CreateKafka(initCtx, true, k)
-		if err != nil {
-			return true, err
-		}
-		return resp.StatusCode == http.StatusAccepted, err
-	})
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(initCtx, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 
-	var foundKafka openapi.KafkaRequest
-	err = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(initCtx, kafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-	})
+	foundKafka, err := utils.WaitForKafkaToReachStatus(initCtx, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 
 	// attempt to delete kafka not created by the owner (should result in an error)
@@ -1168,14 +1076,8 @@ func TestKafkaList_Success(t *testing.T) {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
 
-	var foundKafka openapi.KafkaRequest
-	_ = wait.PollImmediate(kafkaCheckInterval, kafkaReadyTimeout, func() (done bool, err error) {
-		foundKafka, _, err = client.DefaultApi.GetKafkaById(initCtx, seedKafka.Id)
-		if err != nil {
-			return true, err
-		}
-		return foundKafka.Status == constants.KafkaRequestStatusReady.String(), nil
-	})
+	foundKafka, err := utils.WaitForKafkaToReachStatus(initCtx, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	Expect(err).NotTo(HaveOccurred(), "Error occurred while waiting for kafka to be ready:  %v", err)
 
 	// get populated list of kafka requests
 	afterPostList, _, err := client.DefaultApi.GetKafkas(initCtx, nil)
@@ -1425,11 +1327,8 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
-		list, _, err := client.DefaultApi.GetKafkas(ctx, nil)
-		return list.Size == 1, err
-	})
 
+	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, client, 1)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }
 
@@ -1528,10 +1427,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	kafkaDeletionErr := wait.PollImmediate(kafkaCheckInterval, kafkaDeleteTimeout, func() (done bool, err error) {
-		list, _, err := client.DefaultApi.GetKafkas(ctx, nil)
-		return list.Size == 2, err
-	})
 
+	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, client, 2)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }

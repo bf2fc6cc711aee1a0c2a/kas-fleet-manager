@@ -575,19 +575,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", newCluster.ClusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
 
-	err = utils.NewPollerBuilder().
-		OutputFunction(t.Logf).
-		IntervalAndTimeout(interval, clusterDeletionTimeout).
-		OnRetry(func(attempt int, maxRetries int) (bool, error) {
-			clusterFromDb, findClusterByIdErr := clusterService.FindClusterByID(newCluster.ClusterID)
-			if findClusterByIdErr != nil {
-				return false, findClusterByIdErr
-			}
-
-			return clusterFromDb == nil, nil // cluster has been deleted
-		}).
-		RetryLogMessagef("Waiting for cluster '%s' to be deleted", newCluster.ClusterID).
-		Build().Poll()
+	err = utils.WaitForClusterToBeDeleted(&clusterService, newCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }
