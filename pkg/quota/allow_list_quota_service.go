@@ -16,6 +16,10 @@ type allowListQuotaService struct {
 }
 
 func (q allowListQuotaService) CheckQuota(kafka *api.KafkaRequest) *errors.ServiceError {
+	if !q.configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
+		return nil
+	}
+
 	username := kafka.Owner
 	orgId := kafka.OrganisationId
 	var allowListItem config.AllowedListItem
