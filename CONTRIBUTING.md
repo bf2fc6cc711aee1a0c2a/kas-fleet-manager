@@ -88,7 +88,10 @@ make openapi/generate
 ```
 
 ## Adding a new endpoint
-See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint) documentation.
+See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
+
+## Adding New Serve Command Flags
+See the [Adding Flags to KAS Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
 
 ## Testing
 
