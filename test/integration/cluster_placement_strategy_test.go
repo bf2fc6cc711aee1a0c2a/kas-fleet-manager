@@ -1,18 +1,16 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	"github.com/golang/glog"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func TestClusterPlacementStrategy_ManualType(t *testing.T) {
@@ -80,14 +78,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	clusterService := h.Env().Services.Cluster
 
 	// Ensure both clusters in the config file have been created
-	pollErr := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-		clusters, svcErr := clusterService.FindAllClusters(clusterCriteria)
-		if svcErr != nil {
-			return true, svcErr
-		}
-		t.Logf("%d clusters found in the database: ", len(clusters))
-		return len(clusters) == 2, nil
-	})
+	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(&clusterService, &clusterCriteria, 2)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	//*********************************************************************
@@ -99,13 +90,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 	})
 
-	pollErr = wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-		found, svcErr := clusterService.FindAllClusters(clusterCriteria)
-		if svcErr != nil {
-			return true, svcErr
-		}
-		return len(found) == 4, nil // make sure that the original cluster is there because it has kafka
-	})
+	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(&clusterService, &clusterCriteria, 4)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	// Now delete the kafka from the original cluster to check for placement strategy and wait for cluster deletion
@@ -113,13 +98,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		t.Fatal("failed to delete a dummy kafka request")
 	}
 
-	pollErr = wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-		found, svcErr := clusterService.FindAllClusters(clusterCriteria)
-		if svcErr != nil {
-			return true, svcErr
-		}
-		return len(found) == 3, nil // we should only have clusters in the manual config
-	})
+	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(&clusterService, &clusterCriteria, 3)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	//*********************************************************************
@@ -154,7 +133,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	}
 
 	dbFactory := h.Env().DBFactory
-	kafkaFound, kafkaErr := collectResult(dbFactory, "dummy-kafka-1")
+	kafkaFound, kafkaErr := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
 	Expect(kafkaErr).NotTo(HaveOccurred())
 	Expect(kafkaFound.ClusterID).To(Equal("test03"))
 
@@ -164,20 +143,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		return
 	}
 
-	kafkaFound2, kafkaErr2 := collectResult(dbFactory, "dummy-kafka-2")
+	kafkaFound2, kafkaErr2 := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-2")
 	Expect(kafkaErr2).NotTo(HaveOccurred())
 	Expect(kafkaFound2.ClusterID).To(Equal("test02"))
-}
-
-func collectResult(dbFactory *db.ConnectionFactory, kafkaRequestName string) (*api.KafkaRequest, error) {
-	kafkaFound := &api.KafkaRequest{}
-	kafkaErr := wait.PollImmediate(interval, clusterIDAssignTimeout, func() (done bool, err error) {
-		if err := dbFactory.New().Where("name = ?", kafkaRequestName).First(kafkaFound).Error; err != nil {
-			return false, err
-		}
-		glog.Infof("got kafka instance %v", kafkaFound)
-		return kafkaFound.ClusterID != "", nil
-	})
-
-	return kafkaFound, kafkaErr
 }
