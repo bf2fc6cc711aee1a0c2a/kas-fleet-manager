@@ -63,8 +63,8 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	var foundCluster *api.Cluster
 	var err *ocmErrors.ServiceError
 
-	// get cluster details from persisted cluster file when running against a non-emulated server
-	if h.Env().Config.OCM.MockMode != config.MockModeEmulateServer && fileExists(testClusterPath, t) {
+	// get cluster details from persisted cluster file
+	if fileExists(testClusterPath, t) {
 		clusterID, _ := readClusterDetailsFromFile(h, t)
 		foundCluster, err = h.Env().Services.Cluster.FindClusterByID(clusterID)
 		if err != nil {
@@ -72,8 +72,8 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		}
 	}
 
-	// get cluster details from database when running against an emulated server
-	if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
+	// get cluster details from database when running against an emulated server and the cluster in cluster file doesn't exist
+	if foundCluster == nil && h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		foundCluster, err = findFirstValidCluster(h)
 		if err != nil {
 			return "", err
@@ -198,6 +198,16 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 		return cluster.ClusterID, nil
 	}
 	return "", nil
+}
+
+func RemoveClusterFile(t *testing.T) {
+	if fileExists(testClusterPath, t) {
+		if err := os.Remove(testClusterPath); err != nil {
+			t.Errorf("failed to delete file %v due to error %v", testClusterPath, err)
+		}
+	} else {
+		t.Logf("cluster file %s does not exist", testClusterPath)
+	}
 }
 
 func getMetrics(t *testing.T) string {
