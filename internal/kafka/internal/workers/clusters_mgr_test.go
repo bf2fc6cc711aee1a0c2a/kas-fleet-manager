@@ -6,25 +6,26 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	"github.com/onsi/gomega"
+	. "github.com/onsi/gomega"
 	authv1 "github.com/openshift/api/authorization/v1"
 	projectv1 "github.com/openshift/api/project/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	errors "github.com/zgalor/weberr"
+
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/onsi/gomega"
-	. "github.com/onsi/gomega"
 )
 
 var (
@@ -1153,6 +1154,13 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 		ObservabilityConfigChannel:     "obs-config-channel",
 		ObservabilityConfigAccessToken: "obs-config-token",
 		ObservabilityConfigTag:         "obs-config-tag",
+		RedHatSsoAuthServerUrl:         "red-hat-sso-auth-server-url",
+		RedHatSsoRealm:                 "red-hat-sso-realm",
+		MetricsClientId:                "metrics-client",
+		MetricsSecret:                  "metrics-secret",
+		LogsClientId:                   "logs-client",
+		LogsSecret:                     "logs-secret",
+		AuthType:                       "dex",
 	}
 	return observabilityConfig
 }
@@ -1213,14 +1221,40 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 				Kind:       "Secret",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      observabilityDexCredentials,
+				Name:      observatoriumDexSecretName,
 				Namespace: observabilityNamespace,
 			},
 			Type: k8sCoreV1.SecretTypeOpaque,
 			StringData: map[string]string{
-				"password": observabilityConfig.DexPassword,
-				"secret":   observabilityConfig.DexSecret,
-				"username": observabilityConfig.DexUsername,
+				"authType":    config.AuthTypeDex,
+				"dexPassword": observabilityConfig.DexPassword,
+				"dexSecret":   observabilityConfig.DexSecret,
+				"dexUsername": observabilityConfig.DexUsername,
+				"gateway":     observabilityConfig.ObservatoriumGateway,
+				"dexUrl":      observabilityConfig.DexUrl,
+				"tenant":      observabilityConfig.ObservatoriumTenant,
+			},
+		},
+		&k8sCoreV1.Secret{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: metav1.SchemeGroupVersion.Version,
+				Kind:       "Secret",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      observatoriumSSOSecretName,
+				Namespace: observabilityNamespace,
+			},
+			Type: k8sCoreV1.SecretTypeOpaque,
+			StringData: map[string]string{
+				"authType":               config.AuthTypeSso,
+				"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
+				"tenant":                 observabilityConfig.RedHatSsoTenant,
+				"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,
+				"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
+				"metricsClientId":        observabilityConfig.MetricsClientId,
+				"metricsSecret":          observabilityConfig.MetricsSecret,
+				"logsClientId":           observabilityConfig.LogsClientId,
+				"logsSecret":             observabilityConfig.LogsSecret,
 			},
 		},
 		&v1alpha1.CatalogSource{
@@ -1263,7 +1297,7 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 				CatalogSource:          observabilityCatalogSourceName,
 				Channel:                "alpha",
 				CatalogSourceNamespace: observabilityNamespace,
-				StartingCSV:            "observability-operator.v3.0.2",
+				StartingCSV:            "observability-operator.v3.0.3",
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
 			},
