@@ -306,13 +306,13 @@ openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/private/openapi
 	rm -rf pkg/api/connector/openapi
 	rm -rf pkg/api/connector_catalog/openapi
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o pkg/api/connector/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o pkg/api/connector/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_catalog.yaml -g go -o pkg/api/connector_catalog/openapi --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_catalog.yaml -g go -o pkg/api/connector_catalog/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_catalog.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ -mode 420 -modtime 1 ./openapi
 	$(GOBINDATA) -o ./data/generated/connector/bindata.go -pkg connector -prefix ./pkg/api/connector/openapi/api -mode 420 -modtime 1 ./pkg/api/connector/openapi/api

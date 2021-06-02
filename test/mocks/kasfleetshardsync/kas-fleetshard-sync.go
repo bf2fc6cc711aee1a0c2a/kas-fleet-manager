@@ -91,7 +91,7 @@ var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *priv
 
 		kafkaStatusList := make(map[string]privateopenapi.DataPlaneKafkaStatus)
 		for _, kafka := range kafkaList.Items {
-			id := kafka.Metadata.Annotations.Bf2OrgId
+			id := kafka.Metadata.Annotations.Id
 			if kafka.Spec.Deleted {
 				kafkaStatusList[id] = GetDeletedKafkaStatusResponse()
 			} else {
@@ -235,7 +235,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *privateopenapi.
 			DataRetentionSize:             &[]string{"test"}[0],
 			Partitions:                    &[]int32{1000000}[0],
 		},
-		NodeInfo: privateopenapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
+		NodeInfo: &privateopenapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{20}[0],
 			Floor:                  &[]int32{3}[0],
 			Current:                &[]int32{5}[0],
@@ -247,7 +247,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *privateopenapi.
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],
 			DataRetentionSize:             &[]string{"test"}[0],
 		},
-		ResizeInfo: privateopenapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
+		ResizeInfo: &privateopenapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
 			Delta: &privateopenapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{10000}[0],

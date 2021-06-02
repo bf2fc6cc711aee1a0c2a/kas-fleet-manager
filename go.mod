@@ -17,6 +17,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
+	github.com/getkin/kin-openapi v0.62.0
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
@@ -25,7 +26,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/handlers v1.4.2
-	github.com/gorilla/mux v1.7.3
+	github.com/gorilla/mux v1.8.0
 	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
 	github.com/itchyny/gojq v0.12.2
 	github.com/lib/pq v1.10.0

@@ -11,6 +11,6 @@ package openapi
 
 // DataPlaneClusterUpdateStatusRequestResizeInfo struct for DataPlaneClusterUpdateStatusRequestResizeInfo
 type DataPlaneClusterUpdateStatusRequestResizeInfo struct {
-	NodeDelta *int32                                              `json:"nodeDelta,omitempty"`
+	NodeDelta *int32                                              `json:"node_delta,omitempty"`
 	Delta     *DataPlaneClusterUpdateStatusRequestResizeInfoDelta `json:"delta,omitempty"`
 }

@@ -422,27 +422,27 @@ components:
           name: example-kafka
           namespace: example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac
           annotations:
-            bf2.org/id: 1rfpsqbvq1em2u9u0z54ymjcwac
-            bf2.org/placementId: ""
+            id: 1rfpsqbvq1em2u9u0z54ymjcwac
+            placement_id: ""
         spec:
           capacity:
-            ingressEgressThroughputPerSec: 4Mi
-            totalMaxConnections: 500
-            maxDataRetentionSize: 100Gi
-            maxPartitions: 100
-            maxDataRetentionPeriod: P14D
-            maxConnectionAttemptsPerSec: 100
+            ingress_egress_throughput_per_sec: 4Mi
+            total_max_connections: 500
+            max_data_retention_size: 100Gi
+            max_partitions: 100
+            max_data_retention_period: P14D
+            max_connection_attempts_per_sec: 100
           oauth:
-            clientId: kafka-1rfpsqbvq1em2u9u0z54ymjcwac
-            clientSecret: example-client-secret
-            tokenEndpointURI: https://example-token-endpoint-uri.com/token
-            jwksEndpointURI: https://example-jwks-endpoint-uri.com/certs
-            validIssuerEndpointURI: https://issuer-endpoint-uri.com
-            userNameClaim: username
-            tlsTrustedCertificate: ""
-            customClaimCheck: ""
+            client_id: kafka-1rfpsqbvq1em2u9u0z54ymjcwac
+            client_secret: example-client-secret
+            token_endpoint_uri: https://example-token-endpoint-uri.com/token
+            jwks_endpoint_uri: https://example-jwks-endpoint-uri.com/certs
+            valid_issuer_endpoint_uri: https://issuer-endpoint-uri.com
+            user_name_claim: username
+            tls_trusted_certificate: ""
+            custom_claim_check: ""
           endpoint:
-            bootstrapServerHost: example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org
+            bootstrap_server_host: example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org
             tls:
               cert: ""
               key: ""
@@ -457,14 +457,14 @@ components:
           reason: KafkaInstanceReady
           message: installing
           status: "False"
-          lastTransitionTime: 2018-01-01T00:00:00Z
+          last_transition_time: 2018-01-01T00:00:00Z
         capacity:
-          ingressEgressThroughputPerSec: 4Mi
-          totalMaxConnections: 500
-          maxDataRetentionSize: 100Gi
-          maxPartitions: 100
-          maxDataRetentionPeriod: P14D
-          maxConnectionAttemptsPerSec: 100
+          ingress_egress_throughput_per_sec: 4Mi
+          total_maxConnections: 500
+          max_data_retention_size: 100Gi
+          max_partitions: 100
+          max_data_retention_period: P14D
+          max_connection_attempts_per_sec: 100
         versions:
           kafka: 2.4.1
           strimzi: 0.21.2
@@ -518,6 +518,7 @@ components:
     MetaV1Condition:
       example:
         reason: reason
+        last_transition_time: last_transition_time
         type: type
         message: message
         lastTransitionTime: lastTransitionTime
@@ -532,23 +533,47 @@ components:
         status:
           type: string
         lastTransitionTime:
+          deprecated: true
+          type: string
+        last_transition_time:
           type: string
       type: object
     ManagedKafkaCapacity:
       properties:
         ingressEgressThroughputPerSec:
+          deprecated: true
           type: string
         totalMaxConnections:
+          deprecated: true
           format: int
           type: integer
         maxDataRetentionSize:
+          deprecated: true
           type: string
         maxPartitions:
+          deprecated: true
           format: int
           type: integer
         maxDataRetentionPeriod:
+          deprecated: true
           type: string
         maxConnectionAttemptsPerSec:
+          deprecated: true
+          format: int
+          type: integer
+        ingress_egress_throughput_per_sec:
+          type: string
+        total_max_connections:
+          format: int
+          type: integer
+        max_data_retention_size:
+          type: string
+        max_partitions:
+          format: int
+          type: integer
+        max_data_retention_period:
+          type: string
+        max_connection_attempts_per_sec:
           format: int
           type: integer
       type: object
@@ -615,11 +640,13 @@ components:
         phase: phase
         conditions:
         - reason: reason
+          last_transition_time: last_transition_time
           type: type
           message: message
           lastTransitionTime: lastTransitionTime
           status: status
         - reason: reason
+          last_transition_time: last_transition_time
           type: type
           message: message
           lastTransitionTime: lastTransitionTime
@@ -662,11 +689,13 @@ components:
           status: status
         conditions:
         - reason: reason
+          last_transition_time: last_transition_time
           type: type
           message: message
           lastTransitionTime: lastTransitionTime
           status: status
         - reason: reason
+          last_transition_time: last_transition_time
           type: type
           message: message
           lastTransitionTime: lastTransitionTime
@@ -687,20 +716,75 @@ components:
             $ref: '#/components/schemas/ConnectorClusterStatus_operators'
           type: array
       type: object
+    DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo:
+      deprecated: true
+      example:
+        ceiling: 1
+        current: 5
+        currentWorkLoadMinimum: 2
+        floor: 5
+      nullable: true
+      properties:
+        ceiling:
+          nullable: true
+          type: integer
+        floor:
+          nullable: true
+          type: integer
+        current:
+          nullable: true
+          type: integer
+        currentWorkLoadMinimum:
+          deprecated: true
+          nullable: true
+          type: integer
+      type: object
+    DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo:
+      deprecated: true
+      example:
+        nodeDelta: 4
+        delta:
+          partitions: 1
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 7
+          dataRetentionSize: dataRetentionSize
+      nullable: true
+      properties:
+        nodeDelta:
+          deprecated: true
+          nullable: true
+          type: integer
+        delta:
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo_delta'
+      type: object
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
+        resize_info:
+          delta:
+            partitions: 6
+            ingress_egress_throughput_per_sec: ingress_egress_throughput_per_sec
+            data_retention_size: data_retention_size
+            connections: 1
+          node_delta: 1
         total:
           partitions: 6
+          ingress_egress_throughput_per_sec: ingress_egress_throughput_per_sec
+          data_retention_size: data_retention_size
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
+        node_info:
+          ceiling: 7
+          current_work_load_minimum: 2
+          current: 3
+          floor: 9
         resizeInfo:
-          nodeDelta: 7
+          nodeDelta: 4
           delta:
-            partitions: 3
+            partitions: 1
             ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-            connections: 9
+            connections: 7
             dataRetentionSize: dataRetentionSize
         nodeInfo:
           ceiling: 1
@@ -711,15 +795,15 @@ components:
         - reason: reason
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         - reason: reason
           type: type
           message: message
-          lastTransitionTime: lastTransitionTime
           status: status
         remaining:
           partitions: 6
+          ingress_egress_throughput_per_sec: ingress_egress_throughput_per_sec
+          data_retention_size: data_retention_size
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
@@ -734,9 +818,13 @@ components:
         remaining:
           $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
         nodeInfo:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_nodeInfo'
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo'
+        node_info:
+          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_node_info'
         resizeInfo:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resizeInfo'
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo'
+        resize_info:
+          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resize_info'
       type: object
     DataPlaneKafkaStatus:
       description: Schema of the status object for a Kafka cluster
@@ -764,6 +852,7 @@ components:
       example:
         spec:
           observability:
+            access_token: access_token
             channel: channel
             tag: tag
             accessToken: accessToken
@@ -813,12 +902,18 @@ components:
     ManagedKafka_allOf_metadata_annotations:
       properties:
         bf2.org/id:
+          deprecated: true
           type: string
         bf2.org/placementId:
+          deprecated: true
+          type: string
+        id:
+          type: string
+        placement_id:
           type: string
       required:
-      - bf2.org/id
-      - bf2.org/placementId
+      - id
+      - placement_id
     ManagedKafka_allOf_metadata:
       properties:
         name:
@@ -830,20 +925,44 @@ components:
     ManagedKafka_allOf_spec_oauth:
       properties:
         clientId:
+          deprecated: true
           type: string
         clientSecret:
+          deprecated: true
           type: string
         tokenEndpointURI:
+          deprecated: true
           type: string
         jwksEndpointURI:
+          deprecated: true
           type: string
         validIssuerEndpointURI:
+          deprecated: true
           type: string
         userNameClaim:
+          deprecated: true
           type: string
         tlsTrustedCertificate:
+          deprecated: true
           type: string
         customClaimCheck:
+          deprecated: true
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        token_endpoint_uri:
+          type: string
+        jwks_endpoint_uri:
+          type: string
+        valid_issuer_endpoint_uri:
+          type: string
+        user_name_claim:
+          type: string
+        tls_trusted_certificate:
+          type: string
+        custom_claim_check:
           type: string
     ManagedKafka_allOf_spec_endpoint_tls:
       properties:
@@ -854,6 +973,9 @@ components:
     ManagedKafka_allOf_spec_endpoint:
       properties:
         bootstrapServerHost:
+          deprecated: true
+          type: string
+        bootstrap_server_host:
           type: string
         tls:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec_endpoint_tls'
@@ -934,12 +1056,33 @@ components:
         status:
           description: the status of the operator
           type: string
+    DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo_delta:
+      example:
+        partitions: 1
+        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        connections: 7
+        dataRetentionSize: dataRetentionSize
+      nullable: true
+      properties:
+        ingressEgressThroughputPerSec:
+          deprecated: true
+          nullable: true
+          type: string
+        connections:
+          nullable: true
+          type: integer
+        dataRetentionSize:
+          deprecated: true
+          nullable: true
+          type: string
+        partitions:
+          nullable: true
+          type: integer
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason
         type: type
         message: message
-        lastTransitionTime: lastTransitionTime
         status: status
       properties:
         type:
@@ -950,33 +1093,42 @@ components:
           type: string
         status:
           type: string
-        lastTransitionTime:
-          type: string
     DataPlaneClusterUpdateStatusRequest_total:
       example:
         partitions: 6
+        ingress_egress_throughput_per_sec: ingress_egress_throughput_per_sec
+        data_retention_size: data_retention_size
         ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
         connections: 0
         dataRetentionSize: dataRetentionSize
       properties:
         ingressEgressThroughputPerSec:
+          deprecated: true
+          nullable: true
+          type: string
+        ingress_egress_throughput_per_sec:
           nullable: true
           type: string
         connections:
           nullable: true
           type: integer
         dataRetentionSize:
+          deprecated: true
+          nullable: true
+          type: string
+        data_retention_size:
           nullable: true
           type: string
         partitions:
           nullable: true
           type: integer
-    DataPlaneClusterUpdateStatusRequest_nodeInfo:
+    DataPlaneClusterUpdateStatusRequest_node_info:
       example:
-        ceiling: 1
-        current: 5
-        currentWorkLoadMinimum: 2
-        floor: 5
+        ceiling: 7
+        current_work_load_minimum: 2
+        current: 3
+        floor: 9
+      nullable: true
       properties:
         ceiling:
           nullable: true
@@ -987,57 +1139,88 @@ components:
         current:
           nullable: true
           type: integer
-        currentWorkLoadMinimum:
+        current_work_load_minimum:
           nullable: true
           type: integer
-    DataPlaneClusterUpdateStatusRequest_resizeInfo_delta:
+    DataPlaneClusterUpdateStatusRequest_resize_info_delta:
       example:
-        partitions: 3
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 9
-        dataRetentionSize: dataRetentionSize
+        partitions: 6
+        ingress_egress_throughput_per_sec: ingress_egress_throughput_per_sec
+        data_retention_size: data_retention_size
+        connections: 1
       nullable: true
       properties:
-        ingressEgressThroughputPerSec:
+        ingress_egress_throughput_per_sec:
           nullable: true
           type: string
         connections:
           nullable: true
           type: integer
-        dataRetentionSize:
+        data_retention_size:
           nullable: true
           type: string
         partitions:
           nullable: true
           type: integer
-    DataPlaneClusterUpdateStatusRequest_resizeInfo:
+    DataPlaneClusterUpdateStatusRequest_resize_info:
       example:
-        nodeDelta: 7
         delta:
-          partitions: 3
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 9
-          dataRetentionSize: dataRetentionSize
+          partitions: 6
+          ingress_egress_throughput_per_sec: ingress_egress_throughput_per_sec
+          data_retention_size: data_retention_size
+          connections: 1
+        node_delta: 1
+      nullable: true
       properties:
-        nodeDelta:
+        node_delta:
           nullable: true
           type: integer
         delta:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resizeInfo_delta'
+          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resize_info_delta'
     DataPlaneKafkaStatus_capacity:
       description: Capacity information of the data plane cluster
       properties:
         ingressEgressThroughputPerSec:
+          deprecated: true
+          nullable: true
           type: string
         totalMaxConnections:
+          deprecated: true
+          nullable: true
           type: integer
         maxDataRetentionSize:
+          deprecated: true
+          nullable: true
           type: string
         maxPartitions:
+          deprecated: true
+          nullable: true
           type: integer
         maxDataRetentionPeriod:
+          deprecated: true
+          nullable: true
           type: string
         maxConnectionAttemptsPerSec:
+          deprecated: true
+          nullable: true
+          type: integer
+        ingress_egress_throughput_per_sec:
+          nullable: true
+          type: string
+        total_max_connections:
+          nullable: true
+          type: integer
+        max_data_retention_size:
+          nullable: true
+          type: string
+        max_partitions:
+          nullable: true
+          type: integer
+        max_data_retention_period:
+          nullable: true
+          type: string
+        max_connection_attempts_per_sec:
+          nullable: true
           type: integer
     DataPlaneKafkaStatus_versions:
       description: Version information related to a Kafka cluster
@@ -1049,12 +1232,18 @@ components:
     DataplaneClusterAgentConfig_spec_observability:
       description: Observability configurations
       example:
+        access_token: access_token
         channel: channel
         tag: tag
         accessToken: accessToken
         repository: repository
       properties:
         accessToken:
+          deprecated: true
+          nullable: true
+          type: string
+        access_token:
+          nullable: true
           type: string
         channel:
           type: string
@@ -1066,6 +1255,7 @@ components:
       description: Data plane cluster agent spec
       example:
         observability:
+          access_token: access_token
           channel: channel
           tag: tag
           accessToken: accessToken

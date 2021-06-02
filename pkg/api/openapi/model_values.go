@@ -11,6 +11,10 @@ package openapi
 
 // Values struct for Values
 type Values struct {
-	Timestamp int64   `json:"Timestamp,omitempty"`
-	Value     float64 `json:"Value"`
+	// Deprecated
+	DeprecatedTimestamp int64 `json:"Timestamp,omitempty"`
+	Timestamp           int64 `json:"timestamp,omitempty"`
+	// Deprecated
+	DeprecatedValue float64 `json:"Value,omitempty"`
+	Value           float64 `json:"value"`
 }
