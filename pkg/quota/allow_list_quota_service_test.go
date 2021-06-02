@@ -37,6 +37,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 					},
 				),
 			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "2"}})
+			},
 			want: nil,
 		},
 		{
