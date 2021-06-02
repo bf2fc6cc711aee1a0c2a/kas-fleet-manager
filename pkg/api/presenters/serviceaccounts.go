@@ -15,28 +15,31 @@ func ConvertServiceAccountRequest(account openapi.ServiceAccountRequest) *api.Se
 func PresentServiceAccount(account *api.ServiceAccount) *openapi.ServiceAccount {
 	reference := PresentReference(account.ID, account)
 	return &openapi.ServiceAccount{
-		ClientID:     account.ClientID,
-		ClientSecret: account.ClientSecret,
-		Name:         account.Name,
-		Description:  account.Description,
-		Owner:        account.Owner,
-		CreatedAt:    account.CreatedAt,
-		Id:           reference.Id,
-		Kind:         reference.Kind,
-		Href:         reference.Href,
+		ClientId:               account.ClientID,
+		ClientSecret:           account.ClientSecret,
+		DeprecatedClientID:     account.ClientID,
+		DeprecatedClientSecret: account.ClientSecret,
+		Name:                   account.Name,
+		Description:            account.Description,
+		Owner:                  account.Owner,
+		CreatedAt:              account.CreatedAt,
+		Id:                     reference.Id,
+		Kind:                   reference.Kind,
+		Href:                   reference.Href,
 	}
 }
 
 func PresentServiceAccountListItem(account *api.ServiceAccount) openapi.ServiceAccountListItem {
 	ref := PresentReference(account.ID, account)
 	return openapi.ServiceAccountListItem{
-		Id:          ref.Id,
-		Kind:        ref.Kind,
-		Href:        ref.Href,
-		ClientID:    account.ClientID,
-		Name:        account.Name,
-		Owner:       account.Owner,
-		Description: account.Description,
-		CreatedAt:   account.CreatedAt,
+		Id:                 ref.Id,
+		Kind:               ref.Kind,
+		Href:               ref.Href,
+		ClientId:           account.ClientID,
+		Name:               account.Name,
+		Owner:              account.Owner,
+		Description:        account.Description,
+		CreatedAt:          account.CreatedAt,
+		DeprecatedClientID: account.ClientID,
 	}
 }

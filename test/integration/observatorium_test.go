@@ -148,6 +148,13 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
+
+	firstMetric := metrics.Items[0]
+	Expect(firstMetric.Values[0].DeprecatedTimestamp).NotTo(BeNil())
+	Expect(firstMetric.Values[0].DeprecatedValue).NotTo(BeNil())
+	Expect(firstMetric.Values[0].Timestamp).NotTo(BeNil())
+	Expect(firstMetric.Values[0].Value).NotTo(BeNil())
+
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }
 func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
@@ -213,5 +220,12 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(metrics.Items)).NotTo(Equal(0))
+
+	firstMetric := metrics.Items[0]
+	Expect(firstMetric.DeprecatedTimestamp).NotTo(BeNil())
+	Expect(firstMetric.DeprecatedValue).NotTo(BeNil())
+	Expect(firstMetric.Timestamp).NotTo(BeNil())
+	Expect(firstMetric.Value).NotTo(BeNil())
+
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }

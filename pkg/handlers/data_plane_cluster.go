@@ -96,57 +96,90 @@ func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneCluster
 }
 
 func (h *dataPlaneClusterHandler) validateNodeInfo(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	nodeInfo := &request.NodeInfo
-	if nodeInfo.Ceiling == nil {
-		return errors.FieldValidationError("nodeinfo ceiling attribute must be set")
+	if request.NodeInfo != nil {
+		nodeInfo := *request.NodeInfo
+		if nodeInfo.Ceiling == nil {
+			return errors.FieldValidationError("nodeinfo ceiling attribute must be set")
+		}
+		if nodeInfo.Current == nil {
+			return errors.FieldValidationError("nodeinfo current attribute must be set")
+		}
+		if nodeInfo.CurrentWorkLoadMinimum == nil {
+			return errors.FieldValidationError("nodeinfo currentWorkLoadMinimum attribute must be set")
+		}
+		if nodeInfo.Floor == nil {
+			return errors.FieldValidationError("nodeinfo floor attribute must be set")
+		}
+	} else if request.DeprecatedNodeInfo != nil {
+		nodeInfo := *request.DeprecatedNodeInfo
+		if nodeInfo.Ceiling == nil {
+			return errors.FieldValidationError("nodeinfo ceiling attribute must be set")
+		}
+		if nodeInfo.Current == nil {
+			return errors.FieldValidationError("nodeinfo current attribute must be set")
+		}
+		if nodeInfo.DeprecatedCurrentWorkLoadMinimum == nil {
+			return errors.FieldValidationError("nodeinfo currentWorkLoadMinimum attribute must be set")
+		}
 	}
-	if nodeInfo.Current == nil {
-		return errors.FieldValidationError("nodeinfo current attribute must be set")
-	}
-	if nodeInfo.CurrentWorkLoadMinimum == nil {
-		return errors.FieldValidationError("nodeinfo currentWorkLoadMinimum attribute must be set")
-	}
-	if nodeInfo.Floor == nil {
-		return errors.FieldValidationError("nodeinfo floor attribute must be set")
-	}
-
 	return nil
 }
 
 func (h *dataPlaneClusterHandler) validateResizeInfo(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	resizeInfo := &request.ResizeInfo
+	if request.ResizeInfo != nil {
+		resizeInfo := *request.ResizeInfo
 
-	if resizeInfo.NodeDelta == nil {
-		return errors.FieldValidationError("resizeInfo nodeDelta attribute must be set")
+		if resizeInfo.NodeDelta == nil {
+			return errors.FieldValidationError("resizeInfo nodeDelta attribute must be set")
+		}
+		if resizeInfo.Delta == nil {
+			return errors.FieldValidationError("resizeInfo delta attribute must be set")
+		}
+		if resizeInfo.Delta.Connections == nil {
+			return errors.FieldValidationError("resizeInfo delta connections must be set")
+		}
+		if resizeInfo.Delta.DataRetentionSize == nil {
+			return errors.FieldValidationError("resizeInfo delta data retention size must be set")
+		}
+		if resizeInfo.Delta.IngressEgressThroughputPerSec == nil {
+			return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
+		}
+		if resizeInfo.Delta.Partitions == nil {
+			return errors.FieldValidationError("resieInfo delta partitions must be set")
+		}
+	} else if request.DeprecatedResizeInfo != nil {
+		resizeInfo := *request.DeprecatedResizeInfo
+		if resizeInfo.DeprecatedNodeDelta == nil {
+			return errors.FieldValidationError("resizeInfo nodeDelta attribute must be set")
+		}
+		if resizeInfo.Delta == nil {
+			return errors.FieldValidationError("resizeInfo delta attribute must be set")
+		}
+		if resizeInfo.Delta.Connections == nil {
+			return errors.FieldValidationError("resizeInfo delta connections must be set")
+		}
+		if resizeInfo.Delta.DeprecatedDataRetentionSize == nil {
+			return errors.FieldValidationError("resizeInfo delta data retention size must be set")
+		}
+		if resizeInfo.Delta.DeprecatedIngressEgressThroughputPerSec == nil {
+			return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
+		}
+		if resizeInfo.Delta.Partitions == nil {
+			return errors.FieldValidationError("resieInfo delta partitions must be set")
+		}
 	}
-	if resizeInfo.Delta == nil {
-		return errors.FieldValidationError("resizeInfo delta attribute must be set")
-	}
-	if resizeInfo.Delta.Connections == nil {
-		return errors.FieldValidationError("resizeInfo delta connections must be set")
-	}
-	if resizeInfo.Delta.DataRetentionSize == nil {
-		return errors.FieldValidationError("resizeInfo delta data retention size must be set")
-	}
-	if resizeInfo.Delta.IngressEgressThroughputPerSec == nil {
-		return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
-	}
-	if resizeInfo.Delta.Partitions == nil {
-		return errors.FieldValidationError("resieInfo delta partitions must be set")
-	}
-
 	return nil
 }
 
 func (h *dataPlaneClusterHandler) validateTotal(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	total := &request.Total
+	total := request.Total
 	if total.Connections == nil {
 		return errors.FieldValidationError("total connections must be set")
 	}
-	if total.DataRetentionSize == nil {
+	if total.DataRetentionSize == nil && total.DeprecatedDataRetentionSize == nil {
 		return errors.FieldValidationError("total data retention size must be set")
 	}
-	if total.IngressEgressThroughputPerSec == nil {
+	if total.IngressEgressThroughputPerSec == nil && total.DeprecatedIngressEgressThroughputPerSec == nil {
 		return errors.FieldValidationError("total ingressegress throughput per second must be set")
 	}
 	if total.Partitions == nil {
@@ -157,15 +190,15 @@ func (h *dataPlaneClusterHandler) validateTotal(request *openapi.DataPlaneCluste
 }
 
 func (h *dataPlaneClusterHandler) validateRemaining(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	remaining := &request.Remaining
+	remaining := request.Remaining
 
 	if remaining.Connections == nil {
 		return errors.FieldValidationError("remaining connections must be set")
 	}
-	if remaining.DataRetentionSize == nil {
+	if remaining.DataRetentionSize == nil && remaining.DeprecatedDataRetentionSize == nil {
 		return errors.FieldValidationError("remaining data retention size must be set")
 	}
-	if remaining.IngressEgressThroughputPerSec == nil {
+	if remaining.IngressEgressThroughputPerSec == nil && remaining.DeprecatedIngressEgressThroughputPerSec == nil {
 		return errors.FieldValidationError("remaining ingressegress throughput per second must be set")
 	}
 	if remaining.Partitions == nil {
