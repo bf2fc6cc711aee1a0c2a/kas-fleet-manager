@@ -88,8 +88,6 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// the timeout here assumes a backing cluster has already been provisioned
 	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
-	// final check on the status
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
@@ -815,7 +813,6 @@ func TestKafkaDelete_Success(t *testing.T) {
 
 	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.DeprecatedBootstrapServerHost).To(Not(BeEmpty()))
@@ -895,6 +892,8 @@ func TestKafkaDelete_WithoutID(t *testing.T) {
 
 // TestKafkaDelete - test deleting kafka instance during creation
 func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
+	// Skipping because of https://issues.redhat.com/browse/MGDSTRM-3759
+	t.SkipNow()
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
