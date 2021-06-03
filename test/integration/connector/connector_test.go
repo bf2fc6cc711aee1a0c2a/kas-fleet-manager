@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -17,6 +18,17 @@ import (
 
 type extender struct {
 	*cucumber.TestScenario
+}
+
+func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
+	// we can only check the delete count on the TmpVault service impl...
+	if vault, ok := environments.Environment().Services.Vault.(*services.TmpVaultService); ok {
+		actual := vault.Counters().Deletes
+		if actual != expected {
+			return fmt.Errorf("vault delete counter does not match expected: %v, actual: %v", expected, actual)
+		}
+	}
+	return nil
 }
 
 func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as string) error {
@@ -75,6 +87,7 @@ func init() {
 	cucumber.StepModules = append(cucumber.StepModules, func(ctx *godog.ScenarioContext, s *cucumber.TestScenario) {
 		e := &extender{s}
 		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
+		ctx.Step(`^the vault delete counter should be (\d+)$`, e.theVaultDeleteCounterShouldBe)
 	})
 }
 

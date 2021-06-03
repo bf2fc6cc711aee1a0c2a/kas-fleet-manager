@@ -96,5 +96,6 @@ type ConnectorDeploymentSpecStatusExtractors struct {
 type KafkaConnectionSettings struct {
 	BootstrapServer string `json:"bootstrap_server,omitempty"`
 	ClientId        string `json:"client_id,omitempty"`
-	ClientSecret    string `json:"client_secret,omitempty"`
+	ClientSecret    string `json:"client_secret,omitempty" gorm:"-"`
+	ClientSecretRef string `json:"client_secret_ref,omitempty" gorm:"column:client_secret"`
 }
