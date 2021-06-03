@@ -85,16 +85,19 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Kafkas and their records soft deleted from the database.
 
 	deletingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeleting)
+	originalTotalKafkaInDeleting := len(deletingKafkas)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting kafka requests"))
 	} else {
-		glog.Infof("%s kafkas count = %d", constants.KafkaRequestStatusDeleting.String(), len(deletingKafkas))
+		glog.Infof("%s kafkas count = %d", constants.KafkaRequestStatusDeleting.String(), originalTotalKafkaInDeleting)
 	}
 
 	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster
 	deprovisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
+	} else {
+		glog.Infof("%s kafkas count = %d", constants.KafkaRequestStatusDeprovision.String(), len(deprovisioningKafkas))
 	}
 
 	for _, deprovisioningKafka := range deprovisioningKafkas {
@@ -109,6 +112,8 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 		}
 	}
+
+	glog.Infof("An additional of kafkas count = %d which are marked for removal before being provisioned will also be deleted", len(deletingKafkas)-originalTotalKafkaInDeleting)
 
 	for _, kafka := range deletingKafkas {
 		glog.V(10).Infof("deleting kafka id = %s", kafka.ID)
