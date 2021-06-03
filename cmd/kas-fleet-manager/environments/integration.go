@@ -13,7 +13,6 @@ var integrationConfigDefaults map[string]string = map[string]string{
 	"ocm-base-url":                      "https://api-integration.6943.hive-integration.openshiftapps.com",
 	"enable-https":                      "false",
 	"enable-metrics-https":              "false",
-	"enable-authz":                      "true",
 	"enable-terms-acceptance":           "false",
 	"ocm-debug":                         "false",
 	"enable-ocm-mock":                   "true",

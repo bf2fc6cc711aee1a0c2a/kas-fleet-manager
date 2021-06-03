@@ -96,7 +96,7 @@ make binary
     ```
     ./kas-fleet-manager serve
     ```
-    >**NOTE**: The service has numerous cli flags. Please see the [feature flag](TODO) section to enable features disabled by default for the development environment
+    >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features of the service. Please see the [feature flag](./docs/feature-flags.md) documentation for more information.
 4. Verify the local service is working
     ```
     curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
@@ -317,4 +317,4 @@ See this [README](./test/performance/README.md) for more info about performance 
 
 ## Additional documentation:
 * [kas-fleet-manager Implementation](docs/implementation.md)
-* [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling)
+* [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md)

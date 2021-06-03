@@ -23,8 +23,6 @@ type KafkaConfig struct {
 	EnableKafkaExternalCertificate bool                `json:"enable_kafka_external_certificate"`
 	NumOfBrokers                   int                 `json:"num_of_brokers"`
 	KafkaDomainName                string              `json:"kafka_domain_name"`
-	KafkaCanaryImage               string              `json:"kafka_canary_image"`
-	KafkaAdminServerImage          string              `json:"kafka_admin_server_image"`
 	KafkaCapacity                  KafkaCapacityConfig `json:"kafka_capacity_config"`
 	KafkaCapacityConfigFile        string              `json:"kafka_capacity_config_file"`
 
@@ -40,8 +38,6 @@ func NewKafkaConfig() *KafkaConfig {
 		EnableKafkaExternalCertificate: false,
 		KafkaDomainName:                "kafka.devshift.org",
 		NumOfBrokers:                   3,
-		KafkaCanaryImage:               "quay.io/ppatierno/strimzi-canary:0.0.1-1",
-		KafkaAdminServerImage:          "quay.io/sknot/kafka-admin-api:0.0.4",
 		KafkaCapacityConfigFile:        "config/kafka-capacity-config.yaml",
 		DefaultKafkaVersion:            "2.7.0",
 		KafkaLifespan:                  NewKafkaLifespanConfig(),
@@ -53,8 +49,6 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaTLSCertFile, "kafka-tls-cert-file", c.KafkaTLSCertFile, "File containing kafka certificate")
 	fs.StringVar(&c.KafkaTLSKeyFile, "kafka-tls-key-file", c.KafkaTLSKeyFile, "File containing kafka certificate private key")
 	fs.BoolVar(&c.EnableKafkaExternalCertificate, "enable-kafka-external-certificate", c.EnableKafkaExternalCertificate, "Enable custom certificate for Kafka TLS")
-	fs.StringVar(&c.KafkaCanaryImage, "kafka-canary-image", c.KafkaCanaryImage, "Specifies a canary image")
-	fs.StringVar(&c.KafkaAdminServerImage, "kafka-admin-server-image", c.KafkaAdminServerImage, "Specifies an admin server image")
 	fs.StringVar(&c.KafkaCapacityConfigFile, "kafka-capacity-config-file", c.KafkaCapacityConfigFile, "File containing kafka capacity configurations")
 	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
 	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
