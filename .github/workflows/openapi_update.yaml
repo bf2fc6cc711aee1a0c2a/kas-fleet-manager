@@ -12,7 +12,7 @@ jobs:
       APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
       matrix:
-        repo: ["redhat-developer/app-services-sdk-go", "redhat-developer/app-services-sdk-js"]
+        repo: ["redhat-developer/app-services-sdk-go", "redhat-developer/app-services-sdk-js", "redhat-developer/app-services-sdk-java"]
     runs-on: ubuntu-latest
     steps:
       - name: Repository Dispatch
