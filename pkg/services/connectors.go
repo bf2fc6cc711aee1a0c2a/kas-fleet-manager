@@ -149,9 +149,9 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 
 	var deployment api.ConnectorDeployment
 	err := dbConn.Select("id").Where("connector_id = ?", id).First(&deployment).Error
-	if err == gorm.ErrRecordNotFound {
-		// connector will not have a deployment if it has not been assigned.
-
+	switch err {
+	case nil:
+		// no err, deployment existed..
 		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeployment{}).Error; err != nil {
 			err := handleGetError("ConnectorDeployment", "id", deployment.ID, err)
 			if err != nil {
@@ -164,7 +164,9 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 				return err
 			}
 		}
-	} else if err != nil {
+	case gorm.ErrRecordNotFound:
+		// deployment did not exist, so we don't need to clean up after it..
+	default:
 		return handleGetError("ConnectorDeployment", "connector_id", id, err)
 	}
 
