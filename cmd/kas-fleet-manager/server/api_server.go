@@ -304,7 +304,6 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 		connectorTypesHandler := handlers.NewConnectorTypesHandler(services.ConnectorTypes)
 		apiV1ConnectorTypesRouter := apiV1Router.PathPrefix("/{_:kafka[-_]connector[-_]types}").Subrouter()
 		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}", connectorTypesHandler.Get).Methods(http.MethodGet)
-		apiV1ConnectorTypesRouter.HandleFunc("/{connector_type_id}/{path:.*}", connectorTypesHandler.ProxyToExtensionService).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.HandleFunc("", connectorTypesHandler.List).Methods(http.MethodGet)
 		apiV1ConnectorTypesRouter.Use(authorizeMiddleware)
 

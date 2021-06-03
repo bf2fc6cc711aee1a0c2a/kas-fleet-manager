@@ -1,15 +1,12 @@
 package api
 
-import "net/url"
-
 type ConnectorType struct {
 	Meta
 	Version     string `json:"version"`
 	Name        string `json:"name"`
 	Description string `json:"description,omitempty"`
 	// A json schema that can be used to validate a connectors connector_spec field.
-	JsonSchema   map[string]interface{} `json:"json_schema,omitempty"`
-	ExtensionURL *url.URL               `json:"-"`
+	JsonSchema map[string]interface{} `json:"json_schema,omitempty"`
 
 	Channels []string `json:"channels,omitempty"`
 	// URL to an icon of the connector.

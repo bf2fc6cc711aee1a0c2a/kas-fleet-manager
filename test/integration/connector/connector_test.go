@@ -84,11 +84,8 @@ func TestMain(m *testing.M) {
 	// connector features.
 	t := &testing.T{}
 
-	connectorTypeService := mocks.NewConnectorTypeMock(t)
-	defer connectorTypeService.Close()
 	environments.Environment().Config.ConnectorsConfig.Enabled = true
-	environments.Environment().Config.ConnectorsConfig.ConnectorTypesDir = ""
-	environments.Environment().Config.ConnectorsConfig.ConnectorTypeSvcUrls = []string{connectorTypeService.URL}
+	environments.Environment().Config.ConnectorsConfig.ConnectorCatalogDirs = []string{"./test/integration/connector/connector-catalog"}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
