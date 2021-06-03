@@ -47,7 +47,6 @@ JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-
 MAS_SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
 MAS_SSO_REALM ?="rhoas"
 ENABLE_CONNECTORS ?= false
-ENABLE_QUOTA_SERVICE ?= true
 VAULT_KIND ?= tmp
 
 GO := go
@@ -527,7 +526,6 @@ deploy: deploy/db
 		-p ALLOW_ANY_REGISTERED_USERS="$(ALLOW_ANY_REGISTERED_USERS)" \
 		-p VAULT_KIND=$(VAULT_KIND) \
 		-p ENABLE_CONNECTORS=$(ENABLE_CONNECTORS) \
-		-p ENABLE_QUOTA_SERVICE=$(ENABLE_QUOTA_SERVICE) \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy
