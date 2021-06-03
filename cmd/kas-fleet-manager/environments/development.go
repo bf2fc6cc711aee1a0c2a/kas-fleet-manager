@@ -7,14 +7,12 @@ import (
 // The development environment is intended for use while developing features, requiring manual verification
 var developmentConfigDefaults map[string]string = map[string]string{
 	"v":                                 "10",
-	"enable-authz":                      "true",
 	"ocm-debug":                         "false",
 	"ocm-base-url":                      "https://api.stage.openshift.com",
 	"enable-ocm-mock":                   "false",
 	"enable-https":                      "false",
 	"enable-metrics-https":              "false",
 	"enable-terms-acceptance":           "false",
-	"api-server-hostname":               "localhost",
 	"api-server-bindaddress":            "localhost:8000",
 	"enable-sentry":                     "false",
 	"enable-deny-list":                  "true",
