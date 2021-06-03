@@ -81,3 +81,6 @@ bin
 
 # Ignore vendor
 vendor
+
+# docker files
+.docker

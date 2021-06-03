@@ -197,12 +197,6 @@ func (env *Env) LoadServices() error {
 	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus)
 	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig)
 	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
-	if env.Config.ConnectorsConfig.Enabled {
-		err := env.Services.ConnectorTypes.DiscoverExtensions()
-		if err != nil {
-			return err
-		}
-	}
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
 	env.Services.Config = configService

@@ -1,16 +1,12 @@
 package handlers
 
 import (
-	"net/http"
-	"net/http/httputil"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/golang/glog"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
 type connectorTypesHandler struct {
@@ -41,33 +37,6 @@ func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	handleGet(w, r, cfg)
-}
-
-func (h connectorTypesHandler) ProxyToExtensionService(w http.ResponseWriter, r *http.Request) {
-	glog.Info("proxying to extension")
-	connectorTypeId := mux.Vars(r)["connector_type_id"]
-
-	err := validation("connector_type_id", &connectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength))()
-	if err != nil {
-		shared.HandleError(r, w, err)
-		return
-	}
-
-	resource, err := h.service.Get(connectorTypeId)
-	if err != nil {
-		shared.HandleError(r, w, err)
-		return
-	}
-
-	url := resource.ExtensionURL
-	proxy := httputil.NewSingleHostReverseProxy(url)
-
-	r.URL.Host = url.Host
-	r.URL.Scheme = url.Scheme
-	r.Header.Set("X-Forwarded-Host", r.Header.Get("Host"))
-	r.Host = url.Host
-
-	proxy.ServeHTTP(w, r)
 }
 
 func (h connectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {

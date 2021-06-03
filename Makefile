@@ -297,7 +297,6 @@ openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/connector_catalog.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and data/generated/openapi/openapi.go
@@ -305,21 +304,17 @@ openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
 	rm -rf pkg/api/private/openapi
 	rm -rf pkg/api/connector/openapi
-	rm -rf pkg/api/connector_catalog/openapi
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o pkg/api/connector/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_catalog.yaml -g go -o pkg/api/connector_catalog/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(OPENAPI_GENERATOR) validate -i openapi/connector_catalog.yaml
 	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ -mode 420 -modtime 1 ./openapi
 	$(GOBINDATA) -o ./data/generated/connector/bindata.go -pkg connector -prefix ./pkg/api/connector/openapi/api -mode 420 -modtime 1 ./pkg/api/connector/openapi/api
 	$(GOFMT) -w pkg/api/openapi
 	$(GOFMT) -w pkg/api/private/openapi
 	$(GOFMT) -w pkg/api/connector/openapi
-	$(GOFMT) -w pkg/api/connector_catalog/openapi
 .PHONY: openapi/generate
 
 # clean up code and dependencies
@@ -338,9 +333,8 @@ run/docs:
 	@echo "Please open http://localhost/"
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
 		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
-		{url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
-		{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" }, {url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
-		{url: \"./openapi/connector_catalog.yaml\", name: \"Connector Catalog Service\"}]"\
+		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
+		{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" }, {url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
