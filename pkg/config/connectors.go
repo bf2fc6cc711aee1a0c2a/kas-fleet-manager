@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -45,19 +46,16 @@ func (c *ConnectorsConfig) ReadFiles() error {
 	var values []ConnectorCatalogEntry
 	for _, dir := range c.ConnectorCatalogDirs {
 		dir = BuildFullFilePath(dir)
-		files, err := ioutil.ReadDir(dir)
-		if err != nil {
-			return err
-		}
 
-		for _, f := range files {
-
-			// skip over hidden files and dirs..
-			if f.IsDir() || strings.HasPrefix(f.Name(), ".") {
-				continue
+		err := c.walkCatalogDirs(dir, dir, func(path string, info os.FileInfo, err error) error {
+			if strings.HasPrefix(info.Name(), ".") {
+				return filepath.SkipDir
+			}
+			if info.IsDir() {
+				return nil
 			}
 
-			file := filepath.Join(dir, f.Name())
+			file := path
 
 			// Read the file
 			buf, err := ioutil.ReadFile(file)
@@ -76,8 +74,15 @@ func (c *ConnectorsConfig) ReadFiles() error {
 			}
 			typesLoaded[entry.ConnectorType.Id] = file
 			values = append(values, entry)
+
+			return nil
+		})
+
+		if err != nil {
+			return err
 		}
 	}
+
 	sort.Slice(values, func(i, j int) bool {
 		return values[i].ConnectorType.Id < values[j].ConnectorType.Id
 	})
@@ -85,3 +90,33 @@ func (c *ConnectorsConfig) ReadFiles() error {
 	c.CatalogEntries = values
 	return nil
 }
+
+func (c *ConnectorsConfig) walkCatalogDirs(filename string, linkDirname string, walkFn filepath.WalkFunc) error {
+	symWalkFunc := func(path string, info os.FileInfo, err error) error {
+
+		if fname, err := filepath.Rel(filename, path); err == nil {
+			path = filepath.Join(linkDirname, fname)
+		} else {
+			return err
+		}
+
+		if err == nil && info.Mode()&os.ModeSymlink == os.ModeSymlink {
+			finalPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+			info, err := os.Lstat(finalPath)
+			if err != nil {
+				return walkFn(path, info, err)
+			}
+			if info.IsDir() {
+				return c.walkCatalogDirs(finalPath, path, walkFn)
+			}
+		}
+
+		return walkFn(path, info, err)
+	}
+
+	return filepath.Walk(filename, symWalkFunc)
+}
+
