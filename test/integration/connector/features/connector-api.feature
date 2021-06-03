@@ -168,7 +168,7 @@ Feature: create a a connector
     Then the response code should be 202
     And the ".status" selection from the response should match "assigning"
 
-    Given I store the ".id" selection from the response as ${cid}
+    Given I store the ".id" selection from the response as ${connector_id}
     When I GET path "/v1/kafka_connectors?kafka_id=${kid}"
     Then the response code should be 200
     And the response should match json:
@@ -192,8 +192,8 @@ Feature: create a a connector
               "cluster_id": "default",
               "kind": "addon"
             },
-            "href": "/api/connector_mgmt/v1/kafka_connectors/${cid}",
-            "id": "${cid}",
+            "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+            "id": "${connector_id}",
             "kind": "Connector",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
@@ -214,16 +214,16 @@ Feature: create a a connector
       }
       """
 
-    When I GET path "/v1/kafka_connectors/${cid}"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 200
     And the ".status" selection from the response should match "assigning"
-    And the ".id" selection from the response should match "${cid}"
+    And the ".id" selection from the response should match "${connector_id}"
     And the response should match json:
       """
       {
-          "id": "${cid}",
+          "id": "${connector_id}",
           "kind": "Connector",
-          "href": "/api/connector_mgmt/v1/kafka_connectors/${cid}",
+          "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
           "metadata": {
               "kafka_id": "${kid}",
               "owner": "${response.metadata.owner}",
@@ -253,56 +253,70 @@ Feature: create a a connector
       }
       """
 
-    # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
-    Given I am logged in as "Coworker Sally"
-    When I GET path "/v1/kafka_connectors/${cid}"
-    Then the response code should be 200
-
-    Given I am logged in as "Evil Bob"
-    When I GET path "/v1/kafka_connectors/${cid}"
-    Then the response code should be 404
-
-    Given I am logged in as "Greg"
-    When I DELETE path "/v1/kafka_connectors/${cid}"
-    Then the response code should be 204
-    And the response should match ""
-
-    When I GET path "/v1/kafka_connectors/${cid}"
-    Then the response code should be 200
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+      """
+      {
+          "connector_spec": {
+              "secretKey": {
+                "ref": "hack"
+              }
+          }
+      }
+      """
+    Then the response code should be 400
     And the response should match json:
       """
       {
-          "id": "${cid}",
-          "kind": "Connector",
-          "href": "/api/connector_mgmt/v1/kafka_connectors/${cid}",
-          "metadata": {
-              "kafka_id": "${kid}",
-              "owner": "${response.metadata.owner}",
-              "name": "example 1",
-              "created_at": "${response.metadata.created_at}",
-              "updated_at": "${response.metadata.updated_at}",
-              "resource_version": ${response.metadata.resource_version}
-          },
-          "kafka": {
-            "bootstrap_server": "kafka.hostname",
-            "client_id": "myclient"
-          },
-          "deployment_location": {
-              "kind": "addon",
-              "cluster_id": "default"
-          },
-          "connector_type_id": "aws-sqs-source-v1alpha1",
-          "channel": "stable",
-          "connector_spec": {
-              "accessKey": "test",
-              "queueNameOrArn": "test",
-              "region": "east",
-              "secretKey": {}
-          },
-          "desired_state": "deleted",
-          "status": "assigning"
+        "code": "CONNECTOR-MGMT-21",
+        "href": "/api/connector_mgmt/v1/errors/21",
+        "id": "21",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "invalid patch: attempting to change opaque connector secret"
       }
       """
+
+    # We can update secrets of a connector
+    And the vault delete counter should be 0
+    Given I set the "Content-Type" header to "application/merge-patch+json"
+    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+      """
+      {
+          "kafka": {
+            "client_secret": "patched_secret 1"
+          },
+          "connector_spec": {
+              "secretKey": "patched_secret 2"
+          }
+      }
+      """
+
+    Then the response code should be 202
+    And the vault delete counter should be 2
+
+
+    # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
+    Given I am logged in as "Coworker Sally"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+
+    Given I am logged in as "Evil Bob"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 404
+
+    # We are going to delete the connector...
+    Given I am logged in as "Greg"
+    Given the vault delete counter should be 2
+    When I DELETE path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 204
+    And the response should match ""
+
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 404
+    # This verifies that kafka client secret and the connector_spec.secretKey vault entries are deleted.
+    Then the vault delete counter should be 4
 
   Scenario: Greg can discover the API endpoints
     Given I am logged in as "Greg"

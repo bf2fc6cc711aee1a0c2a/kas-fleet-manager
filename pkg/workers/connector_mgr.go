@@ -92,9 +92,18 @@ func (k *ConnectorManager) Reconcile() []error {
 			}
 			switch connector.Status.Phase {
 			case api.ConnectorStatusPhaseAssigning:
-				if err := k.reconcileAssigning(ctx, connector); err != nil {
-					errs = append(errs, err)
-					glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
+				// if it's not been assigned yet, we can immediately delete it.
+				if connector.DesiredState == "deleted" {
+					if err := k.reconcileDeleted(ctx, connector); err != nil {
+						errs = append(errs, err)
+						glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
+					}
+				} else {
+					if err := k.reconcileAssigning(ctx, connector); err != nil {
+						errs = append(errs, err)
+						glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
+					}
+
 				}
 			}
 			return nil

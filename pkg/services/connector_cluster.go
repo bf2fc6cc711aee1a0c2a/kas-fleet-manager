@@ -337,8 +337,8 @@ func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesServ
 	}
 	// move secrets to a vault.
 
-	if resource.Kafka.ClientSecret != "" {
-		v, err := vault.GetSecretString(resource.Kafka.ClientSecret)
+	if resource.Kafka.ClientSecretRef != "" {
+		v, err := vault.GetSecretString(resource.Kafka.ClientSecretRef)
 		if err != nil {
 			return errors.GeneralError("could not get kafka client secrets from the vault")
 		}

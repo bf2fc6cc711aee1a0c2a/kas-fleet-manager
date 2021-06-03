@@ -9,6 +9,8 @@
 //      """
 // Wait until an http get responds with an expected result or a timeout occurs:
 //    Given I wait up to "35.5" seconds for a GET on path "/v1/some/path" response ".total" selection to match "1"
+// Wait until an http get responds with an expected response code or a timeout occurs:
+//    Given I wait up to "35.5" seconds for a GET on path "/v1/some/path" response code to match "200"
 // Send an http request that receives a stream of events. Supports (GET|POST|PUT|DELETE|PATCH|OPTION). :
 //    When I GET path "/v1/some/${kid} as an event stream
 // Wait until a json event arrives on the event stream or a timeout occurs:
@@ -34,6 +36,7 @@ func init() {
 		ctx.Step(`^I (GET|POST|PUT|DELETE|PATCH|OPTION) path "([^"]*)" as a json event stream$`, s.sendHttpRequestAsEventStream)
 		ctx.Step(`^I (GET|POST|PUT|DELETE|PATCH|OPTION) path "([^"]*)" with json body:$`, s.sendHttpRequestWithJsonBody)
 		ctx.Step(`^I wait up to "([^"]*)" seconds for a GET on path "([^"]*)" response "([^"]*)" selection to match "([^"]*)"$`, s.iWaitUpToSecondsForAGETOnPathResponseSelectionToMatch)
+		ctx.Step(`^I wait up to "([^"]*)" seconds for a GET on path "([^"]*)" response code to match "([^"]*)"$`, s.iWaitUpToSecondsForAGETOnPathResponseCodeToMatch)
 		ctx.Step(`^I wait up to "([^"]*)" seconds for a response event$`, s.iWaitUpToSecondsForAResponseJsonEvent)
 	})
 }
@@ -174,6 +177,34 @@ func (s *TestScenario) iWaitUpToSecondsForAResponseJsonEvent(timeout float64) er
 	}
 
 	return nil
+}
+
+func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseCodeToMatch(timeout float64, path string, expected int) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout*float64(time.Second)))
+	defer cancel()
+	session := s.Session()
+	session.Ctx = ctx
+	defer func() {
+		session.Ctx = nil
+	}()
+
+	for {
+		err := s.sendHttpRequest("GET", path)
+		if err == nil {
+			err = s.theResponseCodeShouldBe(expected)
+			if err == nil {
+				return nil
+			}
+		}
+
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			time.Sleep(time.Duration(timeout * float64(time.Second) / 10.0))
+		}
+	}
 }
 
 func (s *TestScenario) iWaitUpToSecondsForAGETOnPathResponseSelectionToMatch(timeout float64, path string, selection, expected string) error {
