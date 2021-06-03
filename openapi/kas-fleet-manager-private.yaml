@@ -482,6 +482,8 @@ components:
                   required:
                     - id
                     - placement_id
+                    - bf2.org/placementId
+                    - bf2.org/id
                   properties:
                     bf2.org/id:
                       type: string
