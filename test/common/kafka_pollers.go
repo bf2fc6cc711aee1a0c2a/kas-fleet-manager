@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"net/http"
 	"time"
 )
@@ -83,8 +84,18 @@ func WaitForKafkaToReachStatus(ctx context.Context, client *openapi.APIClient, k
 			if err != nil {
 				return true, err
 			}
+
+			switch kafka.Status {
+			case constants.KafkaRequestStatusFailed.String():
+				fallthrough
+			case constants.KafkaRequestStatusDeprovision.String():
+				fallthrough
+			case constants.KafkaRequestStatusDeleting.String():
+				return false, errors.Errorf("Waiting for kafka '%s' to reach status '%s', but status '%s' has been reached instead", kafkaId, status.String(), kafka.Status)
+			}
+
 			currentStatus = kafka.Status
-			return kafka.Status == status.String(), nil
+			return constants.KafkaStatus(kafka.Status).CompareTo(status) >= 0, nil
 		}).
 		Build().Poll()
 	return kafka, err

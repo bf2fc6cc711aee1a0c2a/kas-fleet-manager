@@ -31,6 +31,21 @@ func (k *ClusterStatus) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// CompareTo - Compare this status with the given status returning an int. The result will be 0 if k==k1, -1 if k < k1, and +1 if k > k1
+func (k ClusterStatus) CompareTo(k1 ClusterStatus) int {
+	ordinalK := ordinals[k.String()]
+	ordinalK1 := ordinals[k1.String()]
+
+	switch {
+	case ordinalK == ordinalK1:
+		return 0
+	case ordinalK > ordinalK1:
+		return 1
+	default:
+		return -1
+	}
+}
+
 func (p ClusterProviderType) String() string {
 	return string(p)
 }
@@ -80,6 +95,18 @@ const (
 	ClusterProviderAwsEKS     ClusterProviderType = "aws_eks"
 	ClusterProviderStandalone ClusterProviderType = "standalone"
 )
+
+// ordinals - Used to decide if a status comes after or before a given state
+var ordinals = map[string]int{
+	ClusterAccepted.String():                        0,
+	ClusterProvisioning.String():                    10,
+	ClusterProvisioned.String():                     20,
+	ClusterWaitingForKasFleetShardOperator.String(): 30,
+	ClusterReady.String():                           40,
+	ClusterComputeNodeScalingUp.String():            50,
+	ClusterDeprovisioning.String():                  60,
+	ClusterCleanup.String():                         70,
+}
 
 // This represents the valid statuses of a OSD cluster
 var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady),
