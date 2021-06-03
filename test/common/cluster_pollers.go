@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/pkg/errors"
 	"time"
 )
 
@@ -95,7 +96,12 @@ func WaitForClusterStatus(clusterService *services.ClusterService, clusterId str
 			}
 			cluster = foundCluster
 			currentStatus = foundCluster.Status.String()
-			return currentStatus == status.String(), nil
+
+			if currentStatus == api.ClusterDeprovisioning.String() || currentStatus == api.ClusterCleanup.String() {
+				return false, errors.Errorf("Waiting for cluster '%s' to reach status '%s' but reached status '%s' instead", clusterId, status.String(), foundCluster.Status.String())
+			}
+
+			return foundCluster.Status.CompareTo(status) >= 0, nil
 		}).Build().Poll()
 
 	return cluster, err
