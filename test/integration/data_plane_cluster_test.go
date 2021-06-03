@@ -454,7 +454,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 }
 
 func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
-	var originalScalingType *string = new(string)
+	var originalScalingType = new(string)
 	startHook := func(h *test.Helper) {
 		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
 	}
