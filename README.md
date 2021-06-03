@@ -317,4 +317,4 @@ See this [README](./test/performance/README.md) for more info about performance 
 
 ## Additional documentation:
 * [kas-fleet-manager Implementation](docs/implementation.md)
-* [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling)
+* [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md)
