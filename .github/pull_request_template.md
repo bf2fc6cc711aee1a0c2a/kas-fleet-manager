@@ -15,14 +15,6 @@ Add the steps required to check this change. Following an example.
 If manual verifications required, please provide an environment where the reviewers can easily validate the changes if possible to speed up the review process. 
 -->
 
-## Type of change
-<!-- Please delete options that are not relevant. -->
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Refactor (A code change that neither fixes a bug nor adds a feature. The work is done to address technical debt) 
-- [ ] Documentation (A documentation only change)
-
 ## Checklist (Definition of Done)
 <!-- Please strikethrough options not relevant using two tildes ~~Text~~. Do not delete non relevant options -->
 - [ ] All acceptance criteria specified in JIRA have been completed
