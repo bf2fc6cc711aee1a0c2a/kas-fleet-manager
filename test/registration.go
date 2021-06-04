@@ -30,12 +30,12 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, startHo
 	// Create a new helper
 	helper := NewHelper(t, server)
 	helper.Env().Config.ObservabilityConfiguration.EnableMock = true
-	if startHook != nil {
-		startHook(helper)
-	}
 	if server != nil && helper.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
 		helper.SetServer(server)
 		workers.RepeatInterval = 1 * time.Second
+	}
+	if startHook != nil {
+		startHook(helper)
 	}
 
 	// Reload the clients and services to ensure the following:
