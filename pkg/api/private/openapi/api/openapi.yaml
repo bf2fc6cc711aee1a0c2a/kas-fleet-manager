@@ -251,7 +251,7 @@ paths:
     put:
       operationId: updateAgentClusterStatus
       parameters:
-      - description: The id of record
+      - description: The ID of record
         in: path
         name: id
         required: true
@@ -294,7 +294,7 @@ paths:
     put:
       operationId: updateKafkaClusterStatus
       parameters:
-      - description: The id of record
+      - description: The ID of record
         in: path
         name: id
         required: true
@@ -337,7 +337,7 @@ paths:
     get:
       operationId: getKafkas
       parameters:
-      - description: The id of record
+      - description: The ID of record
         in: path
         name: id
         required: true
@@ -377,7 +377,7 @@ paths:
     get:
       operationId: getKafkaAgent
       parameters:
-      - description: The id of record
+      - description: The ID of record
         in: path
         name: id
         required: true
