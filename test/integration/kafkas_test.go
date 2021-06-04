@@ -108,6 +108,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafkaRequest.SsoClientID).To(BeEmpty())
 	Expect(kafkaRequest.SsoClientSecret).To(BeEmpty())
 	Expect(kafkaRequest.QuotaType).To(Equal(h.Env().Config.Kafka.Quota.Type))
+	Expect(kafkaRequest.PlacementId).To(Not(BeEmpty()))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
