@@ -178,6 +178,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *erro
 		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
 		SsoClientID:         kafkaRequest.SsoClientID,
 		SsoClientSecret:     kafkaRequest.SsoClientSecret,
+		PlacementId:         api.NewID(),
 		Status:              constants.KafkaRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {

@@ -342,7 +342,7 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 	}
 }
 
-func Test_kafkaService_Create(t *testing.T) {
+func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
