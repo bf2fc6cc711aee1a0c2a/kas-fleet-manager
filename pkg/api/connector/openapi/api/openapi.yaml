@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: Connector Service Fleet Manager is a Rest API to manage connectors.
   title: Connector Service Fleet Manager
-  version: 0.0.2
+  version: 0.0.3
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -290,7 +290,7 @@ paths:
                   $ref: '#/components/examples/404DeleteExample'
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No kafka request with specified id exists
+          description: No kafka request with specified ID exists
         "500":
           content:
             application/json:
@@ -587,7 +587,7 @@ paths:
                   $ref: '#/components/examples/404DeleteExample'
               schema:
                 $ref: '#/components/schemas/Error'
-          description: No resource with specified id exists
+          description: No resource with specified ID exists
         "500":
           content:
             application/json:
