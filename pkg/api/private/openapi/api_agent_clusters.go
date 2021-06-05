@@ -28,7 +28,7 @@ type AgentClustersApiService service
 /*
 GetKafkaAgent Get the spec of the ManagedKafkaAgent CR spec
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param id The ID of record
 @return DataplaneClusterAgentConfig
 */
 func (a *AgentClustersApiService) GetKafkaAgent(ctx _context.Context, id string) (DataplaneClusterAgentConfig, *_nethttp.Response, error) {
@@ -124,7 +124,7 @@ func (a *AgentClustersApiService) GetKafkaAgent(ctx _context.Context, id string)
 /*
 GetKafkas Get the list of ManagedaKafkas for the specified agent cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param id The ID of record
 @return ManagedKafkaList
 */
 func (a *AgentClustersApiService) GetKafkas(ctx _context.Context, id string) (ManagedKafkaList, *_nethttp.Response, error) {
@@ -220,7 +220,7 @@ func (a *AgentClustersApiService) GetKafkas(ctx _context.Context, id string) (Ma
 /*
 UpdateAgentClusterStatus Update the status of an agent cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param id The ID of record
  * @param dataPlaneClusterUpdateStatusRequest Cluster status update data
 */
 func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context, id string, dataPlaneClusterUpdateStatusRequest DataPlaneClusterUpdateStatusRequest) (*_nethttp.Response, error) {
@@ -308,7 +308,7 @@ func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context,
 /*
 UpdateKafkaClusterStatus Update the status of Kafka clusters on an agent cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param id The id of record
+ * @param id The ID of record
  * @param requestBody Kafka clusters status update data
 */
 func (a *AgentClustersApiService) UpdateKafkaClusterStatus(ctx _context.Context, id string, requestBody map[string]DataPlaneKafkaStatus) (*_nethttp.Response, error) {
