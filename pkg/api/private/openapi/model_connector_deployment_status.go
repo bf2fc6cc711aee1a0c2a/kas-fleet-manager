@@ -11,8 +11,10 @@ package openapi
 
 // ConnectorDeploymentStatus The status of connector deployment
 type ConnectorDeploymentStatus struct {
-	Phase             string            `json:"phase,omitempty"`
-	ResourceVersion   int64             `json:"resource_version,omitempty"`
-	AvailableUpgrades string            `json:"available_upgrades,omitempty"`
-	Conditions        []MetaV1Condition `json:"conditions,omitempty"`
+	Phase           string `json:"phase,omitempty"`
+	ResourceVersion int64  `json:"resource_version,omitempty"`
+	// Deprecated
+	DeprecatedAvailableUpgrades string                             `json:"available_upgrades,omitempty"`
+	Operators                   ConnectorDeploymentStatusOperators `json:"operators,omitempty"`
+	Conditions                  []MetaV1Condition                  `json:"conditions,omitempty"`
 }

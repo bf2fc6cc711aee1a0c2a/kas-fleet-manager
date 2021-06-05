@@ -19,12 +19,10 @@
 package cucumber
 
 import (
-	"encoding/json"
 	"fmt"
+
 	"github.com/cucumber/godog"
 	"github.com/itchyny/gojq"
-	"github.com/pmezard/go-difflib/difflib"
-	"reflect"
 )
 
 func init() {
@@ -57,37 +55,7 @@ func (s *TestScenario) theResponseShouldMatchJson(expected string) error {
 		return fmt.Errorf("got an empty response from server, expected a json body")
 	}
 
-	// parse both so we can deep compare...
-	actualParsed, err := session.RespJson()
-	if err != nil {
-		return err
-	}
-
-	var expectedParsed interface{}
-	expanded, err := s.Expand(expected)
-	if err != nil {
-		return fmt.Errorf("%v\nresponse was:\n%s\n", err, string(session.RespBytes))
-	}
-	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
-		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)
-	}
-
-	if !reflect.DeepEqual(expectedParsed, actualParsed) {
-		expected, _ := json.MarshalIndent(expectedParsed, "", "  ")
-		actual, _ := json.MarshalIndent(actualParsed, "", "  ")
-
-		diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
-			A:        difflib.SplitLines(string(expected)),
-			B:        difflib.SplitLines(string(actual)),
-			FromFile: "Expected",
-			FromDate: "",
-			ToFile:   "Actual",
-			ToDate:   "",
-			Context:  1,
-		})
-		return fmt.Errorf("reponse does not match expected, diff:\n%s\n", diff)
-	}
-	return nil
+	return s.JsonMustMatch(string(session.RespBytes), expected, true)
 }
 
 func (s *TestScenario) theResponseShouldMatchText(expected string) error {

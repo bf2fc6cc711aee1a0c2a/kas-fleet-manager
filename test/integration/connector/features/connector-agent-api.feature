@@ -88,7 +88,12 @@ Feature: connector agent API
             "kafka": {
             }
           },
-          "status": {}
+          "status": {
+            "operators": {
+              "assigned": {},
+              "available": {}
+            }
+          }
         },
         "type": "BOOKMARK"
       }
@@ -169,7 +174,12 @@ Feature: connector agent API
             },
             "desired_state": "ready"
           },
-          "status": {}
+          "status": {
+            "operators": {
+              "assigned": {},
+              "available": {}
+            }
+          }
         }
       }
       """
@@ -222,7 +232,12 @@ Feature: connector agent API
               },
               "desired_state": "ready"
             },
-            "status": {}
+            "status": {
+              "operators": {
+                "assigned": {},
+                "available": {}
+              }
+            }
           }
         ],
         "kind": "ConnectorDeploymentList",
@@ -274,7 +289,12 @@ Feature: connector agent API
             },
             "desired_state": "ready"
           },
-          "status": {}
+          "status": {
+            "operators": {
+              "assigned": {},
+              "available": {}
+            }
+          }
       }
       """
     When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
@@ -282,6 +302,13 @@ Feature: connector agent API
       {
         "phase":"ready",
         "resource_version": 45,
+        "operators": {
+          "assigned": {
+            "id": "camel-k-1.0.0",
+            "type": "camel-k",
+            "version": "1.0.0"
+          }
+        },
         "conditions": [{
           "type": "Ready",
           "status": "True",
@@ -409,9 +436,102 @@ Feature: connector agent API
                 "type": "Ready"
               }
             ],
+            "operators": {
+              "assigned": {
+                "id": "camel-k-1.0.0",
+                "type": "camel-k",
+                "version": "1.0.0"
+              },
+              "available": {}
+            },
             "phase": "ready",
             "resource_version": 45
           }
         }
       }
       """
+
+    # Now lets verify connector upgrades due to catalog updates
+    Given connector deployment upgrades available are:
+      """
+      []
+      """
+
+    # Simulate the catalog getting an update
+    When update connector catalog of type "aws-sqs-source-v1alpha1" and channel "stable" with shard metadata:
+      """
+      {
+        "meta_image": "quay.io/mock-image:1.0.0",
+        "operators": [
+          {
+            "type": "camel-k",
+            "versions": "[2.0.0]"
+          }
+        ]
+      }
+      """
+    Then connector deployment upgrades available are:
+      """
+      [{
+        "deployment_id": "${connector_deployment_id}",
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "channel": "stable",
+        "shard_metadata": {
+          "assigned_id": ${response[0].shard_metadata.assigned_id},
+          "available_id": ${response[0].shard_metadata.available_id}
+        }
+      }]
+      """
+
+    # Simulate the agent telling us there is an operator upgrade available for the deployment...
+    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
+      """
+      {
+        "phase":"ready",
+        "resource_version": 45,
+        "conditions": [{
+          "type": "Ready",
+          "status": "True",
+          "lastTransitionTime": "2018-01-01T00:00:00Z"
+        }],
+        "operators": {
+          "assigned": {
+            "id": "camel-k-1.0.0",
+            "type": "camel-k",
+            "version": "1.0.0"
+          },
+          "available": {
+            "id": "camel-k-1.0.1",
+            "type": "camel-k",
+            "version": "1.0.1"
+          }
+        }
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+    And connector deployment upgrades available are:
+      """
+      [{
+        "deployment_id": "${connector_deployment_id}",
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "channel": "stable",
+        "operator": {
+          "assigned": {
+            "id": "camel-k-1.0.0",
+            "type": "camel-k",
+            "version": "1.0.0"
+          },
+          "available": {
+            "id": "camel-k-1.0.1",
+            "type": "camel-k",
+            "version": "1.0.1"
+          }
+        },
+        "shard_metadata": {
+          "assigned_id": ${response[0].shard_metadata.assigned_id},
+          "available_id": ${response[0].shard_metadata.available_id}
+        }
+      }]
+      """
+

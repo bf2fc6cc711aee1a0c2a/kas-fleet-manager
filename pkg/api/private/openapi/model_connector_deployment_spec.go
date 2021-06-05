@@ -14,7 +14,10 @@ type ConnectorDeploymentSpec struct {
 	ShardMetadata map[string]interface{} `json:"shard_metadata,omitempty"`
 	ConnectorId   string                 `json:"connector_id,omitempty"`
 	// allow the connector to upgrade to a new operator
-	AllowUpgrade             bool                    `json:"allow_upgrade,omitempty"`
+	// Deprecated
+	DeprecatedAllowUpgrade bool `json:"allow_upgrade,omitempty"`
+	// an optional operator id that the connector should be run under.
+	OperatorId               string                  `json:"operator_id,omitempty"`
 	ConnectorResourceVersion int64                   `json:"connector_resource_version,omitempty"`
 	KafkaId                  string                  `json:"kafka_id,omitempty"`
 	Kafka                    KafkaConnectionSettings `json:"kafka,omitempty"`
