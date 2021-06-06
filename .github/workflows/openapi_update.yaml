@@ -8,6 +8,7 @@ on:
 
 jobs:
   dispatch:
+    if: github.repository == 'bf2fc6cc711aee1a0c2a/kas-fleet-manager'
     env:
       APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
