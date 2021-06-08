@@ -23,7 +23,7 @@ const (
 	nonExistentKafkaName     = "non-existentKafka"
 	nonExistentColumnName    = "non_existentColumn"
 	sqlDeleteQuery           = "delete * from clusters;"
-	usernameWithSpecialChars = "special+kakfa@example.com"
+	usernameWithSpecialChars = "special+kafka@example.com"
 	orgId                    = "13640203"
 )
 
