@@ -153,7 +153,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `ROUTE53_ACCESS_KEY`: AWS route 53 access key for creating CNAME records
 - `ROUTE53_SECRET_ACCESS_KEY`: AWS route 53 secret access key for creating CNAME records
 - `KAFKA_TLS_CERT`: Kafka TLS external certificate.
-- `KAFKA_TLS_KEY`: Kakfa TLS external certificate private key.
+- `KAFKA_TLS_KEY`: Kafka TLS external certificate private key.
 - `OBSERVATORIUM_SERVICE_TOKEN`: Token for observatorium service.
 - `MAS_SSO_BASE_URL`: MAS SSO base url.
 - `MAS_SSO_REALM`: MAS SSO realm url.
