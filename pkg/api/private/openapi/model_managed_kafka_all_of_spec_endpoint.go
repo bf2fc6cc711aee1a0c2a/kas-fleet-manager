@@ -12,7 +12,7 @@ package openapi
 // ManagedKafkaAllOfSpecEndpoint struct for ManagedKafkaAllOfSpecEndpoint
 type ManagedKafkaAllOfSpecEndpoint struct {
 	// Deprecated
-	DeprecatedBootstrapServerHost string                           `json:"bootstrapServerHost,omitempty"`
-	BootstrapServerHost           string                           `json:"bootstrap_server_host,omitempty"`
-	Tls                           ManagedKafkaAllOfSpecEndpointTls `json:"tls,omitempty"`
+	DeprecatedBootstrapServerHost string                            `json:"bootstrapServerHost,omitempty"`
+	BootstrapServerHost           string                            `json:"bootstrap_server_host,omitempty"`
+	Tls                           *ManagedKafkaAllOfSpecEndpointTls `json:"tls,omitempty"`
 }

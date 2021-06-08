@@ -582,10 +582,6 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			},
 			Endpoint: managedkafka.EndpointSpec{
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
-				Tls: managedkafka.TlsSpec{
-					Cert: kafkaConfig.KafkaTLSCert,
-					Key:  kafkaConfig.KafkaTLSKey,
-				},
 			},
 			// These values must be changed as soon as we will have the real values
 			Versions: managedkafka.VersionsSpec{
@@ -608,6 +604,13 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			UserNameClaim:          keycloakConfig.UserNameClaim,
 			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
 			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
+		}
+	}
+
+	if kafkaConfig.EnableKafkaExternalCertificate {
+		managedKafkaCR.Spec.Endpoint.Tls = &managedkafka.TlsSpec{
+			Cert: kafkaConfig.KafkaTLSCert,
+			Key:  kafkaConfig.KafkaTLSKey,
 		}
 	}
 
