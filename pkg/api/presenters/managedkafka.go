@@ -53,11 +53,8 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 				DeprecatedCustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
 			},
 			Endpoint: openapi.ManagedKafkaAllOfSpecEndpoint{
-				BootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
-				Tls: openapi.ManagedKafkaAllOfSpecEndpointTls{
-					Cert: from.Spec.Endpoint.Tls.Cert,
-					Key:  from.Spec.Endpoint.Tls.Key,
-				},
+				Tls:                           getOpenAPIManagedKafkaEndpointTLS(from.Spec.Endpoint.Tls),
+				BootstrapServerHost:           from.Spec.Endpoint.BootstrapServerHost,
 				DeprecatedBootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
 			},
 			Versions: openapi.ManagedKafkaVersions{
@@ -68,5 +65,16 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 		},
 	}
 
+	return res
+}
+
+func getOpenAPIManagedKafkaEndpointTLS(from *v1.TlsSpec) *openapi.ManagedKafkaAllOfSpecEndpointTls {
+	var res *openapi.ManagedKafkaAllOfSpecEndpointTls
+	if from != nil {
+		res = &openapi.ManagedKafkaAllOfSpecEndpointTls{
+			Cert: from.Cert,
+			Key:  from.Key,
+		}
+	}
 	return res
 }

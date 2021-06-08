@@ -555,6 +555,7 @@ components:
                       type: string
                     tls:
                       type: object
+                      nullable: true
                       properties:
                         cert:
                           type: string

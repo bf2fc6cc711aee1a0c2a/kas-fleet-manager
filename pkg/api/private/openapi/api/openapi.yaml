@@ -967,6 +967,7 @@ components:
         custom_claim_check:
           type: string
     ManagedKafka_allOf_spec_endpoint_tls:
+      nullable: true
       properties:
         cert:
           type: string

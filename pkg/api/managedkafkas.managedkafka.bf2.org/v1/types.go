@@ -58,8 +58,8 @@ type TlsSpec struct {
 }
 
 type EndpointSpec struct {
-	BootstrapServerHost string  `json:"bootstrapServerHost"`
-	Tls                 TlsSpec `json:"tls"`
+	BootstrapServerHost string   `json:"bootstrapServerHost"`
+	Tls                 *TlsSpec `json:"tls,omitempty"`
 }
 
 type ManagedKafkaSpec struct {
