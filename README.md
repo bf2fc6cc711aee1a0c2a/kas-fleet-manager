@@ -56,7 +56,6 @@ make kafkacert/setup
 ```
 6. Setup the image pull secret
     - Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull), copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
-7. If the `--enable-kas-fleetshard-sync` flag on the serve command is set to true (it is set to false by default at the moment, so you need to explicitly enable it), you should follow the [extra steps](./docs/test-locally-with-fleetshard-sync.md) to allow the synchronizer to communicate with your local server. 
 
 ## Running the Service locally
 Please make sure you have followed all of the prerequisites above first.
