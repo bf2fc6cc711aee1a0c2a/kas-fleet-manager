@@ -8,14 +8,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
+	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
@@ -893,26 +895,64 @@ func TestKafkaDelete_WithoutID(t *testing.T) {
 
 // TestKafkaDelete - test deleting kafka instance during creation
 func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
-	// Skipping because of https://issues.redhat.com/browse/MGDSTRM-3759
-	t.SkipNow()
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	startHook := func(h *test.Helper) {
+		if h.Env().Config.OCM.MockMode == config.MockModeEmulateServer {
+			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
+			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
+			workers.RepeatInterval = 10 * time.Second
+		}
+	}
+
+	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, nil)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
-	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
+	// custom update kafka status implementation to ensure that kafkas created within this test never gets updated to a 'ready' state.
+	mockKasFleetshardSyncBuilder.SetUpdateKafkaStatusFunc(func(helper *test.Helper, privateClient *privateopenapi.APIClient) error {
+		clusterService := helper.Env().Services.Cluster
+		dataplaneCluster, findDataplaneClusterErr := clusterService.FindCluster(services.FindClusterCriteria{
+			Status: api.ClusterReady,
+		})
+		if findDataplaneClusterErr != nil {
+			return fmt.Errorf("Unable to retrieve a ready data plane cluster: %v", findDataplaneClusterErr)
+		}
 
+		// only update kafka status if a data plane cluster is available
+		if dataplaneCluster != nil {
+			ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
+			kafkaList, _, err := privateClient.AgentClustersApi.GetKafkas(ctx, dataplaneCluster.ClusterID)
+			if err != nil {
+				return err
+			}
+			kafkaStatusList := make(map[string]privateopenapi.DataPlaneKafkaStatus)
+			for _, kafka := range kafkaList.Items {
+				id := kafka.Metadata.Annotations.Id
+				if kafka.Spec.Deleted {
+					kafkaStatusList[id] = kasfleetshardsync.GetDeletedKafkaStatusResponse()
+				}
+			}
+
+			if _, err = privateClient.AgentClustersApi.UpdateKafkaClusterStatus(ctx, dataplaneCluster.ClusterID, kafkaStatusList); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	mockKasFleetshardSync := mockKasFleetshardSyncBuilder.Build()
+	mockKasFleetshardSync.Start()
+	defer mockKasFleetshardSync.Stop()
+
+	clusterID, getClusterErr := utils.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details from persisted .json file: %v", getClusterErr)
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
 	if clusterID == "" {
 		panic("No cluster found")
 	}
+
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 	k := openapi.KafkaRequestPayload{
@@ -922,35 +962,68 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
+	// Test deletion of a kafka in an 'accepted' state
 	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
-
-	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
-	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusProvisioning)
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusProvisioning.String()))
-	Expect(foundKafka.Owner).To(Equal(account.Username()))
-
-	// wait a few seconds to ensure that deletion is triggered during creation
-	time.Sleep(kafkaCheckInterval)
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
-	// Sleep for worker interval duration to ensure kafka manager reconciliation has finished: 1 time for
-	// updating the status to `deprovision` and one time for the real deletion
-	time.Sleep(workers.RepeatInterval * 2)
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
-
-	// wait for kafka to be deleted
 	_ = utils.WaitForKafkaToBeDeleted(ctx, client, kafka.Id)
 	kafkaList, _, err := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
-	Expect(kafkaList.Total).Should(BeZero(), " Kafka List response should be empty")
+	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
+
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+
+	// Test deletion of a kafka in a 'preparing' state
+	kafka, resp, err = utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
+
+	kafka, err = utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusPreparing)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
+
+	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+
+	_ = utils.WaitForKafkaToBeDeleted(ctx, client, kafka.Id)
+	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
+	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
+	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
+
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+
+	// Test deletion of a kafka in a 'provisioning' state
+	kafka, resp, err = utils.WaitForKafkaCreateToBeAccepted(ctx, client, k)
+	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
+
+	kafka, err = utils.WaitForKafkaToReachStatus(ctx, client, kafka.Id, constants.KafkaRequestStatusProvisioning)
+	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
+
+	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+
+	_ = utils.WaitForKafkaToBeDeleted(ctx, client, kafka.Id)
+	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
+	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
+	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
+
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
 }
 
 // TestKafkaDelete - tests fail kafka delete
