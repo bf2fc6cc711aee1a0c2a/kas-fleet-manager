@@ -11,10 +11,7 @@ package openapi
 
 // ConnectorClusterStatusOperators struct for ConnectorClusterStatusOperators
 type ConnectorClusterStatusOperators struct {
-	// the id of the operator
-	Id string `json:"id,omitempty"`
-	// the version of the operator
-	Version string `json:"version,omitempty"`
+	Operator ConnectorOperator `json:"operator,omitempty"`
 	// the namespace to which the operator has been installed
 	Namespace string `json:"namespace,omitempty"`
 	// the status of the operator

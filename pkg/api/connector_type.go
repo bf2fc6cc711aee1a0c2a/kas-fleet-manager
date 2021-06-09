@@ -25,3 +25,11 @@ func (l ConnectorTypeList) Index() ConnectorTypeIndex {
 	}
 	return index
 }
+
+type ConnectorShardMetadata struct {
+	ID              int64
+	ConnectorTypeId string
+	Channel         string
+	ShardMetadata   JSON
+	LatestId        *int64
+}

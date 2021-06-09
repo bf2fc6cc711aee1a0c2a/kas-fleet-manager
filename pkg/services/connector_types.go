@@ -8,9 +8,11 @@ package services
 
 import (
 	"context"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -23,6 +25,11 @@ type ConnectorTypesService interface {
 	Get(id string) (*api.ConnectorType, *errors.ServiceError)
 	GetConnectorCatalogEntry(id string, channel string) (*config.ConnectorChannelConfig, *errors.ServiceError)
 	List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
+	ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError
+
+	PutConnectorShardMetadata(ctc *api.ConnectorShardMetadata) (int64, *errors.ServiceError)
+	GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError)
+	GetConnectorShardMetadata(id int64) (*api.ConnectorShardMetadata, *errors.ServiceError)
 }
 
 var _ ConnectorTypesService = &connectorTypesService{}
@@ -30,9 +37,10 @@ var _ ConnectorTypesService = &connectorTypesService{}
 type connectorTypesService struct {
 	connectorTypeIndex map[string]*config.ConnectorCatalogEntry
 	connectorsConfig   *config.ConnectorsConfig
+	connectionFactory  *db.ConnectionFactory
 }
 
-func NewConnectorTypesService(connectorsConfig *config.ConnectorsConfig) *connectorTypesService {
+func NewConnectorTypesService(connectorsConfig *config.ConnectorsConfig, connectionFactory *db.ConnectionFactory) *connectorTypesService {
 
 	connectorTypeIndex := map[string]*config.ConnectorCatalogEntry{}
 	for _, entry := range connectorsConfig.CatalogEntries {
@@ -41,6 +49,7 @@ func NewConnectorTypesService(connectorsConfig *config.ConnectorsConfig) *connec
 	return &connectorTypesService{
 		connectorTypeIndex: connectorTypeIndex,
 		connectorsConfig:   connectorsConfig,
+		connectionFactory:  connectionFactory,
 	}
 }
 
@@ -100,4 +109,103 @@ func (k *connectorTypesService) getConnectorTypeList() api.ConnectorTypeList {
 		r[i] = presenters.ConvertConnectorType(v.ConnectorType)
 	}
 	return r
+}
+
+func (k *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError {
+	for id, entry := range k.connectorTypeIndex {
+		for channel, ccc := range entry.Channels {
+			err := f(id, channel, ccc)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (k *connectorTypesService) PutConnectorShardMetadata(ctc *api.ConnectorShardMetadata) (int64, *errors.ServiceError) {
+
+	var resource api.ConnectorShardMetadata
+
+	dbConn := k.connectionFactory.New()
+	dbConn = dbConn.Select("id")
+	dbConn = dbConn.Where("connector_type_id = ?", ctc.ConnectorTypeId)
+	dbConn = dbConn.Where("channel = ?", ctc.Channel)
+	dbConn = dbConn.Where("shard_metadata = ?", ctc.ShardMetadata)
+
+	if err := dbConn.First(&resource).Error; err != nil {
+		if IsRecordNotFoundError(err) {
+
+			// We need to create the resource....
+			dbConn = k.connectionFactory.New()
+			if err := dbConn.Save(ctc).Error; err != nil {
+				return 0, errors.GeneralError("failed to create connector type channel: %v", err)
+			}
+
+			// read it back again to get it's version.
+			dbConn = k.connectionFactory.New()
+			dbConn = dbConn.Select("id")
+			dbConn = dbConn.Where("connector_type_id = ?", ctc.ConnectorTypeId)
+			dbConn = dbConn.Where("channel = ?", ctc.Channel)
+			dbConn = dbConn.Where("shard_metadata = ?", ctc.ShardMetadata)
+			if err := dbConn.First(&resource).Error; err != nil {
+				return 0, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find connector type channel after insert")
+			}
+
+			// update the other records to know the latest_id
+			dbConn = k.connectionFactory.New()
+			dbConn = dbConn.Table("connector_shard_metadata")
+			dbConn = dbConn.Where("id <> ?", resource.ID)
+			dbConn = dbConn.Where("connector_type_id = ?", ctc.ConnectorTypeId)
+			dbConn = dbConn.Where("channel = ?", ctc.Channel)
+			if err := dbConn.Update(`latest_id`, resource.ID).Error; err != nil {
+				return 0, errors.GeneralError("failed to create connector type channel: %v", err)
+			}
+
+			return resource.ID, nil
+
+		} else {
+			return 0, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find connector type channel")
+		}
+	} else {
+		// resource existed... update the ctc with the version it's been assigned in the DB...
+		return resource.ID, nil
+	}
+}
+
+func (k *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError) {
+	resource := &api.ConnectorShardMetadata{}
+	dbConn := k.connectionFactory.New()
+
+	err := dbConn.
+		Select("id").
+		Where("connector_type_id", tid).
+		Where("channel", channel).
+		Order("id desc").
+		First(&resource).Error
+
+	if err != nil {
+		if IsRecordNotFoundError(err) {
+			return 0, errors.NotFound("connector type channel not found")
+		}
+		return 0, errors.GeneralError("Unable to get connector type channel: %s", err)
+	}
+	return resource.ID, nil
+}
+
+func (k *connectorTypesService) GetConnectorShardMetadata(id int64) (*api.ConnectorShardMetadata, *errors.ServiceError) {
+	resource := &api.ConnectorShardMetadata{}
+	dbConn := k.connectionFactory.New()
+
+	err := dbConn.
+		Where("id", id).
+		First(&resource).Error
+
+	if err != nil {
+		if IsRecordNotFoundError(err) {
+			return nil, errors.NotFound("connector type channel not found")
+		}
+		return nil, errors.GeneralError("Unable to get connector type channel: %s", err)
+	}
+	return resource, nil
 }

@@ -1,10 +1,13 @@
 package db
 
 import (
+	"fmt"
+	"runtime"
 	"time"
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"github.com/golang/glog"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -53,6 +56,7 @@ var migrations []*gormigrate.Migration = []*gormigrate.Migration{
 	addClusterProviderInfo(),
 	changeKafkaDeleteStatusToDeleting(),
 	addKafkaQuotaTypeColumn(),
+	addConnectorTypeChannel(),
 }
 
 func Migrate(conFactory *ConnectionFactory) {
@@ -114,4 +118,144 @@ type Model struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+type MigrationAction func(tx *gorm.DB, apply bool) error
+
+func CreateTableAction(table interface{}) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			err := tx.AutoMigrate(table)
+			if err != nil {
+				return errors.Wrap(err, caller)
+			}
+		} else {
+			err := tx.Migrator().DropTable(table)
+			if err != nil {
+				return errors.Wrap(err, caller)
+			}
+		}
+		return nil
+	}
+}
+
+func AddTableColumnsAction(table interface{}) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			stmt := &gorm.Statement{DB: tx}
+			if err := stmt.Parse(table); err != nil {
+				return errors.Wrap(err, caller)
+			}
+			for _, field := range stmt.Schema.FieldsByDBName {
+				if err := tx.Migrator().AddColumn(table, field.DBName); err != nil {
+					return errors.Wrap(err, caller)
+				}
+			}
+		} else {
+			stmt := &gorm.Statement{DB: tx}
+			if err := stmt.Parse(table); err != nil {
+				return errors.Wrap(err, caller)
+			}
+			for _, field := range stmt.Schema.FieldsByDBName {
+				if err := tx.Migrator().DropColumn(table, field.DBName); err != nil {
+					return errors.Wrap(err, caller)
+				}
+			}
+		}
+		return nil
+
+	}
+}
+
+func DropTableColumnsAction(table interface{}, tableName ...string) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			stmt := &gorm.Statement{DB: tx}
+			if err := stmt.Parse(table); err != nil {
+				return errors.Wrap(err, caller)
+			}
+			if len(tableName) > 0 {
+				stmt.Schema.Table = tableName[0]
+			}
+			for _, field := range stmt.Schema.FieldsByDBName {
+				if err := tx.Migrator().DropColumn(table, field.DBName); err != nil {
+					return errors.Wrap(err, caller)
+				}
+			}
+		} else {
+			stmt := &gorm.Statement{DB: tx}
+			if err := stmt.Parse(table); err != nil {
+				return errors.Wrap(err, caller)
+			}
+			if len(tableName) > 0 {
+				stmt.Schema.Table = tableName[0]
+			}
+			for _, field := range stmt.Schema.FieldsByDBName {
+				if err := tx.Migrator().AddColumn(table, field.DBName); err != nil {
+					return errors.Wrap(err, caller)
+				}
+			}
+		}
+		return nil
+
+	}
+}
+
+func ExecAction(applySql string, unapplySql string) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			err := tx.Exec(applySql).Error
+			if err != nil {
+				return errors.Wrap(err, caller)
+			}
+		} else {
+			err := tx.Exec(unapplySql).Error
+			if err != nil {
+				return errors.Wrap(err, caller)
+			}
+		}
+		return nil
+
+	}
+}
+
+func CreateMigrationFromActions(id string, actions ...MigrationAction) *gormigrate.Migration {
+	return &gormigrate.Migration{
+		ID: id,
+		Migrate: func(tx *gorm.DB) error {
+			for _, action := range actions {
+				err := action(tx, true)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		Rollback: func(tx *gorm.DB) error {
+			for i := len(actions) - 1; i >= 0; i-- {
+				err := actions[i](tx, false)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
 }

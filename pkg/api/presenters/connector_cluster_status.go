@@ -9,7 +9,7 @@ func ConvertConnectorClusterStatus(from openapi.ConnectorClusterStatus) api.Conn
 	return api.ConnectorClusterStatus{
 		Conditions: ConvertConditions(from.Conditions),
 		Phase:      from.Phase,
-		Operators:  ConvertOperators(from.Operators),
+		Operators:  ConvertOperatorStatus(from.Operators),
 	}
 }
 
@@ -55,12 +55,13 @@ func PresentConditions(in []api.Condition) []openapi.MetaV1Condition {
 	return out
 }
 
-func ConvertOperators(in []openapi.ConnectorClusterStatusOperators) []api.Operators {
-	out := make([]api.Operators, len(in))
+func ConvertOperatorStatus(in []openapi.ConnectorClusterStatusOperators) []api.OperatorStatus {
+	out := make([]api.OperatorStatus, len(in))
 	for i, v := range in {
-		out[i] = api.Operators{
-			Id:        v.Id,
-			Version:   v.Version,
+		out[i] = api.OperatorStatus{
+			Id:        v.Operator.Id,
+			Type:      v.Operator.Type,
+			Version:   v.Operator.Version,
 			Namespace: v.Namespace,
 			Status:    v.Status,
 		}
@@ -68,12 +69,15 @@ func ConvertOperators(in []openapi.ConnectorClusterStatusOperators) []api.Operat
 	return out
 }
 
-func PresentOperators(in []api.Operators) []openapi.ConnectorClusterStatusOperators {
+func PresentOperators(in []api.OperatorStatus) []openapi.ConnectorClusterStatusOperators {
 	out := make([]openapi.ConnectorClusterStatusOperators, len(in))
 	for i, v := range in {
 		out[i] = openapi.ConnectorClusterStatusOperators{
-			Id:        v.Id,
-			Version:   v.Version,
+			Operator: openapi.ConnectorOperator{
+				Id:      v.Id,
+				Type:    v.Type,
+				Version: v.Version,
+			},
 			Namespace: v.Namespace,
 			Status:    v.Status,
 		}

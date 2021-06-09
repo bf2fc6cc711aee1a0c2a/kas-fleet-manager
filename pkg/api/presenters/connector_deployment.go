@@ -12,7 +12,15 @@ func PresentConnectorDeployment(from api.ConnectorDeployment) (openapi.Connector
 	if from.Status.Conditions != nil {
 		err := json.Unmarshal([]byte(from.Status.Conditions), &conditions)
 		if err != nil {
-			return openapi.ConnectorDeployment{}, errors.BadRequest("invalid status conditions: %v", err)
+			return openapi.ConnectorDeployment{}, errors.GeneralError("invalid status conditions: %v", err)
+		}
+	}
+
+	var operators openapi.ConnectorDeploymentStatusOperators
+	if from.Status.Operators != nil {
+		err := json.Unmarshal([]byte(from.Status.Operators), &operators)
+		if err != nil {
+			return openapi.ConnectorDeployment{}, errors.GeneralError("invalid status operators: %v", err)
 		}
 	}
 
@@ -29,26 +37,30 @@ func PresentConnectorDeployment(from api.ConnectorDeployment) (openapi.Connector
 		Spec: openapi.ConnectorDeploymentSpec{
 			ConnectorId:              from.ConnectorID,
 			ConnectorResourceVersion: from.ConnectorVersion,
-			AllowUpgrade:             from.AllowUpgrade,
 		},
 		Status: openapi.ConnectorDeploymentStatus{
 			Phase:           from.Status.Phase,
 			ResourceVersion: from.Status.Version,
 			Conditions:      conditions,
+			Operators:       operators,
 		},
 	}, nil
 }
 
 func ConvertConnectorDeploymentStatus(from openapi.ConnectorDeploymentStatus) (api.ConnectorDeploymentStatus, *errors.ServiceError) {
-
 	conditions, err := json.Marshal(from.Conditions)
 	if err != nil {
 		return api.ConnectorDeploymentStatus{}, errors.BadRequest("invalid conditions: %v", err)
 	}
+	operators, err := json.Marshal(from.Operators)
+	if err != nil {
+		return api.ConnectorDeploymentStatus{}, errors.BadRequest("invalid operators: %v", err)
+	}
 	return api.ConnectorDeploymentStatus{
-		Phase:             from.Phase,
-		Version:           from.ResourceVersion,
-		Conditions:        conditions,
-		AvailableUpgrades: from.AvailableUpgrades,
+		Phase:            from.Phase,
+		Version:          from.ResourceVersion,
+		Conditions:       conditions,
+		Operators:        operators,
+		UpgradeAvailable: from.Operators.Available.Id != "" && from.Operators.Available.Id != from.Operators.Assigned.Id,
 	}, nil
 }

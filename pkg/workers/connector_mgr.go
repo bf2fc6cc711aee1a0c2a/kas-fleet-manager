@@ -2,8 +2,10 @@ package workers
 
 import (
 	"context"
+	"encoding/json"
 	"sync"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/pkg/errors"
 
@@ -28,6 +30,7 @@ type ConnectorManager struct {
 	connectorTypesService   services.ConnectorTypesService
 	vaultService            services.VaultService
 	lastVersion             int64
+	reconcileChannels       bool
 }
 
 // NewConnectorManager creates a new connector manager
@@ -40,6 +43,7 @@ func NewConnectorManager(id string, connectorTypesService services.ConnectorType
 		observatoriumService:    observatoriumService,
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
+		reconcileChannels:       true,
 	}
 }
 
@@ -82,6 +86,17 @@ func (c *ConnectorManager) SetIsRunning(val bool) {
 func (k *ConnectorManager) Reconcile() []error {
 	glog.V(5).Infoln("reconciling connectors")
 	var errs []error
+
+	if k.reconcileChannels {
+		err := k.connectorTypesService.ForEachConnectorCatalogEntry(k.ReconcileConnectorCatalogEntry)
+		if err != nil {
+			errs = append(errs, err)
+		} else {
+			// We only need to reconcile channel updates once per process startup since,
+			// configured channel settings are only loaded on startup.
+			k.reconcileChannels = false
+		}
+	}
 
 	serviceErr := k.connectorService.ForEach(func(connector *api.Connector) *serviceError.ServiceError {
 		return InDBTransaction(func(ctx context.Context) error {
@@ -171,6 +186,28 @@ func InDBTransaction(f func(ctx context.Context) error) (rerr *serviceError.Serv
 	return nil
 }
 
+func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel string, ccc *config.ConnectorChannelConfig) *serviceError.ServiceError {
+
+	ctc := api.ConnectorShardMetadata{
+		ConnectorTypeId: id,
+		Channel:         channel,
+	}
+	var err error
+	ctc.ShardMetadata, err = json.Marshal(ccc.ShardMetadata)
+	if err != nil {
+		return serviceError.GeneralError("failed to convert connector type %s, channel %s: %v", id, channel, err.Error())
+	}
+
+	// We store connector type channels so we can track changes and trigger redeployment of
+	// associated connectors upon connector type channel changes.
+	_, serr := k.connectorTypesService.PutConnectorShardMetadata(&ctc)
+	if serr != nil {
+		return serr
+	}
+
+	return nil
+}
+
 func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *api.Connector) error {
 	switch connector.TargetKind {
 	case api.AddonTargetKind:
@@ -182,30 +219,34 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 		if cluster == nil {
 			// we will try to find a ready cluster again in the next reconcile
 			return nil
-		} else {
+		}
 
-			var status = api.ConnectorStatus{}
-			status.ID = connector.ID
-			status.ClusterID = cluster.ID
-			status.Phase = api.ConnectorStatusPhaseAssigned
-			if err = k.connectorService.SaveStatus(ctx, status); err != nil {
-				return errors.Wrapf(err, "failed to update connector status %s with cluster details", connector.ID)
-			}
+		channelVersion, err := k.connectorTypesService.GetLatestConnectorShardMetadataID(connector.ConnectorTypeId, connector.Channel)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get latest channel version for connector request %s", connector.ID)
+		}
 
-			deployment := api.ConnectorDeployment{
-				Meta: api.Meta{
-					ID: api.NewID(),
-				},
-				ConnectorID:      connector.ID,
-				ClusterID:        cluster.ID,
-				ConnectorVersion: connector.Version,
-				Status:           api.ConnectorDeploymentStatus{},
-			}
+		var status = api.ConnectorStatus{}
+		status.ID = connector.ID
+		status.ClusterID = cluster.ID
+		status.Phase = api.ConnectorStatusPhaseAssigned
+		if err = k.connectorService.SaveStatus(ctx, status); err != nil {
+			return errors.Wrapf(err, "failed to update connector status %s with cluster details", connector.ID)
+		}
 
-			if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
-				return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
-			}
+		deployment := api.ConnectorDeployment{
+			Meta: api.Meta{
+				ID: api.NewID(),
+			},
+			ConnectorID:            connector.ID,
+			ClusterID:              cluster.ID,
+			ConnectorVersion:       connector.Version,
+			ConnectorTypeChannelId: channelVersion,
+			Status:                 api.ConnectorDeploymentStatus{},
+		}
 
+		if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
+			return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
 		}
 
 	default:

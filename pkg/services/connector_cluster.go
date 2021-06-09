@@ -7,6 +7,9 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -15,7 +18,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/spyzhov/ajson"
 	"gorm.io/gorm"
-	"reflect"
 )
 
 type ConnectorClusterService interface {
@@ -34,6 +36,7 @@ type ConnectorClusterService interface {
 	FindReadyCluster(owner string, orgId string, group string) (*api.ConnectorCluster, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (api.ConnectorDeployment, *errors.ServiceError)
 	GetDeployment(ctx context.Context, id string) (api.ConnectorDeployment, *errors.ServiceError)
+	GetAvailableDeploymentUpgrades() (upgrades []api.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError)
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -400,6 +403,82 @@ func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) 
 	dbConn = dbConn.Where("id = ?", id)
 	if err := dbConn.First(&resource).Error; err != nil {
 		return resource, handleGetError("Connector deployment", "id", id, err)
+	}
+	return
+}
+
+func (k *connectorClusterService) GetAvailableDeploymentUpgrades() (upgrades []api.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError) {
+
+	type Result struct {
+		DeploymentID             string
+		ConnectorTypeUpgrade     bool
+		ConnectorOperatorUpgrade bool
+		ConnectorTypeUpgradeFrom int64
+		ConnectorTypeUpgradeTo   int64
+		ConnectorTypeId          string
+		Channel                  string
+		ConnectorOperators       api.JSON
+	}
+
+	results := []Result{}
+	dbConn := k.connectionFactory.New()
+	dbConn = dbConn.Table("connector_deployments")
+	dbConn = dbConn.Select(
+		"connector_deployments.id AS deployment_id",
+		"connector_shard_metadata.latest_id IS NOT NULL AS connector_type_upgrade",
+		"connector_shard_metadata.id AS connector_type_upgrade_from",
+		"connector_shard_metadata.latest_id AS connector_type_upgrade_to",
+		"connector_shard_metadata.connector_type_id",
+		"connector_shard_metadata.channel",
+		"connector_deployment_statuses.upgrade_available AS connector_operator_upgrade",
+		"connector_deployment_statuses.operators AS connector_operators",
+	)
+	dbConn = dbConn.Joins("LEFT JOIN connector_shard_metadata ON connector_shard_metadata.id = connector_deployments.connector_type_channel_id")
+	dbConn = dbConn.Joins("LEFT JOIN connector_deployment_statuses ON connector_deployment_statuses.id = connector_deployments.id")
+	dbConn = dbConn.Where("connector_shard_metadata.latest_id IS NOT NULL")
+	dbConn = dbConn.Or("connector_deployment_statuses.upgrade_available")
+
+	if err := dbConn.Scan(&results).Error; err != nil {
+		return upgrades, errors.GeneralError("Unable to list connector deployment upgrades: %s", err)
+	}
+
+	upgrades = make([]api.ConnectorDeploymentAvailableUpgrades, len(results))
+	for i, r := range results {
+		upgrades[i] = api.ConnectorDeploymentAvailableUpgrades{
+			DeploymentID:    r.DeploymentID,
+			ConnectorTypeId: r.ConnectorTypeId,
+			Channel:         r.Channel,
+		}
+
+		var operators openapi.ConnectorDeploymentStatusOperators
+		if r.ConnectorTypeUpgrade {
+
+			upgrades[i].ShardMetadata = &api.ConnectorTypeUpgrade{
+				AssignedId:  r.ConnectorTypeUpgradeFrom,
+				AvailableId: r.ConnectorTypeUpgradeTo,
+			}
+
+		}
+		if r.ConnectorOperatorUpgrade {
+			err := json.Unmarshal([]byte(r.ConnectorOperators), &operators)
+			if err != nil {
+				return upgrades, errors.GeneralError("converting ConnectorDeploymentStatusOperators: %s", err)
+			}
+
+			upgrades[i].Operator = &api.ConnectorOperatorUpgrade{
+				Assigned: api.ConnectorOperator{
+					Id:      operators.Assigned.Id,
+					Type:    operators.Assigned.Type,
+					Version: operators.Assigned.Version,
+				},
+				Available: api.ConnectorOperator{
+					Id:      operators.Available.Id,
+					Type:    operators.Available.Type,
+					Version: operators.Available.Version,
+				},
+			}
+		}
+
 	}
 	return
 }

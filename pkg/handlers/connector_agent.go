@@ -176,12 +176,17 @@ func (h *connectorClusterHandler) presentDeployment(r *http.Request, resource ap
 		return openapi.ConnectorDeployment{}, err
 	}
 
-	catalogEntry, err := h.connectorTypes.GetConnectorCatalogEntry(pc.ConnectorTypeId, pc.Channel)
+	shardMetadataJson, err := h.connectorTypes.GetConnectorShardMetadata(resource.ConnectorTypeChannelId)
 	if err != nil {
 		return openapi.ConnectorDeployment{}, err
 	}
 
-	converted.Spec.ShardMetadata = catalogEntry.ShardMetadata
+	shardMetadata, err2 := shardMetadataJson.ShardMetadata.Object()
+	if err2 != nil {
+		return openapi.ConnectorDeployment{}, errors.GeneralError("failed to convert shard metadata")
+	}
+
+	converted.Spec.ShardMetadata = shardMetadata
 	converted.Spec.ConnectorSpec = pc.ConnectorSpec
 	converted.Spec.DesiredState = pc.DesiredState
 	converted.Spec.ConnectorId = pc.Id
