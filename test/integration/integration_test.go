@@ -2,7 +2,6 @@ package integration
 
 import (
 	"flag"
-	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"os"
 	"runtime"
 	"testing"
@@ -20,7 +19,5 @@ func TestMain(m *testing.M) {
 	helper.ResetDB()
 	exitCode := m.Run()
 	helper.Teardown()
-	// this can't be called from `helper.Teardown` as it will cause cycle imports. Refactoring is required to support this.
-	utils.RemoveClusterFile(t)
 	os.Exit(exitCode)
 }
