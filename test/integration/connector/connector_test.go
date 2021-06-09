@@ -3,17 +3,19 @@ package connector
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/cucumber/godog"
-	"net/url"
-	"os"
-	"testing"
-	"time"
 )
 
 type extender struct {
@@ -82,12 +84,54 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 	return nil
 }
 
+func (s *extender) connectorDeploymentUpgradesAvailableAre(expected *godog.DocString) error {
+	actual, serr := environments.Environment().Services.ConnectorCluster.GetAvailableDeploymentUpgrades()
+	if serr != nil {
+		return serr
+	}
+
+	actualBytes, err := json.Marshal(actual)
+	if err != nil {
+		return err
+	}
+
+	s.Session().SetRespBytes(actualBytes)
+
+	return s.JsonMustMatch(string(actualBytes), expected.Content, true)
+}
+
+func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(connectorTypeId, channel string, metadata *godog.DocString) error {
+	content, err := s.Expand(metadata.Content)
+	if err != nil {
+		return err
+	}
+
+	shardMetadata := map[string]interface{}{}
+	err = json.Unmarshal([]byte(content), &shardMetadata)
+	if err != nil {
+		return err
+	}
+
+	worker := s.Suite.Helper.ConnectorWorker
+	ccc := &config.ConnectorChannelConfig{
+		ShardMetadata: shardMetadata,
+	}
+	serr := worker.ReconcileConnectorCatalogEntry(connectorTypeId, channel, ccc)
+	if serr != nil {
+		return serr
+	}
+	return nil
+}
+
 func init() {
 	// This is how we can contribute additional steps over the standard ones provided in the cucumber package.
 	cucumber.StepModules = append(cucumber.StepModules, func(ctx *godog.ScenarioContext, s *cucumber.TestScenario) {
 		e := &extender{s}
 		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
 		ctx.Step(`^the vault delete counter should be (\d+)$`, e.theVaultDeleteCounterShouldBe)
+		ctx.Step(`^connector deployment upgrades available are:$`, e.connectorDeploymentUpgradesAvailableAre)
+		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
+
 	})
 }
 

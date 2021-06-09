@@ -618,8 +618,12 @@ components:
         connector_id:
           type: string
         allow_upgrade:
+          deprecated: true
           description: allow the connector to upgrade to a new operator
           type: boolean
+        operator_id:
+          description: an optional operator id that the connector should be run under.
+          type: string
         connector_resource_version:
           format: int64
           type: integer
@@ -638,6 +642,15 @@ components:
       description: The status of connector deployment
       example:
         phase: phase
+        operators:
+          available:
+            id: id
+            type: type
+            version: version
+          assigned:
+            id: id
+            type: type
+            version: version
         conditions:
         - reason: reason
           last_transition_time: last_transition_time
@@ -660,7 +673,10 @@ components:
           format: int64
           type: integer
         available_upgrades:
+          deprecated: true
           type: string
+        operators:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus_operators'
         conditions:
           items:
             $ref: '#/components/schemas/MetaV1Condition'
@@ -674,18 +690,39 @@ components:
       allOf:
       - $ref: '#/components/schemas/WatchEvent'
       - $ref: '#/components/schemas/ConnectorDeploymentWatchEvent_allOf'
+    ConnectorOperator:
+      description: identifies an operator that runs on the fleet shards used to manage
+        connectors.
+      example:
+        id: id
+        type: type
+        version: version
+      properties:
+        id:
+          description: the id of the operator
+          type: string
+        type:
+          description: the type of the operator
+          type: string
+        version:
+          description: the version of the operator
+          type: string
     ConnectorClusterStatus:
       description: Schema for the request to update a data plane cluster's status
       example:
         phase: phase
         operators:
         - namespace: namespace
-          id: id
-          version: version
+          operator:
+            id: id
+            type: type
+            version: version
           status: status
         - namespace: namespace
-          id: id
-          version: version
+          operator:
+            id: id
+            type: type
+            version: version
           status: status
         conditions:
         - reason: reason
@@ -1029,6 +1066,21 @@ components:
           $ref: '#/components/schemas/ConnectorDeploymentSpec'
         status:
           $ref: '#/components/schemas/ConnectorDeploymentStatus'
+    ConnectorDeploymentStatus_operators:
+      example:
+        available:
+          id: id
+          type: type
+          version: version
+        assigned:
+          id: id
+          type: type
+          version: version
+      properties:
+        assigned:
+          $ref: '#/components/schemas/ConnectorOperator'
+        available:
+          $ref: '#/components/schemas/ConnectorOperator'
     ConnectorDeploymentList_allOf:
       properties:
         items:
@@ -1043,16 +1095,14 @@ components:
     ConnectorClusterStatus_operators:
       example:
         namespace: namespace
-        id: id
-        version: version
+        operator:
+          id: id
+          type: type
+          version: version
         status: status
       properties:
-        id:
-          description: the id of the operator
-          type: string
-        version:
-          description: the version of the operator
-          type: string
+        operator:
+          $ref: '#/components/schemas/ConnectorOperator'
         namespace:
           description: the namespace to which the operator has been installed
           type: string

@@ -42,6 +42,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -51,6 +52,7 @@ import (
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/itchyny/gojq"
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 // TestSuite holds the sate global to all the test scenarios.
@@ -101,13 +103,54 @@ func (s *TestScenario) Session() *TestSession {
 	return result
 }
 
+func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error {
+
+	var actualParsed interface{}
+	err := json.Unmarshal([]byte(actual), &actualParsed)
+	if err != nil {
+		return fmt.Errorf("error parsing actual json: %v\njson was:\n%s\n", err, actual)
+	}
+
+	var expectedParsed interface{}
+	expanded := expected
+	if expand {
+		expanded, err = s.Expand(expected)
+		if err != nil {
+			return err
+		}
+	}
+	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
+		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)
+	}
+
+	if !reflect.DeepEqual(expectedParsed, actualParsed) {
+		expected, _ := json.MarshalIndent(expectedParsed, "", "  ")
+		actual, _ := json.MarshalIndent(actualParsed, "", "  ")
+
+		diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+			A:        difflib.SplitLines(string(expected)),
+			B:        difflib.SplitLines(string(actual)),
+			FromFile: "Expected",
+			FromDate: "",
+			ToFile:   "Actual",
+			ToDate:   "",
+			Context:  1,
+		})
+		return fmt.Errorf("actual does not match expected, diff:\n%s\n", diff)
+	}
+
+	return nil
+}
+
 // Expand replaces ${var} or $var in the string based on saved Variables in the session/test scenario.
 func (s *TestScenario) Expand(value string) (result string, rerr error) {
 	session := s.Session()
 	return os.Expand(value, func(name string) string {
-		if strings.HasPrefix(name, "response.") {
 
-			selector := strings.TrimPrefix(name, "response")
+		arrayResponse := strings.HasPrefix(name, "response[")
+		if strings.HasPrefix(name, "response.") || arrayResponse {
+
+			selector := "." + name
 			query, err := gojq.Parse(selector)
 			if err != nil {
 				rerr = err
@@ -118,6 +161,10 @@ func (s *TestScenario) Expand(value string) (result string, rerr error) {
 			if err != nil {
 				rerr = err
 				return ""
+			}
+
+			j = map[string]interface{}{
+				"response": j,
 			}
 
 			iter := query.Run(j)
@@ -131,6 +178,9 @@ func (s *TestScenario) Expand(value string) (result string, rerr error) {
 					return fmt.Sprintf("%f", next)
 				case nil:
 					rerr = fmt.Errorf("field ${%s} not found in json response:\n%s\n", name, string(session.RespBytes))
+					return ""
+				case error:
+					rerr = fmt.Errorf("failed to evaluate selection: %s: %v", name, next)
 					return ""
 				default:
 					return fmt.Sprintf("%s", next)
@@ -175,6 +225,11 @@ func (s *TestSession) RespJson() (interface{}, error) {
 		}
 	}
 	return s.respJson, nil
+}
+
+func (s *TestSession) SetRespBytes(bytes []byte) {
+	s.RespBytes = bytes
+	s.respJson = nil
 }
 
 // StepModules is the list of functions used to add steps to a godog.ScenarioContext, you can

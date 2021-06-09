@@ -68,7 +68,7 @@ func (c ConditionList) Value() (driver.Value, error) {
 	return json.Marshal(c)
 }
 
-type OperatorList []Operators
+type OperatorList []OperatorStatus
 
 func (o *OperatorList) Scan(value interface{}) error {
 	s, ok := value.(string)
@@ -97,9 +97,11 @@ type Condition struct {
 	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
 }
 
-type Operators struct {
+type OperatorStatus struct {
 	// the id of the operator
 	Id string `json:"id,omitempty"`
+	// the type of the operator
+	Type string `json:"type,omitempty"`
 	// the version of the operator
 	Version string `json:"version,omitempty"`
 	// the namespace to which the operator has been installed
