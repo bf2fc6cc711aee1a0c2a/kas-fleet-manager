@@ -548,8 +548,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 
 	clusterCreationTimeout := 3 * time.Hour
 	var newCluster *api.Cluster
-	// Wait until new cluster is created and ClusterWaitingForKasFleetShardOperator in OCM
-
+	// wait for the new cluster to have an ID
 	err = utils.NewPollerBuilder().
 		OutputFunction(t.Logf).
 		IntervalAndTimeout(5*time.Second, clusterCreationTimeout).
@@ -566,10 +565,14 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 			}
 
 			newCluster = &clusters[0]
-			return newCluster.Status == api.ClusterWaitingForKasFleetShardOperator, nil
+			return newCluster.ClusterID != "", nil
 		}).
-		RetryLogMessagef("Waiting for cluster '%s' to reach status '%s'", testDataPlaneclusterID, api.ClusterWaitingForKasFleetShardOperator.String()).
+		RetryLogMessage("Waiting for the new cluster to have an ID").
 		Build().Poll()
+
+	Expect(err).NotTo(HaveOccurred())
+	// Wait until new cluster is created and ClusterWaitingForKasFleetShardOperator in OCM
+	newCluster, err = utils.WaitForClusterStatus(&clusterService, newCluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator)
 
 	Expect(err).ToNot(HaveOccurred())
 
