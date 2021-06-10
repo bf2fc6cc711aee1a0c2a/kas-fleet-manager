@@ -511,6 +511,7 @@ deploy: deploy/db
 		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
+	@oc apply -f ./templates/connector-catalog-configmap.yml -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(OCM_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
