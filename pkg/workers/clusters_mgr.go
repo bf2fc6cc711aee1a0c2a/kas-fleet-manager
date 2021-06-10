@@ -2,18 +2,17 @@ package workers
 
 import (
 	"fmt"
+	"strings"
+	"sync"
+
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	authv1 "github.com/openshift/api/authorization/v1"
 	"github.com/pkg/errors"
-	storagev1 "k8s.io/api/storage/v1"
-	"strings"
-	"sync"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 
@@ -46,7 +45,6 @@ const (
 	mkSRERoleBindingName            = "kafka-sre-cluster-admin"
 	dedicatedReadersRoleBindingName = "dedicated-readers"
 	clusterAdminRoleName            = "cluster-admin"
-	KafkaStorageClass               = "mk-storageclass"
 	IngressLabelName                = "ingressType"
 	IngressLabelValue               = "sharded"
 )
@@ -666,7 +664,6 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 
 func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 	r := []interface{}{
-		c.buildStorageClass(),
 		c.buildIngressController(ingressDNS),
 		c.buildObservabilityNamespaceResource(),
 		c.buildObservabilityDexSecretResource(),
@@ -818,30 +815,6 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 				},
 			},
 		},
-	}
-}
-
-func (c *ClusterManager) buildStorageClass() *storagev1.StorageClass {
-	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
-	expansion := true
-	consumer := storagev1.VolumeBindingWaitForFirstConsumer
-
-	return &storagev1.StorageClass{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "storage.k8s.io/v1",
-			Kind:       "StorageClass",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: KafkaStorageClass,
-		},
-		Parameters: map[string]string{
-			"encrypted": "false",
-			"type":      "gp2",
-		},
-		Provisioner:          "kubernetes.io/aws-ebs",
-		ReclaimPolicy:        &reclaimDelete,
-		AllowVolumeExpansion: &expansion,
-		VolumeBindingMode:    &consumer,
 	}
 }
 
