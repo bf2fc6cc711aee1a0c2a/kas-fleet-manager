@@ -13,7 +13,6 @@ import (
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	errors "github.com/zgalor/weberr"
 	k8sCoreV1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -1051,28 +1050,8 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 }
 
 func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.OSDClusterConfig, ingressDNS string) (types.ResourceSet, error) {
-	reclaimDelete := k8sCoreV1.PersistentVolumeReclaimDelete
-	expansion := true
-	consumer := storagev1.VolumeBindingWaitForFirstConsumer
 	r := int32(clusterCreateConfig.IngressControllerReplicas)
 	resources := []interface{}{
-		&storagev1.StorageClass{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "storage.k8s.io/v1",
-				Kind:       "StorageClass",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: KafkaStorageClass,
-			},
-			Parameters: map[string]string{
-				"encrypted": "false",
-				"type":      "gp2",
-			},
-			Provisioner:          "kubernetes.io/aws-ebs",
-			ReclaimPolicy:        &reclaimDelete,
-			AllowVolumeExpansion: &expansion,
-			VolumeBindingMode:    &consumer,
-		},
 		&ingressoperatorv1.IngressController{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "operator.openshift.io/v1",
