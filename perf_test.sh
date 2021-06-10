@@ -3,6 +3,9 @@
 declare -x START
 declare -x STOP
 
+REPORTS_DIR="test/performance/reports/"
+FILES=( "test/performance/token_api/kafkas.txt" "test/performance/token_api/service_accounts.txt" "test/performance/token_api/config.txt")
+
 # check if all required env vars are provided. IF not - exit immediately
 check_params () {
   if [[ -z "${OCM_OFFLINE_TOKEN}" || \
@@ -75,6 +78,18 @@ upload_results() {
   fi
 }
 
+copy_generated_resources_info() {
+  for FILENAME in "${FILES[@]}"; do
+    copy_file "$FILENAME"
+  done
+}
+
+copy_file() {
+  if [ -f "$1" ]; then
+    cp "$1" "$REPORTS_DIR"
+  fi
+}
+
 check_params
 
 run_perf_test
@@ -82,3 +97,5 @@ run_perf_test
 process_perf_test_results
 
 upload_results
+
+copy_generated_resources_info

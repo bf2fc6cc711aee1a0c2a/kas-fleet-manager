@@ -65,7 +65,8 @@ Dockerfile_integration_tests
 
 # performance tests leftovers
 **/__pycache__
-test/performance/reports/perf_test*
+!test/performance/reports/.keep
+test/performance/reports/*
 test/performance/token_api/config.txt
 test/performance/token_api/kafkas.txt
 test/performance/token_api/service_accounts.txt

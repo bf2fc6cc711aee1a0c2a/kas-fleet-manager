@@ -188,7 +188,7 @@ def exercise_endpoints(self, get_only):
 # service accounts (get, post, delete, reset pwd)   1%
 # kafka get metrics                      	        0.5%
 def hit_endpoint(self, get_only):
-  endpoint_selector = random.randrange(1,99) # set to (0,99) post scale testing
+  endpoint_selector = random.randrange(0,99)
   if endpoint_selector < 1:
     service_accounts(self, get_only)
   elif endpoint_selector < 2:

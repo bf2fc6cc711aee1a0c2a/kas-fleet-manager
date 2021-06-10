@@ -107,10 +107,10 @@ def svc_acc_json(base_url):
   return {
            'id': svc_acc_id,
            'href': f'{base_url}/serviceaccounts/{svc_acc_id}',
-           'clientID': generate_random_svc_acc_client_id(),
+           'client_id': generate_random_svc_acc_client_id(),
            'name': random_string(10),
            'description': svc_acc_description(),
-           'clientSecret': generate_random_svc_acc_secret()
+           'client_secret': generate_random_svc_acc_secret()
          }
 
 # get details of service account associated with kafka
@@ -125,8 +125,8 @@ def get_svc_account_for_kafka(collection, kafka_id):
 def persist_kafka_config(bootstrapURL, svc_acc_json):
   config = {
              'bootstrapURL': bootstrapURL,
-             'username': svc_acc_json['clientID'],
-             'password': svc_acc_json['clientSecret'],
+             'username': svc_acc_json['client_id'],
+             'password': svc_acc_json['client_secret'],
            }
   persist_to_api_helper(kafka_config_write_url, config)
 
