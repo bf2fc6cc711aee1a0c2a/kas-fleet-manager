@@ -410,7 +410,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.K
 	if len(listArgs.Search) > 0 {
 		searchDbQuery, err := services.NewQueryParser().Parse(listArgs.Search)
 		if err != nil {
-			return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list kafka requests for %s", user)
+			return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list kafka requests: %s", err.Error())
 		}
 		dbConn = dbConn.Where(searchDbQuery.Query, searchDbQuery.Values...)
 	}
