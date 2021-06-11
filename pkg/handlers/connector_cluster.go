@@ -20,7 +20,7 @@ var (
 	maxConnectorClusterIdLength = 32
 )
 
-type connectorClusterHandler struct {
+type ConnectorClusterHandler struct {
 	bus            signalbus.SignalBus
 	service        services.ConnectorClusterService
 	config         services.ConfigService
@@ -29,8 +29,8 @@ type connectorClusterHandler struct {
 	vault          services.VaultService
 }
 
-func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config services.ConfigService, keycloak services.KeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *connectorClusterHandler {
-	return &connectorClusterHandler{
+func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config services.ConfigService, keycloak services.KafkaKeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *ConnectorClusterHandler {
+	return &ConnectorClusterHandler{
 		bus:            bus,
 		service:        service,
 		config:         config,
@@ -40,7 +40,7 @@ func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.Connec
 	}
 }
 
-func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var resource openapi.ConnectorCluster
 	cfg := &handlerConfig{
 		MarshalInto: &resource,
@@ -71,7 +71,7 @@ func (h *connectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 	handle(w, r, cfg, http.StatusAccepted)
 }
 
-func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
@@ -88,7 +88,7 @@ func (h *connectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handleGet(w, r, cfg)
 }
 
-func (h *connectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
@@ -102,7 +102,7 @@ func (h *connectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request)
 	handleDelete(w, r, cfg, http.StatusNoContent)
 }
 
-func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -131,7 +131,7 @@ func (h *connectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 	handleList(w, r, cfg)
 }
 
-func (h *connectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
@@ -174,7 +174,7 @@ const (
 	connectorFleetshardOperatorParamControlPlaneBaseURL  = "control-plane-base-url"
 )
 
-func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.AddonParameter {
+func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.AddonParameter {
 	p := []ocm.AddonParameter{
 		{
 			Id:    connectorFleetshardOperatorParamMasSSOBaseUrl,
@@ -204,7 +204,7 @@ func (o *connectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 	return p
 }
 
-func (o *connectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
+func (o *ConnectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
 	u, err := url.Parse(o.config.GetConfig().Keycloak.KafkaRealm.TokenEndpointURI)
 	if err != nil {
 		return "", err

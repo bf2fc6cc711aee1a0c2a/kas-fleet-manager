@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -29,13 +30,16 @@ type ReadyKafkaManager struct {
 }
 
 // NewReadyKafkaManager creates a new kafka manager
-func NewReadyKafkaManager(kafkaService services.KafkaService, id string, keycloakService services.KeycloakService, configService services.ConfigService) *ReadyKafkaManager {
+func NewReadyKafkaManager(kafkaService services.KafkaService, id string, keycloakService services.KeycloakService, configService services.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
 		id:              id,
 		workerType:      "ready_kafka",
 		kafkaService:    kafkaService,
 		keycloakService: keycloakService,
 		configService:   configService,
+		reconciler: workers.Reconciler{
+			SignalBus: bus,
+		},
 	}
 }
 

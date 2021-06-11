@@ -46,7 +46,7 @@ limitations under the License.
 // The meaning of that is that there were a total of 56 requests to get specific clusters,
 // independently of the specific identifier of the cluster.
 
-package server
+package handlers
 
 import (
 	"net/http"

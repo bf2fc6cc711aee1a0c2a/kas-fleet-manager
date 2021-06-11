@@ -1,8 +1,9 @@
-package acl
+package acl_test
 
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -175,7 +176,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 
-			middleware := NewAccessControlListMiddleware(tt.arg)
+			middleware := acl.NewAccessControlListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
 			req = req.WithContext(tt.ctx)
@@ -318,7 +319,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 
-			middleware := NewAccessControlListMiddleware(tt.arg)
+			middleware := acl.NewAccessControlListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
 			// create a jwt and set it in the context
@@ -501,7 +502,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 
 			rr := httptest.NewRecorder()
 
-			middleware := NewAccessControlListMiddleware(tt.arg)
+			middleware := acl.NewAccessControlListMiddleware(tt.arg)
 			handler := middleware.Authorize(http.HandlerFunc(NextHandler))
 
 			req = req.WithContext(tt.ctx)

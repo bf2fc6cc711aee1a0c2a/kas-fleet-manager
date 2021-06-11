@@ -32,7 +32,7 @@ type KasFleetshardOperatorAddon interface {
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
 
-func NewKasFleetshardOperatorAddon(ssoService KeycloakService, configService ConfigService, providerFactory clusters.ProviderFactory) KasFleetshardOperatorAddon {
+func NewKasFleetshardOperatorAddon(ssoService KafkaKeycloakService, configService ConfigService, providerFactory clusters.ProviderFactory) KasFleetshardOperatorAddon {
 	return &kasFleetshardOperatorAddon{
 		ssoService:      ssoService,
 		configService:   configService,

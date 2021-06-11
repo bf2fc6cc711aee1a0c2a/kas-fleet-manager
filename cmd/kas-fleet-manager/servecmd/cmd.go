@@ -1,11 +1,13 @@
 package servecmd
 
 import (
+	goerrors "errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers/kafka_mgrs"
+	"github.com/goava/di"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -63,7 +65,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	kasFleetshardOperatorAddon := env.Services.KasFleetshardAddonService
 
 	//set Unique Id for each work to facilitate Leader Election process
-	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService)
+	clusterManager := workers.NewClusterManager(clusterService, cloudProviderService, configService, uuid.New().String(), kasFleetshardOperatorAddon, osdIdpKeycloakService, env.Services.SignalBus)
 	workerList = append(workerList, clusterManager)
 
 	// creates kafka worker
@@ -72,25 +74,23 @@ func runServe(cmd *cobra.Command, args []string) {
 	clusterPlmtStrategy := env.Services.ClusterPlmtStrategy
 
 	//create kafka manager per type and assign them a Unique Id for each work to facilitate Leader Election process
-	kafkaManager := kafka_mgrs.NewKafkaManager(kafkaService, uuid.New().String(), configService)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(kafkaService, uuid.New().String(), configService, env.QuotaServiceFactory, clusterPlmtStrategy)
-	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(kafkaService, uuid.New().String())
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(kafkaService, uuid.New().String(), configService, env.QuotaServiceFactory)
-	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(kafkaService, uuid.New().String(), observatoriumService, configService)
-	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(kafkaService, uuid.New().String(), keycloakService, configService)
+	kafkaManager := kafka_mgrs.NewKafkaManager(kafkaService, uuid.New().String(), configService, env.Services.SignalBus)
+	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(kafkaService, uuid.New().String(), configService, env.QuotaServiceFactory, clusterPlmtStrategy, env.Services.SignalBus)
+	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(kafkaService, uuid.New().String(), env.Services.SignalBus)
+	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(kafkaService, uuid.New().String(), configService, env.QuotaServiceFactory, env.Services.SignalBus)
+	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(kafkaService, uuid.New().String(), observatoriumService, configService, env.Services.SignalBus)
+	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(kafkaService, uuid.New().String(), keycloakService, configService, env.Services.SignalBus)
 	workerList = append(workerList, kafkaManager, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
 
-	// add the connector manager worker
-	connectorManager := workers.NewConnectorManager(
-		uuid.New().String(),
-		env.Services.ConnectorTypes,
-		env.Services.Connectors,
-		env.Services.ConnectorCluster,
-		env.Services.Observatorium,
-		env.Services.Vault,
-	)
-
-	workerList = append(workerList, connectorManager)
+	// Add the DI injected workers...
+	var diWorkers []workers.Worker
+	err = env.ServiceContainer.Resolve(&diWorkers)
+	if !goerrors.Is(err, di.ErrTypeNotExists) {
+		panic(err)
+	}
+	for _, worker := range diWorkers {
+		workerList = append(workerList, worker)
+	}
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
 	leaderElectionManager := workers.NewLeaderElectionManager(workerList, env.DBFactory)

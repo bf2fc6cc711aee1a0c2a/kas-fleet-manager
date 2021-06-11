@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"strings"
 	"sync"
 
@@ -100,7 +101,7 @@ type ClusterManager struct {
 type processor func() []error
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, configService services.ConfigService, id string, agentOperatorAddon services.KasFleetshardOperatorAddon, osdIdpKeycloakService services.KeycloakService) *ClusterManager {
+func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, configService services.ConfigService, id string, agentOperatorAddon services.KasFleetshardOperatorAddon, osdIdpKeycloakService services.KeycloakService, bus signalbus.SignalBus) *ClusterManager {
 	return &ClusterManager{
 		id:                         id,
 		workerType:                 "cluster",
@@ -109,6 +110,9 @@ func NewClusterManager(clusterService services.ClusterService, cloudProvidersSer
 		configService:              configService,
 		kasFleetshardOperatorAddon: agentOperatorAddon,
 		osdIdpKeycloakService:      osdIdpKeycloakService,
+		reconciler: Reconciler{
+			SignalBus: bus,
+		},
 	}
 }
 

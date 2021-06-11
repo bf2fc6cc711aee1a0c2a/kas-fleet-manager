@@ -13,15 +13,15 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewErrorsHandler() *errorHandler {
-	return &errorHandler{}
+func NewErrorsHandler() *ErrorHandler {
+	return &ErrorHandler{}
 }
 
-type errorHandler struct{}
+type ErrorHandler struct{}
 
-var _ RestHandler = errorHandler{}
+var _ RestHandler = ErrorHandler{}
 
-func (h errorHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			listArgs := services.NewListArguments(r.URL.Query())
@@ -52,7 +52,7 @@ func (h errorHandler) List(w http.ResponseWriter, r *http.Request) {
 	handleList(w, r, cfg)
 }
 
-func (h errorHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -72,14 +72,14 @@ func (h errorHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handleGet(w, r, cfg)
 }
 
-func (h errorHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h ErrorHandler) Create(w http.ResponseWriter, r *http.Request) {
 	shared.HandleError(r, w, errors.NotImplemented("create"))
 }
 
-func (h errorHandler) Patch(w http.ResponseWriter, r *http.Request) {
+func (h ErrorHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	shared.HandleError(r, w, errors.NotImplemented("path"))
 }
 
-func (h errorHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h ErrorHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	shared.HandleError(r, w, errors.NotImplemented("delete"))
 }

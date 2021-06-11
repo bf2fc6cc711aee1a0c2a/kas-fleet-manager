@@ -26,15 +26,15 @@ var (
 	maxConnectorIdLength = 32
 )
 
-type connectorsHandler struct {
+type ConnectorsHandler struct {
 	connectorsService     services.ConnectorsService
 	connectorTypesService services.ConnectorTypesService
 	kafkaService          services.KafkaService
 	vaultService          services.VaultService
 }
 
-func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService services.VaultService) *connectorsHandler {
-	return &connectorsHandler{
+func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService services.VaultService) *ConnectorsHandler {
+	return &ConnectorsHandler{
 		kafkaService:          kafkaService,
 		connectorsService:     connectorsService,
 		connectorTypesService: connectorTypesService,
@@ -42,7 +42,7 @@ func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService 
 	}
 }
 
-func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var resource openapi.Connector
 	tid := mux.Vars(r)["tid"]
 	cfg := &handlerConfig{
@@ -110,7 +110,7 @@ func (h connectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	handle(w, r, cfg, http.StatusAccepted)
 }
 
-func (h connectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 
 	connectorId := mux.Vars(r)["connector_id"]
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
@@ -331,7 +331,7 @@ func PatchResource(resource interface{}, patchType string, patchBytes []byte, pa
 	return nil
 }
 
-func (h connectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlerConfig{
@@ -361,7 +361,7 @@ func (h connectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete is the handler for deleting a kafka request
-func (h connectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
@@ -387,7 +387,7 @@ func (h connectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	handleDelete(w, r, cfg, http.StatusNoContent)
 }
 
-func (h connectorsHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 	kafkaId := r.URL.Query().Get("kafka_id")
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlerConfig{

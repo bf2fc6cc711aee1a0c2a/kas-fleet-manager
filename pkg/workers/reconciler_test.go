@@ -6,18 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	. "github.com/onsi/gomega"
 )
 
 func TestReconciler_Wakeup(t *testing.T) {
 	RegisterTestingT(t)
-	r := Reconciler{}
+	r := Reconciler{
+		SignalBus: signalbus.NewSignalBus(),
+	}
 	var stopchan chan struct{}
 	var wg sync.WaitGroup
-
-	environments.Environment().Services.SignalBus = signalbus.NewSignalBus()
 
 	reconcileChan := make(chan time.Time, 1000)
 	worker := &WorkerMock{
