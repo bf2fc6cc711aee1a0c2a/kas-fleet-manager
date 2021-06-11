@@ -4,6 +4,7 @@ import (
 	"context"
 	goerrors "errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 
@@ -19,7 +20,7 @@ import (
 type ConnectorsService interface {
 	Create(ctx context.Context, resource *api.Connector) *errors.ServiceError
 	Get(ctx context.Context, id string, tid string) (*api.Connector, *errors.ServiceError)
-	List(ctx context.Context, kid string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *api.Connector) *errors.ServiceError
 	SaveStatus(ctx context.Context, resource api.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
@@ -31,11 +32,11 @@ var _ ConnectorsService = &connectorsService{}
 type connectorsService struct {
 	connectionFactory     *db.ConnectionFactory
 	bus                   signalbus.SignalBus
-	vaultService          VaultService
+	vaultService          services.VaultService
 	connectorTypesService ConnectorTypesService
 }
 
-func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
+func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService services.VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
 	return &connectorsService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,
@@ -58,7 +59,7 @@ func (k *connectorsService) Create(ctx context.Context, resource *api.Connector)
 
 	// read it back.... to get the updated version...
 	if err := dbConn.Where("id = ?", resource.ID).First(&resource).Error; err != nil {
-		return handleGetError("Connector", "id", resource.ID, err)
+		return services.HandleGetError("Connector", "id", resource.ID, err)
 	}
 
 	resource.Status.ID = resource.ID
@@ -99,7 +100,7 @@ func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*ap
 	}
 
 	if err := dbConn.First(&resource).Error; err != nil {
-		return nil, handleGetError("Connector", "id", id, err)
+		return nil, services.HandleGetError("Connector", "id", id, err)
 	}
 	return &resource, nil
 }
@@ -136,7 +137,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 
 	var resource api.Connector
 	if err := dbConn.Where("id = ?", id).First(&resource).Error; err != nil {
-		return handleGetError("Connector", "id", id, err)
+		return services.HandleGetError("Connector", "id", id, err)
 	}
 	if err := dbConn.Delete(&resource).Error; err != nil {
 		return errors.GeneralError("unable to delete connector with id %s: %s", resource.ID, err)
@@ -144,7 +145,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 
 	// delete the associated relations
 	if err := dbConn.Where("id = ?", id).Delete(&api.ConnectorStatus{}).Error; err != nil {
-		return handleGetError("ConnectorStatus", "id", id, err)
+		return services.HandleGetError("ConnectorStatus", "id", id, err)
 	}
 
 	var deployment api.ConnectorDeployment
@@ -153,13 +154,13 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	case nil:
 		// no err, deployment existed..
 		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeployment{}).Error; err != nil {
-			err := handleGetError("ConnectorDeployment", "id", deployment.ID, err)
+			err := services.HandleGetError("ConnectorDeployment", "id", deployment.ID, err)
 			if err != nil {
 				return err
 			}
 		}
 		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeploymentStatus{}).Error; err != nil {
-			err := handleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
+			err := services.HandleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
 			if err != nil {
 				return err
 			}
@@ -167,7 +168,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	case gorm.ErrRecordNotFound:
 		// deployment did not exist, so we don't need to clean up after it..
 	default:
-		return handleGetError("ConnectorDeployment", "connector_id", id, err)
+		return services.HandleGetError("ConnectorDeployment", "connector_id", id, err)
 	}
 
 	_ = db.AddPostCommitAction(ctx, func() {
@@ -208,7 +209,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 }
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList api.ConnectorList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Preload("Status")
@@ -271,7 +272,7 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 	// read it back.... to get the updated version...
 	dbConn = k.connectionFactory.New().Where("id = ?", resource.ID)
 	if err := dbConn.First(&resource).Error; err != nil {
-		return handleGetError("Connector", "id", resource.ID, err)
+		return services.HandleGetError("Connector", "id", resource.ID, err)
 	}
 
 	_ = db.AddPostCommitAction(ctx, func() {

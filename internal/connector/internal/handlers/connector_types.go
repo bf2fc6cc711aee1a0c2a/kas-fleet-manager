@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -11,14 +12,14 @@ import (
 )
 
 type ConnectorTypesHandler struct {
-	service services.ConnectorTypesService
+	service services2.ConnectorTypesService
 }
 
 var (
 	maxConnectorTypeIdLength = 50
 )
 
-func NewConnectorTypesHandler(service services.ConnectorTypesService) *ConnectorTypesHandler {
+func NewConnectorTypesHandler(service services2.ConnectorTypesService) *ConnectorTypesHandler {
 	return &ConnectorTypesHandler{
 		service: service,
 	}

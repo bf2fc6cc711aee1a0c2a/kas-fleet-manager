@@ -39,7 +39,7 @@ var piiFields []string = []string{
 	"address",
 }
 
-func handleGetError(resourceType, field string, value interface{}, err error) *errors.ServiceError {
+func HandleGetError(resourceType, field string, value interface{}, err error) *errors.ServiceError {
 	// Sanitize errors of any personally identifiable information
 	for _, f := range piiFields {
 		if field == f {

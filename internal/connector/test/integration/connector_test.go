@@ -3,6 +3,7 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"net/url"
 	"os"
@@ -86,7 +87,7 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 }
 
 func (s *extender) connectorDeploymentUpgradesAvailableAre(expected *godog.DocString) error {
-	var connectorCluster services.ConnectorClusterService
+	var connectorCluster services2.ConnectorClusterService
 	if err := environments.Environment().ServiceContainer.Resolve(&connectorCluster); err != nil {
 		return err
 	}

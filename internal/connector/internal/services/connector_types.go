@@ -8,6 +8,7 @@ package services
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -24,7 +25,7 @@ type ConnectorCatalogKey struct {
 type ConnectorTypesService interface {
 	Get(id string) (*api.ConnectorType, *errors.ServiceError)
 	GetConnectorCatalogEntry(id string, channel string) (*config.ConnectorChannelConfig, *errors.ServiceError)
-	List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
 	ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError
 
 	PutConnectorShardMetadata(ctc *api.ConnectorShardMetadata) (int64, *errors.ServiceError)
@@ -86,7 +87,7 @@ func (k *connectorTypesService) GetConnectorCatalogEntry(id string, channel stri
 }
 
 // List returns all connector types
-func (k *connectorTypesService) List(ctx context.Context, listArgs *ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorTypesService) List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
 	resourceList := k.getConnectorTypeList()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -135,7 +136,7 @@ func (k *connectorTypesService) PutConnectorShardMetadata(ctc *api.ConnectorShar
 	dbConn = dbConn.Where("shard_metadata = ?", ctc.ShardMetadata)
 
 	if err := dbConn.First(&resource).Error; err != nil {
-		if IsRecordNotFoundError(err) {
+		if services.IsRecordNotFoundError(err) {
 
 			// We need to create the resource....
 			dbConn = k.connectionFactory.New()
@@ -186,7 +187,7 @@ func (k *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel s
 		First(&resource).Error
 
 	if err != nil {
-		if IsRecordNotFoundError(err) {
+		if services.IsRecordNotFoundError(err) {
 			return 0, errors.NotFound("connector type channel not found")
 		}
 		return 0, errors.GeneralError("Unable to get connector type channel: %s", err)
@@ -203,7 +204,7 @@ func (k *connectorTypesService) GetConnectorShardMetadata(id int64) (*api.Connec
 		First(&resource).Error
 
 	if err != nil {
-		if IsRecordNotFoundError(err) {
+		if services.IsRecordNotFoundError(err) {
 			return nil, errors.NotFound("connector type channel not found")
 		}
 		return nil, errors.GeneralError("Unable to get connector type channel: %s", err)
