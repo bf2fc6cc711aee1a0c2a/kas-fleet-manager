@@ -22,6 +22,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-resty/resty/v2 v2.3.0
+	github.com/goava/di v1.9.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.1.2

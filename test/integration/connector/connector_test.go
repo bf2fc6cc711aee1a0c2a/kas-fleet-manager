@@ -141,8 +141,15 @@ func TestMain(m *testing.M) {
 	// connector features.
 	t := &testing.T{}
 
-	environments.Environment().Config.ConnectorsConfig.Enabled = true
-	environments.Environment().Config.ConnectorsConfig.ConnectorCatalogDirs = []string{"./test/integration/connector/connector-catalog"}
+	env := environments.Environment()
+	connectorsConfig := &config.ConnectorsConfig{}
+	err := env.Container.Resolve(&connectorsConfig)
+	if err != nil {
+		t.Fatalf("no ConnectorsConfig found: %v", err)
+	}
+
+	connectorsConfig.Enabled = true
+	connectorsConfig.ConnectorCatalogDirs = []string{"./test/integration/connector/connector-catalog"}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
