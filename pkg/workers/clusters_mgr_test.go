@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"testing"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
@@ -26,9 +27,10 @@ import (
 )
 
 var (
-	testRegion     = "us-west-1"
-	testProvider   = "aws"
-	strimziAddonID = "managed-kafka-test"
+	testRegion                    = "us-west-1"
+	testProvider                  = "aws"
+	strimziAddonID                = "managed-kafka-test"
+	clusterLoggingOperatorAddonID = "cluster-logging-operator-test"
 )
 
 func TestClusterManager_reconcileClusterStatus(t *testing.T) {
@@ -141,6 +143,63 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("reconcileStrimziOperator() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
+func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
+	type fields struct {
+		clusterService services.ClusterService
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "error when getting cluster logging operator addon from ocm fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *ocmErrors.ServiceError) {
+						return false, apiErrors.GeneralError("failed to install cluster logging operator addon")
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "cluster logging operator addon installed successfully",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *ocmErrors.ServiceError) {
+						return true, nil
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &ClusterManager{
+				clusterService: tt.fields.clusterService,
+				configService: services.NewConfigService(
+					config.ApplicationConfig{
+						SupportedProviders:         &config.ProviderConfig{},
+						AccessControlList:          &config.AccessControlListConfig{},
+						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+						OSDClusterConfig:           &config.OSDClusterConfig{},
+						OCM:                        &config.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
+					},
+				),
+			}
+			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
+				ClusterID: "clusterId",
+			})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("reconcileClusterLoggingOperator() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 		})
@@ -324,7 +383,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "successful strimzi and kas fleetshard operator addon installation",
+			name: "successful strimzi cluster logging operator and kas fleetshard operator addon installation",
 			fields: fields{
 				agentOperator: &services.KasFleetshardOperatorAddonMock{
 					ProvisionFunc: func(cluster api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -333,6 +392,9 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				},
 				clusterService: &services.ClusterServiceMock{
 					InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *ocmErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -350,7 +412,24 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
-						return false, apiErrors.GeneralError("failed to insall strimzi addon")
+						return false, apiErrors.GeneralError("failed to install strimzi addon")
+					},
+					InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *ocmErrors.ServiceError) {
+						return false, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "return an error if cluster logging operator installation fails",
+			fields: fields{
+				clusterService: &services.ClusterServiceMock{
+					InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
+						return false, apiErrors.GeneralError("failed to install strimzi addon")
+					},
+					InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *ocmErrors.ServiceError) {
+						return false, nil
 					},
 				},
 			},
@@ -361,6 +440,9 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
 					InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
+						return false, nil
+					},
+					InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *ocmErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -385,7 +467,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 			c := &ClusterManager{
 				clusterService: tt.fields.clusterService,
 				configService: services.NewConfigService(config.ApplicationConfig{
-					OCM: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OCM: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 				}),
 				kasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}

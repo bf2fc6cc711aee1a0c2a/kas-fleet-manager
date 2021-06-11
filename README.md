@@ -231,7 +231,7 @@ curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/ka
 # list all connector deployments
 curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments
 
-# set CONNECTOR_ID to the ID of the first connector delployment found
+# set CONNECTOR_ID to the ID of the first connector deployment found
 CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
 
 # get a single connector deployment
