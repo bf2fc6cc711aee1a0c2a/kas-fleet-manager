@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -9,7 +10,7 @@ import (
 	"strings"
 )
 
-func validateConnectorSpec(connectorTypesService services.ConnectorTypesService, resource *openapi.Connector, tid string) handlers.Validate {
+func validateConnectorSpec(connectorTypesService services2.ConnectorTypesService, resource *openapi.Connector, tid string) handlers.Validate {
 	return func() *errors.ServiceError {
 
 		// If a a tid was defined on the URL verify that it matches the posted resource connector type

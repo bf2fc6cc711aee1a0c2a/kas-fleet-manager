@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/google/uuid"
@@ -27,17 +28,17 @@ type ConnectorManager struct {
 	imStop                  chan struct{}
 	syncTeardown            sync.WaitGroup
 	reconciler              workers.Reconciler
-	connectorService        services.ConnectorsService
-	connectorClusterService services.ConnectorClusterService
+	connectorService        services2.ConnectorsService
+	connectorClusterService services2.ConnectorClusterService
 	observatoriumService    services.ObservatoriumService
-	connectorTypesService   services.ConnectorTypesService
+	connectorTypesService   services2.ConnectorTypesService
 	vaultService            services.VaultService
 	lastVersion             int64
 	reconcileChannels       bool
 }
 
 // NewConnectorManager creates a new connector manager
-func NewConnectorManager(connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService services.ObservatoriumService, vaultService services.VaultService, bus signalbus.SignalBus) *ConnectorManager {
+func NewConnectorManager(connectorTypesService services2.ConnectorTypesService, connectorService services2.ConnectorsService, connectorClusterService services2.ConnectorClusterService, observatoriumService services.ObservatoriumService, vaultService services.VaultService, bus signalbus.SignalBus) *ConnectorManager {
 	return &ConnectorManager{
 		id:                      uuid.New().String(),
 		workerType:              "connector",

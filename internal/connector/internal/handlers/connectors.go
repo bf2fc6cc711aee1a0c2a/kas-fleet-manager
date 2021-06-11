@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -29,13 +30,13 @@ var (
 )
 
 type ConnectorsHandler struct {
-	connectorsService     services.ConnectorsService
-	connectorTypesService services.ConnectorTypesService
+	connectorsService     services2.ConnectorsService
+	connectorTypesService services2.ConnectorTypesService
 	kafkaService          services.KafkaService
 	vaultService          services.VaultService
 }
 
-func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService services.VaultService) *ConnectorsHandler {
+func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services2.ConnectorsService, connectorTypesService services2.ConnectorTypesService, vaultService services.VaultService) *ConnectorsHandler {
 	return &ConnectorsHandler{
 		kafkaService:          kafkaService,
 		connectorsService:     connectorsService,

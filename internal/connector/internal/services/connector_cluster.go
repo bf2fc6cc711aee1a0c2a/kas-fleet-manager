@@ -8,6 +8,7 @@ import (
 	goerrors "errors"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -24,14 +25,14 @@ type ConnectorClusterService interface {
 	Create(ctx context.Context, resource *api.ConnectorCluster) *errors.ServiceError
 	Get(ctx context.Context, id string) (api.ConnectorCluster, *errors.ServiceError)
 	Delete(ctx context.Context, id string) *errors.ServiceError
-	List(ctx context.Context, listArgs *ListArguments) (api.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError)
 	Update(ctx context.Context, resource *api.ConnectorCluster) *errors.ServiceError
 	UpdateConnectorClusterStatus(ctx context.Context, id string, status api.ConnectorClusterStatus) *errors.ServiceError
 	GetConnectorClusterStatus(ctx context.Context, id string) (api.ConnectorClusterStatus, *errors.ServiceError)
 
 	SaveDeployment(ctx context.Context, resource *api.ConnectorDeployment) *errors.ServiceError
 	GetConnectorWithBase64Secrets(ctx context.Context, resource api.ConnectorDeployment) (api.Connector, *errors.ServiceError)
-	ListConnectorDeployments(ctx context.Context, id string, listArgs *ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
+	ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
 	UpdateConnectorDeploymentStatus(ctx context.Context, status api.ConnectorDeploymentStatus) *errors.ServiceError
 	FindReadyCluster(owner string, orgId string, group string) (*api.ConnectorCluster, *errors.ServiceError)
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (api.ConnectorDeployment, *errors.ServiceError)
@@ -45,10 +46,10 @@ type connectorClusterService struct {
 	connectionFactory     *db.ConnectionFactory
 	bus                   signalbus.SignalBus
 	connectorTypesService ConnectorTypesService
-	vaultService          VaultService
+	vaultService          services.VaultService
 }
 
-func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService VaultService, connectorTypesService ConnectorTypesService) *connectorClusterService {
+func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService services.VaultService, connectorTypesService ConnectorTypesService) *connectorClusterService {
 	return &connectorClusterService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,
@@ -82,7 +83,7 @@ func (k *connectorClusterService) Get(ctx context.Context, id string) (api.Conne
 	}
 
 	if err := dbConn.First(&resource).Error; err != nil {
-		return resource, handleGetError("Connector cluster", "id", id, err)
+		return resource, services.HandleGetError("Connector cluster", "id", id, err)
 	}
 	return resource, nil
 }
@@ -101,7 +102,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 	dbConn := k.connectionFactory.New()
 	var resource api.ConnectorCluster
 	if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
-		return handleGetError("Connector cluster", "id", id, err)
+		return services.HandleGetError("Connector cluster", "id", id, err)
 	}
 
 	// TODO: implement soft delete instead?
@@ -113,7 +114,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 }
 
 // List returns all connector clusters visible to the user within the requested paging window.
-func (k *connectorClusterService) List(ctx context.Context, listArgs *ListArguments) (api.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorClusterService) List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList api.ConnectorClusterList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
@@ -170,7 +171,7 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 	var resource api.ConnectorCluster
 
 	if err := dbConn.Where("id = ?", id).First(&resource).Error; err != nil {
-		return handleGetError("Connector cluster status", "id", id, err)
+		return services.HandleGetError("Connector cluster status", "id", id, err)
 	}
 
 	if !reflect.DeepEqual(resource.Status, status) {
@@ -195,7 +196,7 @@ func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context,
 	dbConn = dbConn.Select("status_phase, status_version, status_conditions, status_operators").Where("id = ?", id)
 
 	if err := dbConn.First(&resource).Error; err != nil {
-		return resource.Status, handleGetError("Connector cluster status", "id", id, err)
+		return resource.Status, services.HandleGetError("Connector cluster status", "id", id, err)
 	}
 	return resource.Status, nil
 }
@@ -209,7 +210,7 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 	}
 
 	if err := dbConn.Where("id = ?", resource.ID).Select("version").First(&resource).Error; err != nil {
-		return handleGetError("Connector Deployment", "id", resource.ID, err)
+		return services.HandleGetError("Connector Deployment", "id", resource.ID, err)
 	}
 
 	if resource.ClusterID != "" {
@@ -224,7 +225,7 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 }
 
 // List returns all connectors assigned to the cluster
-func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, id string, listArgs *ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList api.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Preload("Status")
@@ -267,7 +268,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	if err := dbConn.Select("connector_id").
 		Where("id = ?", resource.ID).
 		First(&deployment).Error; err != nil {
-		return handleGetError("connector deployment", "id", resource.ID, err)
+		return services.HandleGetError("connector deployment", "id", resource.ID, err)
 	}
 
 	if err := dbConn.Model(&resource).Where("id = ?", resource.ID).Save(&resource).Error; err != nil {
@@ -322,7 +323,7 @@ func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Cont
 	var connector api.Connector
 	err := dbConn.Where("id = ?", resource.ConnectorID).First(&connector).Error
 	if err != nil {
-		return connector, handleGetError("Connector", "id", resource.ConnectorID, err)
+		return connector, services.HandleGetError("Connector", "id", resource.ConnectorID, err)
 	}
 
 	serr := getSecretsFromVaultAsBase64(&connector, k.connectorTypesService, k.vaultService)
@@ -333,7 +334,7 @@ func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Cont
 	return connector, nil
 }
 
-func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesService, vault VaultService) *errors.ServiceError {
+func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesService, vault services.VaultService) *errors.ServiceError {
 	ct, err := cts.Get(resource.ConnectorTypeId)
 	if err != nil {
 		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
@@ -393,7 +394,7 @@ func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Where("connector_id = ?", connectorID)
 	if err := dbConn.First(&resource).Error; err != nil {
-		return resource, handleGetError("Connector deployment", "connector_id", connectorID, err)
+		return resource, services.HandleGetError("Connector deployment", "connector_id", connectorID, err)
 	}
 	return
 }
@@ -402,7 +403,7 @@ func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) 
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Where("id = ?", id)
 	if err := dbConn.First(&resource).Error; err != nil {
-		return resource, handleGetError("Connector deployment", "id", id, err)
+		return resource, services.HandleGetError("Connector deployment", "id", id, err)
 	}
 	return
 }
