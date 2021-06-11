@@ -21,7 +21,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (h *connectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	var resource openapi.ConnectorClusterStatus
 
@@ -41,7 +41,7 @@ func (h *connectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 	handle(w, r, cfg, http.StatusNoContent)
 }
 
-func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http.Request) {
 	// h.service.ListConnectors()
 	ctx := r.Context()
 	query := r.URL.Query()
@@ -160,7 +160,7 @@ func (h *connectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 	handleList(w, r, cfg)
 }
 
-func (h *connectorClusterHandler) presentDeployment(r *http.Request, resource api.ConnectorDeployment) (openapi.ConnectorDeployment, *errors.ServiceError) {
+func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource api.ConnectorDeployment) (openapi.ConnectorDeployment, *errors.ServiceError) {
 	converted, err := presenters.PresentConnectorDeployment(resource)
 	if err != nil {
 		return openapi.ConnectorDeployment{}, err
@@ -214,7 +214,7 @@ func waitForCancelOrTimeoutOrNotification(ctx context.Context, timeout time.Dura
 	}
 }
 
-func (h *connectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	deploymentId := mux.Vars(r)["deployment_id"]
 
@@ -238,7 +238,7 @@ func (h *connectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 	handleGet(w, r, cfg)
 }
 
-func (h *connectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
+func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	deploymentId := mux.Vars(r)["deployment_id"]
 	var resource openapi.ConnectorDeploymentStatus

@@ -85,7 +85,12 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 }
 
 func (s *extender) connectorDeploymentUpgradesAvailableAre(expected *godog.DocString) error {
-	actual, serr := environments.Environment().Services.ConnectorCluster.GetAvailableDeploymentUpgrades()
+	var connectorCluster services.ConnectorClusterService
+	if err := environments.Environment().ServiceContainer.Resolve(&connectorCluster); err != nil {
+		return err
+	}
+
+	actual, serr := connectorCluster.GetAvailableDeploymentUpgrades()
 	if serr != nil {
 		return serr
 	}
@@ -143,7 +148,7 @@ func TestMain(m *testing.M) {
 
 	env := environments.Environment()
 	connectorsConfig := &config.ConnectorsConfig{}
-	err := env.Container.Resolve(&connectorsConfig)
+	err := env.ConfigContainer.Resolve(&connectorsConfig)
 	if err != nil {
 		t.Fatalf("no ConnectorsConfig found: %v", err)
 	}

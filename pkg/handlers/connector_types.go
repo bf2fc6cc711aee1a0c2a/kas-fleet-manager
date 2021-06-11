@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-type connectorTypesHandler struct {
+type ConnectorTypesHandler struct {
 	service services.ConnectorTypesService
 }
 
@@ -17,12 +17,12 @@ var (
 	maxConnectorTypeIdLength = 50
 )
 
-func NewConnectorTypesHandler(service services.ConnectorTypesService) *connectorTypesHandler {
-	return &connectorTypesHandler{
+func NewConnectorTypesHandler(service services.ConnectorTypesService) *ConnectorTypesHandler {
+	return &ConnectorTypesHandler{
 		service: service,
 	}
 }
-func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlerConfig{
 		Validate: []validate{
@@ -39,7 +39,7 @@ func (h connectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handleGet(w, r, cfg)
 }
 
-func (h connectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
+func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()

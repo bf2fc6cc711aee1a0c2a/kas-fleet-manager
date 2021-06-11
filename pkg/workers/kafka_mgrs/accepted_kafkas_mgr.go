@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"sync"
 	"time"
 
@@ -31,7 +32,7 @@ type AcceptedKafkaManager struct {
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, id string, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, id string, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		id:                  id,
 		workerType:          "accepted_kafka",
@@ -39,6 +40,9 @@ func NewAcceptedKafkaManager(kafkaService services.KafkaService, id string, conf
 		configService:       configService,
 		quotaServiceFactory: quotaServiceFactory,
 		clusterPlmtStrategy: clusterPlmtStrategy,
+		reconciler: workers.Reconciler{
+			SignalBus: bus,
+		},
 	}
 }
 
