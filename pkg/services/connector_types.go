@@ -43,7 +43,8 @@ type connectorTypesService struct {
 func NewConnectorTypesService(connectorsConfig *config.ConnectorsConfig, connectionFactory *db.ConnectionFactory) *connectorTypesService {
 
 	connectorTypeIndex := map[string]*config.ConnectorCatalogEntry{}
-	for _, entry := range connectorsConfig.CatalogEntries {
+	for i := range connectorsConfig.CatalogEntries {
+		entry := connectorsConfig.CatalogEntries[i]
 		connectorTypeIndex[entry.ConnectorType.Id] = &entry
 	}
 	return &connectorTypesService{
