@@ -5,6 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
@@ -64,6 +65,9 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			},
 // 			InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the InstallAddon method")
+// 			},
+// 			InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the InstallAddonWithParams method")
 // 			},
 // 			ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 // 				panic("mock out the ListAllClusterIds method")
@@ -146,6 +150,9 @@ type ClusterServiceMock struct {
 
 	// InstallAddonFunc mocks the InstallAddon method.
 	InstallAddonFunc func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
+
+	// InstallAddonWithParamsFunc mocks the InstallAddonWithParams method.
+	InstallAddonWithParamsFunc func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError)
 
 	// ListAllClusterIdsFunc mocks the ListAllClusterIds method.
 	ListAllClusterIdsFunc func() ([]api.Cluster, *apiErrors.ServiceError)
@@ -260,6 +267,15 @@ type ClusterServiceMock struct {
 			// AddonID is the addonID argument value.
 			AddonID string
 		}
+		// InstallAddonWithParams holds details about calls to the InstallAddonWithParams method.
+		InstallAddonWithParams []struct {
+			// Cluster is the cluster argument value.
+			Cluster *api.Cluster
+			// AddonID is the addonID argument value.
+			AddonID string
+			// AddonParams is the addonParams argument value.
+			AddonParams []ocm.AddonParameter
+		}
 		// ListAllClusterIds holds details about calls to the ListAllClusterIds method.
 		ListAllClusterIds []struct {
 		}
@@ -338,6 +354,7 @@ type ClusterServiceMock struct {
 	lockGetClusterDNS                    sync.RWMutex
 	lockGetComputeNodes                  sync.RWMutex
 	lockInstallAddon                     sync.RWMutex
+	lockInstallAddonWithParams           sync.RWMutex
 	lockListAllClusterIds                sync.RWMutex
 	lockListByStatus                     sync.RWMutex
 	lockListGroupByProviderAndRegion     sync.RWMutex
@@ -824,6 +841,45 @@ func (mock *ClusterServiceMock) InstallAddonCalls() []struct {
 	mock.lockInstallAddon.RLock()
 	calls = mock.calls.InstallAddon
 	mock.lockInstallAddon.RUnlock()
+	return calls
+}
+
+// InstallAddonWithParams calls InstallAddonWithParamsFunc.
+func (mock *ClusterServiceMock) InstallAddonWithParams(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError) {
+	if mock.InstallAddonWithParamsFunc == nil {
+		panic("ClusterServiceMock.InstallAddonWithParamsFunc: method is nil but ClusterService.InstallAddonWithParams was just called")
+	}
+	callInfo := struct {
+		Cluster     *api.Cluster
+		AddonID     string
+		AddonParams []ocm.AddonParameter
+	}{
+		Cluster:     cluster,
+		AddonID:     addonID,
+		AddonParams: addonParams,
+	}
+	mock.lockInstallAddonWithParams.Lock()
+	mock.calls.InstallAddonWithParams = append(mock.calls.InstallAddonWithParams, callInfo)
+	mock.lockInstallAddonWithParams.Unlock()
+	return mock.InstallAddonWithParamsFunc(cluster, addonID, addonParams)
+}
+
+// InstallAddonWithParamsCalls gets all the calls that were made to InstallAddonWithParams.
+// Check the length with:
+//     len(mockedClusterService.InstallAddonWithParamsCalls())
+func (mock *ClusterServiceMock) InstallAddonWithParamsCalls() []struct {
+	Cluster     *api.Cluster
+	AddonID     string
+	AddonParams []ocm.AddonParameter
+} {
+	var calls []struct {
+		Cluster     *api.Cluster
+		AddonID     string
+		AddonParams []ocm.AddonParameter
+	}
+	mock.lockInstallAddonWithParams.RLock()
+	calls = mock.calls.InstallAddonWithParams
+	mock.lockInstallAddonWithParams.RUnlock()
 	return calls
 }
 

@@ -66,6 +66,8 @@ const (
 	EndpointPathAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}"
 	// EndpointPathKasFleetshardOperatorAddonInstallation ocm cluster kas-fleetshard-operator addon installation endpoint
 	EndpointPathKasFleetshardOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/kas-fleetshard-operator"
+	// EndpointPathClusterLoggingOperatorAddonInstallation ocm cluster cluster-logging-operator addon installation endpoint
+	EndpointPathClusterLoggingOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/cluster-logging-operator"
 
 	EndpointPathClusterAuthorization = "/api/accounts_mgmt/v1/cluster_authorizations"
 	EndpointPathSubscription         = "/api/accounts_mgmt/v1/subscriptions/{id}"
@@ -103,6 +105,8 @@ const (
 	MockClusterAddonID = "managed-kafka"
 	// MockKasFleetshardAddonID default mock ID for the KAS Fleetshard Operator
 	MockKasFleetshardAddonID = "kas-fleetshard-operator"
+	// MockClusterLoggingOperatorAddonID default mock ID for the Cluster Logging Operator
+	MockClusterLoggingOperatorAddonID = "cluster-logging-operator"
 	// MockClusterAddonState default mock cluster addon state
 	MockClusterAddonState = clustersmgmtv1.AddOnInstallationStateReady
 	// MockClusterAddonDescription default mock cluster addon description
@@ -125,39 +129,42 @@ const (
 
 // variables for endpoints
 var (
-	EndpointClusterGet                                  = Endpoint{EndpointPathCluster, http.MethodGet}
-	EndpointClusterPatch                                = Endpoint{EndpointPathCluster, http.MethodPatch}
-	EndpointKafkaDelete                                 = Endpoint{EndpointPathSyncset, http.MethodDelete}
-	EndpointClustersGet                                 = Endpoint{EndpointPathClusters, http.MethodGet}
-	EndpointClustersPost                                = Endpoint{EndpointPathClusters, http.MethodPost}
-	EndpointClusterDelete                               = Endpoint{EndpointPathCluster, http.MethodDelete}
-	EndpointClusterSyncsetsPost                         = Endpoint{EndpointPathSyncsets, http.MethodPost}
-	EndpointClusterSyncsetGet                           = Endpoint{EndpointPathSyncset, http.MethodGet}
-	EndpointClusterSyncsetPatch                         = Endpoint{EndpointPathSyncset, http.MethodPatch}
-	EndpointClusterIngressGet                           = Endpoint{EndpointPathIngresses, http.MethodGet}
-	EndpointCloudProvidersGet                           = Endpoint{EndpointPathCloudProviders, http.MethodGet}
-	EndpointCloudProviderGet                            = Endpoint{EndpointPathCloudProvider, http.MethodGet}
-	EndpointCloudProviderRegionsGet                     = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
-	EndpointCloudProviderRegionGet                      = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
-	EndpointClusterStatusGet                            = Endpoint{EndpointPathClusterStatus, http.MethodGet}
-	EndpointClusterAddonsGet                            = Endpoint{EndpointPathClusterAddons, http.MethodGet}
-	EndpointClusterAddonPost                            = Endpoint{EndpointPathClusterAddons, http.MethodPost}
-	EndpointMachinePoolsGet                             = Endpoint{EndpointPathMachinePools, http.MethodGet}
-	EndpointMachinePoolPost                             = Endpoint{EndpointPathMachinePools, http.MethodPost}
-	EndpointMachinePoolPatch                            = Endpoint{EndpointPathMachinePool, http.MethodPatch}
-	EndpointMachinePoolGet                              = Endpoint{EndpointPathMachinePool, http.MethodGet}
-	EndpointIdentityProviderPost                        = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
-	EndpointIdentityProviderPatch                       = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
-	EndpointAddonInstallationsPost                      = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
-	EndpointAddonInstallationGet                        = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
-	EndpointAddonInstallationPatch                      = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
-	EndpointKasFleetshardOperatorAddonInstallationGet   = Endpoint{EndpointPathKasFleetshardOperatorAddonInstallation, http.MethodGet}
-	EndpointKasFleetshardOperatorAddonInstallationPatch = Endpoint{EndpointPathKasFleetshardOperatorAddonInstallation, http.MethodPatch}
-	EndpointKasFleetshardOperatorAddonInstallationPost  = Endpoint{EndpointPathKasFleetshardOperatorAddonInstallation, http.MethodPost}
-	EndpointClusterAuthorizationPost                    = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
-	EndpointSubscriptionDelete                          = Endpoint{EndpointPathSubscription, http.MethodDelete}
-	EndpointSubscriptionSearch                          = Endpoint{EndpointPathSubscriptionSearch, http.MethodGet}
-	EndpointTermsReviewPost                             = Endpoint{EndpointPathTermsReview, http.MethodPost}
+	EndpointClusterGet                                   = Endpoint{EndpointPathCluster, http.MethodGet}
+	EndpointClusterPatch                                 = Endpoint{EndpointPathCluster, http.MethodPatch}
+	EndpointKafkaDelete                                  = Endpoint{EndpointPathSyncset, http.MethodDelete}
+	EndpointClustersGet                                  = Endpoint{EndpointPathClusters, http.MethodGet}
+	EndpointClustersPost                                 = Endpoint{EndpointPathClusters, http.MethodPost}
+	EndpointClusterDelete                                = Endpoint{EndpointPathCluster, http.MethodDelete}
+	EndpointClusterSyncsetsPost                          = Endpoint{EndpointPathSyncsets, http.MethodPost}
+	EndpointClusterSyncsetGet                            = Endpoint{EndpointPathSyncset, http.MethodGet}
+	EndpointClusterSyncsetPatch                          = Endpoint{EndpointPathSyncset, http.MethodPatch}
+	EndpointClusterIngressGet                            = Endpoint{EndpointPathIngresses, http.MethodGet}
+	EndpointCloudProvidersGet                            = Endpoint{EndpointPathCloudProviders, http.MethodGet}
+	EndpointCloudProviderGet                             = Endpoint{EndpointPathCloudProvider, http.MethodGet}
+	EndpointCloudProviderRegionsGet                      = Endpoint{EndpointPathCloudProviderRegions, http.MethodGet}
+	EndpointCloudProviderRegionGet                       = Endpoint{EndpointPathCloudProviderRegion, http.MethodGet}
+	EndpointClusterStatusGet                             = Endpoint{EndpointPathClusterStatus, http.MethodGet}
+	EndpointClusterAddonsGet                             = Endpoint{EndpointPathClusterAddons, http.MethodGet}
+	EndpointClusterAddonPost                             = Endpoint{EndpointPathClusterAddons, http.MethodPost}
+	EndpointMachinePoolsGet                              = Endpoint{EndpointPathMachinePools, http.MethodGet}
+	EndpointMachinePoolPost                              = Endpoint{EndpointPathMachinePools, http.MethodPost}
+	EndpointMachinePoolPatch                             = Endpoint{EndpointPathMachinePool, http.MethodPatch}
+	EndpointMachinePoolGet                               = Endpoint{EndpointPathMachinePool, http.MethodGet}
+	EndpointIdentityProviderPost                         = Endpoint{EndpointPathClusterIdentityProviders, http.MethodPost}
+	EndpointIdentityProviderPatch                        = Endpoint{EndpointPathClusterIdentityProvider, http.MethodPatch}
+	EndpointAddonInstallationsPost                       = Endpoint{EndpointPathAddonInstallations, http.MethodPost}
+	EndpointAddonInstallationGet                         = Endpoint{EndpointPathAddonInstallation, http.MethodGet}
+	EndpointAddonInstallationPatch                       = Endpoint{EndpointPathAddonInstallation, http.MethodPatch}
+	EndpointKasFleetshardOperatorAddonInstallationGet    = Endpoint{EndpointPathKasFleetshardOperatorAddonInstallation, http.MethodGet}
+	EndpointKasFleetshardOperatorAddonInstallationPatch  = Endpoint{EndpointPathKasFleetshardOperatorAddonInstallation, http.MethodPatch}
+	EndpointKasFleetshardOperatorAddonInstallationPost   = Endpoint{EndpointPathKasFleetshardOperatorAddonInstallation, http.MethodPost}
+	EndpointClusterLoggingOperatorAddonInstallationGet   = Endpoint{EndpointPathClusterLoggingOperatorAddonInstallation, http.MethodGet}
+	EndpointClusterLoggingOperatorAddonInstallationPatch = Endpoint{EndpointPathClusterLoggingOperatorAddonInstallation, http.MethodPatch}
+	EndpointClusterLoggingOperatorAddonInstallationPost  = Endpoint{EndpointPathClusterLoggingOperatorAddonInstallation, http.MethodPost}
+	EndpointClusterAuthorizationPost                     = Endpoint{EndpointPathClusterAuthorization, http.MethodPost}
+	EndpointSubscriptionDelete                           = Endpoint{EndpointPathSubscription, http.MethodDelete}
+	EndpointSubscriptionSearch                           = Endpoint{EndpointPathSubscriptionSearch, http.MethodGet}
+	EndpointTermsReviewPost                              = Endpoint{EndpointPathTermsReview, http.MethodPost}
 )
 
 // variables for mocked ocm types
@@ -166,24 +173,25 @@ var (
 // to override these values, do not set them directly e.g. mocks.MockSyncset = ...
 // instead use the Set*Response functions provided by MockConfigurableServerBuilder e.g. SetClusterGetResponse(...)
 var (
-	MockIdentityProvider                       *clustersmgmtv1.IdentityProvider
-	MockSyncset                                *clustersmgmtv1.Syncset
-	MockIngressList                            *clustersmgmtv1.IngressList
-	MockCloudProvider                          *clustersmgmtv1.CloudProvider
-	MockCloudProviderList                      *clustersmgmtv1.CloudProviderList
-	MockCloudProviderRegion                    *clustersmgmtv1.CloudRegion
-	MockCloudProviderRegionList                *clustersmgmtv1.CloudRegionList
-	MockClusterStatus                          *clustersmgmtv1.ClusterStatus
-	MockClusterAddonInstallation               *clustersmgmtv1.AddOnInstallation
-	MockClusterAddonInstallationList           *clustersmgmtv1.AddOnInstallationList
-	MockKasFleetshardOperatorAddonInstallation *clustersmgmtv1.AddOnInstallation
-	MockMachinePoolList                        *clustersmgmtv1.MachinePoolList
-	MockMachinePool                            *clustersmgmtv1.MachinePool
-	MockCluster                                *clustersmgmtv1.Cluster
-	MockClusterAuthorization                   *amsv1.ClusterAuthorizationResponse
-	MockSubscription                           *amsv1.Subscription
-	MockSubscriptionSearch                     []*amsv1.Subscription
-	MockTermsReview                            *authorizationsv1.TermsReviewResponse
+	MockIdentityProvider                           *clustersmgmtv1.IdentityProvider
+	MockSyncset                                    *clustersmgmtv1.Syncset
+	MockIngressList                                *clustersmgmtv1.IngressList
+	MockCloudProvider                              *clustersmgmtv1.CloudProvider
+	MockCloudProviderList                          *clustersmgmtv1.CloudProviderList
+	MockCloudProviderRegion                        *clustersmgmtv1.CloudRegion
+	MockCloudProviderRegionList                    *clustersmgmtv1.CloudRegionList
+	MockClusterStatus                              *clustersmgmtv1.ClusterStatus
+	MockClusterAddonInstallation                   *clustersmgmtv1.AddOnInstallation
+	MockClusterAddonInstallationList               *clustersmgmtv1.AddOnInstallationList
+	MockKasFleetshardOperatorAddonInstallation     *clustersmgmtv1.AddOnInstallation
+	MockKasClusterLoggingOperatorAddonInstallation *clustersmgmtv1.AddOnInstallation
+	MockMachinePoolList                            *clustersmgmtv1.MachinePoolList
+	MockMachinePool                                *clustersmgmtv1.MachinePool
+	MockCluster                                    *clustersmgmtv1.Cluster
+	MockClusterAuthorization                       *amsv1.ClusterAuthorizationResponse
+	MockSubscription                               *amsv1.Subscription
+	MockSubscriptionSearch                         []*amsv1.Subscription
+	MockTermsReview                                *authorizationsv1.TermsReviewResponse
 )
 
 // routerSwapper is an http.Handler that allows you to swap mux routers.
@@ -377,6 +385,18 @@ func (b *MockConfigurableServerBuilder) SetKasFleetshardOperatorAddonInstallatio
 	b.handlerRegister[EndpointKasFleetshardOperatorAddonInstallationPost] = buildMockRequestHandler(ai, err)
 }
 
+func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationGetResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationGet] = buildMockRequestHandler(ai, err)
+}
+
+func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationPatchResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationPatch] = buildMockRequestHandler(ai, err)
+}
+
+func (b *MockConfigurableServerBuilder) SetClusterLoggingOperatorAddonInstallationPostResponse(ai *clustersmgmtv1.AddOnInstallation, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointClusterLoggingOperatorAddonInstallationPost] = buildMockRequestHandler(ai, err)
+}
+
 func (b *MockConfigurableServerBuilder) SetSubscriptionPathDeleteResponse(idp *amsv1.Subscription, err *ocmErrors.ServiceError) {
 	b.handlerRegister[EndpointSubscriptionDelete] = buildMockRequestHandler(idp, err)
 }
@@ -445,39 +465,42 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 	// define a list of default endpoints and handlers in the mock ocm api server, when new endpoints are used in the
 	// managed-services-api service, a default ocm response should also be added here
 	return HandlerRegister{
-		EndpointClusterGet:                                  buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterPatch:                                buildMockRequestHandler(MockCluster, nil),
-		EndpointKafkaDelete:                                 buildMockRequestHandler(MockSyncset, nil),
-		EndpointClustersGet:                                 buildMockRequestHandler(MockCluster, nil),
-		EndpointClustersPost:                                buildMockRequestHandler(MockCluster, nil),
-		EndpointClusterDelete:                               buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),
-		EndpointClusterSyncsetsPost:                         buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterSyncsetGet:                           buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterSyncsetPatch:                         buildMockRequestHandler(MockSyncset, nil),
-		EndpointClusterIngressGet:                           buildMockRequestHandler(MockIngressList, nil),
-		EndpointCloudProvidersGet:                           buildMockRequestHandler(MockCloudProviderList, nil),
-		EndpointCloudProviderGet:                            buildMockRequestHandler(MockCloudProvider, nil),
-		EndpointCloudProviderRegionsGet:                     buildMockRequestHandler(MockCloudProviderRegionList, nil),
-		EndpointCloudProviderRegionGet:                      buildMockRequestHandler(MockCloudProviderRegion, nil),
-		EndpointClusterStatusGet:                            buildMockRequestHandler(MockClusterStatus, nil),
-		EndpointClusterAddonsGet:                            buildMockRequestHandler(MockClusterAddonInstallationList, nil),
-		EndpointClusterAddonPost:                            buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointMachinePoolsGet:                             buildMockRequestHandler(MockMachinePoolList, nil),
-		EndpointMachinePoolGet:                              buildMockRequestHandler(MockMachinePool, nil),
-		EndpointMachinePoolPatch:                            buildMockRequestHandler(MockMachinePool, nil),
-		EndpointMachinePoolPost:                             buildMockRequestHandler(MockMachinePool, nil),
-		EndpointIdentityProviderPatch:                       buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointIdentityProviderPost:                        buildMockRequestHandler(MockIdentityProvider, nil),
-		EndpointAddonInstallationsPost:                      buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationGet:                        buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointAddonInstallationPatch:                      buildMockRequestHandler(MockClusterAddonInstallation, nil),
-		EndpointKasFleetshardOperatorAddonInstallationGet:   buildMockRequestHandler(MockKasFleetshardOperatorAddonInstallation, nil),
-		EndpointKasFleetshardOperatorAddonInstallationPatch: buildMockRequestHandler(MockKasFleetshardOperatorAddonInstallation, nil),
-		EndpointKasFleetshardOperatorAddonInstallationPost:  buildMockRequestHandler(MockKasFleetshardOperatorAddonInstallation, nil),
-		EndpointClusterAuthorizationPost:                    buildMockRequestHandler(MockClusterAuthorization, nil),
-		EndpointSubscriptionDelete:                          buildMockRequestHandler(MockSubscription, nil),
-		EndpointSubscriptionSearch:                          buildMockRequestHandler(MockSubscriptionSearch, nil),
-		EndpointTermsReviewPost:                             buildMockRequestHandler(MockTermsReview, nil),
+		EndpointClusterGet:                                   buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterPatch:                                 buildMockRequestHandler(MockCluster, nil),
+		EndpointKafkaDelete:                                  buildMockRequestHandler(MockSyncset, nil),
+		EndpointClustersGet:                                  buildMockRequestHandler(MockCluster, nil),
+		EndpointClustersPost:                                 buildMockRequestHandler(MockCluster, nil),
+		EndpointClusterDelete:                                buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),
+		EndpointClusterSyncsetsPost:                          buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetGet:                            buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterSyncsetPatch:                          buildMockRequestHandler(MockSyncset, nil),
+		EndpointClusterIngressGet:                            buildMockRequestHandler(MockIngressList, nil),
+		EndpointCloudProvidersGet:                            buildMockRequestHandler(MockCloudProviderList, nil),
+		EndpointCloudProviderGet:                             buildMockRequestHandler(MockCloudProvider, nil),
+		EndpointCloudProviderRegionsGet:                      buildMockRequestHandler(MockCloudProviderRegionList, nil),
+		EndpointCloudProviderRegionGet:                       buildMockRequestHandler(MockCloudProviderRegion, nil),
+		EndpointClusterStatusGet:                             buildMockRequestHandler(MockClusterStatus, nil),
+		EndpointClusterAddonsGet:                             buildMockRequestHandler(MockClusterAddonInstallationList, nil),
+		EndpointClusterAddonPost:                             buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointMachinePoolsGet:                              buildMockRequestHandler(MockMachinePoolList, nil),
+		EndpointMachinePoolGet:                               buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPatch:                             buildMockRequestHandler(MockMachinePool, nil),
+		EndpointMachinePoolPost:                              buildMockRequestHandler(MockMachinePool, nil),
+		EndpointIdentityProviderPatch:                        buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointIdentityProviderPost:                         buildMockRequestHandler(MockIdentityProvider, nil),
+		EndpointAddonInstallationsPost:                       buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationGet:                         buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointAddonInstallationPatch:                       buildMockRequestHandler(MockClusterAddonInstallation, nil),
+		EndpointKasFleetshardOperatorAddonInstallationGet:    buildMockRequestHandler(MockKasFleetshardOperatorAddonInstallation, nil),
+		EndpointKasFleetshardOperatorAddonInstallationPatch:  buildMockRequestHandler(MockKasFleetshardOperatorAddonInstallation, nil),
+		EndpointKasFleetshardOperatorAddonInstallationPost:   buildMockRequestHandler(MockKasFleetshardOperatorAddonInstallation, nil),
+		EndpointClusterLoggingOperatorAddonInstallationGet:   buildMockRequestHandler(MockKasClusterLoggingOperatorAddonInstallation, nil),
+		EndpointClusterLoggingOperatorAddonInstallationPatch: buildMockRequestHandler(MockKasClusterLoggingOperatorAddonInstallation, nil),
+		EndpointClusterLoggingOperatorAddonInstallationPost:  buildMockRequestHandler(MockKasClusterLoggingOperatorAddonInstallation, nil),
+		EndpointClusterAuthorizationPost:                     buildMockRequestHandler(MockClusterAuthorization, nil),
+		EndpointSubscriptionDelete:                           buildMockRequestHandler(MockSubscription, nil),
+		EndpointSubscriptionSearch:                           buildMockRequestHandler(MockSubscriptionSearch, nil),
+		EndpointTermsReviewPost:                              buildMockRequestHandler(MockTermsReview, nil),
 	}, nil
 }
 
@@ -712,6 +735,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	MockKasClusterLoggingOperatorAddonInstallation, err = GetMockClusterAddonInstallation(nil, MockClusterLoggingOperatorAddonID)
+	if err != nil {
+		panic(err)
+	}
 	MockCluster, err = GetMockCluster(nil)
 	if err != nil {
 		panic(err)
@@ -931,6 +958,7 @@ func GetMockClusterAddonInstallation(modifyFn func(*clustersmgmtv1.AddOnInstalla
 func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInstallationList, error)) (*clustersmgmtv1.AddOnInstallationList, error) {
 	list, err := clustersmgmtv1.NewAddOnInstallationList().Items(
 		GetMockClusterAddonInstallationBuilder(nil, MockClusterAddonID),
+		GetMockClusterAddonInstallationBuilder(nil, MockClusterLoggingOperatorAddonID),
 		GetMockClusterAddonInstallationBuilder(nil, MockKasFleetshardAddonID)).
 		Build()
 	if modifyFn != nil {

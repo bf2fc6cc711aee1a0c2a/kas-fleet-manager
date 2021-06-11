@@ -5,42 +5,44 @@ import (
 )
 
 const (
-	MockModeStubServer     = "stub-server"
-	MockModeEmulateServer  = "emulate-server"
-	strimziOperatorAddonID = "managed-kafka"
-	kasFleetshardAddonID   = "kas-fleetshard-operator"
+	MockModeStubServer            = "stub-server"
+	MockModeEmulateServer         = "emulate-server"
+	strimziOperatorAddonID        = "managed-kafka"
+	kasFleetshardAddonID          = "kas-fleetshard-operator"
+	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )
 
 type OCMConfig struct {
-	BaseURL                string `json:"base_url"`
-	ClientID               string `json:"client-id"`
-	ClientIDFile           string `json:"client-id_file"`
-	ClientSecret           string `json:"client-secret"`
-	ClientSecretFile       string `json:"client-secret_file"`
-	SelfToken              string `json:"self_token"`
-	SelfTokenFile          string `json:"self_token_file"`
-	TokenURL               string `json:"token_url"`
-	TokenIssuerURL         string `json:"token_issuer"`
-	Debug                  bool   `json:"debug"`
-	EnableMock             bool   `json:"enable_mock"`
-	MockMode               string `json:"mock_type"`
-	StrimziOperatorAddonID string `json:"strimzi_operator_addon_id"`
-	KasFleetshardAddonID   string `json:"kas_fleetshard_addon_id"`
+	BaseURL                       string `json:"base_url"`
+	ClientID                      string `json:"client-id"`
+	ClientIDFile                  string `json:"client-id_file"`
+	ClientSecret                  string `json:"client-secret"`
+	ClientSecretFile              string `json:"client-secret_file"`
+	SelfToken                     string `json:"self_token"`
+	SelfTokenFile                 string `json:"self_token_file"`
+	TokenURL                      string `json:"token_url"`
+	TokenIssuerURL                string `json:"token_issuer"`
+	Debug                         bool   `json:"debug"`
+	EnableMock                    bool   `json:"enable_mock"`
+	MockMode                      string `json:"mock_type"`
+	StrimziOperatorAddonID        string `json:"strimzi_operator_addon_id"`
+	KasFleetshardAddonID          string `json:"kas_fleetshard_addon_id"`
+	ClusterLoggingOperatorAddonID string `json:"cluster_logging_operator_addon_id"`
 }
 
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
-		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
-		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		TokenIssuerURL:         "https://sso.redhat.com/auth/realms/redhat-external",
-		ClientIDFile:           "secrets/ocm-service.clientId",
-		ClientSecretFile:       "secrets/ocm-service.clientSecret",
-		SelfTokenFile:          "secrets/ocm-service.token",
-		Debug:                  false,
-		EnableMock:             false,
-		MockMode:               MockModeStubServer,
-		StrimziOperatorAddonID: strimziOperatorAddonID,
-		KasFleetshardAddonID:   kasFleetshardAddonID,
+		BaseURL:                       "https://api-integration.6943.hive-integration.openshiftapps.com",
+		TokenURL:                      "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+		TokenIssuerURL:                "https://sso.redhat.com/auth/realms/redhat-external",
+		ClientIDFile:                  "secrets/ocm-service.clientId",
+		ClientSecretFile:              "secrets/ocm-service.clientSecret",
+		SelfTokenFile:                 "secrets/ocm-service.token",
+		Debug:                         false,
+		EnableMock:                    false,
+		MockMode:                      MockModeStubServer,
+		StrimziOperatorAddonID:        strimziOperatorAddonID,
+		KasFleetshardAddonID:          kasFleetshardAddonID,
 	}
 }
 
@@ -56,6 +58,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")
 	fs.StringVar(&c.StrimziOperatorAddonID, "strimzi-operator-addon-id", c.StrimziOperatorAddonID, "The name of the Strimzi operator addon")
 	fs.StringVar(&c.KasFleetshardAddonID, "kas-fleetshard-addon-id", c.KasFleetshardAddonID, "The name of the kas-fleetshard operator addon")
+	fs.StringVar(&c.ClusterLoggingOperatorAddonID, "cluster-logging-operator-addon-id", "", "The name of the cluster logging operator addon. An empty string indicates that the operator should not be installed")
 }
 
 func (c *OCMConfig) ReadFiles() error {
