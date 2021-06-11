@@ -85,12 +85,106 @@ Feature: create a a connector
             "kind": "ConnectorType",
             "name": "aws-sqs-source",
             "version": "v1alpha1"
+          },
+          {
+            "json_schema" : {
+              "type" : "object",
+              "properties" : {
+                "connector" : {
+                  "type" : "object",
+                  "title" : "Log",
+                  "required" : [ ],
+                  "properties" : {
+                    "multiLine" : {
+                      "title" : "Multi Line",
+                      "description" : "Multi Line",
+                      "type" : "boolean",
+                      "default" : false
+                    },
+                    "showAll" : {
+                      "title" : "Show All",
+                      "description" : "Show All",
+                      "type" : "boolean",
+                      "default" : false
+                    }
+                  }
+                },
+                "kafka" : {
+                  "type" : "object",
+                  "title" : "Managed Kafka Source",
+                  "required" : [ "topic" ],
+                  "properties" : {
+                    "topic" : {
+                      "title" : "Topic names",
+                      "description" : "Comma separated list of Kafka topic names",
+                      "type" : "string"
+                    }
+                  }
+                },
+                "steps" : {
+                  "type" : "array",
+                  "items" : {
+                    "oneOf" : [ {
+                      "type" : "object",
+                      "required" : [ "insert-field" ],
+                      "properties" : {
+                        "insert-field" : {
+                          "title" : "Insert Field Action",
+                          "description" : "Adds a custom field with a constant value to the message in transit",
+                          "required" : [ "field", "value" ],
+                          "properties" : {
+                            "field" : {
+                              "title" : "Field",
+                              "description" : "The name of the field to be added",
+                              "type" : "string"
+                            },
+                            "value" : {
+                              "title" : "Value",
+                              "description" : "The value of the field",
+                              "type" : "string"
+                            }
+                          },
+                          "type" : "object"
+                        }
+                      }
+                    }, {
+                      "type" : "object",
+                      "required" : [ "extract-field" ],
+                      "properties" : {
+                        "extract-field" : {
+                          "title" : "Extract Field Action",
+                          "description" : "Extract a field from the body",
+                          "required" : [ "field" ],
+                          "properties" : {
+                            "field" : {
+                              "title" : "Field",
+                              "description" : "The name of the field to be added",
+                              "type" : "string"
+                            }
+                          },
+                          "type" : "object"
+                        }
+                      }
+                    } ]
+                  }
+                }
+              }
+            },
+            "id" : "log_sink_0.1",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "kind" : "ConnectorType",
+            "icon_href" : "TODO",
+            "name" : "Log Sink",
+            "description" : "Log Sink",
+            "version" : "0.1",
+            "labels" : [ "sink" ],
+            "channels" : [ "stable" ]
           }
         ],
         "kind": "ConnectorTypeList",
         "page": 1,
-        "size": 1,
-        "total": 1
+        "size": 2,
+        "total": 2
       }
       """
 
