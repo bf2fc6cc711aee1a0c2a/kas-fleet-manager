@@ -29,8 +29,8 @@ var (
 	maxServiceAccountId           = 36
 )
 
-// validateAsyncEnabled returns a validator that returns an error if the async query param is not true
-func validateAsyncEnabled(r *http.Request, action string) validate {
+// ValidateAsyncEnabled returns a validator that returns an error if the async query param is not true
+func ValidateAsyncEnabled(r *http.Request, action string) Validate {
 	return func() *errors.ServiceError {
 		asyncParam := r.URL.Query().Get("async")
 		if asyncParam != "true" {
@@ -40,7 +40,7 @@ func validateAsyncEnabled(r *http.Request, action string) validate {
 	}
 }
 
-func validateServiceAccountName(value *string, field string) validate {
+func ValidateServiceAccountName(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !validServiceAccountNameRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountName("%s does not match %s", field, validServiceAccountNameRegexp.String())
@@ -49,7 +49,7 @@ func validateServiceAccountName(value *string, field string) validate {
 	}
 }
 
-func validateServiceAccountDesc(value *string, field string) validate {
+func ValidateServiceAccountDesc(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !validServiceAccountDescRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountDesc("%s does not match %s", field, validServiceAccountDescRegexp.String())
@@ -58,7 +58,7 @@ func validateServiceAccountDesc(value *string, field string) validate {
 	}
 }
 
-func validateServiceAccountId(value *string, field string) validate {
+func ValidateServiceAccountId(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !validUuidRegexp.MatchString(*value) {
 			return errors.MalformedServiceAccountId("%s does not match %s", field, validUuidRegexp.String())
@@ -67,8 +67,8 @@ func validateServiceAccountId(value *string, field string) validate {
 	}
 }
 
-// validateMultiAZEnabled returns a validator that returns an error if the multiAZ is not true
-func validateMultiAZEnabled(value *bool, action string) validate {
+// ValidateMultiAZEnabled returns a validator that returns an error if the multiAZ is not true
+func ValidateMultiAZEnabled(value *bool, action string) Validate {
 	return func() *errors.ServiceError {
 		if !*value {
 			return errors.NotMultiAzActionNotSupported()
@@ -77,9 +77,9 @@ func validateMultiAZEnabled(value *bool, action string) validate {
 	}
 }
 
-// validateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
+// ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
-func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configService services.ConfigService, action string) validate {
+func ValidateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configService services.ConfigService, action string) Validate {
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
 		if kafkaRequest.CloudProvider == "" {
@@ -110,7 +110,7 @@ func validateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 	}
 }
 
-func validKafkaClusterName(value *string, field string) validate {
+func ValidKafkaClusterName(value *string, field string) Validate {
 	return func() *errors.ServiceError {
 		if !validKafkaClusterNameRegexp.MatchString(*value) {
 			return errors.MalformedKafkaClusterName("%s does not match %s", field, validKafkaClusterNameRegexp.String())
@@ -119,8 +119,8 @@ func validKafkaClusterName(value *string, field string) validate {
 	}
 }
 
-// validateKafkaClusterNameIsUnique returns a validator that validates that the kafka cluster name is unique
-func validateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaService, context context.Context) validate {
+// ValidateKafkaClusterNameIsUnique returns a validator that validates that the kafka cluster name is unique
+func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaService, context context.Context) Validate {
 	return func() *errors.ServiceError {
 
 		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1, Search: fmt.Sprintf("name = %s", *name)})
@@ -136,7 +136,7 @@ func validateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 	}
 }
 
-func validateMaxLength(value *string, field string, maxVal *int) validate {
+func ValidateMaxLength(value *string, field string, maxVal *int) Validate {
 	return func() *errors.ServiceError {
 		if maxVal != nil && len(*value) > *maxVal {
 			return errors.MaximumFieldLengthMissing("%s is not valid. Maximum length %d is required", field, *maxVal)
@@ -145,19 +145,19 @@ func validateMaxLength(value *string, field string, maxVal *int) validate {
 	}
 }
 
-func validateLength(value *string, field string, minVal *int, maxVal *int) validate {
+func ValidateLength(value *string, field string, minVal *int, maxVal *int) Validate {
 	var min = 1
 	if *minVal > 1 {
 		min = *minVal
 	}
-	resp := validateMaxLength(value, field, maxVal)
+	resp := ValidateMaxLength(value, field, maxVal)
 	if resp != nil {
 		return resp
 	}
-	return validateMinLength(value, field, min)
+	return ValidateMinLength(value, field, min)
 }
 
-func validateMinLength(value *string, field string, min int) validate {
+func ValidateMinLength(value *string, field string, min int) Validate {
 	return func() *errors.ServiceError {
 		if value == nil || len(*value) < min {
 			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, min)
@@ -166,7 +166,7 @@ func validateMinLength(value *string, field string, min int) validate {
 	}
 }
 
-func validateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader, documentName string, documentLoader gojsonschema.JSONLoader) *errors.ServiceError {
+func ValidateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader, documentName string, documentLoader gojsonschema.JSONLoader) *errors.ServiceError {
 	schema, err := gojsonschema.NewSchema(schemaLoader)
 	if err != nil {
 		return errors.BadRequest("invalid %s: %v", schemaName, err)
@@ -183,7 +183,7 @@ func validateJsonSchema(schemaName string, schemaLoader gojsonschema.JSONLoader,
 	return nil
 }
 
-func validatQueryParam(queryParams url.Values, field string) validate {
+func ValidatQueryParam(queryParams url.Values, field string) Validate {
 
 	return func() *errors.ServiceError {
 		fieldValue := queryParams.Get(field)

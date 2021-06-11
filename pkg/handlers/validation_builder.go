@@ -7,7 +7,7 @@ import (
 
 type ValidateOption func(field string, value *string) *errors.ServiceError
 
-func validation(field string, value *string, options ...ValidateOption) validate {
+func Validation(field string, value *string, options ...ValidateOption) Validate {
 	return func() *errors.ServiceError {
 		for _, option := range options {
 			err := option(field, value)
@@ -19,7 +19,7 @@ func validation(field string, value *string, options ...ValidateOption) validate
 	}
 }
 
-func withDefault(d string) ValidateOption {
+func WithDefault(d string) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if *value == "" {
 			*value = d
@@ -28,7 +28,7 @@ func withDefault(d string) ValidateOption {
 	}
 }
 
-func minLen(min int) ValidateOption {
+func MinLen(min int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value == nil || len(*value) < min {
 			return errors.MinimumFieldLengthNotReached("%s is not valid. Minimum length %d is required.", field, min)
@@ -36,7 +36,7 @@ func minLen(min int) ValidateOption {
 		return nil
 	}
 }
-func maxLen(min int) ValidateOption {
+func MaxLen(min int) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil && len(*value) > min {
 			return errors.MinimumFieldLengthNotReached("%s is not valid. Maximum length %d is required.", field, min)
@@ -45,7 +45,7 @@ func maxLen(min int) ValidateOption {
 	}
 }
 
-func isOneOf(options ...string) ValidateOption {
+func IsOneOf(options ...string) ValidateOption {
 	return func(field string, value *string) *errors.ServiceError {
 		if value != nil {
 			for _, option := range options {

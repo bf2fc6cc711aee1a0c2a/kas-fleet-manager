@@ -3,12 +3,13 @@ package routes
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	corehandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
@@ -21,7 +22,7 @@ import (
 type options struct {
 	di.Inject
 	ConnectorsConfig    *config.ConnectorsConfig
-	ErrorsHandler       *handlers.ErrorHandler
+	ErrorsHandler       *corehandlers.ErrorHandler
 	AuthorizeMiddleware *acl.AccessControlListMiddleware
 	KeycloakService     services.KafkaKeycloakService
 
@@ -49,7 +50,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
 
 		//  /api/connector_mgmt/v1/openapi
-		apiV1Router.HandleFunc("/openapi", handlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
+		apiV1Router.HandleFunc("/openapi", corehandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
 		//  /api/connector_mgmt/v1/errors
 		apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
@@ -129,7 +130,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
 		apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
-		apiRouter.Use(handlers.MetricsMiddleware)
+		apiRouter.Use(corehandlers.MetricsMiddleware)
 		apiRouter.Use(db.TransactionMiddleware)
 		apiRouter.Use(gorillahandlers.CompressHandler)
 	}

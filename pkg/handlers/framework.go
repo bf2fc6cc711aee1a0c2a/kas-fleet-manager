@@ -13,33 +13,33 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
-// handlerConfig defines the common things each REST controller must do.
-// The corresponding handle() func runs the basic handlerConfig.
+// HandlerConfig defines the common things each REST controller must do.
+// The corresponding handle() func runs the basic HandlerConfig.
 // This is not meant to be an HTTP framework or anything larger than simple CRUD in handlers.
 //
 //   MarshalInto is a pointer to the object to hold the unmarshaled JSON.
-//   Validate is a list of validation function that run in order, returning fast on the first error.
+//   Validate is a list of Validation function that run in order, returning fast on the first error.
 //   Action is the specific logic a handler must take (e.g, find an object, save an object)
 //   ErrorHandler is the way errors are returned to the client
-type handlerConfig struct {
+type HandlerConfig struct {
 	MarshalInto  interface{}
-	Validate     []validate
-	Action       httpAction
-	ErrorHandler errorHandlerFunc
+	Validate     []Validate
+	Action       HttpAction
+	ErrorHandler ErrorHandlerFunc
 }
 
-type eventStream struct {
+type EventStream struct {
 	ContentType string
 	// GetNextEvent should block until there is an event to return.  GetNextEvent should unblock and return io.EOF when if context is canceled.
-	GetNextEvent httpAction
+	GetNextEvent HttpAction
 	Close        func()
 }
 
-type validate func() *errors.ServiceError
-type errorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.ServiceError)
-type httpAction func() (interface{}, *errors.ServiceError)
+type Validate func() *errors.ServiceError
+type ErrorHandlerFunc func(r *http.Request, w http.ResponseWriter, err *errors.ServiceError)
+type HttpAction func() (interface{}, *errors.ServiceError)
 
-func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStatus int) {
+func Handle(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
 	}
@@ -82,7 +82,7 @@ func handle(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStat
 
 }
 
-func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, httpStatus int) {
+func HandleDelete(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig, httpStatus int) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
 	}
@@ -105,7 +105,7 @@ func handleDelete(w http.ResponseWriter, r *http.Request, cfg *handlerConfig, ht
 
 }
 
-func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
+func HandleGet(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
 	}
@@ -127,7 +127,7 @@ func handleGet(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	}
 }
 
-func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
+func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	if cfg.ErrorHandler == nil {
 		cfg.ErrorHandler = shared.HandleError
 	}
@@ -147,7 +147,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 		return
 	}
 
-	if stream, ok := results.(eventStream); ok {
+	if stream, ok := results.(EventStream); ok {
 		if stream.Close != nil {
 			defer stream.Close()
 		}
@@ -171,7 +171,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 				}
 				result := openapi.WatchEvent{
 					Type:  "error",
-					Error: convertToPrivateError(err.AsOpenapiError(operationID, r.RequestURI)),
+					Error: ConvertToPrivateError(err.AsOpenapiError(operationID, r.RequestURI)),
 				}
 				_ = json.NewEncoder(w).Encode(result)
 				return
@@ -189,7 +189,7 @@ func handleList(w http.ResponseWriter, r *http.Request, cfg *handlerConfig) {
 	}
 
 }
-func convertToPrivateError(e publicOpenapi.Error) openapi.Error {
+func ConvertToPrivateError(e publicOpenapi.Error) openapi.Error {
 	return openapi.Error{
 		Id:          e.Id,
 		Kind:        e.Kind,

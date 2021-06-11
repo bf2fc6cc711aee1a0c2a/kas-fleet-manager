@@ -23,7 +23,7 @@ func NewServiceStatusHandler(service services.KafkaService, configService servic
 }
 
 func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			context := r.Context()
 			claims, err := auth.GetClaimsFromContext(context)
@@ -58,5 +58,5 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			return presenters.PresentServiceStatus(false, !hasAvailableKafkaCapacity), capacityErr
 		},
 	}
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }

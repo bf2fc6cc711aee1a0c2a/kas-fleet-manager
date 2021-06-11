@@ -30,9 +30,9 @@ func NewCloudProviderHandler(service services.CloudProvidersService, configServi
 func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, nil),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateLength(&id, "id", &minRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			cachedRegionList, cached := h.cache.Get(id)
@@ -58,11 +58,11 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			return regionList, nil
 		},
 	}
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
 func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			cachedCloudProviderList, cached := h.cache.Get("cloudProviderList")
 			if cached {
@@ -88,5 +88,5 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			return cloudProviderList, nil
 		},
 	}
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }

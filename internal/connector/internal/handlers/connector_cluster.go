@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"net/http"
 	"net/url"
@@ -42,11 +43,11 @@ func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.Connec
 
 func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var resource openapi.ConnectorCluster
-	cfg := &handlerConfig{
+	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
-		Validate: []validate{
-			validation("name", &resource.Metadata.Name,
-				withDefault("New Cluster"), minLen(1), maxLen(100)),
+		Validate: []handlers.Validate{
+			handlers.Validation("name", &resource.Metadata.Name,
+				handlers.WithDefault("New Cluster"), handlers.MinLen(1), handlers.MaxLen(100)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -68,14 +69,14 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 	}
 
 	// return 202 status accepted
-	handle(w, r, cfg, http.StatusAccepted)
+	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
 func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			resource, err := h.service.Get(r.Context(), connectorClusterId)
@@ -85,25 +86,25 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			return presenters.PresentConnectorCluster(resource), nil
 		},
 	}
-	handleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 func (h *ConnectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			err := h.service.Delete(r.Context(), connectorClusterId)
 			return nil, err
 		},
 	}
-	handleDelete(w, r, cfg, http.StatusNoContent)
+	handlers.HandleDelete(w, r, cfg, http.StatusNoContent)
 }
 
 func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			listArgs := services.NewListArguments(r.URL.Query())
@@ -128,14 +129,14 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	handleList(w, r, cfg)
+	handlers.HandleList(w, r, cfg)
 }
 
 func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
@@ -161,7 +162,7 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 			return result, nil
 		},
 	}
-	handleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 const (

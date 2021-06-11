@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
@@ -23,6 +24,7 @@ import (
 )
 
 var (
+	maxKafkaNameLength   = 32
 	maxConnectorIdLength = 32
 )
 
@@ -45,20 +47,20 @@ func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService 
 func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var resource openapi.Connector
 	tid := mux.Vars(r)["tid"]
-	cfg := &handlerConfig{
+	cfg := &handlers.HandlerConfig{
 
 		MarshalInto: &resource,
-		Validate: []validate{
-			validateAsyncEnabled(r, "creating connector"),
-			validation("channel", &resource.Channel, withDefault("stable"), maxLen(40)),
-			validation("metadata.name", &resource.Metadata.Name,
-				withDefault("New Connector"), minLen(1), maxLen(100)),
-			validation("metadata.kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
-			validation("kafka.bootstrap_server", &resource.Kafka.BootstrapServer, minLen(1)),
-			validation("kafka.client_id", &resource.Kafka.ClientId, minLen(1)),
-			validation("kafka.client_secret", &resource.Kafka.ClientSecret, minLen(1)),
-			validation("connector_type_id", &resource.ConnectorTypeId, minLen(1), maxLen(maxConnectorTypeIdLength)),
-			validation("desired_state", &resource.DesiredState, withDefault("ready"), isOneOf("ready", "stopped")),
+		Validate: []handlers.Validate{
+			handlers.ValidateAsyncEnabled(r, "creating connector"),
+			handlers.Validation("channel", &resource.Channel, handlers.WithDefault("stable"), handlers.MaxLen(40)),
+			handlers.Validation("metadata.name", &resource.Metadata.Name,
+				handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
+			handlers.Validation("metadata.kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
+			handlers.Validation("kafka.bootstrap_server", &resource.Kafka.BootstrapServer, handlers.MinLen(1)),
+			handlers.Validation("kafka.client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
+			handlers.Validation("kafka.client_secret", &resource.Kafka.ClientSecret, handlers.MinLen(1)),
+			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
+			handlers.Validation("desired_state", &resource.DesiredState, handlers.WithDefault("ready"), handlers.IsOneOf("ready", "stopped")),
 			validateConnectorSpec(h.connectorTypesService, &resource, tid),
 		},
 
@@ -107,7 +109,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return 202 status accepted
-	handle(w, r, cfg, http.StatusAccepted)
+	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
 func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
@@ -116,11 +118,11 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	contentType := r.Header.Get("Content-Type")
 
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_id", &connectorId, minLen(1), maxLen(maxConnectorIdLength)),
-			validation("connector_type_id", &connectorTypeId, maxLen(maxConnectorTypeIdLength)),
-			validation("Content-Type header", &contentType, isOneOf("application/json-patch+json", "application/merge-patch+json")),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
+			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json-patch+json", "application/merge-patch+json")),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -178,11 +180,11 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// revalidate
-			validates := []validate{
-				validation("name", &resource.Metadata.Name, minLen(1), maxLen(100)),
-				validation("connector_type_id", &resource.ConnectorTypeId, minLen(1), maxLen(maxKafkaNameLength)),
-				validation("kafka_id", &resource.Metadata.KafkaId, minLen(1), maxLen(maxKafkaNameLength)),
-				validation("Kafka client_id", &resource.Kafka.ClientId, minLen(1)),
+			validates := []handlers.Validate{
+				handlers.Validation("name", &resource.Metadata.Name, handlers.MinLen(1), handlers.MaxLen(100)),
+				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
+				handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
+				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
@@ -251,7 +253,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return 202 status accepted
-	handle(w, r, cfg, http.StatusAccepted)
+	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
 func validateConnectorPatch(bytes []byte, ct *api.ConnectorType) *errors.ServiceError {
@@ -334,10 +336,10 @@ func PatchResource(resource interface{}, patchType string, patchBytes []byte, pa
 func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_id", &connectorId, minLen(1), maxLen(maxConnectorIdLength)),
-			validation("connector_type_id", &connectorTypeId, maxLen(maxConnectorTypeIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			resource, err := h.connectorsService.Get(r.Context(), connectorId, connectorTypeId)
@@ -357,15 +359,15 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 			return presenters.PresentConnector(resource)
 		},
 	}
-	handleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 // Delete is the handler for deleting a kafka request
 func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_id", &connectorId, minLen(1), maxLen(maxConnectorIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
@@ -384,16 +386,16 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			return nil, nil
 		},
 	}
-	handleDelete(w, r, cfg, http.StatusNoContent)
+	handlers.HandleDelete(w, r, cfg, http.StatusNoContent)
 }
 
 func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 	kafkaId := r.URL.Query().Get("kafka_id")
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("kafka_id", &kafkaId, maxLen(maxKafkaNameLength)),
-			validation("connector_type_id", &connectorTypeId, maxLen(maxConnectorTypeIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("kafka_id", &kafkaId, handlers.MaxLen(maxKafkaNameLength)),
+			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -433,5 +435,5 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	handleList(w, r, cfg)
+	handlers.HandleList(w, r, cfg)
 }

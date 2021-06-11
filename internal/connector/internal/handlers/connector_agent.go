@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"io"
 	"net/http"
 	"strconv"
@@ -25,11 +26,11 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	var resource openapi.ConnectorClusterStatus
 
-	cfg := &handlerConfig{
+	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
-			validation("phase", &resource.Phase, isOneOf(api.AllConnectorClusterStatus...)),
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(api.AllConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -38,7 +39,7 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 			return nil, err
 		},
 	}
-	handle(w, r, cfg, http.StatusNoContent)
+	handlers.Handle(w, r, cfg, http.StatusNoContent)
 }
 
 func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http.Request) {
@@ -47,9 +48,9 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 	query := r.URL.Query()
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -92,7 +93,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				bookmarkSent := false
 
 				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", connectorClusterId))
-				return eventStream{
+				return handlers.EventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,
 					GetNextEvent: func() (interface{}, *errors.ServiceError) {
@@ -157,7 +158,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 			}
 		},
 	}
-	handleList(w, r, cfg)
+	handlers.HandleList(w, r, cfg)
 }
 
 func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource api.ConnectorDeployment) (openapi.ConnectorDeployment, *errors.ServiceError) {
@@ -218,10 +219,10 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	deploymentId := mux.Vars(r)["deployment_id"]
 
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
-			validation("deployment_id", &deploymentId, minLen(1), maxLen(maxConnectorIdLength)),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			resource, err := h.service.GetDeployment(r.Context(), deploymentId)
@@ -235,7 +236,7 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 			return h.presentDeployment(r, resource)
 		},
 	}
-	handleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
@@ -243,12 +244,12 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 	deploymentId := mux.Vars(r)["deployment_id"]
 	var resource openapi.ConnectorDeploymentStatus
 
-	cfg := &handlerConfig{
+	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
-		Validate: []validate{
-			validation("connector_cluster_id", &connectorClusterId, minLen(1), maxLen(maxConnectorClusterIdLength)),
-			validation("deployment_id", &deploymentId, minLen(1), maxLen(maxConnectorIdLength)),
-			validation("phase", &resource.Phase, isOneOf(api.AgentSetConnectorStatusPhase...)),
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
+			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(api.AgentSetConnectorStatusPhase...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -261,5 +262,5 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 			return nil, err
 		},
 	}
-	handle(w, r, cfg, http.StatusNoContent)
+	handlers.Handle(w, r, cfg, http.StatusNoContent)
 }
