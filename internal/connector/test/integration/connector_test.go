@@ -1,8 +1,9 @@
-package connector
+package integration
 
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"net/url"
 	"os"
 	"testing"
@@ -117,11 +118,15 @@ func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(conne
 		return err
 	}
 
-	worker := s.Suite.Helper.ConnectorWorker
+	var connectorManager *workers.ConnectorManager
+	if err := environments.Environment().ServiceContainer.Resolve(&connectorManager); err != nil {
+		return err
+	}
+
 	ccc := &config.ConnectorChannelConfig{
 		ShardMetadata: shardMetadata,
 	}
-	serr := worker.ReconcileConnectorCatalogEntry(connectorTypeId, channel, ccc)
+	serr := connectorManager.ReconcileConnectorCatalogEntry(connectorTypeId, channel, ccc)
 	if serr != nil {
 		return serr
 	}
@@ -154,7 +159,7 @@ func TestMain(m *testing.M) {
 	}
 
 	connectorsConfig.Enabled = true
-	connectorsConfig.ConnectorCatalogDirs = []string{"./test/integration/connector/connector-catalog"}
+	connectorsConfig.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()

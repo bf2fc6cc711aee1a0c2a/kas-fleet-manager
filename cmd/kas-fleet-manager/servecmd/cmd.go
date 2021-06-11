@@ -84,8 +84,7 @@ func runServe(cmd *cobra.Command, args []string) {
 
 	// Add the DI injected workers...
 	var diWorkers []workers.Worker
-	err = env.ServiceContainer.Resolve(&diWorkers)
-	if !goerrors.Is(err, di.ErrTypeNotExists) {
+	if err := env.ServiceContainer.Resolve(&diWorkers); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		panic(err)
 	}
 	for _, worker := range diWorkers {

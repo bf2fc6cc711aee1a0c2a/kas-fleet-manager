@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/google/uuid"
 	"sync"
 
@@ -25,7 +26,7 @@ type ConnectorManager struct {
 	isRunning               bool
 	imStop                  chan struct{}
 	syncTeardown            sync.WaitGroup
-	reconciler              Reconciler
+	reconciler              workers.Reconciler
 	connectorService        services.ConnectorsService
 	connectorClusterService services.ConnectorClusterService
 	observatoriumService    services.ObservatoriumService
@@ -46,7 +47,7 @@ func NewConnectorManager(connectorTypesService services.ConnectorTypesService, c
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
 		reconcileChannels:       true,
-		reconciler: Reconciler{
+		reconciler: workers.Reconciler{
 			SignalBus: bus,
 		},
 	}

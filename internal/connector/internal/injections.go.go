@@ -3,10 +3,11 @@ package internal
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/routes"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	oworker "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 )
 
@@ -33,6 +34,6 @@ func (s serviceInjector) Injections() (common.InjectionMap, error) {
 		"ConnectorsHandler":       di.Provide(handlers.NewConnectorsHandler),
 		"ConnectorClusterHandler": di.Provide(handlers.NewConnectorClusterHandler),
 		"RouteLoader":             di.Provide(routes.NewRouteLoader),
-		"ConnectorManager":        di.Provide(workers.NewConnectorManager),
+		"ConnectorManager":        di.Provide(workers.NewConnectorManager, di.As(new(oworker.Worker))),
 	}, nil
 }
