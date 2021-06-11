@@ -3,6 +3,8 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/google/uuid"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -34,9 +36,9 @@ type ConnectorManager struct {
 }
 
 // NewConnectorManager creates a new connector manager
-func NewConnectorManager(id string, connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService services.ObservatoriumService, vaultService services.VaultService) *ConnectorManager {
+func NewConnectorManager(connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService services.ObservatoriumService, vaultService services.VaultService, bus signalbus.SignalBus) *ConnectorManager {
 	return &ConnectorManager{
-		id:                      id,
+		id:                      uuid.New().String(),
 		workerType:              "connector",
 		connectorService:        connectorService,
 		connectorClusterService: connectorClusterService,
@@ -44,6 +46,9 @@ func NewConnectorManager(id string, connectorTypesService services.ConnectorType
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
 		reconcileChannels:       true,
+		reconciler: Reconciler{
+			SignalBus: bus,
+		},
 	}
 }
 

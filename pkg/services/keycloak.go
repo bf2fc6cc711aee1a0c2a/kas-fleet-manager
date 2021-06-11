@@ -46,6 +46,9 @@ type KeycloakService interface {
 	GetKafkaClientSecret(clientId string) (string, *errors.ServiceError)
 }
 
+type KafkaKeycloakService KeycloakService
+type OsdKeycloakService KeycloakService
+
 type keycloakService struct {
 	kcClient keycloak.KcClient
 }

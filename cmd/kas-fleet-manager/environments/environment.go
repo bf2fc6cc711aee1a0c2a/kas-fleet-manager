@@ -2,6 +2,9 @@ package environments
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"os"
 	"sync"
 
@@ -44,20 +47,21 @@ type Env struct {
 	Clients             Clients
 	DBFactory           *db.ConnectionFactory
 	QuotaServiceFactory services.QuotaServiceFactory
-	Container           *di.Container
+	ConfigContainer     *di.Container
+	ServiceContainer    *di.Container
 }
 
 type Services struct {
-	Kafka                     services.KafkaService
-	Connectors                services.ConnectorsService
-	ConnectorTypes            services.ConnectorTypesService
-	ConnectorCluster          services.ConnectorClusterService
+	Kafka services.KafkaService
+	//Connectors                services.ConnectorsService
+	//ConnectorTypes            services.ConnectorTypesService
+	//ConnectorCluster          services.ConnectorClusterService
 	Cluster                   services.ClusterService
 	CloudProviders            services.CloudProvidersService
 	Config                    services.ConfigService
 	Observatorium             services.ObservatoriumService
-	Keycloak                  services.KeycloakService
-	OsdIdpKeycloak            services.KeycloakService
+	Keycloak                  services.KafkaKeycloakService
+	OsdIdpKeycloak            services.OsdKeycloakService
 	DataPlaneCluster          services.DataPlaneClusterService
 	DataPlaneKafkaService     services.DataPlaneKafkaService
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
@@ -96,21 +100,26 @@ func NewEnv(options ...di.Option) (*Env, error) {
 
 	//di.SetTracer(di.StdTracer{})
 	container, err := di.New(append(options,
+		// Add the env types
 		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
 		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
 		di.Provide(newStageEnvLoader, di.Tags{"env": StageEnv}),
 		di.Provide(newIntegrationEnvLoader, di.Tags{"env": IntegrationEnv}),
 		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
+
+		// Add the config modules
 		di.Provide(config.NewApplicationConfig, di.As(new(config.ConfigModule))),
-		di.Provide(config.NewConnectorsConfig, di.As(new(config.ConfigModule))),
+
+		// Add the connector injections.
+		connector.EnvInjections().AsOption(),
 	)...)
 	if err != nil {
 		return nil, err
 	}
 
 	env := &Env{
-		Name:      GetEnvironmentStrFromEnv(),
-		Container: container,
+		Name:            GetEnvironmentStrFromEnv(),
+		ConfigContainer: container,
 	}
 	err = container.Resolve(&env.Config)
 	if err != nil {
@@ -137,13 +146,13 @@ func Environment() *Env {
 func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 
 	var namedEnv EnvLoader
-	err := e.Container.Resolve(&namedEnv, di.Tags{"env": e.Name})
+	err := e.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": e.Name})
 	if err != nil {
 		return errors.Errorf("unsupported environment %q", e.Name)
 	}
 
 	modules := []config.ConfigModule{}
-	err = e.Container.Resolve(&modules)
+	err = e.ConfigContainer.Resolve(&modules)
 	if err != nil {
 		return errors.Wrapf(err, "no config modules found")
 	}
@@ -161,7 +170,7 @@ func (e *Env) Initialize() error {
 	glog.Infof("Initializing %s environment", e.Name)
 
 	modules := []config.ConfigModule{}
-	if err := e.Container.Resolve(&modules); err != nil {
+	if err := e.ConfigContainer.Resolve(&modules); err != nil {
 		return errors.Wrapf(err, "no config modules found")
 	}
 
@@ -176,7 +185,7 @@ func (e *Env) Initialize() error {
 	}
 
 	var namedEnv EnvLoader
-	err := e.Container.Resolve(&namedEnv, di.Tags{"env": e.Name})
+	err := e.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": e.Name})
 	if err != nil {
 		return errors.Errorf("unsupported environment %q", e.Name)
 	}
@@ -186,58 +195,132 @@ func (e *Env) Initialize() error {
 
 func (env *Env) LoadServices() error {
 
-	signalBus := signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
-	ocmClient := customOcm.NewClient(env.Clients.OCM.Connection)
-	clusterProviderFactory := clusters.NewDefaultProviderFactory(ocmClient, env.Config)
-	clusterService := services.NewClusterService(env.DBFactory, clusterProviderFactory)
-	kafkaKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
-	OsdIdpKeycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
-	configService := services.NewConfigService(*env.Config)
-	quotaServiceFactory := quota.NewDefaultQuotaServiceFactory(ocmClient, env.DBFactory, configService)
-	kafkaService := services.NewKafkaService(env.DBFactory, clusterService, kafkaKeycloakService, env.Config.Kafka, env.Config.AWS, quotaServiceFactory)
-	cloudProviderService := services.NewCloudProvidersService(clusterProviderFactory)
-	ObservatoriumService := services.NewObservatoriumService(env.Clients.Observatorium, kafkaService)
-	kasFleetshardAddonService := services.NewKasFleetshardOperatorAddon(kafkaKeycloakService, configService, clusterProviderFactory)
-	clusterPlmtStrategy := services.NewClusterPlacementStrategy(configService, clusterService)
+	var serviceInjections []config.ServiceInjector
+	if err := env.ConfigContainer.Resolve(&serviceInjections); err != nil {
+		return errors.Wrapf(err, "no config modules found")
+	}
 
-	env.QuotaServiceFactory = quotaServiceFactory
+	var opts []di.Option
+	for i := range serviceInjections {
+		opt, err := serviceInjections[i].Injections()
+		if err != nil {
+			return err
+		}
+		opts = append(opts, opt.AsOption())
+	}
 
-	env.Services.Kafka = kafkaService
-	env.Services.Cluster = clusterService
-	env.Services.CloudProviders = cloudProviderService
-	env.Services.Observatorium = ObservatoriumService
-	env.Services.Keycloak = kafkaKeycloakService
-	env.Services.OsdIdpKeycloak = OsdIdpKeycloakService
-	env.Services.KasFleetshardAddonService = kasFleetshardAddonService
-	env.Services.SignalBus = signalBus
-	env.Services.ClusterPlmtStrategy = clusterPlmtStrategy
+	// We need to build a new container here because LoadServices() can be called after a config
+	// change, and we need to re-create all the services.
+	container, err := di.New(append(opts,
+		di.ProvideValue(env.Config),
+		di.ProvideValue(env.DBFactory),
 
-	vaultService, err := services.NewVaultService(env.Config.Vault)
+		di.Provide(func() signalbus.SignalBus {
+			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
+		}),
+		di.Provide(func() customOcm.Client {
+			return customOcm.NewClient(env.Clients.OCM.Connection)
+		}),
+		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
+		di.Provide(services.NewClusterService),
+
+		di.Provide(func() services.KeycloakService {
+			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
+		}, di.Tags{"realm": "kafka"}, di.As(new(services.KafkaKeycloakService))),
+
+		di.Provide(func() services.KeycloakService {
+			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
+		}, di.Tags{"realm": "osd"}, di.As(new(services.OsdKeycloakService))),
+
+		di.ProvideValue(*env.Config),
+		di.Provide(services.NewConfigService),
+		di.Provide(quota.NewDefaultQuotaServiceFactory),
+
+		di.ProvideValue(env.Config.Kafka),
+		di.ProvideValue(env.Config.AWS),
+
+		di.Provide(services.NewKafkaService, di.As(new(services.KafkaService))),
+
+		di.Provide(services.NewCloudProvidersService),
+		di.ProvideValue(env.Clients.Observatorium),
+		di.Provide(services.NewObservatoriumService),
+		di.Provide(services.NewKasFleetshardOperatorAddon),
+		di.Provide(services.NewClusterPlacementStrategy),
+
+		di.ProvideValue(env.Config.Vault),
+		di.Provide(services.NewVaultService),
+
+		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
+		di.Provide(services.NewDataPlaneKafkaService, di.As(new(services.DataPlaneKafkaService))),
+
+		di.Provide(acl.NewAccessControlListMiddleware),
+		di.Provide(handlers.NewErrorsHandler),
+	)...)
 	if err != nil {
 		return err
 	}
-	env.Services.Vault = vaultService
 
-	dataPlaneClusterService := services.NewDataPlaneClusterService(clusterService, env.Config)
-	dataPlaneKafkaService := services.NewDataPlaneKafkaService(kafkaService, clusterService)
-	env.Services.DataPlaneCluster = dataPlaneClusterService
-	env.Services.DataPlaneKafkaService = dataPlaneKafkaService
+	if env.ServiceContainer != nil {
+		env.ServiceContainer.Cleanup()
+	}
+	env.ServiceContainer = container
 
-	connectorsConfig := &config.ConnectorsConfig{}
-	if err := env.Container.Resolve(&connectorsConfig); err != nil {
+	if err := container.Resolve(&env.QuotaServiceFactory); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.Kafka); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.Cluster); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.CloudProviders); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.Observatorium); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.Keycloak, di.Tags{"realm": "kafka"}); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.OsdIdpKeycloak, di.Tags{"realm": "osd"}); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.KasFleetshardAddonService); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.SignalBus); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.ClusterPlmtStrategy); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.Vault); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.DataPlaneCluster); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Services.DataPlaneKafkaService); err != nil {
 		return err
 	}
 
-	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
-	env.Services.ConnectorTypes = services.NewConnectorTypesService(connectorsConfig, env.DBFactory)
-	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
+	//if err := container.Resolve(&env.Services.Connectors); err != nil {
+	//	return err
+	//}
+	//if err := container.Resolve(&env.Services.ConnectorTypes); err != nil {
+	//	return err
+	//}
+	//if err := container.Resolve(&env.Services.ConnectorCluster); err != nil {
+	//	return err
+	//}
+	if err := container.Resolve(&env.Services.Config); err != nil {
+		return err
+	}
 
-	// load the new config service and ensure it's valid (pre-req checks are performed)
-	env.Services.Config = configService
 	if err := env.Services.Config.Validate(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
