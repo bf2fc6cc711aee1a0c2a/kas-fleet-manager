@@ -14,6 +14,11 @@ import (
 
 var projectRootDirectory = shared.GetProjectRootDir()
 
+type ConfigModule interface {
+	AddFlags(fs *pflag.FlagSet)
+	ReadFiles() error
+}
+
 type ApplicationConfig struct {
 	Server                     *ServerConfig               `json:"server"`
 	Metrics                    *MetricsConfig              `json:"metrics"`
@@ -28,10 +33,11 @@ type ApplicationConfig struct {
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
 	OSDClusterConfig           *OSDClusterConfig           `json:"osd_cluster"`
-	ConnectorsConfig           *ConnectorsConfig           `json:"connectors"`
 	KasFleetShardConfig        *KasFleetshardConfig        `json:"kas-fleetshard"`
 	Vault                      *VaultConfig                `json:"vault"`
 }
+
+var _ ConfigModule = &ApplicationConfig{}
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
@@ -48,7 +54,6 @@ func NewApplicationConfig() *ApplicationConfig {
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
 		OSDClusterConfig:           NewOSDClusterConfig(),
-		ConnectorsConfig:           NewConnectorsConfig(),
 		KasFleetShardConfig:        NewKasFleetshardConfig(),
 		Vault:                      NewVaultConfig(),
 	}
@@ -69,7 +74,6 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
 	c.OSDClusterConfig.AddFlags(flagset)
-	c.ConnectorsConfig.AddFlags(flagset)
 	c.KasFleetShardConfig.AddFlags(flagset)
 	c.Vault.AddFlags(flagset)
 }
@@ -122,12 +126,6 @@ func (c *ApplicationConfig) ReadFiles() error {
 	err = c.Kafka.ReadFiles()
 	if err != nil {
 		return err
-	}
-	if c.ConnectorsConfig.Enabled {
-		err = c.ConnectorsConfig.ReadFiles()
-		if err != nil {
-			return err
-		}
 	}
 	err = c.OSDClusterConfig.ReadFiles()
 	if err != nil {
