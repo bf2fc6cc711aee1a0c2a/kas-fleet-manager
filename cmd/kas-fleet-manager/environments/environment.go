@@ -139,7 +139,7 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 	var namedEnv EnvLoader
 	err := e.Container.Resolve(&namedEnv, di.Tags{"env": e.Name})
 	if err != nil {
-		return fmt.Errorf("unsupported environment %q", e.Name)
+		return errors.Errorf("unsupported environment %q", e.Name)
 	}
 
 	modules := []config.ConfigModule{}
@@ -168,7 +168,7 @@ func (e *Env) Initialize() error {
 	for i := range modules {
 		err := modules[i].ReadFiles()
 		if err != nil {
-			err = fmt.Errorf("Unable to read configuration files: %s", err)
+			err = errors.Errorf("unable to read configuration files: %s", err)
 			glog.Error(err)
 			sentry.CaptureException(err)
 			return err
@@ -178,7 +178,7 @@ func (e *Env) Initialize() error {
 	var namedEnv EnvLoader
 	err := e.Container.Resolve(&namedEnv, di.Tags{"env": e.Name})
 	if err != nil {
-		return fmt.Errorf("unsupported environment %q", e.Name)
+		return errors.Errorf("unsupported environment %q", e.Name)
 	}
 
 	return namedEnv.Load(environment)
