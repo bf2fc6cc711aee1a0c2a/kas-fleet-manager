@@ -30,11 +30,17 @@ check_params () {
       -z "${KEYCLOAK_URL}" || \
       -z "${HORREUM_USER}" || \
       -z "${HORREUM_PASSWORD}" || \
-      -z "${RESULTS_FILENAME}" ]] &>/dev/null; then
+      -z "${RESULTS_FILENAME}" || \
+      -z "${QUAY_USER}" || \
+      -z "${QUAY_TOKEN}" ]] &>/dev/null; then
 
     echo "Required env vars not provided. Exiting...".
     exit 1
   fi
+}
+
+docker_login() {
+  make docker/login
 }
 
 # run perf tests
@@ -91,6 +97,8 @@ copy_file() {
 }
 
 check_params
+
+docker_login
 
 run_perf_test
 
