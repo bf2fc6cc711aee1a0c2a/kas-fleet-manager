@@ -3,12 +3,13 @@ package handlers
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/xeipuuv/gojsonschema"
 	"strings"
 )
 
-func validateConnectorSpec(connectorTypesService services.ConnectorTypesService, resource *openapi.Connector, tid string) validate {
+func validateConnectorSpec(connectorTypesService services.ConnectorTypesService, resource *openapi.Connector, tid string) handlers.Validate {
 	return func() *errors.ServiceError {
 
 		// If a a tid was defined on the URL verify that it matches the posted resource connector type
@@ -27,6 +28,6 @@ func validateConnectorSpec(connectorTypesService services.ConnectorTypesService,
 		schemaLoader := gojsonschema.NewGoLoader(ct.JsonSchema)
 		documentLoader := gojsonschema.NewGoLoader(resource.ConnectorSpec)
 
-		return validateJsonSchema("connector type schema", schemaLoader, "connector spec", documentLoader)
+		return handlers.ValidateJsonSchema("connector type schema", schemaLoader, "connector spec", documentLoader)
 	}
 }

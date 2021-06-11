@@ -23,7 +23,7 @@ func NewServiceAccountHandler(service services.KeycloakService) *serviceAccounts
 }
 
 func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			Page, Size := s.handleParams(r.URL.Query())
@@ -45,7 +45,7 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 			return serviceAccountList, nil
 		},
 	}
-	handleList(w, r, cfg)
+	HandleList(w, r, cfg)
 }
 
 func (s serviceAccountsHandler) handleParams(params url.Values) (int, int) {
@@ -62,13 +62,13 @@ func (s serviceAccountsHandler) handleParams(params url.Values) (int, int) {
 
 func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *http.Request) {
 	var serviceAccountRequest openapi.ServiceAccountRequest
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		MarshalInto: &serviceAccountRequest,
-		Validate: []validate{
-			validateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength, &maxServiceAccountNameLength),
-			validateMaxLength(&serviceAccountRequest.Description, "description", &maxServiceAccountDescLength),
-			validateServiceAccountName(&serviceAccountRequest.Name, "name"),
-			validateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
+		Validate: []Validate{
+			ValidateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength, &maxServiceAccountNameLength),
+			ValidateMaxLength(&serviceAccountRequest.Description, "description", &maxServiceAccountDescLength),
+			ValidateServiceAccountName(&serviceAccountRequest.Name, "name"),
+			ValidateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -80,15 +80,15 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 			return presenters.PresentServiceAccount(serviceAccount), nil
 		},
 	}
-	handle(w, r, cfg, http.StatusAccepted)
+	Handle(w, r, cfg, http.StatusAccepted)
 }
 
 func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
-			validateServiceAccountId(&id, "id"),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -97,15 +97,15 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 		},
 	}
 
-	handleDelete(w, r, cfg, http.StatusNoContent)
+	HandleDelete(w, r, cfg, http.StatusNoContent)
 }
 
 func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
-			validateServiceAccountId(&id, "id"),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -117,15 +117,15 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 		},
 	}
 
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
 func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
-			validateServiceAccountId(&id, "id"),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -137,5 +137,5 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 		},
 	}
 
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }

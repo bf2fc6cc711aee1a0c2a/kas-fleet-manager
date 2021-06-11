@@ -28,9 +28,9 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 	clusterId := mux.Vars(r)["id"]
 	var data = map[string]openapi.DataPlaneKafkaStatus{}
 
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		MarshalInto: &data,
-		Validate:    []validate{},
+		Validate:    []Validate{},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			dataPlaneKafkaStatus := presenters.ConvertDataPlaneKafkaStatus(data)
@@ -39,14 +39,14 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 		},
 	}
 
-	handle(w, r, cfg, http.StatusOK)
+	Handle(w, r, cfg, http.StatusOK)
 }
 
 func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&clusterID, "id", &minRequiredFieldLength, nil),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateLength(&clusterID, "id", &minRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			managedKafkas, err := h.kafkaService.GetManagedKafkaByClusterID(clusterID)
@@ -67,5 +67,5 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }

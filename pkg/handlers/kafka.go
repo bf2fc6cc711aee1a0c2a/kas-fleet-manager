@@ -26,15 +26,15 @@ func NewKafkaHandler(service services.KafkaService, configService services.Confi
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var kafkaRequest openapi.KafkaRequestPayload
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		MarshalInto: &kafkaRequest,
-		Validate: []validate{
-			validateAsyncEnabled(r, "creating kafka requests"),
-			validateLength(&kafkaRequest.Name, "name", &minRequiredFieldLength, &maxKafkaNameLength),
-			validKafkaClusterName(&kafkaRequest.Name, "name"),
-			validateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
-			validateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
-			validateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
+		Validate: []Validate{
+			ValidateAsyncEnabled(r, "creating kafka requests"),
+			ValidateLength(&kafkaRequest.Name, "name", &minRequiredFieldLength, &maxKafkaNameLength),
+			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
+			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
+			ValidateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
+			ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -57,11 +57,11 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// return 202 status accepted
-	handle(w, r, cfg, http.StatusAccepted)
+	Handle(w, r, cfg, http.StatusAccepted)
 }
 
 func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			ctx := r.Context()
@@ -72,14 +72,14 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			return presenters.PresentKafkaRequest(kafkaRequest), nil
 		},
 	}
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
 // Delete is the handler for deleting a kafka request
 func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateAsyncEnabled(r, "deleting kafka requests"),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateAsyncEnabled(r, "deleting kafka requests"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
@@ -89,11 +89,11 @@ func (h kafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			return nil, err
 		},
 	}
-	handleDelete(w, r, cfg, http.StatusAccepted)
+	HandleDelete(w, r, cfg, http.StatusAccepted)
 }
 
 func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 
@@ -125,5 +125,5 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	handleList(w, r, cfg)
+	HandleList(w, r, cfg)
 }
