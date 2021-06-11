@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
@@ -272,7 +273,9 @@ func (s *apiServer) buildApiBaseRouter(mainRouter *mux.Router, basePath string, 
 	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
 	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
 
-	if env().Config.ConnectorsConfig.Enabled {
+	connectorsConfig := &config.ConnectorsConfig{}
+	check(env().Container.Resolve(&connectorsConfig), "no ConnectorsConfig found")
+	if connectorsConfig.Enabled {
 		//  /kafka_connector_types
 
 		openAPIDefinitions, err := s.loadOpenAPISpec(connector.Asset, "openapi.yaml")

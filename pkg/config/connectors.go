@@ -18,6 +18,8 @@ type ConnectorsConfig struct {
 	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
 }
 
+var _ ConfigModule = &ConnectorsConfig{}
+
 type ConnectorChannelConfig struct {
 	Revision      int64                  `json:"revision,omitempty"`
 	ShardMetadata map[string]interface{} `json:"shard_metadata,omitempty"`
@@ -41,6 +43,9 @@ func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
+	if !c.Enabled {
+		return nil
+	}
 	typesLoaded := map[string]string{}
 	var values []ConnectorCatalogEntry
 	for _, dir := range c.ConnectorCatalogDirs {

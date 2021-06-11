@@ -5,6 +5,9 @@ import (
 	"os"
 	"sync"
 
+	"github.com/goava/di"
+	"github.com/pkg/errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota"
 
@@ -41,6 +44,7 @@ type Env struct {
 	Clients             Clients
 	DBFactory           *db.ConnectionFactory
 	QuotaServiceFactory services.QuotaServiceFactory
+	Container           *di.Container
 }
 
 type Services struct {
@@ -80,12 +84,40 @@ var once sync.Once
 
 func init() {
 	once.Do(func() {
-		environment = &Env{}
-
-		// Create the configuration
-		environment.Config = config.NewApplicationConfig()
-		environment.Name = GetEnvironmentStrFromEnv()
+		var err error
+		environment, err = NewEnv()
+		if err != nil {
+			panic(err)
+		}
 	})
+}
+
+func NewEnv(options ...di.Option) (*Env, error) {
+
+	//di.SetTracer(di.StdTracer{})
+	container, err := di.New(append(options,
+		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
+		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
+		di.Provide(newStageEnvLoader, di.Tags{"env": StageEnv}),
+		di.Provide(newIntegrationEnvLoader, di.Tags{"env": IntegrationEnv}),
+		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
+		di.Provide(config.NewApplicationConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewConnectorsConfig, di.As(new(config.ConfigModule))),
+	)...)
+	if err != nil {
+		return nil, err
+	}
+
+	env := &Env{
+		Name:      GetEnvironmentStrFromEnv(),
+		Container: container,
+	}
+	err = container.Resolve(&env.Config)
+	if err != nil {
+		return nil, err
+	}
+	return env, nil
+
 }
 
 func GetEnvironmentStrFromEnv() string {
@@ -103,25 +135,23 @@ func Environment() *Env {
 
 // Adds environment flags, using the environment's config struct, to the flagset 'flags'
 func (e *Env) AddFlags(flags *pflag.FlagSet) error {
-	var defaults map[string]string
 
-	switch e.Name {
-	case DevelopmentEnv:
-		defaults = developmentConfigDefaults
-	case ProductionEnv:
-		defaults = productionConfigDefaults
-	case StageEnv:
-		defaults = stageConfigDefaults
-	case IntegrationEnv:
-		defaults = integrationConfigDefaults
-	case TestingEnv:
-		// do nothing as there are no defaults for testing environment
-	default:
-		return fmt.Errorf("Unsupported environment %q", e.Name)
+	var namedEnv EnvLoader
+	err := e.Container.Resolve(&namedEnv, di.Tags{"env": e.Name})
+	if err != nil {
+		return fmt.Errorf("unsupported environment %q", e.Name)
 	}
 
-	e.Config.AddFlags(flags)
-	return setConfigDefaults(flags, defaults)
+	modules := []config.ConfigModule{}
+	err = e.Container.Resolve(&modules)
+	if err != nil {
+		return errors.Wrapf(err, "no config modules found")
+	}
+	for i := range modules {
+		modules[i].AddFlags(flags)
+	}
+
+	return setConfigDefaults(flags, namedEnv.Defaults())
 }
 
 // Initialize loads the environment's resources
@@ -130,29 +160,28 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 func (e *Env) Initialize() error {
 	glog.Infof("Initializing %s environment", e.Name)
 
-	err := environment.Config.ReadFiles()
-	if err != nil {
-		err = fmt.Errorf("Unable to read configuration files: %s", err)
-		glog.Error(err)
-		sentry.CaptureException(err)
-		return err
+	modules := []config.ConfigModule{}
+	if err := e.Container.Resolve(&modules); err != nil {
+		return errors.Wrapf(err, "no config modules found")
 	}
 
-	switch e.Name {
-	case DevelopmentEnv:
-		err = loadDevelopment(environment)
-	case TestingEnv:
-		err = loadTesting(environment)
-	case ProductionEnv:
-		err = loadProduction(environment)
-	case StageEnv:
-		err = loadStage(environment)
-	case IntegrationEnv:
-		err = loadIntegration(environment)
-	default:
-		err = fmt.Errorf("Unsupported environment %q", e.Name)
+	for i := range modules {
+		err := modules[i].ReadFiles()
+		if err != nil {
+			err = fmt.Errorf("Unable to read configuration files: %s", err)
+			glog.Error(err)
+			sentry.CaptureException(err)
+			return err
+		}
 	}
-	return err
+
+	var namedEnv EnvLoader
+	err := e.Container.Resolve(&namedEnv, di.Tags{"env": e.Name})
+	if err != nil {
+		return fmt.Errorf("unsupported environment %q", e.Name)
+	}
+
+	return namedEnv.Load(environment)
 }
 
 func (env *Env) LoadServices() error {
@@ -194,8 +223,13 @@ func (env *Env) LoadServices() error {
 	env.Services.DataPlaneCluster = dataPlaneClusterService
 	env.Services.DataPlaneKafkaService = dataPlaneKafkaService
 
+	connectorsConfig := &config.ConnectorsConfig{}
+	if err := env.Container.Resolve(&connectorsConfig); err != nil {
+		return err
+	}
+
 	env.Services.Connectors = services.NewConnectorsService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
-	env.Services.ConnectorTypes = services.NewConnectorTypesService(env.Config.ConnectorsConfig, env.DBFactory)
+	env.Services.ConnectorTypes = services.NewConnectorTypesService(connectorsConfig, env.DBFactory)
 	env.Services.ConnectorCluster = services.NewConnectorClusterService(env.DBFactory, signalBus, vaultService, env.Services.ConnectorTypes)
 
 	// load the new config service and ensure it's valid (pre-req checks are performed)
@@ -306,7 +340,8 @@ func (env *Env) Teardown() {
 
 func setConfigDefaults(flags *pflag.FlagSet, defaults map[string]string) error {
 	for name, value := range defaults {
-		if err := flags.Set(name, value); err != nil {
+		err := flags.Set(name, value)
+		if err != nil {
 			glog.Errorf("Error setting flag %s: %v", name, err)
 			return err
 		}
