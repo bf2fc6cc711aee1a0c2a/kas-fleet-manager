@@ -446,3 +446,149 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 }
+
+func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
+	var originalKeycloakTLSTrustedCertificatesValue string
+	var originalKeycloakEnableAuthOnKafka bool
+	startHook := func(h *test.Helper) {
+		originalKeycloakEnableAuthOnKafka = h.Env().Config.Keycloak.EnableAuthenticationOnKafka
+		originalKeycloakTLSTrustedCertificatesValue = h.Env().Config.Keycloak.TLSTrustedCertificatesValue
+		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = ""
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = originalKeycloakTLSTrustedCertificatesValue
+	}
+	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, startHook, tearDownHook)
+	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
+	testKafka := &api.KafkaRequest{
+		ClusterID:           testServer.ClusterID,
+		MultiAZ:             false,
+		Name:                mockKafkaName1,
+		Status:              constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost: bootstrapServerHost,
+		SsoClientID:         ssoClientID,
+		SsoClientSecret:     ssoSecret,
+		PlacementId:         "some-placement-id",
+		Version:             "2.7.0",
+	}
+
+	testServer.Helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = true
+
+	db := testServer.Helper.Env().DBFactory.New()
+
+	// create dummy kafka
+	if err := db.Save(testKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+
+	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+		for _, item := range slice {
+			if match(item) {
+				return &item
+			}
+		}
+		return nil
+	}
+	if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
+		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).To(BeNil())
+	} else {
+		t.Error("failed matching managedkafka id with kafkarequest id")
+	}
+
+	testServer.Helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = originalKeycloakEnableAuthOnKafka
+}
+
+func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
+	var originalKeycloakTLSTrustedCertificatesValue string
+	var originalKeycloakEnableAuthOnKafka bool
+	cert := "some-fake-cert"
+	startHook := func(h *test.Helper) {
+		originalKeycloakEnableAuthOnKafka = h.Env().Config.Keycloak.EnableAuthenticationOnKafka
+		originalKeycloakTLSTrustedCertificatesValue = h.Env().Config.Keycloak.TLSTrustedCertificatesValue
+		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = cert
+		h.Env().Config.Keycloak.EnableAuthenticationOnKafka = true
+	}
+	tearDownHook := func(h *test.Helper) {
+		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = originalKeycloakTLSTrustedCertificatesValue
+		h.Env().Config.Keycloak.EnableAuthenticationOnKafka = originalKeycloakEnableAuthOnKafka
+	}
+	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, startHook, tearDownHook)
+	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
+	testKafka := &api.KafkaRequest{
+		ClusterID:           testServer.ClusterID,
+		MultiAZ:             false,
+		Name:                mockKafkaName1,
+		Status:              constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost: bootstrapServerHost,
+		SsoClientID:         ssoClientID,
+		SsoClientSecret:     ssoSecret,
+		PlacementId:         "some-placement-id",
+		Version:             "2.7.0",
+	}
+
+	testServer.Helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = true
+
+	db := testServer.Helper.Env().DBFactory.New()
+
+	// create dummy kafka
+	if err := db.Save(testKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+
+	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+		for _, item := range slice {
+			if match(item) {
+				return &item
+			}
+		}
+		return nil
+	}
+	if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
+		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).ToNot(BeNil())
+	} else {
+		t.Error("failed matching managedkafka id with kafkarequest id")
+	}
+
+}

@@ -41,7 +41,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 				JwksEndpointUri:                  from.Spec.OAuth.JwksEndpointURI,
 				ValidIssuerEndpointUri:           from.Spec.OAuth.ValidIssuerEndpointURI,
 				UserNameClaim:                    from.Spec.OAuth.UserNameClaim,
-				TlsTrustedCertificate:            from.Spec.OAuth.TlsTrustedCertificate,
+				TlsTrustedCertificate:            getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(&from.Spec.OAuth),
 				CustomClaimCheck:                 from.Spec.OAuth.CustomClaimCheck,
 				DeprecatedClientId:               from.Spec.OAuth.ClientId,
 				DeprecatedClientSecret:           from.Spec.OAuth.ClientSecret,
@@ -49,7 +49,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) openapi.ManagedKafka {
 				DeprecatedJwksEndpointURI:        from.Spec.OAuth.JwksEndpointURI,
 				DeprecatedValidIssuerEndpointURI: from.Spec.OAuth.ValidIssuerEndpointURI,
 				DeprecatedUserNameClaim:          from.Spec.OAuth.UserNameClaim,
-				DeprecatedTlsTrustedCertificate:  from.Spec.OAuth.TlsTrustedCertificate,
+				DeprecatedTlsTrustedCertificate:  getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(&from.Spec.OAuth),
 				DeprecatedCustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
 			},
 			Endpoint: openapi.ManagedKafkaAllOfSpecEndpoint{
@@ -75,6 +75,14 @@ func getOpenAPIManagedKafkaEndpointTLS(from *v1.TlsSpec) *openapi.ManagedKafkaAl
 			Cert: from.Cert,
 			Key:  from.Key,
 		}
+	}
+	return res
+}
+
+func getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(from *v1.OAuthSpec) *string {
+	var res *string
+	if from.TlsTrustedCertificate != nil {
+		res = from.TlsTrustedCertificate
 	}
 	return res
 }
