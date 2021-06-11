@@ -603,7 +603,10 @@ func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.Kaf
 			ValidIssuerEndpointURI: keycloakConfig.KafkaRealm.ValidIssuerURI,
 			UserNameClaim:          keycloakConfig.UserNameClaim,
 			CustomClaimCheck:       BuildCustomClaimCheck(kafkaRequest),
-			TlsTrustedCertificate:  keycloakConfig.TLSTrustedCertificatesValue,
+		}
+
+		if keycloakConfig.TLSTrustedCertificatesValue != "" {
+			managedKafkaCR.Spec.OAuth.TlsTrustedCertificate = &keycloakConfig.TLSTrustedCertificatesValue
 		}
 	}
 

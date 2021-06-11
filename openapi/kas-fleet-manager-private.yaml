@@ -526,6 +526,7 @@ components:
                     tlsTrustedCertificate:
                       type: string
                       deprecated: true
+                      nullable: true
                     customClaimCheck:
                       type: string
                       deprecated: true
@@ -543,6 +544,7 @@ components:
                       type: string
                     tls_trusted_certificate:
                       type: string
+                      nullable: true
                     custom_claim_check:
                       type: string
                 endpoint:

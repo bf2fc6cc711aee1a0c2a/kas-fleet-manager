@@ -24,15 +24,15 @@ type ManagedKafkaAllOfSpecOauth struct {
 	// Deprecated
 	DeprecatedUserNameClaim string `json:"userNameClaim,omitempty"`
 	// Deprecated
-	DeprecatedTlsTrustedCertificate string `json:"tlsTrustedCertificate,omitempty"`
+	DeprecatedTlsTrustedCertificate *string `json:"tlsTrustedCertificate,omitempty"`
 	// Deprecated
-	DeprecatedCustomClaimCheck string `json:"customClaimCheck,omitempty"`
-	ClientId                   string `json:"client_id,omitempty"`
-	ClientSecret               string `json:"client_secret,omitempty"`
-	TokenEndpointUri           string `json:"token_endpoint_uri,omitempty"`
-	JwksEndpointUri            string `json:"jwks_endpoint_uri,omitempty"`
-	ValidIssuerEndpointUri     string `json:"valid_issuer_endpoint_uri,omitempty"`
-	UserNameClaim              string `json:"user_name_claim,omitempty"`
-	TlsTrustedCertificate      string `json:"tls_trusted_certificate,omitempty"`
-	CustomClaimCheck           string `json:"custom_claim_check,omitempty"`
+	DeprecatedCustomClaimCheck string  `json:"customClaimCheck,omitempty"`
+	ClientId                   string  `json:"client_id,omitempty"`
+	ClientSecret               string  `json:"client_secret,omitempty"`
+	TokenEndpointUri           string  `json:"token_endpoint_uri,omitempty"`
+	JwksEndpointUri            string  `json:"jwks_endpoint_uri,omitempty"`
+	ValidIssuerEndpointUri     string  `json:"valid_issuer_endpoint_uri,omitempty"`
+	UserNameClaim              string  `json:"user_name_claim,omitempty"`
+	TlsTrustedCertificate      *string `json:"tls_trusted_certificate,omitempty"`
+	CustomClaimCheck           string  `json:"custom_claim_check,omitempty"`
 }

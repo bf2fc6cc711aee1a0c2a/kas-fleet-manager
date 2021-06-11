@@ -60,7 +60,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **mas-sso-debug**: Enables Keycloak debug logging.
 - **mas-sso-enable-auth**: Enables Kafka authentication via Keycloak.
     - `mas-sso-base-url` [Required]: The base URL of the Keycloak instance.
-    - `mas-sso-cert-file` [Required]: The path to the file containing the Keycloak TLS Certificate (default: `'secrets/keycloak-service.crt'`).
+    - `mas-sso-cert-file` [Optional]: File containing tls cert for the mas-sso. Useful when mas-sso uses a self-signed certificate. If the provided file does not exist, is the empty string or the provided file content is empty then no custom MAS SSO certificate is used (default `secrets/keycloak-service.crt`).
     - `mas-sso-client-id-file` [Required]: The path to the file containing a Keycloak account client ID that has access to the Kafka service accounts realm (default: `'secrets/keycloak-service.clientId'`).
     - `mas-sso-client-secret-file` [Required]: The path to the file containing a Keycloak account client secret that has access to the Kafka service accounts realm (default: `'secrets/keycloak-service.clientSecret'`).
     - `mas-sso-realm` [Required]: The Keycloak realm to be used for the Kafka service accounts.
