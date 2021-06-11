@@ -42,14 +42,14 @@ type ManagedKafkaStatus struct {
 
 // Spec
 type OAuthSpec struct {
-	ClientId               string `json:"clientId"`
-	ClientSecret           string `json:"clientSecret"`
-	TokenEndpointURI       string `json:"tokenEndpointURI"`
-	JwksEndpointURI        string `json:"jwksEndpointURI"`
-	ValidIssuerEndpointURI string `json:"validIssuerEndpointURI"`
-	UserNameClaim          string `json:"userNameClaim"`
-	TlsTrustedCertificate  string `json:"tlsTrustedCertificate"`
-	CustomClaimCheck       string `json:"customClaimCheck"`
+	ClientId               string  `json:"clientId"`
+	ClientSecret           string  `json:"clientSecret"`
+	TokenEndpointURI       string  `json:"tokenEndpointURI"`
+	JwksEndpointURI        string  `json:"jwksEndpointURI"`
+	ValidIssuerEndpointURI string  `json:"validIssuerEndpointURI"`
+	UserNameClaim          string  `json:"userNameClaim"`
+	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
+	CustomClaimCheck       string  `json:"customClaimCheck"`
 }
 
 type TlsSpec struct {

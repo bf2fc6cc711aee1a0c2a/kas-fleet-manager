@@ -983,6 +983,7 @@ components:
           type: string
         tlsTrustedCertificate:
           deprecated: true
+          nullable: true
           type: string
         customClaimCheck:
           deprecated: true
@@ -1000,6 +1001,7 @@ components:
         user_name_claim:
           type: string
         tls_trusted_certificate:
+          nullable: true
           type: string
         custom_claim_check:
           type: string
