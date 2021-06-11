@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
+	goerrors "errors"
 	"fmt"
+	"github.com/goava/di"
 	"net/http/httptest"
 	"os"
 	"sync"
@@ -58,7 +60,6 @@ type Helper struct {
 	APIServer         server.Server
 	MetricsServer     server.Server
 	HealthCheckServer server.Server
-	ConnectorWorker   *workers.ConnectorManager
 	KafkaWorkers      []workers.Worker
 	ClusterWorker     *workers.ClusterManager
 	LeaderEleWorker   *workers.LeaderElectionManager
@@ -259,24 +260,24 @@ func (helper *Helper) stopClusterWorker() {
 	helper.ClusterWorker.Stop()
 }
 
-func (helper *Helper) startConnectorWorker() {
-	env := helper.Env()
-	if err := env.ServiceContainer.Resolve(&helper.ConnectorWorker); err != nil {
-		helper.T.Fatalf("ConnectorWorker not found: %s", err)
-	}
-	go func() {
-		glog.V(10).Info("Connector worker started")
-		helper.ConnectorWorker.Start()
-	}()
-}
-
-func (helper *Helper) stopConnectorWorker() {
-	if helper.ConnectorWorker == nil {
-		return
-	}
-	helper.ConnectorWorker.Stop()
-	glog.V(10).Info("Connector worker stopped")
-}
+//func (helper *Helper) startConnectorWorker() {
+//	env := helper.Env()
+//	if err := env.ServiceContainer.Resolve(&helper.ConnectorWorker); err != nil {
+//		helper.T.Fatalf("ConnectorWorker not found: %s", err)
+//	}
+//	go func() {
+//		glog.V(10).Info("Connector worker started")
+//		helper.ConnectorWorker.Start()
+//	}()
+//}
+//
+//func (helper *Helper) stopConnectorWorker() {
+//	if helper.ConnectorWorker == nil {
+//		return
+//	}
+//	helper.ConnectorWorker.Stop()
+//	glog.V(10).Info("Connector worker stopped")
+//}
 
 func (helper *Helper) startSignalBusWorker() {
 	env := helper.Env()
@@ -306,14 +307,18 @@ func (helper *Helper) startLeaderElectionWorker() {
 	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(services.Kafka, uuid.New().String(), services.Keycloak, services.Config, env.Services.SignalBus)
 	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
 
-	if err := env.ServiceContainer.Resolve(&helper.ConnectorWorker); err != nil {
-		helper.T.Fatalf("ConnectorWorker not found: %s", err)
-	}
-
 	var workerList []workers.Worker
 	workerList = append(workerList, helper.ClusterWorker)
 	workerList = append(workerList, helper.KafkaWorkers...)
-	workerList = append(workerList, helper.ConnectorWorker)
+
+	// load dependency injected workers.
+	var diWorkers []workers.Worker
+	if err := env.ServiceContainer.Resolve(&diWorkers); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
+		panic(err)
+	}
+	for _, worker := range diWorkers {
+		workerList = append(workerList, worker)
+	}
 
 	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerList, helper.DBFactory)
 	helper.LeaderEleWorker.Start()
@@ -359,15 +364,6 @@ func (helper *Helper) StartKafkaWorker() {
 
 func (helper *Helper) StopKafkaWorker() {
 	helper.stopKafkaWorkers()
-}
-
-func (helper *Helper) StartConnectorWorker() {
-	helper.stopConnectorWorker()
-	helper.startConnectorWorker()
-}
-
-func (helper *Helper) StopConnectorWorker() {
-	helper.stopConnectorWorker()
 }
 
 func (helper *Helper) StartClusterWorker() {

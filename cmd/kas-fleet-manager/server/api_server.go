@@ -89,8 +89,7 @@ func NewAPIServer() Server {
 
 	// Lets load injected routes.
 	var routeLoaders []common.RouteLoader
-	err := env().ServiceContainer.Resolve(&routeLoaders)
-	if !goerrors.Is(err, di.ErrTypeNotExists) {
+	if err := env().ServiceContainer.Resolve(&routeLoaders); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		check(err, "failed to create the route loaders")
 	}
 	for _, loader := range routeLoaders {

@@ -1,6 +1,7 @@
 package environments
 
 import (
+	goerrors "errors"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
@@ -89,14 +90,14 @@ var once sync.Once
 func init() {
 	once.Do(func() {
 		var err error
-		environment, err = NewEnv()
+		environment, err = NewEnv(GetEnvironmentStrFromEnv())
 		if err != nil {
 			panic(err)
 		}
 	})
 }
 
-func NewEnv(options ...di.Option) (*Env, error) {
+func NewEnv(name string, options ...di.Option) (*Env, error) {
 
 	//di.SetTracer(di.StdTracer{})
 	container, err := di.New(append(options,
@@ -118,7 +119,7 @@ func NewEnv(options ...di.Option) (*Env, error) {
 	}
 
 	env := &Env{
-		Name:            GetEnvironmentStrFromEnv(),
+		Name:            name,
 		ConfigContainer: container,
 	}
 	err = container.Resolve(&env.Config)
@@ -142,6 +143,10 @@ func Environment() *Env {
 	return environment
 }
 
+func SetEnvironment(e *Env) {
+	environment = e
+}
+
 // Adds environment flags, using the environment's config struct, to the flagset 'flags'
 func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 
@@ -152,9 +157,8 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 	}
 
 	modules := []config.ConfigModule{}
-	err = e.ConfigContainer.Resolve(&modules)
-	if err != nil {
-		return errors.Wrapf(err, "no config modules found")
+	if err := e.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
+		return err
 	}
 	for i := range modules {
 		modules[i].AddFlags(flags)
@@ -170,8 +174,8 @@ func (e *Env) Initialize() error {
 	glog.Infof("Initializing %s environment", e.Name)
 
 	modules := []config.ConfigModule{}
-	if err := e.ConfigContainer.Resolve(&modules); err != nil {
-		return errors.Wrapf(err, "no config modules found")
+	if err := e.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
+		return err
 	}
 
 	for i := range modules {
@@ -196,8 +200,8 @@ func (e *Env) Initialize() error {
 func (env *Env) LoadServices() error {
 
 	var serviceInjections []config.ServiceInjector
-	if err := env.ConfigContainer.Resolve(&serviceInjections); err != nil {
-		return errors.Wrapf(err, "no config modules found")
+	if err := env.ConfigContainer.Resolve(&serviceInjections); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
+		return err
 	}
 
 	var opts []di.Option
