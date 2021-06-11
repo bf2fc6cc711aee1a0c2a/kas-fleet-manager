@@ -27,10 +27,10 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 
 	var dataPlaneClusterUpdateRequest openapi.DataPlaneClusterUpdateStatusRequest
 
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		MarshalInto: &dataPlaneClusterUpdateRequest,
-		Validate: []validate{
-			validateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
+		Validate: []Validate{
+			ValidateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
 			h.validateBody(&dataPlaneClusterUpdateRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -42,15 +42,15 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 	}
 
 	// TODO do we always to return HTTP 204 No Content?
-	handle(w, r, cfg, http.StatusNoContent)
+	Handle(w, r, cfg, http.StatusNoContent)
 }
 
 func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWriter, r *http.Request) {
 	dataPlaneClusterID := mux.Vars(r)["id"]
 
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -62,10 +62,10 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 		},
 	}
 
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
-func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneClusterUpdateStatusRequest) validate {
+func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneClusterUpdateStatusRequest) Validate {
 	return func() *errors.ServiceError {
 		err := h.validateNodeInfo(request)
 		if err != nil {

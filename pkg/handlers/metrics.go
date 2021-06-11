@@ -27,10 +27,10 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	query := r.URL.Query()
-	cfg := &handlerConfig{
-		Validate: []validate{
-			validatQueryParam(query, "duration"),
-			validatQueryParam(query, "interval"),
+	cfg := &HandlerConfig{
+		Validate: []Validate{
+			ValidatQueryParam(query, "duration"),
+			ValidatQueryParam(query, "interval"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()
@@ -54,13 +54,13 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 			return metricList, nil
 		},
 	}
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
 func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()
 			params.ResultType = observatorium.Query
@@ -83,7 +83,7 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 			return metricList, nil
 		},
 	}
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
 func extractMetricsQueryParams(r *http.Request, q *observatorium.MetricsReqParams) {

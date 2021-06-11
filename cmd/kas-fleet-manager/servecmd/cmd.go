@@ -87,9 +87,7 @@ func runServe(cmd *cobra.Command, args []string) {
 	if err := env.ServiceContainer.Resolve(&diWorkers); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		panic(err)
 	}
-	for _, worker := range diWorkers {
-		workerList = append(workerList, worker)
-	}
+	workerList = append(workerList, diWorkers...)
 
 	// starts Leader Election manager to coordinate workers job in a single or a replicas setting
 	leaderElectionManager := workers.NewLeaderElectionManager(workerList, env.DBFactory)

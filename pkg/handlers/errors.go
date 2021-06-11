@@ -22,7 +22,7 @@ type ErrorHandler struct{}
 var _ RestHandler = ErrorHandler{}
 
 func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			listArgs := services.NewListArguments(r.URL.Query())
 			allErrors := errors.Errors()
@@ -32,7 +32,7 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 				return allErrors[i].Code < allErrors[j].Code
 			})
 
-			list, total := determineListRange(allErrors, listArgs.Page, listArgs.Size)
+			list, total := DetermineListRange(allErrors, listArgs.Page, listArgs.Size)
 			errorList := openapi.ErrorList{
 				Kind:  "ErrorList",
 				Page:  int32(listArgs.Page),
@@ -49,11 +49,11 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	handleList(w, r, cfg)
+	HandleList(w, r, cfg)
 }
 
 func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
-	cfg := &handlerConfig{
+	cfg := &HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			id := mux.Vars(r)["id"]
 			value, err := strconv.Atoi(id)
@@ -69,7 +69,7 @@ func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	handleGet(w, r, cfg)
+	HandleGet(w, r, cfg)
 }
 
 func (h ErrorHandler) Create(w http.ResponseWriter, r *http.Request) {

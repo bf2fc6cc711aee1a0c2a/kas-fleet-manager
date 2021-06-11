@@ -316,9 +316,7 @@ func (helper *Helper) startLeaderElectionWorker() {
 	if err := env.ServiceContainer.Resolve(&diWorkers); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		panic(err)
 	}
-	for _, worker := range diWorkers {
-		workerList = append(workerList, worker)
-	}
+	workerList = append(workerList, diWorkers...)
 
 	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerList, helper.DBFactory)
 	helper.LeaderEleWorker.Start()

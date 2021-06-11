@@ -139,7 +139,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			validateFn := validateCloudProvider(&tt.arg.kafkaRequest, tt.arg.configService, "creating-kafka")
+			validateFn := ValidateCloudProvider(&tt.arg.kafkaRequest, tt.arg.configService, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
@@ -219,7 +219,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			validateFn := validateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
+			validateFn := ValidateKafkaClusterNameIsUnique(&tt.arg.name, tt.arg.kafkaService, tt.arg.context)
 			err := validateFn()
 			Expect(tt.want).To(Equal(err))
 		})
@@ -267,7 +267,7 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.description, func(t *testing.T) {
 			RegisterTestingT(t)
-			validateFn := validKafkaClusterName(&tt.name, "name")
+			validateFn := ValidKafkaClusterName(&tt.name, "name")
 			err := validateFn()
 			if tt.expectError {
 				Expect(err).Should(HaveOccurred())
