@@ -232,7 +232,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return nil, handleGetError("KafkaResource for user "+user, "id", id, err)
+		return nil, HandleGetError("KafkaResource for user "+user, "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
@@ -245,7 +245,7 @@ func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceErr
 	dbConn := k.connectionFactory.New()
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
-		return nil, handleGetError("KafkaResource", "id", id, err)
+		return nil, HandleGetError("KafkaResource", "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
@@ -267,7 +267,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return handleGetError("KafkaResource", "id", id, err)
+		return HandleGetError("KafkaResource", "id", id, err)
 	}
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
@@ -275,7 +275,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
-			return handleGetError("KafkaResource", "id", id, err)
+			return HandleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"net/http"
@@ -23,14 +24,14 @@ var (
 
 type ConnectorClusterHandler struct {
 	bus            signalbus.SignalBus
-	service        services.ConnectorClusterService
+	service        services2.ConnectorClusterService
 	config         services.ConfigService
 	keycloak       services.KeycloakService
-	connectorTypes services.ConnectorTypesService
+	connectorTypes services2.ConnectorTypesService
 	vault          services.VaultService
 }
 
-func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config services.ConfigService, keycloak services.KafkaKeycloakService, connectorTypes services.ConnectorTypesService, vault services.VaultService) *ConnectorClusterHandler {
+func NewConnectorClusterHandler(bus signalbus.SignalBus, service services2.ConnectorClusterService, config services.ConfigService, keycloak services.KafkaKeycloakService, connectorTypes services2.ConnectorTypesService, vault services.VaultService) *ConnectorClusterHandler {
 	return &ConnectorClusterHandler{
 		bus:            bus,
 		service:        service,

@@ -19,7 +19,7 @@ const (
 	mockIDWithInvalidChars = "vp&xG^nl9MStC@SI*#c$6V^TKq0"
 )
 
-func Test_handleGetError(t *testing.T) {
+func Test_HandleGetError(t *testing.T) {
 	cause := pkgErr.WithStack(gorm.ErrInvalidData)
 	type args struct {
 		resourceType string
@@ -65,8 +65,8 @@ func Test_handleGetError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := handleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("handleGetError() = %v, want %v", got, tt.want)
+			if got := HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("HandleGetError() = %v, want %v", got, tt.want)
 			}
 		})
 	}
