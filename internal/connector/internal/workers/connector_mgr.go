@@ -3,21 +3,23 @@ package workers
 import (
 	"context"
 	"encoding/json"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-	"github.com/google/uuid"
 	"sync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+
 	"github.com/golang/glog"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 // ConnectorManager represents a connector manager that periodically reconciles connector requests
@@ -28,17 +30,17 @@ type ConnectorManager struct {
 	imStop                  chan struct{}
 	syncTeardown            sync.WaitGroup
 	reconciler              workers.Reconciler
-	connectorService        services2.ConnectorsService
-	connectorClusterService services2.ConnectorClusterService
-	observatoriumService    services.ObservatoriumService
-	connectorTypesService   services2.ConnectorTypesService
-	vaultService            services.VaultService
+	connectorService        services.ConnectorsService
+	connectorClusterService services.ConnectorClusterService
+	observatoriumService    coreServices.ObservatoriumService
+	connectorTypesService   services.ConnectorTypesService
+	vaultService            coreServices.VaultService
 	lastVersion             int64
 	reconcileChannels       bool
 }
 
 // NewConnectorManager creates a new connector manager
-func NewConnectorManager(connectorTypesService services2.ConnectorTypesService, connectorService services2.ConnectorsService, connectorClusterService services2.ConnectorClusterService, observatoriumService services.ObservatoriumService, vaultService services.VaultService, bus signalbus.SignalBus) *ConnectorManager {
+func NewConnectorManager(connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService coreServices.ObservatoriumService, vaultService coreServices.VaultService, bus signalbus.SignalBus) *ConnectorManager {
 	return &ConnectorManager{
 		id:                      uuid.New().String(),
 		workerType:              "connector",
@@ -105,7 +107,7 @@ func (k *ConnectorManager) Reconcile() []error {
 		}
 	}
 
-	serviceErr := k.connectorService.ForEach(func(connector *api.Connector) *serviceError.ServiceError {
+	serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(func(ctx context.Context) error {
 			if err := db.AddPostCommitAction(ctx, func() {
 				k.lastVersion = connector.Version
@@ -113,7 +115,7 @@ func (k *ConnectorManager) Reconcile() []error {
 				return err
 			}
 			switch connector.Status.Phase {
-			case api.ConnectorStatusPhaseAssigning:
+			case dbapi.ConnectorStatusPhaseAssigning:
 				// if it's not been assigned yet, we can immediately delete it.
 				if connector.DesiredState == "deleted" {
 					if err := k.reconcileDeleted(ctx, connector); err != nil {
@@ -130,19 +132,19 @@ func (k *ConnectorManager) Reconcile() []error {
 			}
 			return nil
 		})
-	}, "phase IN (?)", []api.ConnectorStatusPhase{
-		api.ConnectorStatusPhaseAssigning,
+	}, "phase IN (?)", []dbapi.ConnectorStatusPhase{
+		dbapi.ConnectorStatusPhaseAssigning,
 	})
 	if serviceErr != nil {
 		errs = append(errs, serviceErr)
 	}
 
 	// Process any connector updates...
-	serviceErr = k.connectorService.ForEach(func(connector *api.Connector) *serviceError.ServiceError {
+	serviceErr = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(func(ctx context.Context) error {
 			switch connector.Status.Phase {
-			case api.ConnectorStatusPhaseAssigning:
-			case api.ConnectorClusterPhaseDeleted:
+			case dbapi.ConnectorStatusPhaseAssigning:
+			case dbapi.ConnectorClusterPhaseDeleted:
 				if err := k.reconcileDeleted(ctx, connector); err != nil {
 					errs = append(errs, err)
 					glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
@@ -195,7 +197,7 @@ func InDBTransaction(f func(ctx context.Context) error) (rerr *serviceError.Serv
 
 func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel string, ccc *config.ConnectorChannelConfig) *serviceError.ServiceError {
 
-	ctc := api.ConnectorShardMetadata{
+	ctc := dbapi.ConnectorShardMetadata{
 		ConnectorTypeId: id,
 		Channel:         channel,
 	}
@@ -215,9 +217,9 @@ func (k *ConnectorManager) ReconcileConnectorCatalogEntry(id string, channel str
 	return nil
 }
 
-func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *api.Connector) error {
+func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *dbapi.Connector) error {
 	switch connector.TargetKind {
-	case api.AddonTargetKind:
+	case dbapi.AddonTargetKind:
 
 		cluster, err := k.connectorClusterService.FindReadyCluster(connector.Owner, connector.OrganisationId, connector.AddonClusterId)
 		if err != nil {
@@ -233,15 +235,15 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 			return errors.Wrapf(err, "failed to get latest channel version for connector request %s", connector.ID)
 		}
 
-		var status = api.ConnectorStatus{}
+		var status = dbapi.ConnectorStatus{}
 		status.ID = connector.ID
 		status.ClusterID = cluster.ID
-		status.Phase = api.ConnectorStatusPhaseAssigned
+		status.Phase = dbapi.ConnectorStatusPhaseAssigned
 		if err = k.connectorService.SaveStatus(ctx, status); err != nil {
 			return errors.Wrapf(err, "failed to update connector status %s with cluster details", connector.ID)
 		}
 
-		deployment := api.ConnectorDeployment{
+		deployment := dbapi.ConnectorDeployment{
 			Meta: api.Meta{
 				ID: api.NewID(),
 			},
@@ -249,7 +251,7 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 			ClusterID:              cluster.ID,
 			ConnectorVersion:       connector.Version,
 			ConnectorTypeChannelId: channelVersion,
-			Status:                 api.ConnectorDeploymentStatus{},
+			Status:                 dbapi.ConnectorDeploymentStatus{},
 		}
 
 		if err = k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
@@ -262,7 +264,7 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *ap
 	return nil
 }
 
-func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *api.Connector) error {
+func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *dbapi.Connector) error {
 
 	// Get the deployment for the connector...
 	deployment, serr := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
@@ -279,7 +281,7 @@ func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *api
 	return nil
 }
 
-func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *api.Connector) error {
+func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *dbapi.Connector) error {
 
 	if err := k.connectorService.Delete(ctx, connector.ID); err != nil {
 		return errors.Wrapf(err, "failed to delete connector %s", connector.ID)

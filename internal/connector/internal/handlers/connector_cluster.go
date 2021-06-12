@@ -2,20 +2,20 @@ package handlers
 
 import (
 	"fmt"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"net/http"
 	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
@@ -25,14 +25,14 @@ var (
 
 type ConnectorClusterHandler struct {
 	bus            signalbus.SignalBus
-	service        services2.ConnectorClusterService
-	config         services.ConfigService
-	keycloak       services.KeycloakService
-	connectorTypes services2.ConnectorTypesService
-	vault          services.VaultService
+	service        services.ConnectorClusterService
+	config         coreservices.ConfigService
+	keycloak       coreservices.KeycloakService
+	connectorTypes services.ConnectorTypesService
+	vault          coreservices.VaultService
 }
 
-func NewConnectorClusterHandler(bus signalbus.SignalBus, service services2.ConnectorClusterService, config services.ConfigService, keycloak services.KafkaKeycloakService, connectorTypes services2.ConnectorTypesService, vault services.VaultService) *ConnectorClusterHandler {
+func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config coreservices.ConfigService, keycloak coreservices.KafkaKeycloakService, connectorTypes services.ConnectorTypesService, vault coreservices.VaultService) *ConnectorClusterHandler {
 	return &ConnectorClusterHandler{
 		bus:            bus,
 		service:        service,
@@ -44,7 +44,7 @@ func NewConnectorClusterHandler(bus signalbus.SignalBus, service services2.Conne
 }
 
 func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var resource openapi.ConnectorCluster
+	var resource public.ConnectorCluster
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
@@ -53,7 +53,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource := presenters2.ConvertConnectorCluster(resource)
+			convResource := presenters.ConvertConnectorCluster(resource)
 
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
@@ -61,12 +61,12 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			}
 			convResource.Owner = auth.GetUsernameFromClaims(claims)
 			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
-			convResource.Status.Phase = api.ConnectorClusterPhaseUnconnected
+			convResource.Status.Phase = dbapi.ConnectorClusterPhaseUnconnected
 
 			if err := h.service.Create(r.Context(), &convResource); err != nil {
 				return nil, err
 			}
-			return presenters2.PresentConnectorCluster(convResource), nil
+			return presenters.PresentConnectorCluster(convResource), nil
 		},
 	}
 
@@ -85,7 +85,7 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentConnectorCluster(resource), nil
+			return presenters.PresentConnectorCluster(resource), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -109,13 +109,13 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			listArgs := services.NewListArguments(r.URL.Query())
+			listArgs := coreservices.NewListArguments(r.URL.Query())
 			resources, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
 
-			resourceList := openapi.ConnectorClusterList{
+			resourceList := public.ConnectorClusterList{
 				Kind:  "ConnectorClusterList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -123,7 +123,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters2.PresentConnectorCluster(resource)
+				converted := presenters.PresentConnectorCluster(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 
@@ -153,7 +153,7 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
 			}
 			params := h.buildAddonParams(acc, connectorClusterId)
-			result := make([]openapi.AddonParameter, len(params))
+			result := make([]public.AddonParameter, len(params))
 			for i, p := range params {
 				result[i] = presenters.PresentAddonParameter(p)
 			}

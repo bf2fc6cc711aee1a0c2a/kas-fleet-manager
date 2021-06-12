@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -8,7 +9,7 @@ import (
 	"github.com/spyzhov/ajson"
 )
 
-func stripSecretReferences(resource *api.Connector, ct *api.ConnectorType) *errors.ServiceError {
+func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *errors.ServiceError {
 	// clear out secrets..
 	resource.Kafka.ClientSecret = ""
 	resource.Kafka.ClientSecretRef = ""
@@ -37,7 +38,7 @@ func stripSecretReferences(resource *api.Connector, ct *api.ConnectorType) *erro
 	return nil
 }
 
-func moveSecretsToVault(resource *api.Connector, ct *api.ConnectorType, vault services.VaultService, errorOnObject bool) *errors.ServiceError {
+func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vault services.VaultService, errorOnObject bool) *errors.ServiceError {
 
 	// move secrets to a vault.
 	if resource.Kafka.ClientSecret != "" {
@@ -88,7 +89,7 @@ func moveSecretsToVault(resource *api.Connector, ct *api.ConnectorType, vault se
 	return nil
 }
 
-func getSecretRefs(resource *api.Connector, ct *api.ConnectorType) (result []string, err error) {
+func getSecretRefs(resource *dbapi.Connector, ct *dbapi.ConnectorType) (result []string, err error) {
 
 	if resource.Kafka.ClientSecretRef != "" {
 		result = append(result, resource.Kafka.ClientSecretRef)

@@ -5,7 +5,11 @@ import (
 )
 
 func PresentReference(id, obj interface{}) openapi.ObjectReference {
-	refId, ok := makeReferenceId(id)
+	return PresentReferenceWith(id, obj, ObjectKind, ObjectPath)
+}
+
+func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) string, ObjectPath func(id string, obj interface{}) string) openapi.ObjectReference {
+	refId, ok := MakeReferenceId(id)
 
 	if !ok {
 		return openapi.ObjectReference{}
@@ -18,7 +22,7 @@ func PresentReference(id, obj interface{}) openapi.ObjectReference {
 	}
 }
 
-func makeReferenceId(id interface{}) (string, bool) {
+func MakeReferenceId(id interface{}) (string, bool) {
 	var refId string
 
 	if i, ok := id.(string); ok {

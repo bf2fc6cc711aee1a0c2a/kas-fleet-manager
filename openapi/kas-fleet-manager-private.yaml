@@ -17,213 +17,10 @@ servers:
   - url: /
     description: current domain
 tags:
-  - name: Connector Clusters Agent
-    description: "only accessible by connector fleet shard agents"
   - name: Agent Clusters
     description: ""
 
 paths:
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status':
-    parameters:
-      - name: connector_cluster_id
-        description: The id of the connector cluster
-        schema:
-          type: string
-        in: path
-        required: true
-    put:
-      tags:
-        - Connector Clusters Agent
-      security:
-        - Bearer: [ ]
-      operationId: updateKafkaConnectorClusterStatus
-      summary: Update the status of a connector cluster
-      requestBody:
-        description: Cluster status update data
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConnectorClusterStatus'
-        required: true
-      responses:
-        '200':
-          description: Cluster status is updated
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                400InvalidIdExample:
-                  $ref: '#/components/examples/400InvalidIdExample'
-          description: id value is not valid
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
-          # This is deliberate to hide the endpoints for unauthorised users
-          description: Auth token is not valid.
-
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments':
-    parameters:
-      - name: connector_cluster_id
-        description: The id of the connector cluster
-        schema:
-          type: string
-        in: path
-        required: true
-    get:
-      tags:
-        - Connector Clusters Agent
-      security:
-        - Bearer: [ ]
-      operationId: getClusterAsignedConnectorDeployments
-      summary: Returns a list of connector deployments assigned to the cluster.
-      parameters:
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/size'
-        - in: query
-          name: gt_version
-          description: filters the connectors to those with a version greater than the given value
-          schema:
-            type: integer
-            format: int64
-        - in: query
-          name: watch
-          description: watch for changes to the resources and return them as a stream of watch events. Specify gt_version to specify the starting point.
-          schema:
-            type: string
-
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectorDeploymentList'
-            application/json;stream=watch:
-              schema:
-                $ref: '#/components/schemas/ConnectorDeploymentWatchEvent'
-          description: A list of connector
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
-          description: Auth token is invalid
-        '500':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
-          description: Unexpected error occurred
-
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}':
-    parameters:
-      - name: connector_cluster_id
-        description: The id of the connector cluster
-        schema:
-          type: string
-        in: path
-        required: true
-      - name: deployment_id
-        description: The id of the deployment
-        schema:
-          type: string
-        in: path
-        required: true
-    get:
-      tags:
-        - Connector Clusters Agent
-      security:
-        - Bearer: [ ]
-      operationId: getClusterAsignedConnectorDeploymentById
-      summary: Returns a list of connector deployments assigned to the cluster.
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ConnectorDeployment'
-          description: A connector deployment
-        '401':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
-          description: Auth token is invalid
-        '500':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
-          description: Unexpected error occurred
-
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status':
-    parameters:
-      - name: connector_cluster_id
-        description: The id of the connector cluster
-        schema:
-          type: string
-        in: path
-        required: true
-      - name: deployment_id
-        description: The id of the deployment
-        schema:
-          type: string
-        in: path
-        required: true
-    put:
-      tags:
-        - Connector Clusters Agent
-      operationId: updateConnectorDeploymentStatus
-      summary: update the connector deployment status
-      security:
-        - Bearer: [ ]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ConnectorDeploymentStatus'
-        required: true
-      responses:
-        '200':
-          description: Cluster status is updated
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                400InvalidIdExample:
-                  $ref: '#/components/examples/400InvalidIdExample'
-          description: id value is not valid
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-              examples:
-                404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
-          # This is deliberate to hide the endpoints for unauthorised users
-          description: Auth token is not valid.
-
   # Endpoints for data plane communications
   '/api/kafkas_mgmt/v1/agent_clusters/{id}/status':
     put:
@@ -399,24 +196,6 @@ components:
         kind:
           type: string
 
-    MetaV1Condition:
-      type: object
-      properties:
-        type:
-          type: string
-        reason:
-          type: string
-        message:
-          type: string
-        status:
-          type: string
-        lastTransitionTime:
-          type: string
-          deprecated: true
-        last_transition_time:
-          type: string
-          #format: date-time # enable this?? or just set it as pure plain string?
-
     ManagedKafkaCapacity:
       type: object
       properties:
@@ -586,155 +365,6 @@ components:
               items:
                 allOf:
                   - $ref: "#/components/schemas/ManagedKafka"
-
-    WatchEvent:
-      required:
-        - type
-      type: object
-      properties:
-        type:
-          type: string
-        error:
-          nullable: true
-          $ref: "kas-fleet-manager.yaml#/components/schemas/Error"
-        object:
-          type: object
-          nullable: true
-
-    ConnectorDeployment:
-      description: Holds the deployment configuration of a connector
-      allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
-        - type: object
-          properties:
-            metadata:
-              type: object
-              properties:
-                created_at:
-                  format: date-time
-                  type: string
-                updated_at:
-                  format: date-time
-                  type: string
-                resource_version:
-                  type: integer
-                  format: int64
-            spec:
-              $ref: '#/components/schemas/ConnectorDeploymentSpec'
-            status:
-              $ref: '#/components/schemas/ConnectorDeploymentStatus'
-
-    ConnectorDeploymentSpec:
-      description: Holds the deployment specification of a connector
-      type: object
-      properties:
-        shard_metadata:
-          type: object
-        connector_id:
-          type: string
-        allow_upgrade:
-          description: allow the connector to upgrade to a new operator
-          type: boolean
-          deprecated: true
-        operator_id:
-          description: an optional operator id that the connector should be run under.
-          type: string
-        connector_resource_version:
-          type: integer
-          format: int64
-        kafka_id:
-          type: string
-        kafka:
-          $ref: 'connector_mgmt.yaml#/components/schemas/KafkaConnectionSettings'
-        connector_type_id:
-          type: string
-        connector_spec:
-          type: object
-        desired_state:
-          type: string
-
-    ConnectorDeploymentStatus:
-      description: The status of connector deployment
-      type: object
-      properties:
-        phase:
-          type: string
-        resource_version:
-          type: integer
-          format: int64
-        available_upgrades:
-          type: string
-          deprecated: true
-        operators:
-          type: object
-          properties:
-            assigned:
-              $ref: '#/components/schemas/ConnectorOperator'
-            available:
-              $ref: '#/components/schemas/ConnectorOperator'
-        conditions:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetaV1Condition'
-
-    ConnectorDeploymentList:
-      allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/List'
-        - type: object
-          properties:
-            items:
-              type: array
-              items:
-                allOf:
-                  - $ref: '#/components/schemas/ConnectorDeployment'
-
-    ConnectorDeploymentWatchEvent:
-      allOf:
-        - $ref: '#/components/schemas/WatchEvent'
-        - type: object
-          properties:
-            object:
-              $ref: '#/components/schemas/ConnectorDeployment'
-
-    ConnectorOperator:
-      description: identifies an operator that runs on the fleet shards used to manage connectors.
-      properties:
-        id:
-          description: the id of the operator
-          type: string
-        type:
-          description: the type of the operator
-          type: string
-        version:
-          description: the version of the operator
-          type: string
-
-    ConnectorClusterStatus:
-      description: "Schema for the request to update a data plane cluster's status"
-      type: object
-      properties:
-        phase:
-          type: string
-        version:
-          type: string
-        conditions:
-          type: array
-          items:
-            $ref: '#/components/schemas/MetaV1Condition'
-        operators:
-          description: the list of installed operators
-          type: array
-          items:
-            type: object
-            properties:
-              operator:
-                $ref: '#/components/schemas/ConnectorOperator'
-              namespace:
-                description: the namespace to which the operator has been installed
-                type: string
-              status:
-                description: the status of the operator
-                type: string
 
     DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo:
       type: object
@@ -1000,6 +630,20 @@ components:
                   type: string
                 tag:
                   type: string
+
+    WatchEvent:
+      required:
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+        error:
+          nullable: true
+          $ref: "kas-fleet-manager.yaml#/components/schemas/Error"
+        object:
+          type: object
+          nullable: true
 
   securitySchemes:
     Bearer:

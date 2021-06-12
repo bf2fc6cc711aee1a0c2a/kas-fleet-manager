@@ -2,20 +2,20 @@ package presenters
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
-func ConvertConnector(from openapi.Connector) (*api.Connector, *errors.ServiceError) {
+func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceError) {
 
 	spec, err := json.Marshal(from.ConnectorSpec)
 	if err != nil {
 		return nil, errors.BadRequest("invalid connector spec: %v", err)
 	}
 
-	return &api.Connector{
+	return &dbapi.Connector{
 		Meta: api.Meta{
 			ID: from.Id,
 		},
@@ -32,30 +32,30 @@ func ConvertConnector(from openapi.Connector) (*api.Connector, *errors.ServiceEr
 		ConnectorSpec:   spec,
 		DesiredState:    from.DesiredState,
 		Channel:         from.Channel,
-		Kafka: api.KafkaConnectionSettings{
+		Kafka: dbapi.KafkaConnectionSettings{
 			BootstrapServer: from.Kafka.BootstrapServer,
 			ClientId:        from.Kafka.ClientId,
 			ClientSecret:    from.Kafka.ClientSecret,
 		},
-		Status: api.ConnectorStatus{
+		Status: dbapi.ConnectorStatus{
 			Phase: from.Status,
 		},
 	}, nil
 }
 
-func PresentConnector(from *api.Connector) (openapi.Connector, *errors.ServiceError) {
+func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceError) {
 	spec := map[string]interface{}{}
 	err := json.Unmarshal([]byte(from.ConnectorSpec), &spec)
 	if err != nil {
-		return openapi.Connector{}, errors.BadRequest("invalid connector spec: %v", err)
+		return public.Connector{}, errors.BadRequest("invalid connector spec: %v", err)
 	}
 
-	reference := presenters.PresentReference(from.ID, from)
-	return openapi.Connector{
+	reference := PresentReference(from.ID, from)
+	return public.Connector{
 		Id:   reference.Id,
 		Kind: reference.Kind,
 		Href: reference.Href,
-		Metadata: openapi.ConnectorAllOfMetadata{
+		Metadata: public.ConnectorAllOfMetadata{
 			Owner:           from.Owner,
 			KafkaId:         from.KafkaID,
 			Name:            from.Name,
@@ -63,7 +63,7 @@ func PresentConnector(from *api.Connector) (openapi.Connector, *errors.ServiceEr
 			UpdatedAt:       from.UpdatedAt,
 			ResourceVersion: from.Version,
 		},
-		DeploymentLocation: openapi.ClusterTarget{
+		DeploymentLocation: public.ClusterTarget{
 			Kind:          from.TargetKind,
 			ClusterId:     from.AddonClusterId,
 			CloudProvider: from.CloudProvider,
@@ -75,7 +75,7 @@ func PresentConnector(from *api.Connector) (openapi.Connector, *errors.ServiceEr
 		Status:          from.Status.Phase,
 		DesiredState:    from.DesiredState,
 		Channel:         from.Channel,
-		Kafka: openapi.KafkaConnectionSettings{
+		Kafka: public.KafkaConnectionSettings{
 			BootstrapServer: from.Kafka.BootstrapServer,
 			ClientId:        from.Kafka.ClientId,
 			ClientSecret:    from.Kafka.ClientSecret,

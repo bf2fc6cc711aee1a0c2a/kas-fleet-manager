@@ -1,28 +1,28 @@
 package presenters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 )
 
-func ConvertConnectorClusterStatus(from openapi.ConnectorClusterStatus) api.ConnectorClusterStatus {
-	return api.ConnectorClusterStatus{
+func ConvertConnectorClusterStatus(from private.ConnectorClusterStatus) dbapi.ConnectorClusterStatus {
+	return dbapi.ConnectorClusterStatus{
 		Conditions: ConvertConditions(from.Conditions),
 		Phase:      from.Phase,
 		Operators:  ConvertOperatorStatus(from.Operators),
 	}
 }
 
-func PresentConnectorClusterStatus(from api.ConnectorClusterStatus) openapi.ConnectorClusterStatus {
-	return openapi.ConnectorClusterStatus{
+func PresentConnectorClusterStatus(from dbapi.ConnectorClusterStatus) private.ConnectorClusterStatus {
+	return private.ConnectorClusterStatus{
 		Conditions: PresentConditions(from.Conditions),
 		Phase:      from.Phase,
 		Operators:  PresentOperators(from.Operators),
 	}
 }
 
-func ConvertConditions(in []openapi.MetaV1Condition) []api.Condition {
-	out := make([]api.Condition, len(in))
+func ConvertConditions(in []private.MetaV1Condition) []dbapi.Condition {
+	out := make([]dbapi.Condition, len(in))
 	for i, v := range in {
 		var t string
 		if v.LastTransitionTime != "" {
@@ -30,7 +30,7 @@ func ConvertConditions(in []openapi.MetaV1Condition) []api.Condition {
 		} else {
 			t = v.DeprecatedLastTransitionTime
 		}
-		out[i] = api.Condition{
+		out[i] = dbapi.Condition{
 			Type:               v.Type,
 			Reason:             v.Reason,
 			Message:            v.Message,
@@ -40,10 +40,10 @@ func ConvertConditions(in []openapi.MetaV1Condition) []api.Condition {
 	}
 	return out
 }
-func PresentConditions(in []api.Condition) []openapi.MetaV1Condition {
-	out := make([]openapi.MetaV1Condition, len(in))
+func PresentConditions(in []dbapi.Condition) []private.MetaV1Condition {
+	out := make([]private.MetaV1Condition, len(in))
 	for i, v := range in {
-		out[i] = openapi.MetaV1Condition{
+		out[i] = private.MetaV1Condition{
 			Type:                         v.Type,
 			Reason:                       v.Reason,
 			Message:                      v.Message,
@@ -55,10 +55,10 @@ func PresentConditions(in []api.Condition) []openapi.MetaV1Condition {
 	return out
 }
 
-func ConvertOperatorStatus(in []openapi.ConnectorClusterStatusOperators) []api.OperatorStatus {
-	out := make([]api.OperatorStatus, len(in))
+func ConvertOperatorStatus(in []private.ConnectorClusterStatusOperators) []dbapi.OperatorStatus {
+	out := make([]dbapi.OperatorStatus, len(in))
 	for i, v := range in {
-		out[i] = api.OperatorStatus{
+		out[i] = dbapi.OperatorStatus{
 			Id:        v.Operator.Id,
 			Type:      v.Operator.Type,
 			Version:   v.Operator.Version,
@@ -69,11 +69,11 @@ func ConvertOperatorStatus(in []openapi.ConnectorClusterStatusOperators) []api.O
 	return out
 }
 
-func PresentOperators(in []api.OperatorStatus) []openapi.ConnectorClusterStatusOperators {
-	out := make([]openapi.ConnectorClusterStatusOperators, len(in))
+func PresentOperators(in []dbapi.OperatorStatus) []private.ConnectorClusterStatusOperators {
+	out := make([]private.ConnectorClusterStatusOperators, len(in))
 	for i, v := range in {
-		out[i] = openapi.ConnectorClusterStatusOperators{
-			Operator: openapi.ConnectorOperator{
+		out[i] = private.ConnectorClusterStatusOperators{
+			Operator: private.ConnectorOperator{
 				Id:      v.Id,
 				Type:    v.Type,
 				Version: v.Version,

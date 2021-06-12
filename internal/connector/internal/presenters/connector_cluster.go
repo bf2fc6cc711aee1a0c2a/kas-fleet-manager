@@ -1,13 +1,13 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 )
 
-func ConvertConnectorCluster(from openapi.ConnectorCluster) api.ConnectorCluster {
-	return api.ConnectorCluster{
+func ConvertConnectorCluster(from public.ConnectorCluster) dbapi.ConnectorCluster {
+	return dbapi.ConnectorCluster{
 		Meta: api.Meta{
 			ID:        from.Id,
 			CreatedAt: from.Metadata.CreatedAt,
@@ -15,19 +15,19 @@ func ConvertConnectorCluster(from openapi.ConnectorCluster) api.ConnectorCluster
 		},
 		Owner: from.Metadata.Owner,
 		Name:  from.Metadata.Name,
-		Status: api.ConnectorClusterStatus{
+		Status: dbapi.ConnectorClusterStatus{
 			Phase: from.Status,
 		},
 	}
 }
 
-func PresentConnectorCluster(from api.ConnectorCluster) openapi.ConnectorCluster {
-	reference := presenters.PresentReference(from.ID, from)
-	return openapi.ConnectorCluster{
+func PresentConnectorCluster(from dbapi.ConnectorCluster) public.ConnectorCluster {
+	reference := PresentReference(from.ID, from)
+	return public.ConnectorCluster{
 		Id:   reference.Id,
 		Kind: reference.Kind,
 		Href: reference.Href,
-		Metadata: openapi.ConnectorClusterAllOfMetadata{
+		Metadata: public.ConnectorClusterAllOfMetadata{
 			Owner:     from.Owner,
 			Name:      from.Name,
 			CreatedAt: from.CreatedAt,

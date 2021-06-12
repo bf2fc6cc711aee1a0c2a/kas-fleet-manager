@@ -3,8 +3,10 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -15,10 +17,9 @@ import (
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
@@ -30,13 +31,13 @@ var (
 )
 
 type ConnectorsHandler struct {
-	connectorsService     services2.ConnectorsService
-	connectorTypesService services2.ConnectorTypesService
-	kafkaService          services.KafkaService
-	vaultService          services.VaultService
+	connectorsService     services.ConnectorsService
+	connectorTypesService services.ConnectorTypesService
+	kafkaService          coreServices.KafkaService
+	vaultService          coreServices.VaultService
 }
 
-func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService services2.ConnectorsService, connectorTypesService services2.ConnectorTypesService, vaultService services.VaultService) *ConnectorsHandler {
+func NewConnectorsHandler(kafkaService coreServices.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService coreServices.VaultService) *ConnectorsHandler {
 	return &ConnectorsHandler{
 		kafkaService:          kafkaService,
 		connectorsService:     connectorsService,
@@ -46,7 +47,7 @@ func NewConnectorsHandler(kafkaService services.KafkaService, connectorsService 
 }
 
 func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var resource openapi.Connector
+	var resource public.Connector
 	tid := mux.Vars(r)["tid"]
 	cfg := &handlers.HandlerConfig{
 
@@ -73,7 +74,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			convResource, err := presenters2.ConvertConnector(resource)
+			convResource, err := presenters.ConvertConnector(resource)
 			if err != nil {
 				return nil, err
 			}
@@ -105,7 +106,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters2.PresentConnector(convResource)
+			return presenters.PresentConnector(convResource)
 		},
 	}
 
@@ -132,7 +133,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			resource, serr := presenters2.PresentConnector(dbresource)
+			resource, serr := presenters.PresentConnector(dbresource)
 			if serr != nil {
 				return nil, serr
 			}
@@ -159,7 +160,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			patch := openapi.Connector{}
+			patch := public.Connector{}
 			serr = PatchResource(resource, contentType, patchBytes, &patch)
 			if serr != nil {
 				return nil, serr
@@ -175,7 +176,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			resource.Kafka = patch.Kafka
 
 			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters2.PresentConnector(dbresource)
+			originalResource, _ := presenters.PresentConnector(dbresource)
 			if reflect.DeepEqual(originalResource, resource) {
 				return originalResource, nil
 			}
@@ -204,7 +205,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			p, svcErr := presenters2.ConvertConnector(resource)
+			p, svcErr := presenters.ConvertConnector(resource)
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -219,9 +220,9 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			if originalResource.Status != api.ConnectorStatusPhaseAssigning {
-				dbresource.Status.Phase = api.ConnectorStatusPhaseUpdating
-				p.Status.Phase = api.ConnectorStatusPhaseUpdating
+			if originalResource.Status != dbapi.ConnectorStatusPhaseAssigning {
+				dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
+				p.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
 				serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
 				if serr != nil {
 					return nil, serr
@@ -249,7 +250,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters2.PresentConnector(p)
+			return presenters.PresentConnector(p)
 		},
 	}
 
@@ -257,7 +258,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
 }
 
-func validateConnectorPatch(bytes []byte, ct *api.ConnectorType) *errors.ServiceError {
+func validateConnectorPatch(bytes []byte, ct *dbapi.ConnectorType) *errors.ServiceError {
 	type Connector struct {
 		ConnectorSpec api.JSON `json:"connector_spec,omitempty"`
 	}
@@ -357,7 +358,7 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters2.PresentConnector(resource)
+			return presenters.PresentConnector(resource)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -400,13 +401,13 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			listArgs := services.NewListArguments(r.URL.Query())
+			listArgs := coreServices.NewListArguments(r.URL.Query())
 			resources, paging, err := h.connectorsService.List(ctx, kafkaId, listArgs, connectorTypeId)
 			if err != nil {
 				return nil, err
 			}
 
-			resourceList := openapi.ConnectorList{
+			resourceList := public.ConnectorList{
 				Kind:  "ConnectorList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -423,7 +424,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 				if err := stripSecretReferences(resource, ct); err != nil {
 					return nil, err
 				}
-				converted, err := presenters2.PresentConnector(resource)
+				converted, err := presenters.PresentConnector(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
 					return nil, errors.GeneralError("internal error")

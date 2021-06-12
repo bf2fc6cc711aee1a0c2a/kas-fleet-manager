@@ -49,8 +49,6 @@ type APIClient struct {
 	// API Services
 
 	AgentClustersApi *AgentClustersApiService
-
-	ConnectorClustersAgentApi *ConnectorClustersAgentApiService
 }
 
 type service struct {
@@ -70,7 +68,6 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 
 	// API Services
 	c.AgentClustersApi = (*AgentClustersApiService)(&c.common)
-	c.ConnectorClustersAgentApi = (*ConnectorClustersAgentApiService)(&c.common)
 
 	return c
 }

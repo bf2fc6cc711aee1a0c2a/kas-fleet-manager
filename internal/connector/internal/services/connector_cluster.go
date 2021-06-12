@@ -7,7 +7,8 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"reflect"
 
@@ -22,22 +23,22 @@ import (
 )
 
 type ConnectorClusterService interface {
-	Create(ctx context.Context, resource *api.ConnectorCluster) *errors.ServiceError
-	Get(ctx context.Context, id string) (api.ConnectorCluster, *errors.ServiceError)
+	Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError
+	Get(ctx context.Context, id string) (dbapi.ConnectorCluster, *errors.ServiceError)
 	Delete(ctx context.Context, id string) *errors.ServiceError
-	List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError)
-	Update(ctx context.Context, resource *api.ConnectorCluster) *errors.ServiceError
-	UpdateConnectorClusterStatus(ctx context.Context, id string, status api.ConnectorClusterStatus) *errors.ServiceError
-	GetConnectorClusterStatus(ctx context.Context, id string) (api.ConnectorClusterStatus, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError)
+	Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError
+	UpdateConnectorClusterStatus(ctx context.Context, id string, status dbapi.ConnectorClusterStatus) *errors.ServiceError
+	GetConnectorClusterStatus(ctx context.Context, id string) (dbapi.ConnectorClusterStatus, *errors.ServiceError)
 
-	SaveDeployment(ctx context.Context, resource *api.ConnectorDeployment) *errors.ServiceError
-	GetConnectorWithBase64Secrets(ctx context.Context, resource api.ConnectorDeployment) (api.Connector, *errors.ServiceError)
-	ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
-	UpdateConnectorDeploymentStatus(ctx context.Context, status api.ConnectorDeploymentStatus) *errors.ServiceError
-	FindReadyCluster(owner string, orgId string, group string) (*api.ConnectorCluster, *errors.ServiceError)
-	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (api.ConnectorDeployment, *errors.ServiceError)
-	GetDeployment(ctx context.Context, id string) (api.ConnectorDeployment, *errors.ServiceError)
-	GetAvailableDeploymentUpgrades() (upgrades []api.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError)
+	SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError
+	GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError)
+	ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError)
+	UpdateConnectorDeploymentStatus(ctx context.Context, status dbapi.ConnectorDeploymentStatus) *errors.ServiceError
+	FindReadyCluster(owner string, orgId string, group string) (*dbapi.ConnectorCluster, *errors.ServiceError)
+	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
+	GetDeployment(ctx context.Context, id string) (dbapi.ConnectorDeployment, *errors.ServiceError)
+	GetAvailableDeploymentUpgrades() (upgrades []dbapi.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError)
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -59,7 +60,7 @@ func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus sig
 }
 
 // Create creates a connector cluster in the database
-func (k *connectorClusterService) Create(ctx context.Context, resource *api.ConnectorCluster) *errors.ServiceError {
+func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Save(resource).Error; err != nil {
 		return errors.GeneralError("failed to create connector: %v", err)
@@ -70,10 +71,10 @@ func (k *connectorClusterService) Create(ctx context.Context, resource *api.Conn
 }
 
 // Get gets a connector by id from the database
-func (k *connectorClusterService) Get(ctx context.Context, id string) (api.ConnectorCluster, *errors.ServiceError) {
+func (k *connectorClusterService) Get(ctx context.Context, id string) (dbapi.ConnectorCluster, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	var resource api.ConnectorCluster
+	var resource dbapi.ConnectorCluster
 	dbConn = dbConn.Where("id = ?", id)
 
 	var err *errors.ServiceError
@@ -100,7 +101,7 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 	}
 
 	dbConn := k.connectionFactory.New()
-	var resource api.ConnectorCluster
+	var resource dbapi.ConnectorCluster
 	if err := dbConn.Where("owner = ? AND id = ?", owner, id).First(&resource).Error; err != nil {
 		return services.HandleGetError("Connector cluster", "id", id, err)
 	}
@@ -114,8 +115,8 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 }
 
 // List returns all connector clusters visible to the user within the requested paging window.
-func (k *connectorClusterService) List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError) {
-	var resourceList api.ConnectorClusterList
+func (k *connectorClusterService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorClusterList, *api.PagingMeta, *errors.ServiceError) {
+	var resourceList dbapi.ConnectorClusterList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -149,7 +150,7 @@ func (k *connectorClusterService) List(ctx context.Context, listArgs *services.L
 	return resourceList, pagingMeta, nil
 }
 
-func (k connectorClusterService) Update(ctx context.Context, resource *api.ConnectorCluster) *errors.ServiceError {
+func (k connectorClusterService) Update(ctx context.Context, resource *dbapi.ConnectorCluster) *errors.ServiceError {
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return errors.Unauthenticated("user not authenticated")
@@ -166,9 +167,9 @@ func (k connectorClusterService) Update(ctx context.Context, resource *api.Conne
 	return nil
 }
 
-func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Context, id string, status api.ConnectorClusterStatus) *errors.ServiceError {
+func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Context, id string, status dbapi.ConnectorClusterStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
-	var resource api.ConnectorCluster
+	var resource dbapi.ConnectorCluster
 
 	if err := dbConn.Where("id = ?", id).First(&resource).Error; err != nil {
 		return services.HandleGetError("Connector cluster status", "id", id, err)
@@ -189,10 +190,10 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 }
 
 // Get gets a connector by id from the database
-func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context, id string) (api.ConnectorClusterStatus, *errors.ServiceError) {
+func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context, id string) (dbapi.ConnectorClusterStatus, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	var resource api.ConnectorCluster
+	var resource dbapi.ConnectorCluster
 	dbConn = dbConn.Select("status_phase, status_version, status_conditions, status_operators").Where("id = ?", id)
 
 	if err := dbConn.First(&resource).Error; err != nil {
@@ -202,7 +203,7 @@ func (k *connectorClusterService) GetConnectorClusterStatus(ctx context.Context,
 }
 
 // Create creates a connector deployment in the database
-func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *api.ConnectorDeployment) *errors.ServiceError {
+func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *dbapi.ConnectorDeployment) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	if err := dbConn.Save(resource).Error; err != nil {
@@ -225,8 +226,8 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 }
 
 // List returns all connectors assigned to the cluster
-func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (api.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
-	var resourceList api.ConnectorDeploymentList
+func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, id string, listArgs *services.ListArguments, gtVersion int64) (dbapi.ConnectorDeploymentList, *api.PagingMeta, *errors.ServiceError) {
+	var resourceList dbapi.ConnectorDeploymentList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Preload("Status")
 	pagingMeta := &api.PagingMeta{
@@ -260,11 +261,11 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	return resourceList, pagingMeta, nil
 }
 
-func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, resource api.ConnectorDeploymentStatus) *errors.ServiceError {
+func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, resource dbapi.ConnectorDeploymentStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	// lets get the connector id of the deployment..
-	deployment := api.ConnectorDeployment{}
+	deployment := dbapi.ConnectorDeployment{}
 	if err := dbConn.Select("connector_id").
 		Where("id = ?", resource.ID).
 		First(&deployment).Error; err != nil {
@@ -276,7 +277,7 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	}
 
 	// TODO: use post the deployment status to the type service to simplify the connector status.
-	c := api.ConnectorStatus{
+	c := dbapi.ConnectorStatus{
 		Phase: resource.Phase,
 	}
 	if err := dbConn.Model(&c).Where("id = ?", deployment.ConnectorID).Updates(&c).Error; err != nil {
@@ -286,11 +287,11 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 	return nil
 }
 
-func (k *connectorClusterService) FindReadyCluster(owner string, orgId string, connectorClusterId string) (*api.ConnectorCluster, *errors.ServiceError) {
+func (k *connectorClusterService) FindReadyCluster(owner string, orgId string, connectorClusterId string) (*dbapi.ConnectorCluster, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
-	var resource api.ConnectorCluster
+	var resource dbapi.ConnectorCluster
 
-	dbConn = dbConn.Where("id = ? AND status_phase = ?", connectorClusterId, api.ConnectorClusterPhaseReady)
+	dbConn = dbConn.Where("id = ? AND status_phase = ?", connectorClusterId, dbapi.ConnectorClusterPhaseReady)
 
 	if orgId != "" {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
@@ -316,11 +317,11 @@ func Checksum(spec interface{}) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Context, resource api.ConnectorDeployment) (api.Connector, *errors.ServiceError) {
+func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Context, resource dbapi.ConnectorDeployment) (dbapi.Connector, *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 
-	var connector api.Connector
+	var connector dbapi.Connector
 	err := dbConn.Where("id = ?", resource.ConnectorID).First(&connector).Error
 	if err != nil {
 		return connector, services.HandleGetError("Connector", "id", resource.ConnectorID, err)
@@ -334,7 +335,7 @@ func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Cont
 	return connector, nil
 }
 
-func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesService, vault services.VaultService) *errors.ServiceError {
+func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesService, vault services.VaultService) *errors.ServiceError {
 	ct, err := cts.Get(resource.ConnectorTypeId)
 	if err != nil {
 		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
@@ -389,7 +390,7 @@ func getSecretsFromVaultAsBase64(resource *api.Connector, cts ConnectorTypesServ
 	return nil
 }
 
-func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource api.ConnectorDeployment, serr *errors.ServiceError) {
+func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context, connectorID string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Where("connector_id = ?", connectorID)
@@ -398,7 +399,7 @@ func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context
 	}
 	return
 }
-func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource api.ConnectorDeployment, serr *errors.ServiceError) {
+func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Where("id = ?", id)
@@ -408,7 +409,7 @@ func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) 
 	return
 }
 
-func (k *connectorClusterService) GetAvailableDeploymentUpgrades() (upgrades []api.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError) {
+func (k *connectorClusterService) GetAvailableDeploymentUpgrades() (upgrades []dbapi.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError) {
 
 	type Result struct {
 		DeploymentID             string
@@ -443,18 +444,18 @@ func (k *connectorClusterService) GetAvailableDeploymentUpgrades() (upgrades []a
 		return upgrades, errors.GeneralError("Unable to list connector deployment upgrades: %s", err)
 	}
 
-	upgrades = make([]api.ConnectorDeploymentAvailableUpgrades, len(results))
+	upgrades = make([]dbapi.ConnectorDeploymentAvailableUpgrades, len(results))
 	for i, r := range results {
-		upgrades[i] = api.ConnectorDeploymentAvailableUpgrades{
+		upgrades[i] = dbapi.ConnectorDeploymentAvailableUpgrades{
 			DeploymentID:    r.DeploymentID,
 			ConnectorTypeId: r.ConnectorTypeId,
 			Channel:         r.Channel,
 		}
 
-		var operators openapi.ConnectorDeploymentStatusOperators
+		var operators private.ConnectorDeploymentStatusOperators
 		if r.ConnectorTypeUpgrade {
 
-			upgrades[i].ShardMetadata = &api.ConnectorTypeUpgrade{
+			upgrades[i].ShardMetadata = &dbapi.ConnectorTypeUpgrade{
 				AssignedId:  r.ConnectorTypeUpgradeFrom,
 				AvailableId: r.ConnectorTypeUpgradeTo,
 			}
@@ -466,13 +467,13 @@ func (k *connectorClusterService) GetAvailableDeploymentUpgrades() (upgrades []a
 				return upgrades, errors.GeneralError("converting ConnectorDeploymentStatusOperators: %s", err)
 			}
 
-			upgrades[i].Operator = &api.ConnectorOperatorUpgrade{
-				Assigned: api.ConnectorOperator{
+			upgrades[i].Operator = &dbapi.ConnectorOperatorUpgrade{
+				Assigned: dbapi.ConnectorOperator{
 					Id:      operators.Assigned.Id,
 					Type:    operators.Assigned.Type,
 					Version: operators.Assigned.Version,
 				},
-				Available: api.ConnectorOperator{
+				Available: dbapi.ConnectorOperator{
 					Id:      operators.Available.Id,
 					Type:    operators.Available.Type,
 					Version: operators.Available.Version,

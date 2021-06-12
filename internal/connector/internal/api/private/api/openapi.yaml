@@ -1,0 +1,630 @@
+openapi: 3.0.0
+info:
+  description: Connector Service Fleet Manager apis that are used by internal services.
+  title: Connector Service Fleet Manager Private APIs
+  version: 0.0.3
+servers:
+- description: Main (production) server
+  url: https://api.openshift.com
+- description: Staging server
+  url: https://api.stage.openshift.com
+- description: localhost
+  url: http://localhost:8000
+- description: current domain
+  url: /
+tags:
+- description: only accessible by connector fleet shard agents
+  name: Connector Clusters Agent
+paths:
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status:
+    put:
+      operationId: updateKafkaConnectorClusterStatus
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorClusterStatus'
+        description: Cluster status update data
+        required: true
+      responses:
+        "200":
+          description: Cluster status is updated
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Update the status of a connector cluster
+      tags:
+      - Connector Clusters Agent
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments:
+    get:
+      operationId: getClusterAsignedConnectorDeployments
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: Page index
+        examples:
+          page:
+            value: "1"
+        in: query
+        name: page
+        required: false
+        schema:
+          type: string
+      - description: Number of items in each page
+        examples:
+          size:
+            value: "100"
+        in: query
+        name: size
+        required: false
+        schema:
+          type: string
+      - description: filters the connectors to those with a version greater than the
+          given value
+        explode: true
+        in: query
+        name: gt_version
+        required: false
+        schema:
+          format: int64
+          type: integer
+        style: form
+      - description: watch for changes to the resources and return them as a stream
+          of watch events. Specify gt_version to specify the starting point.
+        explode: true
+        in: query
+        name: watch
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorDeploymentList'
+            application/json;stream=watch:
+              schema:
+                $ref: '#/components/schemas/ConnectorDeploymentWatchEvent'
+          description: A list of connector
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a list of connector deployments assigned to the cluster.
+      tags:
+      - Connector Clusters Agent
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}:
+    get:
+      operationId: getClusterAsignedConnectorDeploymentById
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the deployment
+        explode: false
+        in: path
+        name: deployment_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorDeployment'
+          description: A connector deployment
+        "401":
+          content:
+            application/json:
+              examples:
+                "401Example":
+                  $ref: '#/components/examples/401Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is invalid
+        "500":
+          content:
+            application/json:
+              examples:
+                "500Example":
+                  $ref: '#/components/examples/500Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Unexpected error occurred
+      security:
+      - Bearer: []
+      summary: Returns a list of connector deployments assigned to the cluster.
+      tags:
+      - Connector Clusters Agent
+  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status:
+    put:
+      operationId: updateConnectorDeploymentStatus
+      parameters:
+      - description: The id of the connector cluster
+        explode: false
+        in: path
+        name: connector_cluster_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      - description: The id of the deployment
+        explode: false
+        in: path
+        name: deployment_id
+        required: true
+        schema:
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectorDeploymentStatus'
+        required: true
+      responses:
+        "200":
+          description: Cluster status is updated
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: update the connector deployment status
+      tags:
+      - Connector Clusters Agent
+components:
+  examples:
+    ManagedKafkaExample:
+      value:
+        kind: ManagedKafka
+        metadata:
+          name: example-kafka
+          namespace: example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac
+          annotations:
+            id: 1rfpsqbvq1em2u9u0z54ymjcwac
+            placement_id: ""
+        spec:
+          capacity:
+            ingress_egress_throughput_per_sec: 4Mi
+            total_max_connections: 500
+            max_data_retention_size: 100Gi
+            max_partitions: 100
+            max_data_retention_period: P14D
+            max_connection_attempts_per_sec: 100
+          oauth:
+            client_id: kafka-1rfpsqbvq1em2u9u0z54ymjcwac
+            client_secret: example-client-secret
+            token_endpoint_uri: https://example-token-endpoint-uri.com/token
+            jwks_endpoint_uri: https://example-jwks-endpoint-uri.com/certs
+            valid_issuer_endpoint_uri: https://issuer-endpoint-uri.com
+            user_name_claim: username
+            tls_trusted_certificate: ""
+            custom_claim_check: ""
+          endpoint:
+            bootstrap_server_host: example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org
+            tls:
+              cert: ""
+              key: ""
+          versions:
+            kafka: 2.7.0
+            strimzi: 0.21.2
+          deleted: false
+    DataPlaneKafkaStatusRequestExample:
+      value:
+        conditions:
+        - type: Ready
+          reason: KafkaInstanceReady
+          message: installing
+          status: "False"
+          last_transition_time: 2018-01-01T00:00:00Z
+        capacity:
+          ingress_egress_throughput_per_sec: 4Mi
+          total_maxConnections: 500
+          max_data_retention_size: 100Gi
+          max_partitions: 100
+          max_data_retention_period: P14D
+          max_connection_attempts_per_sec: 100
+        versions:
+          kafka: 2.4.1
+          strimzi: 0.21.2
+    "400InvalidIdExample":
+      value:
+        id: "203"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/21
+        code: KAFKAS-MGMT-21
+        reason: Bad request
+        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "404Example":
+      value:
+        id: "404"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/7
+        code: KAFKAS-MGMT-7
+        reason: The requested resource doesn't exist
+    "401Example":
+      value:
+        id: "11"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/11
+        code: KAFKAS-MGMT-11
+        reason: 'Unable to verify JWT token: Required authorization token not found'
+        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+    "500Example":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/kafkas_mgmt/v1/errors/9
+        code: KAFKAS-MGMT-9
+        reason: Unspecified error
+        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
+  schemas:
+    MetaV1Condition:
+      example:
+        reason: reason
+        last_transition_time: last_transition_time
+        type: type
+        message: message
+        lastTransitionTime: lastTransitionTime
+        status: status
+      properties:
+        type:
+          type: string
+        reason:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+        lastTransitionTime:
+          deprecated: true
+          type: string
+        last_transition_time:
+          type: string
+      type: object
+    WatchEvent:
+      properties:
+        type:
+          type: string
+        error:
+          $ref: '#/components/schemas/Error'
+        object:
+          nullable: true
+          type: object
+      required:
+      - type
+      type: object
+    ConnectorDeployment:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/ConnectorDeployment_allOf'
+      description: Holds the deployment configuration of a connector
+    ConnectorDeploymentSpec:
+      description: Holds the deployment specification of a connector
+      properties:
+        shard_metadata:
+          type: object
+        connector_id:
+          type: string
+        allow_upgrade:
+          deprecated: true
+          description: allow the connector to upgrade to a new operator
+          type: boolean
+        operator_id:
+          description: an optional operator id that the connector should be run under.
+          type: string
+        connector_resource_version:
+          format: int64
+          type: integer
+        kafka_id:
+          type: string
+        kafka:
+          $ref: '#/components/schemas/KafkaConnectionSettings'
+        connector_type_id:
+          type: string
+        connector_spec:
+          type: object
+        desired_state:
+          type: string
+      type: object
+    ConnectorDeploymentStatus:
+      description: The status of connector deployment
+      example:
+        phase: phase
+        operators:
+          available:
+            id: id
+            type: type
+            version: version
+          assigned:
+            id: id
+            type: type
+            version: version
+        conditions:
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        resource_version: 0
+        available_upgrades: available_upgrades
+      properties:
+        phase:
+          type: string
+        resource_version:
+          format: int64
+          type: integer
+        available_upgrades:
+          deprecated: true
+          type: string
+        operators:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus_operators'
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+      type: object
+    ConnectorDeploymentList:
+      allOf:
+      - $ref: '#/components/schemas/List'
+      - $ref: '#/components/schemas/ConnectorDeploymentList_allOf'
+    ConnectorDeploymentWatchEvent:
+      allOf:
+      - $ref: '#/components/schemas/WatchEvent'
+      - $ref: '#/components/schemas/ConnectorDeploymentWatchEvent_allOf'
+    ConnectorOperator:
+      description: identifies an operator that runs on the fleet shards used to manage
+        connectors.
+      example:
+        id: id
+        type: type
+        version: version
+      properties:
+        id:
+          description: the id of the operator
+          type: string
+        type:
+          description: the type of the operator
+          type: string
+        version:
+          description: the version of the operator
+          type: string
+    ConnectorClusterStatus:
+      description: Schema for the request to update a data plane cluster's status
+      example:
+        phase: phase
+        operators:
+        - namespace: namespace
+          operator:
+            id: id
+            type: type
+            version: version
+          status: status
+        - namespace: namespace
+          operator:
+            id: id
+            type: type
+            version: version
+          status: status
+        conditions:
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        - reason: reason
+          last_transition_time: last_transition_time
+          type: type
+          message: message
+          lastTransitionTime: lastTransitionTime
+          status: status
+        version: version
+      properties:
+        phase:
+          type: string
+        version:
+          type: string
+        conditions:
+          items:
+            $ref: '#/components/schemas/MetaV1Condition'
+          type: array
+        operators:
+          description: the list of installed operators
+          items:
+            $ref: '#/components/schemas/ConnectorClusterStatus_operators'
+          type: array
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
+    KafkaConnectionSettings:
+      properties:
+        bootstrap_server:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+    List:
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+      required:
+      - items
+      - kind
+      - page
+      - size
+      - total
+      type: object
+    ConnectorDeployment_allOf_metadata:
+      properties:
+        created_at:
+          format: date-time
+          type: string
+        updated_at:
+          format: date-time
+          type: string
+        resource_version:
+          format: int64
+          type: integer
+    ConnectorDeployment_allOf:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ConnectorDeployment_allOf_metadata'
+        spec:
+          $ref: '#/components/schemas/ConnectorDeploymentSpec'
+        status:
+          $ref: '#/components/schemas/ConnectorDeploymentStatus'
+    ConnectorDeploymentStatus_operators:
+      example:
+        available:
+          id: id
+          type: type
+          version: version
+        assigned:
+          id: id
+          type: type
+          version: version
+      properties:
+        assigned:
+          $ref: '#/components/schemas/ConnectorOperator'
+        available:
+          $ref: '#/components/schemas/ConnectorOperator'
+    ConnectorDeploymentList_allOf:
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ConnectorDeployment'
+          type: array
+    ConnectorDeploymentWatchEvent_allOf:
+      properties:
+        object:
+          $ref: '#/components/schemas/ConnectorDeployment'
+    ConnectorClusterStatus_operators:
+      example:
+        namespace: namespace
+        operator:
+          id: id
+          type: type
+          version: version
+        status: status
+      properties:
+        operator:
+          $ref: '#/components/schemas/ConnectorOperator'
+        namespace:
+          description: the namespace to which the operator has been installed
+          type: string
+        status:
+          description: the status of the operator
+          type: string
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+  securitySchemes:
+    Bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
