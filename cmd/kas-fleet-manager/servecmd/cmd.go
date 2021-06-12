@@ -35,21 +35,14 @@ func runServe(cmd *cobra.Command, args []string) {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
 
-	// Run the servers
-	go func() {
-		apiserver := server.NewAPIServer()
-		apiserver.Start()
-	}()
-
-	go func() {
-		metricsServer := server.NewMetricsServer()
-		metricsServer.Start()
-	}()
-
-	go func() {
-		healthcheckServer := server.NewHealthCheckServer()
-		healthcheckServer.Start()
-	}()
+	if err := env.ServiceContainer.Invoke(func(apiserver *server.ApiServer, metricsServer server.MetricsServer, healthcheckServer *server.HealthCheckServer) {
+		// Run the servers
+		go apiserver.Start()
+		go metricsServer.Start()
+		go healthcheckServer.Start()
+	}); err != nil {
+		glog.Fatalf("di failure: %s", err.Error())
+	}
 
 	// Replace the default signal bus with a clustered version.
 

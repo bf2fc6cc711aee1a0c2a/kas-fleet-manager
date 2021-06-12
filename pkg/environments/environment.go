@@ -4,8 +4,10 @@ import (
 	goerrors "errors"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	"os"
@@ -119,6 +121,7 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 
 		// Add the connector injections.
 		connector.EnvInjections().AsOption(),
+		kafka.EnvInjections().AsOption(),
 		vault.EnvInjections().AsOption(),
 	)...)
 	if err != nil {
@@ -225,8 +228,12 @@ func (env *Env) LoadServices() error {
 		di.ProvideValue(env.Config.Sentry),
 		di.ProvideValue(env.Config.Kafka),
 		di.ProvideValue(env.Config.AWS),
+		di.ProvideValue(env.Config.Metrics),
+		di.ProvideValue(env.Config.Server),
+		di.ProvideValue(env.Config.HealthCheck),
 		di.ProvideValue(env.Config.OCM),
 		di.ProvideValue(env.Config.ObservabilityConfiguration),
+		di.ProvideValue(env.Config.Keycloak),
 
 		di.Provide(db.NewConnectionFactory),
 		di.Provide(func() signalbus.SignalBus {
@@ -266,6 +273,10 @@ func (env *Env) LoadServices() error {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
+
+		di.Provide(server.NewAPIServer),
+		di.Provide(server.NewMetricsServer),
+		di.Provide(server.NewHealthCheckServer),
 	)...)
 	if err != nil {
 		return err

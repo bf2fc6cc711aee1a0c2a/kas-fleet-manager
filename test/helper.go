@@ -57,9 +57,9 @@ type TimeFunc func() time.Time
 type Helper struct {
 	DBFactory         *db.ConnectionFactory
 	AppConfig         *config.ApplicationConfig
-	APIServer         server.Server
-	MetricsServer     server.Server
-	HealthCheckServer server.Server
+	APIServer         *server.ApiServer
+	MetricsServer     *server.MetricsServer
+	HealthCheckServer *server.HealthCheckServer
 	KafkaWorkers      []workers.Worker
 	ClusterWorker     *workers.ClusterManager
 	LeaderEleWorker   *workers.LeaderElectionManager
@@ -165,7 +165,11 @@ func (helper *Helper) startAPIServer() {
 	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
 	helper.Env().Config.Server.JwksURL = jwkURL
 	helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = false
-	helper.APIServer = server.NewAPIServer()
+
+	if err := helper.Env().ServiceContainer.Resolve(&helper.APIServer); err != nil {
+		glog.Fatalf("di failure: %v", err)
+	}
+
 	listener, err := helper.APIServer.Listen()
 	if err != nil {
 		glog.Fatalf("Unable to start Test API server: %s", err)
@@ -184,7 +188,9 @@ func (helper *Helper) stopAPIServer() {
 }
 
 func (helper *Helper) startMetricsServer() {
-	helper.MetricsServer = server.NewMetricsServer()
+	if err := helper.Env().ServiceContainer.Resolve(&helper.MetricsServer); err != nil {
+		glog.Fatalf("di failure: %v", err)
+	}
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.MetricsServer.Start()
@@ -199,7 +205,9 @@ func (helper *Helper) stopMetricsServer() {
 }
 
 func (helper *Helper) startHealthCheckServer() {
-	helper.HealthCheckServer = server.NewHealthCheckServer()
+	if err := helper.Env().ServiceContainer.Resolve(&helper.HealthCheckServer); err != nil {
+		glog.Fatalf("di failure: %v", err)
+	}
 	go func() {
 		glog.V(10).Info("Test health check server started")
 		helper.HealthCheckServer.Start()
