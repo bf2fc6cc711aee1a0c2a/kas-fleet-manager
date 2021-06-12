@@ -3,8 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net"
 	"net/http"
+	"time"
 
 	health "github.com/docker/go-healthcheck"
 	"github.com/golang/glog"
@@ -15,13 +17,16 @@ var (
 	updater = health.NewStatusUpdater()
 )
 
-var _ Server = &healthCheckServer{}
+var _ Server = &HealthCheckServer{}
 
-type healthCheckServer struct {
-	httpServer *http.Server
+type HealthCheckServer struct {
+	httpServer        *http.Server
+	serverConfig      *config.ServerConfig
+	sentryTimeout     time.Duration
+	healthCheckConfig *config.HealthCheckConfig
 }
 
-func NewHealthCheckServer() *healthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *config.HealthCheckConfig, serverConfig *config.ServerConfig, sentryConfig *config.SentryConfig) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)
@@ -31,46 +36,49 @@ func NewHealthCheckServer() *healthCheckServer {
 
 	srv := &http.Server{
 		Handler: router,
-		Addr:    env().Config.HealthCheck.BindAddress,
+		Addr:    healthCheckConfig.BindAddress,
 	}
 
-	return &healthCheckServer{
-		httpServer: srv,
+	return &HealthCheckServer{
+		httpServer:        srv,
+		serverConfig:      serverConfig,
+		healthCheckConfig: healthCheckConfig,
+		sentryTimeout:     sentryConfig.Timeout,
 	}
 }
 
-func (s healthCheckServer) Start() {
+func (s HealthCheckServer) Start() {
 	var err error
-	if env().Config.HealthCheck.EnableHTTPS {
-		if env().Config.Server.HTTPSCertFile == "" || env().Config.Server.HTTPSKeyFile == "" {
+	if s.healthCheckConfig.EnableHTTPS {
+		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
 			check(
 				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
-				"Can't start https server",
+				"Can't start https server", s.sentryTimeout,
 			)
 		}
 
 		// Serve with TLS
-		glog.Infof("Serving HealthCheck with TLS at %s", env().Config.HealthCheck.BindAddress)
-		err = s.httpServer.ListenAndServeTLS(env().Config.Server.HTTPSCertFile, env().Config.Server.HTTPSKeyFile)
+		glog.Infof("Serving HealthCheck with TLS at %s", s.healthCheckConfig.BindAddress)
+		err = s.httpServer.ListenAndServeTLS(s.serverConfig.HTTPSCertFile, s.serverConfig.HTTPSKeyFile)
 	} else {
-		glog.Infof("Serving HealthCheck without TLS at %s", env().Config.HealthCheck.BindAddress)
+		glog.Infof("Serving HealthCheck without TLS at %s", s.healthCheckConfig.BindAddress)
 		err = s.httpServer.ListenAndServe()
 	}
-	check(err, "HealthCheck server terminated with errors")
+	check(err, "HealthCheck server terminated with errors", s.sentryTimeout)
 	glog.Infof("HealthCheck server terminated")
 }
 
-func (s healthCheckServer) Stop() error {
+func (s HealthCheckServer) Stop() error {
 	return s.httpServer.Shutdown(context.Background())
 }
 
 // Unimplemented
-func (s healthCheckServer) Listen() (listener net.Listener, err error) {
+func (s HealthCheckServer) Listen() (listener net.Listener, err error) {
 	return nil, nil
 }
 
 // Unimplemented
-func (s healthCheckServer) Serve(listener net.Listener) {
+func (s HealthCheckServer) Serve(listener net.Listener) {
 }
 
 func upHandler(w http.ResponseWriter, r *http.Request) {
