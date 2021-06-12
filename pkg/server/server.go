@@ -1,6 +1,7 @@
 package server
 
 import (
+	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"net"
 	"net/http"
 	"os"
@@ -8,8 +9,6 @@ import (
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 )
 
 type Server interface {
@@ -31,7 +30,7 @@ func check(err error, msg string) {
 	if err != nil && err != http.ErrServerClosed {
 		glog.Errorf("%s: %s", msg, err)
 		sentry.CaptureException(err)
-		sentry.Flush(environments.Environment().Config.Sentry.Timeout)
+		sentry.Flush(environments2.Environment().Config.Sentry.Timeout)
 		os.Exit(1)
 	}
 }

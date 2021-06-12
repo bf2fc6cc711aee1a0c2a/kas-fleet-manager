@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	logging2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
 	"net"
@@ -22,8 +24,6 @@ import (
 	"github.com/gorilla/mux"
 
 	goerrors "errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -47,8 +47,8 @@ type apiServer struct {
 
 var _ Server = &apiServer{}
 
-func env() *environments.Env {
-	return environments.Environment()
+func env() *environments2.Env {
+	return environments2.Environment()
 }
 
 func NewAPIServer() Server {
@@ -77,7 +77,7 @@ func NewAPIServer() Server {
 	mainRouter.Use(logger.OperationIDMiddleware)
 
 	// Request logging middleware logs pertinent information about the request and response
-	mainRouter.Use(logging.RequestLoggingMiddleware)
+	mainRouter.Use(logging2.RequestLoggingMiddleware)
 
 	// build current base path /api/kafkas_mgmt
 	currentBasePath := fmt.Sprintf("%s/%s", apiEndpoint, kafkasFleetManagementApiPrefix)
