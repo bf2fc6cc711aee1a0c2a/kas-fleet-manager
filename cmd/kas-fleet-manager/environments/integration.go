@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 )
 
 type IntegrationEnvLoader struct{}
@@ -49,15 +48,10 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 // Mocks are loaded by default.
 // The environment is expected to be modified as needed
 func (b IntegrationEnvLoader) Load(env *Env) error {
-
-	env.DBFactory = db.NewConnectionFactory(env.Config.Database)
-
 	// Support a one-off env to allow enabling db debug in testing
 	if os.Getenv("DB_DEBUG") == "true" {
 		env.Config.Database.Debug = true
 	}
-
 	env.Config.ObservabilityConfiguration.EnableMock = true
-
 	return env.LoadServices()
 }
