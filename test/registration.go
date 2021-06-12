@@ -41,9 +41,6 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, startHo
 	// Reload the clients and services to ensure the following:
 	//   - Services should use the mocked observatorium client
 	//   - Apply any configuration changes that could change the way clients/services are loaded (i.e. cluster placement strategy service)
-	if err := helper.Env().LoadClients(); err != nil {
-		t.Fatal("failed to reload clients")
-	}
 	if err := helper.Env().LoadServices(); err != nil {
 		t.Fatal("failed to reload services")
 	}
