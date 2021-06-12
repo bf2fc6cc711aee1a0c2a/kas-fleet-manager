@@ -18,14 +18,5 @@ func (b SimpleEnvLoader) Defaults() map[string]string {
 func (b SimpleEnvLoader) Load(env *Env) error {
 	env.DBFactory = db.NewConnectionFactory(env.Config.Database)
 
-	err := env.LoadClients()
-	if err != nil {
-		return err
-	}
-	err = env.LoadServices()
-	if err != nil {
-		return err
-	}
-
-	return env.InitializeSentry()
+	return env.LoadServices()
 }

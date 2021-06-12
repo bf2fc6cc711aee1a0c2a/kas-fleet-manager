@@ -29,14 +29,5 @@ func (t TestingEnvLoader) Load(env *Env) error {
 		env.Config.Database.Debug = true
 	}
 
-	err := env.LoadClients()
-	if err != nil {
-		return err
-	}
-	err = env.LoadServices()
-	if err != nil {
-		return err
-	}
-
-	return env.InitializeSentry()
+	return env.LoadServices()
 }
