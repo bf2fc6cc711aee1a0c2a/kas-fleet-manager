@@ -32,17 +32,17 @@ type OCMConfig struct {
 
 func NewOCMConfig() *OCMConfig {
 	return &OCMConfig{
-		BaseURL:                       "https://api-integration.6943.hive-integration.openshiftapps.com",
-		TokenURL:                      "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		TokenIssuerURL:                "https://sso.redhat.com/auth/realms/redhat-external",
-		ClientIDFile:                  "secrets/ocm-service.clientId",
-		ClientSecretFile:              "secrets/ocm-service.clientSecret",
-		SelfTokenFile:                 "secrets/ocm-service.token",
-		Debug:                         false,
-		EnableMock:                    false,
-		MockMode:                      MockModeStubServer,
-		StrimziOperatorAddonID:        strimziOperatorAddonID,
-		KasFleetshardAddonID:          kasFleetshardAddonID,
+		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
+		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+		TokenIssuerURL:         "https://sso.redhat.com/auth/realms/redhat-external",
+		ClientIDFile:           "secrets/ocm-service.clientId",
+		ClientSecretFile:       "secrets/ocm-service.clientSecret",
+		SelfTokenFile:          "secrets/ocm-service.token",
+		Debug:                  false,
+		EnableMock:             false,
+		MockMode:               MockModeStubServer,
+		StrimziOperatorAddonID: strimziOperatorAddonID,
+		KasFleetshardAddonID:   kasFleetshardAddonID,
 	}
 }
 

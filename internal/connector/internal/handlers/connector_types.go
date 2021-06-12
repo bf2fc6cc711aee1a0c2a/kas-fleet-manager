@@ -1,25 +1,25 @@
 package handlers
 
 import (
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
 type ConnectorTypesHandler struct {
-	service services2.ConnectorTypesService
+	service services.ConnectorTypesService
 }
 
 var (
 	maxConnectorTypeIdLength = 50
 )
 
-func NewConnectorTypesHandler(service services2.ConnectorTypesService) *ConnectorTypesHandler {
+func NewConnectorTypesHandler(service services.ConnectorTypesService) *ConnectorTypesHandler {
 	return &ConnectorTypesHandler{
 		service: service,
 	}
@@ -35,7 +35,7 @@ func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentConnectorType(resource), nil
+			return presenters.PresentConnectorType(resource), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -46,13 +46,13 @@ func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 
-			listArgs := services.NewListArguments(r.URL.Query())
+			listArgs := coreServices.NewListArguments(r.URL.Query())
 			resources, paging, err := h.service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
 
-			resourceList := openapi.ConnectorTypeList{
+			resourceList := public.ConnectorTypeList{
 				Kind:  "ConnectorTypeList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
@@ -60,7 +60,7 @@ func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters2.PresentConnectorType(resource)
+				converted := presenters.PresentConnectorType(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 

@@ -2,7 +2,7 @@ run:
   skip-dirs:
     - pkg/api/openapi
     - pkg/api/private/openapi
-    - pkg/api/connector/openapi
-    - pkg/api/connector_catalog/openapi
+    - internal/connector/internal/api/public
+    - internal/connector/internal/api/private
   # timeout for analysis, e.g. 30s, 5m, default is 1m
   timeout: 10m

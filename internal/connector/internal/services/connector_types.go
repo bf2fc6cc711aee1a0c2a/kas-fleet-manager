@@ -8,11 +8,12 @@ package services
 
 import (
 	"context"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -23,14 +24,14 @@ type ConnectorCatalogKey struct {
 }
 
 type ConnectorTypesService interface {
-	Get(id string) (*api.ConnectorType, *errors.ServiceError)
+	Get(id string) (*dbapi.ConnectorType, *errors.ServiceError)
 	GetConnectorCatalogEntry(id string, channel string) (*config.ConnectorChannelConfig, *errors.ServiceError)
-	List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError)
 	ForEachConnectorCatalogEntry(f func(id string, channel string, ccc *config.ConnectorChannelConfig) *errors.ServiceError) *errors.ServiceError
 
-	PutConnectorShardMetadata(ctc *api.ConnectorShardMetadata) (int64, *errors.ServiceError)
+	PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError)
 	GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError)
-	GetConnectorShardMetadata(id int64) (*api.ConnectorShardMetadata, *errors.ServiceError)
+	GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError)
 }
 
 var _ ConnectorTypesService = &connectorTypesService{}
@@ -55,7 +56,7 @@ func NewConnectorTypesService(connectorsConfig *config.ConnectorsConfig, connect
 	}
 }
 
-func (k *connectorTypesService) Get(id string) (*api.ConnectorType, *errors.ServiceError) {
+func (k *connectorTypesService) Get(id string) (*dbapi.ConnectorType, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
@@ -65,7 +66,7 @@ func (k *connectorTypesService) Get(id string) (*api.ConnectorType, *errors.Serv
 		return nil, errors.NotFound("ConnectorType with id='%s' not found", id)
 	}
 
-	return presenters2.ConvertConnectorType(resource.ConnectorType), nil
+	return presenters.ConvertConnectorType(resource.ConnectorType), nil
 }
 
 func (k *connectorTypesService) GetConnectorCatalogEntry(id string, channel string) (*config.ConnectorChannelConfig, *errors.ServiceError) {
@@ -87,7 +88,7 @@ func (k *connectorTypesService) GetConnectorCatalogEntry(id string, channel stri
 }
 
 // List returns all connector types
-func (k *connectorTypesService) List(ctx context.Context, listArgs *services.ListArguments) (api.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorTypesService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.ConnectorTypeList, *api.PagingMeta, *errors.ServiceError) {
 	resourceList := k.getConnectorTypeList()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -105,10 +106,10 @@ func (k *connectorTypesService) List(ctx context.Context, listArgs *services.Lis
 	return resourceList, pagingMeta, nil
 }
 
-func (k *connectorTypesService) getConnectorTypeList() api.ConnectorTypeList {
-	r := make(api.ConnectorTypeList, len(k.connectorsConfig.CatalogEntries))
+func (k *connectorTypesService) getConnectorTypeList() dbapi.ConnectorTypeList {
+	r := make(dbapi.ConnectorTypeList, len(k.connectorsConfig.CatalogEntries))
 	for i, v := range k.connectorsConfig.CatalogEntries {
-		r[i] = presenters2.ConvertConnectorType(v.ConnectorType)
+		r[i] = presenters.ConvertConnectorType(v.ConnectorType)
 	}
 	return r
 }
@@ -125,9 +126,9 @@ func (k *connectorTypesService) ForEachConnectorCatalogEntry(f func(id string, c
 	return nil
 }
 
-func (k *connectorTypesService) PutConnectorShardMetadata(ctc *api.ConnectorShardMetadata) (int64, *errors.ServiceError) {
+func (k *connectorTypesService) PutConnectorShardMetadata(ctc *dbapi.ConnectorShardMetadata) (int64, *errors.ServiceError) {
 
-	var resource api.ConnectorShardMetadata
+	var resource dbapi.ConnectorShardMetadata
 
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Select("id")
@@ -176,7 +177,7 @@ func (k *connectorTypesService) PutConnectorShardMetadata(ctc *api.ConnectorShar
 }
 
 func (k *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel string) (int64, *errors.ServiceError) {
-	resource := &api.ConnectorShardMetadata{}
+	resource := &dbapi.ConnectorShardMetadata{}
 	dbConn := k.connectionFactory.New()
 
 	err := dbConn.
@@ -195,8 +196,8 @@ func (k *connectorTypesService) GetLatestConnectorShardMetadataID(tid, channel s
 	return resource.ID, nil
 }
 
-func (k *connectorTypesService) GetConnectorShardMetadata(id int64) (*api.ConnectorShardMetadata, *errors.ServiceError) {
-	resource := &api.ConnectorShardMetadata{}
+func (k *connectorTypesService) GetConnectorShardMetadata(id int64) (*dbapi.ConnectorShardMetadata, *errors.ServiceError) {
+	resource := &dbapi.ConnectorShardMetadata{}
 	dbConn := k.connectionFactory.New()
 
 	err := dbConn.

@@ -1,16 +1,16 @@
 package handlers
 
 import (
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/xeipuuv/gojsonschema"
 	"strings"
 )
 
-func validateConnectorSpec(connectorTypesService services2.ConnectorTypesService, resource *openapi.Connector, tid string) handlers.Validate {
+func validateConnectorSpec(connectorTypesService services.ConnectorTypesService, resource *public.Connector, tid string) handlers.Validate {
 	return func() *errors.ServiceError {
 
 		// If a a tid was defined on the URL verify that it matches the posted resource connector type
@@ -22,7 +22,7 @@ func validateConnectorSpec(connectorTypesService services2.ConnectorTypesService
 			return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
 		}
 
-		if !services.Contains(ct.Channels, resource.Channel) {
+		if !coreServices.Contains(ct.Channels, resource.Channel) {
 			return errors.BadRequest("channel is not valid. Must be one of: %s", strings.Join(ct.Channels, ", "))
 		}
 

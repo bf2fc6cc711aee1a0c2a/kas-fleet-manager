@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	goerrors "errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
@@ -18,13 +19,13 @@ import (
 )
 
 type ConnectorsService interface {
-	Create(ctx context.Context, resource *api.Connector) *errors.ServiceError
-	Get(ctx context.Context, id string, tid string) (*api.Connector, *errors.ServiceError)
-	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError)
-	Update(ctx context.Context, resource *api.Connector) *errors.ServiceError
-	SaveStatus(ctx context.Context, resource api.ConnectorStatus) *errors.ServiceError
+	Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
+	Get(ctx context.Context, id string, tid string) (*dbapi.Connector, *errors.ServiceError)
+	List(ctx context.Context, kid string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorList, *api.PagingMeta, *errors.ServiceError)
+	Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError
+	SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError
 	Delete(ctx context.Context, id string) *errors.ServiceError
-	ForEach(f func(*api.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError
+	ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError
 }
 
 var _ ConnectorsService = &connectorsService{}
@@ -46,7 +47,7 @@ func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus
 }
 
 // Create creates a connector in the database
-func (k *connectorsService) Create(ctx context.Context, resource *api.Connector) *errors.ServiceError {
+func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
 	kid := resource.KafkaID
 	if kid == "" {
 		return errors.Validation("kafka id is undefined")
@@ -63,7 +64,7 @@ func (k *connectorsService) Create(ctx context.Context, resource *api.Connector)
 	}
 
 	resource.Status.ID = resource.ID
-	resource.Status.Phase = api.ConnectorStatusPhaseAssigning
+	resource.Status.Phase = dbapi.ConnectorStatusPhaseAssigning
 	if err := dbConn.Save(&resource.Status).Error; err != nil {
 		return errors.GeneralError("failed to save status: %v", err)
 	}
@@ -79,13 +80,13 @@ func (k *connectorsService) Create(ctx context.Context, resource *api.Connector)
 }
 
 // Get gets a connector by id from the database
-func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*api.Connector, *errors.ServiceError) {
+func (k *connectorsService) Get(ctx context.Context, id string, tid string) (*dbapi.Connector, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("connector id is undefined")
 	}
 
 	dbConn := k.connectionFactory.New()
-	var resource api.Connector
+	var resource dbapi.Connector
 	dbConn = dbConn.Where("id = ?", id)
 	dbConn = dbConn.Preload("Status")
 
@@ -135,7 +136,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 
 	dbConn := k.connectionFactory.New()
 
-	var resource api.Connector
+	var resource dbapi.Connector
 	if err := dbConn.Where("id = ?", id).First(&resource).Error; err != nil {
 		return services.HandleGetError("Connector", "id", id, err)
 	}
@@ -144,22 +145,22 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	}
 
 	// delete the associated relations
-	if err := dbConn.Where("id = ?", id).Delete(&api.ConnectorStatus{}).Error; err != nil {
+	if err := dbConn.Where("id = ?", id).Delete(&dbapi.ConnectorStatus{}).Error; err != nil {
 		return services.HandleGetError("ConnectorStatus", "id", id, err)
 	}
 
-	var deployment api.ConnectorDeployment
+	var deployment dbapi.ConnectorDeployment
 	err := dbConn.Select("id").Where("connector_id = ?", id).First(&deployment).Error
 	switch err {
 	case nil:
 		// no err, deployment existed..
-		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeployment{}).Error; err != nil {
+		if err := dbConn.Where("id = ?", deployment.ID).Delete(&dbapi.ConnectorDeployment{}).Error; err != nil {
 			err := services.HandleGetError("ConnectorDeployment", "id", deployment.ID, err)
 			if err != nil {
 				return err
 			}
 		}
-		if err := dbConn.Where("id = ?", deployment.ID).Delete(&api.ConnectorDeploymentStatus{}).Error; err != nil {
+		if err := dbConn.Where("id = ?", deployment.ID).Delete(&dbapi.ConnectorDeploymentStatus{}).Error; err != nil {
 			err := services.HandleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
 			if err != nil {
 				return err
@@ -209,8 +210,8 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 }
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (api.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
-	var resourceList api.ConnectorList
+func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
+	var resourceList dbapi.ConnectorList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Preload("Status")
 	pagingMeta := &api.PagingMeta{
@@ -252,13 +253,13 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 	return resourceList, pagingMeta, nil
 }
 
-func (k connectorsService) Update(ctx context.Context, resource *api.Connector) *errors.ServiceError {
+func (k connectorsService) Update(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
 
 	// If the version is set, then lets verify that the version has not changed...
 	if resource.Version != 0 {
 		dbConn := k.connectionFactory.New()
 		dbConn = dbConn.Where("id = ? AND version = ?", resource.ID, resource.Version)
-		t := api.Connector{}
+		t := dbapi.Connector{}
 		if err := dbConn.First(&t).Error; err != nil {
 			return errors.BadRequest("resource version changed")
 		}
@@ -283,7 +284,7 @@ func (k connectorsService) Update(ctx context.Context, resource *api.Connector) 
 	return nil
 }
 
-func (k connectorsService) SaveStatus(ctx context.Context, resource api.ConnectorStatus) *errors.ServiceError {
+func (k connectorsService) SaveStatus(ctx context.Context, resource dbapi.ConnectorStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Model(resource).Save(resource).Error; err != nil {
 		return errors.GeneralError("failed to update: %s", err.Error())
@@ -291,10 +292,10 @@ func (k connectorsService) SaveStatus(ctx context.Context, resource api.Connecto
 	return nil
 }
 
-func (k connectorsService) ForEach(f func(*api.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
+func (k connectorsService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 	rows, err := dbConn.
-		Model(&api.Connector{}).
+		Model(&dbapi.Connector{}).
 		Where(query, args...).
 		Joins("left join connector_statuses on connector_statuses.id = connectors.id").
 		Order("version").Rows()
@@ -308,7 +309,7 @@ func (k connectorsService) ForEach(f func(*api.Connector) *errors.ServiceError, 
 	defer rows.Close()
 
 	for rows.Next() {
-		resource := api.Connector{}
+		resource := dbapi.Connector{}
 
 		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
 		err := dbConn.ScanRows(rows, &resource)
@@ -317,7 +318,7 @@ func (k connectorsService) ForEach(f func(*api.Connector) *errors.ServiceError, 
 		}
 
 		resource.Status.ID = resource.ID
-		err = dbConn.Model(&api.ConnectorStatus{}).First(&resource.Status).Error
+		err = dbConn.Model(&dbapi.ConnectorStatus{}).First(&resource.Status).Error
 		if err != nil {
 			return errors.GeneralError("Unable to load connector status: %s", err)
 		}
