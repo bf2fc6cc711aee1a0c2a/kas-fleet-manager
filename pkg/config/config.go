@@ -3,17 +3,8 @@ package config
 import (
 	"flag"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
-	"io/ioutil"
-	"path/filepath"
-	"strconv"
-	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-
 	"github.com/spf13/pflag"
 )
-
-var projectRootDirectory = shared.GetProjectRootDir()
 
 type ConfigModule interface {
 	AddFlags(fs *pflag.FlagSet)
@@ -39,7 +30,6 @@ type ApplicationConfig struct {
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
 	OSDClusterConfig           *OSDClusterConfig           `json:"osd_cluster"`
 	KasFleetShardConfig        *KasFleetshardConfig        `json:"kas-fleetshard"`
-	Vault                      *VaultConfig                `json:"vault"`
 }
 
 var _ ConfigModule = &ApplicationConfig{}
@@ -60,7 +50,6 @@ func NewApplicationConfig() *ApplicationConfig {
 		Kafka:                      NewKafkaConfig(),
 		OSDClusterConfig:           NewOSDClusterConfig(),
 		KasFleetShardConfig:        NewKasFleetshardConfig(),
-		Vault:                      NewVaultConfig(),
 	}
 }
 
@@ -80,7 +69,6 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Kafka.AddFlags(flagset)
 	c.OSDClusterConfig.AddFlags(flagset)
 	c.KasFleetShardConfig.AddFlags(flagset)
-	c.Vault.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() error {
@@ -136,83 +124,9 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	err = c.Vault.ReadFiles()
-	if err != nil {
-		return err
-	}
 	err = c.KasFleetShardConfig.ReadFiles()
 	if err != nil {
 		return err
 	}
 	return nil
-}
-
-// Read the contents of file into integer value
-func readFileValueInt(file string, val *int) error {
-	fileContents, err := readFile(file)
-	if err != nil {
-		return err
-	}
-
-	*val, err = strconv.Atoi(fileContents)
-	return err
-}
-
-// Read the contents of file into string value
-func readFileValueString(file string, val *string) error {
-	fileContents, err := readFile(file)
-	if err != nil {
-		return err
-	}
-
-	*val = strings.TrimSuffix(fileContents, "\n")
-	return err
-}
-
-// Read the contents of file into boolean value
-func readFileValueBool(file string, val *bool) error {
-	fileContents, err := readFile(file)
-	if err != nil {
-		return err
-	}
-
-	*val, err = strconv.ParseBool(fileContents)
-	return err
-}
-
-func readFile(file string) (string, error) {
-	absFilePath := BuildFullFilePath(file)
-
-	// If no file is provided then we don't try to read it
-	if absFilePath == "" {
-		return "", nil
-	}
-
-	// Read the file
-	buf, err := ioutil.ReadFile(absFilePath)
-	if err != nil {
-		return "", err
-	}
-	return string(buf), nil
-}
-
-func BuildFullFilePath(filename string) string {
-	// If the value is in quotes, unquote it
-	unquotedFile, err := strconv.Unquote(filename)
-	if err != nil {
-		// values without quotes will raise an error, ignore it.
-		unquotedFile = filename
-	}
-
-	// If no file is provided, leave val unchanged.
-	if unquotedFile == "" {
-		return ""
-	}
-
-	// Ensure the absolute file path is used
-	absFilePath := unquotedFile
-	if !filepath.IsAbs(unquotedFile) {
-		absFilePath = filepath.Join(projectRootDirectory, unquotedFile)
-	}
-	return absFilePath
 }

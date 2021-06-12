@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -38,5 +39,5 @@ func (c *SentryConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *SentryConfig) ReadFiles() error {
-	return readFileValueString(c.KeyFile, &c.Key)
+	return shared.ReadFileValueString(c.KeyFile, &c.Key)
 }

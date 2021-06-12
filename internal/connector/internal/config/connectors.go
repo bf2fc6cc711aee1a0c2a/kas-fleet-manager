@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 	"io/ioutil"
@@ -50,7 +51,7 @@ func (c *ConnectorsConfig) ReadFiles() error {
 	typesLoaded := map[string]string{}
 	var values []ConnectorCatalogEntry
 	for _, dir := range c.ConnectorCatalogDirs {
-		dir = config.BuildFullFilePath(dir)
+		dir = shared.BuildFullFilePath(dir)
 		files, err := ioutil.ReadDir(dir)
 		if err != nil {
 			return err

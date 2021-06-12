@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"reflect"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -47,10 +48,10 @@ type connectorClusterService struct {
 	connectionFactory     *db.ConnectionFactory
 	bus                   signalbus.SignalBus
 	connectorTypesService ConnectorTypesService
-	vaultService          services.VaultService
+	vaultService          vault.VaultService
 }
 
-func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService services.VaultService, connectorTypesService ConnectorTypesService) *connectorClusterService {
+func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService, connectorTypesService ConnectorTypesService) *connectorClusterService {
 	return &connectorClusterService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,
@@ -335,7 +336,7 @@ func (k *connectorClusterService) GetConnectorWithBase64Secrets(ctx context.Cont
 	return connector, nil
 }
 
-func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesService, vault services.VaultService) *errors.ServiceError {
+func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesService, vault vault.VaultService) *errors.ServiceError {
 	ct, err := cts.Get(resource.ConnectorTypeId)
 	if err != nil {
 		return errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)

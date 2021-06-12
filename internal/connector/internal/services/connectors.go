@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 
@@ -33,11 +34,11 @@ var _ ConnectorsService = &connectorsService{}
 type connectorsService struct {
 	connectionFactory     *db.ConnectionFactory
 	bus                   signalbus.SignalBus
-	vaultService          services.VaultService
+	vaultService          vault.VaultService
 	connectorTypesService ConnectorTypesService
 }
 
-func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService services.VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
+func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService, connectorTypesService ConnectorTypesService) *connectorsService {
 	return &connectorsService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,

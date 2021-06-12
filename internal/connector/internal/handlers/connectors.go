@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 	"io/ioutil"
@@ -34,10 +35,10 @@ type ConnectorsHandler struct {
 	connectorsService     services.ConnectorsService
 	connectorTypesService services.ConnectorTypesService
 	kafkaService          coreServices.KafkaService
-	vaultService          coreServices.VaultService
+	vaultService          vault.VaultService
 }
 
-func NewConnectorsHandler(kafkaService coreServices.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService coreServices.VaultService) *ConnectorsHandler {
+func NewConnectorsHandler(kafkaService coreServices.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService vault.VaultService) *ConnectorsHandler {
 	return &ConnectorsHandler{
 		kafkaService:          kafkaService,
 		connectorsService:     connectorsService,

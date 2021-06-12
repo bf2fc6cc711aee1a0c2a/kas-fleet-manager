@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"time"
 )
@@ -78,11 +79,11 @@ func (c *ObservabilityConfiguration) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *ObservabilityConfiguration) ReadFiles() error {
-	dexPassword, err := readFile(c.DexPasswordFile)
+	dexPassword, err := shared.ReadFile(c.DexPasswordFile)
 	if err != nil {
 		return err
 	}
-	dexSecret, err := readFile(c.DexSecretFile)
+	dexSecret, err := shared.ReadFile(c.DexSecretFile)
 	if err != nil {
 		return err
 	}
@@ -90,14 +91,14 @@ func (c *ObservabilityConfiguration) ReadFiles() error {
 	c.DexSecret = dexSecret
 
 	if c.AuthToken == "" && c.AuthTokenFile != "" {
-		err := readFileValueString(c.AuthTokenFile, &c.AuthToken)
+		err := shared.ReadFileValueString(c.AuthTokenFile, &c.AuthToken)
 		if err != nil {
 			return err
 		}
 	}
 
 	if c.ObservabilityConfigAccessToken == "" && c.ObservabilityConfigAccessTokenFile != "" {
-		return readFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
+		return shared.ReadFileValueString(c.ObservabilityConfigAccessTokenFile, &c.ObservabilityConfigAccessToken)
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"io/ioutil"
 	"log"
 	"os"
@@ -19,14 +20,14 @@ func TestConfigReadStringFile(t *testing.T) {
 	}
 
 	var stringConfig string
-	err = readFileValueString(stringFile.Name(), &stringConfig)
+	err = shared.ReadFileValueString(stringFile.Name(), &stringConfig)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(stringConfig).To(Equal("example"))
 }
 
 func TestConfigReadEmptyFile(t *testing.T) {
 	RegisterTestingT(t)
-	res, err := readFile("")
+	res, err := shared.ReadFile("")
 	Expect(err).NotTo(HaveOccurred())
 	Expect(res).To(Equal(""))
 }
@@ -41,7 +42,7 @@ func TestConfigReadIntFile(t *testing.T) {
 	}
 
 	var intConfig int
-	err = readFileValueInt(intFile.Name(), &intConfig)
+	err = shared.ReadFileValueInt(intFile.Name(), &intConfig)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(intConfig).To(Equal(123))
 }
@@ -56,7 +57,7 @@ func TestConfigReadBoolFile(t *testing.T) {
 	}
 
 	var boolConfig bool = false
-	err = readFileValueBool(boolFile.Name(), &boolConfig)
+	err = shared.ReadFileValueBool(boolFile.Name(), &boolConfig)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(boolConfig).To(Equal(true))
 }
@@ -71,7 +72,7 @@ func TestConfigReadQuotedFile(t *testing.T) {
 	}
 
 	quotedFileName := "\"" + stringFile.Name() + "\""
-	val, err := readFile(quotedFileName)
+	val, err := shared.ReadFile(quotedFileName)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(val).To(Equal("example"))
 }

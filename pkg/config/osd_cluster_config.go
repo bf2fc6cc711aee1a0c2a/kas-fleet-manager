@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
@@ -169,7 +170,7 @@ func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *OSDClusterConfig) ReadFiles() error {
 	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
-		err := readFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
+		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
 		if err != nil {
 			return err
 		}
@@ -197,7 +198,7 @@ func (c *OSDClusterConfig) ReadFiles() error {
 }
 
 func readDataPlaneClusterConfig(file string) (ClusterList, error) {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +216,7 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 
 // Read the read-only users in the file into the read-only user list config
 func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -225,7 +226,7 @@ func readOnlyUserListFile(file string, val *userv1.OptionalNames) error {
 
 // Read the kafka-sre users from the file into the kafka-sre user list config
 func readKafkaSREUserFile(file string, val *userv1.OptionalNames) error {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}
