@@ -4,7 +4,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 )
@@ -38,7 +38,7 @@ func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *
 	return nil
 }
 
-func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vault services.VaultService, errorOnObject bool) *errors.ServiceError {
+func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vault vault.VaultService, errorOnObject bool) *errors.ServiceError {
 
 	// move secrets to a vault.
 	if resource.Kafka.ClientSecret != "" {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"gopkg.in/yaml.v2"
 )
 
@@ -29,7 +30,7 @@ func (c *KafkaLifespanConfig) ReadFiles() error {
 }
 
 func readLongLivedKafkasFile(file string, longLivedKafkas *LongLivedKafas) error {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}

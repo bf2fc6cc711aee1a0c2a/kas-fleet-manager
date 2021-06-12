@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"os"
 	"sync"
 
@@ -67,7 +68,6 @@ type Services struct {
 	DataPlaneKafkaService     services.DataPlaneKafkaService
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
 	SignalBus                 signalbus.SignalBus
-	Vault                     services.VaultService
 	ClusterPlmtStrategy       services.ClusterPlacementStrategy
 }
 
@@ -113,6 +113,7 @@ func NewEnv(name string, options ...di.Option) (*Env, error) {
 
 		// Add the connector injections.
 		connector.EnvInjections().AsOption(),
+		vault.EnvInjections().AsOption(),
 	)...)
 	if err != nil {
 		return nil, err
@@ -251,9 +252,6 @@ func (env *Env) LoadServices() error {
 		di.Provide(services.NewKasFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),
 
-		di.ProvideValue(env.Config.Vault),
-		di.Provide(services.NewVaultService),
-
 		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
 		di.Provide(services.NewDataPlaneKafkaService, di.As(new(services.DataPlaneKafkaService))),
 
@@ -297,9 +295,6 @@ func (env *Env) LoadServices() error {
 		return err
 	}
 	if err := container.Resolve(&env.Services.ClusterPlmtStrategy); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.Vault); err != nil {
 		return err
 	}
 	if err := container.Resolve(&env.Services.DataPlaneCluster); err != nil {

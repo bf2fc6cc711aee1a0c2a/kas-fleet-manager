@@ -1,50 +1,50 @@
-package services_test
+package vault_test
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"testing"
 )
 
 func TestNewVaultService(t *testing.T) {
-	env := environments.Environment()
+	RegisterTestingT(t)
+	vc := vault.NewConfig()
 
 	// Enable testing against aws if the access keys are configured..
-	if content, err := ioutil.ReadFile(config.BuildFullFilePath(env.Config.Vault.AccessKeyFile)); err == nil && len(content) > 0 {
-		env.Config.Vault.Kind = "aws"
+	if content, err := ioutil.ReadFile(shared.BuildFullFilePath(vc.AccessKeyFile)); err == nil && len(content) > 0 {
+		vc.Kind = "aws"
 	}
-	_ = env.Initialize()
+	Expect(vc.ReadFiles()).To(BeNil())
 
 	tests := []struct {
-		config       *config.VaultConfig
+		config       *vault.Config
 		wantErrOnNew bool
 		skip         bool
 	}{
 		{
-			config: &config.VaultConfig{Kind: "tmp"},
+			config: &vault.Config{Kind: "tmp"},
 		},
 		{
-			config: &config.VaultConfig{
+			config: &vault.Config{
 				Kind:            "aws",
-				AccessKey:       env.Config.Vault.AccessKey,
-				SecretAccessKey: env.Config.Vault.SecretAccessKey,
-				Region:          env.Config.Vault.Region,
+				AccessKey:       vc.AccessKey,
+				SecretAccessKey: vc.SecretAccessKey,
+				Region:          vc.Region,
 			},
-			skip: env.Config.Vault.Kind != "aws",
+			skip: vc.Kind != "aws",
 		},
 		{
-			config:       &config.VaultConfig{Kind: "wrong"},
+			config:       &vault.Config{Kind: "wrong"},
 			wantErrOnNew: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.config.Kind, func(t *testing.T) {
 			RegisterTestingT(t)
-			svc, err := services.NewVaultService(tt.config)
+			svc, err := vault.NewVaultService(tt.config)
 			Expect(err != nil).Should(Equal(tt.wantErrOnNew), "NewVaultService() error = %v, wantErr %v", err, tt.wantErrOnNew)
 			if err == nil {
 				if tt.skip {
@@ -56,7 +56,7 @@ func TestNewVaultService(t *testing.T) {
 	}
 }
 
-func happyPath(vault services.VaultService) {
+func happyPath(vault vault.VaultService) {
 
 	counter := 0
 	err := vault.ForEachSecret(func(name string, owningResource string) bool {

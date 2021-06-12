@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
 
@@ -39,22 +40,22 @@ func (c *AWSConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *AWSConfig) ReadFiles() error {
-	err := readFileValueString(c.AccountIDFile, &c.AccountID)
+	err := shared.ReadFileValueString(c.AccountIDFile, &c.AccountID)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.AccessKeyFile, &c.AccessKey)
+	err = shared.ReadFileValueString(c.AccessKeyFile, &c.AccessKey)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.SecretAccessKeyFile, &c.SecretAccessKey)
+	err = shared.ReadFileValueString(c.SecretAccessKeyFile, &c.SecretAccessKey)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.Route53AccessKeyFile, &c.Route53AccessKey)
+	err = shared.ReadFileValueString(c.Route53AccessKeyFile, &c.Route53AccessKey)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.Route53SecretAccessKeyFile, &c.Route53SecretAccessKey)
+	err = shared.ReadFileValueString(c.Route53SecretAccessKeyFile, &c.Route53SecretAccessKey)
 	return err
 }

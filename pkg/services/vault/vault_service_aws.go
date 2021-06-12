@@ -1,4 +1,4 @@
-package services
+package vault
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	"github.com/aws/aws-secretsmanager-caching-go/secretcache"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 )
 
 var OwnerResourceTagKey = "owner-resource"
@@ -19,7 +18,7 @@ type awsVaultService struct {
 	secretClient *secretsmanager.SecretsManager
 }
 
-func NewAwsVaultService(vaultConfig *config.VaultConfig) (*awsVaultService, error) {
+func NewAwsVaultService(vaultConfig *Config) (*awsVaultService, error) {
 	awsConfig := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(
 			vaultConfig.AccessKey,

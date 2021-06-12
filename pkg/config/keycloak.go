@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"os"
 
 	"github.com/golang/glog"
@@ -80,26 +81,26 @@ func (kc *KeycloakConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (kc *KeycloakConfig) ReadFiles() error {
-	err := readFileValueString(kc.KafkaRealm.ClientIDFile, &kc.KafkaRealm.ClientID)
+	err := shared.ReadFileValueString(kc.KafkaRealm.ClientIDFile, &kc.KafkaRealm.ClientID)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(kc.KafkaRealm.ClientSecretFile, &kc.KafkaRealm.ClientSecret)
+	err = shared.ReadFileValueString(kc.KafkaRealm.ClientSecretFile, &kc.KafkaRealm.ClientSecret)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(kc.OSDClusterIDPRealm.ClientIDFile, &kc.OSDClusterIDPRealm.ClientID)
+	err = shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientIDFile, &kc.OSDClusterIDPRealm.ClientID)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(kc.OSDClusterIDPRealm.ClientSecretFile, &kc.OSDClusterIDPRealm.ClientSecret)
+	err = shared.ReadFileValueString(kc.OSDClusterIDPRealm.ClientSecretFile, &kc.OSDClusterIDPRealm.ClientSecret)
 	if err != nil {
 		return err
 	}
 
 	// We read the MAS SSO TLS certificate file. If it does not exist we
 	// intentionally continue as if it was not provided
-	err = readFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
+	err = shared.ReadFileValueString(kc.TLSTrustedCertificatesFile, &kc.TLSTrustedCertificatesValue)
 	if err != nil {
 		if os.IsNotExist(err) {
 			glog.V(10).Infof("Specified MAS SSO TLS certificate file '%s' does not exist. Proceeding as if MAS SSO TLS certificate was not provided", kc.TLSTrustedCertificatesFile)
