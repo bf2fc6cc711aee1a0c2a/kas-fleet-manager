@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
@@ -120,9 +121,9 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 		di.Provide(config.NewApplicationConfig, di.As(new(config.ConfigModule))),
 
 		// Add the connector injections.
-		connector.EnvInjections().AsOption(),
-		kafka.EnvInjections().AsOption(),
-		vault.EnvInjections().AsOption(),
+		connector.ConfigProviders().AsOption(),
+		kafka.ConfigProviders().AsOption(),
+		vault.ConfigProviders().AsOption(),
 	)...)
 	if err != nil {
 		return nil, err
@@ -204,14 +205,14 @@ func (e *Env) Initialize() error {
 
 func (env *Env) LoadServices() error {
 
-	var serviceInjections []config.ServiceInjector
+	var serviceInjections []provider.Provider
 	if err := env.ConfigContainer.Resolve(&serviceInjections); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
 
 	var opts []di.Option
 	for i := range serviceInjections {
-		opt, err := serviceInjections[i].Injections()
+		opt, err := serviceInjections[i].Providers()
 		if err != nil {
 			return err
 		}
