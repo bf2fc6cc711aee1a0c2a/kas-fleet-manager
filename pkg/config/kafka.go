@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/ghodss/yaml"
 	"github.com/spf13/pflag"
 )
@@ -59,15 +60,15 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *KafkaConfig) ReadFiles() error {
-	err := readFileValueString(c.KafkaTLSCertFile, &c.KafkaTLSCert)
+	err := shared.ReadFileValueString(c.KafkaTLSCertFile, &c.KafkaTLSCert)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
+	err = shared.ReadFileValueString(c.KafkaTLSKeyFile, &c.KafkaTLSKey)
 	if err != nil {
 		return err
 	}
-	content, err := readFile(c.KafkaCapacityConfigFile)
+	content, err := shared.ReadFile(c.KafkaCapacityConfigFile)
 	if err != nil {
 		return err
 	}

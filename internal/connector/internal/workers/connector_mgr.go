@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
@@ -34,13 +35,13 @@ type ConnectorManager struct {
 	connectorClusterService services.ConnectorClusterService
 	observatoriumService    coreServices.ObservatoriumService
 	connectorTypesService   services.ConnectorTypesService
-	vaultService            coreServices.VaultService
+	vaultService            vault.VaultService
 	lastVersion             int64
 	reconcileChannels       bool
 }
 
 // NewConnectorManager creates a new connector manager
-func NewConnectorManager(connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService coreServices.ObservatoriumService, vaultService coreServices.VaultService, bus signalbus.SignalBus) *ConnectorManager {
+func NewConnectorManager(connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService coreServices.ObservatoriumService, vaultService vault.VaultService, bus signalbus.SignalBus) *ConnectorManager {
 	return &ConnectorManager{
 		id:                      uuid.New().String(),
 		workerType:              "connector",

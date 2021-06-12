@@ -7,13 +7,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
+	vault2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -26,7 +26,12 @@ type extender struct {
 
 func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 	// we can only check the delete count on the TmpVault service impl...
-	if vault, ok := environments.Environment().Services.Vault.(*coreServices.TmpVaultService); ok {
+	var service vault2.VaultService
+	if err := environments.Environment().ServiceContainer.Resolve(&service); err != nil {
+		return err
+	}
+
+	if vault, ok := service.(*vault2.TmpVaultService); ok {
 		actual := vault.Counters().Deletes
 		if actual != expected {
 			return fmt.Errorf("vault delete counter does not match expected: %v, actual: %v", expected, actual)

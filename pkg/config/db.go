@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/spf13/pflag"
 )
@@ -52,27 +53,27 @@ func (c *DatabaseConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *DatabaseConfig) ReadFiles() error {
-	err := readFileValueString(c.HostFile, &c.Host)
+	err := shared.ReadFileValueString(c.HostFile, &c.Host)
 	if err != nil {
 		return err
 	}
 
-	err = readFileValueInt(c.PortFile, &c.Port)
+	err = shared.ReadFileValueInt(c.PortFile, &c.Port)
 	if err != nil {
 		return err
 	}
 
-	err = readFileValueString(c.UsernameFile, &c.Username)
+	err = shared.ReadFileValueString(c.UsernameFile, &c.Username)
 	if err != nil {
 		return err
 	}
 
-	err = readFileValueString(c.PasswordFile, &c.Password)
+	err = shared.ReadFileValueString(c.PasswordFile, &c.Password)
 	if err != nil {
 		return err
 	}
 
-	err = readFileValueString(c.NameFile, &c.Name)
+	err = shared.ReadFileValueString(c.NameFile, &c.Name)
 	return err
 }
 

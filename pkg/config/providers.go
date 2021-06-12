@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
@@ -80,7 +81,7 @@ func (c *ProviderConfig) ReadFiles() error {
 
 // Read the contents of file into the providers config
 func readFileProvidersConfig(file string, val *ProviderConfiguration) error {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}

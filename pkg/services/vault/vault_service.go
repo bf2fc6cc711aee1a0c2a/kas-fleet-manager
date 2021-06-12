@@ -1,8 +1,7 @@
-package services
+package vault
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 )
 
 type VaultService interface {
@@ -13,7 +12,7 @@ type VaultService interface {
 	Kind() string
 }
 
-func NewVaultService(vaultConfig *config.VaultConfig) (VaultService, error) {
+func NewVaultService(vaultConfig *Config) (VaultService, error) {
 	switch vaultConfig.Kind {
 	case "aws":
 		return NewAwsVaultService(vaultConfig)

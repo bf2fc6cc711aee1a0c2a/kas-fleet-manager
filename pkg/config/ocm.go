@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
 
@@ -62,15 +63,15 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 }
 
 func (c *OCMConfig) ReadFiles() error {
-	err := readFileValueString(c.ClientIDFile, &c.ClientID)
+	err := shared.ReadFileValueString(c.ClientIDFile, &c.ClientID)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.ClientSecretFile, &c.ClientSecret)
+	err = shared.ReadFileValueString(c.ClientSecretFile, &c.ClientSecret)
 	if err != nil {
 		return err
 	}
-	err = readFileValueString(c.SelfTokenFile, &c.SelfToken)
+	err = shared.ReadFileValueString(c.SelfTokenFile, &c.SelfToken)
 	if err != nil && (c.ClientSecret == "" || c.ClientID == "") {
 		return err
 	}

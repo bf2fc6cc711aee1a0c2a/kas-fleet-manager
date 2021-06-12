@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
 )
@@ -147,7 +148,7 @@ func (c *AccessControlListConfig) ReadFiles() error {
 
 // Read the contents of file into the allow list config
 func readAllowListConfigFile(file string, val *AllowListConfiguration) error {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}
@@ -157,7 +158,7 @@ func readAllowListConfigFile(file string, val *AllowListConfiguration) error {
 
 // Read the contents of file into the deny list config
 func readDenyListConfigFile(file string, val *DeniedUsers) error {
-	fileContents, err := readFile(file)
+	fileContents, err := shared.ReadFile(file)
 	if err != nil {
 		return err
 	}
