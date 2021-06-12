@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
@@ -10,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
@@ -31,7 +31,7 @@ type options struct {
 	ConnectorClusterHandler *handlers.ConnectorClusterHandler
 }
 
-func NewRouteLoader(s options) common.RouteLoader {
+func NewRouteLoader(s options) provider.RouteLoader {
 	return &s
 }
 

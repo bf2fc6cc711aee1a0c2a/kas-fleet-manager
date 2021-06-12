@@ -3,10 +3,10 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	logging2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/goava/di"
@@ -47,7 +47,7 @@ type ServerOptions struct {
 	SentryConfig   *config.SentryConfig
 	DBFactory      *db.ConnectionFactory
 	CloudProviders services.CloudProvidersService
-	RouteLoaders   []common.RouteLoader
+	RouteLoaders   []provider.RouteLoader
 }
 
 func NewAPIServer(options ServerOptions) *ApiServer {

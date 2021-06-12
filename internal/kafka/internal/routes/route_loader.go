@@ -3,7 +3,6 @@ package routes
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -13,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
@@ -37,7 +37,7 @@ type options struct {
 	DataPlaneKafkaService services.DataPlaneKafkaService
 }
 
-func NewRouteLoader(s options) common.RouteLoader {
+func NewRouteLoader(s options) provider.RouteLoader {
 	return &s
 }
 
