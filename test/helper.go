@@ -145,11 +145,7 @@ func NewHelper(t *testing.T, server *httptest.Server) *Helper {
 
 func (helper *Helper) SetServer(server *httptest.Server) {
 	helper.Env().Config.OCM.BaseURL = server.URL
-	err := helper.Env().LoadClients()
-	if err != nil {
-		glog.Fatalf("Unable to load clients: %s", err.Error())
-	}
-	err = helper.Env().LoadServices()
+	err := helper.Env().LoadServices()
 	if err != nil {
 		glog.Fatalf("Unable to load services: %s", err.Error())
 	}

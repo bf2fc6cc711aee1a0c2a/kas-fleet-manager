@@ -7,6 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	"os"
 	"sync"
 
@@ -97,10 +98,15 @@ func init() {
 	})
 }
 
-func NewEnv(name string, options ...di.Option) (*Env, error) {
+func NewEnv(name string, options ...di.Option) (env *Env, err error) {
+	env = &Env{
+		Name: name,
+	}
 
 	//di.SetTracer(di.StdTracer{})
-	container, err := di.New(append(options,
+	env.ConfigContainer, err = di.New(append(options,
+		di.ProvideValue(env),
+
 		// Add the env types
 		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
 		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
@@ -119,16 +125,11 @@ func NewEnv(name string, options ...di.Option) (*Env, error) {
 		return nil, err
 	}
 
-	env := &Env{
-		Name:            name,
-		ConfigContainer: container,
-	}
-	err = container.Resolve(&env.Config)
+	err = env.ConfigContainer.Resolve(&env.Config)
 	if err != nil {
 		return nil, err
 	}
 	return env, nil
-
 }
 
 func GetEnvironmentStrFromEnv() string {
@@ -217,15 +218,27 @@ func (env *Env) LoadServices() error {
 	// We need to build a new container here because LoadServices() can be called after a config
 	// change, and we need to re-create all the services.
 	container, err := di.New(append(opts,
-		di.ProvideValue(env.Config),
+		di.ProvideValue(env),
 		di.ProvideValue(env.DBFactory),
+		di.ProvideValue(env.Config),
+		di.ProvideValue(*env.Config),
+		di.ProvideValue(env.Config.Sentry),
+		di.ProvideValue(env.Config.Kafka),
+		di.ProvideValue(env.Config.AWS),
+		di.ProvideValue(env.Config.OCM),
+		di.ProvideValue(env.Config.ObservabilityConfiguration),
 
 		di.Provide(func() signalbus.SignalBus {
 			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
 		}),
-		di.Provide(func() customOcm.Client {
-			return customOcm.NewClient(env.Clients.OCM.Connection)
+
+		di.Provide(NewObservatoriumClient),
+		di.Provide(NewOCMClient),
+		di.Provide(func(client *ocm.Client) (ocmClient *sdkClient.Connection) {
+			return client.Connection
 		}),
+		di.Provide(customOcm.NewClient),
+
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(services.NewClusterService),
 
@@ -237,17 +250,12 @@ func (env *Env) LoadServices() error {
 			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
 		}, di.Tags{"realm": "osd"}, di.As(new(services.OsdKeycloakService))),
 
-		di.ProvideValue(*env.Config),
 		di.Provide(services.NewConfigService),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
-
-		di.ProvideValue(env.Config.Kafka),
-		di.ProvideValue(env.Config.AWS),
 
 		di.Provide(services.NewKafkaService, di.As(new(services.KafkaService))),
 
 		di.Provide(services.NewCloudProvidersService),
-		di.ProvideValue(env.Clients.Observatorium),
 		di.Provide(services.NewObservatoriumService),
 		di.Provide(services.NewKasFleetshardOperatorAddon),
 		di.Provide(services.NewClusterPlacementStrategy),
@@ -267,9 +275,16 @@ func (env *Env) LoadServices() error {
 	}
 	env.ServiceContainer = container
 
+	if err := container.Resolve(&env.Clients.OCM); err != nil {
+		return err
+	}
+	if err := container.Resolve(&env.Clients.Observatorium); err != nil {
+		return err
+	}
 	if err := container.Resolve(&env.QuotaServiceFactory); err != nil {
 		return err
 	}
+
 	if err := container.Resolve(&env.Services.Kafka); err != nil {
 		return err
 	}
@@ -303,16 +318,6 @@ func (env *Env) LoadServices() error {
 	if err := container.Resolve(&env.Services.DataPlaneKafkaService); err != nil {
 		return err
 	}
-
-	//if err := container.Resolve(&env.Services.Connectors); err != nil {
-	//	return err
-	//}
-	//if err := container.Resolve(&env.Services.ConnectorTypes); err != nil {
-	//	return err
-	//}
-	//if err := container.Resolve(&env.Services.ConnectorCluster); err != nil {
-	//	return err
-	//}
 	if err := container.Resolve(&env.Services.Config); err != nil {
 		return err
 	}
@@ -320,67 +325,66 @@ func (env *Env) LoadServices() error {
 	if err := env.Services.Config.Validate(); err != nil {
 		return err
 	}
-	return nil
+
+	return env.ServiceContainer.Invoke(InitializeSentry)
 }
 
-func (env *Env) LoadClients() error {
-	var err error
-
+func NewOCMClient(OCM *config.OCMConfig) (client *ocm.Client, err error) {
 	ocmConfig := ocm.Config{
-		BaseURL:      env.Config.OCM.BaseURL,
-		ClientID:     env.Config.OCM.ClientID,
-		ClientSecret: env.Config.OCM.ClientSecret,
-		SelfToken:    env.Config.OCM.SelfToken,
-		TokenURL:     env.Config.OCM.TokenURL,
-		Debug:        env.Config.OCM.Debug,
+		BaseURL:      OCM.BaseURL,
+		ClientID:     OCM.ClientID,
+		ClientSecret: OCM.ClientSecret,
+		SelfToken:    OCM.SelfToken,
+		TokenURL:     OCM.TokenURL,
+		Debug:        OCM.Debug,
 	}
 
 	// Create OCM Authz client
-	if env.Config.OCM.EnableMock {
-		if env.Config.OCM.MockMode == config.MockModeEmulateServer {
-			env.Clients.OCM, err = ocm.NewIntegrationClientMock(ocmConfig)
+	if OCM.EnableMock {
+		if OCM.MockMode == config.MockModeEmulateServer {
+			client, err = ocm.NewIntegrationClientMock(ocmConfig)
 		} else {
 			glog.Infof("Using Mock OCM Authz Client")
-			env.Clients.OCM, err = ocm.NewClientMock(ocmConfig)
+			client, err = ocm.NewClientMock(ocmConfig)
 		}
 	} else {
-		env.Clients.OCM, err = ocm.NewClient(ocmConfig)
+		client, err = ocm.NewClient(ocmConfig)
 	}
 	if err != nil {
 		glog.Errorf("Unable to create OCM Authz client: %s", err.Error())
-		return err
 	}
+	return
+}
 
+func NewObservatoriumClient(c *config.ObservabilityConfiguration) (client *observatorium.Client, err error) {
 	// Create Observatorium client
 	observatoriumConfig := &observatorium.Configuration{
-		BaseURL:   env.Config.ObservabilityConfiguration.ObservatoriumGateway + dataEndpoint + env.Config.ObservabilityConfiguration.ObservatoriumTenant,
-		AuthToken: env.Config.ObservabilityConfiguration.AuthToken,
-		Cookie:    env.Config.ObservabilityConfiguration.Cookie,
-		Timeout:   env.Config.ObservabilityConfiguration.Timeout,
-		Debug:     env.Config.ObservabilityConfiguration.Debug,
-		Insecure:  env.Config.ObservabilityConfiguration.Insecure,
+		BaseURL:   c.ObservatoriumGateway + dataEndpoint + c.ObservatoriumTenant,
+		AuthToken: c.AuthToken,
+		Cookie:    c.Cookie,
+		Timeout:   c.Timeout,
+		Debug:     c.Debug,
+		Insecure:  c.Insecure,
 	}
-	if env.Config.ObservabilityConfiguration.EnableMock {
+	if c.EnableMock {
 		glog.Infof("Using Mock Observatorium Client")
-		env.Clients.Observatorium, err = observatorium.NewClientMock(observatoriumConfig)
+		client, err = observatorium.NewClientMock(observatoriumConfig)
 	} else {
-		env.Clients.Observatorium, err = observatorium.NewClient(observatoriumConfig)
+		client, err = observatorium.NewClient(observatoriumConfig)
 	}
 	if err != nil {
 		glog.Errorf("Unable to create Observatorium client: %s", err)
-		return err
 	}
-
-	return nil
+	return
 }
 
-func (env *Env) InitializeSentry() error {
+func InitializeSentry(env *Env, c *config.SentryConfig) error {
 	options := sentry.ClientOptions{}
 
-	if env.Config.Sentry.Enabled {
-		key := env.Config.Sentry.Key
-		url := env.Config.Sentry.URL
-		project := env.Config.Sentry.Project
+	if c.Enabled {
+		key := c.Key
+		url := c.URL
+		project := c.Project
 		glog.Infof("Sentry error reporting enabled to %s on project %s", url, project)
 		options.Dsn = fmt.Sprintf("https://%s@%s/%s", key, url, project)
 	} else {
@@ -391,9 +395,9 @@ func (env *Env) InitializeSentry() error {
 	}
 
 	options.Transport = &sentry.HTTPTransport{
-		Timeout: env.Config.Sentry.Timeout,
+		Timeout: c.Timeout,
 	}
-	options.Debug = env.Config.Sentry.Debug
+	options.Debug = c.Debug
 	options.AttachStacktrace = true
 	options.Environment = env.Name
 
