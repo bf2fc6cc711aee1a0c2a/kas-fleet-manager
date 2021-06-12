@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
@@ -52,7 +53,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			convResource := presenters.ConvertConnectorCluster(resource)
+			convResource := presenters2.ConvertConnectorCluster(resource)
 
 			claims, err := auth.GetClaimsFromContext(r.Context())
 			if err != nil {
@@ -65,7 +66,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			if err := h.service.Create(r.Context(), &convResource); err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorCluster(convResource), nil
+			return presenters2.PresentConnectorCluster(convResource), nil
 		},
 	}
 
@@ -84,7 +85,7 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorCluster(resource), nil
+			return presenters2.PresentConnectorCluster(resource), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -122,7 +123,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorCluster(resource)
+				converted := presenters2.PresentConnectorCluster(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 

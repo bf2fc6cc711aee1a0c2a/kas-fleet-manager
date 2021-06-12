@@ -3,6 +3,7 @@ package presenters
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 )
 
 func ConvertConnectorCluster(from openapi.ConnectorCluster) api.ConnectorCluster {
@@ -21,7 +22,7 @@ func ConvertConnectorCluster(from openapi.ConnectorCluster) api.ConnectorCluster
 }
 
 func PresentConnectorCluster(from api.ConnectorCluster) openapi.ConnectorCluster {
-	reference := PresentReference(from.ID, from)
+	reference := presenters.PresentReference(from.ID, from)
 	return openapi.ConnectorCluster{
 		Id:   reference.Id,
 		Kind: reference.Kind,
