@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -49,7 +50,7 @@ func PresentConnector(from *api.Connector) (openapi.Connector, *errors.ServiceEr
 		return openapi.Connector{}, errors.BadRequest("invalid connector spec: %v", err)
 	}
 
-	reference := PresentReference(from.ID, from)
+	reference := presenters.PresentReference(from.ID, from)
 	return openapi.Connector{
 		Id:   reference.Id,
 		Kind: reference.Kind,

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"io"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -34,7 +34,7 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			convResource := presenters.ConvertConnectorClusterStatus(resource)
+			convResource := presenters2.ConvertConnectorClusterStatus(resource)
 			err := h.service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			return nil, err
 		},
@@ -162,7 +162,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 }
 
 func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource api.ConnectorDeployment) (openapi.ConnectorDeployment, *errors.ServiceError) {
-	converted, err := presenters.PresentConnectorDeployment(resource)
+	converted, err := presenters2.PresentConnectorDeployment(resource)
 	if err != nil {
 		return openapi.ConnectorDeployment{}, err
 	}
@@ -172,7 +172,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource ap
 		return openapi.ConnectorDeployment{}, err
 	}
 
-	pc, err := presenters.PresentConnector(&apiSpec)
+	pc, err := presenters2.PresentConnector(&apiSpec)
 	if err != nil {
 		return openapi.ConnectorDeployment{}, err
 	}
@@ -253,7 +253,7 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			converted, serr := presenters.ConvertConnectorDeploymentStatus(resource)
+			converted, serr := presenters2.ConvertConnectorDeploymentStatus(resource)
 			if serr != nil {
 				return nil, serr
 			}
