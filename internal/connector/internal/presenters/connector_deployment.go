@@ -3,6 +3,7 @@ package presenters
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -24,7 +25,7 @@ func PresentConnectorDeployment(from api.ConnectorDeployment) (openapi.Connector
 		}
 	}
 
-	reference := PresentReference(from.ID, from)
+	reference := presenters.PresentReference(from.ID, from)
 	return openapi.ConnectorDeployment{
 		Id:   reference.Id,
 		Kind: reference.Kind,

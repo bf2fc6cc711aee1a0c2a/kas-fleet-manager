@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -35,7 +35,7 @@ func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorType(resource), nil
+			return presenters2.PresentConnectorType(resource), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -60,7 +60,7 @@ func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorType(resource)
+				converted := presenters2.PresentConnectorType(resource)
 				resourceList.Items = append(resourceList.Items, converted)
 			}
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -15,7 +16,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -73,7 +73,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			convResource, err := presenters.ConvertConnector(resource)
+			convResource, err := presenters2.ConvertConnector(resource)
 			if err != nil {
 				return nil, err
 			}
@@ -105,7 +105,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnector(convResource)
+			return presenters2.PresentConnector(convResource)
 		},
 	}
 
@@ -132,7 +132,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, serr
 			}
 
-			resource, serr := presenters.PresentConnector(dbresource)
+			resource, serr := presenters2.PresentConnector(dbresource)
 			if serr != nil {
 				return nil, serr
 			}
@@ -175,7 +175,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			resource.Kafka = patch.Kafka
 
 			// If we didn't change anything, then just skip the update...
-			originalResource, _ := presenters.PresentConnector(dbresource)
+			originalResource, _ := presenters2.PresentConnector(dbresource)
 			if reflect.DeepEqual(originalResource, resource) {
 				return originalResource, nil
 			}
@@ -204,7 +204,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			p, svcErr := presenters.ConvertConnector(resource)
+			p, svcErr := presenters2.ConvertConnector(resource)
 			if svcErr != nil {
 				return nil, svcErr
 			}
@@ -249,7 +249,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnector(p)
+			return presenters2.PresentConnector(p)
 		},
 	}
 
@@ -357,7 +357,7 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			return presenters.PresentConnector(resource)
+			return presenters2.PresentConnector(resource)
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -423,7 +423,7 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 				if err := stripSecretReferences(resource, ct); err != nil {
 					return nil, err
 				}
-				converted, err := presenters.PresentConnector(resource)
+				converted, err := presenters2.PresentConnector(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
 					return nil, errors.GeneralError("internal error")

@@ -8,10 +8,10 @@ package services
 
 import (
 	"context"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -65,7 +65,7 @@ func (k *connectorTypesService) Get(id string) (*api.ConnectorType, *errors.Serv
 		return nil, errors.NotFound("ConnectorType with id='%s' not found", id)
 	}
 
-	return presenters.ConvertConnectorType(resource.ConnectorType), nil
+	return presenters2.ConvertConnectorType(resource.ConnectorType), nil
 }
 
 func (k *connectorTypesService) GetConnectorCatalogEntry(id string, channel string) (*config.ConnectorChannelConfig, *errors.ServiceError) {
@@ -108,7 +108,7 @@ func (k *connectorTypesService) List(ctx context.Context, listArgs *services.Lis
 func (k *connectorTypesService) getConnectorTypeList() api.ConnectorTypeList {
 	r := make(api.ConnectorTypeList, len(k.connectorsConfig.CatalogEntries))
 	for i, v := range k.connectorsConfig.CatalogEntries {
-		r[i] = presenters.ConvertConnectorType(v.ConnectorType)
+		r[i] = presenters2.ConvertConnectorType(v.ConnectorType)
 	}
 	return r
 }
