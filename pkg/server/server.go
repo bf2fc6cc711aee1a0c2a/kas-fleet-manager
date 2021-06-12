@@ -1,11 +1,11 @@
 package server
 
 import (
-	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"net"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
@@ -26,11 +26,11 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 }
 
 // Exit on error
-func check(err error, msg string) {
+func check(err error, msg string, timeout time.Duration) {
 	if err != nil && err != http.ErrServerClosed {
 		glog.Errorf("%s: %s", msg, err)
 		sentry.CaptureException(err)
-		sentry.Flush(environments2.Environment().Config.Sentry.Timeout)
+		sentry.Flush(timeout)
 		os.Exit(1)
 	}
 }

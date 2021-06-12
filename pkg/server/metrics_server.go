@@ -3,9 +3,11 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/golang/glog"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -13,7 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
 
-func NewMetricsServer() Server {
+func NewMetricsServer(metricsConfig *config.MetricsConfig, serverConfig *config.ServerConfig, sentryConfig *config.SentryConfig) *MetricsServer {
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
 
@@ -23,49 +25,56 @@ func NewMetricsServer() Server {
 
 	var mainHandler http.Handler = mainRouter
 
-	s := &metricsServer{}
+	s := &MetricsServer{
+		serverConfig:  serverConfig,
+		sentryTimeout: sentryConfig.Timeout,
+		metricsConfig: metricsConfig,
+	}
 	s.httpServer = &http.Server{
-		Addr:    env().Config.Metrics.BindAddress,
+		Addr:    metricsConfig.BindAddress,
 		Handler: mainHandler,
 	}
 	return s
 }
 
-type metricsServer struct {
-	httpServer *http.Server
+type MetricsServer struct {
+	httpServer    *http.Server
+	serverConfig  *config.ServerConfig
+	metricsConfig *config.MetricsConfig
+	sentryTimeout time.Duration
 }
 
-var _ Server = &metricsServer{}
+var _ Server = &MetricsServer{}
 
-func (s metricsServer) Listen() (listener net.Listener, err error) {
+func (s MetricsServer) Listen() (listener net.Listener, err error) {
 	return nil, nil
 }
 
-func (s metricsServer) Serve(listener net.Listener) {
+func (s MetricsServer) Serve(listener net.Listener) {
 }
 
-func (s metricsServer) Start() {
+func (s MetricsServer) Start() {
 	glog.Infof("start metrics server")
 	var err error
-	if env().Config.Metrics.EnableHTTPS {
-		if env().Config.Server.HTTPSCertFile == "" || env().Config.Server.HTTPSKeyFile == "" {
+	if s.metricsConfig.EnableHTTPS {
+		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
 			check(
 				fmt.Errorf("Unspecified required --https-cert-file, --https-key-file"),
-				"Can't start https server",
+				"Can't start https server", s.sentryTimeout,
 			)
 		}
 
 		// Serve with TLS
-		glog.Infof("Serving Metrics with TLS at %s", env().Config.Server.BindAddress)
-		err = s.httpServer.ListenAndServeTLS(env().Config.Server.HTTPSCertFile, env().Config.Server.HTTPSKeyFile)
+		glog.Infof("Serving Metrics with TLS at %s", s.serverConfig.BindAddress)
+		err = s.httpServer.ListenAndServeTLS(s.serverConfig.HTTPSCertFile, s.serverConfig.HTTPSKeyFile)
 	} else {
-		glog.Infof("Serving Metrics without TLS at %s", env().Config.Metrics.BindAddress)
+		glog.Infof("Serving Metrics without TLS at %s", s.metricsConfig.BindAddress)
 		err = s.httpServer.ListenAndServe()
 	}
-	check(err, "Metrics server terminated with errors")
+	check(err, "Metrics server terminated with errors", s.sentryTimeout)
 	glog.Infof("Metrics server terminated")
 }
 
-func (s metricsServer) Stop() error {
+func (s MetricsServer) Stop() error {
 	return s.httpServer.Shutdown(context.Background())
 }
