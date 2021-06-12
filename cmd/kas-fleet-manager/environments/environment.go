@@ -219,15 +219,16 @@ func (env *Env) LoadServices() error {
 	// change, and we need to re-create all the services.
 	container, err := di.New(append(opts,
 		di.ProvideValue(env),
-		di.ProvideValue(env.DBFactory),
 		di.ProvideValue(env.Config),
 		di.ProvideValue(*env.Config),
+		di.ProvideValue(env.Config.Database),
 		di.ProvideValue(env.Config.Sentry),
 		di.ProvideValue(env.Config.Kafka),
 		di.ProvideValue(env.Config.AWS),
 		di.ProvideValue(env.Config.OCM),
 		di.ProvideValue(env.Config.ObservabilityConfiguration),
 
+		di.Provide(db.NewConnectionFactory),
 		di.Provide(func() signalbus.SignalBus {
 			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
 		}),
@@ -275,6 +276,9 @@ func (env *Env) LoadServices() error {
 	}
 	env.ServiceContainer = container
 
+	if err := container.Resolve(&env.DBFactory); err != nil {
+		return err
+	}
 	if err := container.Resolve(&env.Clients.OCM); err != nil {
 		return err
 	}

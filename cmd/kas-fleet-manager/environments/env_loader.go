@@ -1,7 +1,5 @@
 package environments
 
-import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-
 type EnvLoader interface {
 	Defaults() map[string]string
 	Load(env *Env) error
@@ -16,7 +14,5 @@ func (b SimpleEnvLoader) Defaults() map[string]string {
 }
 
 func (b SimpleEnvLoader) Load(env *Env) error {
-	env.DBFactory = db.NewConnectionFactory(env.Config.Database)
-
 	return env.LoadServices()
 }
