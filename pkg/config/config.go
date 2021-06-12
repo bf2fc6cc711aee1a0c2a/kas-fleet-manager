@@ -2,17 +2,12 @@ package config
 
 import (
 	"flag"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
 	"github.com/spf13/pflag"
 )
 
 type ConfigModule interface {
 	AddFlags(fs *pflag.FlagSet)
 	ReadFiles() error
-}
-
-type ServiceInjector interface {
-	Injections() (common.InjectionMap, error)
 }
 
 type ApplicationConfig struct {
