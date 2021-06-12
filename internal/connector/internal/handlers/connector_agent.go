@@ -3,7 +3,9 @@ package handlers
 import (
 	"context"
 	"fmt"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"io"
 	"net/http"
@@ -15,8 +17,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
@@ -24,17 +24,17 @@ import (
 
 func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
-	var resource openapi.ConnectorClusterStatus
+	var resource private.ConnectorClusterStatus
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
-			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(api.AllConnectorClusterStatus...)),
+			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(dbapi.AllConnectorClusterStatus...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			convResource := presenters2.ConvertConnectorClusterStatus(resource)
+			convResource := presenters.ConvertConnectorClusterStatus(resource)
 			err := h.service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			return nil, err
 		},
@@ -61,14 +61,14 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 
 			listArgs := services.NewListArguments(query)
 
-			getList := func() (list openapi.ConnectorDeploymentList, err *errors.ServiceError) {
+			getList := func() (list private.ConnectorDeploymentList, err *errors.ServiceError) {
 
 				resources, paging, err := h.service.ListConnectorDeployments(ctx, connectorClusterId, listArgs, gtVersion)
 				if err != nil {
 					return
 				}
 
-				list = openapi.ConnectorDeploymentList{
+				list = private.ConnectorDeploymentList{
 					Kind:  "ConnectorDeploymentList",
 					Page:  int32(paging.Page),
 					Size:  int32(paging.Size),
@@ -105,7 +105,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 								result := list.Items[idx]
 								gtVersion = result.Metadata.ResourceVersion
 								idx += 1
-								return openapi.ConnectorDeploymentWatchEvent{
+								return private.ConnectorDeploymentWatchEvent{
 									Type:   "CHANGE",
 									Object: result,
 								}, nil
@@ -124,7 +124,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 									// bookmark idea taken from: https://kubernetes.io/docs/reference/using-api/api-concepts/#watch-bookmarks
 									if !bookmarkSent {
 										bookmarkSent = true
-										return openapi.ConnectorDeploymentWatchEvent{
+										return private.ConnectorDeploymentWatchEvent{
 											Type: "BOOKMARK",
 										}, nil
 									}
@@ -161,30 +161,30 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 	handlers.HandleList(w, r, cfg)
 }
 
-func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource api.ConnectorDeployment) (openapi.ConnectorDeployment, *errors.ServiceError) {
-	converted, err := presenters2.PresentConnectorDeployment(resource)
+func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource dbapi.ConnectorDeployment) (private.ConnectorDeployment, *errors.ServiceError) {
+	converted, err := presenters.PresentConnectorDeployment(resource)
 	if err != nil {
-		return openapi.ConnectorDeployment{}, err
+		return private.ConnectorDeployment{}, err
 	}
 
 	apiSpec, err := h.service.GetConnectorWithBase64Secrets(r.Context(), resource)
 	if err != nil {
-		return openapi.ConnectorDeployment{}, err
+		return private.ConnectorDeployment{}, err
 	}
 
-	pc, err := presenters2.PresentConnector(&apiSpec)
+	pc, err := presenters.PresentConnector(&apiSpec)
 	if err != nil {
-		return openapi.ConnectorDeployment{}, err
+		return private.ConnectorDeployment{}, err
 	}
 
 	shardMetadataJson, err := h.connectorTypes.GetConnectorShardMetadata(resource.ConnectorTypeChannelId)
 	if err != nil {
-		return openapi.ConnectorDeployment{}, err
+		return private.ConnectorDeployment{}, err
 	}
 
 	shardMetadata, err2 := shardMetadataJson.ShardMetadata.Object()
 	if err2 != nil {
-		return openapi.ConnectorDeployment{}, errors.GeneralError("failed to convert shard metadata")
+		return private.ConnectorDeployment{}, errors.GeneralError("failed to convert shard metadata")
 	}
 
 	converted.Spec.ShardMetadata = shardMetadata
@@ -192,7 +192,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource ap
 	converted.Spec.DesiredState = pc.DesiredState
 	converted.Spec.ConnectorId = pc.Id
 	converted.Spec.KafkaId = pc.Metadata.KafkaId
-	converted.Spec.Kafka = openapi.KafkaConnectionSettings{
+	converted.Spec.Kafka = private.KafkaConnectionSettings{
 		BootstrapServer: pc.Kafka.BootstrapServer,
 		ClientId:        pc.Kafka.ClientId,
 		ClientSecret:    pc.Kafka.ClientSecret,
@@ -242,18 +242,18 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	deploymentId := mux.Vars(r)["deployment_id"]
-	var resource openapi.ConnectorDeploymentStatus
+	var resource private.ConnectorDeploymentStatus
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
-			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(api.AgentSetConnectorStatusPhase...)),
+			handlers.Validation("phase", &resource.Phase, handlers.IsOneOf(dbapi.AgentSetConnectorStatusPhase...)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			converted, serr := presenters2.ConvertConnectorDeploymentStatus(resource)
+			converted, serr := presenters.ConvertConnectorDeploymentStatus(resource)
 			if serr != nil {
 				return nil, serr
 			}

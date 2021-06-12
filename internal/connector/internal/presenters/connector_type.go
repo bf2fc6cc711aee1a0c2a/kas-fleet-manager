@@ -1,14 +1,14 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 )
 
-func ConvertConnectorType(from openapi.ConnectorType) *api.ConnectorType {
+func ConvertConnectorType(from public.ConnectorType) *dbapi.ConnectorType {
 
-	return &api.ConnectorType{
+	return &dbapi.ConnectorType{
 		Meta: api.Meta{
 			ID: from.Id,
 		},
@@ -22,9 +22,9 @@ func ConvertConnectorType(from openapi.ConnectorType) *api.ConnectorType {
 	}
 }
 
-func PresentConnectorType(from *api.ConnectorType) openapi.ConnectorType {
-	reference := presenters.PresentReference(from.ID, from)
-	return openapi.ConnectorType{
+func PresentConnectorType(from *dbapi.ConnectorType) public.ConnectorType {
+	reference := PresentReference(from.ID, from)
+	return public.ConnectorType{
 		Id:          reference.Id,
 		Kind:        reference.Kind,
 		Href:        reference.Href,

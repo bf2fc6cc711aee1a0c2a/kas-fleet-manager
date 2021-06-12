@@ -3,7 +3,9 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"net/url"
 	"os"
@@ -11,9 +13,7 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/connector/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -26,7 +26,7 @@ type extender struct {
 
 func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 	// we can only check the delete count on the TmpVault service impl...
-	if vault, ok := environments.Environment().Services.Vault.(*services.TmpVaultService); ok {
+	if vault, ok := environments.Environment().Services.Vault.(*coreServices.TmpVaultService); ok {
 		actual := vault.Counters().Deletes
 		if actual != expected {
 			return fmt.Errorf("vault delete counter does not match expected: %v, actual: %v", expected, actual)
@@ -38,7 +38,7 @@ func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as string) error {
 	session := s.Session()
 
-	params := []openapi.AddonParameter{}
+	params := []public.AddonParameter{}
 	err := json.Unmarshal(session.RespBytes, &params)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 }
 
 func (s *extender) connectorDeploymentUpgradesAvailableAre(expected *godog.DocString) error {
-	var connectorCluster services2.ConnectorClusterService
+	var connectorCluster services.ConnectorClusterService
 	if err := environments.Environment().ServiceContainer.Resolve(&connectorCluster); err != nil {
 		return err
 	}

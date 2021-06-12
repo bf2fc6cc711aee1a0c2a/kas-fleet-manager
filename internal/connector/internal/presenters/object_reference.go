@@ -1,0 +1,55 @@
+package presenters
+
+import (
+	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
+)
+
+const (
+	// KindConnector is a string identifier for the type dbapi.Connector
+	KindConnector = "Connector"
+	// KindConnectorCluster is a string identifier for the type dbapi.ConnectorCluster
+	KindConnectorCluster = "ConnectorCluster"
+	// KindConnectorDeployment is a string identifier for the type dbapi.ConnectorDeployment
+	KindConnectorDeployment = "ConnectorDeployment"
+	// KindConnectorType is a string identifier for the type dbapi.ConnectorType
+	KindConnectorType = "ConnectorType"
+)
+
+func PresentReference(id, obj interface{}) openapi.ObjectReference {
+	return presenters.PresentReferenceWith(id, obj, objectKind, objectPath)
+}
+
+func objectKind(i interface{}) string {
+	switch i.(type) {
+	case dbapi.Connector, *dbapi.Connector:
+		return KindConnector
+	case dbapi.ConnectorCluster, *dbapi.ConnectorCluster:
+		return KindConnectorCluster
+	case dbapi.ConnectorDeployment, *dbapi.ConnectorDeployment:
+		return KindConnectorDeployment
+	case dbapi.ConnectorType, *dbapi.ConnectorType:
+		return KindConnectorType
+	default:
+		return ""
+	}
+}
+
+func objectPath(id string, obj interface{}) string {
+	switch obj := obj.(type) {
+	case dbapi.Connector, *dbapi.Connector:
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connectors/%s", id)
+	case dbapi.ConnectorType, *dbapi.ConnectorType:
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_types/%s", id)
+	case dbapi.ConnectorCluster, *dbapi.ConnectorCluster:
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s", id)
+	case dbapi.ConnectorDeployment:
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
+	case *dbapi.ConnectorDeployment:
+		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
+	default:
+		return ""
+	}
+}

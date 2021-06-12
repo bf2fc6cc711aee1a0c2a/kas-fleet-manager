@@ -1,19 +1,19 @@
 package routes
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	corehandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
-	gorillahandlers "github.com/gorilla/handlers"
+	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	"net/http"
@@ -22,7 +22,7 @@ import (
 type options struct {
 	di.Inject
 	ConnectorsConfig    *config.ConnectorsConfig
-	ErrorsHandler       *corehandlers.ErrorHandler
+	ErrorsHandler       *coreHandlers.ErrorHandler
 	AuthorizeMiddleware *acl.AccessControlListMiddleware
 	KeycloakService     services.KafkaKeycloakService
 
@@ -38,7 +38,7 @@ func NewRouteLoader(s options) common.RouteLoader {
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	if s.ConnectorsConfig.Enabled {
 
-		openAPIDefinitions, err := shared.LoadOpenAPISpec(connector.Asset, "openapi.yaml")
+		openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, "openapi.yaml")
 		if err != nil {
 			return errors.Wrap(err, "Can't load OpenAPI specification")
 		}
@@ -50,7 +50,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
 
 		//  /api/connector_mgmt/v1/openapi
-		apiV1Router.HandleFunc("/openapi", corehandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
+		apiV1Router.HandleFunc("/openapi", coreHandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
 		//  /api/connector_mgmt/v1/errors
 		apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
@@ -130,9 +130,9 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
 		apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
-		apiRouter.Use(corehandlers.MetricsMiddleware)
+		apiRouter.Use(coreHandlers.MetricsMiddleware)
 		apiRouter.Use(db.TransactionMiddleware)
-		apiRouter.Use(gorillahandlers.CompressHandler)
+		apiRouter.Use(gorillaHandlers.CompressHandler)
 	}
 	return nil
 }

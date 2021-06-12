@@ -220,6 +220,7 @@ verify: check-gopath openapi/validate
 	$(GO) vet \
 		./cmd/... \
 		./pkg/... \
+		./internal/... \
 		./test/...
 .PHONY: verify
 
@@ -229,6 +230,7 @@ lint: golangci-lint
 	$(GOLANGCI_LINT) run \
 		./cmd/... \
 		./pkg/... \
+		./internal/... \
 		./test/...
 .PHONY: lint
 
@@ -301,18 +303,23 @@ openapi/validate: openapi-generator
 openapi/generate: go-bindata openapi-generator
 	rm -rf pkg/api/openapi
 	rm -rf pkg/api/private/openapi
-	rm -rf pkg/api/connector/openapi
+	rm -rf internal/connector/internal/api/public
+	rm -rf internal/connector/internal/api/private
+
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o pkg/api/connector/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -prefix ./openapi/ -mode 420 -modtime 1 ./openapi
-	$(GOBINDATA) -o ./data/generated/connector/bindata.go -pkg connector -prefix ./pkg/api/connector/openapi/api -mode 420 -modtime 1 ./pkg/api/connector/openapi/api
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
+	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -mode 420 -modtime 1 -prefix ./openapi/ ./openapi
+	$(GOBINDATA) -o ./internal/connector/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix ./internal/connector/internal/api/public/api ./internal/connector/internal/api/public/api
 	$(GOFMT) -w pkg/api/openapi
 	$(GOFMT) -w pkg/api/private/openapi
-	$(GOFMT) -w pkg/api/connector/openapi
+	$(GOFMT) -w internal/connector/internal/api/public
+	$(GOFMT) -w internal/connector/internal/api/private
 .PHONY: openapi/generate
 
 # clean up code and dependencies
