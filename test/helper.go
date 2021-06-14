@@ -264,25 +264,6 @@ func (helper *Helper) stopClusterWorker() {
 	helper.ClusterWorker.Stop()
 }
 
-//func (helper *Helper) startConnectorWorker() {
-//	env := helper.Env()
-//	if err := env.ServiceContainer.Resolve(&helper.ConnectorWorker); err != nil {
-//		helper.T.Fatalf("ConnectorWorker not found: %s", err)
-//	}
-//	go func() {
-//		glog.V(10).Info("Connector worker started")
-//		helper.ConnectorWorker.Start()
-//	}()
-//}
-//
-//func (helper *Helper) stopConnectorWorker() {
-//	if helper.ConnectorWorker == nil {
-//		return
-//	}
-//	helper.ConnectorWorker.Stop()
-//	glog.V(10).Info("Connector worker stopped")
-//}
-
 func (helper *Helper) startSignalBusWorker() {
 	env := helper.Env()
 	glog.V(10).Info("Signal bus worker started")

@@ -58,10 +58,7 @@ type Env struct {
 }
 
 type Services struct {
-	Kafka services.KafkaService
-	//Connectors                services.ConnectorsService
-	//ConnectorTypes            services.ConnectorTypesService
-	//ConnectorCluster          services.ConnectorClusterService
+	Kafka                     services.KafkaService
 	Cluster                   services.ClusterService
 	CloudProviders            services.CloudProvidersService
 	Config                    services.ConfigService
