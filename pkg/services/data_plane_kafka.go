@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -66,7 +67,10 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 		case statusReady:
 			e = d.setKafkaClusterReady(kafka)
 		case statusError:
-			e = d.setKafkaClusterFailed(kafka)
+			// when getStatus returns statusError we know that the ready
+			// condition will be there so there's no need to check for it
+			readyCondition, _ := ks.GetReadyCondition()
+			e = d.setKafkaClusterFailed(kafka, readyCondition.Message)
 		case statusDeleted:
 			e = d.setKafkaClusterDeleting(kafka)
 		case statusRejected:
@@ -104,21 +108,30 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *s
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest) *serviceError.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest, errMessage string) *serviceError.ServiceError {
+	// if kafka was already reported as failed we don't do anything
+	if kafka.Status == string(constants.KafkaRequestStatusFailed) {
+		return nil
+	}
+
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants.KafkaRequestStatusProvisioning)
 	if err != nil {
 		return err
 	}
-	if ok, err := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusFailed); ok {
-		if err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants.KafkaRequestStatusFailed, kafka.ID)
-		}
-		if shouldSendMetric {
-			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
-			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-		}
+
+	kafka.Status = string(constants.KafkaRequestStatusFailed)
+	kafka.FailedReason = fmt.Sprintf("Kafka reported as failed: '%s'", errMessage)
+	err = d.kafkaService.Update(kafka)
+	if err != nil {
+		return serviceError.NewWithCause(err.Code, err, "failed to update kafka cluster to %s status for kafka cluster %s", constants.KafkaRequestStatusFailed, kafka.ID)
 	}
+	if shouldSendMetric {
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
+	}
+	logger.Logger.Errorf("Kafka status reported as failed by KAS Fleet Shard Operator: '%s'", errMessage)
+
 	return nil
 }
 
@@ -176,7 +189,6 @@ func getStatus(status *api.DataPlaneKafkaStatus) kafkaStatus {
 	}
 	return statusInstalling
 }
-
 func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *api.KafkaRequest, status constants.KafkaStatus) (bool, *serviceError.ServiceError) {
 	matchStatus := false
 	if currentInstance, err := d.kafkaService.GetById(kafka.ID); err != nil {

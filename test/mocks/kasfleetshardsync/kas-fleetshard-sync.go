@@ -282,3 +282,21 @@ func GetReadyKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
 		},
 	}
 }
+
+func GetErrorKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
+	return privateopenapi.DataPlaneKafkaStatus{
+		Conditions: []privateopenapi.DataPlaneClusterUpdateStatusRequestConditions{
+			{
+				Type:   "Ready",
+				Reason: "Error",
+				Status: "False",
+			},
+		},
+	}
+}
+
+func GetErrorWithCustomMessageKafkaStatusResponse(message string) privateopenapi.DataPlaneKafkaStatus {
+	res := GetErrorKafkaStatusResponse()
+	res.Conditions[0].Message = message
+	return res
+}
