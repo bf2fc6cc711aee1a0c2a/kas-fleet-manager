@@ -3,6 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -41,7 +42,8 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
 	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
-	kafkaService := env.Services.Kafka
+	var kafkaService services.KafkaService
+	env.MustResolveAll(&kafkaService)
 
 	kafkaRequest := &api.KafkaRequest{
 		Region:         region,

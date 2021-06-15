@@ -50,7 +50,7 @@ func setUp(t *testing.T) *testEnv {
 	account := h.NewAccount(usernameWithSpecialChars, faker.Name(), faker.Email(), orgId)
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	kafkas := []*api.KafkaRequest{
 		{
 			MultiAZ:        false,

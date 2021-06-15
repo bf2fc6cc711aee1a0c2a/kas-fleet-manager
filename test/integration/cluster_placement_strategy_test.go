@@ -37,7 +37,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	// load existing cluster and assign kafka to it so that it is not deleted
 
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	clusterWithKafkaID := "cluster-id-that-should-not-be-deleted"
 
 	kafka := api.KafkaRequest{
@@ -87,7 +87,8 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		},
 	})
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 
 	// Ensure both clusters in the config file have been created
 	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(h.DBFactory, &clusterService, &clusterCriteria, 2)
@@ -142,7 +143,8 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		},
 	}
 
-	kafkaSrv := h.Env.Services.Kafka
+	var kafkaSrv services.KafkaService
+	h.Env.MustResolveAll(&kafkaSrv)
 
 	errK := kafkaSrv.RegisterKafkaJob(kafkas[0])
 	if errK != nil {
@@ -150,7 +152,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		return
 	}
 
-	dbFactory := h.Env.DBFactory
+	dbFactory := h.DBFactory
 	kafkaFound, kafkaErr := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
 	Expect(kafkaErr).NotTo(HaveOccurred())
 	Expect(kafkaFound.ClusterID).To(Equal("test03"))

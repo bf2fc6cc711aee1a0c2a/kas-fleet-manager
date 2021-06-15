@@ -3,6 +3,7 @@ package kafka
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
@@ -26,8 +27,8 @@ func NewGetCommand(env *environments.Env) *cobra.Command {
 
 func runGet(env *environments.Env, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
-
-	kafkaService := env.Services.Kafka
+	var kafkaService services.KafkaService
+	env.MustResolveAll(&kafkaService)
 
 	kafkaRequest, err := kafkaService.GetById(id)
 	if err != nil {

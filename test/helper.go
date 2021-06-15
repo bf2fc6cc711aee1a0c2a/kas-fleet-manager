@@ -194,11 +194,15 @@ func (helper *Helper) RestURL(path string) string {
 }
 
 func (helper *Helper) MetricsURL(path string) string {
-	return fmt.Sprintf("http://%s%s", helper.AppConfig.Metrics.BindAddress, path)
+	var metricsConfig *config.MetricsConfig
+	helper.Env.MustResolveAll(&metricsConfig)
+	return fmt.Sprintf("http://%s%s", metricsConfig.BindAddress, path)
 }
 
 func (helper *Helper) HealthCheckURL(path string) string {
-	return fmt.Sprintf("http://%s%s", helper.AppConfig.HealthCheck.BindAddress, path)
+	var healthCheckConfig *config.HealthCheckConfig
+	helper.Env.MustResolveAll(&healthCheckConfig)
+	return fmt.Sprintf("http://%s%s", healthCheckConfig.BindAddress, path)
 }
 
 func (helper *Helper) NewApiClient() *openapi.APIClient {

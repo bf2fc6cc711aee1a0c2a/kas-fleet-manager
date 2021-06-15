@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -28,8 +29,9 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 
-	config := env.Services.Config
-	cloudProviderService := env.Services.CloudProviders
+	var config services.ConfigService
+	var cloudProviderService services.CloudProvidersService
+	env.MustResolveAll(&config, &cloudProviderService)
 
 	cloudRegions, err := cloudProviderService.ListCloudProviderRegions(id)
 	if err != nil {

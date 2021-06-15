@@ -11,10 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//nolint
-func init() {
-}
-
 func main() {
 	// This is needed to make `glog` believe that the flags have already been parsed, otherwise
 	// every log messages is prefixed by an error message stating the the flags haven't been
@@ -56,7 +52,7 @@ func main() {
 
 		// All subcommands under root
 		rootCmd.AddCommand(
-			migrate.NewMigrateCommand(),
+			migrate.NewMigrateCommand(env),
 			serve.NewServeCommand(env),
 		)
 		rootCmd.AddCommand(subcommands...)

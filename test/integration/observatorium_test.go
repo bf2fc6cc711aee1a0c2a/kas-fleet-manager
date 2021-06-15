@@ -33,7 +33,11 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	service := services.NewObservatoriumService(h.Env.Clients.Observatorium, h.Env.Services.Kafka)
+	var kafkaSrv services.KafkaService
+	var observatoriumClient *observatorium.Client
+	h.Env.MustResolveAll(&kafkaSrv, &observatoriumClient)
+
+	service := services.NewObservatoriumService(observatoriumClient, kafkaSrv)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
 	Expect(kafkaState.State).NotTo(BeEmpty(), "Should return state")
@@ -66,7 +70,11 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	service := services.NewObservatoriumService(h.Env.Clients.Observatorium, h.Env.Services.Kafka)
+	var kafkaSrv services.KafkaService
+	var observatoriumClient *observatorium.Client
+	h.Env.MustResolveAll(&kafkaSrv, &observatoriumClient)
+
+	service := services.NewObservatoriumService(observatoriumClient, kafkaSrv)
 	metricsList := &observatorium.KafkaMetrics{}
 	q := observatorium.MetricsReqParams{}
 	q.ResultType = observatorium.RangeQuery

@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/golang/glog"
 	"net/url"
 	"os"
 	"testing"
@@ -162,13 +161,10 @@ func TestMain(m *testing.M) {
 
 	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer,
 		func(helper *test.Helper) {
-			if err := helper.Env.ConfigContainer.Invoke(func(c *config.ConnectorsConfig) {
+			helper.Env.MustInvoke(func(c *config.ConnectorsConfig) {
 				c.Enabled = true
 				c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-			}); err != nil {
-				glog.Fatalf("di failure: %v", err)
-			}
-
+			})
 		},
 		connector.ConfigProviders().AsOption(),
 	)

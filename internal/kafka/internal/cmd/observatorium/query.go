@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -33,6 +34,9 @@ func runGetMetricsByInstantQuery(env *environments.Env, cmd *cobra.Command, _arg
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 
+	var observatoriumService services.ObservatoriumService
+	env.MustResolveAll(&observatoriumService)
+
 	kafkaMetrics := &observatorium.KafkaMetrics{}
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{
@@ -42,7 +46,7 @@ func runGetMetricsByInstantQuery(env *environments.Env, cmd *cobra.Command, _arg
 	params := observatorium.MetricsReqParams{}
 	params.ResultType = observatorium.Query
 
-	kafkaId, err := env.Services.Observatorium.GetMetricsByKafkaId(ctx, kafkaMetrics, id, params)
+	kafkaId, err := observatoriumService.GetMetricsByKafkaId(ctx, kafkaMetrics, id, params)
 	if err != nil {
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return

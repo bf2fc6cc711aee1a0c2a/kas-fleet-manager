@@ -42,42 +42,10 @@ const (
 )
 
 type Env struct {
-	Name                string
-	Config              *config.ApplicationConfig
-	Services            Services
-	Clients             Clients
-	DBFactory           *db.ConnectionFactory
-	QuotaServiceFactory services.QuotaServiceFactory
-	ConfigContainer     *di.Container
-	ServiceContainer    *di.Container
-}
-
-type Services struct {
-	di.Inject
-	Kafka                     services.KafkaService
-	Cluster                   services.ClusterService
-	CloudProviders            services.CloudProvidersService
-	Config                    services.ConfigService
-	Observatorium             services.ObservatoriumService
-	Keycloak                  services.KafkaKeycloakService
-	OsdIdpKeycloak            services.OsdKeycloakService
-	DataPlaneCluster          services.DataPlaneClusterService
-	DataPlaneKafkaService     services.DataPlaneKafkaService
-	KasFleetshardAddonService services.KasFleetshardOperatorAddon
-	ClusterPlmtStrategy       services.ClusterPlacementStrategy
-}
-
-type Clients struct {
-	OCM           *ocm.Client
-	Observatorium *observatorium.Client
-}
-
-type ConfigDefaults struct {
-	Server   map[string]interface{}
-	Metrics  map[string]interface{}
-	Database map[string]interface{}
-	OCM      map[string]interface{}
-	Options  map[string]interface{}
+	Name             string
+	Config           *config.ApplicationConfig
+	ConfigContainer  *di.Container
+	ServiceContainer *di.Container
 }
 
 func GetEnvironmentStrFromEnv() string {
@@ -126,6 +94,16 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
 
 		di.Provide(config.NewApplicationConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewMetricsConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewHealthCheckConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewDatabaseConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewSentryConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewKasFleetshardConfig, di.As(new(config.ConfigModule))),
+
+		di.Provide(func(c *config.ApplicationConfig) *config.ObservabilityConfiguration {
+			return c.ObservabilityConfiguration
+		}),
+
 		vault.ConfigProviders().AsOption(),
 	)...)
 	if err != nil {
@@ -196,25 +174,42 @@ func (env *Env) CreateServices() error {
 		opts = append(opts, opt.AsOption())
 	}
 
-	// We need to build a new container here because LoadServices() can be called after a config
-	// change, and we need to re-create all the services.
 	container, err := di.New(append(opts,
 		di.ProvideValue(env),
 		di.ProvideValue(env.Config),
-		di.ProvideValue(env.Config.Database),
-		di.ProvideValue(env.Config.Sentry),
 		di.ProvideValue(env.Config.Kafka),
 		di.ProvideValue(env.Config.AWS),
-		di.ProvideValue(env.Config.Metrics),
 		di.ProvideValue(env.Config.Server),
-		di.ProvideValue(env.Config.HealthCheck),
 		di.ProvideValue(env.Config.OCM),
 		di.ProvideValue(env.Config.ObservabilityConfiguration),
 		di.ProvideValue(env.Config.Keycloak),
 
+		// We wont need these providers that get values from the ConfigContainer
+		// once we can add parent containers: https://github.com/goava/di/pull/34
+		di.Provide(func() (value *config.DatabaseConfig, err error) {
+			err = env.ConfigContainer.Resolve(&value)
+			return
+		}),
+		di.Provide(func() (value *config.SentryConfig, err error) {
+			err = env.ConfigContainer.Resolve(&value)
+			return
+		}),
+		di.Provide(func() (value *config.HealthCheckConfig, err error) {
+			err = env.ConfigContainer.Resolve(&value)
+			return
+		}),
+		di.Provide(func() (value *config.MetricsConfig, err error) {
+			err = env.ConfigContainer.Resolve(&value)
+			return
+		}),
+		di.Provide(func() (value *config.KasFleetshardConfig, err error) {
+			err = env.ConfigContainer.Resolve(&value)
+			return
+		}),
+
 		di.Provide(db.NewConnectionFactory),
-		di.Provide(func() *signalbus.PgSignalBus {
-			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
+		di.Provide(func(dbFactory *db.ConnectionFactory) *signalbus.PgSignalBus {
+			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), dbFactory)
 		}, di.As(new(signalbus.SignalBus))),
 
 		di.Provide(NewObservatoriumClient),
@@ -262,27 +257,46 @@ func (env *Env) CreateServices() error {
 	}
 
 	env.ServiceContainer = container
-	if err := container.Resolve(&env.DBFactory); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Clients.OCM); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Clients.Observatorium); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.QuotaServiceFactory); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services); err != nil {
-		return err
-	}
 
-	if err := env.Services.Config.Validate(); err != nil {
+	var configService services.ConfigService
+	env.MustResolve(&configService)
+	if err := configService.Validate(); err != nil {
 		return err
 	}
 
 	return env.ServiceContainer.Invoke(InitializeSentry)
+}
+
+func (env *Env) MustInvoke(invocation di.Invocation, options ...di.InvokeOption) {
+	container := env.ServiceContainer
+	if container == nil {
+		container = env.ConfigContainer
+	}
+	if err := container.Invoke(invocation, options...); err != nil {
+		glog.Fatalf("di failure: %v", err)
+	}
+}
+
+func (env *Env) MustResolve(ptr di.Pointer, options ...di.ResolveOption) {
+	container := env.ServiceContainer
+	if container == nil {
+		container = env.ConfigContainer
+	}
+	if err := container.Resolve(ptr, options...); err != nil {
+		glog.Fatalf("di failure: %v", err)
+	}
+}
+
+func (env *Env) MustResolveAll(ptrs ...di.Pointer) {
+	container := env.ServiceContainer
+	if container == nil {
+		container = env.ConfigContainer
+	}
+	for _, ptr := range ptrs {
+		if err := container.Resolve(ptr); err != nil {
+			glog.Fatalf("di failure: %v", err)
+		}
+	}
 }
 
 func NewOCMClient(OCM *config.OCMConfig) (client *ocm.Client, err error) {
@@ -373,10 +387,14 @@ func InitializeSentry(env *Env, c *config.SentryConfig) error {
 
 func (env *Env) Teardown() {
 	if env.Name != TestingEnv {
-		if err := env.DBFactory.Close(); err != nil {
+		var dbFactory *db.ConnectionFactory
+		var ocmClient *ocm.Client
+		env.MustResolveAll(&dbFactory, &ocmClient)
+
+		if err := dbFactory.Close(); err != nil {
 			glog.Fatalf("Unable to close db connection: %s", err.Error())
 		}
-		env.Clients.OCM.Close()
+		ocmClient.Close()
 	}
 	env.ServiceContainer.Cleanup()
 	env.ServiceContainer = nil

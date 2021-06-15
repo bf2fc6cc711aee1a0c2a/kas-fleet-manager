@@ -3,6 +3,7 @@ package observatorium
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,10 @@ func runGethResourceStateMetrics(env *environments.Env, cmd *cobra.Command, _arg
 	name := flags.MustGetDefinedString(FlagName, cmd.Flags())
 	namespace := flags.MustGetDefinedString(FlagNameSpace, cmd.Flags())
 
-	kafkaState, err := env.Services.Observatorium.GetKafkaState(name, namespace)
+	var observatoriumService services.ObservatoriumService
+	env.MustResolveAll(&observatoriumService)
+
+	kafkaState, err := observatoriumService.GetKafkaState(name, namespace)
 	if err != nil {
 		glog.Error("An error occurred while attempting to fetch Observatorium data from Prometheus", err.Error())
 		return

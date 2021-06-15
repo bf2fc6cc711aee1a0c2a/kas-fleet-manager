@@ -272,7 +272,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		},
 	}
 
-	db := testServer.Helper.Env.DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
@@ -409,7 +409,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		Version:             "2.7.0",
 	}
 
-	db := testServer.Helper.Env.DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -472,7 +472,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 
 	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 
-	db := testServer.Helper.Env.DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -537,7 +537,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 
 	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 
-	db := testServer.Helper.Env.DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {

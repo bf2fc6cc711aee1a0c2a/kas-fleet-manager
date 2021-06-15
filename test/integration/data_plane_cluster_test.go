@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"net/http"
 	"testing"
 	"time"
@@ -51,7 +53,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -192,7 +195,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		t.Fatalf("Cluster not found")
 	}
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -214,7 +218,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		Status:        api.ClusterReady,
 	}
 
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	if err := db.Save(&dummyCluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
 		return
@@ -269,7 +273,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 
 	// We force status to 'ready' at DB level to ensure no cluster is recreated
 	// again
-	err = h.Env.DBFactory.DB.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
+	err = h.DBFactory.DB.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
 }
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {
@@ -300,7 +304,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -340,7 +345,10 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
-	ocmClient := ocm.NewClient(h.Env.Clients.OCM.Connection)
+	var ocm2Client *ocm2.Client
+	h.Env.MustResolveAll(&ocm2Client)
+	ocmClient := ocm.NewClient(ocm2Client.Connection)
+
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
 	initialComputeNodes := ocmCluster.Nodes().Compute()
 	Expect(initialComputeNodes).NotTo(BeNil())
@@ -363,7 +371,8 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
@@ -458,7 +467,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	var count int64
 	err = db.Model(&api.Cluster{}).Count(&count).Error
 	Expect(err).ToNot(HaveOccurred())
@@ -467,7 +476,10 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := h.NewPrivateAPIClient()
 
-	ocmClient := ocm.NewClient(h.Env.Clients.OCM.Connection)
+	var ocm2Client *ocm2.Client
+	h.Env.MustResolveAll(&ocm2Client)
+	ocmClient := ocm.NewClient(ocm2Client.Connection)
+
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 
@@ -498,7 +510,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 	cluster, err := clusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
