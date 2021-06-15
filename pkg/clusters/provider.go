@@ -53,19 +53,22 @@ type ProviderFactory interface {
 
 // DefaultProviderFactory the default implementation for ProviderFactory
 type DefaultProviderFactory struct {
-	ocmClient ocm.Client
-	config    *config.ApplicationConfig
-
-	ocmProvider        *OCMProvider
-	standaloneProvider *StandaloneProvider
+	providerContainer      map[api.ClusterProviderType]Provider
+	addonProviderContainer map[api.ClusterProviderType]AddonProvider
 }
 
 func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.ApplicationConfig) *DefaultProviderFactory {
+	standaloneProvider := newStandaloneProvider()
+	ocmProvider := newOCMProvider(ocmClient, ocm.NewClusterBuilder(appConfig.AWS, appConfig.OSDClusterConfig))
 	return &DefaultProviderFactory{
-		ocmClient:          ocmClient,
-		config:             appConfig,
-		ocmProvider:        nil,
-		standaloneProvider: nil,
+		providerContainer: map[api.ClusterProviderType]Provider{
+			api.ClusterProviderStandalone: standaloneProvider,
+			api.ClusterProviderOCM:        ocmProvider,
+		},
+		addonProviderContainer: map[api.ClusterProviderType]AddonProvider{
+			api.ClusterProviderStandalone: standaloneProvider,
+			api.ClusterProviderOCM:        ocmProvider,
+		},
 	}
 }
 
@@ -73,35 +76,24 @@ func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderTyp
 	if providerType == "" {
 		providerType = api.ClusterProviderOCM
 	}
-	switch providerType {
-	case api.ClusterProviderOCM:
-		if d.ocmProvider == nil {
-			cb := ocm.NewClusterBuilder(d.config.AWS, d.config.OSDClusterConfig)
-			d.ocmProvider = newOCMProvider(d.ocmClient, cb)
-		}
-		return d.ocmProvider, nil
-	case api.ClusterProviderStandalone:
-		if d.standaloneProvider == nil {
-			d.standaloneProvider = newStandaloneProvider()
-		}
-		return d.standaloneProvider, nil
-	default:
+
+	provider, ok := d.providerContainer[providerType]
+	if !ok {
 		return nil, errors.Errorf("invalid provider type: %v", providerType)
 	}
+
+	return provider, nil
 }
 
 func (d *DefaultProviderFactory) GetAddonProvider(providerType api.ClusterProviderType) (AddonProvider, error) {
 	if providerType == "" {
 		providerType = api.ClusterProviderOCM
 	}
-	switch providerType {
-	case api.ClusterProviderOCM:
-		if d.ocmProvider == nil {
-			cb := ocm.NewClusterBuilder(d.config.AWS, d.config.OSDClusterConfig)
-			d.ocmProvider = newOCMProvider(d.ocmClient, cb)
-		}
-		return d.ocmProvider, nil
-	default:
+
+	provider, ok := d.addonProviderContainer[providerType]
+	if !ok {
 		return nil, errors.Errorf("invalid provider type: %v", providerType)
 	}
+
+	return provider, nil
 }
