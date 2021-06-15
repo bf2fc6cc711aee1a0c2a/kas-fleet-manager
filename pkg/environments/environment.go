@@ -64,7 +64,6 @@ type Services struct {
 	DataPlaneCluster          services.DataPlaneClusterService
 	DataPlaneKafkaService     services.DataPlaneKafkaService
 	KasFleetshardAddonService services.KasFleetshardOperatorAddon
-	SignalBus                 signalbus.SignalBus
 	ClusterPlmtStrategy       services.ClusterPlacementStrategy
 }
 

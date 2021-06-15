@@ -36,7 +36,7 @@ const (
 )
 
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-var jwkURL string
+//var jwkURL string
 
 // TimeFunc defines a way to get a new Time instance common to the entire test suite.
 // Aria's environment has Virtual Time that may not be actual time. We compensate
@@ -52,6 +52,8 @@ type Services struct {
 	ClusterWorker     *workers.ClusterManager
 	KafkaWorkers      []workers.Worker
 	LeaderEleWorker   *workers.LeaderElectionManager
+	SignalBus         signalbus.SignalBus
+	APIServer         *server.ApiServer
 }
 
 type Helper struct {
@@ -61,34 +63,10 @@ type Helper struct {
 	T             *testing.T
 	Env           *environments.Env
 
-	APIServer *server.ApiServer
 	Services
 }
 
-func NewHelper(t *testing.T) *Helper {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
-	if err != nil {
-		t.Errorf("failed to create a new auth helper %s", err.Error())
-	}
-	env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-	env.Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
-	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
-
-	return &Helper{
-		//AppConfig:     env.Config,
-		//DBFactory:     env.DBFactory,
-		JWTPrivateKey: authHelper.JWTPrivateKey,
-		JWTCA:         authHelper.JWTCA,
-		AuthHelper:    authHelper,
-		T:             t,
-		Env:           env,
-	}
-}
-
 func (helper *Helper) startAPIServer() {
-	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-	helper.Env.Config.Server.JwksURL = jwkURL
-	helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = false
 
 	if err := helper.Env.ServiceContainer.Resolve(&helper.APIServer); err != nil {
 		glog.Fatalf("di failure: %v", err)
@@ -139,14 +117,12 @@ func (helper *Helper) stopHealthCheckServer() {
 }
 
 func (helper *Helper) StartSignalBusWorker() {
-	env := helper.Env
 	glog.V(10).Info("Signal bus worker started")
-	env.Services.SignalBus.(*signalbus.PgSignalBus).Start()
+	helper.SignalBus.(*signalbus.PgSignalBus).Start()
 }
 
 func (helper *Helper) StopSignalBusWorker() {
-	env := helper.Env
-	env.Services.SignalBus.(*signalbus.PgSignalBus).Stop()
+	helper.SignalBus.(*signalbus.PgSignalBus).Stop()
 	glog.V(10).Info("Signal bus worker stopped")
 }
 
@@ -283,10 +259,8 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 	return context.WithValue(context.Background(), openapi.ContextAccessToken, token)
 }
 
-func (helper *Helper) StartJWKCertServerMock() (teardown func()) {
-	jwkURL, teardown = mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
-	helper.Env.Config.Server.JwksURL = jwkURL
-	return teardown
+func (helper *Helper) StartJWKCertServerMock() (string, func()) {
+	return mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
 }
 
 func (helper *Helper) DeleteAll(table interface{}) {
