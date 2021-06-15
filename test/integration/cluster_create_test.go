@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"testing"
 
 	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -26,7 +27,8 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	}(h)
 	h.Env.Config.AWS.AccountID = "123456789012"
 
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",

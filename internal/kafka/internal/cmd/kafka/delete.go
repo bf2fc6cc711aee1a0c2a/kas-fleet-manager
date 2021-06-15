@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -30,7 +31,8 @@ func NewDeleteCommand(env *environments.Env) *cobra.Command {
 func runDelete(env *environments.Env, cmd *cobra.Command, _ []string) {
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
-	kafkaService := env.Services.Kafka
+	var kafkaService services.KafkaService
+	env.MustResolveAll(&kafkaService)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

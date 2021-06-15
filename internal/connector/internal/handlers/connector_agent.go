@@ -35,7 +35,7 @@ func (h *ConnectorClusterHandler) UpdateConnectorClusterStatus(w http.ResponseWr
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			convResource := presenters.ConvertConnectorClusterStatus(resource)
-			err := h.service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
+			err := h.Service.UpdateConnectorClusterStatus(ctx, connectorClusterId, convResource)
 			return nil, err
 		},
 	}
@@ -63,7 +63,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 
 			getList := func() (list private.ConnectorDeploymentList, err *errors.ServiceError) {
 
-				resources, paging, err := h.service.ListConnectorDeployments(ctx, connectorClusterId, listArgs, gtVersion)
+				resources, paging, err := h.Service.ListConnectorDeployments(ctx, connectorClusterId, listArgs, gtVersion)
 				if err != nil {
 					return
 				}
@@ -92,7 +92,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				list, err := getList()
 				bookmarkSent := false
 
-				sub := h.bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", connectorClusterId))
+				sub := h.Bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", connectorClusterId))
 				return handlers.EventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,
@@ -167,7 +167,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 		return private.ConnectorDeployment{}, err
 	}
 
-	apiSpec, err := h.service.GetConnectorWithBase64Secrets(r.Context(), resource)
+	apiSpec, err := h.Service.GetConnectorWithBase64Secrets(r.Context(), resource)
 	if err != nil {
 		return private.ConnectorDeployment{}, err
 	}
@@ -177,7 +177,7 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 		return private.ConnectorDeployment{}, err
 	}
 
-	shardMetadataJson, err := h.connectorTypes.GetConnectorShardMetadata(resource.ConnectorTypeChannelId)
+	shardMetadataJson, err := h.ConnectorTypes.GetConnectorShardMetadata(resource.ConnectorTypeChannelId)
 	if err != nil {
 		return private.ConnectorDeployment{}, err
 	}
@@ -225,7 +225,7 @@ func (h *ConnectorClusterHandler) GetDeployment(w http.ResponseWriter, r *http.R
 			handlers.Validation("deployment_id", &deploymentId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			resource, err := h.service.GetDeployment(r.Context(), deploymentId)
+			resource, err := h.Service.GetDeployment(r.Context(), deploymentId)
 			if err != nil {
 				return nil, err
 			}
@@ -258,7 +258,7 @@ func (h *ConnectorClusterHandler) UpdateDeploymentStatus(w http.ResponseWriter, 
 				return nil, serr
 			}
 			converted.ID = deploymentId
-			err := h.service.UpdateConnectorDeploymentStatus(ctx, converted)
+			err := h.Service.UpdateConnectorDeploymentStatus(ctx, converted)
 			return nil, err
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,8 @@ func runCreate(env *environments.Env, cmd *cobra.Command, _ []string) {
 	multiAZ := flags.MustGetBool(FlagMultiAZ, cmd.Flags())
 	providerType := flags.MustGetDefinedString(FlagProviderType, cmd.Flags())
 
-	clusterService := env.Services.Cluster
+	var clusterService services.ClusterService
+	env.MustResolveAll(&clusterService)
 
 	clusterRequest := api.Cluster{
 		CloudProvider: provider,

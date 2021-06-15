@@ -2,6 +2,7 @@ package integration
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"net/http"
 	"testing"
 
@@ -67,13 +68,17 @@ func getClusterForScaleTest(replicas int) *clustersmgmtv1.Cluster {
 
 // scaleUpComputeNodes and confirm that it is scaled without error
 func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, increment int) {
-	_, err := h.Env.Services.Cluster.ScaleUpComputeNodes(clusterID, increment)
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
+	_, err := clusterService.ScaleUpComputeNodes(clusterID, increment)
 	Expect(err).To(BeNil())
 }
 
 // scaleDownComputeNodes and confirm that it is scaled without error
 func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, decrement int) {
-	_, err := h.Env.Services.Cluster.ScaleDownComputeNodes(clusterID, decrement)
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
+	_, err := clusterService.ScaleDownComputeNodes(clusterID, decrement)
 	Expect(err).To(BeNil())
 }
 

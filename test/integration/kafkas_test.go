@@ -102,7 +102,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
 	Expect(kafka.Version).To(Equal(h.AppConfig.Kafka.DefaultKafkaVersion))
 
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	var kafkaRequest api.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find kafka request")
@@ -157,7 +157,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	kafkas := []*api.KafkaRequest{
 		{
 			MultiAZ:        false,
@@ -489,7 +489,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	kafkas := []*api.KafkaRequest{
@@ -907,7 +907,8 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	// custom update kafka status implementation to ensure that kafkas created within this test never gets updated to a 'ready' state.
 	mockKasFleetshardSyncBuilder.SetUpdateKafkaStatusFunc(func(helper *test.Helper, privateClient *privateopenapi.APIClient) error {
-		clusterService := helper.Env.Services.Cluster
+		var clusterService services.ClusterService
+		h.Env.MustResolveAll(&clusterService)
 		dataplaneCluster, findDataplaneClusterErr := clusterService.FindCluster(services.FindClusterCriteria{
 			Status: api.ClusterReady,
 		})
@@ -1250,7 +1251,7 @@ func deleteTestKafka(t *testing.T, h *test.Helper, ctx context.Context, client *
 		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
 		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			db := h.Env.DBFactory.New()
+			db := h.DBFactory.New()
 			var kafkaRequest api.KafkaRequest
 			if err := db.Unscoped().Where("id = ?", kafkaID).First(&kafkaRequest).Error; err != nil {
 				return false, err
@@ -1336,7 +1337,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 
@@ -1427,7 +1428,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	// set the long lived kafka id list at the beginning of the tests to avoid potential timing issues when testing its case

@@ -43,8 +43,8 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	owner := flags.MustGetDefinedString(FlagOwner, cmd.Flags())
 	page := flags.MustGetString(FlagPage, cmd.Flags())
 	size := flags.MustGetString(FlagSize, cmd.Flags())
-
-	kafkaService := env.Services.Kafka
+	var kafkaService services.KafkaService
+	env.MustResolveAll(&kafkaService)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -9,7 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
@@ -35,8 +36,13 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer teardown()
 
 	// setup required services
-	ocmClient := ocm.NewClient(h.Env.Clients.OCM.Connection)
-	clusterService := h.Env.Services.Cluster
+
+	var ocm2Client *ocm2.Client
+	h.Env.MustResolveAll(&ocm2Client)
+	ocmClient := ocm.NewClient(ocm2Client.Connection)
+
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
@@ -134,7 +140,8 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer kasfFleetshardSync.Stop()
 
 	// setup required services
-	clusterService := h.Env.Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 
 	// Get a 'ready' osd cluster
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
@@ -145,7 +152,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	db := h.Env.DBFactory.New()
+	db := h.DBFactory.New()
 	cluster, _ := clusterService.FindClusterByID(clusterID)
 
 	// create dummy kafkas and assign it to current cluster to make it not empty

@@ -5,6 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -54,7 +55,8 @@ func NewScaleDownCommand(env *environments.Env) *cobra.Command {
 
 func runScaleUp(env *environments.Env, cmd *cobra.Command, _ []string) {
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
-	clusterService := env.Services.Cluster
+	var clusterService services.ClusterService
+	env.MustResolveAll(&clusterService)
 
 	// scale up compute nodes
 	cluster, err := clusterService.ScaleUpComputeNodes(clusterID, constants.DefaultClusterNodeScaleIncrement)
@@ -72,7 +74,8 @@ func runScaleUp(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 func runScaleDown(env *environments.Env, cmd *cobra.Command, _ []string) {
 	clusterID := flags.MustGetDefinedString(FlagClusterID, cmd.Flags())
-	clusterService := env.Services.Cluster
+	var clusterService services.ClusterService
+	env.MustResolveAll(&clusterService)
 
 	// scale down compute nodes
 	cluster, err := clusterService.ScaleDownComputeNodes(clusterID, constants.DefaultClusterNodeScaleIncrement)

@@ -5,7 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +21,7 @@ func NewServeCommand(env *environments.Env) *cobra.Command {
 }
 
 func runServe(env *environments.Env, cmd *cobra.Command, args []string) {
-	if err := env.ServiceContainer.Invoke(func(
+	env.MustInvoke(func(
 		apiServer *server.ApiServer,
 		metricsServer *server.MetricsServer,
 		healthCheckServer *server.HealthCheckServer,
@@ -37,9 +36,6 @@ func runServe(env *environments.Env, cmd *cobra.Command, args []string) {
 		signalBus.Start()
 		// starts Leader Election manager to coordinate workers job in a single or a replicas setting
 		leaderElectionManager.Start()
-
-	}); err != nil {
-		glog.Fatalf("di failure: %s", err.Error())
-	}
+	})
 	select {}
 }

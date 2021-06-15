@@ -3,6 +3,7 @@ package kasfleetshardsync
 import (
 	"context"
 	"fmt"
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 	"time"
 
@@ -19,7 +20,9 @@ import (
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
 var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error {
-	clusters, err := helper.Env.Services.Cluster.FindAllClusters(services.FindClusterCriteria{
+	var clusterService services.ClusterService
+	helper.Env.MustResolveAll(&clusterService)
+	clusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
 	})
 	if err != nil {
@@ -60,7 +63,8 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateC
 // Any Kafkas marked for deletion are updated to 'deleting'
 // Kafkas with any other status are updated to 'ready'
 var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient) error {
-	clusterService := helper.Env.Services.Cluster
+	var clusterService services.ClusterService
+	helper.Env.MustResolveAll(&clusterService)
 
 	var dataplaneClusters []*api.Cluster
 	readyDataplaneClusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
@@ -126,11 +130,13 @@ type mockKasFleetshardSyncBuilder struct {
 var _ MockKasFleetshardSyncBuilder = &mockKasFleetshardSyncBuilder{}
 
 func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasFleetshardSyncBuilder {
+	var ocm2Client *ocm2.Client
+	helper.Env.MustResolveAll(&ocm2Client)
 	return &mockKasFleetshardSyncBuilder{
 		kfsync: mockKasFleetshardSync{
 			helper:                       helper,
 			t:                            t,
-			ocmClient:                    ocm.NewClient(helper.Env.Clients.OCM.Connection),
+			ocmClient:                    ocm.NewClient(ocm2Client.Connection),
 			privateClient:                helper.NewPrivateAPIClient(),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,
