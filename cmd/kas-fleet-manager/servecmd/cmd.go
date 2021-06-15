@@ -2,6 +2,7 @@ package servecmd
 
 import (
 	goerrors "errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
@@ -35,7 +36,7 @@ func runServe(cmd *cobra.Command, args []string) {
 		glog.Fatalf("Unable to initialize environment: %s", err.Error())
 	}
 
-	if err := env.ServiceContainer.Invoke(func(apiserver *server.ApiServer, metricsServer server.MetricsServer, healthcheckServer *server.HealthCheckServer) {
+	if err := env.ServiceContainer.Invoke(func(apiserver *server.ApiServer, metricsServer *server.MetricsServer, healthcheckServer *server.HealthCheckServer) {
 		// Run the servers
 		go apiserver.Start()
 		go metricsServer.Start()
