@@ -2,14 +2,13 @@ package clusters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
-	"github.com/pkg/errors"
 )
 
 type StandaloneProvider struct {
 }
 
 func (s StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
-	return nil, errors.Errorf("Create is not supported for StandaloneProvider type")
+	return nil, nil
 }
 
 func (s StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
