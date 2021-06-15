@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"strings"
 	"sync"
 
@@ -102,9 +103,9 @@ type ClusterManager struct {
 type processor func() []error
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, configService services.ConfigService, id string, agentOperatorAddon services.KasFleetshardOperatorAddon, osdIdpKeycloakService services.KeycloakService, bus signalbus.SignalBus) *ClusterManager {
+func NewClusterManager(clusterService services.ClusterService, cloudProvidersService services.CloudProvidersService, configService services.ConfigService, agentOperatorAddon services.KasFleetshardOperatorAddon, osdIdpKeycloakService services.OsdKeycloakService, bus signalbus.SignalBus) *ClusterManager {
 	return &ClusterManager{
-		id:                         id,
+		id:                         uuid.New().String(),
 		workerType:                 "cluster",
 		clusterService:             clusterService,
 		cloudProvidersService:      cloudProvidersService,

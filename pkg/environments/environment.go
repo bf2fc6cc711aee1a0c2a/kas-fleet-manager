@@ -11,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	"github.com/pkg/errors"
@@ -52,6 +53,7 @@ type Env struct {
 }
 
 type Services struct {
+	di.Inject
 	Kafka                     services.KafkaService
 	Cluster                   services.ClusterService
 	CloudProviders            services.CloudProvidersService
@@ -78,24 +80,6 @@ type ConfigDefaults struct {
 	OCM      map[string]interface{}
 	Options  map[string]interface{}
 }
-
-//var environment *Env
-//
-//func Environment() *Env {
-//	if environment == nil {
-//		panic("environment global not initialized.")
-//	}
-//	return environment
-//}
-//func SetEnvironment(e *Env) {
-//	if e != nil && environment != nil {
-//		panic("environment global already initialized.")
-//	}
-//	if e == nil && environment == nil {
-//		panic("environment global already uninitialized.")
-//	}
-//	environment = e
-//}
 
 func GetEnvironmentStrFromEnv() string {
 	envStr, specified := os.LookupEnv(EnvironmentStringKey)
@@ -230,9 +214,9 @@ func (env *Env) CreateServices() error {
 		di.ProvideValue(env.Config.Keycloak),
 
 		di.Provide(db.NewConnectionFactory),
-		di.Provide(func() signalbus.SignalBus {
+		di.Provide(func() *signalbus.PgSignalBus {
 			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), env.DBFactory)
-		}),
+		}, di.As(new(signalbus.SignalBus))),
 
 		di.Provide(NewObservatoriumClient),
 		di.Provide(NewOCMClient),
@@ -244,13 +228,13 @@ func (env *Env) CreateServices() error {
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(services.NewClusterService),
 
-		di.Provide(func() services.KeycloakService {
+		di.Provide(func() services.KafkaKeycloakService {
 			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
-		}, di.Tags{"realm": "kafka"}, di.As(new(services.KafkaKeycloakService))),
+		}),
 
-		di.Provide(func() services.KeycloakService {
+		di.Provide(func() services.OsdKeycloakService {
 			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
-		}, di.Tags{"realm": "osd"}, di.As(new(services.OsdKeycloakService))),
+		}),
 
 		di.Provide(services.NewConfigService),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
@@ -271,16 +255,14 @@ func (env *Env) CreateServices() error {
 		di.Provide(server.NewAPIServer),
 		di.Provide(server.NewMetricsServer),
 		di.Provide(server.NewHealthCheckServer),
+
+		di.Provide(workers.NewLeaderElectionManager),
 	)...)
 	if err != nil {
 		return err
 	}
 
-	if env.ServiceContainer != nil {
-		env.ServiceContainer.Cleanup()
-	}
 	env.ServiceContainer = container
-
 	if err := container.Resolve(&env.DBFactory); err != nil {
 		return err
 	}
@@ -293,41 +275,7 @@ func (env *Env) CreateServices() error {
 	if err := container.Resolve(&env.QuotaServiceFactory); err != nil {
 		return err
 	}
-
-	if err := container.Resolve(&env.Services.Kafka); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.Cluster); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.CloudProviders); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.Observatorium); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.Keycloak, di.Tags{"realm": "kafka"}); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.OsdIdpKeycloak, di.Tags{"realm": "osd"}); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.KasFleetshardAddonService); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.SignalBus); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.ClusterPlmtStrategy); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.DataPlaneCluster); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.DataPlaneKafkaService); err != nil {
-		return err
-	}
-	if err := container.Resolve(&env.Services.Config); err != nil {
+	if err := container.Resolve(&env.Services); err != nil {
 		return err
 	}
 

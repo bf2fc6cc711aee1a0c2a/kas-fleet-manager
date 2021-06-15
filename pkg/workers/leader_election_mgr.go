@@ -78,6 +78,9 @@ func (s *LeaderElectionManager) Start() {
 // impl. Stoppable
 // Workers started with Leader Election manager should be stop from here
 func (s *LeaderElectionManager) Stop() {
+	if s.tearDown == nil {
+		return
+	}
 	select {
 	case <-s.tearDown:
 		return //already closed/stopped
