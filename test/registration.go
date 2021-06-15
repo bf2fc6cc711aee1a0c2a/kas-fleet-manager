@@ -3,7 +3,9 @@ package test
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
@@ -17,8 +19,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 )
-
-var env *environments.Env
 
 type Hook func(helper *Helper)
 
@@ -54,7 +54,7 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 	}
 
 	var err error
-	env, err = environments.NewEnv(envName, options...)
+	env, err := environments.NewEnv(envName, options...)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
@@ -76,8 +76,22 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 		glog.Fatalf("Unable to parse command line options: %s", err.Error())
 	}
 
+	env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	env.Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
+
 	// Create a new helper
-	h := NewHelper(t)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
+	if err != nil {
+		t.Fatalf("failed to create a new auth helper %s", err.Error())
+	}
+	h := &Helper{
+		T:             t,
+		Env:           env,
+		JWTPrivateKey: authHelper.JWTPrivateKey,
+		JWTCA:         authHelper.JWTCA,
+		AuthHelper:    authHelper,
+	}
 
 	// Set server if provided
 	env.Config.ObservabilityConfiguration.EnableMock = true
@@ -88,6 +102,10 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 			workers.RepeatInterval = 1 * time.Second
 		}
 	}
+
+	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
+	env.Config.Server.JwksURL = jwkURL
+	env.Config.Keycloak.EnableAuthenticationOnKafka = false
 
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()
@@ -117,7 +135,6 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 	}
 
 	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-	stopJWKMockServer := h.StartJWKCertServerMock()
 	h.startMetricsServer()
 	h.startHealthCheckServer()
 
