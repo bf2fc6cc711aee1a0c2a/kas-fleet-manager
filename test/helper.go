@@ -4,15 +4,12 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
 	"github.com/goava/di"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers/kafka_mgrs"
-
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
@@ -52,6 +49,9 @@ type Services struct {
 	AppConfig         *config.ApplicationConfig
 	MetricsServer     *server.MetricsServer
 	HealthCheckServer *server.HealthCheckServer
+	ClusterWorker     *workers.ClusterManager
+	KafkaWorkers      []workers.Worker
+	LeaderEleWorker   *workers.LeaderElectionManager
 }
 
 type Helper struct {
@@ -61,11 +61,7 @@ type Helper struct {
 	T             *testing.T
 	Env           *environments.Env
 
-	APIServer       *server.ApiServer
-	KafkaWorkers    []workers.Worker
-	ClusterWorker   *workers.ClusterManager
-	LeaderEleWorker *workers.LeaderElectionManager
-
+	APIServer *server.ApiServer
 	Services
 }
 
@@ -142,55 +138,6 @@ func (helper *Helper) stopHealthCheckServer() {
 	}
 }
 
-func (helper *Helper) startKafkaWorkers() {
-	env := helper.Env
-	var kafkaWorkerList []workers.Worker
-	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.SignalBus)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.ClusterPlmtStrategy, env.Services.SignalBus)
-	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.SignalBus)
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.SignalBus)
-	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Observatorium, env.Services.Config, env.Services.SignalBus)
-	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Keycloak, env.Services.Config, env.Services.SignalBus)
-	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
-
-	go func() {
-		glog.V(10).Info("Test Metrics server started")
-		for _, worker := range helper.KafkaWorkers {
-			worker.Start()
-		}
-		glog.V(10).Info("Test Metrics server stopped")
-	}()
-}
-
-func (helper *Helper) stopKafkaWorkers() {
-	if len(helper.KafkaWorkers) < 1 {
-		return
-	}
-
-	for _, worker := range helper.KafkaWorkers {
-		worker.Stop()
-	}
-}
-
-func (helper *Helper) startClusterWorker() {
-	// start cluster worker
-	services := helper.Env.Services
-	helper.ClusterWorker = workers.NewClusterManager(services.Cluster, services.CloudProviders,
-		services.Config, uuid.New().String(), services.KasFleetshardAddonService, services.OsdIdpKeycloak, services.SignalBus)
-	go func() {
-		glog.V(10).Info("Test Metrics server started")
-		helper.ClusterWorker.Start()
-		glog.V(10).Info("Test Metrics server stopped")
-	}()
-}
-
-func (helper *Helper) stopClusterWorker() {
-	if helper.ClusterWorker == nil {
-		return
-	}
-	helper.ClusterWorker.Stop()
-}
-
 func (helper *Helper) StartSignalBusWorker() {
 	env := helper.Env
 	glog.V(10).Info("Signal bus worker started")
@@ -204,33 +151,6 @@ func (helper *Helper) StopSignalBusWorker() {
 }
 
 func (helper *Helper) startLeaderElectionWorker() {
-
-	env := helper.Env
-	services := env.Services
-	helper.ClusterWorker = workers.NewClusterManager(services.Cluster, services.CloudProviders,
-		services.Config, uuid.New().String(), services.KasFleetshardAddonService, services.OsdIdpKeycloak, services.SignalBus)
-
-	var kafkaWorkerList []workers.Worker
-	kafkaWorker := kafka_mgrs.NewKafkaManager(services.Kafka, uuid.New().String(), services.Config, services.SignalBus)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(services.Kafka, uuid.New().String(), services.Config, env.QuotaServiceFactory, services.ClusterPlmtStrategy, env.Services.SignalBus)
-	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(services.Kafka, uuid.New().String(), env.Services.SignalBus)
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(services.Kafka, uuid.New().String(), services.Config, env.QuotaServiceFactory, env.Services.SignalBus)
-	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(services.Kafka, uuid.New().String(), services.Observatorium, services.Config, env.Services.SignalBus)
-	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(services.Kafka, uuid.New().String(), services.Keycloak, services.Config, env.Services.SignalBus)
-	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
-
-	var workerList []workers.Worker
-	workerList = append(workerList, helper.ClusterWorker)
-	workerList = append(workerList, helper.KafkaWorkers...)
-
-	// load dependency injected workers.
-	var diWorkers []workers.Worker
-	if err := env.ServiceContainer.Resolve(&diWorkers); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
-		panic(err)
-	}
-	workerList = append(workerList, diWorkers...)
-
-	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerList, helper.DBFactory)
 	helper.LeaderEleWorker.Start()
 	glog.V(10).Info("Test Leader Election Manager started")
 }
@@ -265,24 +185,6 @@ func (helper *Helper) RestartServer() {
 	helper.stopAPIServer()
 	helper.startAPIServer()
 	glog.V(10).Info("Test API server restarted")
-}
-
-func (helper *Helper) StartKafkaWorker() {
-	helper.stopKafkaWorkers()
-	helper.startKafkaWorkers()
-}
-
-func (helper *Helper) StopKafkaWorker() {
-	helper.stopKafkaWorkers()
-}
-
-func (helper *Helper) StartClusterWorker() {
-	helper.stopClusterWorker()
-	helper.startClusterWorker()
-}
-
-func (helper *Helper) StopClusterWorker() {
-	helper.stopClusterWorker()
 }
 
 func (helper *Helper) RestartMetricsServer() {

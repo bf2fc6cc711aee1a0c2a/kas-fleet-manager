@@ -16,7 +16,7 @@ type serviceAccountsHandler struct {
 	service services.KeycloakService
 }
 
-func NewServiceAccountHandler(service services.KeycloakService) *serviceAccountsHandler {
+func NewServiceAccountHandler(service services.KafkaKeycloakService) *serviceAccountsHandler {
 	return &serviceAccountsHandler{
 		service: service,
 	}

@@ -2,6 +2,7 @@ package kafka_mgrs
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/google/uuid"
 	"sync"
 	"time"
 
@@ -28,9 +29,9 @@ type ProvisioningKafkaManager struct {
 }
 
 // NewProvisioningKafkaManager creates a new kafka manager
-func NewProvisioningKafkaManager(kafkaService services.KafkaService, id string, observatoriumService services.ObservatoriumService, configService services.ConfigService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
+func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, configService services.ConfigService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
-		id:                   id,
+		id:                   uuid.New().String(),
 		workerType:           "provisioning_kafka",
 		kafkaService:         kafkaService,
 		observatoriumService: observatoriumService,
