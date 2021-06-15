@@ -11,7 +11,6 @@ type ConfigModule interface {
 }
 
 type ApplicationConfig struct {
-	Server                     *ServerConfig               `json:"server"`
 	OCM                        *OCMConfig                  `json:"ocm"`
 	AWS                        *AWSConfig                  `json:"aws"`
 	SupportedProviders         *ProviderConfig             `json:"providers"`
@@ -26,7 +25,6 @@ var _ ConfigModule = &ApplicationConfig{}
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
-		Server:                     NewServerConfig(),
 		OCM:                        NewOCMConfig(),
 		AWS:                        NewAWSConfig(),
 		SupportedProviders:         NewSupportedProvidersConfig(),
@@ -40,7 +38,6 @@ func NewApplicationConfig() *ApplicationConfig {
 
 func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	flagset.AddGoFlagSet(flag.CommandLine)
-	c.Server.AddFlags(flagset)
 	c.OCM.AddFlags(flagset)
 	c.AWS.AddFlags(flagset)
 	c.SupportedProviders.AddFlags(flagset)
@@ -51,11 +48,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.OSDClusterConfig.AddFlags(flagset)
 }
 
-func (c *ApplicationConfig) ReadFiles() error {
-	err := c.Server.ReadFiles()
-	if err != nil {
-		return err
-	}
+func (c *ApplicationConfig) ReadFiles() (err error) {
 	err = c.OCM.ReadFiles()
 	if err != nil {
 		return err
@@ -88,5 +81,5 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return
 }

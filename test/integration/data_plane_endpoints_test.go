@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,6 +36,7 @@ type TestServer struct {
 type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.MapClaims
 
 func setup(t *testing.T, claims claimsFunc, startupHook test.Hook) TestServer {
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startupHook)
 
@@ -47,8 +49,11 @@ func setup(t *testing.T, claims claimsFunc, startupHook test.Hook) TestServer {
 	ctx := h.NewAuthenticatedContext(account, claims(account, clusterId, h))
 	token := h.CreateJWTStringWithClaim(account, claims(account, clusterId, h))
 
+	var serverConfig *config2.ServerConfig
+	h.Env.MustResolveAll(&serverConfig)
+
 	config := openapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", h.AppConfig.Server.BindAddress)
+	config.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
 	config.DefaultHeader = map[string]string{
 		"Authorization": "Bearer " + token,
 	}

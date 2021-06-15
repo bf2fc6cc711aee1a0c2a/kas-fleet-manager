@@ -19,7 +19,9 @@ type TestEnv struct {
 
 func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 	configHook := func(h *test.Helper) {
-		h.Env.Config.Server.EnableTermsAcceptance = true
+		var serverConfig *config.ServerConfig
+		h.Env.MustResolveAll(&serverConfig)
+		serverConfig.EnableTermsAcceptance = true
 	}
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	termsReviewResponse, err := mocks.GetMockTermsReviewBuilder(nil).TermsRequired(termsRequired).Build()

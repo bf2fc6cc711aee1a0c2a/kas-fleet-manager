@@ -76,12 +76,20 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 		glog.Fatalf("Unable to parse command line options: %s", err.Error())
 	}
 
-	env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-	env.Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+	var osdClusterConfig *config.OSDClusterConfig
+	var kafkaConfig *config.KafkaConfig
+	var ocmConfig *config.OCMConfig
+	var observabilityConfiguration *config.ObservabilityConfiguration
+	var serverConfig *config.ServerConfig
+	var keycloakConfig *config.KeycloakConfig
+	env.MustResolveAll(&osdClusterConfig, &kafkaConfig, &ocmConfig, &observabilityConfiguration, &serverConfig, &keycloakConfig)
+
+	osdClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
 	// Create a new helper
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatalf("failed to create a new auth helper %s", err.Error())
 	}
@@ -94,18 +102,18 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 	}
 
 	// Set server if provided
-	env.Config.ObservabilityConfiguration.EnableMock = true
+	observabilityConfiguration.EnableMock = true
 	if server != nil {
 		fmt.Printf("Setting OCM base URL to %s\n", server.URL)
-		env.Config.OCM.BaseURL = server.URL
-		if env.Config.OCM.MockMode == config.MockModeEmulateServer {
+		ocmConfig.BaseURL = server.URL
+		if ocmConfig.MockMode == config.MockModeEmulateServer {
 			workers.RepeatInterval = 1 * time.Second
 		}
 	}
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
-	env.Config.Server.JwksURL = jwkURL
-	env.Config.Keycloak.EnableAuthenticationOnKafka = false
+	serverConfig.JwksURL = jwkURL
+	keycloakConfig.EnableAuthenticationOnKafka = false
 
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()

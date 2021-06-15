@@ -186,11 +186,14 @@ func (helper *Helper) NewUUID() string {
 }
 
 func (helper *Helper) RestURL(path string) string {
+	var serverConfig *config.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
 	protocol := "http"
-	if helper.AppConfig.Server.EnableHTTPS {
+	if serverConfig.EnableHTTPS {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s/api/kafkas_mgmt/v1%s", protocol, helper.AppConfig.Server.BindAddress, path)
+	return fmt.Sprintf("%s://%s/api/kafkas_mgmt/v1%s", protocol, serverConfig.BindAddress, path)
 }
 
 func (helper *Helper) MetricsURL(path string) string {
@@ -206,16 +209,22 @@ func (helper *Helper) HealthCheckURL(path string) string {
 }
 
 func (helper *Helper) NewApiClient() *openapi.APIClient {
-	config := openapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
-	client := openapi.NewAPIClient(config)
+	var serverConfig *config.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
+	openapiConfig := openapi.NewConfiguration()
+	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
+	client := openapi.NewAPIClient(openapiConfig)
 	return client
 }
 
 func (helper *Helper) NewPrivateAPIClient() *privateopenapi.APIClient {
-	config := privateopenapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
-	client := privateopenapi.NewAPIClient(config)
+	var serverConfig *config.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
+	openapiConfig := privateopenapi.NewConfiguration()
+	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
+	client := privateopenapi.NewAPIClient(openapiConfig)
 	return client
 }
 
