@@ -2,9 +2,10 @@ package workers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"strings"
 	"sync"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
@@ -615,6 +616,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 			ClusterID:     p.ClusterId,
 			Status:        p.Status,
 			ProviderType:  p.ProviderType,
+			ClusterDNS:    p.ClusterDNS,
 		}
 		if err := c.clusterService.RegisterClusterJob(&clusterRequest); err != nil {
 			return []error{errors.Wrapf(err, "Failed to register new cluster %s with config file", p.ClusterId)}

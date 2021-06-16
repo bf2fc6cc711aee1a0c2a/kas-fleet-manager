@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	userv1 "github.com/openshift/api/user/v1"
@@ -68,6 +70,7 @@ type ManualCluster struct {
 	KafkaInstanceLimit int                     `yaml:"kafka_instance_limit"`
 	Status             api.ClusterStatus       `yaml:"status"`
 	ProviderType       api.ClusterProviderType `yaml:"provider_type"`
+	ClusterDNS         string                  `yaml:"cluster_dns"`
 }
 
 func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -75,6 +78,7 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	temp := t{
 		Status:       api.ClusterProvisioning,
 		ProviderType: api.ClusterProviderOCM,
+		ClusterDNS:   "",
 	}
 	err := unmarshal(&temp)
 	if err != nil {
@@ -84,6 +88,15 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if c.ClusterId == "" {
 		return fmt.Errorf("cluster_id is empty")
 	}
+
+	if c.ProviderType == api.ClusterProviderStandalone {
+		if c.ClusterDNS == "" {
+			return errors.Errorf("Standalone cluster with id %s does not have the cluster dns field provided", c.ClusterId)
+		}
+
+		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
+	}
+
 	return nil
 }
 
