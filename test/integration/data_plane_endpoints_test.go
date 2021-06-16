@@ -14,6 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -591,4 +592,61 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 
+}
+
+func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
+	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, nil, nil)
+	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
+	db := testServer.Helper.Env().DBFactory.New()
+
+	testKafka := api.KafkaRequest{
+		ClusterID:           testServer.ClusterID,
+		MultiAZ:             false,
+		Name:                mockKafkaName1,
+		Status:              constants.KafkaRequestStatusReady.String(),
+		BootstrapServerHost: bootstrapServerHost,
+		SsoClientID:         ssoClientID,
+		SsoClientSecret:     ssoSecret,
+		Version:             "2.7.0",
+	}
+
+	// create dummy kafkas
+	if err := db.Create(&testKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	kafkaReqID := list.Items[0].Metadata.Annotations.Id
+
+	errMessage := "test-err-message"
+	updateReq := map[string]openapi.DataPlaneKafkaStatus{
+		kafkaReqID: kasfleetshardsync.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
+	}
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	Expect(err).NotTo(HaveOccurred())
+
+	c := &api.KafkaRequest{}
+	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
+		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
+	}
+	Expect(c.Status).To(Equal(constants.KafkaRequestStatusFailed.String()))
+	Expect(c.FailedReason).To(ContainSubstring(errMessage))
 }
