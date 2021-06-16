@@ -86,14 +86,18 @@ var clusterLoggingOperatorAddonParams = []ocm.AddonParameter{
 }
 
 // ClusterManager represents a cluster manager that periodically reconciles osd clusters
+
 type ClusterManager struct {
-	di.Inject
 	id           string
 	workerType   string
 	isRunning    bool
 	imStop       chan struct{} //a chan used only for cancellation
 	syncTeardown sync.WaitGroup
+	ClusterManagerOptions
+}
 
+type ClusterManagerOptions struct {
+	di.Inject
 	Reconciler                 Reconciler
 	OCMConfig                  *config.OCMConfig
 	ClusterService             services.ClusterService
@@ -106,10 +110,12 @@ type ClusterManager struct {
 type processor func() []error
 
 // NewClusterManager creates a new cluster manager
-func NewClusterManager(o ClusterManager) *ClusterManager {
-	o.id = uuid.New().String()
-	o.workerType = "cluster"
-	return &o
+func NewClusterManager(o ClusterManagerOptions) *ClusterManager {
+	return &ClusterManager{
+		id:                    uuid.New().String(),
+		workerType:            "cluster",
+		ClusterManagerOptions: o,
+	}
 }
 
 func (c *ClusterManager) GetStopChan() *chan struct{} {

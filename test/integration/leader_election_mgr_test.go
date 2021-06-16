@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"testing"
 	"time"
 
@@ -22,10 +23,13 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	var clusterManager *workers.ClusterManager
+	h.Env.MustResolveAll(&clusterManager)
+
 	// wait and validate all workers are started.
 	var clusterState bool
 	err := wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		clusterState = h.ClusterWorker.IsRunning()
+		clusterState = clusterManager.IsRunning()
 		return clusterState, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
@@ -33,10 +37,10 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 
 	kafkaState := false
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		if len(h.KafkaWorkers) < 1 {
+		if len(h.Workers) < 1 {
 			return false, nil
 		}
-		for _, worker := range h.KafkaWorkers {
+		for _, worker := range h.Workers {
 			if !worker.IsRunning() {
 				return false, nil
 			}
@@ -49,18 +53,18 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	Expect(kafkaState).To(Equal(true))
 
 	// Take down a worker and valid it is really down
-	h.LeaderEleWorker.Stop()
+	h.LeaderElectionManager.Stop()
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		clusterState = h.ClusterWorker.IsRunning()
+		clusterState = clusterManager.IsRunning()
 		return !clusterState, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
 	Expect(clusterState).To(Equal(false))
 
-	h.LeaderEleWorker.Start()
+	h.LeaderElectionManager.Start()
 	// Wait for Leader Election Manager to start it up again
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		clusterState = h.ClusterWorker.IsRunning()
+		clusterState = clusterManager.IsRunning()
 		return clusterState, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
