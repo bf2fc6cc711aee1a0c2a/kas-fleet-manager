@@ -4,7 +4,7 @@ on:
     branches: 
       - main
     paths:
-      - "openapi/kas-fleet-manager.yaml"
+      - "openapi/*.yaml"
 
 jobs:
   dispatch:
@@ -13,13 +13,35 @@ jobs:
       APP_SERVICES_CI_TOKEN: ${{ secrets.GH_CI_TOKEN }}
     strategy:
       matrix:
-        repo: ["redhat-developer/app-services-sdk-go", "redhat-developer/app-services-sdk-js", "redhat-developer/app-services-sdk-java"]
+        repo:
+          - "redhat-developer/app-services-sdk-go"
+          - "redhat-developer/app-services-sdk-js"
+          - "redhat-developer/app-services-sdk-java"
     runs-on: ubuntu-latest
     steps:
-      - name: Repository Dispatch
+      - uses: actions/checkout@v2
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          base: main
+          list-files: json
+          filters: |
+            openapi:
+              - 'openapi/*.yaml'
+      - if: contains(steps.filter.outputs.openapi_files, 'openapi/kas-fleet-manager.yaml')
+        name: KAS Fleet Manager OpenAPI changed
         uses: peter-evans/repository-dispatch@v1
         with:
           token: ${{ env.APP_SERVICES_CI_TOKEN }}
           repository: ${{ matrix.repo }}
           event-type: openapi-spec-change
           client-payload: '{ "id": "kafka-mgmt/v1", "download_url":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/main/openapi/kas-fleet-manager.yaml"}'
+
+      - if: contains(steps.filter.outputs.openapi_files, 'openapi/connector_mgmt.yaml')
+        name: Connector Service Fleet Manager OpenAPI changed
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ env.APP_SERVICES_CI_TOKEN }}
+          repository: ${{ matrix.repo }}
+          event-type: openapi-spec-change
+          client-payload: '{ "id": "connector-mgmt/v1", "download_url":"https://raw.githubusercontent.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/main/openapi/connector_mgmt.yaml"}'
