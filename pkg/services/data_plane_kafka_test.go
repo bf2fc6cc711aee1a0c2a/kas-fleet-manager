@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -11,6 +12,7 @@ import (
 )
 
 func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
+	testErrorCondMessage := "test failed message"
 	tests := []struct {
 		name           string
 		clusterService ClusterService
@@ -56,7 +58,15 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						}, nil
 					},
 					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
-						c["rejected"]++
+						if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
+							if !strings.Contains(kafkaRequest.FailedReason, testErrorCondMessage) {
+								return errors.GeneralError("Test failure error. Expected FailedReason is empty")
+							}
+							c["failed"]++
+
+						} else {
+							c["rejected"]++
+						}
 						return nil
 					},
 					UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
@@ -96,9 +106,10 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				{
 					Conditions: []api.DataPlaneKafkaStatusCondition{
 						{
-							Type:   "Ready",
-							Status: "False",
-							Reason: "Error",
+							Type:    "Ready",
+							Status:  "False",
+							Reason:  "Error",
+							Message: testErrorCondMessage,
 						},
 					},
 				},

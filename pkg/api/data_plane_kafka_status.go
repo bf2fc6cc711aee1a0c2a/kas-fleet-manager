@@ -1,5 +1,9 @@
 package api
 
+import (
+	"strings"
+)
+
 type DataPlaneKafkaStatus struct {
 	KafkaClusterId string
 	Conditions     []DataPlaneKafkaStatusCondition
@@ -11,4 +15,13 @@ type DataPlaneKafkaStatusCondition struct {
 	Reason  string
 	Status  string
 	Message string
+}
+
+func (d *DataPlaneKafkaStatus) GetReadyCondition() (DataPlaneKafkaStatusCondition, bool) {
+	for _, c := range d.Conditions {
+		if strings.EqualFold(c.Type, "Ready") {
+			return c, true
+		}
+	}
+	return DataPlaneKafkaStatusCondition{}, false
 }
