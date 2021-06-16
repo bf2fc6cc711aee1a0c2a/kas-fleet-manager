@@ -45,15 +45,14 @@ type TimeFunc func() time.Time
 
 type Services struct {
 	di.Inject
-	DBFactory         *db.ConnectionFactory
-	AppConfig         *config.ApplicationConfig
-	MetricsServer     *server.MetricsServer
-	HealthCheckServer *server.HealthCheckServer
-	ClusterWorker     *workers.ClusterManager
-	KafkaWorkers      []workers.Worker
-	LeaderEleWorker   *workers.LeaderElectionManager
-	SignalBus         signalbus.SignalBus
-	APIServer         *server.ApiServer
+	DBFactory             *db.ConnectionFactory
+	AppConfig             *config.ApplicationConfig
+	MetricsServer         *server.MetricsServer
+	HealthCheckServer     *server.HealthCheckServer
+	Workers               []workers.Worker
+	LeaderElectionManager *workers.LeaderElectionManager
+	SignalBus             signalbus.SignalBus
+	APIServer             *server.ApiServer
 }
 
 type Helper struct {
@@ -127,15 +126,15 @@ func (helper *Helper) StopSignalBusWorker() {
 }
 
 func (helper *Helper) startLeaderElectionWorker() {
-	helper.LeaderEleWorker.Start()
+	helper.LeaderElectionManager.Start()
 	glog.V(10).Info("Test Leader Election Manager started")
 }
 
 func (helper *Helper) stopLeaderElectionWorker() {
-	if helper.LeaderEleWorker == nil {
+	if helper.LeaderElectionManager == nil {
 		return
 	}
-	helper.LeaderEleWorker.Stop()
+	helper.LeaderElectionManager.Stop()
 }
 
 func (helper *Helper) StartLeaderElectionWorker() {
