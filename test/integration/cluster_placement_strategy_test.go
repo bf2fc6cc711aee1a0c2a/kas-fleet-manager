@@ -1,8 +1,9 @@
 package integration
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -69,10 +70,28 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//*********************************************************************
 	// pre-create clusters
 	//*********************************************************************
+	clusterDns := "apps.example.com"
 	h.Env().Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
-		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
+		config.ManualCluster{
+			ClusterId:          "test03",
+			KafkaInstanceLimit: 1,
+			Region:             clusterCriteria.Region,
+			MultiAZ:            clusterCriteria.MultiAZ,
+			CloudProvider:      clusterCriteria.Provider,
+			Schedulable:        true,
+		},
 		// this is a dummy cluster which will be auto created and should not be deleted because it has kafka in it
-		config.ManualCluster{ClusterId: clusterWithKafkaID, KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
+		config.ManualCluster{
+			ClusterId:          clusterWithKafkaID,
+			KafkaInstanceLimit: 1,
+			Region:             clusterCriteria.Region,
+			MultiAZ:            clusterCriteria.MultiAZ,
+			CloudProvider:      clusterCriteria.Provider,
+			Schedulable:        true,
+			ProviderType:       api.ClusterProviderStandalone,
+			ClusterDNS:         clusterDns,
+			Status:             api.ClusterProvisioning, // standalone cluster needs to start at provisioning state.
+		},
 	})
 
 	clusterService := h.Env().Services.Cluster
@@ -80,6 +99,12 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// Ensure both clusters in the config file have been created
 	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(&clusterService, &clusterCriteria, 2)
 	Expect(pollErr).NotTo(HaveOccurred())
+
+	// Ensure that cluster dns is populated with given value
+	cluster, err := clusterService.FindClusterByID(clusterWithKafkaID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cluster.ClusterDNS).To(Equal(clusterDns))
+	Expect(cluster.ProviderType).To(Equal(api.ClusterProviderStandalone))
 
 	//*********************************************************************
 	//data plane cluster config - with new clusters
