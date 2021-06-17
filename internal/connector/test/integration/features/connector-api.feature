@@ -229,6 +229,49 @@ Feature: create a a connector
       }
       """
 
+  Scenario: Greg tries to create a connector with an invalid deployment_location.kind
+    Given I am logged in as "Greg"
+    Given I have created a kafka cluster as ${kid}
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "metadata": {
+          "name": "example 1",
+          "kafka_id":"${kid}"
+        },
+        "deployment_location": {
+          "kind": "WRONG",
+          "cluster_id": "default"
+        },
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "bootstrap_server": "kafka.hostname",
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
+        "connector_spec": {
+            "queueNameOrArn": "test",
+            "accessKey": "test",
+            "secretKey": "test",
+            "region": "east"
+        }
+      }
+      """
+    Then the response code should be 400
+    And the response should match json:
+      """
+      {
+        "code": "CONNECTOR-MGMT-33",
+        "href": "/api/connector_mgmt/v1/errors/33",
+        "id": "33",
+        "kind": "Error",
+        "operation_id": "${response.operation_id}",
+        "reason": "deployment_location.kind is not valid. Must be one of: addon"
+      }
+      """
+
+
   Scenario: Greg creates lists and deletes a connector verifying that Evil Bob can't access Gregs Connectors
   but Coworker Sally can.
     Given I am logged in as "Greg"
