@@ -4,9 +4,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 )
 
 type StandaloneProvider struct {
+	connectionFactory *db.ConnectionFactory
 }
 
 func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
@@ -51,7 +53,31 @@ func (s *StandaloneProvider) GetComputeNodes(spec *types.ClusterSpec) (*types.Co
 }
 
 func (s *StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
-	return &types.CloudProviderInfoList{}, nil
+	type Cluster struct {
+		CloudProvider string
+	}
+	dbConn := s.connectionFactory.New().
+		Model(&Cluster{}).
+		Distinct("cloud_provider").
+		Where("provider_type = ?", api.ClusterProviderStandalone.String()).
+		Where("status NOT IN (?)", api.ClusterDeletionStatuses)
+
+	var results []Cluster
+	err := dbConn.Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := []types.CloudProviderInfo{}
+	for _, result := range results {
+		items = append(items, types.CloudProviderInfo{
+			ID:          result.CloudProvider,
+			Name:        result.CloudProvider,
+			DisplayName: result.CloudProvider,
+		})
+	}
+
+	return &types.CloudProviderInfoList{Items: items}, nil
 }
 
 func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
@@ -68,6 +94,6 @@ func (s *StandaloneProvider) InstallAddonWithParams(clusterSpec *types.ClusterSp
 
 var _ Provider = &StandaloneProvider{}
 
-func newStandaloneProvider() *StandaloneProvider {
-	return &StandaloneProvider{}
+func newStandaloneProvider(connectionFactory *db.ConnectionFactory) *StandaloneProvider {
+	return &StandaloneProvider{connectionFactory: connectionFactory}
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -87,6 +88,31 @@ func TestListCloudProviders(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	gcp := "gcp"
+	// Create two clusters each with different provider type
+	dummyClusters := []*api.Cluster{
+		{
+			ClusterID:     api.NewID(),
+			MultiAZ:       true,
+			Region:        "af-east-1",
+			CloudProvider: gcp,
+			Status:        api.ClusterReady,
+			ProviderType:  api.ClusterProviderStandalone,
+		},
+		{
+			ClusterID:     api.NewID(),
+			MultiAZ:       true,
+			Region:        "us-east-1",
+			CloudProvider: "aws",
+			Status:        api.ClusterReady,
+			ProviderType:  api.ClusterProviderOCM,
+		},
+	}
+
+	if err := h.DBFactory.New().Create(dummyClusters).Error; err != nil {
+		t.Error("failed to create dummy clusters")
+		return
+	}
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
@@ -95,6 +121,15 @@ func TestListCloudProviders(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud providers list")
 
+	// verify that the cloud providers list should contain atleast "gcp" which comes from standalone provider type
+	hasGcp := false
+	for _, cloudProvider := range cloudProviderList.Items {
+		if cloudProvider.Id == gcp {
+			hasGcp = true
+			break
+		}
+	}
+	Expect(hasGcp).To(BeTrue())
 }
 
 func TestListCloudProviderRegions(t *testing.T) {

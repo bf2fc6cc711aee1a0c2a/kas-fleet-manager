@@ -5,6 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/pkg/errors"
 )
 
@@ -57,8 +58,8 @@ type DefaultProviderFactory struct {
 	addonProviderContainer map[api.ClusterProviderType]AddonProvider
 }
 
-func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.ApplicationConfig) *DefaultProviderFactory {
-	standaloneProvider := newStandaloneProvider()
+func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory) *DefaultProviderFactory {
+	standaloneProvider := newStandaloneProvider(connectionFactory)
 	ocmProvider := newOCMProvider(ocmClient, ocm.NewClusterBuilder(appConfig.AWS, appConfig.OSDClusterConfig))
 	return &DefaultProviderFactory{
 		providerContainer: map[api.ClusterProviderType]Provider{
