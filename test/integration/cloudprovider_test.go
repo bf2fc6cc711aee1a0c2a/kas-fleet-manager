@@ -19,7 +19,7 @@ func TestCloudProviderRegions(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	cloudProviderRegions, err := h.Env().Services.CloudProviders.GetCloudProvidersWithRegions()
+	cloudProviderRegions, err := h.Env.Services.CloudProviders.GetCloudProvidersWithRegions()
 	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
@@ -51,7 +51,7 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	cloudProviderRegions, err := h.Env().Services.CloudProviders.GetCachedCloudProvidersWithRegions()
+	cloudProviderRegions, err := h.Env.Services.CloudProviders.GetCachedCloudProvidersWithRegions()
 	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {

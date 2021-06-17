@@ -14,10 +14,16 @@ import (
 
 // TransactionMiddleware creates a new HTTP middleware that begins a database transaction
 // and stores it in the request context.
-func TransactionMiddleware(next http.Handler) http.Handler {
+func TransactionMiddleware(db *ConnectionFactory) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return transactionMiddleware(db, next)
+	}
+}
+
+func transactionMiddleware(db *ConnectionFactory, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Create a new Context with the transaction stored in it.
-		ctx, err := NewContext(r.Context())
+		ctx, err := db.NewContext(r.Context())
 		if err != nil {
 			ulog := logger.NewUHCLogger(ctx)
 			ulog.Error(errors.Wrap(err, "Could not create transaction"))

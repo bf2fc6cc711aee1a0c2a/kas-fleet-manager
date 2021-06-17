@@ -22,25 +22,21 @@ import (
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.OCM.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
+	configHook := func(h *test.Helper) {
+		h.Env.Config.OCM.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
 	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.OCM.ClusterLoggingOperatorAddonID = ""
-	}
-
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
 	defer teardown()
 
 	// setup required services
-	ocmClient := ocm.NewClient(h.Env().Clients.OCM.Connection)
-	clusterService := h.Env().Services.Cluster
+	ocmClient := ocm.NewClient(h.Env.Clients.OCM.Connection)
+	clusterService := h.Env.Services.Cluster
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
@@ -58,7 +54,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}
 
-	clusterID, err := utils.WaitForClusterIDToBeAssigned(&clusterService, &services.FindClusterCriteria{
+	clusterID, err := utils.WaitForClusterIDToBeAssigned(h.DBFactory, &clusterService, &services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
 	},
@@ -67,7 +63,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	cluster, checkReadyErr := utils.WaitForClusterStatus(&clusterService, clusterID, api.ClusterReady)
+	cluster, checkReadyErr := utils.WaitForClusterStatus(h.DBFactory, &clusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
@@ -90,14 +86,14 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
-	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.StrimziOperatorAddonID)
+	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env.Config.OCM.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// check the state of the cluster logging operator addon on ocm to ensure it was installed successfully
-	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env().Config.OCM.ClusterLoggingOperatorAddonID)
+	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env.Config.OCM.ClusterLoggingOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the cluster logging addon installation for cluster %s", cluster.ClusterID)
 	}
@@ -119,11 +115,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 
 func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	var originalScalingType *string = new(string)
-	startHook := func(h *test.Helper) {
-		*originalScalingType = h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = *originalScalingType
+	configHook := func(h *test.Helper) {
+		*originalScalingType = h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType
 	}
 
 	// setup ocm server
@@ -132,7 +125,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
 	defer teardown()
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -141,7 +134,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer kasfFleetshardSync.Stop()
 
 	// setup required services
-	clusterService := h.Env().Services.Cluster
+	clusterService := h.Env.Services.Cluster
 
 	// Get a 'ready' osd cluster
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
@@ -152,7 +145,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	db := h.Env().DBFactory.New()
+	db := h.Env.DBFactory.New()
 	cluster, _ := clusterService.FindClusterByID(clusterID)
 
 	// create dummy kafkas and assign it to current cluster to make it not empty
@@ -191,10 +184,10 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
-	err := utils.WaitForClusterToBeDeleted(&clusterService, dummyCluster.ClusterID)
+	err := utils.WaitForClusterToBeDeleted(h.DBFactory, &clusterService, dummyCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

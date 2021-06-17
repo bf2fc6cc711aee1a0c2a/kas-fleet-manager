@@ -33,7 +33,7 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
+	service := services.NewObservatoriumService(h.Env.Clients.Observatorium, h.Env.Services.Kafka)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
 	Expect(kafkaState.State).NotTo(BeEmpty(), "Should return state")
@@ -66,7 +66,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	service := services.NewObservatoriumService(h.Env().Clients.Observatorium, h.Env().Services.Kafka)
+	service := services.NewObservatoriumService(h.Env.Clients.Observatorium, h.Env.Services.Kafka)
 	metricsList := &observatorium.KafkaMetrics{}
 	q := observatorium.MetricsReqParams{}
 	q.ResultType = observatorium.RangeQuery
@@ -119,7 +119,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, _ := utils.WaitForKafkaToReachStatus(ctx, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, _ := utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -191,7 +191,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)

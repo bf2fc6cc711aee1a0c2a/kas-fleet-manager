@@ -37,7 +37,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 				quotaService: &services.QuotaServiceMock{
@@ -64,7 +64,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return errors.GeneralError("test")
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 				quotaService: &services.QuotaServiceMock{
@@ -92,7 +92,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: &config.KafkaConfig{
 						Quota: config.NewKafkaQuotaConfig(),
 					},
@@ -124,7 +124,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return &api.KafkaRequest{}, nil
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: &config.KafkaConfig{
 						Quota: config.NewKafkaQuotaConfig(),
 					},

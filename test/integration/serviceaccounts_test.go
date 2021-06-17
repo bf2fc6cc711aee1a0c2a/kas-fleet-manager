@@ -164,7 +164,7 @@ func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      h.Env().Config.OCM.TokenIssuerURL,
+		"iss":      h.Env.Config.OCM.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}

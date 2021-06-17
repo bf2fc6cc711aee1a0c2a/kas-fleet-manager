@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/olekukonko/tablewriter"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -205,7 +205,7 @@ type pollerBuilder struct {
 
 var _ PollerBuilder = &pollerBuilder{}
 
-func NewPollerBuilder() PollerBuilder {
+func NewPollerBuilder(db *db.ConnectionFactory) PollerBuilder {
 	return &pollerBuilder{
 		p: poller{
 			logEnabled:      defaultLogEnabled,
@@ -213,6 +213,7 @@ func NewPollerBuilder() PollerBuilder {
 			maxRetryLogs:    defaultMaxRetryLogs,
 			outputFunction:  defaultLogFunction,
 			shouldLog:       defaultShouldLogFunction,
+			db:              db.New(),
 		},
 	}
 }
@@ -286,7 +287,6 @@ func (b *pollerBuilder) DumpCluster(id string) PollerBuilder {
 func (b *pollerBuilder) DumpDB(name string, filter string, columns ...string) PollerBuilder {
 	if b.p.dbDump == nil {
 		b.p.dbDump = make(map[string]dbDumper)
-		b.p.db = environments.Environment().DBFactory.New()
 	}
 	b.p.dbDump[name] = dbDumper{
 		filter:  filter,

@@ -36,7 +36,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			arg: args{
 				kafkaRequest: openapi.KafkaRequestPayload{},
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						SupportedProviders: &config.ProviderConfig{
 							ProvidersConfig: config.ProviderConfiguration{
 								SupportedProviders: config.ProviderList{
@@ -71,7 +71,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					Region:        "us-east-1",
 				},
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						SupportedProviders: &config.ProviderConfig{
 							ProvidersConfig: config.ProviderConfiguration{
 								SupportedProviders: config.ProviderList{
@@ -112,7 +112,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					SupportedProviders: &config.ProviderConfig{
 						ProvidersConfig: config.ProviderConfiguration{
 							SupportedProviders: config.ProviderList{

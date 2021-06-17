@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/pkg/errors"
 	"time"
@@ -14,9 +15,9 @@ const (
 )
 
 // WaitForClustersMatchCriteriaToBeGivenCount - Awaits for the number of clusters with an assigned cluster id to be exactly `count`
-func WaitForClustersMatchCriteriaToBeGivenCount(clusterService *services.ClusterService, clusterCriteria *services.FindClusterCriteria, count int) error {
+func WaitForClustersMatchCriteriaToBeGivenCount(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterCriteria *services.FindClusterCriteria, count int) error {
 	currentCount := -1
-	return NewPollerBuilder().
+	return NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterIDAssignmentTimeout).
 		RetryLogFunction(func(retry int, maxRetry int) string {
 			if currentCount == -1 {
@@ -37,9 +38,9 @@ func WaitForClustersMatchCriteriaToBeGivenCount(clusterService *services.Cluster
 }
 
 // WaitForClusterIDToBeAssigned - Awaits for clusterID to be assigned to the designed cluster
-func WaitForClusterIDToBeAssigned(clusterService *services.ClusterService, criteria *services.FindClusterCriteria) (string, error) {
+func WaitForClusterIDToBeAssigned(db *db.ConnectionFactory, clusterService *services.ClusterService, criteria *services.FindClusterCriteria) (string, error) {
 	var clusterID string
-	return clusterID, NewPollerBuilder().
+	return clusterID, NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterIDAssignmentTimeout).
 		RetryLogMessagef("Waiting for an ID to be assigned to the cluster (%+v)", criteria).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -55,8 +56,8 @@ func WaitForClusterIDToBeAssigned(clusterService *services.ClusterService, crite
 }
 
 // WaitForClusterToBeDeleted - Awaits for the specified cluster to be deleted
-func WaitForClusterToBeDeleted(clusterService *services.ClusterService, clusterId string) error {
-	return NewPollerBuilder().
+func WaitForClusterToBeDeleted(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterId string) error {
+	return NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, clusterDeleteTimeout).
 		RetryLogMessagef("Waiting for cluster '%s' to be deleted", clusterId).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -70,13 +71,13 @@ func WaitForClusterToBeDeleted(clusterService *services.ClusterService, clusterI
 }
 
 // WaitForClusterStatus - Awaits for the cluster to reach the desired status
-func WaitForClusterStatus(clusterService *services.ClusterService, clusterId string, status api.ClusterStatus) (cluster *api.Cluster, err error) {
+func WaitForClusterStatus(db *db.ConnectionFactory, clusterService *services.ClusterService, clusterId string, status api.ClusterStatus) (cluster *api.Cluster, err error) {
 	pollingInterval := defaultPollInterval
 	if status.String() != api.ClusterReady.String() {
 		pollingInterval = 1 * time.Second
 	}
 	currentStatus := ""
-	err = NewPollerBuilder().
+	err = NewPollerBuilder(db).
 		IntervalAndTimeout(pollingInterval, 120*time.Minute).
 		DumpCluster(clusterId).
 		RetryLogFunction(func(retry int, maxRetry int) string {
