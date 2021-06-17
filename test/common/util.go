@@ -45,6 +45,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	var foundCluster *api.Cluster
 	var err *ocmErrors.ServiceError
 	var clusterService services.ClusterService
+	var ocmConfig config.OCMConfig
 	h.Env.MustResolveAll(&clusterService)
 
 	// get cluster details from persisted cluster file
@@ -57,7 +58,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	}
 
 	// get cluster details from database when running against an emulated server and the cluster in cluster file doesn't exist
-	if foundCluster == nil && h.Env.Config.OCM.MockMode == config.MockModeEmulateServer {
+	if foundCluster == nil && ocmConfig.MockMode == config.MockModeEmulateServer {
 		foundCluster, err = findFirstValidCluster(h)
 		if err != nil {
 			return "", err
@@ -94,7 +95,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		}
 
 		// Only persist new cluster if executing against real ocm
-		if h.Env.Config.OCM.MockMode != config.MockModeEmulateServer {
+		if ocmConfig.MockMode != config.MockModeEmulateServer {
 			pErr := PersistClusterStruct(*foundCluster)
 			if pErr != nil {
 				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))

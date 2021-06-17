@@ -17,8 +17,7 @@ import (
 func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	// Start with no cluster config and manual scaling.
-	configtHook := func(h *test.Helper) {
-		clusterConfig := h.Env.Config.OSDClusterConfig
+	configHook := func(clusterConfig *config.OSDClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 	}
 
@@ -28,10 +27,13 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configtHook)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
 	defer teardown()
 
-	if h.Env.Config.OCM.MockMode != config.MockModeEmulateServer {
+	var ocmConfig *config.OCMConfig
+	h.Env.MustResolveAll(&ocmConfig)
+
+	if ocmConfig.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 

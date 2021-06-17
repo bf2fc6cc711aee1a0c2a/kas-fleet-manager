@@ -23,8 +23,8 @@ import (
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.OCM.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
+	configHook := func(c *config.OCMConfig) {
+		c.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
 	}
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -38,11 +38,11 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// setup required services
 
 	var ocm2Client *ocm2.Client
-	h.Env.MustResolveAll(&ocm2Client)
-	ocmClient := ocm.NewClient(ocm2Client.Connection)
-
 	var clusterService services.ClusterService
-	h.Env.MustResolveAll(&clusterService)
+	var ocmConfig *config.OCMConfig
+	h.Env.MustResolveAll(&ocm2Client, &clusterService, &ocmConfig)
+
+	ocmClient := ocm.NewClient(ocm2Client.Connection)
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
@@ -92,14 +92,14 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
-	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env.Config.OCM.StrimziOperatorAddonID)
+	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// check the state of the cluster logging operator addon on ocm to ensure it was installed successfully
-	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, h.Env.Config.OCM.ClusterLoggingOperatorAddonID)
+	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.ClusterLoggingOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the cluster logging addon installation for cluster %s", cluster.ClusterID)
 	}

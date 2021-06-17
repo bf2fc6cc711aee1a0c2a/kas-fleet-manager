@@ -49,7 +49,9 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
-	if env.helper.Env.Config.OCM.MockMode != config.MockModeEmulateServer {
+	var ocmConfig *config.OCMConfig
+	env.helper.Env.MustResolveAll(&ocmConfig)
+	if ocmConfig.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -74,7 +76,10 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
-	if env.helper.Env.Config.OCM.MockMode != config.MockModeEmulateServer {
+	var ocmConfig *config.OCMConfig
+	env.helper.Env.MustResolveAll(&ocmConfig)
+
+	if ocmConfig.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 

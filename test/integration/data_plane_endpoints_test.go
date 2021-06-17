@@ -35,7 +35,7 @@ type TestServer struct {
 
 type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.MapClaims
 
-func setup(t *testing.T, claims claimsFunc, startupHook test.Hook) TestServer {
+func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startupHook)
@@ -589,7 +589,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	db := testServer.Helper.Env.DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	testKafka := api.KafkaRequest{
 		ClusterID:           testServer.ClusterID,

@@ -32,7 +32,7 @@ func RegisterIntegration(t *testing.T, server *httptest.Server, options ...di.Op
 // RegisterIntegrationWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hooks.
 // The startHook will be invoked after the Helper object is inited but before the api server is started, which will allow caller to change configurations via the helper object.
 // The teardownHook will be called before server is stopped, to allow the caller to reset configurations via the helper object.
-func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configurationHook Hook, options ...di.Option) (*Helper, *openapi.APIClient, func()) {
+func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}, options ...di.Option) (*Helper, *openapi.APIClient, func()) {
 
 	// Register the test with gomega
 	gm.RegisterTestingT(t)
@@ -118,7 +118,14 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()
 	if configurationHook != nil {
-		configurationHook(h)
+		switch configurationHook := configurationHook.(type) {
+		case Hook:
+			configurationHook(h)
+		case func(helper *Helper):
+			configurationHook(h)
+		default:
+			env.MustInvoke(configurationHook)
+		}
 	}
 
 	// loads the config files.
@@ -130,7 +137,14 @@ func RegisterIntegrationWithHooks(t *testing.T, server *httptest.Server, configu
 	// the configuration hook might set config options that are changing settings that where just
 	// loaded from the config files that were just loaded, so run it again.
 	if configurationHook != nil {
-		configurationHook(h)
+		switch configurationHook := configurationHook.(type) {
+		case Hook:
+			configurationHook(h)
+		case func(helper *Helper):
+			configurationHook(h)
+		default:
+			env.MustInvoke(configurationHook)
+		}
 	}
 
 	err = env.CreateServices()

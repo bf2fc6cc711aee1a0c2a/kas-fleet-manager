@@ -893,8 +893,8 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	startHook := func(h *test.Helper) {
-		if h.Env.Config.OCM.MockMode == config.MockModeEmulateServer {
+	startHook := func(ocmConfig *config.OCMConfig) {
+		if ocmConfig.MockMode == config.MockModeEmulateServer {
 			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
 			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
 			workers.RepeatInterval = 10 * time.Second
@@ -1293,9 +1293,12 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	var ocmConfig *config.OCMConfig
+	h.Env.MustResolveAll(&ocmConfig)
+
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      h.Env.Config.OCM.TokenIssuerURL,
+		"iss":      ocmConfig.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}

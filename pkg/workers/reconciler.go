@@ -3,6 +3,7 @@ package workers
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/goava/di"
 	"sync"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 var RepeatInterval time.Duration = 30 * time.Second
 
 type Reconciler struct {
+	di.Inject
 	wakeup    chan *sync.WaitGroup
 	SignalBus signalbus.SignalBus
 }

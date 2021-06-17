@@ -28,6 +28,7 @@ const (
 )
 
 var env *environments.Env
+var ocmConfig *config.OCMConfig
 
 func TestMain(m *testing.M) {
 	var err error
@@ -35,11 +36,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
+	env.MustResolveAll(&ocmConfig)
 	os.Exit(m.Run())
 }
 
 func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +207,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 }
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -374,7 +376,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 }
 
 func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
