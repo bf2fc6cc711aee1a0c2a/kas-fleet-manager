@@ -2,12 +2,13 @@ package services
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
-	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/pkg/errors"
 
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
@@ -2074,6 +2075,105 @@ func TestClusterService_InstallAddon(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("InstallAddon want %v, but got %v", tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_ClusterService_GetExternalID(t *testing.T) {
+	type fields struct {
+		connectionFactory      *db.ConnectionFactory
+		clusterProviderFactory clusters.ProviderFactory
+	}
+
+	type args struct {
+		clusterID string
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		setupFn func()
+		wantErr bool
+		want    string
+	}{
+		{
+			name: "When cluster exists and external ID exists it is returned",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				clusterID: "test-cluster-id",
+			},
+			setupFn: func() {
+				mockedResponse := []map[string]interface{}{{"external_id": "test-cluster-id"}}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(mockedResponse)
+			},
+			wantErr: false,
+			want:    "test-cluster-id",
+		},
+		{
+			name: "When cluster exists and external ID does not exit the empty string is returned",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				clusterID: "test-cluster-id",
+			},
+			setupFn: func() {
+				mockedResponse := []map[string]interface{}{{"external_id": ""}}
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(mockedResponse)
+			},
+			wantErr: false,
+			want:    "",
+		},
+		{
+			name: "When cluster does not exist an error is returned",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				clusterID: "test-cluster-id",
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithError(gorm.ErrRecordNotFound)
+			},
+			wantErr: true,
+		},
+		{
+			name: "When provided clusterID is empty an error is returned",
+			fields: fields{
+				connectionFactory:      db.NewMockConnectionFactory(nil),
+				clusterProviderFactory: &clusters.ProviderFactoryMock{},
+			},
+			args: args{
+				clusterID: "",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFn != nil {
+				tt.setupFn()
+			}
+
+			c := &clusterService{
+				connectionFactory: tt.fields.connectionFactory,
+				providerFactory:   tt.fields.clusterProviderFactory,
+			}
+
+			got, err := c.GetExternalID(tt.args.clusterID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetExternalID() error = %v, wantErr = %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetExternalID() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}
