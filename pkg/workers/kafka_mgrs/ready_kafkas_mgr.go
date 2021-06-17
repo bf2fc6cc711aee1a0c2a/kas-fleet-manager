@@ -2,6 +2,7 @@ package kafka_mgrs
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/google/uuid"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -30,9 +31,9 @@ type ReadyKafkaManager struct {
 }
 
 // NewReadyKafkaManager creates a new kafka manager
-func NewReadyKafkaManager(kafkaService services.KafkaService, id string, keycloakService services.KeycloakService, configService services.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
+func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService services.KafkaKeycloakService, configService services.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
-		id:              id,
+		id:              uuid.New().String(),
 		workerType:      "ready_kafka",
 		kafkaService:    kafkaService,
 		keycloakService: keycloakService,

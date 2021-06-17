@@ -30,7 +30,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
 							EnableInstanceLimitControl: false,
 						},
@@ -47,7 +47,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when the query db throws an error",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableInstanceLimitControl: true,
 						AllowList: config.AllowListConfiguration{
@@ -72,7 +72,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
 							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
@@ -103,7 +103,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
 							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
@@ -133,7 +133,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
 							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
@@ -161,7 +161,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allow list",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableInstanceLimitControl: true,
 					},
@@ -182,7 +182,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
 							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{
@@ -213,7 +213,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				configService: services.NewConfigService(
-					config.ApplicationConfig{
+					&config.ApplicationConfig{
 						AccessControlList: &config.AccessControlListConfig{
 							EnableInstanceLimitControl: true,
 							AllowList: config.AllowListConfiguration{

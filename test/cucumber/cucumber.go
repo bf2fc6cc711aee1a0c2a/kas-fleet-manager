@@ -13,23 +13,13 @@
 // Using in a test
 //  func TestMain(m *testing.M) {
 //
-//	// Startup all the services and mocks that are needed to test the
-//	// connector features.
-//	t := &testing.T{}
-//
-//	connectorTypeService := mocks.NewConnectorTypeMock(t)
-//	defer connectorTypeService.Close()
-//	environments.Environment().Config.ConnectorsConfig.Enabled = true
-//	environments.Environment().Config.ConnectorsConfig.ConnectorTypesDir = ""
-//	environments.Environment().Config.ConnectorsConfig.ConnectorTypeSvcUrls = []string{connectorTypeService.URL}
-//
 //	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 //	defer ocmServer.Close()
 //
-//	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+//	h, _, teardown := test.RegisterIntegration(&testing.T{}, ocmServer)
 //	defer teardown()
 //
-//	cucumber.TestMain(m, h)
+//	cucumber.TestMain(h)
 //
 //}
 
@@ -273,7 +263,7 @@ func TestMain(helper *test.Helper) int {
 
 	// Generate lots of org id's that scenarios can use to avoid
 	// conflicting with each other..
-	allow := helper.Env().Config.AccessControlList
+	allow := helper.Env.Config.AccessControlList
 	if allow != nil {
 		for i := 0; i < 1000; i++ {
 			allow.AllowList.Organisations = append(allow.AllowList.Organisations, config.Organisation{

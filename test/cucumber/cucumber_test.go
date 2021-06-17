@@ -2,7 +2,6 @@ package cucumber_test
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -16,17 +15,10 @@ func Example() {
 	// Typically added to a TestMain function like:
 	// func TestMain(m *testing.M)
 	{
-		env, err := environments.NewEnv("integration")
-		if err != nil {
-			panic(err)
-		}
-
-		environments.SetEnvironment(env)
 		ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 		defer ocmServer.Close()
 		h, _, teardown := test.RegisterIntegration(&testing.T{}, ocmServer)
 		defer teardown()
-
 		cucumber.TestMain(h)
 	}
 

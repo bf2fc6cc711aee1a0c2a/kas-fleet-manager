@@ -49,9 +49,13 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 // The environment is expected to be modified as needed
 func (b IntegrationEnvLoader) Load(env *Env) error {
 	// Support a one-off env to allow enabling db debug in testing
+	var databaseConfig *config.DatabaseConfig
+	var observabilityConfiguration *config.ObservabilityConfiguration
+	env.MustResolveAll(&databaseConfig, &observabilityConfiguration)
+
 	if os.Getenv("DB_DEBUG") == "true" {
-		env.Config.Database.Debug = true
+		databaseConfig.Debug = true
 	}
-	env.Config.ObservabilityConfiguration.EnableMock = true
-	return env.LoadServices()
+	observabilityConfiguration.EnableMock = true
+	return nil
 }

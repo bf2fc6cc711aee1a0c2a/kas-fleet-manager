@@ -17,8 +17,8 @@ const (
 
 // NewContext returns a new context with transaction stored in it.
 // Upon error, the original context is still returned along with an error
-func NewContext(ctx context.Context) (context.Context, error) {
-	tx, err := newTransaction()
+func (c *ConnectionFactory) NewContext(ctx context.Context) (context.Context, error) {
+	tx, err := c.newTransaction()
 	if err != nil {
 		return ctx, err
 	}
@@ -32,8 +32,8 @@ func NewContext(ctx context.Context) (context.Context, error) {
 }
 
 // TxContext creates a new transaction context from context.Background()
-func TxContext() (ctx context.Context, err error) {
-	return NewContext(context.Background())
+func (c *ConnectionFactory) TxContext() (ctx context.Context, err error) {
+	return c.NewContext(context.Background())
 }
 
 // Resolve resolves the current transaction according to the rollback flag.

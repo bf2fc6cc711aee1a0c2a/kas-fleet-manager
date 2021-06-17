@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -34,9 +35,10 @@ type TestServer struct {
 
 type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.MapClaims
 
-func setup(t *testing.T, claims claimsFunc, startupHook test.Hook, tearDownHook test.Hook) TestServer {
+func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
+
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startupHook, tearDownHook)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startupHook)
 
 	clusterId, getClusterErr := utils.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {
@@ -47,8 +49,11 @@ func setup(t *testing.T, claims claimsFunc, startupHook test.Hook, tearDownHook 
 	ctx := h.NewAuthenticatedContext(account, claims(account, clusterId, h))
 	token := h.CreateJWTStringWithClaim(account, claims(account, clusterId, h))
 
+	var serverConfig *config2.ServerConfig
+	h.Env.MustResolveAll(&serverConfig)
+
 	config := openapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", h.AppConfig.Server.BindAddress)
+	config.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
 	config.DefaultHeader = map[string]string{
 		"Authorization": "Bearer " + token,
 	}
@@ -79,7 +84,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": clusterId,
 		}
-	}, nil, nil)
+	}, nil)
 
 	defer testServer.TearDown()
 
@@ -117,7 +122,7 @@ func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": clusterId,
 		}
-	}, nil, nil)
+	}, nil)
 
 	defer testServer.TearDown()
 
@@ -140,7 +145,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 			"iss":                                h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"kas-fleetshard-operator-cluster-id": "test-cluster-id",
 		}
-	}, nil, nil)
+	}, nil)
 
 	defer testServer.TearDown()
 
@@ -176,7 +181,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": "different-cluster-id",
 		}
-	}, nil, nil)
+	}, nil)
 	defer testServer.TearDown()
 
 	body := map[string]openapi.DataPlaneKafkaStatus{
@@ -213,7 +218,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": cid,
 		}
-	}, nil, nil)
+	}, nil)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
@@ -272,7 +277,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		},
 	}
 
-	db := testServer.Helper.Env().DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
@@ -373,23 +378,13 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) {
-	originalEnableKafkaExternalCertificate := false
 	cert := "some-fake-cert"
 	key := "some-fake-key"
-	originalCert := ""
-	originalKey := ""
 	startHook := func(h *test.Helper) {
-		originalEnableKafkaExternalCertificate = h.Env().Config.Kafka.EnableKafkaExternalCertificate
-		originalCert = h.Env().Config.Kafka.KafkaTLSCert
-		originalKey = h.Env().Config.Kafka.KafkaTLSKey
-		h.Env().Config.Kafka.EnableKafkaExternalCertificate = true
-		h.Env().Config.Kafka.KafkaTLSCert = cert
-		h.Env().Config.Kafka.KafkaTLSKey = key
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Kafka.EnableKafkaExternalCertificate = originalEnableKafkaExternalCertificate
-		h.Env().Config.Kafka.KafkaTLSCert = originalCert
-		h.Env().Config.Kafka.KafkaTLSKey = originalKey
+		c := h.Env.Config.Kafka
+		c.EnableKafkaExternalCertificate = true
+		c.KafkaTLSCert = cert
+		c.KafkaTLSKey = key
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
@@ -401,7 +396,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 			},
 			"kas-fleetshard-operator-cluster-id": cid,
 		}
-	}, startHook, tearDownHook)
+	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
@@ -419,7 +414,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		Version:             "2.7.0",
 	}
 
-	db := testServer.Helper.Env().DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -449,15 +444,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
-	var originalKeycloakTLSTrustedCertificatesValue string
-	var originalKeycloakEnableAuthOnKafka bool
 	startHook := func(h *test.Helper) {
-		originalKeycloakEnableAuthOnKafka = h.Env().Config.Keycloak.EnableAuthenticationOnKafka
-		originalKeycloakTLSTrustedCertificatesValue = h.Env().Config.Keycloak.TLSTrustedCertificatesValue
-		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = ""
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = originalKeycloakTLSTrustedCertificatesValue
+		h.Env.Config.Keycloak.TLSTrustedCertificatesValue = ""
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
@@ -469,7 +457,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": cid,
 		}
-	}, startHook, tearDownHook)
+	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
@@ -487,9 +475,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		Version:             "2.7.0",
 	}
 
-	testServer.Helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = true
+	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 
-	db := testServer.Helper.Env().DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -516,23 +504,13 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
-
-	testServer.Helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = originalKeycloakEnableAuthOnKafka
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
-	var originalKeycloakTLSTrustedCertificatesValue string
-	var originalKeycloakEnableAuthOnKafka bool
 	cert := "some-fake-cert"
 	startHook := func(h *test.Helper) {
-		originalKeycloakEnableAuthOnKafka = h.Env().Config.Keycloak.EnableAuthenticationOnKafka
-		originalKeycloakTLSTrustedCertificatesValue = h.Env().Config.Keycloak.TLSTrustedCertificatesValue
-		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = cert
-		h.Env().Config.Keycloak.EnableAuthenticationOnKafka = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Keycloak.TLSTrustedCertificatesValue = originalKeycloakTLSTrustedCertificatesValue
-		h.Env().Config.Keycloak.EnableAuthenticationOnKafka = originalKeycloakEnableAuthOnKafka
+		h.Env.Config.Keycloak.TLSTrustedCertificatesValue = cert
+		h.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
@@ -544,7 +522,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": cid,
 		}
-	}, startHook, tearDownHook)
+	}, startHook)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
@@ -562,9 +540,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		Version:             "2.7.0",
 	}
 
-	testServer.Helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = true
+	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 
-	db := testServer.Helper.Env().DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -605,13 +583,13 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 			},
 			"kas-fleetshard-operator-cluster-id": cid,
 		}
-	}, nil, nil)
+	}, nil)
 	defer testServer.TearDown()
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	db := testServer.Helper.Env().DBFactory.New()
+	db := testServer.Helper.DBFactory.New()
 
 	testKafka := api.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
