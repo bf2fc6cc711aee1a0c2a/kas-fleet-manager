@@ -326,8 +326,11 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	h, _, tearDown := test.RegisterIntegration(t, ocmServer)
 	defer tearDown()
 
+	var ocmConfig *config.OCMConfig
+	h.Env.MustResolveAll(&ocmConfig)
+
 	// only run this test when real OCM API is being used
-	if h.Env.Config.OCM.MockMode == config.MockModeEmulateServer {
+	if ocmConfig.MockMode == config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 

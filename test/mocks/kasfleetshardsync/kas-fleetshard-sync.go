@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 	"time"
 
@@ -21,7 +22,8 @@ import (
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
 var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error {
 	var clusterService services.ClusterService
-	helper.Env.MustResolveAll(&clusterService)
+	var ocmConfig *config.OCMConfig
+	helper.Env.MustResolveAll(&clusterService, &ocmConfig)
 	clusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
 	})
@@ -30,12 +32,12 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateC
 	}
 
 	for _, cluster := range clusters {
-		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, helper.Env.Config.OCM.StrimziOperatorAddonID)
+		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
 		if err != nil {
 			return err
 		}
 
-		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, helper.Env.Config.OCM.KasFleetshardAddonID)
+		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.KasFleetshardAddonID)
 		if err != nil {
 			return err
 		}

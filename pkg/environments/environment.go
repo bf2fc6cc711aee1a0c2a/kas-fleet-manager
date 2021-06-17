@@ -100,13 +100,13 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 		di.Provide(config.NewSentryConfig, di.As(new(config.ConfigModule))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(config.ConfigModule))),
 		di.Provide(config.NewServerConfig, di.As(new(config.ConfigModule))),
+		di.Provide(config.NewOCMConfig, di.As(new(config.ConfigModule))),
 
 		di.Provide(func(c *config.ApplicationConfig) *config.ObservabilityConfiguration {
 			return c.ObservabilityConfiguration
 		}),
 		di.Provide(func(c *config.ApplicationConfig) *config.OSDClusterConfig { return c.OSDClusterConfig }),
 		di.Provide(func(c *config.ApplicationConfig) *config.KafkaConfig { return c.Kafka }),
-		di.Provide(func(c *config.ApplicationConfig) *config.OCMConfig { return c.OCM }),
 		di.Provide(func(c *config.ApplicationConfig) *config.KeycloakConfig { return c.Keycloak }),
 
 		vault.ConfigProviders().AsOption(),
@@ -184,12 +184,15 @@ func (env *Env) CreateServices() error {
 		di.ProvideValue(env.Config),
 		di.ProvideValue(env.Config.Kafka),
 		di.ProvideValue(env.Config.AWS),
-		di.ProvideValue(env.Config.OCM),
 		di.ProvideValue(env.Config.ObservabilityConfiguration),
 		di.ProvideValue(env.Config.Keycloak),
 
 		// We wont need these providers that get values from the ConfigContainer
 		// once we can add parent containers: https://github.com/goava/di/pull/34
+		di.Provide(func() (value *config.OCMConfig, err error) {
+			err = env.ConfigContainer.Resolve(&value)
+			return
+		}),
 		di.Provide(func() (value *config.ServerConfig, err error) {
 			err = env.ConfigContainer.Resolve(&value)
 			return

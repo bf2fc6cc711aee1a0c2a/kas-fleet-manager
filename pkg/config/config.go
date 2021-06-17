@@ -11,7 +11,6 @@ type ConfigModule interface {
 }
 
 type ApplicationConfig struct {
-	OCM                        *OCMConfig                  `json:"ocm"`
 	AWS                        *AWSConfig                  `json:"aws"`
 	SupportedProviders         *ProviderConfig             `json:"providers"`
 	AccessControlList          *AccessControlListConfig    `json:"allow_list"`
@@ -25,7 +24,6 @@ var _ ConfigModule = &ApplicationConfig{}
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
-		OCM:                        NewOCMConfig(),
 		AWS:                        NewAWSConfig(),
 		SupportedProviders:         NewSupportedProvidersConfig(),
 		AccessControlList:          NewAccessControlListConfig(),
@@ -38,7 +36,6 @@ func NewApplicationConfig() *ApplicationConfig {
 
 func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	flagset.AddGoFlagSet(flag.CommandLine)
-	c.OCM.AddFlags(flagset)
 	c.AWS.AddFlags(flagset)
 	c.SupportedProviders.AddFlags(flagset)
 	c.AccessControlList.AddFlags(flagset)
@@ -49,10 +46,6 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 }
 
 func (c *ApplicationConfig) ReadFiles() (err error) {
-	err = c.OCM.ReadFiles()
-	if err != nil {
-		return err
-	}
 	err = c.AWS.ReadFiles()
 	if err != nil {
 		return err

@@ -81,7 +81,7 @@ func TestClusterManager_reconcileClusterStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
+				ClusterService: tt.fields.clusterService,
 			}
 			_, err := c.reconcileClusterStatus(tt.args.cluster)
 			if (err != nil) != tt.wantErr {
@@ -127,16 +127,16 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(
+				ClusterService: tt.fields.clusterService,
+				ConfigService: services.NewConfigService(
 					&config.ApplicationConfig{
 						SupportedProviders:         &config.ProviderConfig{},
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 						OSDClusterConfig:           &config.OSDClusterConfig{},
-						OCM:                        &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 					},
 				),
+				OCMConfig: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 			}
 			_, err := c.reconcileStrimziOperator(api.Cluster{
 				ClusterID: "clusterId",
@@ -184,16 +184,16 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(
+				ClusterService: tt.fields.clusterService,
+				ConfigService: services.NewConfigService(
 					&config.ApplicationConfig{
 						SupportedProviders:         &config.ProviderConfig{},
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
 						OSDClusterConfig:           &config.OSDClusterConfig{},
-						OCM:                        &config.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 					},
 				),
+				OCMConfig: &config.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 			}
 			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
 				ClusterID: "clusterId",
@@ -231,8 +231,8 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(
+				ClusterService: tt.fields.clusterService,
+				ConfigService: services.NewConfigService(
 					&config.ApplicationConfig{
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
@@ -356,8 +356,8 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				ClusterService: tt.fields.clusterService,
+				ConfigService: services.NewConfigService(&config.ApplicationConfig{
 					SupportedProviders:         &tt.fields.providersConfig,
 					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
@@ -465,13 +465,11 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					OCM: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
-				}),
-				kasFleetshardOperatorAddon: tt.fields.agentOperator,
+				OCMConfig:                  &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
+				ClusterService:             tt.fields.clusterService,
+				ConfigService:              services.NewConfigService(&config.ApplicationConfig{}),
+				KasFleetshardOperatorAddon: tt.fields.agentOperator,
 			}
-
 			err := c.reconcileAddonOperator(api.Cluster{
 				ClusterID: "test-cluster-id",
 			})
@@ -543,8 +541,8 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				ClusterService: tt.fields.clusterService,
+				ConfigService: services.NewConfigService(&config.ApplicationConfig{
 					SupportedProviders:         &config.ProviderConfig{},
 					AccessControlList:          &config.AccessControlListConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
@@ -663,8 +661,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService:        tt.fields.clusterService,
-				osdIdpKeycloakService: tt.fields.osdIdpKeycloakService,
+				ClusterService:        tt.fields.clusterService,
+				OsdIdpKeycloakService: tt.fields.osdIdpKeycloakService,
 			}
 
 			err := c.reconcileClusterIdentityProvider(tt.arg)
@@ -707,7 +705,7 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
+				ClusterService: tt.fields.clusterService,
 			}
 
 			err := c.reconcileClusterDNS(tt.arg)
@@ -869,8 +867,8 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
-				configService:  tt.fields.configService,
+				ClusterService: tt.fields.clusterService,
+				ConfigService:  tt.fields.configService,
 			}
 
 			err := c.reconcileDeprovisioningCluster(&tt.arg)
@@ -977,9 +975,9 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService:             tt.fields.clusterService,
-				osdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
-				kasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
+				ClusterService:             tt.fields.clusterService,
+				OsdIdpKeycloakService:      tt.fields.osdIDPKeycloakService,
+				KasFleetshardOperatorAddon: tt.fields.kasFleetshardOperatorAddon,
 			}
 
 			err := c.reconcileCleanupCluster(tt.arg)
@@ -1100,7 +1098,7 @@ func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
-				clusterService: tt.fields.clusterService,
+				ClusterService: tt.fields.clusterService,
 			}
 
 			emptyClusterReconciled, err := c.reconcileEmptyCluster(api.Cluster{
@@ -1409,8 +1407,8 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
-				configService:  tt.fields.configService,
-				clusterService: tt.fields.clusterService,
+				ConfigService:  tt.fields.configService,
+				ClusterService: tt.fields.clusterService,
 			}
 			if err := c.reconcileClusterWithManualConfig(); (len(err) > 0) != tt.wantErr {
 				t.Errorf("reconcileClusterWithManualConfig() error = %v, wantErr %v", err, tt.wantErr)
