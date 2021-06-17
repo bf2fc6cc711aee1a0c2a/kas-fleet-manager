@@ -66,8 +66,6 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 	// Register the test with gomega
 	gm.RegisterTestingT(t)
 
-	envProviders = append(envProviders)
-
 	// Manually set environment name, ignoring environment variables
 	validTestEnv := false
 	envName := environments.GetEnvironmentStrFromEnv()

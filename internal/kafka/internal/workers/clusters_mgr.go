@@ -3,6 +3,7 @@ package workers
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
 	"strings"
@@ -66,6 +67,8 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 	api.ClusterDeprovisioning,
 }
 
+type Worker = workers.Worker
+
 var clusterLoggingOperatorAddonParams = []ocm.AddonParameter{
 	{
 		Id:    "use-cloudwatch",
@@ -98,7 +101,7 @@ type ClusterManager struct {
 
 type ClusterManagerOptions struct {
 	di.Inject
-	Reconciler                 Reconciler
+	Reconciler                 workers.Reconciler
 	OCMConfig                  *config.OCMConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
