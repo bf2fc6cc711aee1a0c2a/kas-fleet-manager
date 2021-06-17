@@ -160,11 +160,9 @@ func TestMain(m *testing.M) {
 	defer ocmServer.Close()
 
 	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer,
-		func(helper *test.Helper) {
-			helper.Env.MustInvoke(func(c *config.ConnectorsConfig) {
-				c.Enabled = true
-				c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-			})
+		func(c *config.ConnectorsConfig) {
+			c.Enabled = true
+			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 		},
 		connector.ConfigProviders().AsOption(),
 	)

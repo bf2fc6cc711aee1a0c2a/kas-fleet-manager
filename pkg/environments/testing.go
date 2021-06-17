@@ -20,7 +20,7 @@ func (t TestingEnvLoader) Defaults() map[string]string {
 // The testing environment is specifically for automated testing
 // Mocks are loaded by default.
 // The environment is expected to be modified as needed
-func (t TestingEnvLoader) Load(env *Env) error {
+func (t TestingEnvLoader) ModifyConfiguration(env *Env) error {
 	// Support a one-off env to allow enabling db debug in testing
 
 	var databaseConfig *config.DatabaseConfig

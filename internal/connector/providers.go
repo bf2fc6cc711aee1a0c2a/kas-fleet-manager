@@ -9,14 +9,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-
 	"github.com/goava/di"
 )
 
 func ConfigProviders() provider.Map {
 	return provider.Map{
-		"ConfigModule":    di.Provide(config.NewConnectorsConfig, di.As(new(coreConfig.ConfigModule))),
+		"ConfigModule":    di.Provide(config.NewConnectorsConfig, di.As(new(provider.ConfigModule))),
 		"ServiceInjector": di.Provide(provider.Func(ServiceProviders)),
 	}
 }

@@ -18,11 +18,6 @@ type TestEnv struct {
 }
 
 func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
-	configHook := func(h *test.Helper) {
-		var serverConfig *config.ServerConfig
-		h.Env.MustResolveAll(&serverConfig)
-		serverConfig.EnableTermsAcceptance = true
-	}
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	termsReviewResponse, err := mocks.GetMockTermsReviewBuilder(nil).TermsRequired(termsRequired).Build()
 	if err != nil {
@@ -33,7 +28,9 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, func(serverConfig *config.ServerConfig) {
+		serverConfig.EnableTermsAcceptance = true
+	})
 
 	return TestEnv{
 		helper: h,

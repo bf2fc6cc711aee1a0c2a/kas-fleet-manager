@@ -22,7 +22,7 @@ func main() {
 		panic(err)
 	}
 
-	err = env.LoadConfig()
+	err = env.CreateServices()
 	if err != nil {
 		panic(err)
 	}
