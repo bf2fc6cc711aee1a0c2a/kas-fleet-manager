@@ -214,9 +214,12 @@ func (m *mockKasFleetshardSync) reconcileKafkaClusters() {
 
 // Returns an authenticated context to be used for calling the data plane endpoints
 func NewAuthenticatedContextForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
+	var keycloakConfig *config.KeycloakConfig
+	h.Env.MustResolveAll(&keycloakConfig)
+
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+		"iss": keycloakConfig.KafkaRealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},

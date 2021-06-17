@@ -15,7 +15,7 @@ func TestInjections(t *testing.T) {
 	RegisterTestingT(t)
 
 	env, err := environments.NewEnv(environments.DevelopmentEnv,
-		kafka.ConfigProviders().AsOption(),
+		kafka.ConfigProviders(),
 	)
 	Expect(err).To(BeNil())
 	err = env.CreateServices()
@@ -31,9 +31,9 @@ func TestInjections(t *testing.T) {
 	Expect(ok).To(Equal(true))
 	_, ok = bootList[2].(*server.HealthCheckServer)
 	Expect(ok).To(Equal(true))
-	_, ok = bootList[3].(signalbus.SignalBus)
+	_, ok = bootList[3].(*workers.LeaderElectionManager)
 	Expect(ok).To(Equal(true))
-	_, ok = bootList[4].(*workers.LeaderElectionManager)
+	_, ok = bootList[4].(signalbus.SignalBus)
 	Expect(ok).To(Equal(true))
 
 	var workerList []workers.Worker

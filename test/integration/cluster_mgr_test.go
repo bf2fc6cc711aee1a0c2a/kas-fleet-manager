@@ -2,7 +2,6 @@ package integration
 
 import (
 	"fmt"
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -12,7 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -29,19 +27,13 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, func(c *config.OCMConfig) {
+	h, _, teardown := NewKafkaHelperWithHooks(t, ocmServer, func(c *config.OCMConfig) {
 		c.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
 	})
 	defer teardown()
 
 	// setup required services
-
-	var ocm2Client *ocm2.Client
-	var clusterService services.ClusterService
-	var ocmConfig *config.OCMConfig
-	h.Env.MustResolveAll(&ocm2Client, &clusterService, &ocmConfig)
-
-	ocmClient := ocm.NewClient(ocm2Client.Connection)
+	ocmClient := ocm.NewClient(testServices.OCM2Client.Connection)
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
@@ -49,7 +41,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer kasfFleetshardSync.Stop()
 
 	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
-	clusterRegisterError := clusterService.RegisterClusterJob(&api.Cluster{
+	clusterRegisterError := testServices.ClusterService.RegisterClusterJob(&api.Cluster{
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Region:        mocks.MockCluster.Region().ID(),
 		MultiAZ:       testMultiAZ,
@@ -59,7 +51,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}
 
-	clusterID, err := utils.WaitForClusterIDToBeAssigned(h.DBFactory, &clusterService, &services.FindClusterCriteria{
+	clusterID, err := utils.WaitForClusterIDToBeAssigned(testServices.DBFactory, &testServices.ClusterService, &services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
 	},
@@ -68,7 +60,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	cluster, checkReadyErr := utils.WaitForClusterStatus(h.DBFactory, &clusterService, clusterID, api.ClusterReady)
+	cluster, checkReadyErr := utils.WaitForClusterStatus(testServices.DBFactory, &testServices.ClusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
@@ -91,14 +83,14 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
-	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.StrimziOperatorAddonID)
+	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, testServices.OCMConfig.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// check the state of the cluster logging operator addon on ocm to ensure it was installed successfully
-	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, ocmConfig.ClusterLoggingOperatorAddonID)
+	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, testServices.OCMConfig.ClusterLoggingOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the cluster logging addon installation for cluster %s", cluster.ClusterID)
 	}
@@ -126,7 +118,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -135,9 +127,6 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer kasfFleetshardSync.Stop()
 
 	// setup required services
-	var clusterService services.ClusterService
-	h.Env.MustResolveAll(&clusterService)
-
 	// Get a 'ready' osd cluster
 	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
@@ -147,8 +136,8 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	db := h.DBFactory.New()
-	cluster, _ := clusterService.FindClusterByID(clusterID)
+	db := testServices.DBFactory.New()
+	cluster, _ := testServices.ClusterService.FindClusterByID(clusterID)
 
 	// create dummy kafkas and assign it to current cluster to make it not empty
 	kafka := api.KafkaRequest{
@@ -189,7 +178,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
-	err := utils.WaitForClusterToBeDeleted(h.DBFactory, &clusterService, dummyCluster.ClusterID)
+	err := utils.WaitForClusterToBeDeleted(testServices.DBFactory, &testServices.ClusterService, dummyCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

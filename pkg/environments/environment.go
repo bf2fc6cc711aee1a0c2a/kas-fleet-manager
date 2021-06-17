@@ -3,31 +3,19 @@ package environments
 import (
 	"context"
 	goerrors "errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	sentry2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
-	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	"github.com/pkg/errors"
 	"os"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
@@ -85,34 +73,10 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 	//di.SetTracer(di.StdTracer{})
 	env.ConfigContainer, err = di.New(append(options,
 		di.ProvideValue(env),
-		di.ProvideValue(config.EnvName(env.Name)),
-
-		// Add the env types
-		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
-		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
-		di.Provide(newStageEnvLoader, di.Tags{"env": StageEnv}),
-		di.Provide(newIntegrationEnvLoader, di.Tags{"env": IntegrationEnv}),
-		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
-
-		di.Provide(config.NewApplicationConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewMetricsConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewHealthCheckConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewDatabaseConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewServerConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewOCMConfig, di.As(new(provider.ConfigModule))),
-
-		di.Provide(func(c *config.ApplicationConfig) *config.ObservabilityConfiguration {
-			return c.ObservabilityConfiguration
-		}),
-		di.Provide(func(c *config.ApplicationConfig) *config.OSDClusterConfig { return c.OSDClusterConfig }),
-		di.Provide(func(c *config.ApplicationConfig) *config.KafkaConfig { return c.Kafka }),
-		di.Provide(func(c *config.ApplicationConfig) *config.KeycloakConfig { return c.Keycloak }),
-		di.Provide(func(c *config.ApplicationConfig) *config.AccessControlListConfig { return c.AccessControlList }),
-		di.Provide(func(c *config.ApplicationConfig) *config.AWSConfig { return c.AWS }),
-
-		vault.ConfigProviders().AsOption(),
-		sentry2.ConfigProviders().AsOption(),
+		ConfigProviders(),
+		vault.ConfigProviders(),
+		sentry2.ConfigProviders(),
+		signalbus.ConfigProviders(),
 	)...)
 	if err != nil {
 		return nil, err
@@ -132,11 +96,11 @@ func (env *Env) CreateServices() error {
 
 	glog.Infof("Initializing %s environment", env.Name)
 
+	// Read in all config files
 	modules := []provider.ConfigModule{}
 	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
-
 	for i := range modules {
 		err := modules[i].ReadFiles()
 		if err != nil {
@@ -147,6 +111,7 @@ func (env *Env) CreateServices() error {
 		}
 	}
 
+	// Allow named env to customize the configuration.
 	var namedEnv EnvLoader
 	err := env.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": env.Name})
 	if err != nil {
@@ -168,123 +133,23 @@ func (env *Env) CreateServices() error {
 		return err
 	}
 
+	// Right before we create the services, run the any before create service hooks
+	// to allow for post config file loading customization.
 	for _, hook := range in.BeforeCreateServicesHooks {
 		env.MustInvoke(hook.Func)
 	}
 
-	var opts []di.Option
-	for i := range in.ServiceInjections {
-		opt, err := in.ServiceInjections[i].Providers()
-		if err != nil {
-			return err
-		}
-		opts = append(opts, opt.AsOption())
+	// Lets build a list of providers that will be used to create the service container.
+	serviceProviders := []di.Option{di.ProvideValue(env)}
+	for _, s := range in.ServiceInjections {
+		serviceProviders = append(serviceProviders, s.Providers())
 	}
-
-	env.ServiceContainer, err = di.New(append(opts,
-		di.ProvideValue(env),
-		di.ProvideValue(config.EnvName(env.Name)),
-
-		// We wont need these providers that get values from the ConfigContainer
-		// once we can add parent containers: https://github.com/goava/di/pull/34
-		di.Provide(func() (value *config.ApplicationConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.KafkaConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.AWSConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.ObservabilityConfiguration, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.KeycloakConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.OCMConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.ServerConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.DatabaseConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.HealthCheckConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.MetricsConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.KasFleetshardConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.AccessControlListConfig, err error) {
-			err = env.ConfigContainer.Resolve(&value)
-			return
-		}),
-
-		di.Provide(db.NewConnectionFactory),
-
-		di.Provide(observatorium.NewObservatoriumClient),
-		di.Provide(ocm.NewOCMClient),
-		di.Provide(func(client *ocm.Client) (ocmClient *sdkClient.Connection) {
-			return client.Connection
-		}),
-		di.Provide(customOcm.NewClient),
-
-		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
-		di.Provide(services.NewClusterService),
-
-		di.Provide(func() services.KafkaKeycloakService {
-			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
-		}),
-
-		di.Provide(func() services.OsdKeycloakService {
-			return services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.OSDClusterIDPRealm)
-		}),
-
-		di.Provide(services.NewConfigService),
-		di.Provide(quota.NewDefaultQuotaServiceFactory),
-
-		di.Provide(services.NewKafkaService, di.As(new(services.KafkaService))),
-
-		di.Provide(services.NewCloudProvidersService),
-		di.Provide(services.NewObservatoriumService),
-		di.Provide(services.NewKasFleetshardOperatorAddon),
-		di.Provide(services.NewClusterPlacementStrategy),
-
-		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
-		di.Provide(services.NewDataPlaneKafkaService, di.As(new(services.DataPlaneKafkaService))),
-
-		di.Provide(acl.NewAccessControlListMiddleware),
-		di.Provide(handlers.NewErrorsHandler),
-
-		// Types registered with the StartupService are started when the app boots up
-		di.Provide(server.NewAPIServer, di.As(new(provider.BootService))),
-		di.Provide(server.NewMetricsServer, di.As(new(provider.BootService))),
-		di.Provide(server.NewHealthCheckServer, di.As(new(provider.BootService))),
-		di.Provide(func(dbFactory *db.ConnectionFactory) *signalbus.PgSignalBus {
-			return signalbus.NewPgSignalBus(signalbus.NewSignalBus(), dbFactory)
-		}, di.As(new(signalbus.SignalBus)), di.As(new(provider.BootService))),
-		di.Provide(workers.NewLeaderElectionManager, di.As(new(provider.BootService))),
-	)...)
+	env.ServiceContainer, err = di.New(serviceProviders...)
 	if err != nil {
 		return err
 	}
 
+	// TODO: rm services.ConfigService on day
 	var configService services.ConfigService
 	env.MustResolve(&configService)
 	if err := configService.Validate(); err != nil {
@@ -360,16 +225,6 @@ func (env *Env) Stop() {
 }
 
 func (env *Env) Cleanup() {
-	//if env.Name != TestingEnv {
-	//	var dbFactory *db.ConnectionFactory
-	//	var ocmClient *ocm.Client
-	//	env.MustResolveAll(&dbFactory, &ocmClient)
-	//
-	//	if err := dbFactory.Close(); err != nil {
-	//		glog.Fatalf("Unable to close db connection: %s", err.Error())
-	//	}
-	//	ocmClient.Close()
-	//}
 	env.ServiceContainer.Cleanup()
 	env.ConfigContainer.Cleanup()
 }
