@@ -21,6 +21,7 @@ import (
 type ClusterService interface {
 	Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	GetClusterDNS(clusterID string) (string, *apiErrors.ServiceError)
+	GetExternalID(clusterID string) (string, *apiErrors.ServiceError)
 	ListByStatus(state api.ClusterStatus) ([]api.Cluster, *apiErrors.ServiceError)
 	UpdateStatus(cluster api.Cluster, status api.ClusterStatus) error
 	// Update updates a Cluster. Only fields whose value is different than the
@@ -443,6 +444,17 @@ func (c clusterService) ListAllClusterIds() ([]api.Cluster, *apiErrors.ServiceEr
 type ResKafkaInstanceCount struct {
 	Clusterid string
 	Count     int
+}
+
+func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.ServiceError) {
+	cluster, err := c.FindClusterByID(clusterID)
+	if err != nil {
+		return "", err
+	}
+	if cluster == nil {
+		return "", apiErrors.GeneralError("failed to get External ID for clusterID %s", clusterID)
+	}
+	return cluster.ExternalID, nil
 }
 
 func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
