@@ -70,7 +70,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				ssoService:      tt.fields.ssoService,
 				providerFactory: tt.fields.providerFactory,
-				configService: NewConfigService(config.ApplicationConfig{
+				configService: NewConfigService(&config.ApplicationConfig{
 					Server: &config.ServerConfig{},
 					Keycloak: &config.KeycloakConfig{
 						KafkaRealm: &config.KeycloakRealmConfig{},
@@ -192,7 +192,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				ssoService:      tt.fields.ssoService,
 				providerFactory: tt.fields.providerFactory,
-				configService: NewConfigService(config.ApplicationConfig{
+				configService: NewConfigService(&config.ApplicationConfig{
 					Server: &config.ServerConfig{},
 					Keycloak: &config.KeycloakConfig{
 						KafkaRealm: &config.KeycloakRealmConfig{},

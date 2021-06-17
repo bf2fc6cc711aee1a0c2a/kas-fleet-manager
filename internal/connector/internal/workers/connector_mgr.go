@@ -38,10 +38,19 @@ type ConnectorManager struct {
 	vaultService            vault.VaultService
 	lastVersion             int64
 	reconcileChannels       bool
+	db                      *db.ConnectionFactory
 }
 
 // NewConnectorManager creates a new connector manager
-func NewConnectorManager(connectorTypesService services.ConnectorTypesService, connectorService services.ConnectorsService, connectorClusterService services.ConnectorClusterService, observatoriumService coreServices.ObservatoriumService, vaultService vault.VaultService, bus signalbus.SignalBus) *ConnectorManager {
+func NewConnectorManager(
+	connectorTypesService services.ConnectorTypesService,
+	connectorService services.ConnectorsService,
+	connectorClusterService services.ConnectorClusterService,
+	observatoriumService coreServices.ObservatoriumService,
+	vaultService vault.VaultService,
+	bus signalbus.SignalBus,
+	db *db.ConnectionFactory,
+) *ConnectorManager {
 	return &ConnectorManager{
 		id:                      uuid.New().String(),
 		workerType:              "connector",
@@ -51,6 +60,7 @@ func NewConnectorManager(connectorTypesService services.ConnectorTypesService, c
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
 		reconcileChannels:       true,
+		db:                      db,
 		reconciler: workers.Reconciler{
 			SignalBus: bus,
 		},
@@ -109,7 +119,7 @@ func (k *ConnectorManager) Reconcile() []error {
 	}
 
 	serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
-		return InDBTransaction(func(ctx context.Context) error {
+		return InDBTransaction(k.db, func(ctx context.Context) error {
 			if err := db.AddPostCommitAction(ctx, func() {
 				k.lastVersion = connector.Version
 			}); err != nil {
@@ -142,7 +152,7 @@ func (k *ConnectorManager) Reconcile() []error {
 
 	// Process any connector updates...
 	serviceErr = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
-		return InDBTransaction(func(ctx context.Context) error {
+		return InDBTransaction(k.db, func(ctx context.Context) error {
 			switch connector.Status.Phase {
 			case dbapi.ConnectorStatusPhaseAssigning:
 			case dbapi.ConnectorClusterPhaseDeleted:
@@ -170,8 +180,8 @@ func (k *ConnectorManager) Reconcile() []error {
 	return errs
 }
 
-func InDBTransaction(f func(ctx context.Context) error) (rerr *serviceError.ServiceError) {
-	ctx, err := db.NewContext(context.Background())
+func InDBTransaction(dbFactory *db.ConnectionFactory, f func(ctx context.Context) error) (rerr *serviceError.ServiceError) {
+	ctx, err := dbFactory.NewContext(context.Background())
 	if err != nil {
 		return serviceError.GeneralError("failed to create tx: %v", err)
 	}

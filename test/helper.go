@@ -7,9 +7,6 @@ import (
 	goerrors "errors"
 	"fmt"
 	"github.com/goava/di"
-	"net/http/httptest"
-	"os"
-	"sync"
 	"testing"
 	"time"
 
@@ -20,10 +17,8 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
-	"github.com/segmentio/ksuid"
-	"github.com/spf13/pflag"
-
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/segmentio/ksuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
@@ -43,9 +38,6 @@ const (
 	jwtCAFile  = "test/support/jwt_ca.pem"
 )
 
-var helper *Helper
-var once sync.Once
-
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
 var jwkURL string
 
@@ -54,119 +46,55 @@ var jwkURL string
 // by synchronizing on a common time func attached to the test harness.
 type TimeFunc func() time.Time
 
-type Helper struct {
+type Services struct {
+	di.Inject
 	DBFactory         *db.ConnectionFactory
 	AppConfig         *config.ApplicationConfig
-	APIServer         *server.ApiServer
 	MetricsServer     *server.MetricsServer
 	HealthCheckServer *server.HealthCheckServer
-	KafkaWorkers      []workers.Worker
-	ClusterWorker     *workers.ClusterManager
-	LeaderEleWorker   *workers.LeaderElectionManager
-	AuthHelper        *auth.AuthHelper
-	TimeFunc          TimeFunc
-	JWTPrivateKey     *rsa.PrivateKey
-	JWTCA             *rsa.PublicKey
-	T                 *testing.T
-	teardowns         []func()
 }
 
-func NewHelper(t *testing.T, server *httptest.Server) *Helper {
-	once.Do(func() {
-		env := environments.Environment()
+type Helper struct {
+	AuthHelper    *auth.AuthHelper
+	JWTPrivateKey *rsa.PrivateKey
+	JWTCA         *rsa.PublicKey
+	T             *testing.T
+	Env           *environments.Env
 
-		// Set server if provided
-		if server != nil {
-			fmt.Printf("Setting OCM base URL to %s\n", server.URL)
-			env.Config.OCM.BaseURL = server.URL
-		}
+	APIServer       *server.ApiServer
+	KafkaWorkers    []workers.Worker
+	ClusterWorker   *workers.ClusterManager
+	LeaderEleWorker *workers.LeaderElectionManager
 
-		// Manually set environment name, ignoring environment variables
-		validTestEnv := false
-		for _, testEnv := range []string{environments.TestingEnv, environments.IntegrationEnv, environments.DevelopmentEnv} {
-			if env.Name == testEnv {
-				validTestEnv = true
-				break
-			}
-		}
-		if !validTestEnv {
-			fmt.Println("OCM_ENV environment variable not set to a valid test environment, using default testing environment")
-			env.Name = environments.TestingEnv
-		}
-		err := env.AddFlags(pflag.CommandLine)
-		if err != nil {
-			glog.Fatalf("Unable to add environment flags: %s", err.Error())
-		}
-		if logLevel := os.Getenv("LOGLEVEL"); logLevel != "" {
-			glog.Infof("Using custom loglevel: %s", logLevel)
-			err = pflag.CommandLine.Set("v", logLevel)
-			if err != nil {
-				glog.Warningf("Unable to set custom logLevel: %s", err.Error())
-			}
-		}
-		pflag.Parse()
-
-		err = env.Initialize()
-		if err != nil {
-			glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
-		}
-
-		authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
-		if err != nil {
-			helper.T.Errorf("failed to create a new auth helper %s", err.Error())
-		}
-
-		helper = &Helper{
-			AppConfig:     environments.Environment().Config,
-			DBFactory:     environments.Environment().DBFactory,
-			JWTPrivateKey: authHelper.JWTPrivateKey,
-			JWTCA:         authHelper.JWTCA,
-			AuthHelper:    authHelper,
-		}
-
-		helper.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-		helper.Env().Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
-
-		db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
-
-		// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-		jwkMockTeardown := helper.StartJWKCertServerMock()
-		helper.teardowns = []func(){
-			helper.CleanDB,
-			jwkMockTeardown,
-			helper.stopAPIServer,
-		}
-		helper.startMetricsServer()
-		helper.startHealthCheckServer()
-	})
-	helper.T = t
-	return helper
+	Services
 }
 
-func (helper *Helper) SetServer(server *httptest.Server) {
-	helper.Env().Config.OCM.BaseURL = server.URL
-	err := helper.Env().LoadServices()
+func NewHelper(t *testing.T) *Helper {
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, env.Config.OCM.TokenIssuerURL)
 	if err != nil {
-		glog.Fatalf("Unable to load services: %s", err.Error())
+		t.Errorf("failed to create a new auth helper %s", err.Error())
 	}
-}
+	env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	env.Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
-func (helper *Helper) Env() *environments.Env {
-	return environments.Environment()
-}
-
-func (helper *Helper) Teardown() {
-	for _, f := range helper.teardowns {
-		f()
+	return &Helper{
+		//AppConfig:     env.Config,
+		//DBFactory:     env.DBFactory,
+		JWTPrivateKey: authHelper.JWTPrivateKey,
+		JWTCA:         authHelper.JWTCA,
+		AuthHelper:    authHelper,
+		T:             t,
+		Env:           env,
 	}
 }
 
 func (helper *Helper) startAPIServer() {
 	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-	helper.Env().Config.Server.JwksURL = jwkURL
-	helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = false
+	helper.Env.Config.Server.JwksURL = jwkURL
+	helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = false
 
-	if err := helper.Env().ServiceContainer.Resolve(&helper.APIServer); err != nil {
+	if err := helper.Env.ServiceContainer.Resolve(&helper.APIServer); err != nil {
 		glog.Fatalf("di failure: %v", err)
 	}
 
@@ -188,9 +116,6 @@ func (helper *Helper) stopAPIServer() {
 }
 
 func (helper *Helper) startMetricsServer() {
-	if err := helper.Env().ServiceContainer.Resolve(&helper.MetricsServer); err != nil {
-		glog.Fatalf("di failure: %v", err)
-	}
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.MetricsServer.Start()
@@ -205,18 +130,20 @@ func (helper *Helper) stopMetricsServer() {
 }
 
 func (helper *Helper) startHealthCheckServer() {
-	if err := helper.Env().ServiceContainer.Resolve(&helper.HealthCheckServer); err != nil {
-		glog.Fatalf("di failure: %v", err)
-	}
 	go func() {
 		glog.V(10).Info("Test health check server started")
 		helper.HealthCheckServer.Start()
 		glog.V(10).Info("Test health check server stopped")
 	}()
 }
+func (helper *Helper) stopHealthCheckServer() {
+	if err := helper.HealthCheckServer.Stop(); err != nil {
+		glog.Fatalf("Unable to stop heal check server: %s", err.Error())
+	}
+}
 
 func (helper *Helper) startKafkaWorkers() {
-	env := helper.Env()
+	env := helper.Env
 	var kafkaWorkerList []workers.Worker
 	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.SignalBus)
 	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.ClusterPlmtStrategy, env.Services.SignalBus)
@@ -247,7 +174,7 @@ func (helper *Helper) stopKafkaWorkers() {
 
 func (helper *Helper) startClusterWorker() {
 	// start cluster worker
-	services := helper.Env().Services
+	services := helper.Env.Services
 	helper.ClusterWorker = workers.NewClusterManager(services.Cluster, services.CloudProviders,
 		services.Config, uuid.New().String(), services.KasFleetshardAddonService, services.OsdIdpKeycloak, services.SignalBus)
 	go func() {
@@ -264,21 +191,21 @@ func (helper *Helper) stopClusterWorker() {
 	helper.ClusterWorker.Stop()
 }
 
-func (helper *Helper) startSignalBusWorker() {
-	env := helper.Env()
+func (helper *Helper) StartSignalBusWorker() {
+	env := helper.Env
 	glog.V(10).Info("Signal bus worker started")
 	env.Services.SignalBus.(*signalbus.PgSignalBus).Start()
 }
 
-func (helper *Helper) stopSignalBusWorker() {
-	env := helper.Env()
+func (helper *Helper) StopSignalBusWorker() {
+	env := helper.Env
 	env.Services.SignalBus.(*signalbus.PgSignalBus).Stop()
 	glog.V(10).Info("Signal bus worker stopped")
 }
 
 func (helper *Helper) startLeaderElectionWorker() {
 
-	env := helper.Env()
+	env := helper.Env
 	services := env.Services
 	helper.ClusterWorker = workers.NewClusterManager(services.Cluster, services.CloudProviders,
 		services.Config, uuid.New().String(), services.KasFleetshardAddonService, services.OsdIdpKeycloak, services.SignalBus)
@@ -364,33 +291,9 @@ func (helper *Helper) RestartMetricsServer() {
 	glog.V(10).Info("Test metrics server restarted")
 }
 
-// Reset metrics. Note this will only reset metrics defined in pkg/metrics
+// ResetMetrics metrics. Note this will only reset metrics defined in pkg/metrics
 func (helper *Helper) ResetMetrics() {
 	metrics.Reset()
-}
-
-func (helper *Helper) Reset() {
-	glog.Infof("Reseting testing environment")
-	env := environments.Environment()
-	// Reset the configuration
-	env.Config = config.NewApplicationConfig()
-
-	// Re-read command-line configuration into a NEW flagset
-	// This new flag set ensures we don't hit conflicts defining the same flag twice
-	// Also on reset, we don't care to be re-defining 'v' and other glog flags
-	flagset := pflag.NewFlagSet(helper.NewID(), pflag.ContinueOnError)
-	err := env.AddFlags(flagset)
-	if err != nil {
-		glog.Fatalf("Unable to load clients: %s", err.Error())
-	}
-	pflag.Parse()
-
-	err = env.Initialize()
-	if err != nil {
-		glog.Fatalf("Unable to reset testing environment: %s", err.Error())
-	}
-	helper.AppConfig = env.Config
-	helper.RestartServer()
 }
 
 // NewID creates a new unique ID used internally to CS
@@ -480,7 +383,7 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 
 func (helper *Helper) StartJWKCertServerMock() (teardown func()) {
 	jwkURL, teardown = mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
-	helper.Env().Config.Server.JwksURL = jwkURL
+	helper.Env.Config.Server.JwksURL = jwkURL
 	return teardown
 }
 

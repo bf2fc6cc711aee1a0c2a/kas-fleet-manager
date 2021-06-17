@@ -14,5 +14,5 @@ func (b SimpleEnvLoader) Defaults() map[string]string {
 }
 
 func (b SimpleEnvLoader) Load(env *Env) error {
-	return env.LoadServices()
+	return nil
 }

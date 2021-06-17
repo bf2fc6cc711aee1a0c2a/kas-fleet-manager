@@ -24,5 +24,5 @@ func (t TestingEnvLoader) Load(env *Env) error {
 	if os.Getenv("DB_DEBUG") == "true" {
 		env.Config.Database.Debug = true
 	}
-	return env.LoadServices()
+	return nil
 }

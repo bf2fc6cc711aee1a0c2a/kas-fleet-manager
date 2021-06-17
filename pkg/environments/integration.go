@@ -53,5 +53,5 @@ func (b IntegrationEnvLoader) Load(env *Env) error {
 		env.Config.Database.Debug = true
 	}
 	env.Config.ObservabilityConfiguration.EnableMock = true
-	return env.LoadServices()
+	return nil
 }

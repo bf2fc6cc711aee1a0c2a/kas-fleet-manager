@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	vault2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"net/http"
 	"net/url"
@@ -30,10 +30,10 @@ type ConnectorClusterHandler struct {
 	config         coreservices.ConfigService
 	keycloak       coreservices.KeycloakService
 	connectorTypes services.ConnectorTypesService
-	vault          vault2.VaultService
+	vault          vault.VaultService
 }
 
-func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config coreservices.ConfigService, keycloak coreservices.KafkaKeycloakService, connectorTypes services.ConnectorTypesService, vault vault2.VaultService) *ConnectorClusterHandler {
+func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config coreservices.ConfigService, keycloak coreservices.KafkaKeycloakService, connectorTypes services.ConnectorTypesService, vault vault.VaultService) *ConnectorClusterHandler {
 	return &ConnectorClusterHandler{
 		bus:            bus,
 		service:        service,

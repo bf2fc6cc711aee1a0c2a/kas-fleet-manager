@@ -20,13 +20,13 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	defer teardown()
 
 	// setting AWS.AccountID to invalid value
-	currentAWSAccountID := h.Env().Config.AWS.AccountID
+	currentAWSAccountID := h.Env.Config.AWS.AccountID
 	defer func(helper *test.Helper) {
-		helper.Env().Config.AWS.AccountID = currentAWSAccountID
+		helper.Env.Config.AWS.AccountID = currentAWSAccountID
 	}(h)
-	h.Env().Config.AWS.AccountID = "123456789012"
+	h.Env.Config.AWS.AccountID = "123456789012"
 
-	clusterService := h.Env().Services.Cluster
+	clusterService := h.Env.Services.Cluster
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",

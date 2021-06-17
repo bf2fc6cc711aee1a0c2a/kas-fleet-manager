@@ -3,17 +3,18 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
-	vault2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"github.com/golang/glog"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -26,12 +27,12 @@ type extender struct {
 
 func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 	// we can only check the delete count on the TmpVault service impl...
-	var service vault2.VaultService
-	if err := environments.Environment().ServiceContainer.Resolve(&service); err != nil {
+	var service vault.VaultService
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
 		return err
 	}
 
-	if vault, ok := service.(*vault2.TmpVaultService); ok {
+	if vault, ok := service.(*vault.TmpVaultService); ok {
 		actual := vault.Counters().Deletes
 		if actual != expected {
 			return fmt.Errorf("vault delete counter does not match expected: %v, actual: %v", expected, actual)
@@ -93,7 +94,7 @@ func (s *extender) getAndStoreAccessTokenUsingTheAddonParameterResponseAs(as str
 
 func (s *extender) connectorDeploymentUpgradesAvailableAre(expected *godog.DocString) error {
 	var connectorCluster services.ConnectorClusterService
-	if err := environments.Environment().ServiceContainer.Resolve(&connectorCluster); err != nil {
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&connectorCluster); err != nil {
 		return err
 	}
 
@@ -125,7 +126,7 @@ func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(conne
 	}
 
 	var connectorManager *workers.ConnectorManager
-	if err := environments.Environment().ServiceContainer.Resolve(&connectorManager); err != nil {
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&connectorManager); err != nil {
 		return err
 	}
 
@@ -156,21 +157,21 @@ func TestMain(m *testing.M) {
 	// Startup all the services and mocks that are needed to test the
 	// connector features.
 	t := &testing.T{}
-
-	env := environments.Environment()
-	connectorsConfig := &config.ConnectorsConfig{}
-	err := env.ConfigContainer.Resolve(&connectorsConfig)
-	if err != nil {
-		t.Fatalf("no ConnectorsConfig found: %v", err)
-	}
-
-	connectorsConfig.Enabled = true
-	connectorsConfig.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer,
+		func(helper *test.Helper) {
+			if err := helper.Env.ConfigContainer.Invoke(func(c *config.ConnectorsConfig) {
+				c.Enabled = true
+				c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
+			}); err != nil {
+				glog.Fatalf("di failure: %v", err)
+			}
+
+		},
+		connector.ConfigProviders().AsOption(),
+	)
 	defer teardown()
 
 	status := cucumber.TestMain(h)

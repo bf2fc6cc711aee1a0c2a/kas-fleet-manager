@@ -70,7 +70,7 @@ Once values are set, these configurations will be available in the overall Appli
 Example:
 ```go
     ...
-    env := environments.Environment()
+    env := env
     if env.Config.Sentry.Enabled {
         ...
     }

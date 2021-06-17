@@ -2,15 +2,11 @@ package main
 
 import (
 	"flag"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/cloudprovider"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/cluster"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/migrate"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/servecmd"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/serviceaccounts"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/serve"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -32,23 +28,42 @@ func main() {
 		glog.Infof("Unable to set logtostderr to true")
 	}
 
+	env, err := environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
+		kafka.ConfigProviders().AsOption(),
+		connector.ConfigProviders().AsOption(),
+	)
+	if err != nil {
+		glog.Fatalf("error initializing: %v", err)
+	}
+
 	rootCmd := &cobra.Command{
 		Use:  "kas-fleet-manager",
 		Long: "kas-fleet-manager serves as an example service template for new microservices",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			err = env.LoadConfigAndCreateServices()
+			if err != nil {
+				glog.Fatalf("Unable to initialize environment: %s", err.Error())
+			}
+		},
 	}
 
-	// All subcommands under root
-	migrateCmd := migrate.NewMigrateCommand()
-	serveCmd := servecmd.NewServeCommand()
-	clusterCmd := cluster.NewClusterCommand()
-	observatoriumCmd := observatorium.NewRunObservatoriumCommand()
-	serviceaccountCmd := serviceaccounts.NewServiceAccountCommand()
-	errorsCmd := errors.NewErrorsCommand()
-
-	// Add subcommand(s)
-	rootCmd.AddCommand(migrateCmd, serveCmd, clusterCmd, kafka.NewKafkaCommand(), cloudprovider.NewCloudProviderCommand(), observatoriumCmd, serviceaccountCmd, errorsCmd)
-
-	if err := rootCmd.Execute(); err != nil {
-		glog.Fatalf("error running command: %v", err)
+	err = env.AddFlags(rootCmd.PersistentFlags())
+	if err != nil {
+		glog.Fatalf("Unable to add environment flags: %s", err.Error())
 	}
+
+	err = env.ConfigContainer.Invoke(func(subcommands []*cobra.Command) {
+
+		// All subcommands under root
+		rootCmd.AddCommand(
+			migrate.NewMigrateCommand(),
+			serve.NewServeCommand(env),
+		)
+		rootCmd.AddCommand(subcommands...)
+
+		if err := rootCmd.Execute(); err != nil {
+			glog.Fatalf("error running command: %v", err)
+		}
+
+	})
 }

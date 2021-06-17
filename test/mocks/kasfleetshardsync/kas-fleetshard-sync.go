@@ -19,7 +19,7 @@ import (
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
 var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error {
-	clusters, err := helper.Env().Services.Cluster.FindAllClusters(services.FindClusterCriteria{
+	clusters, err := helper.Env.Services.Cluster.FindAllClusters(services.FindClusterCriteria{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
 	})
 	if err != nil {
@@ -27,12 +27,12 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateC
 	}
 
 	for _, cluster := range clusters {
-		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, helper.Env().Config.OCM.StrimziOperatorAddonID)
+		managedKafkaAddon, err := ocmClient.GetAddon(cluster.ClusterID, helper.Env.Config.OCM.StrimziOperatorAddonID)
 		if err != nil {
 			return err
 		}
 
-		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, helper.Env().Config.OCM.KasFleetshardAddonID)
+		kasFleetShardOperatorAddon, err := ocmClient.GetAddon(cluster.ClusterID, helper.Env.Config.OCM.KasFleetshardAddonID)
 		if err != nil {
 			return err
 		}
@@ -60,7 +60,7 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateC
 // Any Kafkas marked for deletion are updated to 'deleting'
 // Kafkas with any other status are updated to 'ready'
 var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient) error {
-	clusterService := helper.Env().Services.Cluster
+	clusterService := helper.Env.Services.Cluster
 
 	var dataplaneClusters []*api.Cluster
 	readyDataplaneClusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
@@ -130,7 +130,7 @@ func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasF
 		kfsync: mockKasFleetshardSync{
 			helper:                       helper,
 			t:                            t,
-			ocmClient:                    ocm.NewClient(helper.Env().Clients.OCM.Connection),
+			ocmClient:                    ocm.NewClient(helper.Env.Clients.OCM.Connection),
 			privateClient:                helper.NewPrivateAPIClient(),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,

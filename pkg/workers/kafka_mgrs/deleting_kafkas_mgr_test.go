@@ -41,7 +41,7 @@ func TestDeletingKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 			},
@@ -62,7 +62,7 @@ func TestDeletingKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 			},

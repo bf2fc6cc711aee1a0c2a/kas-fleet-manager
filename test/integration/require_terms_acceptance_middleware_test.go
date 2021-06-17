@@ -18,11 +18,8 @@ type TestEnv struct {
 }
 
 func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
-	startHook := func(h *test.Helper) {
-		h.Env().Config.Server.EnableTermsAcceptance = true
-	}
-	tearDownHook := func(h *test.Helper) {
-		h.Env().Config.Server.EnableTermsAcceptance = false
+	configHook := func(h *test.Helper) {
+		h.Env.Config.Server.EnableTermsAcceptance = true
 	}
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	termsReviewResponse, err := mocks.GetMockTermsReviewBuilder(nil).TermsRequired(termsRequired).Build()
@@ -34,7 +31,7 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook, tearDownHook)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
 
 	return TestEnv{
 		helper: h,
@@ -50,7 +47,7 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
-	if env.helper.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+	if env.helper.Env.Config.OCM.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -75,7 +72,7 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
-	if env.helper.Env().Config.OCM.MockMode != config.MockModeEmulateServer {
+	if env.helper.Env.Config.OCM.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 

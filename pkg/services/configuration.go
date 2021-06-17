@@ -40,19 +40,19 @@ type ConfigService interface {
 	// GetObservabilityConfiguration returns ObservabilityConfiguration.
 	// Deprecated: should not be used anymore, use GetConfig() and then access the config object
 	GetObservabilityConfiguration() config.ObservabilityConfiguration
-	// GetConfig returns ApplicationConfig, which can then be used to access configurations
-	GetConfig() config.ApplicationConfig
+	// GetConfig returns *ApplicationConfig, which can then be used to access configurations
+	GetConfig() *config.ApplicationConfig
 }
 
 var _ ConfigService = &configService{}
 
 // configService is an internal implementation of ConfigService
 type configService struct {
-	appConfig config.ApplicationConfig
+	appConfig *config.ApplicationConfig
 }
 
 // NewConfigService returns a new default implementation of ConfigService
-func NewConfigService(appConfig config.ApplicationConfig) ConfigService {
+func NewConfigService(appConfig *config.ApplicationConfig) ConfigService {
 	return &configService{
 		appConfig: appConfig,
 	}
@@ -161,6 +161,6 @@ func (c configService) GetObservabilityConfiguration() config.ObservabilityConfi
 	return *c.appConfig.ObservabilityConfiguration
 }
 
-func (c configService) GetConfig() config.ApplicationConfig {
+func (c configService) GetConfig() *config.ApplicationConfig {
 	return c.appConfig
 }

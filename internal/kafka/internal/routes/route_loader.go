@@ -35,6 +35,7 @@ type options struct {
 	Keycloak              services.KafkaKeycloakService
 	DataPlaneCluster      services.DataPlaneClusterService
 	DataPlaneKafkaService services.DataPlaneKafkaService
+	DB                    *db.ConnectionFactory
 }
 
 func NewRouteLoader(s options) provider.RouteLoader {
@@ -151,7 +152,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
 	apiRouter.Use(coreHandlers.MetricsMiddleware)
-	apiRouter.Use(db.TransactionMiddleware)
+	apiRouter.Use(db.TransactionMiddleware(s.DB))
 	apiRouter.Use(handlers2.CompressHandler)
 
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)

@@ -1,10 +1,9 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"net/http"
 	"testing"
-
-	clusterscalecmd "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/cluster"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
@@ -39,17 +38,17 @@ func TestClusterComputeNodesScaling(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	expectedReplicas := mocks.MockClusterComputeNodes + clusterscalecmd.DefaultClusterNodeScaleIncrement
+	expectedReplicas := mocks.MockClusterComputeNodes + constants.DefaultClusterNodeScaleIncrement
 
 	overrideClusterMockResponse(ocmServerBuilder, expectedReplicas)
 
-	scaleUpComputeNodes(h, expectedReplicas, clusterID, clusterscalecmd.DefaultClusterNodeScaleIncrement)
+	scaleUpComputeNodes(h, expectedReplicas, clusterID, constants.DefaultClusterNodeScaleIncrement)
 
-	expectedReplicas = expectedReplicas - clusterscalecmd.DefaultClusterNodeScaleIncrement
+	expectedReplicas = expectedReplicas - constants.DefaultClusterNodeScaleIncrement
 
 	overrideClusterMockResponse(ocmServerBuilder, expectedReplicas)
 
-	scaleDownComputeNodes(h, expectedReplicas, clusterID, clusterscalecmd.DefaultClusterNodeScaleIncrement)
+	scaleDownComputeNodes(h, expectedReplicas, clusterID, constants.DefaultClusterNodeScaleIncrement)
 }
 
 // get mock Cluster with specified Compute replicas number
@@ -68,13 +67,13 @@ func getClusterForScaleTest(replicas int) *clustersmgmtv1.Cluster {
 
 // scaleUpComputeNodes and confirm that it is scaled without error
 func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, increment int) {
-	_, err := h.Env().Services.Cluster.ScaleUpComputeNodes(clusterID, increment)
+	_, err := h.Env.Services.Cluster.ScaleUpComputeNodes(clusterID, increment)
 	Expect(err).To(BeNil())
 }
 
 // scaleDownComputeNodes and confirm that it is scaled without error
 func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, decrement int) {
-	_, err := h.Env().Services.Cluster.ScaleDownComputeNodes(clusterID, decrement)
+	_, err := h.Env.Services.Cluster.ScaleDownComputeNodes(clusterID, decrement)
 	Expect(err).To(BeNil())
 }
 

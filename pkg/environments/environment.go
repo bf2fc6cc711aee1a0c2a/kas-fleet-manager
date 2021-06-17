@@ -3,24 +3,18 @@ package environments
 import (
 	goerrors "errors"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	sdkClient "github.com/openshift-online/ocm-sdk-go"
-	"os"
-	"sync"
-
-	"github.com/goava/di"
-	"github.com/pkg/errors"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/goava/di"
+	sdkClient "github.com/openshift-online/ocm-sdk-go"
+	"github.com/pkg/errors"
+	"os"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 
@@ -85,53 +79,23 @@ type ConfigDefaults struct {
 	Options  map[string]interface{}
 }
 
-var environment *Env
-var once sync.Once
-
-func init() {
-	once.Do(func() {
-		var err error
-		environment, err = NewEnv(GetEnvironmentStrFromEnv())
-		if err != nil {
-			panic(err)
-		}
-	})
-}
-
-func NewEnv(name string, options ...di.Option) (env *Env, err error) {
-	env = &Env{
-		Name: name,
-	}
-
-	//di.SetTracer(di.StdTracer{})
-	env.ConfigContainer, err = di.New(append(options,
-		di.ProvideValue(env),
-
-		// Add the env types
-		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
-		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
-		di.Provide(newStageEnvLoader, di.Tags{"env": StageEnv}),
-		di.Provide(newIntegrationEnvLoader, di.Tags{"env": IntegrationEnv}),
-		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
-
-		// Add the config modules
-		di.Provide(config.NewApplicationConfig, di.As(new(config.ConfigModule))),
-
-		// Add the connector injections.
-		connector.ConfigProviders().AsOption(),
-		kafka.ConfigProviders().AsOption(),
-		vault.ConfigProviders().AsOption(),
-	)...)
-	if err != nil {
-		return nil, err
-	}
-
-	err = env.ConfigContainer.Resolve(&env.Config)
-	if err != nil {
-		return nil, err
-	}
-	return env, nil
-}
+//var environment *Env
+//
+//func Environment() *Env {
+//	if environment == nil {
+//		panic("environment global not initialized.")
+//	}
+//	return environment
+//}
+//func SetEnvironment(e *Env) {
+//	if e != nil && environment != nil {
+//		panic("environment global already initialized.")
+//	}
+//	if e == nil && environment == nil {
+//		panic("environment global already uninitialized.")
+//	}
+//	environment = e
+//}
 
 func GetEnvironmentStrFromEnv() string {
 	envStr, specified := os.LookupEnv(EnvironmentStringKey)
@@ -140,14 +104,6 @@ func GetEnvironmentStrFromEnv() string {
 		envStr = EnvironmentDefault
 	}
 	return envStr
-}
-
-func Environment() *Env {
-	return environment
-}
-
-func SetEnvironment(e *Env) {
-	environment = e
 }
 
 // Adds environment flags, using the environment's config struct, to the flagset 'flags'
@@ -170,14 +126,56 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 	return setConfigDefaults(flags, namedEnv.Defaults())
 }
 
-// Initialize loads the environment's resources
+func NewEnv(name string, options ...di.Option) (env *Env, err error) {
+	env = &Env{
+		Name: name,
+	}
+
+	//di.SetTracer(di.StdTracer{})
+	env.ConfigContainer, err = di.New(append(options,
+		di.ProvideValue(env),
+
+		// Add the env types
+		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
+		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
+		di.Provide(newStageEnvLoader, di.Tags{"env": StageEnv}),
+		di.Provide(newIntegrationEnvLoader, di.Tags{"env": IntegrationEnv}),
+		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
+
+		di.Provide(config.NewApplicationConfig, di.As(new(config.ConfigModule))),
+		vault.ConfigProviders().AsOption(),
+	)...)
+	if err != nil {
+		return nil, err
+	}
+
+	err = env.ConfigContainer.Resolve(&env.Config)
+	if err != nil {
+		return nil, err
+	}
+	return env, nil
+}
+
+func (env *Env) LoadConfigAndCreateServices() error {
+	err := env.LoadConfig()
+	if err != nil {
+		return err
+	}
+	err = env.CreateServices()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// LoadConfig loads the environment's resources
 // This should be called after the e.Config has been set appropriately though AddFlags and pasing, done elsewhere
 // The environment does NOT handle flag parsing
-func (e *Env) Initialize() error {
-	glog.Infof("Initializing %s environment", e.Name)
+func (env *Env) LoadConfig() error {
+	glog.Infof("Initializing %s environment", env.Name)
 
 	modules := []config.ConfigModule{}
-	if err := e.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
+	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
 
@@ -192,15 +190,14 @@ func (e *Env) Initialize() error {
 	}
 
 	var namedEnv EnvLoader
-	err := e.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": e.Name})
+	err := env.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": env.Name})
 	if err != nil {
-		return errors.Errorf("unsupported environment %q", e.Name)
+		return errors.Errorf("unsupported environment %q", env.Name)
 	}
-
-	return namedEnv.Load(environment)
+	return namedEnv.Load(env)
 }
 
-func (env *Env) LoadServices() error {
+func (env *Env) CreateServices() error {
 
 	var serviceInjections []provider.Provider
 	if err := env.ConfigContainer.Resolve(&serviceInjections); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
@@ -221,7 +218,6 @@ func (env *Env) LoadServices() error {
 	container, err := di.New(append(opts,
 		di.ProvideValue(env),
 		di.ProvideValue(env.Config),
-		di.ProvideValue(*env.Config),
 		di.ProvideValue(env.Config.Database),
 		di.ProvideValue(env.Config.Sentry),
 		di.ProvideValue(env.Config.Kafka),
@@ -435,6 +431,8 @@ func (env *Env) Teardown() {
 		}
 		env.Clients.OCM.Close()
 	}
+	env.ServiceContainer.Cleanup()
+	env.ServiceContainer = nil
 }
 
 func setConfigDefaults(flags *pflag.FlagSet, defaults map[string]string) error {
