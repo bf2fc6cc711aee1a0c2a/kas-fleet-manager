@@ -76,20 +76,24 @@ paths:
         examples:
           page:
             value: "1"
+        explode: true
         in: query
         name: page
         required: false
         schema:
           type: string
+        style: form
       - description: Number of items in each page
         examples:
           size:
             value: "100"
+        explode: true
         in: query
         name: size
         required: false
         schema:
           type: string
+        style: form
       responses:
         "200":
           content:
@@ -128,20 +132,24 @@ paths:
         examples:
           page:
             value: "1"
+        explode: true
         in: query
         name: page
         required: false
         schema:
           type: string
+        style: form
       - description: Number of items in each page
         examples:
           size:
             value: "100"
+        explode: true
         in: query
         name: size
         required: false
         schema:
           type: string
+        style: form
       - description: The kafka cluster id
         explode: true
         in: query
@@ -246,10 +254,18 @@ paths:
       summary: Create a new connector
       tags:
       - Connectors
-  /api/connector_mgmt/v1/kafkas_connectors/{connector_id}:
+  /api/connector_mgmt/v1/kafkas_connectors/{id}:
     delete:
       operationId: deleteConnector
       parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
       - description: The kafka cluster id
         explode: true
         in: query
@@ -258,14 +274,6 @@ paths:
         schema:
           type: string
         style: form
-      - description: The id of the connector
-        explode: false
-        in: path
-        name: connector_id
-        required: true
-        schema:
-          type: string
-        style: simple
       responses:
         "204":
           content:
@@ -308,6 +316,14 @@ paths:
     get:
       operationId: getConnector
       parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
       - description: The kafka cluster id
         explode: true
         in: query
@@ -316,14 +332,6 @@ paths:
         schema:
           type: string
         style: form
-      - description: The id of the connector
-        explode: false
-        in: path
-        name: connector_id
-        required: true
-        schema:
-          type: string
-        style: simple
       responses:
         "200":
           content:
@@ -366,6 +374,14 @@ paths:
     patch:
       operationId: patchConnector
       parameters:
+      - description: The ID of record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        style: simple
       - description: The kafka cluster id
         explode: true
         in: query
@@ -374,14 +390,6 @@ paths:
         schema:
           type: string
         style: form
-      - description: The id of the connector
-        explode: false
-        in: path
-        name: connector_id
-        required: true
-        schema:
-          type: string
-        style: simple
       requestBody:
         content:
           application/json-patch+json:
@@ -441,20 +449,24 @@ paths:
         examples:
           page:
             value: "1"
+        explode: true
         in: query
         name: page
         required: false
         schema:
           type: string
+        style: form
       - description: Number of items in each page
         examples:
           size:
             value: "100"
+        explode: true
         in: query
         name: size
         required: false
         schema:
           type: string
+        style: form
       responses:
         "200":
           content:
@@ -706,56 +718,109 @@ paths:
       - Connector Clusters
 components:
   examples:
-    "401Example":
-      value:
-        id: "11"
-        kind: Error
-        href: /api/kafkas_mgmt/v1/errors/11
-        code: KAFKAS-MGMT-11
-        reason: 'Unable to verify JWT token: Required authorization token not found'
-        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
-    "404Example":
-      value:
-        id: "404"
-        kind: Error
-        href: /api/kafkas_mgmt/v1/errors/7
-        code: KAFKAS-MGMT-7
-        reason: The requested resource doesn't exist
-    "500Example":
-      value:
-        id: "9"
-        kind: Error
-        href: /api/kafkas_mgmt/v1/errors/9
-        code: KAFKAS-MGMT-9
-        reason: Unspecified error
-        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
     "400CreationExample":
       value:
         id: "103"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/103
-        code: KAFKAS-MGMT-103
+        href: /api/connector_mgmt/v1/errors/103
+        code: CONNECTOR-MGMT-103
         reason: Synchronous action is not supported, use async=true parameter
         operation_id: 1iWIimqGcrDuL61aUxIZqBTqNRa
+    "400InvalidQueryExample":
+      value:
+        id: "203"
+        kind: Error
+        href: /api/connector_mgmt/v1/errors/23
+        code: CONNECTOR-MGMT-23
+        reason: 'Failed to parse search query: Unable to list Kafka requests for api_kafka_service:
+          CONNECTOR-MGMT-23: Failed to parse search query: Unsupported column name
+          for search: ''id''. Supported column names are: region, name, cloud_provider,
+          name, status. Query invalid: id = 123'
+        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "404Example":
+      value:
+        id: "404"
+        kind: Error
+        href: /api/connector_mgmt/v1/errors/7
+        code: CONNECTOR-MGMT-7
+        reason: The requested resource doesn't exist
     "404DeleteExample":
       value:
         id: "7"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/7
-        code: KAFKAS-MGMT-7
+        href: /api/connector_mgmt/v1/errors/7
+        code: CONNECTOR-MGMT-7
         reason: KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found
         operation_id: 1iYO7g2g6HTdUKUa2ksH82kQD3y
+    "401Example":
+      value:
+        id: "11"
+        kind: Error
+        href: /api/connector_mgmt/v1/errors/11
+        code: CONNECTOR-MGMT-11
+        reason: 'Unable to verify JWT token: Required authorization token not found'
+        operation_id: 1iY3UhEhwmXBpWPfI2lNekpd4ZD
+    "409NameConflictExample":
+      value:
+        id: "36"
+        kind: Error
+        href: /api/connector_mgmt/v1/errors/36
+        code: CONNECTOR-MGMT-36
+        reason: Kafka cluster name is already used
+        operation_id: 6kY0UiEkzkXCzWPeI2oYehd3ED
+    "500Example":
+      value:
+        id: "9"
+        kind: Error
+        href: /api/connector_mgmt/v1/errors/9
+        code: CONNECTOR-MGMT-9
+        reason: Unspecified error
+        operation_id: 1ieELvF9jMQY6YghfM9gGRsHvEW
     "500DeleteExample":
       value:
         id: "9"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/9
-        code: KAFKAS-MGMT-9
+        href: /api/connector_mgmt/v1/errors/9
+        code: CONNECTOR-MGMT-9
         reason: 'error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
           is ''404'', code is ''CLUSTERS-MGMT-404'' and operation identifier is ''1g5or50viu07oealuehrkc26dgftj1ac'':
           Cluster ''1g5d88q0lrcdv4g7alb7slfgnj3dhbsj'' not found)'
         operation_id: 1iYTsWry6nsqb2sNmFj5bXpD7Ca
+  parameters:
+    id:
+      description: The ID of record
+      explode: false
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      style: simple
+    page:
+      description: Page index
+      examples:
+        page:
+          value: "1"
+      explode: true
+      in: query
+      name: page
+      required: false
+      schema:
+        type: string
+      style: form
+    size:
+      description: Number of items in each page
+      examples:
+        size:
+          value: "100"
+      explode: true
+      in: query
+      name: size
+      required: false
+      schema:
+        type: string
+      style: form
   schemas:
     ConnectorType:
       allOf:
@@ -844,10 +909,6 @@ components:
           type: string
         client_secret:
           type: string
-    Error:
-      allOf:
-      - $ref: '#/components/schemas/ObjectReference'
-      - $ref: '#/components/schemas/Error_allOf'
     ObjectReference:
       properties:
         id:
@@ -874,6 +935,10 @@ components:
       - size
       - total
       type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
     ConnectorType_allOf:
       properties:
         name:
