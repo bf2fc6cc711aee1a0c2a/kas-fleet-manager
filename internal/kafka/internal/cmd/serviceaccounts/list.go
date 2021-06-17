@@ -3,7 +3,7 @@ package serviceaccounts
 import (
 	"context"
 	"encoding/json"
-	flags2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"strconv"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
@@ -34,16 +34,16 @@ func NewListCommand(env *environments.Env) *cobra.Command {
 }
 
 func runList(env *environments.Env, cmd *cobra.Command) {
-	first, err := strconv.Atoi(flags2.MustGetDefinedString(FlagFirst, cmd.Flags()))
+	first, err := strconv.Atoi(flags.MustGetDefinedString(FlagFirst, cmd.Flags()))
 	if err != nil {
 		glog.Fatalf("Unable to read flag first: %s", err.Error())
 	}
-	max, err := strconv.Atoi(flags2.MustGetDefinedString(FlagMax, cmd.Flags()))
+	max, err := strconv.Atoi(flags.MustGetDefinedString(FlagMax, cmd.Flags()))
 	if err != nil {
 		glog.Fatalf("Unable to read flag max: %s", err.Error())
 	}
 
-	orgId := flags2.MustGetDefinedString(FlagOrgID, cmd.Flags())
+	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	// setup required services
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)

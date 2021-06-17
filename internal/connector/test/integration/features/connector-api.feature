@@ -230,14 +230,13 @@ Feature: create a a connector
 
   Scenario: Greg tries to create a connector with an invalid deployment_location.kind
     Given I am logged in as "Greg"
-    Given I have created a kafka cluster as ${kid}
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"${kid}"
+          "kafka_id":"mykafka"
         },
         "deployment_location": {
           "kind": "WRONG",

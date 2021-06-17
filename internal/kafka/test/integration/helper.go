@@ -2,17 +2,17 @@ package integration
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
-	workers2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/goava/di"
 	"github.com/golang/glog"
@@ -26,18 +26,18 @@ type Services struct {
 	AppConfig             *config.ApplicationConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
-	Workers               []workers.Worker
-	LeaderElectionManager *workers.LeaderElectionManager
+	Workers               []coreWorkers.Worker
+	LeaderElectionManager *coreWorkers.LeaderElectionManager
 	SignalBus             signalbus.SignalBus
 	APIServer             *server.ApiServer
 	BootupServices        []provider.BootService
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
-	OCM2Client            *ocm2.Client
+	OCM2Client            *ocm.Client
 	OCMConfig             *config.OCMConfig
 	KafkaService          services.KafkaService
 	ObservatoriumClient   *observatorium.Client
-	ClusterManager        *workers2.ClusterManager
+	ClusterManager        *workers.ClusterManager
 	ServerConfig          *config.ServerConfig
 }
 

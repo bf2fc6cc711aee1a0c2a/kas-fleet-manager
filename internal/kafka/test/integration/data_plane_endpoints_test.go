@@ -3,7 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -377,7 +377,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) {
 	cert := "some-fake-cert"
 	key := "some-fake-key"
-	startHook := func(c *config2.KafkaConfig) {
+	startHook := func(c *config.KafkaConfig) {
 		c.EnableKafkaExternalCertificate = true
 		c.KafkaTLSCert = cert
 		c.KafkaTLSKey = key
@@ -440,7 +440,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
-	startHook := func(c *config2.KeycloakConfig) {
+	startHook := func(c *config.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = ""
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
@@ -504,7 +504,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	cert := "some-fake-cert"
-	startHook := func(c *config2.KeycloakConfig) {
+	startHook := func(c *config.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = cert
 		c.EnableAuthenticationOnKafka = true
 	}

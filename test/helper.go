@@ -5,16 +5,17 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -58,9 +59,9 @@ func NewHelper(t *testing.T, server *httptest.Server, options ...di.Option) (*He
 	return NewHelperWithHooks(t, server, nil, options...)
 }
 
-// NewHelperWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hooks.
-// The startHook will be invoked after the Helper object is inited but before the api server is started, which will allow caller to change configurations via the helper object.
-// The teardownHook will be called before server is stopped, to allow the caller to reset configurations via the helper object.
+// NewHelperWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hook.
+// The startHook will be invoked after the environments.Env is created but before the api server is started, which will allow caller to change configurations.
+// The startHook can should be a function and can optionally have type arguments that can be injected from the configuration container.
 func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, *openapi.APIClient, func()) {
 
 	// Register the test with gomega

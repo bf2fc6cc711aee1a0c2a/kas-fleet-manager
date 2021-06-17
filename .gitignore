@@ -55,7 +55,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/osd-idp-keycloak-service.*
 
 # cluster details (used for testing)
-/test/integration/test_cluster.json
+/internal/kafka/test/integration/test_cluster.json
 
 # test reports
 /reports/*.xml
