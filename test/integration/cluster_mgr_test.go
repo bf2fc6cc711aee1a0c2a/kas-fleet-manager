@@ -23,16 +23,15 @@ import (
 
 // Tests a successful cluster reconcile
 func TestClusterManager_SuccessfulReconcile(t *testing.T) {
-	configHook := func(c *config.OCMConfig) {
-		c.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
-	}
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, func(c *config.OCMConfig) {
+		c.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
+	})
 	defer teardown()
 
 	// setup required services
@@ -120,10 +119,6 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 }
 
 func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
-	var originalScalingType *string = new(string)
-	configHook := func(h *test.Helper) {
-		*originalScalingType = h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType
-	}
 
 	// setup ocm server
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
@@ -131,7 +126,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
 	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)

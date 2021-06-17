@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	logging2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	sentry2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/goava/di"
 	"net"
 	"net/http"
@@ -44,7 +45,7 @@ type ServerOptions struct {
 	di.Inject
 	ServerConfig   *config.ServerConfig
 	KeycloakConfig *config.KeycloakConfig
-	SentryConfig   *config.SentryConfig
+	SentryConfig   *sentry2.Config
 	DBFactory      *db.ConnectionFactory
 	CloudProviders services.CloudProvidersService
 	RouteLoaders   []provider.RouteLoader
@@ -142,7 +143,7 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 
 // Serve start the blocking call to Serve.
 // Useful for breaking up ListenAndServer (Start) when you require the server to be listening before continuing
-func (s ApiServer) Serve(listener net.Listener) {
+func (s *ApiServer) Serve(listener net.Listener) {
 	var err error
 	if s.serverConfig.EnableHTTPS {
 		// Check https cert and key path path
@@ -169,24 +170,26 @@ func (s ApiServer) Serve(listener net.Listener) {
 
 // Listen only start the listener, not the server.
 // Useful for breaking up ListenAndServer (Start) when you require the server to be listening before continuing
-func (s ApiServer) Listen() (listener net.Listener, err error) {
+func (s *ApiServer) Listen() (listener net.Listener, err error) {
 	return net.Listen("tcp", s.serverConfig.BindAddress)
 }
 
+func (s *ApiServer) Start() {
+	go s.Run()
+}
+
 // Start listening on the configured port and start the server. This is a convenience wrapper for Listen() and Serve(listener Listener)
-func (s ApiServer) Start() {
+func (s *ApiServer) Run() {
 	listener, err := s.Listen()
 	if err != nil {
 		glog.Fatalf("Unable to start API server: %s", err)
 	}
 	s.Serve(listener)
-
-	// after the server exits but before the application terminates
-	// we need to explicitly close Go's sql connection pool.
-	// this needs to be called *exactly* once during an app's lifetime.
-	_ = s.dbFactory.Close()
 }
 
-func (s ApiServer) Stop() error {
-	return s.httpServer.Shutdown(context.Background())
+func (s *ApiServer) Stop() {
+	err := s.httpServer.Shutdown(context.Background())
+	if err != nil {
+		glog.Warningf("Unable to stop API server: %s", err)
+	}
 }

@@ -121,10 +121,6 @@ func TestKafkaCreate_Success(t *testing.T) {
 }
 
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.Kafka.KafkaCapacity.MaxCapacity = 2
-	}
-
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -132,7 +128,9 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+		c.KafkaCapacity.MaxCapacity = 2
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -562,16 +560,14 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 // The max allowed instances limit is set to "1" set for one organusation is not depassed.
 // At the same time, users of a different organisation should be able to create instances.
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		acl := h.Env.Config.AccessControlList
-		acl.AllowList.AllowAnyRegisteredUsers = true
-		acl.EnableInstanceLimitControl = true
-	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, func(acl *config.AccessControlListConfig) {
+		acl.AllowList.AllowAnyRegisteredUsers = true
+		acl.EnableInstanceLimitControl = true
+	})
 	defer teardown()
 
 	// this value if taken from config/allow-list-configuration.yaml
@@ -893,15 +889,13 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	startHook := func(ocmConfig *config.OCMConfig) {
+	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, func(ocmConfig *config.OCMConfig) {
 		if ocmConfig.MockMode == config.MockModeEmulateServer {
 			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
 			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
 			workers.RepeatInterval = 10 * time.Second
 		}
-	}
-
-	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook)
+	})
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1312,14 +1306,12 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 // TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
 func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{}
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+		c.KafkaLifespan.LongLivedKafkas = []string{}
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1403,14 +1395,13 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 
 // TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
 func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{}
-	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+		c.KafkaLifespan.LongLivedKafkas = []string{}
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)

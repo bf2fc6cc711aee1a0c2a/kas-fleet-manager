@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"testing"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/golang/glog"
 	"github.com/google/uuid"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/segmentio/ksuid"
@@ -24,7 +24,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -53,6 +52,7 @@ type Services struct {
 	LeaderElectionManager *workers.LeaderElectionManager
 	SignalBus             signalbus.SignalBus
 	APIServer             *server.ApiServer
+	BootupServices        []provider.BootService
 }
 
 type Helper struct {
@@ -63,114 +63,6 @@ type Helper struct {
 	Env           *environments.Env
 
 	Services
-}
-
-func (helper *Helper) startAPIServer() {
-
-	if err := helper.Env.ServiceContainer.Resolve(&helper.APIServer); err != nil {
-		glog.Fatalf("di failure: %v", err)
-	}
-
-	listener, err := helper.APIServer.Listen()
-	if err != nil {
-		glog.Fatalf("Unable to start Test API server: %s", err)
-	}
-	go func() {
-		glog.V(10).Info("Test API server started")
-		helper.APIServer.Serve(listener)
-		glog.V(10).Info("Test API server stopped")
-	}()
-}
-
-func (helper *Helper) stopAPIServer() {
-	if err := helper.APIServer.Stop(); err != nil {
-		glog.Fatalf("Unable to stop api server: %s", err.Error())
-	}
-}
-
-func (helper *Helper) startMetricsServer() {
-	go func() {
-		glog.V(10).Info("Test Metrics server started")
-		helper.MetricsServer.Start()
-		glog.V(10).Info("Test Metrics server stopped")
-	}()
-}
-
-func (helper *Helper) stopMetricsServer() {
-	if err := helper.MetricsServer.Stop(); err != nil {
-		glog.Fatalf("Unable to stop metrics server: %s", err.Error())
-	}
-}
-
-func (helper *Helper) startHealthCheckServer() {
-	go func() {
-		glog.V(10).Info("Test health check server started")
-		helper.HealthCheckServer.Start()
-		glog.V(10).Info("Test health check server stopped")
-	}()
-}
-func (helper *Helper) stopHealthCheckServer() {
-	if err := helper.HealthCheckServer.Stop(); err != nil {
-		glog.Fatalf("Unable to stop heal check server: %s", err.Error())
-	}
-}
-
-func (helper *Helper) StartSignalBusWorker() {
-	glog.V(10).Info("Signal bus worker started")
-	helper.SignalBus.(*signalbus.PgSignalBus).Start()
-}
-
-func (helper *Helper) StopSignalBusWorker() {
-	helper.SignalBus.(*signalbus.PgSignalBus).Stop()
-	glog.V(10).Info("Signal bus worker stopped")
-}
-
-func (helper *Helper) startLeaderElectionWorker() {
-	helper.LeaderElectionManager.Start()
-	glog.V(10).Info("Test Leader Election Manager started")
-}
-
-func (helper *Helper) stopLeaderElectionWorker() {
-	if helper.LeaderElectionManager == nil {
-		return
-	}
-	helper.LeaderElectionManager.Stop()
-}
-
-func (helper *Helper) StartLeaderElectionWorker() {
-	helper.stopLeaderElectionWorker()
-	helper.startLeaderElectionWorker()
-}
-
-func (helper *Helper) StopLeaderElectionWorker() {
-	helper.stopLeaderElectionWorker()
-}
-
-func (helper *Helper) StartServer() {
-	helper.startAPIServer()
-	glog.V(10).Info("Test API server started")
-}
-
-func (helper *Helper) StopServer() {
-	helper.stopAPIServer()
-	glog.V(10).Info("Test API server stopped")
-}
-
-func (helper *Helper) RestartServer() {
-	helper.stopAPIServer()
-	helper.startAPIServer()
-	glog.V(10).Info("Test API server restarted")
-}
-
-func (helper *Helper) RestartMetricsServer() {
-	helper.stopMetricsServer()
-	helper.startMetricsServer()
-	glog.V(10).Info("Test metrics server restarted")
-}
-
-// ResetMetrics metrics. Note this will only reset metrics defined in pkg/metrics
-func (helper *Helper) ResetMetrics() {
-	metrics.Reset()
 }
 
 // NewID creates a new unique ID used internally to CS

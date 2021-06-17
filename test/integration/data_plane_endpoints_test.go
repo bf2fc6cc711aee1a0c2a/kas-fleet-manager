@@ -380,8 +380,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) {
 	cert := "some-fake-cert"
 	key := "some-fake-key"
-	startHook := func(h *test.Helper) {
-		c := h.Env.Config.Kafka
+	startHook := func(c *config2.KafkaConfig) {
 		c.EnableKafkaExternalCertificate = true
 		c.KafkaTLSCert = cert
 		c.KafkaTLSKey = key
@@ -444,8 +443,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
-	startHook := func(h *test.Helper) {
-		h.Env.Config.Keycloak.TLSTrustedCertificatesValue = ""
+	startHook := func(c *config2.KeycloakConfig) {
+		c.TLSTrustedCertificatesValue = ""
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
@@ -508,9 +507,9 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	cert := "some-fake-cert"
-	startHook := func(h *test.Helper) {
-		h.Env.Config.Keycloak.TLSTrustedCertificatesValue = cert
-		h.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
+	startHook := func(c *config2.KeycloakConfig) {
+		c.TLSTrustedCertificatesValue = cert
+		c.EnableAuthenticationOnKafka = true
 	}
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
