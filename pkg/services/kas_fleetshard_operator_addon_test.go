@@ -68,17 +68,14 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				ssoService:      tt.fields.ssoService,
-				providerFactory: tt.fields.providerFactory,
-				configService: NewConfigService(config.ApplicationConfig{
-					Server: &config.ServerConfig{},
-					Keycloak: &config.KeycloakConfig{
-						KafkaRealm: &config.KeycloakRealmConfig{},
-					},
-					OSDClusterConfig:    &config.OSDClusterConfig{},
-					KasFleetShardConfig: &config.KasFleetshardConfig{},
-					OCM:                 &config.OCMConfig{KasFleetshardAddonID: addonId},
-				}),
+				SsoService:          tt.fields.ssoService,
+				ProviderFactory:     tt.fields.providerFactory,
+				ServerConfig:        &config.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				OCMConfig:           &config.OCMConfig{KasFleetshardAddonID: addonId},
+				KeycloakConfig: &config.KeycloakConfig{
+					KafkaRealm: &config.KeycloakRealmConfig{},
+				},
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
 				ClusterID:    "test-cluster-id",
@@ -128,7 +125,7 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				ssoService: tt.fields.ssoService,
+				SsoService: tt.fields.ssoService,
 			}
 			err := agentOperatorAddon.RemoveServiceAccount(api.Cluster{
 				ClusterID:    "test-cluster-id",
@@ -190,18 +187,14 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
-				ssoService:      tt.fields.ssoService,
-				providerFactory: tt.fields.providerFactory,
-				configService: NewConfigService(config.ApplicationConfig{
-					Server: &config.ServerConfig{},
-					Keycloak: &config.KeycloakConfig{
-						KafkaRealm: &config.KeycloakRealmConfig{},
-					},
-					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-					OSDClusterConfig:           &config.OSDClusterConfig{},
-					KasFleetShardConfig:        &config.KasFleetshardConfig{},
-					OCM:                        &config.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
-				}),
+				SsoService:          tt.fields.ssoService,
+				ProviderFactory:     tt.fields.providerFactory,
+				ServerConfig:        &config.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				OCMConfig:           &config.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
+				KeycloakConfig: &config.KeycloakConfig{
+					KafkaRealm: &config.KeycloakRealmConfig{},
+				},
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{
 				ClusterID:    "test-cluster-id",

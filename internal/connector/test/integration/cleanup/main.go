@@ -2,20 +2,27 @@ package main
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 )
 
 func main() {
-	env := environments.Environment()
+	env, err := environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
+		kafka.ConfigProviders().AsOption(),
+	)
+	if err != nil {
+		glog.Fatalf("error initializing: %v", err)
+	}
 
-	err := env.AddFlags(pflag.CommandLine)
+	err = env.AddFlags(pflag.CommandLine)
 	if err != nil {
 		panic(err)
 	}
 
-	err = env.Initialize()
+	err = env.LoadConfig()
 	if err != nil {
 		panic(err)
 	}

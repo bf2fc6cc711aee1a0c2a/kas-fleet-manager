@@ -11,12 +11,6 @@ type ConfigModule interface {
 }
 
 type ApplicationConfig struct {
-	Server                     *ServerConfig               `json:"server"`
-	Metrics                    *MetricsConfig              `json:"metrics"`
-	HealthCheck                *HealthCheckConfig          `json:"health_check"`
-	Database                   *DatabaseConfig             `json:"database"`
-	OCM                        *OCMConfig                  `json:"ocm"`
-	Sentry                     *SentryConfig               `json:"sentry"`
 	AWS                        *AWSConfig                  `json:"aws"`
 	SupportedProviders         *ProviderConfig             `json:"providers"`
 	AccessControlList          *AccessControlListConfig    `json:"allow_list"`
@@ -24,19 +18,12 @@ type ApplicationConfig struct {
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
 	OSDClusterConfig           *OSDClusterConfig           `json:"osd_cluster"`
-	KasFleetShardConfig        *KasFleetshardConfig        `json:"kas-fleetshard"`
 }
 
 var _ ConfigModule = &ApplicationConfig{}
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
-		Server:                     NewServerConfig(),
-		Metrics:                    NewMetricsConfig(),
-		HealthCheck:                NewHealthCheckConfig(),
-		Database:                   NewDatabaseConfig(),
-		OCM:                        NewOCMConfig(),
-		Sentry:                     NewSentryConfig(),
 		AWS:                        NewAWSConfig(),
 		SupportedProviders:         NewSupportedProvidersConfig(),
 		AccessControlList:          NewAccessControlListConfig(),
@@ -44,18 +31,11 @@ func NewApplicationConfig() *ApplicationConfig {
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
 		OSDClusterConfig:           NewOSDClusterConfig(),
-		KasFleetShardConfig:        NewKasFleetshardConfig(),
 	}
 }
 
 func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	flagset.AddGoFlagSet(flag.CommandLine)
-	c.Server.AddFlags(flagset)
-	c.Metrics.AddFlags(flagset)
-	c.HealthCheck.AddFlags(flagset)
-	c.Database.AddFlags(flagset)
-	c.OCM.AddFlags(flagset)
-	c.Sentry.AddFlags(flagset)
 	c.AWS.AddFlags(flagset)
 	c.SupportedProviders.AddFlags(flagset)
 	c.AccessControlList.AddFlags(flagset)
@@ -63,34 +43,9 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
 	c.OSDClusterConfig.AddFlags(flagset)
-	c.KasFleetShardConfig.AddFlags(flagset)
 }
 
-func (c *ApplicationConfig) ReadFiles() error {
-	err := c.Server.ReadFiles()
-	if err != nil {
-		return err
-	}
-	err = c.Metrics.ReadFiles()
-	if err != nil {
-		return err
-	}
-	err = c.HealthCheck.ReadFiles()
-	if err != nil {
-		return err
-	}
-	err = c.Database.ReadFiles()
-	if err != nil {
-		return err
-	}
-	err = c.OCM.ReadFiles()
-	if err != nil {
-		return err
-	}
-	err = c.Sentry.ReadFiles()
-	if err != nil {
-		return err
-	}
+func (c *ApplicationConfig) ReadFiles() (err error) {
 	err = c.AWS.ReadFiles()
 	if err != nil {
 		return err
@@ -119,9 +74,5 @@ func (c *ApplicationConfig) ReadFiles() error {
 	if err != nil {
 		return err
 	}
-	err = c.KasFleetShardConfig.ReadFiles()
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }

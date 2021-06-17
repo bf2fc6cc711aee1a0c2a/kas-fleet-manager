@@ -3,8 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"sync"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
@@ -12,9 +10,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
-
-var singleton *ConnectionFactory
-var once sync.Once
 
 type ConnectionFactory struct {
 	Config *config.DatabaseConfig
@@ -32,35 +27,32 @@ var gormConfig *gorm.Config = &gorm.Config{
 // Go includes database connection pooling in the platform. Gorm uses the same and provides a method to
 // clone a connection via New(), which is safe for use by concurrent Goroutines.
 func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
-	once.Do(func() {
-		var db *gorm.DB
-		var err error
-		// refer to https://gorm.io/docs/gorm_config.html
+	var db *gorm.DB
+	var err error
+	// refer to https://gorm.io/docs/gorm_config.html
 
-		if config.Dialect == "postgres" {
-			db, err = gorm.Open(postgres.Open(config.ConnectionString()), gormConfig)
-		} else {
-			// TODO what other dialects do we support?
-			panic(fmt.Sprintf("Unsupported DB dialect: %s", config.Dialect))
-		}
-		if err != nil {
-			panic(fmt.Sprintf(
-				"failed to connect to %s database %s with connection string: %s\nError: %s",
-				config.Dialect,
-				config.Name,
-				config.LogSafeConnectionString(),
-				err.Error(),
-			))
-		}
-		sqlDB, sqlDBErr := db.DB()
-		if sqlDBErr != nil {
-			panic(fmt.Errorf("Unexpected connection error: %s", sqlDBErr))
-		}
+	if config.Dialect == "postgres" {
+		db, err = gorm.Open(postgres.Open(config.ConnectionString()), gormConfig)
+	} else {
+		// TODO what other dialects do we support?
+		panic(fmt.Sprintf("Unsupported DB dialect: %s", config.Dialect))
+	}
+	if err != nil {
+		panic(fmt.Sprintf(
+			"failed to connect to %s database %s with connection string: %s\nError: %s",
+			config.Dialect,
+			config.Name,
+			config.LogSafeConnectionString(),
+			err.Error(),
+		))
+	}
+	sqlDB, sqlDBErr := db.DB()
+	if sqlDBErr != nil {
+		panic(fmt.Errorf("Unexpected connection error: %s", sqlDBErr))
+	}
 
-		sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
-		singleton = &ConnectionFactory{Config: config, DB: db}
-	})
-	return singleton
+	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
+	return &ConnectionFactory{Config: config, DB: db}
 }
 
 // NewMockConnectionFactory should only be used for defining mock database drivers
@@ -121,20 +113,23 @@ type txFactory struct {
 	tx                *sql.Tx
 	txid              int64
 	postCommitActions []func()
+	db                *sql.DB
 }
 
 // newTransaction constructs a new Transaction object.
-func newTransaction() (*txFactory, error) {
-	f := &txFactory{}
+func (c *ConnectionFactory) newTransaction() (*txFactory, error) {
+	sqlDB, sqlDBErr := c.DB.DB()
+	if sqlDBErr != nil {
+		return nil, sqlDBErr
+	}
+	f := &txFactory{
+		db: sqlDB,
+	}
 	return f, f.begin()
 }
 
 func (f *txFactory) begin() error {
-	sqlDB, sqlDBErr := singleton.DB.DB()
-	if sqlDBErr != nil {
-		return sqlDBErr
-	}
-	tx, err := sqlDB.Begin()
+	tx, err := f.db.Begin()
 	if err != nil {
 		return err
 	}

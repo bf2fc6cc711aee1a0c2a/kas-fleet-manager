@@ -4,26 +4,18 @@ import (
 	"context"
 	"crypto/rsa"
 	"encoding/json"
-	goerrors "errors"
 	"fmt"
 	"github.com/goava/di"
-	"net/http/httptest"
-	"os"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers/kafka_mgrs"
-
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
-	"github.com/segmentio/ksuid"
-	"github.com/spf13/pflag"
-
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/segmentio/ksuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
@@ -43,130 +35,39 @@ const (
 	jwtCAFile  = "test/support/jwt_ca.pem"
 )
 
-var helper *Helper
-var once sync.Once
-
 // TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-var jwkURL string
+//var jwkURL string
 
 // TimeFunc defines a way to get a new Time instance common to the entire test suite.
 // Aria's environment has Virtual Time that may not be actual time. We compensate
 // by synchronizing on a common time func attached to the test harness.
 type TimeFunc func() time.Time
 
+type Services struct {
+	di.Inject
+	DBFactory             *db.ConnectionFactory
+	AppConfig             *config.ApplicationConfig
+	MetricsServer         *server.MetricsServer
+	HealthCheckServer     *server.HealthCheckServer
+	Workers               []workers.Worker
+	LeaderElectionManager *workers.LeaderElectionManager
+	SignalBus             signalbus.SignalBus
+	APIServer             *server.ApiServer
+}
+
 type Helper struct {
-	DBFactory         *db.ConnectionFactory
-	AppConfig         *config.ApplicationConfig
-	APIServer         *server.ApiServer
-	MetricsServer     *server.MetricsServer
-	HealthCheckServer *server.HealthCheckServer
-	KafkaWorkers      []workers.Worker
-	ClusterWorker     *workers.ClusterManager
-	LeaderEleWorker   *workers.LeaderElectionManager
-	AuthHelper        *auth.AuthHelper
-	TimeFunc          TimeFunc
-	JWTPrivateKey     *rsa.PrivateKey
-	JWTCA             *rsa.PublicKey
-	T                 *testing.T
-	teardowns         []func()
-}
+	AuthHelper    *auth.AuthHelper
+	JWTPrivateKey *rsa.PrivateKey
+	JWTCA         *rsa.PublicKey
+	T             *testing.T
+	Env           *environments.Env
 
-func NewHelper(t *testing.T, server *httptest.Server) *Helper {
-	once.Do(func() {
-		env := environments.Environment()
-
-		// Set server if provided
-		if server != nil {
-			fmt.Printf("Setting OCM base URL to %s\n", server.URL)
-			env.Config.OCM.BaseURL = server.URL
-		}
-
-		// Manually set environment name, ignoring environment variables
-		validTestEnv := false
-		for _, testEnv := range []string{environments.TestingEnv, environments.IntegrationEnv, environments.DevelopmentEnv} {
-			if env.Name == testEnv {
-				validTestEnv = true
-				break
-			}
-		}
-		if !validTestEnv {
-			fmt.Println("OCM_ENV environment variable not set to a valid test environment, using default testing environment")
-			env.Name = environments.TestingEnv
-		}
-		err := env.AddFlags(pflag.CommandLine)
-		if err != nil {
-			glog.Fatalf("Unable to add environment flags: %s", err.Error())
-		}
-		if logLevel := os.Getenv("LOGLEVEL"); logLevel != "" {
-			glog.Infof("Using custom loglevel: %s", logLevel)
-			err = pflag.CommandLine.Set("v", logLevel)
-			if err != nil {
-				glog.Warningf("Unable to set custom logLevel: %s", err.Error())
-			}
-		}
-		pflag.Parse()
-
-		err = env.Initialize()
-		if err != nil {
-			glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
-		}
-
-		authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
-		if err != nil {
-			helper.T.Errorf("failed to create a new auth helper %s", err.Error())
-		}
-
-		helper = &Helper{
-			AppConfig:     environments.Environment().Config,
-			DBFactory:     environments.Environment().DBFactory,
-			JWTPrivateKey: authHelper.JWTPrivateKey,
-			JWTCA:         authHelper.JWTCA,
-			AuthHelper:    authHelper,
-		}
-
-		helper.Env().Config.OSDClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-		helper.Env().Config.Kafka.KafkaLifespan.EnableDeletionOfExpiredKafka = true
-
-		db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
-
-		// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-		jwkMockTeardown := helper.StartJWKCertServerMock()
-		helper.teardowns = []func(){
-			helper.CleanDB,
-			jwkMockTeardown,
-			helper.stopAPIServer,
-		}
-		helper.startMetricsServer()
-		helper.startHealthCheckServer()
-	})
-	helper.T = t
-	return helper
-}
-
-func (helper *Helper) SetServer(server *httptest.Server) {
-	helper.Env().Config.OCM.BaseURL = server.URL
-	err := helper.Env().LoadServices()
-	if err != nil {
-		glog.Fatalf("Unable to load services: %s", err.Error())
-	}
-}
-
-func (helper *Helper) Env() *environments.Env {
-	return environments.Environment()
-}
-
-func (helper *Helper) Teardown() {
-	for _, f := range helper.teardowns {
-		f()
-	}
+	Services
 }
 
 func (helper *Helper) startAPIServer() {
-	// TODO jwk mock server needs to be refactored out of the helper and into the testing environment
-	helper.Env().Config.Server.JwksURL = jwkURL
-	helper.Env().Config.Keycloak.EnableAuthenticationOnKafka = false
 
-	if err := helper.Env().ServiceContainer.Resolve(&helper.APIServer); err != nil {
+	if err := helper.Env.ServiceContainer.Resolve(&helper.APIServer); err != nil {
 		glog.Fatalf("di failure: %v", err)
 	}
 
@@ -188,9 +89,6 @@ func (helper *Helper) stopAPIServer() {
 }
 
 func (helper *Helper) startMetricsServer() {
-	if err := helper.Env().ServiceContainer.Resolve(&helper.MetricsServer); err != nil {
-		glog.Fatalf("di failure: %v", err)
-	}
 	go func() {
 		glog.V(10).Info("Test Metrics server started")
 		helper.MetricsServer.Start()
@@ -205,114 +103,38 @@ func (helper *Helper) stopMetricsServer() {
 }
 
 func (helper *Helper) startHealthCheckServer() {
-	if err := helper.Env().ServiceContainer.Resolve(&helper.HealthCheckServer); err != nil {
-		glog.Fatalf("di failure: %v", err)
-	}
 	go func() {
 		glog.V(10).Info("Test health check server started")
 		helper.HealthCheckServer.Start()
 		glog.V(10).Info("Test health check server stopped")
 	}()
 }
-
-func (helper *Helper) startKafkaWorkers() {
-	env := helper.Env()
-	var kafkaWorkerList []workers.Worker
-	kafkaWorker := kafka_mgrs.NewKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.Services.SignalBus)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.ClusterPlmtStrategy, env.Services.SignalBus)
-	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.SignalBus)
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Config, env.QuotaServiceFactory, env.Services.SignalBus)
-	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Observatorium, env.Services.Config, env.Services.SignalBus)
-	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(env.Services.Kafka, uuid.New().String(), env.Services.Keycloak, env.Services.Config, env.Services.SignalBus)
-	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
-
-	go func() {
-		glog.V(10).Info("Test Metrics server started")
-		for _, worker := range helper.KafkaWorkers {
-			worker.Start()
-		}
-		glog.V(10).Info("Test Metrics server stopped")
-	}()
-}
-
-func (helper *Helper) stopKafkaWorkers() {
-	if len(helper.KafkaWorkers) < 1 {
-		return
-	}
-
-	for _, worker := range helper.KafkaWorkers {
-		worker.Stop()
+func (helper *Helper) stopHealthCheckServer() {
+	if err := helper.HealthCheckServer.Stop(); err != nil {
+		glog.Fatalf("Unable to stop heal check server: %s", err.Error())
 	}
 }
 
-func (helper *Helper) startClusterWorker() {
-	// start cluster worker
-	services := helper.Env().Services
-	helper.ClusterWorker = workers.NewClusterManager(services.Cluster, services.CloudProviders,
-		services.Config, uuid.New().String(), services.KasFleetshardAddonService, services.OsdIdpKeycloak, services.SignalBus)
-	go func() {
-		glog.V(10).Info("Test Metrics server started")
-		helper.ClusterWorker.Start()
-		glog.V(10).Info("Test Metrics server stopped")
-	}()
-}
-
-func (helper *Helper) stopClusterWorker() {
-	if helper.ClusterWorker == nil {
-		return
-	}
-	helper.ClusterWorker.Stop()
-}
-
-func (helper *Helper) startSignalBusWorker() {
-	env := helper.Env()
+func (helper *Helper) StartSignalBusWorker() {
 	glog.V(10).Info("Signal bus worker started")
-	env.Services.SignalBus.(*signalbus.PgSignalBus).Start()
+	helper.SignalBus.(*signalbus.PgSignalBus).Start()
 }
 
-func (helper *Helper) stopSignalBusWorker() {
-	env := helper.Env()
-	env.Services.SignalBus.(*signalbus.PgSignalBus).Stop()
+func (helper *Helper) StopSignalBusWorker() {
+	helper.SignalBus.(*signalbus.PgSignalBus).Stop()
 	glog.V(10).Info("Signal bus worker stopped")
 }
 
 func (helper *Helper) startLeaderElectionWorker() {
-
-	env := helper.Env()
-	services := env.Services
-	helper.ClusterWorker = workers.NewClusterManager(services.Cluster, services.CloudProviders,
-		services.Config, uuid.New().String(), services.KasFleetshardAddonService, services.OsdIdpKeycloak, services.SignalBus)
-
-	var kafkaWorkerList []workers.Worker
-	kafkaWorker := kafka_mgrs.NewKafkaManager(services.Kafka, uuid.New().String(), services.Config, services.SignalBus)
-	acceptedKafkaManager := kafka_mgrs.NewAcceptedKafkaManager(services.Kafka, uuid.New().String(), services.Config, env.QuotaServiceFactory, services.ClusterPlmtStrategy, env.Services.SignalBus)
-	preparingKafkaManager := kafka_mgrs.NewPreparingKafkaManager(services.Kafka, uuid.New().String(), env.Services.SignalBus)
-	deletingKafkaManager := kafka_mgrs.NewDeletingKafkaManager(services.Kafka, uuid.New().String(), services.Config, env.QuotaServiceFactory, env.Services.SignalBus)
-	provisioningKafkaManager := kafka_mgrs.NewProvisioningKafkaManager(services.Kafka, uuid.New().String(), services.Observatorium, services.Config, env.Services.SignalBus)
-	readyKafkaManager := kafka_mgrs.NewReadyKafkaManager(services.Kafka, uuid.New().String(), services.Keycloak, services.Config, env.Services.SignalBus)
-	helper.KafkaWorkers = append(kafkaWorkerList, kafkaWorker, acceptedKafkaManager, preparingKafkaManager, deletingKafkaManager, provisioningKafkaManager, readyKafkaManager)
-
-	var workerList []workers.Worker
-	workerList = append(workerList, helper.ClusterWorker)
-	workerList = append(workerList, helper.KafkaWorkers...)
-
-	// load dependency injected workers.
-	var diWorkers []workers.Worker
-	if err := env.ServiceContainer.Resolve(&diWorkers); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
-		panic(err)
-	}
-	workerList = append(workerList, diWorkers...)
-
-	helper.LeaderEleWorker = workers.NewLeaderElectionManager(workerList, helper.DBFactory)
-	helper.LeaderEleWorker.Start()
+	helper.LeaderElectionManager.Start()
 	glog.V(10).Info("Test Leader Election Manager started")
 }
 
 func (helper *Helper) stopLeaderElectionWorker() {
-	if helper.LeaderEleWorker == nil {
+	if helper.LeaderElectionManager == nil {
 		return
 	}
-	helper.LeaderEleWorker.Stop()
+	helper.LeaderElectionManager.Stop()
 }
 
 func (helper *Helper) StartLeaderElectionWorker() {
@@ -340,57 +162,15 @@ func (helper *Helper) RestartServer() {
 	glog.V(10).Info("Test API server restarted")
 }
 
-func (helper *Helper) StartKafkaWorker() {
-	helper.stopKafkaWorkers()
-	helper.startKafkaWorkers()
-}
-
-func (helper *Helper) StopKafkaWorker() {
-	helper.stopKafkaWorkers()
-}
-
-func (helper *Helper) StartClusterWorker() {
-	helper.stopClusterWorker()
-	helper.startClusterWorker()
-}
-
-func (helper *Helper) StopClusterWorker() {
-	helper.stopClusterWorker()
-}
-
 func (helper *Helper) RestartMetricsServer() {
 	helper.stopMetricsServer()
 	helper.startMetricsServer()
 	glog.V(10).Info("Test metrics server restarted")
 }
 
-// Reset metrics. Note this will only reset metrics defined in pkg/metrics
+// ResetMetrics metrics. Note this will only reset metrics defined in pkg/metrics
 func (helper *Helper) ResetMetrics() {
 	metrics.Reset()
-}
-
-func (helper *Helper) Reset() {
-	glog.Infof("Reseting testing environment")
-	env := environments.Environment()
-	// Reset the configuration
-	env.Config = config.NewApplicationConfig()
-
-	// Re-read command-line configuration into a NEW flagset
-	// This new flag set ensures we don't hit conflicts defining the same flag twice
-	// Also on reset, we don't care to be re-defining 'v' and other glog flags
-	flagset := pflag.NewFlagSet(helper.NewID(), pflag.ContinueOnError)
-	err := env.AddFlags(flagset)
-	if err != nil {
-		glog.Fatalf("Unable to load clients: %s", err.Error())
-	}
-	pflag.Parse()
-
-	err = env.Initialize()
-	if err != nil {
-		glog.Fatalf("Unable to reset testing environment: %s", err.Error())
-	}
-	helper.AppConfig = env.Config
-	helper.RestartServer()
 }
 
 // NewID creates a new unique ID used internally to CS
@@ -405,32 +185,45 @@ func (helper *Helper) NewUUID() string {
 }
 
 func (helper *Helper) RestURL(path string) string {
+	var serverConfig *config.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
 	protocol := "http"
-	if helper.AppConfig.Server.EnableHTTPS {
+	if serverConfig.EnableHTTPS {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s/api/kafkas_mgmt/v1%s", protocol, helper.AppConfig.Server.BindAddress, path)
+	return fmt.Sprintf("%s://%s/api/kafkas_mgmt/v1%s", protocol, serverConfig.BindAddress, path)
 }
 
 func (helper *Helper) MetricsURL(path string) string {
-	return fmt.Sprintf("http://%s%s", helper.AppConfig.Metrics.BindAddress, path)
+	var metricsConfig *config.MetricsConfig
+	helper.Env.MustResolveAll(&metricsConfig)
+	return fmt.Sprintf("http://%s%s", metricsConfig.BindAddress, path)
 }
 
 func (helper *Helper) HealthCheckURL(path string) string {
-	return fmt.Sprintf("http://%s%s", helper.AppConfig.HealthCheck.BindAddress, path)
+	var healthCheckConfig *config.HealthCheckConfig
+	helper.Env.MustResolveAll(&healthCheckConfig)
+	return fmt.Sprintf("http://%s%s", healthCheckConfig.BindAddress, path)
 }
 
 func (helper *Helper) NewApiClient() *openapi.APIClient {
-	config := openapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
-	client := openapi.NewAPIClient(config)
+	var serverConfig *config.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
+	openapiConfig := openapi.NewConfiguration()
+	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
+	client := openapi.NewAPIClient(openapiConfig)
 	return client
 }
 
 func (helper *Helper) NewPrivateAPIClient() *privateopenapi.APIClient {
-	config := privateopenapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", helper.AppConfig.Server.BindAddress)
-	client := privateopenapi.NewAPIClient(config)
+	var serverConfig *config.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
+	openapiConfig := privateopenapi.NewConfiguration()
+	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
+	client := privateopenapi.NewAPIClient(openapiConfig)
 	return client
 }
 
@@ -478,10 +271,8 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 	return context.WithValue(context.Background(), openapi.ContextAccessToken, token)
 }
 
-func (helper *Helper) StartJWKCertServerMock() (teardown func()) {
-	jwkURL, teardown = mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
-	helper.Env().Config.Server.JwksURL = jwkURL
-	return teardown
+func (helper *Helper) StartJWKCertServerMock() (string, func()) {
+	return mocks.NewJWKCertServerMock(helper.T, helper.JWTCA, auth.JwkKID)
 }
 
 func (helper *Helper) DeleteAll(table interface{}) {

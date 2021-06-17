@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/golang/glog"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -25,8 +27,21 @@ const (
 	jwtCAFile  = "test/support/jwt_ca.pem"
 )
 
+var env *environments.Env
+var ocmConfig *config.OCMConfig
+
+func TestMain(m *testing.M) {
+	var err error
+	env, err = environments.NewEnv(environments.GetEnvironmentStrFromEnv())
+	if err != nil {
+		glog.Fatalf("error initializing: %v", err)
+	}
+	env.MustResolveAll(&ocmConfig)
+	os.Exit(m.Run())
+}
+
 func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +65,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		{
 			name: "returns 200 Ok response for internal users who belong to an organisation listed in the allow list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: false,
 						AllowList: config.AllowListConfiguration{
@@ -71,7 +86,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		{
 			name: "returns 200 Ok response for internal users who are listed in the allow list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: false,
 						AllowList: config.AllowListConfiguration{
@@ -89,7 +104,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		{
 			name: "returns 200 OK response for internal users who do not have access through their organisation but as a service account in the allow list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: false,
 						AllowList: config.AllowListConfiguration{
@@ -114,7 +129,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		{
 			name: "returns 200 Ok response for external users",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: false,
 						AllowList: config.AllowListConfiguration{
@@ -129,7 +144,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		{
 			name: "returns 200 Ok response for external users who are not included in their organisation in the allow list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: false,
 						AllowList: config.AllowListConfiguration{
@@ -151,7 +166,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		{
 			name: "returns 200 Ok response for external service accounts",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: false,
 						AllowList: config.AllowListConfiguration{
@@ -192,7 +207,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 }
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -204,7 +219,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						EnableDenyList: true,
 						DenyList:       config.DeniedUsers{"username"},
@@ -227,7 +242,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with allowed users",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -245,7 +260,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with empty allowed users and no users is allowed to access the service",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -264,7 +279,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		{
 			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allowed service accounts list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -286,7 +301,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		{
 			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the service accounts allow list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -361,7 +376,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 }
 
 func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, environments.Environment().Config.OCM.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,7 +400,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		{
 			name: "returns 200 Ok response when user is allowed to access service for the given organisation with allowed users",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -405,7 +420,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -426,7 +441,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -451,7 +466,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		{
 			name: "returns 200 Ok response when token used is retrieved from sso.redhat.com and user is allowed access to the service",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,
@@ -474,7 +489,7 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		{
 			name: "returns 200 OK response when user is allowed access as a service account",
 			arg: services.NewConfigService(
-				config.ApplicationConfig{
+				&config.ApplicationConfig{
 					AccessControlList: &config.AccessControlListConfig{
 						AllowList: config.AllowListConfiguration{
 							AllowAnyRegisteredUsers: false,

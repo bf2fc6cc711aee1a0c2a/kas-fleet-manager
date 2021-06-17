@@ -5,7 +5,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/goava/di"
 	"github.com/golang/glog"
 )
 
@@ -32,27 +34,27 @@ type KasFleetshardOperatorAddon interface {
 	RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError
 }
 
-func NewKasFleetshardOperatorAddon(ssoService KafkaKeycloakService, configService ConfigService, providerFactory clusters.ProviderFactory) KasFleetshardOperatorAddon {
-	return &kasFleetshardOperatorAddon{
-		ssoService:      ssoService,
-		configService:   configService,
-		providerFactory: providerFactory,
-	}
+func NewKasFleetshardOperatorAddon(o kasFleetshardOperatorAddon) KasFleetshardOperatorAddon {
+	return &o
 }
 
 type kasFleetshardOperatorAddon struct {
-	ssoService      KeycloakService
-	providerFactory clusters.ProviderFactory
-	configService   ConfigService
+	di.Inject
+	SsoService          KafkaKeycloakService
+	ProviderFactory     clusters.ProviderFactory
+	ServerConfig        *config.ServerConfig
+	KasFleetShardConfig *config.KasFleetshardConfig
+	OCMConfig           *config.OCMConfig
+	KeycloakConfig      *config.KeycloakConfig
 }
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
-	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
+	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
 		return false, paramsErr
 	}
-	p, err := o.providerFactory.GetAddonProvider(cluster.ProviderType)
+	p, err := o.ProviderFactory.GetAddonProvider(cluster.ProviderType)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
@@ -71,12 +73,12 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 }
 
 func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *errors.ServiceError {
-	kasFleetshardAddonID := o.configService.GetConfig().OCM.KasFleetshardAddonID
+	kasFleetshardAddonID := o.OCMConfig.KasFleetshardAddonID
 	params, paramsErr := o.getAddonParams(cluster)
 	if paramsErr != nil {
 		return paramsErr
 	}
-	p, err := o.providerFactory.GetAddonProvider(cluster.ProviderType)
+	p, err := o.ProviderFactory.GetAddonProvider(cluster.ProviderType)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
@@ -110,7 +112,7 @@ func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]ocm.
 
 func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (*api.ServiceAccount, *errors.ServiceError) {
 	glog.V(5).Infof("Provisioning service account for cluster %s", clusterId)
-	return o.ssoService.RegisterKasFleetshardOperatorServiceAccount(clusterId, KasFleetshardOperatorRoleName)
+	return o.SsoService.RegisterKasFleetshardOperatorServiceAccount(clusterId, KasFleetshardOperatorRoleName)
 }
 
 func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.AddonParameter {
@@ -118,7 +120,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 
 		{
 			Id:    kasFleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.configService.GetConfig().Keycloak.KafkaRealm.ValidIssuerURI,
+			Value: o.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 		},
 		{
 			Id:    kasFleetshardOperatorParamServiceAccountId,
@@ -130,7 +132,7 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 		},
 		{
 			Id:    kasFleetshardOperatorParamControlPlaneBaseURL,
-			Value: o.configService.GetConfig().Server.PublicHostURL,
+			Value: o.ServerConfig.PublicHostURL,
 		},
 		{
 			Id:    kasFleetshardOperatorParamClusterId,
@@ -138,11 +140,11 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 		},
 		{
 			Id:    kasFleetshardOperatorParamPollinterval,
-			Value: o.configService.GetConfig().KasFleetShardConfig.PollInterval,
+			Value: o.KasFleetShardConfig.PollInterval,
 		},
 		{
 			Id:    kasFleetshardOperatorParamResyncInterval,
-			Value: o.configService.GetConfig().KasFleetShardConfig.ResyncInterval,
+			Value: o.KasFleetShardConfig.ResyncInterval,
 		},
 	}
 	return p
@@ -150,5 +152,5 @@ func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.Servic
 
 func (o *kasFleetshardOperatorAddon) RemoveServiceAccount(cluster api.Cluster) *errors.ServiceError {
 	glog.V(5).Infof("Removing kas-fleetshard-operator service account for cluster %s", cluster.ClusterID)
-	return o.ssoService.DeRegisterKasFleetshardOperatorServiceAccount(cluster.ClusterID)
+	return o.SsoService.DeRegisterKasFleetshardOperatorServiceAccount(cluster.ClusterID)
 }

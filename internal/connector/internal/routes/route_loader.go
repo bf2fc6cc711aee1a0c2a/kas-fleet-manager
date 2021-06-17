@@ -29,6 +29,7 @@ type options struct {
 	ConnectorTypesHandler   *handlers.ConnectorTypesHandler
 	ConnectorsHandler       *handlers.ConnectorsHandler
 	ConnectorClusterHandler *handlers.ConnectorClusterHandler
+	DB                      *db.ConnectionFactory
 }
 
 func NewRouteLoader(s options) provider.RouteLoader {
@@ -131,7 +132,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 		apiRouter.Use(coreHandlers.MetricsMiddleware)
-		apiRouter.Use(db.TransactionMiddleware)
+		apiRouter.Use(db.TransactionMiddleware(s.DB))
 		apiRouter.Use(gorillaHandlers.CompressHandler)
 	}
 	return nil

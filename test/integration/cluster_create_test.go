@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"testing"
 
 	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -20,13 +21,14 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	defer teardown()
 
 	// setting AWS.AccountID to invalid value
-	currentAWSAccountID := h.Env().Config.AWS.AccountID
+	currentAWSAccountID := h.Env.Config.AWS.AccountID
 	defer func(helper *test.Helper) {
-		helper.Env().Config.AWS.AccountID = currentAWSAccountID
+		helper.Env.Config.AWS.AccountID = currentAWSAccountID
 	}(h)
-	h.Env().Config.AWS.AccountID = "123456789012"
+	h.Env.Config.AWS.AccountID = "123456789012"
 
-	clusterService := h.Env().Services.Cluster
+	var clusterService services.ClusterService
+	h.Env.MustResolveAll(&clusterService)
 
 	cluster, err := clusterService.Create(&api.Cluster{
 		CloudProvider: "aws",

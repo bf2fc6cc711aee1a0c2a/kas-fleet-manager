@@ -6,9 +6,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	vault2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/goava/di"
 	"net/http"
 	"net/url"
 
@@ -25,23 +27,18 @@ var (
 )
 
 type ConnectorClusterHandler struct {
-	bus            signalbus.SignalBus
-	service        services.ConnectorClusterService
-	config         coreservices.ConfigService
-	keycloak       coreservices.KeycloakService
-	connectorTypes services.ConnectorTypesService
-	vault          vault2.VaultService
+	di.Inject
+	Bus            signalbus.SignalBus
+	Service        services.ConnectorClusterService
+	Keycloak       coreservices.KafkaKeycloakService
+	ConnectorTypes services.ConnectorTypesService
+	Vault          vault.VaultService
+	KeycloakConfig *config.KeycloakConfig
+	ServerConfig   *config.ServerConfig
 }
 
-func NewConnectorClusterHandler(bus signalbus.SignalBus, service services.ConnectorClusterService, config coreservices.ConfigService, keycloak coreservices.KafkaKeycloakService, connectorTypes services.ConnectorTypesService, vault vault2.VaultService) *ConnectorClusterHandler {
-	return &ConnectorClusterHandler{
-		bus:            bus,
-		service:        service,
-		config:         config,
-		keycloak:       keycloak,
-		connectorTypes: connectorTypes,
-		vault:          vault,
-	}
+func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClusterHandler {
+	return &handler
 }
 
 func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +61,7 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 			convResource.OrganisationId = auth.GetOrgIdFromClaims(claims)
 			convResource.Status.Phase = dbapi.ConnectorClusterPhaseUnconnected
 
-			if err := h.service.Create(r.Context(), &convResource); err != nil {
+			if err := h.Service.Create(r.Context(), &convResource); err != nil {
 				return nil, err
 			}
 			return presenters.PresentConnectorCluster(convResource), nil
@@ -82,7 +79,7 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			resource, err := h.service.Get(r.Context(), connectorClusterId)
+			resource, err := h.Service.Get(r.Context(), connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
@@ -99,7 +96,7 @@ func (h *ConnectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request)
 			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			err := h.service.Delete(r.Context(), connectorClusterId)
+			err := h.Service.Delete(r.Context(), connectorClusterId)
 			return nil, err
 		},
 	}
@@ -111,7 +108,7 @@ func (h *ConnectorClusterHandler) List(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			listArgs := coreservices.NewListArguments(r.URL.Query())
-			resources, paging, err := h.service.List(ctx, listArgs)
+			resources, paging, err := h.Service.List(ctx, listArgs)
 			if err != nil {
 				return nil, err
 			}
@@ -144,12 +141,12 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 
 			// To make sure the user can access the cluster....
-			_, err := h.service.Get(r.Context(), connectorClusterId)
+			_, err := h.Service.Get(r.Context(), connectorClusterId)
 			if err != nil {
 				return nil, err
 			}
 
-			acc, err := h.keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId, connectorFleetshardOperatorRoleName)
+			acc, err := h.Keycloak.RegisterConnectorFleetshardOperatorServiceAccount(connectorClusterId, connectorFleetshardOperatorRoleName)
 			if err != nil {
 				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
 			}
@@ -182,11 +179,11 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 	p := []ocm.AddonParameter{
 		{
 			Id:    connectorFleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.config.GetConfig().Keycloak.BaseURL,
+			Value: o.KeycloakConfig.BaseURL,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamMasSSORealm,
-			Value: o.config.GetConfig().Keycloak.KafkaRealm.Realm,
+			Value: o.KeycloakConfig.KafkaRealm.Realm,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamServiceAccountId,
@@ -198,7 +195,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 		},
 		{
 			Id:    connectorFleetshardOperatorParamControlPlaneBaseURL,
-			Value: o.config.GetConfig().Server.PublicHostURL,
+			Value: o.ServerConfig.PublicHostURL,
 		},
 		{
 			Id:    connectorFleetshardOperatorParamClusterId,
@@ -209,7 +206,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 }
 
 func (o *ConnectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
-	u, err := url.Parse(o.config.GetConfig().Keycloak.KafkaRealm.TokenEndpointURI)
+	u, err := url.Parse(o.KeycloakConfig.KafkaRealm.TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}

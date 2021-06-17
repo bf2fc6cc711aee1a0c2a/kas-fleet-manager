@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"net/http"
 	"testing"
 
@@ -19,7 +20,10 @@ func TestCloudProviderRegions(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	cloudProviderRegions, err := h.Env().Services.CloudProviders.GetCloudProvidersWithRegions()
+	var cloudProviders services.CloudProvidersService
+	h.Env.MustResolveAll(&cloudProviders)
+
+	cloudProviderRegions, err := cloudProviders.GetCloudProvidersWithRegions()
 	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
@@ -51,7 +55,10 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	cloudProviderRegions, err := h.Env().Services.CloudProviders.GetCachedCloudProvidersWithRegions()
+	var cloudProviders services.CloudProvidersService
+	h.Env.MustResolveAll(&cloudProviders)
+
+	cloudProviderRegions, err := cloudProviders.GetCachedCloudProvidersWithRegions()
 	Expect(err).NotTo(HaveOccurred(), "Error:  %v", err)
 
 	for _, regions := range cloudProviderRegions {
