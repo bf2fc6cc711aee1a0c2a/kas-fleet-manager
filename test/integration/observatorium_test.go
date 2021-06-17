@@ -12,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
@@ -30,14 +29,10 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	_, _, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	var kafkaSrv services.KafkaService
-	var observatoriumClient *observatorium.Client
-	h.Env.MustResolveAll(&kafkaSrv, &observatoriumClient)
-
-	service := services.NewObservatoriumService(observatoriumClient, kafkaSrv)
+	service := services.NewObservatoriumService(testServices.ObservatoriumClient, testServices.KafkaService)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
 	Expect(kafkaState.State).NotTo(BeEmpty(), "Should return state")
@@ -48,7 +43,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -70,11 +65,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	var kafkaSrv services.KafkaService
-	var observatoriumClient *observatorium.Client
-	h.Env.MustResolveAll(&kafkaSrv, &observatoriumClient)
-
-	service := services.NewObservatoriumService(observatoriumClient, kafkaSrv)
+	service := services.NewObservatoriumService(testServices.ObservatoriumClient, testServices.KafkaService)
 	metricsList := &observatorium.KafkaMetrics{}
 	q := observatorium.MetricsReqParams{}
 	q.ResultType = observatorium.RangeQuery
@@ -97,7 +88,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -127,7 +118,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, _ := utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, _ := utils.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -169,7 +160,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -199,7 +190,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)

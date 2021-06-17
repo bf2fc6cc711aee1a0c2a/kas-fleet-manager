@@ -5,21 +5,21 @@ import (
 	"github.com/goava/di"
 )
 
-func ConfigProviders() provider.Map {
-	return provider.Map{
-		"Config":          di.Provide(NewConfig, di.As(new(provider.ConfigModule))),
-		"ServiceInjector": di.Provide(provider.Func(ServiceProviders)),
-		"Initialize": di.ProvideValue(provider.AfterCreateServicesHook{
+func ConfigProviders() di.Option {
+	return di.Options(
+		di.Provide(NewConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(provider.Func(ServiceProviders)),
+		di.ProvideValue(provider.AfterCreateServicesHook{
 			Func: Initialize,
 		}),
-	}
+	)
 }
 
-func ServiceProviders(configContainer *di.Container) (provider.Map, error) {
-	return provider.Map{
-		"Config": di.Provide(func() (value *Config, err error) {
+func ServiceProviders(configContainer *di.Container) di.Option {
+	return di.Options(
+		di.Provide(func() (value *Config, err error) {
 			err = configContainer.Resolve(&value)
 			return
 		}),
-	}, nil
+	)
 }

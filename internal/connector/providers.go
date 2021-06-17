@@ -12,26 +12,26 @@ import (
 	"github.com/goava/di"
 )
 
-func ConfigProviders() provider.Map {
-	return provider.Map{
-		"ConfigModule":    di.Provide(config.NewConnectorsConfig, di.As(new(provider.ConfigModule))),
-		"ServiceInjector": di.Provide(provider.Func(ServiceProviders)),
-	}
+func ConfigProviders() di.Option {
+	return di.Options(
+		di.Provide(config.NewConnectorsConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(provider.Func(ServiceProviders)),
+	)
 }
 
-func ServiceProviders(configContainer *di.Container) (provider.Map, error) {
-	return provider.Map{
-		"Config": di.Provide(func() (value *config.ConnectorsConfig, err error) {
+func ServiceProviders(configContainer *di.Container) di.Option {
+	return di.Options(
+		di.Provide(func() (value *config.ConnectorsConfig, err error) {
 			err = configContainer.Resolve(&value)
 			return
 		}),
-		"ConnectorsService":       di.Provide(services.NewConnectorsService, di.As(new(services.ConnectorsService))),
-		"ConnectorTypesService":   di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
-		"ConnectorClusterService": di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService))),
-		"ConnectorTypesHandler":   di.Provide(handlers.NewConnectorTypesHandler),
-		"ConnectorsHandler":       di.Provide(handlers.NewConnectorsHandler),
-		"ConnectorClusterHandler": di.Provide(handlers.NewConnectorClusterHandler),
-		"RouteLoader":             di.Provide(routes.NewRouteLoader),
-		"ConnectorManager":        di.Provide(workers.NewConnectorManager, di.As(new(coreWorkers.Worker))),
-	}, nil
+		di.Provide(services.NewConnectorsService, di.As(new(services.ConnectorsService))),
+		di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
+		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService))),
+		di.Provide(handlers.NewConnectorTypesHandler),
+		di.Provide(handlers.NewConnectorsHandler),
+		di.Provide(handlers.NewConnectorClusterHandler),
+		di.Provide(routes.NewRouteLoader),
+		di.Provide(workers.NewConnectorManager, di.As(new(coreWorkers.Worker))),
+	)
 }

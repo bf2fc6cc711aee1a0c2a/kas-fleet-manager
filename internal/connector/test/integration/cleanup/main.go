@@ -11,7 +11,7 @@ import (
 
 func main() {
 	env, err := environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
-		kafka.ConfigProviders().AsOption(),
+		kafka.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)

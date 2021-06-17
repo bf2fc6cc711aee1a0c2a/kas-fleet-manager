@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
@@ -27,11 +26,10 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, _, teardown := NewKafkaHelperWithHooks(t, ocmServer, configHook)
 	defer teardown()
 
-	var ocmConfig *config.OCMConfig
-	h.Env.MustResolveAll(&ocmConfig)
+	ocmConfig := testServices.OCMConfig
 
 	if ocmConfig.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
@@ -39,7 +37,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	// load existing cluster and assign kafka to it so that it is not deleted
 
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	clusterWithKafkaID := "cluster-id-that-should-not-be-deleted"
 
 	kafka := api.KafkaRequest{
@@ -89,15 +87,12 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		},
 	})
 
-	var clusterService services.ClusterService
-	h.Env.MustResolveAll(&clusterService)
-
 	// Ensure both clusters in the config file have been created
-	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(h.DBFactory, &clusterService, &clusterCriteria, 2)
+	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(testServices.DBFactory, &testServices.ClusterService, &clusterCriteria, 2)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	// Ensure that cluster dns is populated with given value
-	cluster, err := clusterService.FindClusterByID(clusterWithKafkaID)
+	cluster, err := testServices.ClusterService.FindClusterByID(clusterWithKafkaID)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cluster.ClusterDNS).To(Equal(clusterDns))
 	Expect(cluster.ProviderType).To(Equal(api.ClusterProviderStandalone))
@@ -111,7 +106,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 	})
 
-	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(h.DBFactory, &clusterService, &clusterCriteria, 4)
+	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(testServices.DBFactory, &testServices.ClusterService, &clusterCriteria, 4)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	// Now delete the kafka from the original cluster to check for placement strategy and wait for cluster deletion
@@ -119,14 +114,14 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		t.Fatal("failed to delete a dummy kafka request")
 	}
 
-	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(h.DBFactory, &clusterService, &clusterCriteria, 3)
+	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(testServices.DBFactory, &testServices.ClusterService, &clusterCriteria, 3)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	//*********************************************************************
 	//Test kafka instance creation and OSD cluster placement
 	//*********************************************************************
 	// Need to mark the clusters to be ready so that placement can actually happen
-	updateErr := clusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterReady)
+	updateErr := testServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterReady)
 	Expect(updateErr).NotTo(HaveOccurred())
 	kafkas := []*api.KafkaRequest{
 		{MultiAZ: true,
@@ -145,21 +140,18 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		},
 	}
 
-	var kafkaSrv services.KafkaService
-	h.Env.MustResolveAll(&kafkaSrv)
-
-	errK := kafkaSrv.RegisterKafkaJob(kafkas[0])
+	errK := testServices.KafkaService.RegisterKafkaJob(kafkas[0])
 	if errK != nil {
 		Expect(errK).NotTo(HaveOccurred())
 		return
 	}
 
-	dbFactory := h.DBFactory
+	dbFactory := testServices.DBFactory
 	kafkaFound, kafkaErr := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
 	Expect(kafkaErr).NotTo(HaveOccurred())
 	Expect(kafkaFound.ClusterID).To(Equal("test03"))
 
-	errK2 := kafkaSrv.RegisterKafkaJob(kafkas[1])
+	errK2 := testServices.KafkaService.RegisterKafkaJob(kafkas[1])
 	if errK2 != nil {
 		Expect(errK2).NotTo(HaveOccurred())
 		return

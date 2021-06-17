@@ -2,8 +2,6 @@ package integration
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
@@ -20,7 +18,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -94,7 +92,7 @@ func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewAccount(faker.Username(), faker.Name(), faker.Email(), faker.ID)
@@ -137,7 +135,7 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -160,15 +158,12 @@ func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
-
-	var ocmConfig *config.OCMConfig
-	h.Env.MustResolveAll(&ocmConfig)
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      ocmConfig.TokenIssuerURL,
+		"iss":      testServices.OCMConfig.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}
@@ -186,7 +181,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -286,7 +281,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
