@@ -3,6 +3,7 @@ package serve
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
@@ -14,6 +15,12 @@ func NewServeCommand(env *environments.Env) *cobra.Command {
 		Use:   "serve",
 		Short: "Serve the kas-fleet-manager",
 		Long:  "Serve the Kafka Service Fleet Manager.",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			err := env.CreateServices()
+			if err != nil {
+				glog.Fatalf("Unable to initialize environment: %s", err.Error())
+			}
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()

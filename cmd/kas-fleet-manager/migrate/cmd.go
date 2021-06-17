@@ -16,6 +16,13 @@ func NewMigrateCommand(env *environments.Env) *cobra.Command {
 		Use:   "migrate",
 		Short: "Run kas-fleet-manager data migrations",
 		Long:  "Run Kafka Service Fleet Manager data migrations",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			err := env.CreateServices()
+			if err != nil {
+				glog.Fatalf("Unable to initialize environment: %s", err.Error())
+			}
+		},
+
 		Run: func(cmd *cobra.Command, args []string) {
 			// we dont do a env.LoadConfigAndCreateServices()
 			// to avoid requiring all other env settings to be provided.
@@ -24,7 +31,9 @@ func NewMigrateCommand(env *environments.Env) *cobra.Command {
 				if err != nil {
 					glog.Fatal(err)
 				}
-				db.Migrate(db.NewConnectionFactory(dbConfig))
+				dbFactory, cleanup := db.NewConnectionFactory(dbConfig)
+				defer cleanup()
+				db.Migrate(dbFactory)
 			})
 		},
 	}

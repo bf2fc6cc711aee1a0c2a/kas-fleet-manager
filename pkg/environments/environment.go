@@ -3,15 +3,16 @@ package environments
 import (
 	"context"
 	goerrors "errors"
+	"os"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
-	sentry2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/goava/di"
 	"github.com/pkg/errors"
-	"os"
 
-	"github.com/getsentry/sentry-go"
+	sentryGo "github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 
@@ -75,7 +76,7 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 		di.ProvideValue(env),
 		ConfigProviders(),
 		vault.ConfigProviders(),
-		sentry2.ConfigProviders(),
+		sentry.ConfigProviders(),
 		signalbus.ConfigProviders(),
 	)...)
 	if err != nil {
@@ -106,7 +107,7 @@ func (env *Env) CreateServices() error {
 		if err != nil {
 			err = errors.Errorf("unable to read configuration files: %s", err)
 			glog.Error(err)
-			sentry.CaptureException(err)
+			sentryGo.CaptureException(err)
 			return err
 		}
 	}
@@ -149,7 +150,6 @@ func (env *Env) CreateServices() error {
 		return err
 	}
 
-	// TODO: rm services.ConfigService on day
 	var configService services.ConfigService
 	env.MustResolve(&configService)
 	if err := configService.Validate(); err != nil {

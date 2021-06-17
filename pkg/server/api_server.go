@@ -3,17 +3,18 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
-	logging2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	sentry2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/goava/di"
-	"net"
-	"net/http"
-	"time"
 
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
@@ -45,7 +46,7 @@ type ServerOptions struct {
 	di.Inject
 	ServerConfig   *config.ServerConfig
 	KeycloakConfig *config.KeycloakConfig
-	SentryConfig   *sentry2.Config
+	SentryConfig   *sentry.Config
 	DBFactory      *db.ConnectionFactory
 	CloudProviders services.CloudProvidersService
 	RouteLoaders   []provider.RouteLoader
@@ -82,7 +83,7 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 	mainRouter.Use(logger.OperationIDMiddleware)
 
 	// Request logging middleware logs pertinent information about the request and response
-	mainRouter.Use(logging2.RequestLoggingMiddleware)
+	mainRouter.Use(logging.RequestLoggingMiddleware)
 
 	for _, loader := range options.RouteLoaders {
 		check(loader.AddRoutes(mainRouter), "error adding routes", options.SentryConfig.Timeout)

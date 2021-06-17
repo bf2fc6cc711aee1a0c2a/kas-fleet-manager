@@ -1,18 +1,19 @@
-package integration
+package itest
 
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"net/url"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
