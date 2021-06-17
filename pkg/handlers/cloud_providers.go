@@ -13,6 +13,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const cloudProvidersCacheKey = "cloudProviderList"
+
 type cloudProvidersHandler struct {
 	service services.CloudProvidersService
 	config  services.ConfigService
@@ -64,7 +66,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http.Request) {
 	cfg := &HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
-			cachedCloudProviderList, cached := h.cache.Get("cloudProviderList")
+			cachedCloudProviderList, cached := h.cache.Get(cloudProvidersCacheKey)
 			if cached {
 				return cachedCloudProviderList, nil
 			}
@@ -77,6 +79,7 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 				Total: int32(len(cloudProviders)),
 				Size:  int32(len(cloudProviders)),
 				Page:  int32(1),
+				Items: []openapi.CloudProvider{},
 			}
 
 			for _, cloudProvider := range cloudProviders {
@@ -84,7 +87,7 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)
 			}
-			h.cache.Set("cloudProviderList", cloudProviderList, cache.DefaultExpiration)
+			h.cache.Set(cloudProvidersCacheKey, cloudProviderList, cache.DefaultExpiration)
 			return cloudProviderList, nil
 		},
 	}
