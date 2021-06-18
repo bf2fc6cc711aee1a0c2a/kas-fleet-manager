@@ -87,3 +87,85 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 		})
 	}
 }
+
+func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		want    *types.CloudProviderRegionInfoList
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name:    "receives an error when database query fails",
+			wantErr: true,
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithError(errors.New("some-error"))
+			},
+		},
+		{
+			name:    "returns an empty list when no standalone clusters in a given cloud provider exists",
+			wantErr: false,
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{})
+			},
+			want: &types.CloudProviderRegionInfoList{
+				Items: []types.CloudProviderRegionInfo{},
+			},
+		},
+		{
+			name:    "returns the list of cloud providers regions",
+			wantErr: false,
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset()
+				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{{"region": "af-east-1", "multi_az": false}, {"region": "eu-central-0", "multi_az": true}})
+			},
+			want: &types.CloudProviderRegionInfoList{
+				Items: []types.CloudProviderRegionInfo{
+					{
+						ID:              "af-east-1",
+						Name:            "af-east-1",
+						DisplayName:     "af-east-1",
+						CloudProviderID: "aws",
+						SupportsMultiAZ: false,
+					},
+					{
+						ID:              "eu-central-0",
+						Name:            "eu-central-0",
+						DisplayName:     "eu-central-0",
+						CloudProviderID: "aws",
+						SupportsMultiAZ: true,
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			RegisterTestingT(t)
+			test.setupFn()
+			provider := newStandaloneProvider(test.fields.connectionFactory)
+			resp, err := provider.GetCloudProviderRegions(types.CloudProviderInfo{ID: "aws"})
+			Expect(test.wantErr).To(Equal(err != nil))
+			if !test.wantErr {
+				Expect(resp.Items).To(Equal(test.want.Items))
+			}
+		})
+	}
+}

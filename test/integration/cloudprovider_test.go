@@ -1,15 +1,42 @@
 package integration
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"net/http"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	api "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
+
+const gcp = "gcp"
+const aws = "aws"
+const azure = "azure"
+
+const afEast1Region = "af-east-1"
+const usEast1Region = "us-east-1"
+
+var dummyClusters = []*api.Cluster{
+	{
+		ClusterID:     api.NewID(),
+		MultiAZ:       true,
+		Region:        afEast1Region,
+		CloudProvider: gcp,
+		Status:        api.ClusterReady,
+		ProviderType:  api.ClusterProviderStandalone,
+	},
+	{
+		ClusterID:     api.NewID(),
+		MultiAZ:       true,
+		Region:        usEast1Region,
+		CloudProvider: aws,
+		Status:        api.ClusterReady,
+		ProviderType:  api.ClusterProviderOCM,
+	},
+}
 
 func TestCloudProviderRegions(t *testing.T) {
 	// setup ocm server
@@ -21,6 +48,12 @@ func TestCloudProviderRegions(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	// Create two clusters each with different provider type
+	if err := h.DBFactory.New().Create(dummyClusters).Error; err != nil {
+		t.Error("failed to create dummy clusters")
+		return
+	}
+
 	var cloudProviders services.CloudProvidersService
 	h.Env.MustResolveAll(&cloudProviders)
 
@@ -29,7 +62,7 @@ func TestCloudProviderRegions(t *testing.T) {
 
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
-		if regions.ID == "aws" || regions.ID == "azure" || regions.ID == "gcp" {
+		if regions.ID == aws || regions.ID == azure || regions.ID == gcp {
 			Expect(len(regions.RegionList.Items)).NotTo(Equal(0))
 		}
 		for _, r := range regions.RegionList.Items {
@@ -56,6 +89,12 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 	h, _, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	// Create two clusters each with different provider type
+	if err := h.DBFactory.New().Create(dummyClusters).Error; err != nil {
+		t.Error("failed to create dummy clusters")
+		return
+	}
+
 	var cloudProviders services.CloudProvidersService
 	h.Env.MustResolveAll(&cloudProviders)
 
@@ -64,7 +103,7 @@ func TestCachedCloudProviderRegions(t *testing.T) {
 
 	for _, regions := range cloudProviderRegions {
 		// regions.ID == "baremetal" | "libvirt" | "openstack" | "vsphere" have empty region list
-		if regions.ID == "aws" || regions.ID == "azure" || regions.ID == "gcp" {
+		if regions.ID == aws || regions.ID == azure || regions.ID == gcp {
 			Expect(len(regions.RegionList.Items)).NotTo(Equal(0))
 		}
 		for _, r := range regions.RegionList.Items {
@@ -88,31 +127,12 @@ func TestListCloudProviders(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
-	gcp := "gcp"
 	// Create two clusters each with different provider type
-	dummyClusters := []*api.Cluster{
-		{
-			ClusterID:     api.NewID(),
-			MultiAZ:       true,
-			Region:        "af-east-1",
-			CloudProvider: gcp,
-			Status:        api.ClusterReady,
-			ProviderType:  api.ClusterProviderStandalone,
-		},
-		{
-			ClusterID:     api.NewID(),
-			MultiAZ:       true,
-			Region:        "us-east-1",
-			CloudProvider: "aws",
-			Status:        api.ClusterReady,
-			ProviderType:  api.ClusterProviderOCM,
-		},
-	}
-
 	if err := h.DBFactory.New().Create(dummyClusters).Error; err != nil {
 		t.Error("failed to create dummy clusters")
 		return
 	}
+
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
@@ -139,18 +159,40 @@ func TestListCloudProviderRegions(t *testing.T) {
 	h, client, teardown := test.RegisterIntegration(t, ocmServer)
 	defer teardown()
 
+	// Create two clusters each with different provider type
+	if err := h.DBFactory.New().Create(dummyClusters).Error; err != nil {
+		t.Error("failed to create dummy clusters")
+		return
+	}
+
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	cloudProviderList, resp, err := client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
+	cloudProviderRegionsList, resp1, err := client.DefaultApi.GetCloudProviderRegions(ctx, mocks.MockCluster.CloudProvider().ID(), nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(cloudProviderList.Items).NotTo(BeEmpty(), "Expected cloud provider regions list")
+	Expect(resp1.StatusCode).To(Equal(http.StatusOK))
+	Expect(cloudProviderRegionsList.Items).NotTo(BeEmpty(), "Expected cloud provider regions list")
+
+	gcpCloudProviderRegions, gcpResp, gcpErr := client.DefaultApi.GetCloudProviderRegions(ctx, gcp, nil)
+	Expect(gcpErr).NotTo(HaveOccurred(), "Error occurred when attempting to list gcp cloud providers regions:  %v", gcpErr)
+	Expect(gcpResp.StatusCode).To(Equal(http.StatusOK))
+	Expect(gcpCloudProviderRegions.Items).NotTo(BeEmpty(), "Expected gcp cloud provider regions list")
+
+	// verify that region from standalone provider type is there
+	gcpHasAfEast1Region := false
+	for _, region := range gcpCloudProviderRegions.Items {
+		if region.Id == afEast1Region {
+			gcpHasAfEast1Region = true
+			break
+		}
+	}
+
+	Expect(gcpHasAfEast1Region).To(BeTrue())
 
 	//test with wrong provider id
-	cloudProviderList, resp, err = client.DefaultApi.GetCloudProviderRegions(ctx, "wrong_provider_id", nil)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(cloudProviderList.Items).To(BeEmpty(), "Expected cloud providers regions list empty")
+	wrongCloudProviderList, respFromWrongID, errFromWrongId := client.DefaultApi.GetCloudProviderRegions(ctx, "wrong_provider_id", nil)
+	Expect(errFromWrongId).NotTo(HaveOccurred(), "Error occurred when attempting to list cloud providers regions:  %v", errFromWrongId)
+	Expect(respFromWrongID.StatusCode).To(Equal(http.StatusOK))
+	Expect(wrongCloudProviderList.Items).To(BeEmpty(), "Expected cloud providers regions list empty")
 
 }

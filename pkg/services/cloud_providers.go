@@ -47,24 +47,48 @@ type CloudProviderWithRegions struct {
 	RegionList *types.CloudProviderRegionInfoList
 }
 
+type Cluster struct {
+	ProviderType api.ClusterProviderType `json:"provider_type"`
+}
+
 func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWithRegions, *errors.ServiceError) {
-	var cloudProviderWithRegions []CloudProviderWithRegions
-	// TODO: when there are multiple provider types, we can list them from the db first and then call out to each of the implementation to get their provider and region info
-	provider, err := p.providerFactory.GetProvider(api.ClusterProviderOCM)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
+	results, dbErr := p.getAvailableClusterProviderTypes()
+	if dbErr != nil {
+		return nil, dbErr
 	}
-	providerList, err := provider.GetCloudProviders()
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
-	}
-	for _, cp := range providerList.Items {
-		regions, regionErr := provider.GetCloudProviderRegions(cp)
-		if regionErr != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud regions")
+
+	cloudProvidersToRegions := map[string]*types.CloudProviderRegionInfoList{}
+
+	for _, result := range results {
+		provider, err := p.providerFactory.GetProvider(result.ProviderType)
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
 		}
+		providerList, err := provider.GetCloudProviders()
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
+		}
+		for _, cp := range providerList.Items {
+			regions, regionErr := provider.GetCloudProviderRegions(cp)
+			if regionErr != nil {
+				return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud regions")
+			}
+
+			existingRegions, ok := cloudProvidersToRegions[cp.ID]
+			if !ok {
+				cloudProvidersToRegions[cp.ID] = regions
+			} else { // merge existing regions with new regions
+				existingRegions.Merge(regions)
+				cloudProvidersToRegions[cp.ID] = existingRegions
+			}
+		}
+
+	}
+
+	var cloudProviderWithRegions []CloudProviderWithRegions = []CloudProviderWithRegions{}
+	for key, regions := range cloudProvidersToRegions {
 		cloudProviderWithRegions = append(cloudProviderWithRegions, CloudProviderWithRegions{
-			ID:         cp.ID,
+			ID:         key,
 			RegionList: regions,
 		})
 	}
@@ -94,19 +118,9 @@ func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interf
 }
 
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
-	type Cluster struct {
-		ProviderType api.ClusterProviderType `json:"provider_type"`
-	}
-
-	dbConn := p.connectionFactory.New().
-		Model(&Cluster{}).
-		Distinct("provider_type").
-		Where("status NOT IN (?)", api.ClusterDeletionStatuses)
-
-	var results []Cluster
-	err := dbConn.Find(&results).Error
+	results, err := p.getAvailableClusterProviderTypes()
 	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to list clusters providers")
+		return nil, err
 	}
 
 	alreadyVisitedCloudProviders := map[string]bool{}
@@ -158,6 +172,21 @@ func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudR
 	}
 
 	return cloudRegionList, nil
+}
+
+func (p cloudProvidersService) getAvailableClusterProviderTypes() ([]Cluster, *errors.ServiceError) {
+	dbConn := p.connectionFactory.New().
+		Model(&Cluster{}).
+		Distinct("provider_type").
+		Where("status NOT IN (?)", api.ClusterDeletionStatuses)
+
+	var results []Cluster
+	err := dbConn.Find(&results).Error
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to list clusters providers")
+	}
+
+	return results, nil
 }
 
 func setDisplayName(providerId string, defaultDisplayName string) string {
