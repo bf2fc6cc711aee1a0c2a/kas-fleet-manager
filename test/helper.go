@@ -5,17 +5,16 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -23,7 +22,6 @@ import (
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/segmentio/ksuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -144,6 +142,7 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
 
+	h.CleanDB()
 	h.ResetDB()
 	client := h.NewApiClient()
 
@@ -324,20 +323,21 @@ func (helper *Helper) DBFactory() (connectionFactory *db.ConnectionFactory) {
 	return
 }
 
+func (helper *Helper) Migrations() (m []*db.Migration) {
+	helper.Env.MustResolveAll(&m)
+	return
+}
+
 func (helper *Helper) MigrateDB() {
-	db.Migrate(helper.DBFactory())
-}
-
-func (helper *Helper) MigrateDBTo(migrationID string) {
-	db.MigrateTo(helper.DBFactory(), migrationID)
-}
-
-func (helper *Helper) ClearAllTables() {
-	helper.DeleteAll(&api.KafkaRequest{})
+	for _, migration := range helper.Migrations() {
+		migration.Migrate()
+	}
 }
 
 func (helper *Helper) CleanDB() {
-	db.RollbackAll(helper.DBFactory())
+	for _, migration := range helper.Migrations() {
+		migration.RollbackAll()
+	}
 }
 
 func (helper *Helper) ResetDB() {

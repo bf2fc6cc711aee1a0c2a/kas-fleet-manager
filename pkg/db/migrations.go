@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"runtime"
 	"time"
 
@@ -11,60 +12,27 @@ import (
 	"gorm.io/gorm"
 )
 
-// gormigrate is a wrapper for gorm's migration functions that adds schema versioning and rollback capabilities.
-// For help writing migration steps, see the gorm documentation on migrations: https://gorm.io/docs/migration.html
-
-// Migration rules:
-//
-// 1. IDs are numerical timestamps that must sort ascending.
-//    Use YYYYMMDDHHMM w/ 24 hour time for format
-//    Example: August 21 2018 at 2:54pm would be 201808211454.
-//
-// 2. Include models inline with migrations to see the evolution of the object over time.
-//    Using our internal type models directly in the first migration would fail in future clean installs.
-//
-// 3. Migrations must be backwards compatible. There are no new required fields allowed.
-//    See $project_home/db/README.md
-//
-// 4. Create one function in a separate file that returns your Migration. Add that single function call to this list.
-var migrations []*gormigrate.Migration = []*gormigrate.Migration{
-	addKafkaRequest(),
-	addClusters(),
-	updateKafkaMultiAZTypeToBoolean(),
-	addKafkabootstrapServerHostType(),
-	addClusterStatus(),
-	addKafkaOrganisationId(),
-	addLeaderLease(),
-	addFailedReason(),
-	addConnectors(),
-	addKafkaPlacementId(),
-	addConnectorClusters(),
-	addKafkaSubscriptionId(),
-	addClusterIdentityProviderID(),
-	addKafkaSsoClientIdAndSecret(),
-	addKafkaOwnerAccountId(),
-	addKafkaVersion(),
-	connectorApiChanges(),
-	addMissingIndexes(),
-	addClusterStatusIndex(),
-	addKafkaWorkersInLeaderLeases(),
-	renameDeletingKafkaLeaseType(),
-	addClusterDNS(),
-	connectorMigrations20210518(),
-	addExternalIDsToSpecificClusters(),
-	addKafkaConnectionSettingsToConnectors(),
-	addClusterProviderInfo(),
-	changeKafkaDeleteStatusToDeleting(),
-	addKafkaQuotaTypeColumn(),
-	addConnectorTypeChannel(),
+type Migration struct {
+	DbFactory   *ConnectionFactory
+	Gormigrate  *gormigrate.Gormigrate
+	GormOptions *gormigrate.Options
 }
 
-func Migrate(conFactory *ConnectionFactory) {
-	gorm := conFactory.New()
+func NewMigration(dbConfig *config.DatabaseConfig, gormOptions *gormigrate.Options, migrations []*gormigrate.Migration) (*Migration, func(), error) {
+	err := dbConfig.ReadFiles()
+	if err != nil {
+		return nil, nil, err
+	}
+	dbFactory, cleanup := NewConnectionFactory(dbConfig)
+	return &Migration{
+		DbFactory:   dbFactory,
+		GormOptions: gormOptions,
+		Gormigrate:  gormigrate.New(dbFactory.New(), gormOptions, migrations),
+	}, cleanup, nil
+}
 
-	m := newGormigrate(gorm)
-
-	if err := m.Migrate(); err != nil {
+func (m *Migration) Migrate() {
+	if err := m.Gormigrate.Migrate(); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
 	}
 }
@@ -72,44 +40,41 @@ func Migrate(conFactory *ConnectionFactory) {
 // Migrating to a specific migration will not seed the database, seeds are up to date with the latest
 // schema based on the most recent migration
 // This should be for testing purposes mainly
-func MigrateTo(conFactory *ConnectionFactory, migrationID string) {
-	gorm := conFactory.New()
-	m := newGormigrate(gorm)
-	if err := m.MigrateTo(migrationID); err != nil {
+func (m *Migration) MigrateTo(migrationID string) {
+	if err := m.Gormigrate.MigrateTo(migrationID); err != nil {
+		glog.Fatalf("Could not migrate: %v", err)
+	}
+}
+
+func (m *Migration) RollbackLast() {
+	if err := m.Gormigrate.RollbackLast(); err != nil {
+		glog.Fatalf("Could not migrate: %v", err)
+	}
+}
+
+func (m *Migration) RollbackTo(migrationID string) {
+	if err := m.Gormigrate.RollbackTo(migrationID); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
 	}
 }
 
 // Rolls back all migrations..
-func RollbackAll(conFactory *ConnectionFactory) {
-	gorm := conFactory.New()
-	m := newGormigrate(gorm)
-
-	type Migration struct {
+func (m *Migration) RollbackAll() {
+	db := m.DbFactory.New()
+	type Result struct {
 		ID string
 	}
-	var result Migration
+	sql := fmt.Sprintf("SELECT %s AS id FROM %s", m.GormOptions.IDColumnName, m.GormOptions.TableName)
 	for {
-		err := gorm.First(&result).Error
-		if err != nil {
+		var result Result
+		err := db.Raw(sql).Scan(&result).Error
+		if err != nil || result.ID == "" {
 			return
 		}
-		if err := m.RollbackLast(); err != nil {
-			glog.Fatalf("Could not rollback: %v", err)
+		if err := m.Gormigrate.RollbackLast(); err != nil {
+			glog.Fatalf("Could not rollback last migration: %v", err)
 		}
 	}
-
-}
-
-func newGormigrate(db *gorm.DB) *gormigrate.Gormigrate {
-	gormOptions := &gormigrate.Options{
-		TableName:      "migrations",
-		IDColumnName:   "id",
-		IDColumnSize:   255,
-		UseTransaction: false,
-	}
-
-	return gormigrate.New(db, gormOptions, migrations)
 }
 
 // Model represents the base model struct. All entities will have this struct embedded.
@@ -221,12 +186,39 @@ func ExecAction(applySql string, unapplySql string) MigrationAction {
 
 	return func(tx *gorm.DB, apply bool) error {
 		if apply {
-			err := tx.Exec(applySql).Error
+			if applySql != "" {
+				err := tx.Exec(applySql).Error
+				if err != nil {
+					return errors.Wrap(err, caller)
+				}
+			}
+		} else {
+			if unapplySql != "" {
+				err := tx.Exec(unapplySql).Error
+				if err != nil {
+					return errors.Wrap(err, caller)
+				}
+			}
+		}
+		return nil
+
+	}
+}
+
+func FuncAction(applyFunc func(*gorm.DB) error, unapplyFunc func(*gorm.DB) error) MigrationAction {
+	caller := ""
+	if _, file, no, ok := runtime.Caller(1); ok {
+		caller = fmt.Sprintf("[ %s:%d ]", file, no)
+	}
+
+	return func(tx *gorm.DB, apply bool) error {
+		if apply {
+			err := applyFunc(tx)
 			if err != nil {
 				return errors.Wrap(err, caller)
 			}
 		} else {
-			err := tx.Exec(unapplySql).Error
+			err := unapplyFunc(tx)
 			if err != nil {
 				return errors.Wrap(err, caller)
 			}
