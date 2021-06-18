@@ -64,6 +64,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("kafka.client_secret", &resource.Kafka.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", &resource.DesiredState, handlers.WithDefault("ready"), handlers.IsOneOf("ready", "stopped")),
+			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 			validateConnectorSpec(h.connectorTypesService, &resource, tid),
 		},
 
@@ -188,6 +189,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
+				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
