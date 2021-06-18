@@ -50,6 +50,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 				Total: int32(len(cloudRegions)),
 				Size:  int32(len(cloudRegions)),
 				Page:  int32(1),
+				Items: []openapi.CloudRegion{},
 			}
 			for _, cloudRegion := range cloudRegions {
 				cloudRegion.Enabled = h.config.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
