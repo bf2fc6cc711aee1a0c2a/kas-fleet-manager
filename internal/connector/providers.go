@@ -3,6 +3,7 @@ package connector
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
@@ -16,6 +17,7 @@ func ConfigProviders() di.Option {
 	return di.Options(
 		di.Provide(config.NewConnectorsConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(provider.Func(ServiceProviders)),
+		di.Provide(migrations.New),
 	)
 }
 
