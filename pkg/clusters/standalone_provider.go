@@ -81,7 +81,35 @@ func (s *StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, 
 }
 
 func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-	return &types.CloudProviderRegionInfoList{}, nil
+	type Cluster struct {
+		Region  string
+		MultiAZ bool
+	}
+	dbConn := s.connectionFactory.New().
+		Model(&Cluster{}).
+		Distinct("region", "multi_az").
+		Where("cloud_provider = ?", providerInf.ID).
+		Where("provider_type = ?", api.ClusterProviderStandalone.String()).
+		Where("status NOT IN (?)", api.ClusterDeletionStatuses)
+
+	var results []Cluster
+	err := dbConn.Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	items := []types.CloudProviderRegionInfo{}
+	for _, result := range results {
+		items = append(items, types.CloudProviderRegionInfo{
+			ID:              result.Region,
+			Name:            result.Region,
+			DisplayName:     result.Region,
+			SupportsMultiAZ: result.MultiAZ,
+			CloudProviderID: providerInf.ID,
+		})
+	}
+
+	return &types.CloudProviderRegionInfoList{Items: items}, nil
 }
 
 func (s *StandaloneProvider) InstallAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
