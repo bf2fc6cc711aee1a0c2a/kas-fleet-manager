@@ -1,6 +1,7 @@
 package services
 
 import (
+	"sort"
 	"strings"
 	"time"
 
@@ -92,6 +93,10 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 			RegionList: regions,
 		})
 	}
+
+	sort.Slice(cloudProviderWithRegions, func(i, j int) bool {
+		return cloudProviderWithRegions[i].ID < cloudProviderWithRegions[j].ID
+	})
 
 	return cloudProviderWithRegions, nil
 }
