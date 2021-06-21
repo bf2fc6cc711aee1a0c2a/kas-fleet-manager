@@ -255,6 +255,8 @@ func (helper *Helper) NewAccountWithNameAndOrg(name string, orgId string) *amv1.
 	return account
 }
 
+// NewAllowedServiceAccount returns a new account that has the testuser1@example.com
+// without an organization ID
 func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
 	// this value if taken from config/allow-list-configuration.yaml
 	allowedSA := "testuser1@example.com"
