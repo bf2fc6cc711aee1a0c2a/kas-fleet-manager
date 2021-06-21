@@ -659,63 +659,6 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	Expect(resp8.Header.Get("Content-Type")).To(Equal("application/json"))
 }
 
-func TestKafkaAllowList_MaxAllowedInstancesForUserWithoutOrganisation(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
-	defer teardown()
-
-	// the values are taken from config/allow-list-configuration.yaml
-	email1 := "testuser2@example.com"
-	email2 := "testuser3@example.com"
-
-	serviceAccount1 := h.NewAccount(email1, faker.Name(), email1, "")
-	serviceAccount2 := h.NewAccount(email2, faker.Name(), email2, "")
-
-	ctx1 := h.NewAuthenticatedContext(serviceAccount1, nil)
-	ctx2 := h.NewAuthenticatedContext(serviceAccount2, nil)
-
-	k := openapi.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
-	}
-
-	// create the first kafka for first service account
-	kafka1, resp1, _ := client.DefaultApi.CreateKafka(ctx1, true, k)
-
-	// create the second kafka for the second service account
-	_, resp2, _ := client.DefaultApi.CreateKafka(ctx2, true, k)
-
-	// verify that the two requests were accepted
-	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(resp2.StatusCode).To(Equal(http.StatusAccepted))
-
-	// verify get works for owner and not the other
-	_, respGet1, _ := client.DefaultApi.GetKafkaById(ctx1, kafka1.Id)
-	_, respGet2, _ := client.DefaultApi.GetKafkaById(ctx2, kafka1.Id)
-	// the owner should get the kafka
-	Expect(respGet1.StatusCode).To(Equal(http.StatusOK))
-	// non owner should not get the kafka
-	Expect(respGet2.StatusCode).To(Equal(http.StatusNotFound))
-
-	// check the list of kafkas size for the first service account to equal one
-	list1, list1Resp, list1Err := client.DefaultApi.GetKafkas(ctx1, nil)
-	Expect(list1Err).NotTo(HaveOccurred())
-	Expect(list1Resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list1.Size).To(Equal(int32(1)))
-	Expect(list1.Total).To(Equal(int32(1)))
-
-	// check the list of kafkas size for the second service account to equal one
-	list2, list2Resp, list2Err := client.DefaultApi.GetKafkas(ctx2, nil)
-	Expect(list2Err).NotTo(HaveOccurred())
-	Expect(list2Resp.StatusCode).To(Equal(http.StatusOK))
-	Expect(list2.Size).To(Equal(int32(1)))
-	Expect(list2.Total).To(Equal(int32(1)))
-}
-
 // TestKafkaGet tests getting kafkas via the API endpoint
 func TestKafkaGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -755,17 +698,29 @@ func TestKafkaGet(t *testing.T) {
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
-	// different account but same org, should be able to read the Kafka cluster
+	// A different account than the one used to create the Kafka instance, within
+	// the same organization than the used account used to create the Kafka instance,
+	// should be able to read the Kafka cluster
 	account = h.NewRandAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
 	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 
-	// a serviceaccount that doesn't have orgId, and owner field is different too so it should get 404
-	account = h.NewAllowedServiceAccount()
+	// An account in a different organization than the one used to create the
+	// Kafka instance should get a 404 Not Found.
+	// this value if taken from config/allow-list-configuration.yaml
+	anotherOrgID := "12147054"
+	account = h.NewAccountWithNameAndOrg(faker.Name(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
 	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+
+	// An allowed serviceaccount in config/allow-list-configuration.yaml
+	// without an organization ID should get a 401 Unauthorized
+	account = h.NewAllowedServiceAccount()
+	ctx = h.NewAuthenticatedContext(account, nil)
+	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
 
 // TestKafkaDelete - tests Success kafka delete

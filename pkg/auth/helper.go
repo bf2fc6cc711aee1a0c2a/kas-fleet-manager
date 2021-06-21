@@ -3,11 +3,12 @@ package auth
 import (
 	"crypto/rsa"
 	"fmt"
-	"github.com/google/uuid"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
@@ -106,8 +107,7 @@ func (authHelper *AuthHelper) CreateJWTWithClaims(account *amv1.Account, jwtClai
 		claims["rh-user-id"] = account.ID()
 		org, ok := account.GetOrganization()
 		if ok {
-			claims["org_id"] = org.ExternalID()
-
+			claims[ocmOrgIdKey] = org.ExternalID()
 		}
 
 		if account.Email() != "" {
