@@ -1,15 +1,24 @@
 package services
 
 import (
+	"strings"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/patrickmn/go-cache"
-	"time"
 )
 
 const keyCloudProvidersWithRegions = "cloudProviderWithRegions"
+
+var cloudPoviderIdToDisplayNameMapping map[string]string = map[string]string{
+	"aws":   "Amazon Web Services",
+	"azure": "Microsoft Azure",
+	"gcp":   "Google Cloud Platform",
+}
 
 //go:generate moq -out cloud_providers_moq.go . CloudProvidersService
 type CloudProvidersService interface {
@@ -19,16 +28,18 @@ type CloudProvidersService interface {
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
-func NewCloudProvidersService(providerFactory clusters.ProviderFactory) CloudProvidersService {
+func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
 	return &cloudProvidersService{
-		providerFactory: providerFactory,
-		cache:           cache.New(5*time.Minute, 10*time.Minute),
+		providerFactory:   providerFactory,
+		connectionFactory: connectionFactory,
+		cache:             cache.New(5*time.Minute, 10*time.Minute),
 	}
 }
 
 type cloudProvidersService struct {
-	providerFactory clusters.ProviderFactory
-	cache           *cache.Cache
+	providerFactory   clusters.ProviderFactory
+	connectionFactory *db.ConnectionFactory
+	cache             *cache.Cache
 }
 
 type CloudProviderWithRegions struct {
@@ -83,22 +94,44 @@ func convertToCloudProviderWithRegionsType(cachedCloudProviderWithRegions interf
 }
 
 func (p cloudProvidersService) ListCloudProviders() ([]api.CloudProvider, *errors.ServiceError) {
+	type Cluster struct {
+		ProviderType api.ClusterProviderType `json:"provider_type"`
+	}
+
+	dbConn := p.connectionFactory.New().
+		Model(&Cluster{}).
+		Distinct("provider_type").
+		Where("status NOT IN (?)", api.ClusterDeletionStatuses)
+
+	var results []Cluster
+	err := dbConn.Find(&results).Error
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to list clusters providers")
+	}
+
+	alreadyVisitedCloudProviders := map[string]bool{}
 	cloudProviderList := []api.CloudProvider{}
-	// TODO: when there are multiple provider types, we can list them from the db first and then call out to each of the implementation to get their provider and region info
-	provider, err := p.providerFactory.GetProvider(api.ClusterProviderOCM)
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
-	}
-	providerList, err := provider.GetCloudProviders()
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
-	}
-	for _, cp := range providerList.Items {
-		cloudProviderList = append(cloudProviderList, api.CloudProvider{
-			Id:          cp.ID,
-			Name:        cp.Name,
-			DisplayName: setDisplayName(cp.ID, cp.DisplayName),
-		})
+	for _, result := range results {
+		provider, err := p.providerFactory.GetProvider(result.ProviderType)
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to find implementation")
+		}
+		providerList, err := provider.GetCloudProviders()
+		if err != nil {
+			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to retrieve cloud provider list")
+		}
+		for _, cp := range providerList.Items {
+			_, cloudProviderAlreadyCollected := alreadyVisitedCloudProviders[cp.ID]
+			if cloudProviderAlreadyCollected {
+				continue
+			}
+			cloudProviderList = append(cloudProviderList, api.CloudProvider{
+				Id:          cp.ID,
+				Name:        cp.Name,
+				DisplayName: setDisplayName(cp.ID, cp.DisplayName),
+			})
+			alreadyVisitedCloudProviders[cp.ID] = true
+		}
 	}
 
 	return cloudProviderList, nil
@@ -128,18 +161,10 @@ func (p cloudProvidersService) ListCloudProviderRegions(id string) ([]api.CloudR
 }
 
 func setDisplayName(providerId string, defaultDisplayName string) string {
-
-	var displayName string
-	switch providerId {
-	case "aws":
-		displayName = "Amazon Web Services"
-	case "azure":
-		displayName = "Microsoft Azure"
-	case "gcp":
-		displayName = "Google Cloud Platform"
-	default:
-		displayName = defaultDisplayName
+	displayName, ok := cloudPoviderIdToDisplayNameMapping[strings.ToLower(providerId)]
+	if ok {
+		return displayName
 	}
 
-	return displayName
+	return defaultDisplayName
 }

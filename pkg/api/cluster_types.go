@@ -108,9 +108,12 @@ var ordinals = map[string]int{
 	ClusterCleanup.String():                         70,
 }
 
-// This represents the valid statuses of a OSD cluster
+// This represents the valid statuses of a dataplane cluster
 var StatusForValidCluster = []string{string(ClusterProvisioning), string(ClusterProvisioned), string(ClusterReady),
 	string(ClusterAccepted), string(ClusterWaitingForKasFleetShardOperator), string(ClusterComputeNodeScalingUp)}
+
+// ClusterDeletionStatuses are statuses of clusters under deletion
+var ClusterDeletionStatuses = []string{ClusterCleanup.String(), ClusterDeprovisioning.String()}
 
 type Cluster struct {
 	Meta
