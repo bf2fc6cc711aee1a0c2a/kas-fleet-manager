@@ -1,7 +1,9 @@
 package migrate
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/golang/glog"
 
 	"github.com/spf13/cobra"
 
@@ -15,8 +17,14 @@ func NewMigrateCommand(env *environments.Env) *cobra.Command {
 		Short: "Run kas-fleet-manager data migrations",
 		Long:  "Run Kafka Service Fleet Manager data migrations",
 		Run: func(cmd *cobra.Command, args []string) {
-			env.MustInvoke(func(dbFactory *db.ConnectionFactory) {
-				db.Migrate(dbFactory)
+			// we dont do a env.LoadConfigAndCreateServices()
+			// to avoid requiring all other env settings to be provided.
+			env.MustInvoke(func(dbConfig *config.DatabaseConfig) {
+				err := dbConfig.ReadFiles()
+				if err != nil {
+					glog.Fatal(err)
+				}
+				db.Migrate(db.NewConnectionFactory(dbConfig))
 			})
 		},
 	}
