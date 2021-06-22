@@ -994,7 +994,7 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 	idpInfo := types.IdentityProviderInfo{
 		OpenID: &types.OpenIDIdentityProviderInfo{
 			Name:         openIDIdentityProviderName,
-			ClientID:     cluster.ClusterID,
+			ClientID:     cluster.ID,
 			ClientSecret: clientSecret,
 			Issuer:       c.OsdIdpKeycloakService.GetRealmConfig().ValidIssuerURI,
 		},
