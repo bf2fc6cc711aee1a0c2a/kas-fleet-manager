@@ -1,18 +1,19 @@
 # Feature Flags
 This lists the feature flags and their sub-configurations to enable/disable and configure features of the KAS Fleet Manager. This set of features can be seen below.
 
-- [Access Control](#access-control)
-- [Connectors](#connectors)
-- [Database](#database)
-- [Health Check Server](#health-check-server)
-- [Kafka](#kafka)
-- [Keycloak](#keycloak)
-- [Metrics Server](#metrics-server)
-- [Observability](#observability)
-- [Openshift Cluster Manager](#openshift-cluster-manager)
-- [Dataplane Cluster Management](#dataplane-cluster-management)
-- [Sentry](#sentry)
-- [Server](#server)
+- [Feature Flags](#feature-flags)
+  - [Access Control](#access-control)
+  - [Connectors](#connectors)
+  - [Database](#database)
+  - [Health Check Server](#health-check-server)
+  - [Kafka](#kafka)
+  - [Keycloak](#keycloak)
+  - [Metrics Server](#metrics-server)
+  - [Observability](#observability)
+  - [OpenShift Cluster Manager](#openshift-cluster-manager)
+  - [Dataplane Cluster Management](#dataplane-cluster-management)
+  - [Sentry](#sentry)
+  - [Server](#server)
 
 ## Access Control
 > For more information on access control for KAS Fleet Manager, see this [documentation](./access-control.md).
@@ -85,6 +86,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 ## Dataplane Cluster Management
 - **enable-ready-dataplane-clusters-reconcile**: Enables reconciliation of data plane clusters in a `Ready` state.
+- **kubeconfig**: A path to kubeconfig file used to communicate with standalone dataplane clusters.
 - **dataplane-cluster-scaling-type**: Sets the behaviour of how the service manages and scales OSD clusters (options: `manual`, `auto` or `none`).
     > For more information on the different dataplane cluster scaling types and their behaviour, see the [dataplane osd cluster options](./data-plane-osd-cluster-options.md) documentation.
     

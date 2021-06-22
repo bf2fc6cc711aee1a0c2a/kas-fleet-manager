@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
@@ -10,6 +12,8 @@ import (
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
 type OSDClusterConfig struct {
@@ -31,6 +35,8 @@ type OSDClusterConfig struct {
 	KafkaSREUsersFile                     string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
+	Kubeconfig                            string         `json:"kubeconfig"`
+	RawKubernetesConfig                   clientcmdapi.Config
 }
 
 const (
@@ -41,6 +47,14 @@ const (
 	// NoScaling disables cluster scaling. This is useful in testing
 	NoScaling string = "none"
 )
+
+func getDefaultKubeconfig() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(homeDir, ".kube", "config")
+}
 
 func NewOSDClusterConfig() *OSDClusterConfig {
 	return &OSDClusterConfig{
@@ -56,6 +70,7 @@ func NewOSDClusterConfig() *OSDClusterConfig {
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
+		Kubeconfig:                            getDefaultKubeconfig(),
 	}
 }
 
@@ -92,6 +107,10 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if c.ProviderType == api.ClusterProviderStandalone {
 		if c.ClusterDNS == "" {
 			return errors.Errorf("Standalone cluster with id %s does not have the cluster dns field provided", c.ClusterId)
+		}
+
+		if c.Name == "" {
+			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
 		}
 
 		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
@@ -179,6 +198,7 @@ func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.StringVar(&c.KafkaSREUsersFile, "kafka-sre-user-list-file", c.KafkaSREUsersFile, "File contains a list of kafka-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
+	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
 }
 
 func (c *OSDClusterConfig) ReadFiles() error {
@@ -188,12 +208,25 @@ func (c *OSDClusterConfig) ReadFiles() error {
 			return err
 		}
 	}
+
 	if c.IsDataPlaneManualScalingEnabled() {
 		list, err := readDataPlaneClusterConfig(c.DataPlaneClusterConfigFile)
 		if err == nil {
 			c.ClusterConfig = NewClusterConfig(list)
 		} else {
 			return err
+		}
+		for _, cluster := range c.ClusterConfig.clusterList {
+			if cluster.ProviderType == api.ClusterProviderStandalone {
+				config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+					&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
+					&clientcmd.ConfigOverrides{})
+				c.RawKubernetesConfig, err = config.RawConfig()
+				if err != nil {
+					return err
+				}
+				break
+			}
 		}
 	}
 

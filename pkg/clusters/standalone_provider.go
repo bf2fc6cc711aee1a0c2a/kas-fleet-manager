@@ -1,13 +1,41 @@
 package clusters
 
 import (
+	"encoding/json"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	coreV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	patchTypes "k8s.io/apimachinery/pkg/types"
+	"k8s.io/cli-runtime/pkg/resource"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
+	"k8s.io/client-go/tools/clientcmd"
 )
+
+const fieldManager = "kas-fleet-manager"
 
 type StandaloneProvider struct {
 	connectionFactory *db.ConnectionFactory
+	osdClusterConfig  *config.OSDClusterConfig
+}
+
+var _ Provider = &StandaloneProvider{}
+
+func newStandaloneProvider(connectionFactory *db.ConnectionFactory, osdClusterConfig *config.OSDClusterConfig) *StandaloneProvider {
+	return &StandaloneProvider{
+		connectionFactory: connectionFactory,
+		osdClusterConfig:  osdClusterConfig,
+	}
 }
 
 func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
@@ -44,6 +72,48 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec,
 }
 
 func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
+	contextName := "change-me" // change this to read the context name of the given cluster
+	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
+	clientConfig, err := clientcmd.NewNonInteractiveClientConfig(s.osdClusterConfig.RawKubernetesConfig, override.CurrentContext,
+		override, &clientcmd.ClientConfigLoadingRules{}).
+		ClientConfig()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// change this to be an element of resourceset
+	configMap := coreV1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "test-namespace",
+		},
+		Data: map[string]string{
+			"jira.ticket": "https://issues.redhat.com/browse/MGDSTRM-3814",
+		},
+	}
+
+	data, err := json.Marshal(configMap)
+	if err != nil {
+		return nil, err
+	}
+
+	var obj unstructured.Unstructured
+	err = json.Unmarshal(data, &obj)
+
+	if err != nil {
+		return nil, err
+	}
+	_, err = createOrUpdateResource(clientConfig, &obj)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &resources, nil // NOOP for now
 }
 
@@ -123,8 +193,73 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 	return &types.CloudProviderRegionInfoList{Items: items}, nil
 }
 
-var _ Provider = &StandaloneProvider{}
+func createOrUpdateResource(restConfig *rest.Config, obj runtime.Object) (runtime.Object, error) {
+	kubeClientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+	// Create a REST mapper that tracks information about the available resources in the cluster.
+	groupResources, err := restmapper.GetAPIGroupResources(kubeClientset.Discovery())
+	if err != nil {
+		return nil, err
+	}
+	rm := restmapper.NewDiscoveryRESTMapper(groupResources)
 
-func newStandaloneProvider(connectionFactory *db.ConnectionFactory) *StandaloneProvider {
-	return &StandaloneProvider{connectionFactory: connectionFactory}
+	// Get some metadata needed to make the REST request.
+	gvk := obj.GetObjectKind().GroupVersionKind()
+	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
+	mapping, err := rm.RESTMapping(gk, gvk.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	namespace, err := meta.NewAccessor().Namespace(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a client specifically for creating the object.
+	restClient, err := newRestClient(restConfig, mapping.GroupVersionKind.GroupVersion())
+	if err != nil {
+		return nil, err
+	}
+
+	restHelper := resource.NewHelper(restClient, mapping)
+	result, err := restHelper.CreateWithOptions(namespace, false, obj, &metav1.CreateOptions{
+		FieldManager: fieldManager,
+	})
+
+	if err != nil {
+		message := err.Error()
+		if strings.Contains(message, "already exists") {
+			name, err := meta.NewAccessor().Name(obj)
+			if err != nil {
+				return nil, err
+			}
+			data, err := json.Marshal(obj)
+			if err != nil {
+				return nil, err
+			}
+			return restHelper.Patch(namespace, name, patchTypes.StrategicMergePatchType, data, &metav1.PatchOptions{
+				FieldManager: fieldManager,
+			})
+		}
+
+		if strings.Contains(message, "field is immutable") {
+			return obj, nil
+		}
+	}
+	return result, err
+}
+
+func newRestClient(restConfig *rest.Config, gv schema.GroupVersion) (rest.Interface, error) {
+	restConfig.ContentConfig = resource.UnstructuredPlusDefaultContentConfig()
+	restConfig.GroupVersion = &gv
+	if len(gv.Group) == 0 {
+		restConfig.APIPath = "/api"
+	} else {
+		restConfig.APIPath = "/apis"
+	}
+
+	return rest.RESTClientFor(restConfig)
 }
