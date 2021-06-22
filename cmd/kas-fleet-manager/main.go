@@ -35,12 +35,6 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:  "kas-fleet-manager",
 		Long: "kas-fleet-manager serves as an example service template for new microservices",
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err = env.LoadConfigAndCreateServices()
-			if err != nil {
-				glog.Fatalf("Unable to initialize environment: %s", err.Error())
-			}
-		},
 	}
 
 	err = env.AddFlags(rootCmd.PersistentFlags())
@@ -62,4 +56,7 @@ func main() {
 		}
 
 	})
+	if err != nil {
+		glog.Fatalf("Unable to initialize environment: %s", err.Error())
+	}
 }
