@@ -4,6 +4,7 @@ package cluster
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
 
@@ -12,6 +13,12 @@ func NewClusterCommand(env *environments.Env) *cobra.Command {
 		Use:   "cluster",
 		Short: "Perform managed-services-api cluster actions directly",
 		Long:  "Perform managed-services-api cluster actions directly.",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			err := env.LoadConfigAndCreateServices()
+			if err != nil {
+				glog.Fatalf("Unable to initialize environment: %s", err.Error())
+			}
+		},
 	}
 
 	// add sub-commands
