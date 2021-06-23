@@ -254,12 +254,12 @@ install: verify lint
 #   make test TESTFLAGS="-run TestSomething"
 test: gotestsum
 	OCM_ENV=testing $(GOTESTSUM) --junitfile reports/unit-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -v -count=1 $(TESTFLAGS) \
-		$(shell go list ./... | grep -v /test)
+		$(shell go list ./... | grep -v /test/integration)
 .PHONY: test
 
 # Precompile everything required for development/test.
 test/prepare:
-	$(GO) test -i ./test/integration/... -i ./internal/connector/test/integration/...
+	$(GO) test -i ./internal/kafka/test/integration/... -i ./internal/connector/test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -274,7 +274,7 @@ test/prepare:
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
 test/integration: test/prepare gotestsum
 	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-			 ./test/integration/... ./internal/connector/test/integration/...
+			 ./internal/kafka/test/integration/... ./internal/connector/test/integration/...
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM

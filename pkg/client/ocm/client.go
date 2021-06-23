@@ -2,6 +2,8 @@ package ocm
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/golang/glog"
 
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 )
@@ -23,13 +25,38 @@ type Config struct {
 	Debug        bool
 }
 
-func NewClient(config Config) (*Client, error) {
+func NewOCMClient(OCM *config.OCMConfig) (client *Client, cleanup func(), err error) {
+	ocmConfig := Config{
+		BaseURL:      OCM.BaseURL,
+		ClientID:     OCM.ClientID,
+		ClientSecret: OCM.ClientSecret,
+		SelfToken:    OCM.SelfToken,
+		TokenURL:     OCM.TokenURL,
+		Debug:        OCM.Debug,
+	}
+
+	// Create OCM Authz client
+	cleanup = func() {}
+	if OCM.EnableMock {
+		if OCM.MockMode == config.MockModeEmulateServer {
+			client, err = NewIntegrationClientMock(ocmConfig)
+		} else {
+			glog.Infof("Using Mock OCM Authz Client")
+			client, err = NewClientMock(ocmConfig)
+		}
+	} else {
+		client, cleanup, err = NewClient(ocmConfig)
+	}
+	return
+}
+
+func NewClient(config Config) (*Client, func(), error) {
 	// Create a logger that has the debug level enabled:
 	logger, err := sdkClient.NewGoLoggerBuilder().
 		Debug(config.Debug).
 		Build()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to build OCM logger: %s", err.Error())
+		return nil, nil, fmt.Errorf("Unable to build OCM logger: %s", err.Error())
 	}
 
 	client := &Client{
@@ -38,10 +65,13 @@ func NewClient(config Config) (*Client, error) {
 	}
 	err = client.newConnection()
 	if err != nil {
-		return nil, fmt.Errorf("Unable to build OCM connection: %s", err.Error())
+		return nil, nil, fmt.Errorf("Unable to build OCM connection: %s", err.Error())
 	}
 	client.Authorization = &authorization{client: client}
-	return client, nil
+	cleanup := func() {
+		client.Close()
+	}
+	return client, cleanup, nil
 }
 
 func NewIntegrationClientMock(config Config) (*Client, error) {

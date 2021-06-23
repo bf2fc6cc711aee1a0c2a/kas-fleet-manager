@@ -34,13 +34,11 @@ var (
 type ConnectorsHandler struct {
 	connectorsService     services.ConnectorsService
 	connectorTypesService services.ConnectorTypesService
-	kafkaService          coreServices.KafkaService
 	vaultService          vault.VaultService
 }
 
-func NewConnectorsHandler(kafkaService coreServices.KafkaService, connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService vault.VaultService) *ConnectorsHandler {
+func NewConnectorsHandler(connectorsService services.ConnectorsService, connectorTypesService services.ConnectorTypesService, vaultService vault.VaultService) *ConnectorsHandler {
 	return &ConnectorsHandler{
-		kafkaService:          kafkaService,
 		connectorsService:     connectorsService,
 		connectorTypesService: connectorTypesService,
 		vaultService:          vaultService,
@@ -70,11 +68,11 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			// Get the Kafka to assert the user can access that kafka instance.
-			_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
-			if err != nil {
-				return nil, err
-			}
+			//// Get the Kafka to assert the user can access that kafka instance.
+			//_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
+			//if err != nil {
+			//	return nil, err
+			//}
 
 			convResource, err := presenters.ConvertConnector(resource)
 			if err != nil {
@@ -187,7 +185,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			validates := []handlers.Validate{
 				handlers.Validation("name", &resource.Metadata.Name, handlers.MinLen(1), handlers.MaxLen(100)),
 				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
-				handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
+				// handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
 				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
@@ -201,12 +199,12 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			// did the kafka instance change? verify we can use it...
-			if resource.Metadata.KafkaId != originalResource.Metadata.KafkaId {
-				_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
-				if err != nil {
-					return nil, err
-				}
-			}
+			//if resource.Metadata.KafkaId != originalResource.Metadata.KafkaId {
+			//	_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
+			//	if err != nil {
+			//		return nil, err
+			//	}
+			//}
 
 			p, svcErr := presenters.ConvertConnector(resource)
 			if svcErr != nil {

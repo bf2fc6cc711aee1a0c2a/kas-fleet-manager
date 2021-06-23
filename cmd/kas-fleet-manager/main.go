@@ -25,12 +25,13 @@ func main() {
 	}
 
 	env, err := environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
-		kafka.ConfigProviders().AsOption(),
-		connector.ConfigProviders().AsOption(),
+		kafka.ConfigProviders(),
+		connector.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
+	defer env.Cleanup()
 
 	rootCmd := &cobra.Command{
 		Use:  "kas-fleet-manager",
@@ -39,10 +40,15 @@ func main() {
 
 	err = env.AddFlags(rootCmd.PersistentFlags())
 	if err != nil {
-		glog.Fatalf("Unable to add environment flags: %s", err.Error())
+		glog.Fatalf("Unable to add global flags: %s", err.Error())
 	}
 
-	err = env.ConfigContainer.Invoke(func(subcommands []*cobra.Command) {
+	err = env.CreateServices()
+	if err != nil {
+		glog.Fatalf("Unable to initialize environment: %s", err.Error())
+	}
+
+	env.MustInvoke(func(subcommands []*cobra.Command) {
 
 		// All subcommands under root
 		rootCmd.AddCommand(

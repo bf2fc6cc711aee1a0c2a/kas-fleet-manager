@@ -12,7 +12,7 @@ func NewServiceAccountCommand(env *environments.Env) *cobra.Command {
 		Short: "Perform serviceaccount actions directly",
 		Long:  "Perform serviceaccount actions directly.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err := env.LoadConfigAndCreateServices()
+			err := env.CreateServices()
 			if err != nil {
 				glog.Fatalf("Unable to initialize environment: %s", err.Error())
 			}

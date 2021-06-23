@@ -14,7 +14,7 @@ func NewKafkaCommand(env *environments.Env) *cobra.Command {
 		Short: "Perform kafka CRUD actions directly",
 		Long:  "Perform kafka CRUD actions directly.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err := env.LoadConfigAndCreateServices()
+			err := env.CreateServices()
 			if err != nil {
 				glog.Fatalf("Unable to initialize environment: %s", err.Error())
 			}
