@@ -216,7 +216,7 @@ paths:
         - Bearer: []
       operationId: listConnectors
       summary: Returns a list of connector types
-  "/api/connector_mgmt/v1/kafkas_connectors/{id}":
+  "/api/connector_mgmt/v1/kafka_connectors/{id}":
     parameters:
       - $ref: "#/components/parameters/id"
       - in: query
