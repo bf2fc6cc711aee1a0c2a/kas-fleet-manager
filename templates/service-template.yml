@@ -646,11 +646,6 @@ objects:
             emptyDir:
               medium: Memory
           initContainers:
-          - name: id
-            image: quay.io/centos/centos:8
-            command:
-            - echo
-            - ${VERSION}-${BUILD_ID}-${BUILD_TS}
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
             imagePullPolicy: IfNotPresent
