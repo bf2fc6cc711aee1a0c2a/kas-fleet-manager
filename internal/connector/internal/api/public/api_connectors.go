@@ -152,12 +152,12 @@ type DeleteConnectorOpts struct {
 /*
 DeleteConnector Delete a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorId The id of the connector
+ * @param id The ID of record
  * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
  * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Error
 */
-func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, connectorId string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -168,8 +168,8 @@ func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, connectorId
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{connector_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"connector_id"+"}", _neturl.QueryEscape(parameterToString(connectorId, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -268,12 +268,12 @@ type GetConnectorOpts struct {
 /*
 GetConnector Get a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorId The id of the connector
+ * @param id The ID of record
  * @param optional nil or *GetConnectorOpts - Optional Parameters:
  * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Connector
 */
-func (a *ConnectorsApiService) GetConnector(ctx _context.Context, connectorId string, localVarOptionals *GetConnectorOpts) (Connector, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, localVarOptionals *GetConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -284,8 +284,8 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, connectorId st
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{connector_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"connector_id"+"}", _neturl.QueryEscape(parameterToString(connectorId, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -497,13 +497,13 @@ type PatchConnectorOpts struct {
 /*
 PatchConnector patch a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- * @param connectorId The id of the connector
+ * @param id The ID of record
  * @param body Data to patch the connector with
  * @param optional nil or *PatchConnectorOpts - Optional Parameters:
  * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Connector
 */
-func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, connectorId string, body map[string]interface{}, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, body map[string]interface{}, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -514,8 +514,8 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, connectorId 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{connector_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"connector_id"+"}", _neturl.QueryEscape(parameterToString(connectorId, "")), -1)
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}

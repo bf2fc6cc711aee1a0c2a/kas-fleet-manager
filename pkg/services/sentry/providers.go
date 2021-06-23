@@ -1,4 +1,4 @@
-package vault
+package sentry
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
@@ -9,6 +9,9 @@ func ConfigProviders() di.Option {
 	return di.Options(
 		di.Provide(NewConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(provider.Func(ServiceProviders)),
+		di.ProvideValue(provider.AfterCreateServicesHook{
+			Func: Initialize,
+		}),
 	)
 }
 
@@ -18,6 +21,5 @@ func ServiceProviders(configContainer *di.Container) di.Option {
 			err = configContainer.Resolve(&value)
 			return
 		}),
-		di.Provide(NewVaultService),
 	)
 }

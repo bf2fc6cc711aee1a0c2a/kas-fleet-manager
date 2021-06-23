@@ -2,7 +2,7 @@ package environments
 
 type EnvLoader interface {
 	Defaults() map[string]string
-	Load(env *Env) error
+	ModifyConfiguration(env *Env) error
 }
 
 type SimpleEnvLoader map[string]string
@@ -13,6 +13,6 @@ func (b SimpleEnvLoader) Defaults() map[string]string {
 	return b
 }
 
-func (b SimpleEnvLoader) Load(env *Env) error {
+func (b SimpleEnvLoader) ModifyConfiguration(env *Env) error {
 	return nil
 }

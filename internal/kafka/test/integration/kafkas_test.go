@@ -50,7 +50,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -77,7 +77,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, h.DBFactory, client, k)
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, testServices.DBFactory, client, k)
 
 	// kafka successfully registered with database
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
@@ -88,21 +88,21 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
-	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.DeprecatedBootstrapServerHost).To(Not(BeEmpty()))
-	Expect(foundKafka.Version).To(Equal(h.AppConfig.Kafka.DefaultKafkaVersion))
+	Expect(foundKafka.Version).To(Equal(testServices.AppConfig.Kafka.DefaultKafkaVersion))
 
 	// checking kafka_request bootstrap server port number being present
 	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
-	Expect(kafka.Version).To(Equal(h.AppConfig.Kafka.DefaultKafkaVersion))
+	Expect(kafka.Version).To(Equal(testServices.AppConfig.Kafka.DefaultKafkaVersion))
 
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	var kafkaRequest api.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find kafka request")
@@ -121,10 +121,6 @@ func TestKafkaCreate_Success(t *testing.T) {
 }
 
 func TestKafkaCreate_TooManyKafkas(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.Kafka.KafkaCapacity.MaxCapacity = 2
-	}
-
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -132,7 +128,9 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+		c.KafkaCapacity.MaxCapacity = 2
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -157,7 +155,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	kafkas := []*api.KafkaRequest{
 		{
 			MultiAZ:        false,
@@ -204,7 +202,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -289,7 +287,7 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// create two random accounts in same organisation
@@ -336,7 +334,7 @@ func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
@@ -398,7 +396,7 @@ func TestKafkaDenyList_UnauthorizedValidation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
@@ -464,7 +462,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -489,7 +487,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	kafkas := []*api.KafkaRequest{
@@ -554,7 +552,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, h.DBFactory, client, 1)
+	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, testServices.DBFactory, client, 1)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for first kafka deletion: %v", kafkaDeletionErr)
 }
 
@@ -562,16 +560,14 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 // The max allowed instances limit is set to "1" set for one organusation is not depassed.
 // At the same time, users of a different organisation should be able to create instances.
 func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		acl := h.Env.Config.AccessControlList
-		acl.AllowList.AllowAnyRegisteredUsers = true
-		acl.EnableInstanceLimitControl = true
-	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, teardown := NewKafkaHelperWithHooks(t, ocmServer, func(acl *config.AccessControlListConfig) {
+		acl.AllowList.AllowAnyRegisteredUsers = true
+		acl.EnableInstanceLimitControl = true
+	})
 	defer teardown()
 
 	// this value if taken from config/allow-list-configuration.yaml
@@ -667,7 +663,7 @@ func TestKafkaAllowList_MaxAllowedInstancesForUserWithoutOrganisation(t *testing
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// the values are taken from config/allow-list-configuration.yaml
@@ -725,7 +721,7 @@ func TestKafkaGet(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -753,7 +749,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
 	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusAccepted.String()))
-	Expect(kafka.Version).To(Equal(h.AppConfig.Kafka.DefaultKafkaVersion))
+	Expect(kafka.Version).To(Equal(testServices.AppConfig.Kafka.DefaultKafkaVersion))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
@@ -777,7 +773,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -801,7 +797,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, h.DBFactory, client, k)
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, testServices.DBFactory, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -809,7 +805,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
-	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := utils.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
@@ -825,7 +821,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
 
 	// wait for kafka to be deleted
-	err = utils.WaitForKafkaToBeDeleted(ctx, h.DBFactory, client, kafka.Id)
+	err = utils.WaitForKafkaToBeDeleted(ctx, testServices.DBFactory, client, kafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 }
 
@@ -834,7 +830,7 @@ func TestKafkaDelete_FailSync(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -858,7 +854,7 @@ func TestKafkaDelete_FailSync(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, h.DBFactory, client, k)
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, testServices.DBFactory, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -876,7 +872,7 @@ func TestKafkaDelete_WithoutID(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -893,23 +889,19 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	startHook := func(ocmConfig *config.OCMConfig) {
+	h, client, teardown := NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *config.OCMConfig) {
 		if ocmConfig.MockMode == config.MockModeEmulateServer {
 			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
 			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
 			workers.RepeatInterval = 10 * time.Second
 		}
-	}
-
-	h, client, teardown := test.RegisterIntegrationWithHooks(t, ocmServer, startHook)
+	})
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	// custom update kafka status implementation to ensure that kafkas created within this test never gets updated to a 'ready' state.
 	mockKasFleetshardSyncBuilder.SetUpdateKafkaStatusFunc(func(helper *test.Helper, privateClient *privateopenapi.APIClient) error {
-		var clusterService services.ClusterService
-		h.Env.MustResolveAll(&clusterService)
-		dataplaneCluster, findDataplaneClusterErr := clusterService.FindCluster(services.FindClusterCriteria{
+		dataplaneCluster, findDataplaneClusterErr := testServices.ClusterService.FindCluster(services.FindClusterCriteria{
 			Status: api.ClusterReady,
 		})
 		if findDataplaneClusterErr != nil {
@@ -959,7 +951,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	}
 
 	// Test deletion of a kafka in an 'accepted' state
-	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, h.DBFactory, client, k)
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(ctx, testServices.DBFactory, client, k)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
@@ -967,7 +959,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
-	_ = utils.WaitForKafkaToBeDeleted(ctx, h.DBFactory, client, kafka.Id)
+	_ = utils.WaitForKafkaToBeDeleted(ctx, testServices.DBFactory, client, kafka.Id)
 	kafkaList, _, err := client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
@@ -978,18 +970,18 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
 
 	// Test deletion of a kafka in a 'preparing' state
-	kafka, resp, err = utils.WaitForKafkaCreateToBeAccepted(ctx, h.DBFactory, client, k)
+	kafka, resp, err = utils.WaitForKafkaCreateToBeAccepted(ctx, testServices.DBFactory, client, k)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
-	kafka, err = utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, kafka.Id, constants.KafkaRequestStatusPreparing)
+	kafka, err = utils.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusPreparing)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
 
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
-	_ = utils.WaitForKafkaToBeDeleted(ctx, h.DBFactory, client, kafka.Id)
+	_ = utils.WaitForKafkaToBeDeleted(ctx, testServices.DBFactory, client, kafka.Id)
 	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
@@ -1000,18 +992,18 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
 
 	// Test deletion of a kafka in a 'provisioning' state
-	kafka, resp, err = utils.WaitForKafkaCreateToBeAccepted(ctx, h.DBFactory, client, k)
+	kafka, resp, err = utils.WaitForKafkaCreateToBeAccepted(ctx, testServices.DBFactory, client, k)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
-	kafka, err = utils.WaitForKafkaToReachStatus(ctx, h.DBFactory, client, kafka.Id, constants.KafkaRequestStatusProvisioning)
+	kafka, err = utils.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusProvisioning)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
 
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
-	_ = utils.WaitForKafkaToBeDeleted(ctx, h.DBFactory, client, kafka.Id)
+	_ = utils.WaitForKafkaToBeDeleted(ctx, testServices.DBFactory, client, kafka.Id)
 	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &openapi.GetKafkasOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
@@ -1027,7 +1019,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -1053,7 +1045,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1078,13 +1070,13 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(initCtx, h.DBFactory, client, k)
+	kafka, resp, err := utils.WaitForKafkaCreateToBeAccepted(initCtx, testServices.DBFactory, client, k)
 
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 
-	foundKafka, err := utils.WaitForKafkaToReachStatus(initCtx, h.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := utils.WaitForKafkaToReachStatus(initCtx, testServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 
 	// attempt to delete kafka not created by the owner (should result in an error)
@@ -1106,7 +1098,7 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1147,7 +1139,7 @@ func TestKafkaList_Success(t *testing.T) {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
 
-	foundKafka, err := utils.WaitForKafkaToReachStatus(initCtx, h.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := utils.WaitForKafkaToReachStatus(initCtx, testServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred while waiting for kafka to be ready:  %v", err)
 
 	// get populated list of kafka requests
@@ -1227,7 +1219,7 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	_, client, teardown := test.RegisterIntegration(t, ocmServer)
+	_, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// create empty context
@@ -1246,12 +1238,12 @@ func deleteTestKafka(t *testing.T, h *test.Helper, ctx context.Context, client *
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	// wait for kafka to be deleted
-	err = utils.NewPollerBuilder(h.DBFactory).
+	err = utils.NewPollerBuilder(testServices.DBFactory).
 		OutputFunction(t.Logf).
 		IntervalAndTimeout(kafkaCheckInterval, kafkaReadyTimeout).
 		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			db := h.DBFactory.New()
+			db := testServices.DBFactory.New()
 			var kafkaRequest api.KafkaRequest
 			if err := db.Unscoped().Where("id = ?", kafkaID).First(&kafkaRequest).Error; err != nil {
 				return false, err
@@ -1267,7 +1259,7 @@ func TestKafkaList_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -1290,15 +1282,12 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
-
-	var ocmConfig *config.OCMConfig
-	h.Env.MustResolveAll(&ocmConfig)
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      ocmConfig.TokenIssuerURL,
+		"iss":      testServices.OCMConfig.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}
@@ -1312,14 +1301,12 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 // TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
 func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{}
-	}
-
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+		c.KafkaLifespan.LongLivedKafkas = []string{}
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1340,7 +1327,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 
@@ -1397,20 +1384,19 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, h.DBFactory, client, 1)
+	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, testServices.DBFactory, client, 1)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }
 
 // TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
 func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
-	configHook := func(h *test.Helper) {
-		h.Env.Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{}
-	}
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.RegisterIntegrationWithHooks(t, ocmServer, configHook)
+	h, client, tearDown := NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+		c.KafkaLifespan.LongLivedKafkas = []string{}
+	})
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1431,7 +1417,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	// set the long lived kafka id list at the beginning of the tests to avoid potential timing issues when testing its case
@@ -1492,6 +1478,6 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, h.DBFactory, client, 2)
+	kafkaDeletionErr := utils.WaitForNumberOfKafkaToBeGivenCount(ctx, testServices.DBFactory, client, 2)
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }

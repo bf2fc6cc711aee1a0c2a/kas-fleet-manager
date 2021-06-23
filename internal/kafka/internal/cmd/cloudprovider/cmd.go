@@ -15,7 +15,7 @@ func NewCloudProviderCommand(env *environments.Env) *cobra.Command {
 		Short: "Perform managed-services-api cloud providers actions directly",
 		Long:  "Perform managed-services-api cloud providers actions directly.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			err := env.LoadConfigAndCreateServices()
+			err := env.CreateServices()
 			if err != nil {
 				glog.Fatalf("Unable to initialize environment: %s", err.Error())
 			}

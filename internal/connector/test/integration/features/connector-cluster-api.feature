@@ -11,7 +11,6 @@ Feature: create a a connector
 
   Scenario: Greg creates lists and deletes a connector addon cluster
     Given I am logged in as "Greg"
-    Given I have created a kafka cluster as ${kid}
     When I POST path "/v1/kafka_connector_clusters" with json body:
       """
       {}

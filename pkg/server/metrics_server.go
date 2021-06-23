@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/golang/glog"
 	"net"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
 
-func NewMetricsServer(metricsConfig *config.MetricsConfig, serverConfig *config.ServerConfig, sentryConfig *config.SentryConfig) *MetricsServer {
+func NewMetricsServer(metricsConfig *config.MetricsConfig, serverConfig *config.ServerConfig, sentryConfig *sentry.Config) *MetricsServer {
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
 
@@ -54,6 +55,10 @@ func (s MetricsServer) Serve(listener net.Listener) {
 }
 
 func (s MetricsServer) Start() {
+	go s.Run()
+}
+
+func (s MetricsServer) Run() {
 	glog.Infof("start metrics server")
 	var err error
 	if s.metricsConfig.EnableHTTPS {
@@ -75,6 +80,9 @@ func (s MetricsServer) Start() {
 	glog.Infof("Metrics server terminated")
 }
 
-func (s MetricsServer) Stop() error {
-	return s.httpServer.Shutdown(context.Background())
+func (s MetricsServer) Stop() {
+	err := s.httpServer.Shutdown(context.Background())
+	if err != nil {
+		glog.Warningf("Unable to stop health check server: %s", err)
+	}
 }

@@ -49,10 +49,10 @@ func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus
 
 // Create creates a connector in the database
 func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
-	kid := resource.KafkaID
-	if kid == "" {
-		return errors.Validation("kafka id is undefined")
-	}
+	//kid := resource.KafkaID
+	//if kid == "" {
+	//	return errors.Validation("kafka id is undefined")
+	//}
 
 	dbConn := k.connectionFactory.New()
 	if err := dbConn.Save(resource).Error; err != nil {

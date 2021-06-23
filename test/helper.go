@@ -5,14 +5,20 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"github.com/goava/di"
+	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/goava/di"
+	"github.com/golang/glog"
+	gm "github.com/onsi/gomega"
+	"github.com/spf13/pflag"
+
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
-	"github.com/golang/glog"
 	"github.com/google/uuid"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/segmentio/ksuid"
@@ -24,8 +30,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 )
@@ -43,134 +47,144 @@ const (
 // by synchronizing on a common time func attached to the test harness.
 type TimeFunc func() time.Time
 
-type Services struct {
-	di.Inject
-	DBFactory             *db.ConnectionFactory
-	AppConfig             *config.ApplicationConfig
-	MetricsServer         *server.MetricsServer
-	HealthCheckServer     *server.HealthCheckServer
-	Workers               []workers.Worker
-	LeaderElectionManager *workers.LeaderElectionManager
-	SignalBus             signalbus.SignalBus
-	APIServer             *server.ApiServer
-}
-
 type Helper struct {
 	AuthHelper    *auth.AuthHelper
 	JWTPrivateKey *rsa.PrivateKey
 	JWTCA         *rsa.PublicKey
 	T             *testing.T
 	Env           *environments.Env
-
-	Services
 }
 
-func (helper *Helper) startAPIServer() {
+func NewHelper(t *testing.T, server *httptest.Server, options ...di.Option) (*Helper, *openapi.APIClient, func()) {
+	return NewHelperWithHooks(t, server, nil, options...)
+}
 
-	if err := helper.Env.ServiceContainer.Resolve(&helper.APIServer); err != nil {
-		glog.Fatalf("di failure: %v", err)
+// NewHelperWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hook.
+// The startHook will be invoked after the environments.Env is created but before the api server is started, which will allow caller to change configurations.
+// The startHook can should be a function and can optionally have type arguments that can be injected from the configuration container.
+func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, *openapi.APIClient, func()) {
+
+	// Register the test with gomega
+	gm.RegisterTestingT(t)
+
+	// Manually set environment name, ignoring environment variables
+	validTestEnv := false
+	envName := environments.GetEnvironmentStrFromEnv()
+	for _, testEnv := range []string{environments.TestingEnv, environments.IntegrationEnv, environments.DevelopmentEnv} {
+		if envName == testEnv {
+			validTestEnv = true
+			break
+		}
+	}
+	if !validTestEnv {
+		fmt.Println("OCM_ENV environment variable not set to a valid test environment, using default testing environment")
+		envName = environments.TestingEnv
+	}
+	h := &Helper{
+		T: t,
 	}
 
-	listener, err := helper.APIServer.Listen()
+	if configurationHook != nil {
+		envProviders = append(envProviders, di.ProvideValue(provider.BeforeCreateServicesHook{
+			Func: configurationHook,
+		}))
+	}
+
+	var err error
+	env, err := environments.NewEnv(envName, envProviders...)
 	if err != nil {
-		glog.Fatalf("Unable to start Test API server: %s", err)
+		glog.Fatalf("error initializing: %v", err)
 	}
-	go func() {
-		glog.V(10).Info("Test API server started")
-		helper.APIServer.Serve(listener)
-		glog.V(10).Info("Test API server stopped")
-	}()
+	h.Env = env
+
+	parseCommandLineFlags(env)
+
+	var osdClusterConfig *config.OSDClusterConfig
+	var kafkaConfig *config.KafkaConfig
+	var ocmConfig *config.OCMConfig
+	var observabilityConfiguration *config.ObservabilityConfiguration
+	var serverConfig *config.ServerConfig
+	var keycloakConfig *config.KeycloakConfig
+	env.MustResolveAll(&osdClusterConfig, &kafkaConfig, &ocmConfig, &observabilityConfiguration, &serverConfig, &keycloakConfig)
+
+	osdClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
+
+	// Create a new helper
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
+	if err != nil {
+		t.Fatalf("failed to create a new auth helper %s", err.Error())
+	}
+	h.JWTPrivateKey = authHelper.JWTPrivateKey
+	h.JWTCA = authHelper.JWTCA
+	h.AuthHelper = authHelper
+
+	// Set server if provided
+	observabilityConfiguration.EnableMock = true
+	if server != nil {
+		fmt.Printf("Setting OCM base URL to %s\n", server.URL)
+		ocmConfig.BaseURL = server.URL
+		if ocmConfig.MockMode == config.MockModeEmulateServer {
+			workers.RepeatInterval = 1 * time.Second
+		}
+	}
+
+	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
+	serverConfig.JwksURL = jwkURL
+	keycloakConfig.EnableAuthenticationOnKafka = false
+
+	// the configuration hook might set config options that influence which config files are loaded,
+	// by env.LoadConfig()
+	if configurationHook != nil {
+		env.MustInvoke(configurationHook)
+	}
+
+	// loads the config files and create the services...
+	err = env.CreateServices()
+	if err != nil {
+		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
+	}
+
+	h.ResetDB()
+	client := h.NewApiClient()
+
+	env.Start()
+	return h, client, buildTeardownHelperFn(
+		env.Stop,
+		h.CleanDB,
+		metrics.Reset,
+		stopJWKMockServer,
+		env.Cleanup)
 }
 
-func (helper *Helper) stopAPIServer() {
-	if err := helper.APIServer.Stop(); err != nil {
-		glog.Fatalf("Unable to stop api server: %s", err.Error())
+func parseCommandLineFlags(env *environments.Env) {
+	commandLine := pflag.NewFlagSet("test", pflag.PanicOnError)
+	err := env.AddFlags(commandLine)
+	if err != nil {
+		glog.Fatalf("Unable to add environment flags: %s", err.Error())
+	}
+	if logLevel := os.Getenv("LOGLEVEL"); logLevel != "" {
+		glog.Infof("Using custom loglevel: %s", logLevel)
+		err = commandLine.Set("v", logLevel)
+		if err != nil {
+			glog.Warningf("Unable to set custom logLevel: %s", err.Error())
+		}
+	}
+	err = commandLine.Parse(os.Args[1:])
+	if err != nil {
+		glog.Fatalf("Unable to parse command line options: %s", err.Error())
 	}
 }
 
-func (helper *Helper) startMetricsServer() {
-	go func() {
-		glog.V(10).Info("Test Metrics server started")
-		helper.MetricsServer.Start()
-		glog.V(10).Info("Test Metrics server stopped")
-	}()
-}
-
-func (helper *Helper) stopMetricsServer() {
-	if err := helper.MetricsServer.Stop(); err != nil {
-		glog.Fatalf("Unable to stop metrics server: %s", err.Error())
+func buildTeardownHelperFn(funcs ...func()) func() {
+	return func() {
+		for _, f := range funcs {
+			if f != nil {
+				f()
+			}
+		}
 	}
-}
-
-func (helper *Helper) startHealthCheckServer() {
-	go func() {
-		glog.V(10).Info("Test health check server started")
-		helper.HealthCheckServer.Start()
-		glog.V(10).Info("Test health check server stopped")
-	}()
-}
-func (helper *Helper) stopHealthCheckServer() {
-	if err := helper.HealthCheckServer.Stop(); err != nil {
-		glog.Fatalf("Unable to stop heal check server: %s", err.Error())
-	}
-}
-
-func (helper *Helper) StartSignalBusWorker() {
-	glog.V(10).Info("Signal bus worker started")
-	helper.SignalBus.(*signalbus.PgSignalBus).Start()
-}
-
-func (helper *Helper) StopSignalBusWorker() {
-	helper.SignalBus.(*signalbus.PgSignalBus).Stop()
-	glog.V(10).Info("Signal bus worker stopped")
-}
-
-func (helper *Helper) startLeaderElectionWorker() {
-	helper.LeaderElectionManager.Start()
-	glog.V(10).Info("Test Leader Election Manager started")
-}
-
-func (helper *Helper) stopLeaderElectionWorker() {
-	if helper.LeaderElectionManager == nil {
-		return
-	}
-	helper.LeaderElectionManager.Stop()
-}
-
-func (helper *Helper) StartLeaderElectionWorker() {
-	helper.stopLeaderElectionWorker()
-	helper.startLeaderElectionWorker()
-}
-
-func (helper *Helper) StopLeaderElectionWorker() {
-	helper.stopLeaderElectionWorker()
-}
-
-func (helper *Helper) StartServer() {
-	helper.startAPIServer()
-	glog.V(10).Info("Test API server started")
-}
-
-func (helper *Helper) StopServer() {
-	helper.stopAPIServer()
-	glog.V(10).Info("Test API server stopped")
-}
-
-func (helper *Helper) RestartServer() {
-	helper.stopAPIServer()
-	helper.startAPIServer()
-	glog.V(10).Info("Test API server restarted")
-}
-
-func (helper *Helper) RestartMetricsServer() {
-	helper.stopMetricsServer()
-	helper.startMetricsServer()
-	glog.V(10).Info("Test metrics server restarted")
-}
-
-// ResetMetrics metrics. Note this will only reset metrics defined in pkg/metrics
-func (helper *Helper) ResetMetrics() {
-	metrics.Reset()
 }
 
 // NewID creates a new unique ID used internally to CS
@@ -276,7 +290,7 @@ func (helper *Helper) StartJWKCertServerMock() (string, func()) {
 }
 
 func (helper *Helper) DeleteAll(table interface{}) {
-	gorm := helper.DBFactory.New()
+	gorm := helper.DBFactory().New()
 	err := gorm.Model(table).Unscoped().Delete(table).Error
 	if err != nil {
 		helper.T.Errorf("error deleting from table %v: %v", table, err)
@@ -284,7 +298,7 @@ func (helper *Helper) DeleteAll(table interface{}) {
 }
 
 func (helper *Helper) Delete(obj interface{}) {
-	gorm := helper.DBFactory.New()
+	gorm := helper.DBFactory().New()
 	err := gorm.Unscoped().Delete(obj).Error
 	if err != nil {
 		helper.T.Errorf("error deleting object %v: %v", obj, err)
@@ -298,7 +312,7 @@ func (helper *Helper) SkipIfShort() {
 }
 
 func (helper *Helper) Count(table string) int64 {
-	gorm := helper.DBFactory.New()
+	gorm := helper.DBFactory().New()
 	var count int64
 	err := gorm.Table(table).Count(&count).Error
 	if err != nil {
@@ -307,12 +321,17 @@ func (helper *Helper) Count(table string) int64 {
 	return count
 }
 
+func (helper *Helper) DBFactory() (connectionFactory *db.ConnectionFactory) {
+	helper.Env.MustResolveAll(&connectionFactory)
+	return
+}
+
 func (helper *Helper) MigrateDB() {
-	db.Migrate(helper.DBFactory)
+	db.Migrate(helper.DBFactory())
 }
 
 func (helper *Helper) MigrateDBTo(migrationID string) {
-	db.MigrateTo(helper.DBFactory, migrationID)
+	db.MigrateTo(helper.DBFactory(), migrationID)
 }
 
 func (helper *Helper) ClearAllTables() {
@@ -320,7 +339,7 @@ func (helper *Helper) ClearAllTables() {
 }
 
 func (helper *Helper) CleanDB() {
-	db.RollbackAll(helper.DBFactory)
+	db.RollbackAll(helper.DBFactory())
 }
 
 func (helper *Helper) ResetDB() {

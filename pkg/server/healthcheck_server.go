@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"net"
 	"net/http"
 	"time"
@@ -26,7 +27,7 @@ type HealthCheckServer struct {
 	healthCheckConfig *config.HealthCheckConfig
 }
 
-func NewHealthCheckServer(healthCheckConfig *config.HealthCheckConfig, serverConfig *config.ServerConfig, sentryConfig *config.SentryConfig) *HealthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *config.HealthCheckConfig, serverConfig *config.ServerConfig, sentryConfig *sentry.Config) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)
@@ -48,6 +49,10 @@ func NewHealthCheckServer(healthCheckConfig *config.HealthCheckConfig, serverCon
 }
 
 func (s HealthCheckServer) Start() {
+	go s.Run()
+}
+
+func (s HealthCheckServer) Run() {
 	var err error
 	if s.healthCheckConfig.EnableHTTPS {
 		if s.serverConfig.HTTPSCertFile == "" || s.serverConfig.HTTPSKeyFile == "" {
@@ -68,8 +73,11 @@ func (s HealthCheckServer) Start() {
 	glog.Infof("HealthCheck server terminated")
 }
 
-func (s HealthCheckServer) Stop() error {
-	return s.httpServer.Shutdown(context.Background())
+func (s HealthCheckServer) Stop() {
+	err := s.httpServer.Shutdown(context.Background())
+	if err != nil {
+		glog.Warningf("Unable to stop health check server: %s", err)
+	}
 }
 
 // Unimplemented
