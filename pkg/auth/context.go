@@ -62,7 +62,7 @@ func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 
 func GetIsOrgAdminFromClaims(claims jwt.MapClaims) bool {
 	if claims[isOrgAdmin] != nil {
-		return claims[ocmOrgIdKey].(bool)
+		return claims[isOrgAdmin].(bool)
 	}
 	return false
 }
