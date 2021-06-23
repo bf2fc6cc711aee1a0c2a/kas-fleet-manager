@@ -190,14 +190,13 @@ Feature: create a a connector
 
   Scenario: Greg tries to create a connector with an invalid configuration spec
     Given I am logged in as "Greg"
-    Given I have created a kafka cluster as ${kid}
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"${kid}"
+          "kafka_id":"mykafka"
         },
         "deployment_location": {
           "kind": "addon",
@@ -231,14 +230,13 @@ Feature: create a a connector
 
   Scenario: Greg tries to create a connector with an invalid deployment_location.kind
     Given I am logged in as "Greg"
-    Given I have created a kafka cluster as ${kid}
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"${kid}"
+          "kafka_id":"mykafka"
         },
         "deployment_location": {
           "kind": "WRONG",
@@ -275,14 +273,13 @@ Feature: create a a connector
   Scenario: Greg creates lists and deletes a connector verifying that Evil Bob can't access Gregs Connectors
   but Coworker Sally can.
     Given I am logged in as "Greg"
-    Given I have created a kafka cluster as ${kid}
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"${kid}"
+          "kafka_id":"mykafka"
         },
         "deployment_location": {
           "kind": "addon",
@@ -306,7 +303,7 @@ Feature: create a a connector
     And the ".status" selection from the response should match "assigning"
 
     Given I store the ".id" selection from the response as ${connector_id}
-    When I GET path "/v1/kafka_connectors?kafka_id=${kid}"
+    When I GET path "/v1/kafka_connectors?kafka_id=mykafka"
     Then the response code should be 200
     And the response should match json:
       """
@@ -334,7 +331,7 @@ Feature: create a a connector
             "kind": "Connector",
             "metadata": {
               "created_at": "${response.items[0].metadata.created_at}",
-              "kafka_id": "${kid}",
+              "kafka_id": "mykafka",
               "name": "example 1",
               "owner": "${response.items[0].metadata.owner}",
               "resource_version": ${response.items[0].metadata.resource_version},
@@ -362,7 +359,7 @@ Feature: create a a connector
           "kind": "Connector",
           "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
           "metadata": {
-              "kafka_id": "${kid}",
+              "kafka_id": "mykafka",
               "owner": "${response.metadata.owner}",
               "name": "example 1",
               "created_at": "${response.metadata.created_at}",

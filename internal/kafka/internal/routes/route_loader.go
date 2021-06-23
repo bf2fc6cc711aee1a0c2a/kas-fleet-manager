@@ -16,9 +16,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
-	handlers2 "github.com/gorilla/handlers"
+	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	errors2 "github.com/pkg/errors"
+	pkgerrors "github.com/pkg/errors"
 	"net/http"
 )
 
@@ -61,7 +61,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
 	openAPIDefinitions, err := shared.LoadOpenAPISpec(openapi.Asset, openApiFilePath)
 	if err != nil {
-		return errors2.Wrapf(err, "can't load OpenAPI specification")
+		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
 	kafkaHandler := coreHandlers.NewKafkaHandler(s.Kafka, s.ConfigService)
@@ -153,7 +153,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
 	apiRouter.Use(coreHandlers.MetricsMiddleware)
 	apiRouter.Use(db.TransactionMiddleware(s.DB))
-	apiRouter.Use(handlers2.CompressHandler)
+	apiRouter.Use(gorillaHandlers.CompressHandler)
 
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 

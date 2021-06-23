@@ -10,7 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 
 	"github.com/bxcodec/faker/v3"
@@ -25,7 +24,7 @@ func TestAuth_success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
@@ -43,7 +42,7 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
@@ -56,7 +55,7 @@ func TestAuthSuccess_usingSSORHToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -78,7 +77,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	restyResp, err := resty.R().
@@ -95,7 +94,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -119,7 +118,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -142,7 +141,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -165,7 +164,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -197,7 +196,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.RegisterIntegration(t, ocmServer)
+	h, _, teardown := NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{

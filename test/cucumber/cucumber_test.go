@@ -2,11 +2,12 @@ package cucumber_test
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/integration"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/cucumber/godog"
-	"testing"
 )
 
 // In this example no scenarios are actually run because the "features" subdirectory does not exist.
@@ -17,7 +18,7 @@ func Example() {
 	{
 		ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 		defer ocmServer.Close()
-		h, _, teardown := test.RegisterIntegration(&testing.T{}, ocmServer)
+		h, _, teardown := integration.NewKafkaHelper(&testing.T{}, ocmServer)
 		defer teardown()
 		cucumber.TestMain(h)
 	}

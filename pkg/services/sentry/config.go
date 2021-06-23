@@ -1,4 +1,4 @@
-package config
+package sentry
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type SentryConfig struct {
+type Config struct {
 	Enabled bool          `json:"enabled"`
 	Key     string        `json:"key"`
 	URL     string        `json:"url"`
@@ -18,8 +18,8 @@ type SentryConfig struct {
 	KeyFile string `json:"key_file"`
 }
 
-func NewSentryConfig() *SentryConfig {
-	return &SentryConfig{
+func NewConfig() *Config {
+	return &Config{
 		Enabled: false,
 		Key:     "",
 		URL:     "sentry.autom8.in",
@@ -29,7 +29,7 @@ func NewSentryConfig() *SentryConfig {
 	}
 }
 
-func (c *SentryConfig) AddFlags(fs *pflag.FlagSet) {
+func (c *Config) AddFlags(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.Enabled, "enable-sentry", c.Enabled, "Enable sentry error monitoring")
 	fs.StringVar(&c.KeyFile, "sentry-key-file", c.KeyFile, "File containing Sentry key")
 	fs.StringVar(&c.URL, "sentry-url", c.URL, "Base URL of Sentry isntance")
@@ -38,6 +38,6 @@ func (c *SentryConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.DurationVar(&c.Timeout, "sentry-timeout", c.Timeout, "Timeout for all requests made to Sentry")
 }
 
-func (c *SentryConfig) ReadFiles() error {
+func (c *Config) ReadFiles() error {
 	return shared.ReadFileValueString(c.KeyFile, &c.Key)
 }

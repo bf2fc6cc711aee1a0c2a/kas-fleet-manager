@@ -7,7 +7,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/bxcodec/faker/v3"
@@ -40,7 +39,7 @@ func setUp(t *testing.T) *testEnv {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := test.RegisterIntegration(t, ocmServer)
+	h, client, teardown := NewKafkaHelper(t, ocmServer)
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
@@ -50,7 +49,7 @@ func setUp(t *testing.T) *testEnv {
 	account := h.NewAccount(usernameWithSpecialChars, faker.Name(), faker.Email(), orgId)
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	db := h.DBFactory.New()
+	db := testServices.DBFactory.New()
 	kafkas := []*api.KafkaRequest{
 		{
 			MultiAZ:        false,

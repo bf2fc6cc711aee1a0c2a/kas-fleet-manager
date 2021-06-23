@@ -3,7 +3,7 @@ package serviceaccounts
 import (
 	"context"
 	"encoding/json"
-	flags2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -31,8 +31,8 @@ func NewResetCredsCommand(env *environments.Env) *cobra.Command {
 }
 
 func runResetCreds(env *environments.Env, cmd *cobra.Command) {
-	id := flags2.MustGetDefinedString(FlagSaID, cmd.Flags())
-	orgId := flags2.MustGetDefinedString(FlagOrgID, cmd.Flags())
+	id := flags.MustGetDefinedString(FlagSaID, cmd.Flags())
+	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	// setup required services
 	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)

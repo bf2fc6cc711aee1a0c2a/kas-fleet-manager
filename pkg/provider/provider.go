@@ -5,10 +5,10 @@ import (
 )
 
 type Provider interface {
-	Providers() (Map, error)
+	Providers() di.Option
 }
 
-func Func(f func(parent *di.Container) (Map, error)) func(container *di.Container) Provider {
+func Func(f func(parent *di.Container) di.Option) func(container *di.Container) Provider {
 	return func(container *di.Container) Provider {
 		return providerFunc{parent: container, apply: f}
 	}
@@ -16,9 +16,9 @@ func Func(f func(parent *di.Container) (Map, error)) func(container *di.Containe
 
 type providerFunc struct {
 	parent *di.Container
-	apply  func(parent *di.Container) (Map, error)
+	apply  func(parent *di.Container) di.Option
 }
 
-func (s providerFunc) Providers() (Map, error) {
+func (s providerFunc) Providers() di.Option {
 	return s.apply(s.parent)
 }
