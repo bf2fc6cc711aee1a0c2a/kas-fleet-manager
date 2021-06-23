@@ -12,8 +12,8 @@ import (
 )
 
 type Server interface {
-	Start()
-	Stop() error
+	Run()
+	Stop()
 	Listen() (net.Listener, error)
 	Serve(net.Listener)
 }

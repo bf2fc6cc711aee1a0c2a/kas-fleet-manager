@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/golang/glog"
 	"net/http"
 	"strings"
 	"time"
@@ -30,6 +32,28 @@ type Client struct {
 	Config     *ClientConfiguration
 	connection pV1.API
 	Service    APIObservatoriumService
+}
+
+func NewObservatoriumClient(c *config.ObservabilityConfiguration) (client *Client, err error) {
+	// Create Observatorium client
+	observatoriumConfig := &Configuration{
+		BaseURL:   c.ObservatoriumGateway + "/api/metrics/v1/" + c.ObservatoriumTenant,
+		AuthToken: c.AuthToken,
+		Cookie:    c.Cookie,
+		Timeout:   c.Timeout,
+		Debug:     c.Debug,
+		Insecure:  c.Insecure,
+	}
+	if c.EnableMock {
+		glog.Infof("Using Mock Observatorium Client")
+		client, err = NewClientMock(observatoriumConfig)
+	} else {
+		client, err = NewClient(observatoriumConfig)
+	}
+	if err != nil {
+		glog.Errorf("Unable to create Observatorium client: %s", err)
+	}
+	return
 }
 
 func NewClient(config *Configuration) (*Client, error) {

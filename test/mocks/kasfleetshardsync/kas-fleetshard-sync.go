@@ -3,7 +3,7 @@ package kasfleetshardsync
 import (
 	"context"
 	"fmt"
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	clientOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 	"time"
@@ -132,7 +132,7 @@ type mockKasFleetshardSyncBuilder struct {
 var _ MockKasFleetshardSyncBuilder = &mockKasFleetshardSyncBuilder{}
 
 func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasFleetshardSyncBuilder {
-	var ocm2Client *ocm2.Client
+	var ocm2Client *clientOcm.Client
 	helper.Env.MustResolveAll(&ocm2Client)
 	return &mockKasFleetshardSyncBuilder{
 		kfsync: mockKasFleetshardSync{
@@ -214,9 +214,12 @@ func (m *mockKasFleetshardSync) reconcileKafkaClusters() {
 
 // Returns an authenticated context to be used for calling the data plane endpoints
 func NewAuthenticatedContextForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
+	var keycloakConfig *config.KeycloakConfig
+	h.Env.MustResolveAll(&keycloakConfig)
+
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
-		"iss": h.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+		"iss": keycloakConfig.KafkaRealm.ValidIssuerURI,
 		"realm_access": map[string][]string{
 			"roles": {"kas_fleetshard_operator"},
 		},

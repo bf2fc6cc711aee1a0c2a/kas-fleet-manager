@@ -20,14 +20,13 @@ Feature: connector agent API
     And the ".status" selection from the response should match "unconnected"
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
-    Given I have created a kafka cluster as ${kafka_id}
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id": "${kafka_id}"
+          "kafka_id": "mykafka"
         },
         "deployment_location": {
           "kind": "addon",
@@ -145,7 +144,7 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "${kafka_id}",
+            "kafka_id": "mykafka",
             "kafka": {
               "bootstrap_server": "kafka.hostname",
               "client_id": "myclient",
@@ -203,7 +202,7 @@ Feature: connector agent API
               "updated_at": "${response.items[0].metadata.updated_at}"
             },
             "spec": {
-              "kafka_id": "${kafka_id}",
+              "kafka_id": "mykafka",
               "kafka": {
                 "bootstrap_server": "kafka.hostname",
                 "client_id": "myclient",
@@ -260,7 +259,7 @@ Feature: connector agent API
             "updated_at": "${response.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "${kafka_id}",
+            "kafka_id": "mykafka",
             "kafka": {
               "bootstrap_server": "kafka.hostname",
               "client_id": "myclient",
@@ -367,7 +366,7 @@ Feature: connector agent API
           "name": "example 1",
           "owner": "${response.metadata.owner}",
           "created_at": "${response.metadata.created_at}",
-          "kafka_id": "${kafka_id}",
+          "kafka_id": "mykafka",
           "updated_at": "${response.metadata.updated_at}",
           "resource_version": ${response.metadata.resource_version}
         },
@@ -399,7 +398,7 @@ Feature: connector agent API
             "updated_at": "${response.object.metadata.updated_at}"
           },
           "spec": {
-            "kafka_id": "${kafka_id}",
+            "kafka_id": "mykafka",
             "kafka": {
               "bootstrap_server": "kafka.hostname",
               "client_id": "myclient",

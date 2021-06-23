@@ -13,14 +13,13 @@ Feature: the old connectors path are still valid
 
   Scenario: Bob tries to create a connector with an invalid configuration spec
     Given I am logged in as "Bob"
-    Given I have created a kafka cluster as ${kid}
     When I POST path "/v1/kafka-connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"${kid}"
+          "kafka_id":"mykafka"
         },
         "deployment_location": {
           "kind": "addon",

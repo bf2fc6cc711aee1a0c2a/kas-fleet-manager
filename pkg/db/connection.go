@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
 	"gorm.io/driver/postgres"
@@ -26,7 +27,7 @@ var gormConfig *gorm.Config = &gorm.Config{
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
 // Go includes database connection pooling in the platform. Gorm uses the same and provides a method to
 // clone a connection via New(), which is safe for use by concurrent Goroutines.
-func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
+func NewConnectionFactory(config *config.DatabaseConfig) (*ConnectionFactory, func()) {
 	var db *gorm.DB
 	var err error
 	// refer to https://gorm.io/docs/gorm_config.html
@@ -52,7 +53,13 @@ func NewConnectionFactory(config *config.DatabaseConfig) *ConnectionFactory {
 	}
 
 	sqlDB.SetMaxOpenConns(config.MaxOpenConnections)
-	return &ConnectionFactory{Config: config, DB: db}
+	dbFactory := &ConnectionFactory{Config: config, DB: db}
+	cleanup := func() {
+		if err := dbFactory.close(); err != nil {
+			glog.Fatalf("Unable to close db connection: %s", err.Error())
+		}
+	}
+	return dbFactory, cleanup
 }
 
 // NewMockConnectionFactory should only be used for defining mock database drivers
@@ -91,10 +98,10 @@ func (f *ConnectionFactory) CheckConnection() error {
 	return f.DB.Exec("SELECT 1").Error
 }
 
-// Close will close the connection to the database.
+// close will close the connection to the database.
 // THIS MUST **NOT** BE CALLED UNTIL THE SERVER/PROCESS IS EXITING!!
 // This should only ever be called once for the entire duration of the application and only at the end.
-func (f *ConnectionFactory) Close() error {
+func (f *ConnectionFactory) close() error {
 	sqlDB, sqlDBErr := f.DB.DB()
 	if sqlDBErr != nil {
 		return sqlDBErr

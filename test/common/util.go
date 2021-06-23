@@ -78,7 +78,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		}
 
 		// need to wait for it to be assigned
-		waitErr := NewPollerBuilder(h.DBFactory).
+		waitErr := NewPollerBuilder(h.DBFactory()).
 			IntervalAndTimeout(1*time.Second, 5*time.Minute).
 			RetryLogMessage("Waiting for ID to be assigned to the new cluster").
 			OnRetry(func(attempt int, maxRetries int) (bool, error) {
@@ -104,7 +104,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	}
 
 	if expectedStatus != nil {
-		_, err := WaitForClusterStatus(h.DBFactory, &clusterService, foundCluster.ClusterID, *expectedStatus)
+		_, err := WaitForClusterStatus(h.DBFactory(), &clusterService, foundCluster.ClusterID, *expectedStatus)
 		if err != nil {
 			return "", ocmErrors.GeneralError("error waiting for cluster '%s' to reach '%s': %v", foundCluster.ClusterID, *expectedStatus, err)
 		}
@@ -179,7 +179,7 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to Unmarshal cluster details from file: %v", marshalErr))
 		}
 
-		dbConn := h.DBFactory.New()
+		dbConn := h.DBFactory().New()
 		if err := dbConn.FirstOrCreate(cluster, &api.Cluster{ClusterID: cluster.ClusterID}).Error; err != nil {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to save cluster details to database: %v", err))
 		}

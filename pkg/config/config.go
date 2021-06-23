@@ -2,13 +2,9 @@ package config
 
 import (
 	"flag"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/spf13/pflag"
 )
-
-type ConfigModule interface {
-	AddFlags(fs *pflag.FlagSet)
-	ReadFiles() error
-}
 
 type ApplicationConfig struct {
 	AWS                        *AWSConfig                  `json:"aws"`
@@ -20,7 +16,7 @@ type ApplicationConfig struct {
 	OSDClusterConfig           *OSDClusterConfig           `json:"osd_cluster"`
 }
 
-var _ ConfigModule = &ApplicationConfig{}
+var _ provider.ConfigModule = &ApplicationConfig{}
 
 func NewApplicationConfig() *ApplicationConfig {
 	return &ApplicationConfig{
