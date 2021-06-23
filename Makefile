@@ -490,7 +490,7 @@ deploy/db:
 deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy: IMAGE_REPOSITORY ?= $(image_repository)
 deploy: IMAGE_TAG ?= $(image_tag)
-deploy: OCM_BASE_URL ?= "https://api.stage.openshift.com"
+deploy: OCM_URL ?= "https://api.stage.openshift.com"
 deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
@@ -525,7 +525,7 @@ deploy: deploy/db
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
-		-p OCM_BASE_URL="$(OCM_BASE_URL)" \
+		-p OCM_URL="$(OCM_URL)" \
 		-p JWKS_URL="$(JWKS_URL)" \
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
