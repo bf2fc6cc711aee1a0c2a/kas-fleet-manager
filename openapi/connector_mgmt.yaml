@@ -25,7 +25,7 @@ paths:
   #
   # These are the connector related APIs
   #
-  '/api/connector_mgmt/v1/kafka_connector_types/{connector_type_id}':
+  "/api/connector_mgmt/v1/kafka_connector_types/{connector_type_id}":
     parameters:
       - name: connector_type_id
         description: The id of the connector type
@@ -37,41 +37,41 @@ paths:
       tags:
         - Connector Types
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorType'
+                $ref: "#/components/schemas/ConnectorType"
           description: The connector type matching the request
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: No matching connector type exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: getConnectorTypeByID
       summary: Get a connector type by id
 
@@ -80,36 +80,36 @@ paths:
       tags:
         - Connector Types
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: listConnectorTypes
       summary: Returns a list of connector types
       parameters:
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/size'
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorTypeList'
+                $ref: "#/components/schemas/ConnectorTypeList"
           description: A list of connector types
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
   /api/connector_mgmt/v1/kafka_connectors:
     post:
@@ -128,228 +128,223 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Connector'
+              $ref: "#/components/schemas/Connector"
         required: true
       responses:
         "202":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Connector'
+                $ref: "#/components/schemas/Connector"
           description: Accepted
         "400":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 400CreationExample:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/400CreationExample'
+                  $ref: "#/components/examples/400CreationExample"
           description: Validation errors occurred
         "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
         "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: The requested resource doesn't exist
         "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: An unexpected error occurred creating the connector
       security:
-        - Bearer: [ ]
+        - Bearer: []
       summary: Create a new connector
     get:
       tags:
         - Connectors
       parameters:
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/size'
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
         - in: query
           name: kafka_id
           description: The kafka cluster id
           schema:
             type: string
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorList'
+                $ref: "#/components/schemas/ConnectorList"
           description: A list of connectors
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: listConnectors
       summary: Returns a list of connector types
-  '/api/connector_mgmt/v1/kafkas_connectors/{connector_id}':
+  "/api/connector_mgmt/v1/kafkas_connectors/{id}":
     parameters:
+      - $ref: "#/components/parameters/id"
       - in: query
         name: kafka_id
         description: The kafka cluster id
         schema:
           type: string
-      - name: connector_id
-        description: The id of the connector
-        schema:
-          type: string
-        in: path
-        required: true
     get:
       tags:
         - Connectors
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Connector'
+                $ref: "#/components/schemas/Connector"
           description: The connector matching the request
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: No matching connector type exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: getConnector
       summary: Get a connector
     delete:
       tags:
         - Connectors
       responses:
-        '204':
+        "204":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Deleted
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404DeleteExample:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404DeleteExample'
+                  $ref: "#/components/examples/404DeleteExample"
           description: No kafka request with specified ID exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500DeleteExample:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500DeleteExample'
+                  $ref: "#/components/examples/500DeleteExample"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: deleteConnector
       summary: Delete a connector
     patch:
       tags:
         - Connectors
       responses:
-        '202':
+        "202":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Connector'
+                $ref: "#/components/schemas/Connector"
           description: The connector matching the request
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: No matching connector type exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: patchConnector
       summary: patch a connector
       requestBody:
@@ -383,87 +378,87 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConnectorCluster'
+              $ref: "#/components/schemas/ConnectorCluster"
         required: true
       responses:
         "202":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorCluster'
+                $ref: "#/components/schemas/ConnectorCluster"
           description: Accepted
         "400":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 400CreationExample:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/400CreationExample'
+                  $ref: "#/components/examples/400CreationExample"
           description: Validation errors occurred
         "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
         "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: The requested resource doesn't exist
         "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: An unexpected error occurred creating the connector cluster
       security:
-        - Bearer: [ ]
+        - Bearer: []
       summary: Create a new connector cluster
     get:
       tags:
         - Connector Clusters
       parameters:
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/size'
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorClusterList'
+                $ref: "#/components/schemas/ConnectorClusterList"
           description: A list of connector clusters
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: listConnectorClusters
       summary: Returns a list of connector clusters
   /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}:
@@ -478,86 +473,86 @@ paths:
       tags:
         - Connector Clusters
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConnectorCluster'
+                $ref: "#/components/schemas/ConnectorCluster"
           description: The connector cluster matching the request
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: No matching connector cluster type exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: getConnectorCluster
       summary: Get a connector cluster
     delete:
       tags:
         - Connector Clusters
       responses:
-        '204':
+        "204":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: Deleted
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404DeleteExample:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404DeleteExample'
+                  $ref: "#/components/examples/404DeleteExample"
           description: No resource with specified ID exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500DeleteExample:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500DeleteExample'
+                  $ref: "#/components/examples/500DeleteExample"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: deleteConnectorCluster
       summary: Delete a connector cluster
-  /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/addon_parameters:
-    parameters:
+  ? /api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/addon_parameters
+  : parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
         schema:
@@ -568,48 +563,46 @@ paths:
       tags:
         - Connector Clusters
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AddonParameterList'
+                $ref: "#/components/schemas/AddonParameterList"
           description: The parameters that should be used to configure the managed connector addon on the cluster.
-        '401':
+        "401":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: "#/components/examples/401Example"
           description: Auth token is invalid
-        '404':
+        "404":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: "#/components/examples/404Example"
           description: No matching connector cluster type exists
-        '500':
+        "500":
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: "#/components/examples/500Example"
           description: Unexpected error occurred
       security:
-        - Bearer: [ ]
+        - Bearer: []
       operationId: getConnectorClusterAddonParameters
       summary: Get a connector cluster's addon parameters
 
-
 components:
   schemas:
-
     ConnectorType:
       description: >-
         Represents a connector type supported by the API
@@ -618,7 +611,7 @@ components:
         - version
         - json_schema
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
             name:
@@ -643,7 +636,7 @@ components:
               type: array
               items:
                 type: string
-                enum: [ sink, source ]
+                enum: [sink, source]
             json_schema:
               description: >-
                 A json schema that can be used to validate a connectors
@@ -652,33 +645,32 @@ components:
 
     ConnectorTypeList:
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/ConnectorType'
+                  - $ref: "#/components/schemas/ConnectorType"
 
     ConnectorList:
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/Connector'
+                  - $ref: "#/components/schemas/Connector"
 
     Connector:
       description: A connector holds the configuration to connect a Kafka topic to another system.
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
-
             metadata:
               type: object
               properties:
@@ -698,9 +690,9 @@ components:
                   type: integer
                   format: int64
             deployment_location:
-              $ref: '#/components/schemas/ClusterTarget'
+              $ref: "#/components/schemas/ClusterTarget"
             kafka:
-              $ref: '#/components/schemas/KafkaConnectionSettings'
+              $ref: "#/components/schemas/KafkaConnectionSettings"
             connector_type_id:
               type: string
             connector_spec:
@@ -716,11 +708,11 @@ components:
       discriminator:
         propertyName: kind
         mapping:
-          addon: '#/components/schemas/AddonClusterTarget'
-          cloud_provider: '#/components/schemas/CloudProviderClusterTarget'
+          addon: "#/components/schemas/AddonClusterTarget"
+          cloud_provider: "#/components/schemas/CloudProviderClusterTarget"
       oneOf:
-        - $ref: '#/components/schemas/AddonClusterTarget'
-        - $ref: '#/components/schemas/CloudProviderClusterTarget'
+        - $ref: "#/components/schemas/AddonClusterTarget"
+        - $ref: "#/components/schemas/CloudProviderClusterTarget"
 
     AddonClusterTarget:
       description: "Targets workloads to an addon cluster"
@@ -753,7 +745,7 @@ components:
       type: array
       items:
         allOf:
-          - $ref: '#/components/schemas/AddonParameter'
+          - $ref: "#/components/schemas/AddonParameter"
 
     AddonParameter:
       description: "A addon parameter"
@@ -767,7 +759,7 @@ components:
     ConnectorCluster:
       description: "Schema for the request to update a data plane cluster's status"
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
+        - $ref: "#/components/schemas/ObjectReference"
         - type: object
           properties:
             metadata:
@@ -788,14 +780,14 @@ components:
 
     ConnectorClusterList:
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/List'
+        - $ref: "#/components/schemas/List"
         - type: object
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: '#/components/schemas/ConnectorCluster'
+                  - $ref: "#/components/schemas/ConnectorCluster"
 
     KafkaConnectionSettings:
       properties:
@@ -806,9 +798,146 @@ components:
         client_secret:
           type: string
 
+    ObjectReference:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+
+    List:
+      required:
+        - kind
+        - page
+        - size
+        - total
+        - items
+      type: object
+      properties:
+        kind:
+          type: string
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+
+    Error:
+      allOf:
+        - $ref: "#/components/schemas/ObjectReference"
+        - type: object
+          properties:
+            code:
+              type: string
+            reason:
+              type: string
+            operation_id:
+              type: string
+
+  parameters:
+    id:
+      name: id
+      description: The ID of record
+      schema:
+        type: string
+      in: path
+      required: true
+    page:
+      name: page
+      in: query
+      description: Page index
+      required: false
+      schema:
+        type: string
+      examples:
+        page:
+          value: "1"
+    size:
+      name: size
+      in: query
+      description: Number of items in each page
+      required: false
+      schema:
+        type: string
+      examples:
+        size:
+          value: "100"
 
   securitySchemes:
     Bearer:
       scheme: bearer
       bearerFormat: JWT
       type: http
+
+  examples:
+    400CreationExample:
+      value:
+        id: "103"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/103"
+        code: "CONNECTOR-MGMT-103"
+        reason: "Synchronous action is not supported, use async=true parameter"
+        operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
+    400InvalidQueryExample:
+      value:
+        id: "203"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/23"
+        code: "CONNECTOR-MGMT-23"
+        reason: "Failed to parse search query: Unable to list Kafka requests for api_kafka_service: CONNECTOR-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
+        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
+    404Example:
+      value:
+        id: "404"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/7"
+        code: "CONNECTOR-MGMT-7"
+        reason: "The requested resource doesn't exist"
+    404DeleteExample:
+      value:
+        id: "7"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/7"
+        code: "CONNECTOR-MGMT-7"
+        reason: "KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
+        operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
+    401Example:
+      value:
+        id: "11"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/11"
+        code: "CONNECTOR-MGMT-11"
+        reason: "Unable to verify JWT token: Required authorization token not found"
+        operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
+    409NameConflictExample:
+      value:
+        id: "36"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/36"
+        code: "CONNECTOR-MGMT-36"
+        reason: "Kafka cluster name is already used"
+        operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
+    500Example:
+      value:
+        id: "9"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/9"
+        code: "CONNECTOR-MGMT-9"
+        reason: "Unspecified error"
+        operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
+    500DeleteExample:
+      value:
+        id: "9"
+        kind: "Error"
+        href: "/api/connector_mgmt/v1/errors/9"
+        code: "CONNECTOR-MGMT-9"
+        reason:
+          "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
+          for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
+          is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':
+          Cluster '1g5d88q0lrcdv4g7alb7slfgnj3dhbsj' not found)"
+        operation_id: "1iYTsWry6nsqb2sNmFj5bXpD7Ca"
