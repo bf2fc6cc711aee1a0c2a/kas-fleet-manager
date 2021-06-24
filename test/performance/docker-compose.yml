@@ -16,6 +16,7 @@ services:
   primary:
     image: "quay.io/rhoas/kas-fleet-manager-locust:latest"
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
       - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER}
       - PERF_TEST_KAFKAS_PER_WORKER=${PERF_TEST_KAFKAS_PER_WORKER}
@@ -42,6 +43,7 @@ services:
   secondary:
     image: "quay.io/rhoas/kas-fleet-manager-locust:latest"
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
       - PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=${PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER}
       - PERF_TEST_KAFKAS_PER_WORKER=${PERF_TEST_KAFKAS_PER_WORKER}
@@ -68,6 +70,7 @@ services:
     image: "quay.io/rhoas/kas-fleet-manager-perf-results:latest"
     user: "${UID}:${GID}"
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
     volumes:
       - .:/mnt/app
