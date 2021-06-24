@@ -63,3 +63,12 @@ services:
     command: -f /locustfile.py --worker --master-host primary
     depends_on:
       - api
+
+  results:
+    image: "quay.io/rhoas/kas-fleet-manager-perf-results:latest"
+    user: "${UID}:${GID}"
+    environment:
+      - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
+    volumes:
+      - .:/mnt/app
+    command: python3 /mnt/app/scripts/process_results.py

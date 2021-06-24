@@ -1,19 +1,23 @@
-import csv, json, os
+import csv, json, os, time
 
-# get current working directory
-cwd = os.getcwd()
+# Runtime in minutes
+run_time_string = os.environ['PERF_TEST_RUN_TIME']
+run_time_seconds = (int(run_time_string[0:len(run_time_string)-1]) * 60) + 45
 
 # csv data as parsed from the raw results
 raw_results = {}
 
 # relative path of the results produced by the perf tests
-csv_file_name = f'{cwd}/test/performance/reports/perf_test_stats.csv'
+csv_file_name = 'mnt/app/reports/perf_test_stats.csv'
 
 # template with empty results (to which the actual results be injected)
-json_template_file_name = f'{cwd}/test/performance/templates/results.json'
+json_template_file_name = 'mnt/app/templates/results.json'
 
 # processed data filename relative path
-processed_json_data = f'{cwd}/test/performance/reports/perf_test_stats.json'
+processed_json_data = 'mnt/app/reports/perf_test_stats.json'
+
+# sleep for the duration of the perf test run and process the results afterwards
+time.sleep(run_time_seconds)
 
 # convert csv to lower case
 f = open(csv_file_name, 'r')
