@@ -54,11 +54,6 @@ run_perf_test() {
   STOP=$(date '+%Y-%m-%dT%H:%M:%S.00Z')
 }
 
-# convert csv results to JSON
-process_perf_test_results() {
-  make test/performance/process/csv
-}
-
 # upload test results to horreum
 upload_results() {
   if [ -f "$RESULTS_FILENAME" ]; then
@@ -101,8 +96,6 @@ check_params
 docker_login
 
 run_perf_test
-
-process_perf_test_results
 
 upload_results
 
