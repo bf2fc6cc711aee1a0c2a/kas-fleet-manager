@@ -43,11 +43,6 @@ func main() {
 		glog.Fatalf("Unable to add global flags: %s", err.Error())
 	}
 
-	err = env.CreateServices()
-	if err != nil {
-		glog.Fatalf("Unable to initialize environment: %s", err.Error())
-	}
-
 	env.MustInvoke(func(subcommands []*cobra.Command) {
 
 		// All subcommands under root

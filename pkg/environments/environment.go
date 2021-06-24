@@ -225,7 +225,9 @@ func (env *Env) Stop() {
 }
 
 func (env *Env) Cleanup() {
-	env.ServiceContainer.Cleanup()
+	if env.ServiceContainer != nil {
+		env.ServiceContainer.Cleanup()
+	}
 	env.ConfigContainer.Cleanup()
 }
 
