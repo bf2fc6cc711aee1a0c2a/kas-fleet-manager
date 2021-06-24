@@ -18,15 +18,15 @@ import (
 
 var (
 	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
-	validKafkaClusterNameRegexp   = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
-	validUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
-	validServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
-	validServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9.,\-\s]*$`)
-	minRequiredFieldLength        = 1
-	maxKafkaNameLength            = 32
-	maxServiceAccountNameLength   = 50
-	maxServiceAccountDescLength   = 255
-	maxServiceAccountId           = 36
+	ValidKafkaClusterNameRegexp   = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+	ValidUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+	ValidServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+	ValidServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9.,\-\s]*$`)
+	MinRequiredFieldLength        = 1
+	MaxKafkaNameLength            = 32
+	MaxServiceAccountNameLength   = 50
+	MaxServiceAccountDescLength   = 255
+	MaxServiceAccountId           = 36
 )
 
 // ValidateAsyncEnabled returns a validator that returns an error if the async query param is not true
@@ -42,8 +42,8 @@ func ValidateAsyncEnabled(r *http.Request, action string) Validate {
 
 func ValidateServiceAccountName(value *string, field string) Validate {
 	return func() *errors.ServiceError {
-		if !validServiceAccountNameRegexp.MatchString(*value) {
-			return errors.MalformedServiceAccountName("%s does not match %s", field, validServiceAccountNameRegexp.String())
+		if !ValidServiceAccountNameRegexp.MatchString(*value) {
+			return errors.MalformedServiceAccountName("%s does not match %s", field, ValidServiceAccountNameRegexp.String())
 		}
 		return nil
 	}
@@ -51,8 +51,8 @@ func ValidateServiceAccountName(value *string, field string) Validate {
 
 func ValidateServiceAccountDesc(value *string, field string) Validate {
 	return func() *errors.ServiceError {
-		if !validServiceAccountDescRegexp.MatchString(*value) {
-			return errors.MalformedServiceAccountDesc("%s does not match %s", field, validServiceAccountDescRegexp.String())
+		if !ValidServiceAccountDescRegexp.MatchString(*value) {
+			return errors.MalformedServiceAccountDesc("%s does not match %s", field, ValidServiceAccountDescRegexp.String())
 		}
 		return nil
 	}
@@ -60,8 +60,8 @@ func ValidateServiceAccountDesc(value *string, field string) Validate {
 
 func ValidateServiceAccountId(value *string, field string) Validate {
 	return func() *errors.ServiceError {
-		if !validUuidRegexp.MatchString(*value) {
-			return errors.MalformedServiceAccountId("%s does not match %s", field, validUuidRegexp.String())
+		if !ValidUuidRegexp.MatchString(*value) {
+			return errors.MalformedServiceAccountId("%s does not match %s", field, ValidUuidRegexp.String())
 		}
 		return nil
 	}
@@ -112,8 +112,8 @@ func ValidateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 
 func ValidKafkaClusterName(value *string, field string) Validate {
 	return func() *errors.ServiceError {
-		if !validKafkaClusterNameRegexp.MatchString(*value) {
-			return errors.MalformedKafkaClusterName("%s does not match %s", field, validKafkaClusterNameRegexp.String())
+		if !ValidKafkaClusterNameRegexp.MatchString(*value) {
+			return errors.MalformedKafkaClusterName("%s does not match %s", field, ValidKafkaClusterNameRegexp.String())
 		}
 		return nil
 	}

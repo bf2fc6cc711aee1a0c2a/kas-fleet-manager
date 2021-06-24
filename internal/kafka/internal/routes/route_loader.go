@@ -3,6 +3,7 @@ package routes
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -64,12 +65,12 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	kafkaHandler := coreHandlers.NewKafkaHandler(s.Kafka, s.ConfigService)
-	cloudProvidersHandler := coreHandlers.NewCloudProviderHandler(s.CloudProviders, s.ConfigService)
+	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ConfigService)
+	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ConfigService)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := coreHandlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := coreHandlers.NewMetricsHandler(s.Observatorium)
-	serviceStatusHandler := coreHandlers.NewServiceStatusHandler(s.Kafka, s.ConfigService)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.ConfigService)
 
 	authorizeMiddleware := acl.NewAccessControlListMiddleware(s.ConfigService).Authorize
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.OCMConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
@@ -158,8 +159,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 	// /agent_clusters/{id}
-	dataPlaneClusterHandler := coreHandlers.NewDataPlaneClusterHandler(s.DataPlaneCluster, s.ConfigService)
-	dataPlaneKafkaHandler := coreHandlers.NewDataPlaneKafkaHandler(s.DataPlaneKafkaService, s.ConfigService, s.Kafka)
+	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster, s.ConfigService)
+	dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(s.DataPlaneKafkaService, s.ConfigService, s.Kafka)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/{_:agent[-_]clusters}").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).Methods(http.MethodGet)
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)

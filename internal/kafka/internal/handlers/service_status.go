@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -23,7 +24,7 @@ func NewServiceStatusHandler(service services.KafkaService, configService servic
 }
 
 func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
-	cfg := &HandlerConfig{
+	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			context := r.Context()
 			claims, err := auth.GetClaimsFromContext(context)
@@ -58,5 +59,5 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			return presenters.PresentServiceStatus(false, !hasAvailableKafkaCapacity), capacityErr
 		},
 	}
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }

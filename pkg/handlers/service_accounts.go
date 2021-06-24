@@ -65,8 +65,8 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 	cfg := &HandlerConfig{
 		MarshalInto: &serviceAccountRequest,
 		Validate: []Validate{
-			ValidateLength(&serviceAccountRequest.Name, "name", &minRequiredFieldLength, &maxServiceAccountNameLength),
-			ValidateMaxLength(&serviceAccountRequest.Description, "description", &maxServiceAccountDescLength),
+			ValidateLength(&serviceAccountRequest.Name, "name", &MinRequiredFieldLength, &MaxServiceAccountNameLength),
+			ValidateMaxLength(&serviceAccountRequest.Description, "description", &MaxServiceAccountDescLength),
 			ValidateServiceAccountName(&serviceAccountRequest.Name, "name"),
 			ValidateServiceAccountDesc(&serviceAccountRequest.Description, "description"),
 		},
@@ -87,7 +87,7 @@ func (s serviceAccountsHandler) DeleteServiceAccount(w http.ResponseWriter, r *h
 	id := mux.Vars(r)["id"]
 	cfg := &HandlerConfig{
 		Validate: []Validate{
-			ValidateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			ValidateLength(&id, "id", &MinRequiredFieldLength, &MaxServiceAccountId),
 			ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -104,7 +104,7 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 	id := mux.Vars(r)["id"]
 	cfg := &HandlerConfig{
 		Validate: []Validate{
-			ValidateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			ValidateLength(&id, "id", &MinRequiredFieldLength, &MaxServiceAccountId),
 			ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -124,7 +124,7 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 	id := mux.Vars(r)["id"]
 	cfg := &HandlerConfig{
 		Validate: []Validate{
-			ValidateLength(&id, "id", &minRequiredFieldLength, &maxServiceAccountId),
+			ValidateLength(&id, "id", &MinRequiredFieldLength, &MaxServiceAccountId),
 			ValidateServiceAccountId(&id, "id"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
