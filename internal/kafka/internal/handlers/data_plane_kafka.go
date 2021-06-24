@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -28,9 +29,9 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 	clusterId := mux.Vars(r)["id"]
 	var data = map[string]openapi.DataPlaneKafkaStatus{}
 
-	cfg := &HandlerConfig{
+	cfg := &handlers.HandlerConfig{
 		MarshalInto: &data,
-		Validate:    []Validate{},
+		Validate:    []handlers.Validate{},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			dataPlaneKafkaStatus := presenters.ConvertDataPlaneKafkaStatus(data)
@@ -39,14 +40,14 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 		},
 	}
 
-	Handle(w, r, cfg, http.StatusOK)
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }
 
 func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	clusterID := mux.Vars(r)["id"]
-	cfg := &HandlerConfig{
-		Validate: []Validate{
-			ValidateLength(&clusterID, "id", &minRequiredFieldLength, nil),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateLength(&clusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			managedKafkas, err := h.kafkaService.GetManagedKafkaByClusterID(clusterID)
@@ -67,5 +68,5 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }

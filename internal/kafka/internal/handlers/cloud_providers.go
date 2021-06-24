@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 	"time"
 
@@ -32,9 +33,9 @@ func NewCloudProviderHandler(service services.CloudProvidersService, configServi
 func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 
-	cfg := &HandlerConfig{
-		Validate: []Validate{
-			ValidateLength(&id, "id", &minRequiredFieldLength, nil),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateLength(&id, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			cachedRegionList, cached := h.cache.Get(id)
@@ -61,11 +62,11 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			return regionList, nil
 		},
 	}
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http.Request) {
-	cfg := &HandlerConfig{
+	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			cachedCloudProviderList, cached := h.cache.Get(cloudProvidersCacheKey)
 			if cached {
@@ -92,5 +93,5 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			return cloudProviderList, nil
 		},
 	}
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }

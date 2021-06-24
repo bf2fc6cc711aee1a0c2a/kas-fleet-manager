@@ -9,10 +9,8 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/goava/di"
 
@@ -35,9 +33,6 @@ type ApiServer struct {
 	httpServer    *http.Server
 	serverConfig  *config.ServerConfig
 	sentryTimeout time.Duration
-	dbFactory     *db.ConnectionFactory
-
-	// options    ServerOptions
 }
 
 var _ Server = &ApiServer{}
@@ -47,8 +42,6 @@ type ServerOptions struct {
 	ServerConfig   *config.ServerConfig
 	KeycloakConfig *config.KeycloakConfig
 	SentryConfig   *sentry.Config
-	DBFactory      *db.ConnectionFactory
-	CloudProviders services.CloudProvidersService
 	RouteLoaders   []provider.RouteLoader
 }
 
@@ -57,7 +50,6 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 		httpServer:    nil,
 		serverConfig:  options.ServerConfig,
 		sentryTimeout: options.SentryConfig.Timeout,
-		dbFactory:     options.DBFactory,
 	}
 
 	// mainRouter is top level "/"
