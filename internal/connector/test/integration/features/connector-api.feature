@@ -9,6 +9,7 @@ Feature: create a a connector
     Given a user named "Greg" in organization "13640203"
     Given a user named "Coworker Sally" in organization "13640203"
     Given a user named "Evil Bob"
+    Given a user named "Jim"
 
   Scenario: Greg lists all connector types
     Given I am logged in as "Greg"
@@ -268,7 +269,6 @@ Feature: create a a connector
         "reason": "deployment_location.kind is not valid. Must be one of: addon"
       }
       """
-
 
   Scenario: Greg creates lists and deletes a connector verifying that Evil Bob can't access Gregs Connectors
   but Coworker Sally can.
@@ -829,3 +829,116 @@ Feature: create a a connector
         "total": 38
       }
       """
+
+  Scenario: Jim creates a connector but later that connector type is removed from the system.  He should
+    still be able to list and get the connector, but it's status should note that it has a bad connector
+    type and the connector_spec section should be empty since we have lost the jons schema for the field.
+    The user should still be able to delete the connector.
+
+    Given this is the only scenario running
+    Given I am logged in as "Jim"
+    When I POST path "/v1/kafka_connectors?async=true" with json body:
+      """
+      {
+        "kind": "Connector",
+        "metadata": {
+          "name": "example 1",
+          "kafka_id":"mykafka"
+        },
+        "deployment_location": {
+          "kind": "addon",
+          "cluster_id": "default"
+        },
+        "connector_type_id": "aws-sqs-source-v1alpha1",
+        "kafka": {
+          "bootstrap_server": "kafka.hostname",
+          "client_id": "myclient",
+          "client_secret": "test"
+        },
+        "connector_spec": {
+            "queueNameOrArn": "test",
+            "accessKey": "test",
+            "secretKey": "test",
+            "region": "east"
+        }
+      }
+      """
+    Then the response code should be 202
+    And the ".status" selection from the response should match "assigning"
+    And I store the ".id" selection from the response as ${connector_id}
+
+    When I run SQL "UPDATE connectors SET connector_type_id='foo' WHERE id = '${connector_id}';" expect 1 row to be affected.
+
+    When I GET path "/v1/kafka_connectors?kafka_id=mykafka"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "channel": "stable",
+            "kafka": {
+              "bootstrap_server": "kafka.hostname",
+              "client_id": "myclient"
+            },
+            "connector_type_id": "foo",
+            "deployment_location": {
+              "cluster_id": "default",
+              "kind": "addon"
+            },
+            "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+            "id": "${connector_id}",
+            "kind": "Connector",
+            "metadata": {
+              "created_at": "${response.items[0].metadata.created_at}",
+              "kafka_id": "mykafka",
+              "name": "example 1",
+              "owner": "${response.items[0].metadata.owner}",
+              "resource_version": ${response.items[0].metadata.resource_version},
+              "updated_at": "${response.items[0].metadata.updated_at}"
+            },
+            "desired_state": "ready",
+            "status": "bad-connector-type"
+          }
+        ],
+        "kind": "ConnectorList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
+
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+          "id": "${connector_id}",
+          "kind": "Connector",
+          "href": "/api/connector_mgmt/v1/kafka_connectors/${connector_id}",
+          "metadata": {
+              "kafka_id": "mykafka",
+              "owner": "${response.metadata.owner}",
+              "name": "example 1",
+              "created_at": "${response.metadata.created_at}",
+              "updated_at": "${response.metadata.updated_at}",
+              "resource_version": ${response.metadata.resource_version}
+          },
+          "kafka": {
+            "bootstrap_server": "kafka.hostname",
+            "client_id": "myclient"
+          },
+          "deployment_location": {
+              "kind": "addon",
+              "cluster_id": "default"
+          },
+          "connector_type_id": "foo",
+          "channel": "stable",
+          "desired_state": "ready",
+          "status": "bad-connector-type"
+      }
+      """
+
+    When I DELETE path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 204
+    And the response should match ""
