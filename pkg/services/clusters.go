@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
@@ -461,10 +462,13 @@ func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaI
 	var res []ResKafkaInstanceCount
 	query := c.connectionFactory.New().
 		Model(&api.KafkaRequest{}).
-		Select("cluster_id as Clusterid, count(1) as Count")
+		Select("cluster_id as Clusterid, count(1) as Count").
+		Where("status != ?", constants.KafkaRequestStatusAccepted.String()) // kafka in accepted state do not have a cluster_id assigned to them
 
 	if len(clusterIDs) > 0 {
 		query = query.Where("cluster_id in (?)", clusterIDs)
+	} else {
+		query = query.Where("cluster_id != ''") // make sure that we only include kafka having a cluster_id
 	}
 
 	query = query.Group("cluster_id").Order("cluster_id asc").Scan(&res)
