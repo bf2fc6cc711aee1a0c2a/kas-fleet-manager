@@ -15,10 +15,6 @@ import (
 )
 
 func ConfigProviders() di.Option {
-	return di.Provide(provider.Func(ServiceProviders))
-}
-
-func ServiceProviders(configContainer *di.Container) di.Option {
 	return di.Options(
 		di.Provide(cluster.NewClusterCommand),
 		di.Provide(kafka.NewKafkaCommand),
@@ -26,6 +22,12 @@ func ServiceProviders(configContainer *di.Container) di.Option {
 		di.Provide(observatorium.NewRunObservatoriumCommand),
 		di.Provide(serviceaccounts.NewServiceAccountCommand),
 		di.Provide(errors.NewErrorsCommand),
+		di.Provide(provider.Func(ServiceProviders)),
+	)
+}
+
+func ServiceProviders(configContainer *di.Container) di.Option {
+	return di.Options(
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewKafkaManager, di.As(new(workers.Worker))),
