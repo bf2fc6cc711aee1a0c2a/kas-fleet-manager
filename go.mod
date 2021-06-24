@@ -35,7 +35,7 @@ require (
 	github.com/mendsley/gojwk v0.0.0-20141217222730-4d5ec6e58103
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/onsi/gomega v1.10.1
-	github.com/openshift-online/ocm-sdk-go v0.1.180
+	github.com/openshift-online/ocm-sdk-go v0.1.190
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/operator-framework/api v0.3.25
 	github.com/patrickmn/go-cache v2.1.0+incompatible

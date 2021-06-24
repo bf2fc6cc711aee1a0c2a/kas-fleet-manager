@@ -86,7 +86,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header"))
+	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
@@ -218,7 +218,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	Expect(err).To(BeNil())
 	re := parseResponse(restyResp)
 	Expect(re.Code).To(Equal(fmt.Sprintf("%s-%d", errors.ERROR_CODE_PREFIX, errors.ErrorUnauthenticated)))
-	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header"))
+	Expect(re.Reason).To(Equal("Request doesn't contain the 'Authorization' header or the 'cs_jwt' cookie"))
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
