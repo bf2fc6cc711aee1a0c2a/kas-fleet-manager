@@ -261,9 +261,16 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
-	user := auth.GetUsernameFromClaims(claims)
+
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
+
+	if auth.GetIsOrgAdminFromClaims(claims) {
+		orgId := auth.GetOrgIdFromClaims(claims)
+		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgId)
+	} else {
+		user := auth.GetUsernameFromClaims(claims)
+		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
+	}
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {

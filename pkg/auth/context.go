@@ -20,6 +20,7 @@ const (
 	// ocm token claim keys
 	ocmUsernameKey string = "username"
 	ocmOrgIdKey    string = "org_id"
+	isOrgAdmin     string = "is_org_admin"
 
 	// sso.redhat.com token claim keys
 	ssoRHUsernameKey  string = "preferred_username"
@@ -57,6 +58,13 @@ func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 	}
 
 	return ""
+}
+
+func GetIsOrgAdminFromClaims(claims jwt.MapClaims) bool {
+	if claims[isOrgAdmin] != nil {
+		return claims[isOrgAdmin].(bool)
+	}
+	return false
 }
 
 func SetFilterByOrganisationContext(ctx context.Context, filterByOrganisation bool) context.Context {
