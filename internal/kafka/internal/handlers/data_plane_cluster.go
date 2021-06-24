@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
@@ -27,10 +28,10 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 
 	var dataPlaneClusterUpdateRequest openapi.DataPlaneClusterUpdateStatusRequest
 
-	cfg := &HandlerConfig{
+	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dataPlaneClusterUpdateRequest,
-		Validate: []Validate{
-			ValidateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
+		Validate: []handlers.Validate{
+			handlers.ValidateLength(&dataPlaneClusterID, "id", &handlers.MinRequiredFieldLength, nil),
 			h.validateBody(&dataPlaneClusterUpdateRequest),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
@@ -42,15 +43,15 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 	}
 
 	// TODO do we always to return HTTP 204 No Content?
-	Handle(w, r, cfg, http.StatusNoContent)
+	handlers.Handle(w, r, cfg, http.StatusNoContent)
 }
 
 func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWriter, r *http.Request) {
 	dataPlaneClusterID := mux.Vars(r)["id"]
 
-	cfg := &HandlerConfig{
-		Validate: []Validate{
-			ValidateLength(&dataPlaneClusterID, "id", &minRequiredFieldLength, nil),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateLength(&dataPlaneClusterID, "id", &handlers.MinRequiredFieldLength, nil),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
@@ -62,10 +63,10 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 		},
 	}
 
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
-func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneClusterUpdateStatusRequest) Validate {
+func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneClusterUpdateStatusRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		err := h.validateNodeInfo(request)
 		if err != nil {
