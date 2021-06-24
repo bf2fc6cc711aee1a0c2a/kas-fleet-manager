@@ -352,11 +352,14 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 			ct, serr := h.connectorTypesService.Get(resource.ConnectorTypeId)
 			if serr != nil {
-				return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
-			}
-
-			if err := stripSecretReferences(resource, ct); err != nil {
-				return nil, err
+				// gracefully degrade by not showing the connector spec, and updating the status
+				// to signal this error
+				resource.ConnectorSpec = api.JSON("{}")
+				resource.Status.Phase = "bad-connector-type"
+			} else {
+				if err := stripSecretReferences(resource, ct); err != nil {
+					return nil, err
+				}
 			}
 
 			return presenters.PresentConnector(resource)
@@ -419,12 +422,16 @@ func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
 
 				ct, serr := h.connectorTypesService.Get(resource.ConnectorTypeId)
 				if serr != nil {
-					return nil, errors.BadRequest("invalid connector type id: %s", resource.ConnectorTypeId)
+					// gracefully degrade by not showing the connector spec, and updating the status
+					// to signal this error
+					resource.ConnectorSpec = api.JSON("{}")
+					resource.Status.Phase = "bad-connector-type"
+				} else {
+					if err := stripSecretReferences(resource, ct); err != nil {
+						return nil, err
+					}
 				}
 
-				if err := stripSecretReferences(resource, ct); err != nil {
-					return nil, err
-				}
 				converted, err := presenters.PresentConnector(resource)
 				if err != nil {
 					glog.Errorf("connector id='%s' presentation failed: %v", resource.ID, err)
