@@ -338,7 +338,7 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
-	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
+	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
 		err = kc.kcClient.DeleteClient(id, accessToken) //id existence checked
 		if err != nil {                                 //5xx
 			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
@@ -367,7 +367,7 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
 	owner := auth.GetUsernameFromClaims(claims)
-	if kc.kcClient.IsSameOrg(c, orgId) && kc.kcClient.IsOwner(c, userId) {
+	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
 		credRep, err := kc.kcClient.RegenerateClientSecret(accessToken, id)
 		if err != nil { //5xx
 			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to reset service account credentials")

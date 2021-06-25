@@ -8,6 +8,7 @@ import (
 	"time"
 
 	gocloak "github.com/Nerzal/gocloak/v8"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -540,7 +541,11 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 		t.Fatal("failed to build a new account")
 	}
 
-	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, claims)
 	if err != nil {
 		t.Fatalf("failed to create jwt: %s", err.Error())
 	}
@@ -552,7 +557,8 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 		wantErr bool
 		args    args
 	}{
-		{name: "successfully deleted service account",
+		{
+			name: "successfully deleted service account",
 			fields: fields{
 				kcClient: &keycloak.KcClientMock{
 					GetTokenFunc: func() (string, error) {
@@ -595,6 +601,141 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			wantErr: false,
+		},
+		{
+			name: "successfully deleted service account as an admin of the org (not an owner)",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					DeleteClientFunc: func(internalClientID string, accessToken string) error {
+						return nil
+					},
+					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := "12221"
+						att := map[string]string{}
+						return &gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return false
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			wantErr: false,
+		},
+		{
+			name: "expected deletion failure when admin in different org",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					DeleteClientFunc: func(internalClientID string, accessToken string) error {
+						return nil
+					},
+					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := "12221"
+						att := map[string]string{}
+						return &gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return false
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return false
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			wantErr: true,
+		},
+		{
+			name: "expected deletion failure when not the same org",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					DeleteClientFunc: func(internalClientID string, accessToken string) error {
+						return nil
+					},
+					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := "12221"
+						att := map[string]string{}
+						return &gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}, nil
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return false
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return true
+					},
+				},
+			},
+			args: args{
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			wantErr: true,
 		},
 	}
 
@@ -717,7 +858,11 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 		t.Fatal("failed to build a new account")
 	}
 
-	jwt, err := authHelper.CreateJWTWithClaims(account, nil)
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
+	jwt, err := authHelper.CreateJWTWithClaims(account, claims)
 	if err != nil {
 		t.Fatalf("failed to create jwt: %s", err.Error())
 	}
@@ -775,6 +920,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					},
 				},
 			},
+
 			args: args{
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
@@ -787,6 +933,118 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				CreatedAt:    time.Time{},
 			},
 			wantErr: false,
+		},
+		{
+			name: "Reset service account credentials as admin (not an owner)",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return true
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return false
+					},
+					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := "12221"
+						att := map[string]string{}
+						return &gocloak.Client{
+							ID:         &testID,
+							ClientID:   &testID,
+							Attributes: &att,
+						}, nil
+					},
+					RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
+						sec := "secret"
+						testID := "12221"
+						return &gocloak.CredentialRepresentation{
+							Value: &sec,
+							ID:    &testID,
+						}, nil
+					},
+				},
+			},
+
+			args: args{
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			want: &api.ServiceAccount{
+				ID:           "12221",
+				ClientID:     "12221",
+				ClientSecret: secret,
+				Name:         "",
+				Description:  "",
+				CreatedAt:    time.Time{},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Unsuccessful reset service account credentials as admin (different org)",
+			fields: fields{
+				kcClient: &keycloak.KcClientMock{
+					GetTokenFunc: func() (string, error) {
+						return token, nil
+					},
+					GetConfigFunc: func() *config.KeycloakConfig {
+						return config.NewKeycloakConfig()
+					},
+					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
+						return "", nil
+					},
+					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
+						testID := "12221"
+						att := map[string]string{}
+						return gocloak.Client{
+							ClientID:   &testID,
+							Attributes: &att,
+						}
+					},
+					IsSameOrgFunc: func(client *gocloak.Client, orgId string) bool {
+						return false
+					},
+					IsOwnerFunc: func(client *gocloak.Client, userId string) bool {
+						return false
+					},
+					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
+						testID := "12221"
+						att := map[string]string{}
+						return &gocloak.Client{
+							ID:         &testID,
+							ClientID:   &testID,
+							Attributes: &att,
+						}, nil
+					},
+					RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
+						sec := "secret"
+						testID := "12221"
+						return &gocloak.CredentialRepresentation{
+							Value: &sec,
+							ID:    &testID,
+						}, nil
+					},
+				},
+			},
+
+			args: args{
+				ctx: auth.SetTokenInContext(context.TODO(), jwt),
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
