@@ -36,7 +36,7 @@ type OSDClusterConfig struct {
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
-	RawKubernetesConfig                   clientcmdapi.Config
+	RawKubernetesConfig                   *clientcmdapi.Config
 }
 
 const (
@@ -216,16 +216,22 @@ func (c *OSDClusterConfig) ReadFiles() error {
 		} else {
 			return err
 		}
+
+		// read kubeconfig and validate standalone clusters are in kubeconfig context
 		for _, cluster := range c.ClusterConfig.clusterList {
-			if cluster.ProviderType == api.ClusterProviderStandalone {
-				config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-					&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
-					&clientcmd.ConfigOverrides{})
-				c.RawKubernetesConfig, err = config.RawConfig()
+			if cluster.ProviderType != api.ClusterProviderStandalone {
+				continue
+			}
+			// make sure we only read kubeconfig once
+			if c.RawKubernetesConfig == nil {
+				err = c.readKubeconfig()
 				if err != nil {
 					return err
 				}
-				break
+			}
+			validationErr := validateClusterIsInKubeconfigContext(*c.RawKubernetesConfig, cluster)
+			if validationErr != nil {
+				return validationErr
 			}
 		}
 	}
@@ -243,6 +249,25 @@ func (c *OSDClusterConfig) ReadFiles() error {
 	return nil
 }
 
+func (c *OSDClusterConfig) readKubeconfig() error {
+	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
+		&clientcmd.ConfigOverrides{})
+	rawConfig, err := config.RawConfig()
+	if err != nil {
+		return err
+	}
+	c.RawKubernetesConfig = &rawConfig
+	return nil
+}
+
+func validateClusterIsInKubeconfigContext(rawConfig clientcmdapi.Config, cluster ManualCluster) error {
+	if _, found := rawConfig.Contexts[cluster.Name]; found {
+		return nil
+	}
+	return errors.Errorf("standalone cluster with ID: %s, and Name %s not in kubeconfig context", cluster.ClusterId, cluster.Name)
+}
+
 func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	fileContents, err := shared.ReadFile(file)
 	if err != nil {
@@ -258,6 +283,15 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	} else {
 		return c.ClusterList, nil
 	}
+}
+
+func (c *OSDClusterConfig) FindClusterNameByClusterId(clusterId string) string {
+	for _, cluster := range c.ClusterConfig.clusterList {
+		if cluster.ClusterId == clusterId {
+			return cluster.Name
+		}
+	}
+	return ""
 }
 
 // Read the read-only users in the file into the read-only user list config
