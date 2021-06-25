@@ -26,7 +26,7 @@ func ConfigProviders() di.Option {
 	)
 }
 
-func ServiceProviders(configContainer *di.Container) di.Option {
+func ServiceProviders() di.Option {
 	return di.Options(
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),

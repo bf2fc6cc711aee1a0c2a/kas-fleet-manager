@@ -141,11 +141,18 @@ func (env *Env) CreateServices() error {
 	}
 
 	// Lets build a list of providers that will be used to create the service container.
-	serviceProviders := []di.Option{di.ProvideValue(env)}
+	var serviceProviders []di.Option
 	for _, s := range in.ServiceInjections {
 		serviceProviders = append(serviceProviders, s.Providers())
 	}
 	env.ServiceContainer, err = di.New(serviceProviders...)
+	if err != nil {
+		return err
+	}
+
+	// add the parent so the ServiceContainer can automatically resolve
+	// types in the ConfigContainer.
+	err = env.ServiceContainer.AddParent(env.ConfigContainer)
 	if err != nil {
 		return err
 	}
