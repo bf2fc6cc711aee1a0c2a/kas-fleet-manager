@@ -67,11 +67,12 @@ type TestUser struct {
 // TestScenario holds that state of single scenario.  It is not accessed
 // concurrently.
 type TestScenario struct {
-	Suite       *TestSuite
-	CurrentUser string
-	PathPrefix  string
-	sessions    map[string]*TestSession
-	Variables   map[string]string
+	Suite           *TestSuite
+	CurrentUser     string
+	PathPrefix      string
+	sessions        map[string]*TestSession
+	Variables       map[string]string
+	hasTestCaseLock bool
 }
 
 func (s *TestScenario) User() *TestUser {
