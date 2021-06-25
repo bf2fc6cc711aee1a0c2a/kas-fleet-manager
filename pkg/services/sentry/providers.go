@@ -8,18 +8,8 @@ import (
 func ConfigProviders() di.Option {
 	return di.Options(
 		di.Provide(NewConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(provider.Func(ServiceProviders)),
 		di.ProvideValue(provider.AfterCreateServicesHook{
 			Func: Initialize,
-		}),
-	)
-}
-
-func ServiceProviders(configContainer *di.Container) di.Option {
-	return di.Options(
-		di.Provide(func() (value *Config, err error) {
-			err = configContainer.Resolve(&value)
-			return
 		}),
 	)
 }

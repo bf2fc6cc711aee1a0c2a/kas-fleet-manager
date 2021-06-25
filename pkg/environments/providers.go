@@ -51,63 +51,8 @@ func ConfigProviders() di.Option {
 	)
 }
 
-func ServiceProviders(configContainer *di.Container) di.Option {
+func ServiceProviders() di.Option {
 	return di.Options(
-
-		// We wont need these providers that get values from the ConfigContainer
-		// once we can add parent containers: https://github.com/goava/di/pull/34
-		di.Provide(func() (value config.EnvName, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.ApplicationConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.KafkaConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.AWSConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.ObservabilityConfiguration, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.KeycloakConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.OCMConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.ServerConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.DatabaseConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.HealthCheckConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.MetricsConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.KasFleetshardConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
-		di.Provide(func() (value *config.AccessControlListConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
 
 		// provide the service constructors
 		di.Provide(db.NewConnectionFactory),

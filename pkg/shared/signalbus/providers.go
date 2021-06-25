@@ -10,7 +10,7 @@ func ConfigProviders() di.Option {
 	return di.Provide(provider.Func(ServiceProviders))
 }
 
-func ServiceProviders(configContainer *di.Container) di.Option {
+func ServiceProviders() di.Option {
 	return di.Provide(func(dbFactory *db.ConnectionFactory) *PgSignalBus {
 		return NewPgSignalBus(NewSignalBus(), dbFactory)
 	}, di.As(new(SignalBus)), di.As(new(provider.BootService)))
