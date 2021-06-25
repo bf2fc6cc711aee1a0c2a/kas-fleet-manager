@@ -23,8 +23,7 @@ func newDevelopmentEnvLoader() EnvLoader {
 		"quota-type":                        "allow-list",
 		"enable-deletion-of-expired-kafka":  "true",
 		"dataplane-cluster-scaling-type":    "manual",
-		//TODO: change these values to the qe ones for development environment once they are available
-		"strimzi-operator-addon-id": "managed-kafka",
-		"kas-fleetshard-addon-id":   "kas-fleetshard-operator",
+		"strimzi-operator-addon-id":         "managed-kafka-qe",
+		"kas-fleetshard-addon-id":           "kas-fleetshard-operator-qe",
 	}
 }

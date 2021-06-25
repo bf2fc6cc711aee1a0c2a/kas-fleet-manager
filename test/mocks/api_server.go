@@ -64,8 +64,8 @@ const (
 	EndpointPathAddonInstallations = "/api/clusters_mgmt/v1/clusters/{id}/addons"
 	// EndpointPathAddonInstallation ocm cluster addon installation endpoint
 	EndpointPathAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/{addoninstallationId}"
-	// EndpointPathKasFleetshardOperatorAddonInstallation ocm cluster kas-fleetshard-operator addon installation endpoint
-	EndpointPathKasFleetshardOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/kas-fleetshard-operator"
+	// EndpointPathKasFleetshardOperatorAddonInstallation ocm cluster kas-fleetshard-operator-qe addon installation endpoint
+	EndpointPathKasFleetshardOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/kas-fleetshard-operator-qe"
 	// EndpointPathClusterLoggingOperatorAddonInstallation ocm cluster cluster-logging-operator addon installation endpoint
 	EndpointPathClusterLoggingOperatorAddonInstallation = "/api/clusters_mgmt/v1/clusters/{id}/addons/cluster-logging-operator"
 
@@ -102,9 +102,9 @@ const (
 	// MockIngressListening default mock ingress listening used in the mock ocm server
 	MockIngressListening = clustersmgmtv1.ListeningMethodExternal
 	// MockClusterAddonID default mock cluster addon ID
-	MockClusterAddonID = "managed-kafka"
+	MockClusterAddonID = "managed-kafka-qe"
 	// MockKasFleetshardAddonID default mock ID for the KAS Fleetshard Operator
-	MockKasFleetshardAddonID = "kas-fleetshard-operator"
+	MockKasFleetshardAddonID = "kas-fleetshard-operator-qe"
 	// MockClusterLoggingOperatorAddonID default mock ID for the Cluster Logging Operator
 	MockClusterLoggingOperatorAddonID = "cluster-logging-operator"
 	// MockClusterAddonState default mock cluster addon state
