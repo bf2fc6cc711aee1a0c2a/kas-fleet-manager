@@ -7,10 +7,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	coreV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	patchTypes "k8s.io/apimachinery/pkg/types"
@@ -71,9 +69,13 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec,
 }
 
 func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-	contextName := "change-me" // change this to read the context name of the given cluster
+	if s.osdClusterConfig.RawKubernetesConfig == nil {
+		return &resources, nil // no kubeconfig read, do nothing.
+	}
+
+	contextName := s.osdClusterConfig.FindClusterNameByClusterId(clusterSpec.InternalID)
 	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
-	clientConfig, err := clientcmd.NewNonInteractiveClientConfig(s.osdClusterConfig.RawKubernetesConfig, override.CurrentContext,
+	clientConfig, err := clientcmd.NewNonInteractiveClientConfig(*s.osdClusterConfig.RawKubernetesConfig, override.CurrentContext,
 		override, &clientcmd.ClientConfigLoadingRules{}).
 		ClientConfig()
 
@@ -81,39 +83,14 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, reso
 		return nil, err
 	}
 
-	// change this to be an element of resourceset
-	configMap := coreV1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ConfigMap",
-			APIVersion: "v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test",
-			Namespace: "test-namespace",
-		},
-		Data: map[string]string{
-			"jira.ticket": "https://issues.redhat.com/browse/MGDSTRM-3814",
-		},
+	for _, resource := range resources.Resources {
+		_, err = applyResource(clientConfig, resource)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	data, err := json.Marshal(configMap)
-	if err != nil {
-		return nil, err
-	}
-
-	var resource unstructured.Unstructured
-	err = json.Unmarshal(data, &resource)
-
-	if err != nil {
-		return nil, err
-	}
-	_, err = applyResource(clientConfig, &resource)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &resources, nil // NOOP for now
+	return &resources, nil
 }
 
 func (s *StandaloneProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
@@ -247,11 +224,4 @@ func newRestClient(restConfig *rest.Config, gv schema.GroupVersion) (rest.Interf
 		restConfig.APIPath = "/apis"
 	}
 	return rest.RESTClientFor(restConfig)
-}
-
-func newStandaloneProvider(connectionFactory *db.ConnectionFactory, osdClusterConfig *config.OSDClusterConfig) *StandaloneProvider {
-	return &StandaloneProvider{
-		connectionFactory: connectionFactory,
-		osdClusterConfig:  osdClusterConfig,
-	}
 }

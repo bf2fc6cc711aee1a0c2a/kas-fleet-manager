@@ -5,17 +5,19 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
 	"github.com/spf13/pflag"
-	"net/http/httptest"
-	"os"
-	"testing"
-	"time"
 
 	"github.com/bxcodec/faker/v3"
 	"github.com/dgrijalva/jwt-go"
@@ -105,6 +107,7 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 	env.MustResolveAll(&osdClusterConfig, &kafkaConfig, &ocmConfig, &observabilityConfiguration, &serverConfig, &keycloakConfig)
 
 	osdClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	osdClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
 	kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
