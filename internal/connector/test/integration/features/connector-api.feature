@@ -832,7 +832,7 @@ Feature: create a a connector
 
   Scenario: Jim creates a connector but later that connector type is removed from the system.  He should
     still be able to list and get the connector, but it's status should note that it has a bad connector
-    type and the connector_spec section should be empty since we have lost the jons schema for the field.
+    type and the connector_spec section should be empty since we have lost the json schema for the field.
     The user should still be able to delete the connector.
 
     Given this is the only scenario running
