@@ -406,12 +406,12 @@ parameters:
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
   description: ID of the Strimzi operator addon
-  value: "managed-kafka"
+  value: "managed-kafka-qe"
 
 - name: KAS_FLEETSHARD_ADDON_ID
   displayName: kas-fleetshard addon ID
   description: ID of the kas-fleetshard addon
-  value: "kas-fleetshard-operator"
+  value: "kas-fleetshard-operator-qe"
 
 - name: CLUSTER_LOGGING_OPERATOR_ADDON_ID
   displayName: Cluster logging operator addon ID
