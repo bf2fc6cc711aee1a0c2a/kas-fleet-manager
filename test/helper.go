@@ -122,12 +122,10 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 
 	// Set server if provided
 	observabilityConfiguration.EnableMock = true
-	if server != nil {
+	if server != nil && ocmConfig.MockMode == config.MockModeEmulateServer {
+		workers.RepeatInterval = 1 * time.Second
 		fmt.Printf("Setting OCM base URL to %s\n", server.URL)
 		ocmConfig.BaseURL = server.URL
-		if ocmConfig.MockMode == config.MockModeEmulateServer {
-			workers.RepeatInterval = 1 * time.Second
-		}
 	}
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
