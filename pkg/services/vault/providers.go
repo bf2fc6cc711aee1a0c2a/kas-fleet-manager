@@ -12,12 +12,8 @@ func ConfigProviders() di.Option {
 	)
 }
 
-func ServiceProviders(configContainer *di.Container) di.Option {
+func ServiceProviders() di.Option {
 	return di.Options(
-		di.Provide(func() (value *Config, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
 		di.Provide(NewVaultService),
 	)
 }

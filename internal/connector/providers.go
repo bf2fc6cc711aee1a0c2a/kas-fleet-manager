@@ -19,12 +19,8 @@ func ConfigProviders() di.Option {
 	)
 }
 
-func ServiceProviders(configContainer *di.Container) di.Option {
+func ServiceProviders() di.Option {
 	return di.Options(
-		di.Provide(func() (value *config.ConnectorsConfig, err error) {
-			err = configContainer.Resolve(&value)
-			return
-		}),
 		di.Provide(services.NewConnectorsService, di.As(new(services.ConnectorsService))),
 		di.Provide(services.NewConnectorTypesService, di.As(new(services.ConnectorTypesService))),
 		di.Provide(services.NewConnectorClusterService, di.As(new(services.ConnectorClusterService))),
