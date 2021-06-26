@@ -16,11 +16,18 @@
 //    Given I store the ".id" selection from the response as ${cid}
 // Assert that a response header matches the provided text:
 //    Then the response header "Content-Type" should match "application/json;stream=watch"
+// Assert that a json field of the response body is correct matches the provided json:
+//    Then the ".deployment_location" selection from the response should match json:
+//      """
+//      {
+//          "kind": "addon",
+//      }
+//      """
 package cucumber
 
 import (
+	"encoding/json"
 	"fmt"
-
 	"github.com/cucumber/godog"
 	"github.com/itchyny/gojq"
 )
@@ -33,6 +40,7 @@ func init() {
 		ctx.Step(`^I store the "([^"]*)" selection from the response as \${([^"]*)}$`, s.iStoreTheSelectionFromTheResponseAs)
 		ctx.Step(`^the "([^"]*)" selection from the response should match "([^"]*)"$`, s.theSelectionFromTheResponseShouldMatch)
 		ctx.Step(`^the response header "([^"]*)" should match "([^"]*)"$`, s.theResponseHeaderShouldMatch)
+		ctx.Step(`^the "([^"]*)" selection from the response should match json:$`, s.theSelectionFromTheResponseShouldMatchJson)
 	})
 }
 
@@ -131,6 +139,31 @@ func (s *TestScenario) theSelectionFromTheResponseShouldMatch(selector string, e
 			return fmt.Errorf("selected JSON does not match. expected: %v, actual: %v", expected, actual)
 		}
 		return nil
+	}
+	return fmt.Errorf("expected JSON does not have node that matches selector: %s", selector)
+}
+
+func (s *TestScenario) theSelectionFromTheResponseShouldMatchJson(selector string, expected *godog.DocString) error {
+
+	session := s.Session()
+	doc, err := session.RespJson()
+	if err != nil {
+		return err
+	}
+
+	query, err := gojq.Parse(selector)
+	if err != nil {
+		return err
+	}
+
+	iter := query.Run(doc)
+	if actual, found := iter.Next(); found {
+		actual, err := json.Marshal(actual)
+		if err != nil {
+			return err
+		}
+
+		return s.JsonMustMatch(string(actual), expected.Content, true)
 	}
 	return fmt.Errorf("expected JSON does not have node that matches selector: %s", selector)
 }
