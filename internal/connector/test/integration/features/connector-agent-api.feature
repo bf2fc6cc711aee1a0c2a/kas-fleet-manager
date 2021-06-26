@@ -183,6 +183,12 @@ Feature: connector agent API
       }
       """
 
+    # at this stage the user will see that the connector is assigned to the cluster.
+    Given I am logged in as "Jimmy"
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the ".status" selection from the response should match "assigned"
+
     # Now that the cluster is ready, a worker should assign the connector to the cluster for deployment.
     Given I am logged in as "Agent2"
     Given I set the "Authorization" header to "Bearer ${agent_token}"
@@ -534,3 +540,26 @@ Feature: connector agent API
       }]
       """
 
+    # Validate that there exists 1 connector deployment in the DB...
+    Given I run SQL "SELECT count(*) FROM connector_deployments WHERE connector_id='${connector_id}' AND deleted_at IS NULL" gives results:
+      | count |
+      | 1     |
+
+    Given I am logged in as "Jimmy"
+    When I DELETE path "/v1/kafka_connector_clusters/${connector_cluster_id}"
+    Then the response code should be 204
+    And the response should match ""
+
+    # Connector deployment should be be deleted...
+    And I run SQL "SELECT count(*) FROM connector_deployments WHERE connector_id='${connector_id}' AND deleted_at IS NULL" gives results:
+      | count |
+      | 0     |
+
+    # Connectors that were assigning the cluster get updated to not refer to them.
+    When I GET path "/v1/kafka_connectors/${connector_id}"
+    Then the response code should be 200
+    And the ".status" selection from the response should match "assigning"
+    And the ".deployment_location" selection from the response should match json:
+      """
+      {"kind": "addon"}
+      """

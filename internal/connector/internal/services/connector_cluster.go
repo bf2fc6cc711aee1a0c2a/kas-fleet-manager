@@ -107,11 +107,111 @@ func (k *connectorClusterService) Delete(ctx context.Context, id string) *errors
 		return services.HandleGetError("Connector cluster", "id", id, err)
 	}
 
-	// TODO: implement soft delete instead?
 	if err := dbConn.Delete(&resource).Error; err != nil {
 		return errors.GeneralError("unable to delete connector with id %s: %s", resource.ID, err)
 	}
 
+	// Delete all deployments assigned to the cluster..
+	dbConn = k.connectionFactory.New()
+	{
+		rows, err := dbConn.
+			Model(&dbapi.ConnectorDeployment{}).
+			Select("id").
+			Where("cluster_id = ?", id).
+			Rows()
+		if err != nil {
+			return errors.GeneralError("unable find deployments of cluster %s: %s", id, err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			deployment := dbapi.ConnectorDeployment{}
+			err := dbConn.ScanRows(rows, &deployment)
+			if err != nil {
+				return errors.GeneralError("Unable to scan connector deployment: %s", err)
+			}
+			deploymentStatus := dbapi.ConnectorDeploymentStatus{
+				Meta: api.Meta{
+					ID: deployment.ID,
+				},
+			}
+			if err := dbConn.Delete(&deploymentStatus).Error; err != nil {
+				return errors.GeneralError("failed to delete connector deployment status: %s", err)
+			}
+			if err := dbConn.Delete(&deployment).Error; err != nil {
+				return errors.GeneralError("failed to delete connector deployment: %s", err)
+			}
+		}
+	}
+
+	// Clear the cluster from any connectors that were using it.
+	{
+		rows, err := dbConn.
+			Model(&dbapi.Connector{}).
+			Select("id").
+			Where("addon_cluster_id = ?", id).
+			Rows()
+		if err != nil {
+			return errors.GeneralError("unable find connector using cluster %s: %s", id, err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			connector := dbapi.Connector{}
+			err := dbConn.ScanRows(rows, &connector)
+			if err != nil {
+				return errors.GeneralError("Unable to scan connector: %s", err)
+			}
+
+			if err := dbConn.Model(&connector).Update("addon_cluster_id", "").Error; err != nil {
+				return errors.GeneralError("failed to update connector: %s", err)
+			}
+
+			status := dbapi.ConnectorStatus{}
+			status.ID = connector.ID
+			if err := dbConn.Model(&status).Update("phase", "assigning").Error; err != nil {
+				return errors.GeneralError("failed to update connector status: %s", err)
+			}
+		}
+	}
+	return nil
+
+}
+
+func (k connectorClusterService) ForEach(f func(*dbapi.Connector) *errors.ServiceError, query string, args ...interface{}) *errors.ServiceError {
+	dbConn := k.connectionFactory.New()
+	rows, err := dbConn.
+		Model(&dbapi.Connector{}).
+		Where(query, args...).
+		Joins("left join connector_statuses on connector_statuses.id = connectors.id").
+		Order("version").Rows()
+
+	if err != nil {
+		if goerrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return errors.GeneralError("Unable to list connectors: %s", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		resource := dbapi.Connector{}
+
+		// ScanRows is a method of `gorm.DB`, it can be used to scan a row into a struct
+		err := dbConn.ScanRows(rows, &resource)
+		if err != nil {
+			return errors.GeneralError("Unable to scan connector: %s", err)
+		}
+
+		resource.Status.ID = resource.ID
+		err = dbConn.Model(&dbapi.ConnectorStatus{}).First(&resource.Status).Error
+		if err != nil {
+			return errors.GeneralError("Unable to load connector status: %s", err)
+		}
+
+		if serr := f(&resource); serr != nil {
+			return serr
+		}
+
+	}
 	return nil
 }
 
