@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 	"time"
@@ -10,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
@@ -18,11 +19,11 @@ const cloudProvidersCacheKey = "cloudProviderList"
 
 type cloudProvidersHandler struct {
 	service services.CloudProvidersService
-	config  services.ConfigService
+	config  coreServices.ConfigService
 	cache   *cache.Cache
 }
 
-func NewCloudProviderHandler(service services.CloudProvidersService, configService services.ConfigService) *cloudProvidersHandler {
+func NewCloudProviderHandler(service services.CloudProvidersService, configService coreServices.ConfigService) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service: service,
 		config:  configService,

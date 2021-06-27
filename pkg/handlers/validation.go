@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"regexp"
 
@@ -18,15 +16,15 @@ import (
 
 var (
 	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
-	ValidKafkaClusterNameRegexp   = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
+
 	ValidUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 	ValidServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
 	ValidServiceAccountDescRegexp = regexp.MustCompile(`^[a-zA-Z0-9.,\-\s]*$`)
 	MinRequiredFieldLength        = 1
-	MaxKafkaNameLength            = 32
-	MaxServiceAccountNameLength   = 50
-	MaxServiceAccountDescLength   = 255
-	MaxServiceAccountId           = 36
+
+	MaxServiceAccountNameLength = 50
+	MaxServiceAccountDescLength = 255
+	MaxServiceAccountId         = 36
 )
 
 // ValidateAsyncEnabled returns a validator that returns an error if the async query param is not true
@@ -104,32 +102,6 @@ func ValidateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configServ
 		if !regionSupported {
 			provider, _ := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
 			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
-		}
-
-		return nil
-	}
-}
-
-func ValidKafkaClusterName(value *string, field string) Validate {
-	return func() *errors.ServiceError {
-		if !ValidKafkaClusterNameRegexp.MatchString(*value) {
-			return errors.MalformedKafkaClusterName("%s does not match %s", field, ValidKafkaClusterNameRegexp.String())
-		}
-		return nil
-	}
-}
-
-// ValidateKafkaClusterNameIsUnique returns a validator that validates that the kafka cluster name is unique
-func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaService, context context.Context) Validate {
-	return func() *errors.ServiceError {
-
-		_, pageMeta, err := kafkaService.List(context, &services.ListArguments{Page: 1, Size: 1, Search: fmt.Sprintf("name = %s", *name)})
-		if err != nil {
-			return err
-		}
-
-		if pageMeta.Total > 0 {
-			return errors.DuplicateKafkaClusterName()
 		}
 
 		return nil

@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"testing"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 )
@@ -131,7 +132,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(
+					ConfigService: coreServices.NewConfigService(
 						&config.ApplicationConfig{
 							SupportedProviders:         &config.ProviderConfig{},
 							AccessControlList:          &config.AccessControlListConfig{},
@@ -190,7 +191,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(
+					ConfigService: coreServices.NewConfigService(
 						&config.ApplicationConfig{
 							SupportedProviders:         &config.ProviderConfig{},
 							AccessControlList:          &config.AccessControlListConfig{},
@@ -239,7 +240,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(
+					ConfigService: coreServices.NewConfigService(
 						&config.ApplicationConfig{
 							AccessControlList:          &config.AccessControlListConfig{},
 							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
@@ -367,7 +368,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 
 					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(&config.ApplicationConfig{
+					ConfigService: coreServices.NewConfigService(&config.ApplicationConfig{
 						SupportedProviders:         &tt.fields.providersConfig,
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
@@ -479,7 +480,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					OCMConfig:                  &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 					ClusterService:             tt.fields.clusterService,
-					ConfigService:              services.NewConfigService(&config.ApplicationConfig{}),
+					ConfigService:              coreServices.NewConfigService(&config.ApplicationConfig{}),
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},
 			}
@@ -557,7 +558,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 
 					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(&config.ApplicationConfig{
+					ConfigService: coreServices.NewConfigService(&config.ApplicationConfig{
 						SupportedProviders:         &config.ProviderConfig{},
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &observabilityConfig,
@@ -578,7 +579,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 	type fields struct {
 		clusterService        services.ClusterService
-		osdIdpKeycloakService services.KeycloakService
+		osdIdpKeycloakService coreServices.KeycloakService
 	}
 	tests := []struct {
 		name    string
@@ -605,7 +606,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return "test.com", nil
 					},
 				},
-				osdIdpKeycloakService: &services.KeycloakServiceMock{
+				osdIdpKeycloakService: &coreServices.KeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "", apiErrors.FailedToCreateSSOClient("failure")
 					},
@@ -630,7 +631,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return nil, apiErrors.GeneralError("failed to configure IDP")
 					},
 				},
-				osdIdpKeycloakService: &services.KeycloakServiceMock{
+				osdIdpKeycloakService: &coreServices.KeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -654,7 +655,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 						return cluster, nil
 					},
 				},
-				osdIdpKeycloakService: &services.KeycloakServiceMock{
+				osdIdpKeycloakService: &coreServices.KeycloakServiceMock{
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
@@ -737,7 +738,7 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
-		configService  services.ConfigService
+		configService  coreServices.ConfigService
 	}
 	tests := []struct {
 		name    string
@@ -754,7 +755,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
@@ -773,7 +774,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
@@ -793,7 +794,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return false, apiErrors.GeneralError("failed to remove cluster")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
@@ -815,7 +816,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return true, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
@@ -835,7 +836,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return true, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},
@@ -854,7 +855,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return true, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},
@@ -873,7 +874,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return errors.Errorf("this should not be called")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: &config.OSDClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},
@@ -902,7 +903,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 	type fields struct {
 		clusterService             services.ClusterService
-		osdIDPKeycloakService      services.KeycloakService
+		osdIDPKeycloakService      coreServices.KeycloakService
 		kasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	}
 	tests := []struct {
@@ -920,7 +921,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
+				osdIDPKeycloakService: &coreServices.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
 						return &apiErrors.ServiceError{}
 					},
@@ -936,7 +937,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
+				osdIDPKeycloakService: &coreServices.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
 						return nil
 					},
@@ -957,7 +958,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return &apiErrors.ServiceError{}
 					},
 				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
+				osdIDPKeycloakService: &coreServices.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
 						return nil
 					},
@@ -978,7 +979,7 @@ func TestClusterManager_reconcileCleanupCluster(t *testing.T) {
 						return nil
 					},
 				},
-				osdIDPKeycloakService: &services.KeycloakServiceMock{
+				osdIDPKeycloakService: &coreServices.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaNamespace string) *apiErrors.ServiceError {
 						return nil
 					},
@@ -1367,7 +1368,7 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	type fields struct {
 		clusterService services.ClusterService
-		configService  services.ConfigService
+		configService  coreServices.ConfigService
 	}
 	testOsdConfig := config.NewOSDClusterConfig()
 	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{config.ManualCluster{Schedulable: true, KafkaInstanceLimit: 2}})
@@ -1400,7 +1401,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 						}, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: testOsdConfig,
 				}),
 			},
@@ -1423,7 +1424,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 						return []services.ResKafkaInstanceCount{}, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					OSDClusterConfig: testOsdConfig,
 				}),
 			},

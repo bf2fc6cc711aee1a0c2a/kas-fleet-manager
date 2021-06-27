@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
 	"sync"
@@ -11,7 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 )
@@ -33,14 +34,14 @@ type KafkaManager struct {
 	workerType    string
 	isRunning     bool
 	kafkaService  services.KafkaService
-	configService services.ConfigService
+	configService coreServices.ConfigService
 	imStop        chan struct{}
 	syncTeardown  sync.WaitGroup
 	reconciler    workers.Reconciler
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
 		id:            uuid.New().String(),
 		workerType:    "general_kafka_worker",

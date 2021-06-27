@@ -3,6 +3,8 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 	"net/http/httptest"
@@ -13,9 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -40,7 +40,7 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	h, client, tearDown := NewKafkaHelperWithHooks(t, ocmServer, startupHook)
 
-	clusterId, getClusterErr := utils.GetOSDClusterID(h, t, nil)
+	clusterId, getClusterErr := common.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
@@ -612,7 +612,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 
 	errMessage := "test-err-message"
 	updateReq := map[string]openapi.DataPlaneKafkaStatus{
-		kafkaReqID: kasfleetshardsync.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
+		kafkaReqID: kasfleetshardsync2.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
 	}
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
 	Expect(err).NotTo(HaveOccurred())

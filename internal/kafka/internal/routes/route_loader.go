@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -14,7 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
 	gorillaHandlers "github.com/gorilla/handlers"
@@ -31,9 +32,9 @@ type options struct {
 	OCM                   ocm.Client
 	Kafka                 services.KafkaService
 	CloudProviders        services.CloudProvidersService
-	ConfigService         services.ConfigService
+	ConfigService         coreServices.ConfigService
 	Observatorium         services.ObservatoriumService
-	Keycloak              services.KafkaKeycloakService
+	Keycloak              coreServices.KafkaKeycloakService
 	DataPlaneCluster      services.DataPlaneClusterService
 	DataPlaneKafkaService services.DataPlaneKafkaService
 	DB                    *db.ConnectionFactory
@@ -69,7 +70,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ConfigService)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := coreHandlers.NewServiceAccountHandler(s.Keycloak)
-	metricsHandler := coreHandlers.NewMetricsHandler(s.Observatorium)
+	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.ConfigService)
 
 	authorizeMiddleware := acl.NewAccessControlListMiddleware(s.ConfigService).Authorize

@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
@@ -18,7 +19,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
@@ -105,9 +106,9 @@ type ClusterManagerOptions struct {
 	OCMConfig                  *config.OCMConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
-	ConfigService              services.ConfigService
+	ConfigService              coreServices.ConfigService
 	KasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
-	OsdIdpKeycloakService      services.OsdKeycloakService
+	OsdIdpKeycloakService      coreServices.OsdKeycloakService
 }
 
 type processor func() []error

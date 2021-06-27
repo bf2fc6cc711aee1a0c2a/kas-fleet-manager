@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
@@ -10,15 +11,15 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 type kafkaHandler struct {
 	service services.KafkaService
-	config  services.ConfigService
+	config  coreServices.ConfigService
 }
 
-func NewKafkaHandler(service services.KafkaService, configService services.ConfigService) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, configService coreServices.ConfigService) *kafkaHandler {
 	return &kafkaHandler{
 		service: service,
 		config:  configService,
@@ -31,9 +32,9 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		MarshalInto: &kafkaRequest,
 		Validate: []handlers.Validate{
 			handlers.ValidateAsyncEnabled(r, "creating kafka requests"),
-			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &handlers.MaxKafkaNameLength),
-			handlers.ValidKafkaClusterName(&kafkaRequest.Name, "name"),
-			handlers.ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
+			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
+			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
+			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
 			handlers.ValidateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 		},
@@ -98,7 +99,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 
-			listArgs := services.NewListArguments(r.URL.Query())
+			listArgs := coreServices.NewListArguments(r.URL.Query())
 
 			if err := listArgs.Validate(); err != nil {
 				return nil, errors.NewWithCause(errors.ErrorMalformedRequest, err, "Unable to list kafka requests: %s", err.Error())

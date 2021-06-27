@@ -14,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
@@ -33,7 +32,6 @@ type ConnectorManager struct {
 	reconciler              workers.Reconciler
 	connectorService        services.ConnectorsService
 	connectorClusterService services.ConnectorClusterService
-	observatoriumService    coreServices.ObservatoriumService
 	connectorTypesService   services.ConnectorTypesService
 	vaultService            vault.VaultService
 	lastVersion             int64
@@ -47,7 +45,6 @@ func NewConnectorManager(
 	connectorTypesService services.ConnectorTypesService,
 	connectorService services.ConnectorsService,
 	connectorClusterService services.ConnectorClusterService,
-	observatoriumService coreServices.ObservatoriumService,
 	vaultService vault.VaultService,
 	bus signalbus.SignalBus,
 	db *db.ConnectionFactory,
@@ -57,7 +54,6 @@ func NewConnectorManager(
 		workerType:              "connector",
 		connectorService:        connectorService,
 		connectorClusterService: connectorClusterService,
-		observatoriumService:    observatoriumService,
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
 		reconcileChannels:       true,

@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"strings"
 	"sync"
 
@@ -46,7 +47,7 @@ type KafkaService interface {
 	// Delete cleans up all dependencies for a Kafka request and soft deletes the Kafka Request record from the database.
 	// The Kafka Request in the database will be updated with a deleted_at timestamp.
 	Delete(*api.KafkaRequest) *errors.ServiceError
-	List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services2.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
 	ListByStatus(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
@@ -70,14 +71,14 @@ var _ KafkaService = &kafkaService{}
 type kafkaService struct {
 	connectionFactory   *db.ConnectionFactory
 	clusterService      ClusterService
-	keycloakService     KeycloakService
+	keycloakService     services2.KeycloakService
 	kafkaConfig         *config.KafkaConfig
 	awsConfig           *config.AWSConfig
-	quotaServiceFactory QuotaServiceFactory
+	quotaServiceFactory services2.QuotaServiceFactory
 	mu                  sync.Mutex
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory services2.QuotaServiceFactory) *kafkaService {
 	return &kafkaService{
 		connectionFactory:   connectionFactory,
 		clusterService:      clusterService,
@@ -232,7 +233,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return nil, HandleGetError("KafkaResource for user "+user, "id", id, err)
+		return nil, services2.HandleGetError("KafkaResource for user "+user, "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
@@ -245,7 +246,7 @@ func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceErr
 	dbConn := k.connectionFactory.New()
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
-		return nil, HandleGetError("KafkaResource", "id", id, err)
+		return nil, services2.HandleGetError("KafkaResource", "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
@@ -274,7 +275,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	var kafkaRequest api.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return HandleGetError("KafkaResource", "id", id, err)
+		return services2.HandleGetError("KafkaResource", "id", id, err)
 	}
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
@@ -282,7 +283,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
-			return HandleGetError("KafkaResource", "id", id, err)
+			return services2.HandleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
@@ -383,7 +384,7 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 }
 
 // List returns all Kafka requests belonging to a user.
-func (k *kafkaService) List(ctx context.Context, listArgs *ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+func (k *kafkaService) List(ctx context.Context, listArgs *services2.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 	var kafkaRequestList api.KafkaList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
