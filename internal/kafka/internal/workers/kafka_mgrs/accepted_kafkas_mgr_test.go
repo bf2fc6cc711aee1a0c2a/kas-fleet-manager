@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -9,15 +10,15 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 func TestAcceptedKafkaManager(t *testing.T) {
 	type fields struct {
 		kafkaService        services.KafkaService
-		configService       services.ConfigService
+		configService       coreServices.ConfigService
 		clusterPlmtStrategy services.ClusterPlacementStrategy
-		quotaService        services.QuotaService
+		quotaService        coreServices.QuotaService
 	}
 	type args struct {
 		kafka *api.KafkaRequest
@@ -37,10 +38,10 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
-				quotaService: &services.QuotaServiceMock{
+				quotaService: &coreServices.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
 						return "", nil
 					},
@@ -64,10 +65,10 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return errors.GeneralError("test")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
-				quotaService: &services.QuotaServiceMock{
+				quotaService: &coreServices.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
 						return "some-subscription", nil
 					},
@@ -92,12 +93,12 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					Kafka: &config.KafkaConfig{
 						Quota: config.NewKafkaQuotaConfig(),
 					},
 				}),
-				quotaService: &services.QuotaServiceMock{
+				quotaService: &coreServices.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
 						return "", errors.InsufficientQuotaError("quota insufficient")
 					},
@@ -124,12 +125,12 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return &api.KafkaRequest{}, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					Kafka: &config.KafkaConfig{
 						Quota: config.NewKafkaQuotaConfig(),
 					},
 				}),
-				quotaService: &services.QuotaServiceMock{
+				quotaService: &coreServices.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
 						return "sub-scription", nil
 					},
@@ -148,8 +149,8 @@ func TestAcceptedKafkaManager(t *testing.T) {
 				kafkaService:        tt.fields.kafkaService,
 				configService:       tt.fields.configService,
 				clusterPlmtStrategy: tt.fields.clusterPlmtStrategy,
-				quotaServiceFactory: &services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+				quotaServiceFactory: &coreServices.QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quoataType api.QuotaType) (coreServices.QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},

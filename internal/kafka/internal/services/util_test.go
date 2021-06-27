@@ -2,6 +2,8 @@ package services
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"reflect"
 	"strings"
 	"testing"
@@ -65,7 +67,7 @@ func Test_HandleGetError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := services.HandleGetError(tt.args.resourceType, tt.args.field, tt.args.value, tt.args.err); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("HandleGetError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -101,7 +103,7 @@ func Test_handleCreateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := handleCreateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := services.HandleCreateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("handleCreateError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -137,7 +139,7 @@ func Test_handleUpdateError(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := handleUpdateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
+			if got := services.HandleUpdateError(tt.args.resourceType, tt.args.err); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("handleUpdateError() = %v, want %v", got, tt.want)
 			}
 		})
@@ -475,7 +477,7 @@ func Test_contains(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Contains(tt.args.slice, tt.args.s)
+			got := shared.Contains(tt.args.slice, tt.args.s)
 			if got != tt.want {
 				t.Errorf("contains() = %v, want %v", got, tt.want)
 			}

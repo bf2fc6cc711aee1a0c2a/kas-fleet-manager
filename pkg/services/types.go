@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
 	"net/url"
 	"regexp"
@@ -71,7 +72,7 @@ func (la *ListArguments) Validate() error {
 				return errors.Errorf("invalid order by clause '%s'", orderByClause)
 			}
 
-			if !Contains(accepted_orderby_fields, keywords[0]) {
+			if !shared.Contains(accepted_orderby_fields, keywords[0]) {
 				return errors.Errorf("unknown order by field '%s'", keywords[0])
 			}
 

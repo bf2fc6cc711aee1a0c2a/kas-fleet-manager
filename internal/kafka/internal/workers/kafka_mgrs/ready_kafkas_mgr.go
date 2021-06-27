@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
 	"sync"
@@ -13,7 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -23,15 +24,15 @@ type ReadyKafkaManager struct {
 	workerType      string
 	isRunning       bool
 	kafkaService    services.KafkaService
-	keycloakService services.KeycloakService
-	configService   services.ConfigService
+	keycloakService coreServices.KeycloakService
+	configService   coreServices.ConfigService
 	imStop          chan struct{}
 	syncTeardown    sync.WaitGroup
 	reconciler      workers.Reconciler
 }
 
 // NewReadyKafkaManager creates a new kafka manager
-func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService services.KafkaKeycloakService, configService services.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
+func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, configService coreServices.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
 		id:              uuid.New().String(),
 		workerType:      "ready_kafka",
