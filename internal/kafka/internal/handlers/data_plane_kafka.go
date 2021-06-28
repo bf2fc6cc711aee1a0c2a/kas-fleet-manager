@@ -1,23 +1,24 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
 type dataPlaneKafkaHandler struct {
 	service      services.DataPlaneKafkaService
-	config       services.ConfigService
+	config       coreServices.ConfigService
 	kafkaService services.KafkaService
 }
 
-func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService services.ConfigService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
+func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService coreServices.ConfigService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
 	return &dataPlaneKafkaHandler{
 		service:      service,
 		config:       configService,

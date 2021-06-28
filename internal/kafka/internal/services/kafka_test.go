@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"net/http"
 	"reflect"
 	"testing"
@@ -12,7 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -346,7 +347,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
-		keycloakService   KeycloakService
+		keycloakService   services.KeycloakService
 		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
@@ -372,7 +373,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
@@ -403,7 +404,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "", errors.New(errors.ErrorBadRequest, "")
 					},
 				},
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
@@ -434,7 +435,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
@@ -468,7 +469,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 						return "clusterDNS", nil
 					},
 				},
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "", errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
@@ -520,7 +521,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		quotaService      QuotaService
+		quotaService      services.QuotaService
 	}
 	type args struct {
 		kafkaRequest *api.KafkaRequest
@@ -536,7 +537,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			name: "error when id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				quotaService: &QuotaServiceMock{
+				quotaService: &services.QuotaServiceMock{
 					DeleteQuotaFunc: func(id string) *errors.ServiceError {
 						return nil
 					},
@@ -553,7 +554,7 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			name: "error when sql where query fails",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				quotaService: &QuotaServiceMock{
+				quotaService: &services.QuotaServiceMock{
 					DeleteQuotaFunc: func(id string) *errors.ServiceError {
 						return nil
 					},
@@ -593,7 +594,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
-		keycloakService   KeycloakService
+		keycloakService   services.KeycloakService
 		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
@@ -610,7 +611,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "successfully deletes a Kafka request when it has not been assigned to an OSD cluster",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
@@ -640,7 +641,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "successfully deletes a Kafka request and cleans up all of its dependencies",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
@@ -674,7 +675,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 			name: "fail to delete kafka request: error when deleting sso client",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return errors.FailedToDeleteSSOClient("failed to delete sso client")
 					},
@@ -714,7 +715,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 						return "", errors.GeneralError("failed to get cluster dns")
 					},
 				},
-				keycloakService: &KeycloakServiceMock{
+				keycloakService: &services.KeycloakServiceMock{
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
@@ -773,7 +774,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
-		quotaService      QuotaService
+		quotaService      services.QuotaService
 	}
 
 	type errorCheck struct {
@@ -797,7 +798,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &QuotaServiceMock{
+				quotaService: &services.QuotaServiceMock{
 					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
@@ -819,7 +820,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &QuotaServiceMock{
+				quotaService: &services.QuotaServiceMock{
 					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
@@ -843,7 +844,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &QuotaServiceMock{
+				quotaService: &services.QuotaServiceMock{
 					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
@@ -867,7 +868,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &QuotaServiceMock{
+				quotaService: &services.QuotaServiceMock{
 					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
 						return errors.InsufficientQuotaError("insufficient quota error")
 					},
@@ -906,8 +907,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       &kafkaConf,
 				awsConfig:         config.NewAWSConfig(),
-				quotaServiceFactory: &QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *errors.ServiceError) {
+				quotaServiceFactory: &services.QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},
@@ -937,7 +938,7 @@ func Test_kafkaService_List(t *testing.T) {
 	}
 	type args struct {
 		ctx      context.Context
-		listArgs *ListArguments
+		listArgs *services.ListArguments
 	}
 
 	type want struct {
@@ -976,7 +977,7 @@ func Test_kafkaService_List(t *testing.T) {
 			},
 			args: args{
 				ctx: authenticatedCtx,
-				listArgs: &ListArguments{
+				listArgs: &services.ListArguments{
 					Page: 1,
 					Size: 100,
 				},
@@ -1039,7 +1040,7 @@ func Test_kafkaService_List(t *testing.T) {
 			},
 			args: args{
 				ctx: authenticatedCtx,
-				listArgs: &ListArguments{
+				listArgs: &services.ListArguments{
 					Page: 1,
 					Size: 1,
 				},
@@ -1089,7 +1090,7 @@ func Test_kafkaService_List(t *testing.T) {
 			},
 			args: args{
 				ctx: authenticatedCtx,
-				listArgs: &ListArguments{
+				listArgs: &services.ListArguments{
 					Page: 1,
 					Size: 100,
 				},
@@ -1124,7 +1125,7 @@ func Test_kafkaService_List(t *testing.T) {
 			},
 			args: args{
 				ctx: context.TODO(),
-				listArgs: &ListArguments{
+				listArgs: &services.ListArguments{
 					Page: 1,
 					Size: 100,
 				},
@@ -1153,7 +1154,7 @@ func Test_kafkaService_List(t *testing.T) {
 			},
 			args: args{
 				ctx: authenticatedCtx,
-				listArgs: &ListArguments{
+				listArgs: &services.ListArguments{
 					Page: 1,
 					Size: 100,
 				},

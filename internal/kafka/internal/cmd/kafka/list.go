@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"net/url"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
@@ -57,7 +58,7 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	query := url.Query()
 	query.Add(FlagPage, page)
 	query.Add(FlagSize, size)
-	listArgs := services.NewListArguments(query)
+	listArgs := coreServices.NewListArguments(query)
 
 	kafkaList, paging, err := kafkaService.List(ctx, listArgs)
 	if err != nil {

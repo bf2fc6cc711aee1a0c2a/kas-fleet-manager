@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks/kasfleetshardsync"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 	"testing"
@@ -41,7 +41,7 @@ func setUp(t *testing.T) *testEnv {
 	// ocm
 	h, client, teardown := NewKafkaHelper(t, ocmServer)
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasfFleetshardSync.Start()
 

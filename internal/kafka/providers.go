@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/serviceaccounts"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/routes"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
@@ -30,6 +31,14 @@ func ConfigProviders() di.Option {
 
 func ServiceProviders() di.Option {
 	return di.Options(
+		di.Provide(services.NewClusterService),
+		di.Provide(services.NewKafkaService, di.As(new(services.KafkaService))),
+		di.Provide(services.NewCloudProvidersService),
+		di.Provide(services.NewObservatoriumService),
+		di.Provide(services.NewKasFleetshardOperatorAddon),
+		di.Provide(services.NewClusterPlacementStrategy),
+		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
+		di.Provide(services.NewDataPlaneKafkaService, di.As(new(services.DataPlaneKafkaService))),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),
 		di.Provide(kafka_mgrs.NewKafkaManager, di.As(new(workers.Worker))),
