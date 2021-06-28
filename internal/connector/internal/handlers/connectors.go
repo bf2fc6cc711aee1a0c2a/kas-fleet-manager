@@ -174,6 +174,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			resource.DesiredState = patch.DesiredState
 			resource.Metadata.ResourceVersion = patch.Metadata.ResourceVersion
 			resource.Kafka = patch.Kafka
+			resource.DeploymentLocation = patch.DeploymentLocation
 
 			// If we didn't change anything, then just skip the update...
 			originalResource, _ := presenters.PresentConnector(dbresource)
