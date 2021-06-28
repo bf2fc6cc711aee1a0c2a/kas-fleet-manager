@@ -4,17 +4,17 @@ import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 type ConnectorType struct {
 	api.Meta
-	Version     string `json:"version"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Version     string
+	Name        string
+	Description string
 	// A json schema that can be used to validate a connectors connector_spec field.
-	JsonSchema map[string]interface{} `json:"json_schema,omitempty"`
+	JsonSchema map[string]interface{}
 
-	Channels []string `json:"channels,omitempty"`
+	Channels []string
 	// URL to an icon of the connector.
-	IconHref string `json:"icon_href,omitempty"`
+	IconHref string
 	// labels used to categorize the connector
-	Labels []string `json:"labels,omitempty"`
+	Labels []string
 }
 
 type ConnectorTypeList []*ConnectorType
@@ -32,6 +32,6 @@ type ConnectorShardMetadata struct {
 	ID              int64
 	ConnectorTypeId string
 	Channel         string
-	ShardMetadata   api.JSON
+	ShardMetadata   api.JSON `gorm:"type:jsonb"`
 	LatestId        *int64
 }
