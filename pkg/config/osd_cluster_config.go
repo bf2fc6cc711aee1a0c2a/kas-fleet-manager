@@ -250,6 +250,13 @@ func (c *OSDClusterConfig) ReadFiles() error {
 }
 
 func (c *OSDClusterConfig) readKubeconfig() error {
+	_, err := os.Stat(c.Kubeconfig)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return errors.Errorf("The kubeconfig file %s does not exist", c.Kubeconfig)
+		}
+		return err
+	}
 	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
 		&clientcmd.ConfigOverrides{})
