@@ -9,6 +9,7 @@ func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus)
 	var r []*dbapi.DataPlaneKafkaStatus
 	for k, v := range status {
 		var c []dbapi.DataPlaneKafkaStatusCondition
+		var routes []dbapi.DataPlaneKafkaRoute
 		for _, s := range v.Conditions {
 			c = append(c, dbapi.DataPlaneKafkaStatusCondition{
 				Type:    s.Type,
@@ -17,9 +18,18 @@ func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus)
 				Message: s.Message,
 			})
 		}
+		if v.Routes != nil {
+			for _, ro := range *v.Routes {
+				routes = append(routes, dbapi.DataPlaneKafkaRoute{
+					Domain: ro.Route,
+					Router: ro.Router,
+				})
+			}
+		}
 		r = append(r, &dbapi.DataPlaneKafkaStatus{
 			KafkaClusterId: k,
 			Conditions:     c,
+			Routes:         routes,
 		})
 	}
 

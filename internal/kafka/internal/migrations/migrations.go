@@ -52,6 +52,8 @@ var migrations = []*gormigrate.Migration{
 	changeKafkaDeleteStatusToDeleting(),
 	addKafkaQuotaTypeColumn(),
 	addConnectorTypeChannel(),
+	addRoutes(),
+	addKafkaDNSWorkerLease(),
 }
 
 func New(dbConfig *config.DatabaseConfig) (*db.Migration, func(), error) {

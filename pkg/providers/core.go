@@ -2,6 +2,7 @@ package providers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
@@ -59,6 +60,7 @@ func ServiceProviders() di.Option {
 		di.Provide(observatorium.NewObservatoriumClient),
 		di.Provide(ocm.NewOCMClient),
 		di.Provide(customOcm.NewClient),
+		di.Provide(aws.NewDefaultClientFactory, di.As(new(aws.ClientFactory))),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 
 		di.Provide(acl.NewAccessControlListMiddleware),
