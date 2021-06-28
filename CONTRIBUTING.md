@@ -239,7 +239,7 @@ func MyTestFunction(t *testing.T) {
 > `TEST_SUMMARY_FORMAT` environment variable to `default-verbose`
 
 #### Mock KAS Fleetshard Sync
-The mock [KAS Fleetshard Sync](test/mocks/kasfleetshardsync/kas-fleetshard-sync.go) is used to reconcile data plane and Kafka cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the KAS Fleetshard Sync in the data plane cluster cannot
+The mock [KAS Fleetshard Sync](internal/kafka/test/mocks/kasfleetshardsync/kas-fleetshard-sync.go) is used to reconcile data plane and Kafka cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the KAS Fleetshard Sync in the data plane cluster cannot
 communicate to the KAS Fleet Manager during integration test runs. 
 
 The mock KAS Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Kafka cluster status. 

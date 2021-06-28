@@ -1,22 +1,23 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
 type serviceStatusHandler struct {
 	kafkaService  services.KafkaService
-	configService services.ConfigService
+	configService coreServices.ConfigService
 }
 
-func NewServiceStatusHandler(service services.KafkaService, configService services.ConfigService) *serviceStatusHandler {
+func NewServiceStatusHandler(service services.KafkaService, configService coreServices.ConfigService) *serviceStatusHandler {
 	return &serviceStatusHandler{
 		kafkaService:  service,
 		configService: configService,

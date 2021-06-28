@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 	"strconv"
 	"time"
@@ -9,7 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
@@ -27,10 +28,10 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
 	query := r.URL.Query()
-	cfg := &HandlerConfig{
-		Validate: []Validate{
-			ValidatQueryParam(query, "duration"),
-			ValidatQueryParam(query, "interval"),
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidatQueryParam(query, "duration"),
+			handlers.ValidatQueryParam(query, "interval"),
 		},
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()
@@ -54,13 +55,13 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 			return metricList, nil
 		},
 	}
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
 	params := observatorium.MetricsReqParams{}
-	cfg := &HandlerConfig{
+	cfg := &handlers.HandlerConfig{
 		Action: func() (i interface{}, serviceError *errors.ServiceError) {
 			ctx := r.Context()
 			params.ResultType = observatorium.Query
@@ -83,7 +84,7 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 			return metricList, nil
 		},
 	}
-	HandleGet(w, r, cfg)
+	handlers.HandleGet(w, r, cfg)
 }
 
 func extractMetricsQueryParams(r *http.Request, q *observatorium.MetricsReqParams) {

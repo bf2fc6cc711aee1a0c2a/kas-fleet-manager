@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"net/http"
 	"strings"
 	"time"
@@ -54,6 +55,12 @@ type keycloakService struct {
 }
 
 var _ KeycloakService = &keycloakService{}
+
+func NewKeycloakServiceWithClient(client keycloak.KcClient) *keycloakService {
+	return &keycloakService{
+		kcClient: client,
+	}
+}
 
 func NewKeycloakService(config *config.KeycloakConfig, realmConfig *config.KeycloakRealmConfig) *keycloakService {
 	client := keycloak.NewClient(config, realmConfig)
@@ -304,7 +311,7 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 		acc := api.ServiceAccount{}
 		attributes := client.Attributes
 		att := *attributes
-		if strings.HasPrefix(safeString(client.ClientID), "srvc-acct") {
+		if strings.HasPrefix(shared.SafeString(client.ClientID), "srvc-acct") {
 			createdAt, err := time.Parse(time.RFC3339, att["created_at"])
 			if err != nil {
 				createdAt = time.Time{}
@@ -313,8 +320,8 @@ func (kc *keycloakService) ListServiceAcc(ctx context.Context, first int, max in
 			acc.Owner = att["username"]
 			acc.CreatedAt = createdAt
 			acc.ClientID = *client.ClientID
-			acc.Name = safeString(client.Name)
-			acc.Description = safeString(client.Description)
+			acc.Name = shared.SafeString(client.Name)
+			acc.Description = shared.SafeString(client.Description)
 			sa = append(sa, acc)
 		}
 	}
@@ -343,7 +350,7 @@ func (kc *keycloakService) DeleteServiceAccount(ctx context.Context, id string) 
 		if err != nil {                                 //5xx
 			return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "failed to delete service account")
 		}
-		glog.V(5).Infof("deleted service account clientId = %s owned by user = %s", safeString(c.ClientID), owner)
+		glog.V(5).Infof("deleted service account clientId = %s owned by user = %s", shared.SafeString(c.ClientID), owner)
 		return nil
 	}
 
@@ -385,8 +392,8 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 			CreatedAt:    createdAt,
 			Owner:        owner,
 			ClientSecret: value,
-			Name:         safeString(c.Name),
-			Description:  safeString(c.Description),
+			Name:         shared.SafeString(c.Name),
+			Description:  shared.SafeString(c.Description),
 		}, nil
 	} else { //4xx
 		return nil, errors.NewWithCause(errors.ErrorForbidden, nil, "failed to reset service account credentials")
@@ -435,8 +442,8 @@ func (kc *keycloakService) GetServiceAccountById(ctx context.Context, id string)
 			ClientID:    *c.ClientID,
 			CreatedAt:   createdAt,
 			Owner:       owner,
-			Name:        safeString(c.Name),
-			Description: safeString(c.Description),
+			Name:        shared.SafeString(c.Name),
+			Description: shared.SafeString(c.Description),
 		}, nil
 	} else {
 		//http requester doesn't have the permission: 4xx

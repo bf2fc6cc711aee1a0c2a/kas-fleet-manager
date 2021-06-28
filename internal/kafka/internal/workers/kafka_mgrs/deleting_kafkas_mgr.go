@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
 	"sync"
@@ -12,7 +13,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -22,15 +23,15 @@ type DeletingKafkaManager struct {
 	workerType          string
 	isRunning           bool
 	kafkaService        services.KafkaService
-	configService       services.ConfigService
-	quotaServiceFactory services.QuotaServiceFactory
+	configService       coreServices.ConfigService
+	quotaServiceFactory coreServices.QuotaServiceFactory
 	imStop              chan struct{}
 	syncTeardown        sync.WaitGroup
 	reconciler          workers.Reconciler
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
+func NewDeletingKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory coreServices.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		id:                  uuid.New().String(),
 		workerType:          "deleting_kafka",

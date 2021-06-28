@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
 	"sync"
@@ -14,7 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -24,8 +25,8 @@ type AcceptedKafkaManager struct {
 	workerType          string
 	isRunning           bool
 	kafkaService        services.KafkaService
-	configService       services.ConfigService
-	quotaServiceFactory services.QuotaServiceFactory
+	configService       coreServices.ConfigService
+	quotaServiceFactory coreServices.QuotaServiceFactory
 	imStop              chan struct{}
 	syncTeardown        sync.WaitGroup
 	reconciler          workers.Reconciler
@@ -33,7 +34,7 @@ type AcceptedKafkaManager struct {
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory coreServices.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		id:                  uuid.New().String(),
 		workerType:          "accepted_kafka",

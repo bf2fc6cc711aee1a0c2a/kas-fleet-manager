@@ -2,11 +2,12 @@ package cloudprovider
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,7 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 
-	var config services.ConfigService
+	var config coreServices.ConfigService
 	var cloudProviderService services.CloudProvidersService
 	env.MustResolveAll(&config, &cloudProviderService)
 
