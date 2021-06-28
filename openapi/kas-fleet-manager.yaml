@@ -719,12 +719,15 @@ components:
         - type: object
           properties:
             status:
+              description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
               type: string
             cloud_provider:
+              description: "Name of Cloud used to deploy. For example AWS"
               type: string
             multi_az:
               type: boolean
             region:
+              description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
               type: string
             owner:
               type: string
@@ -1383,11 +1386,11 @@ components:
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     403TermsNotAcceptedExample:
       value:
-        id: "6"
+        id: "12"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/6"
+        href: "/api/kafkas_mgmt/v1/errors/12"
         code: "KAFKAS-MGMT-12"
-        reason: "User 'foo-bar' did not accept terms and conditions in cloud.redhat.com"
+        reason: "Required terms have not been accepted"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
     409NameConflictExample:
       value:
