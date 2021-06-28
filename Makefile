@@ -271,9 +271,17 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile reports/integraton-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-			 ./internal/kafka/test/integration/... ./internal/connector/test/integration/...
+test/integration/kafka: test/prepare gotestsum
+	$(GOTESTSUM) --junitfile reports/integraton-tests-kafka.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+				./internal/kafka/test/integration/...
+.PHONY: test/integration/kafka
+
+test/integration/connector: test/prepare gotestsum
+	$(GOTESTSUM) --junitfile reports/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+				./internal/connector/test/integration/...
+.PHONY: test/integration/connector
+
+test/integration: test/integration/kafka test/integration/connector
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM

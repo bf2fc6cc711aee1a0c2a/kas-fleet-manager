@@ -3,17 +3,14 @@ package workers
 import (
 	"context"
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"sync"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
@@ -24,12 +21,7 @@ import (
 
 // ConnectorManager represents a connector manager that periodically reconciles connector requests
 type ConnectorManager struct {
-	id                      string
-	workerType              string
-	isRunning               bool
-	imStop                  chan struct{}
-	syncTeardown            sync.WaitGroup
-	reconciler              workers.Reconciler
+	workers.BaseWorker
 	connectorService        services.ConnectorsService
 	connectorClusterService services.ConnectorClusterService
 	connectorTypesService   services.ConnectorTypesService
@@ -50,54 +42,30 @@ func NewConnectorManager(
 	db *db.ConnectionFactory,
 ) *ConnectorManager {
 	return &ConnectorManager{
-		id:                      uuid.New().String(),
-		workerType:              "connector",
+		BaseWorker: workers.BaseWorker{
+			Id:         uuid.New().String(),
+			WorkerType: "connector",
+			Reconciler: workers.Reconciler{
+				SignalBus: bus,
+			},
+		},
 		connectorService:        connectorService,
 		connectorClusterService: connectorClusterService,
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
 		reconcileChannels:       true,
 		db:                      db,
-		reconciler: workers.Reconciler{
-			SignalBus: bus,
-		},
 	}
-}
-
-func (k *ConnectorManager) GetStopChan() *chan struct{} {
-	return &k.imStop
-}
-
-func (k *ConnectorManager) GetSyncGroup() *sync.WaitGroup {
-	return &k.syncTeardown
-}
-
-func (k *ConnectorManager) GetID() string {
-	return k.id
-}
-
-func (c *ConnectorManager) GetWorkerType() string {
-	return c.workerType
 }
 
 // Start initializes the connector manager to reconcile connector requests
 func (k *ConnectorManager) Start() {
-	metrics.SetLeaderWorkerMetric(k.workerType, true)
-	k.reconciler.Start(k)
+	k.StartWorker(k)
 }
 
 // Stop causes the process for reconciling connector requests to stop.
 func (k *ConnectorManager) Stop() {
-	k.reconciler.Stop(k)
-	metrics.SetLeaderWorkerMetric(k.workerType, false)
-}
-
-func (c *ConnectorManager) IsRunning() bool {
-	return c.isRunning
-}
-
-func (c *ConnectorManager) SetIsRunning(val bool) {
-	c.isRunning = val
+	k.StopWorker(k)
 }
 
 func (k *ConnectorManager) Reconcile() []error {
