@@ -596,6 +596,17 @@ components:
               type: string
             strimzi:
               type: string
+        routes:
+          description: "Routes created for a Kafka cluster"
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              domain:
+                type: string
+              router:
+                type: string
       example:
         $ref: '#/components/examples/DataPlaneKafkaStatusRequestExample'
 
