@@ -229,6 +229,8 @@ paths:
                   $ref: '#/components/examples/403Example'
                 403MaxAllowedInstanceReachedExample:
                   $ref: '#/components/examples/403MaxAllowedInstanceReachedExample'
+                403TermsNotAcceptedExample:
+                  $ref: '#/components/examples/403TermsNotAcceptedExample'
           description: User forbidden either because the user is not authorized to access the service or because the maximum number of instances that can be created by this user has been reached.
         "404":
           content:
@@ -717,12 +719,15 @@ components:
         - type: object
           properties:
             status:
+              description: "Values: [accepted, preparing, provisioning, ready, failed, deprovision, deleting] "
               type: string
             cloud_provider:
+              description: "Name of Cloud used to deploy. For example AWS"
               type: string
             multi_az:
               type: boolean
             region:
+              description: "Values will be regions of specific cloud provider. For example: us-east-1 for AWS"
               type: string
             owner:
               type: string
@@ -1379,6 +1384,14 @@ components:
         code: "KAFKAS-MGMT-5"
         reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
+    403TermsNotAcceptedExample:
+      value:
+        id: "12"
+        kind: "Error"
+        href: "/api/kafkas_mgmt/v1/errors/12"
+        code: "KAFKAS-MGMT-12"
+        reason: "Required terms have not been accepted"
+        operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
     409NameConflictExample:
       value:
         id: "36"
