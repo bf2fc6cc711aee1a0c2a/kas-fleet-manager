@@ -2,6 +2,7 @@ package clusters
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
@@ -9,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	patchTypes "k8s.io/apimachinery/pkg/types"
@@ -19,7 +21,15 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// fieldManager indicates that the kas-fleet-manager will be used as a field manager for conflict resolution
 const fieldManager = "kas-fleet-manager"
+
+// lastAppliedConfigurationAnnotation is an annotation applied in a resources which tracks the last applied configuration of a resource.
+// this is used to decide whether a new apply request should be taken into account or not
+const lastAppliedConfigurationAnnotation = "kas-fleet-manager/last-applied-resource-configuration"
+
+// force is a patch option to force applying new changes when conflicts occurs
+var force = true
 
 type StandaloneProvider struct {
 	connectionFactory *db.ConnectionFactory
@@ -169,7 +179,31 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 	return &types.CloudProviderRegionInfoList{Items: items}, nil
 }
 
-func applyResource(restConfig *rest.Config, resourceObj runtime.Object) (runtime.Object, error) {
+func applyResource(restConfig *rest.Config, resourceObj interface{}) (runtime.Object, error) {
+	// parse resource obj
+	data, err := json.Marshal(resourceObj)
+	if err != nil {
+		return nil, err
+	}
+
+	var obj unstructured.Unstructured
+	err = json.Unmarshal(data, &obj)
+
+	if err != nil {
+		return nil, err
+	}
+
+	newConfiguration := string(data)
+	newAnnotations := obj.GetAnnotations()
+	if newAnnotations == nil {
+		newAnnotations = map[string]string{}
+		obj.SetAnnotations(newAnnotations)
+	}
+	// add last configuration annotation with contents pointing to latest marshalled resources
+	// this is needed to see if new changes will need to be applied during reconciliation
+	newAnnotations[lastAppliedConfigurationAnnotation] = newConfiguration
+	obj.SetAnnotations(newAnnotations)
+
 	kubeClientset, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
@@ -182,14 +216,14 @@ func applyResource(restConfig *rest.Config, resourceObj runtime.Object) (runtime
 	rm := restmapper.NewDiscoveryRESTMapper(groupResources)
 
 	// Get some metadata needed to make the REST request.
-	gvk := resourceObj.GetObjectKind().GroupVersionKind()
+	gvk := obj.GetObjectKind().GroupVersionKind()
 	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
 	mapping, err := rm.RESTMapping(gk, gvk.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	namespace, err := meta.NewAccessor().Namespace(resourceObj)
+	namespace, err := meta.NewAccessor().Namespace(&obj)
 	if err != nil {
 		return nil, err
 	}
@@ -201,18 +235,85 @@ func applyResource(restConfig *rest.Config, resourceObj runtime.Object) (runtime
 	}
 
 	restHelper := resource.NewHelper(restClient, mapping)
-	name, err := meta.NewAccessor().Name(resourceObj)
-	if err != nil {
-		return nil, err
-	}
-	data, err := json.Marshal(resourceObj)
+	name, err := meta.NewAccessor().Name(&obj)
 	if err != nil {
 		return nil, err
 	}
 
-	return restHelper.Patch(namespace, name, patchTypes.ApplyPatchType, data, &metav1.PatchOptions{
+	// check if resources needs to be applied
+	applyChanges, err := shouldApplyChanges(restHelper, namespace, name, newConfiguration)
+	if err != nil {
+		return &obj, err
+	}
+
+	if !applyChanges { // no need to apply changes as resource has not changed
+		return &obj, nil
+	}
+
+	// apply new changes which will lead to creation of new resources
+	return applyChangesFn(restHelper, namespace, name, obj)
+}
+
+func shouldApplyChanges(restHelper *resource.Helper, namespace string, name string, newConfiguration string) (bool, error) {
+	existingObj, err := restHelper.Get(namespace, name)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			return true, nil
+		} else {
+			return false, err
+		}
+	}
+
+	existing, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existingObj)
+	if err != nil {
+		return false, err
+	}
+	original := unstructured.Unstructured{
+		Object: existing,
+	}
+	originalAnnotations := original.GetAnnotations()
+	if originalAnnotations != nil {
+		lastApplied, ok := originalAnnotations[lastAppliedConfigurationAnnotation]
+		if !ok {
+			return true, nil // new object, create it
+		} else {
+			return newConfiguration != lastApplied, nil // check if configuration has changed before applying changes
+		}
+	}
+
+	return true, nil
+}
+
+func applyChangesFn(restHelper *resource.Helper, namespace string, name string, obj unstructured.Unstructured) (runtime.Object, error) {
+	data, err := obj.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	patchOptions := &metav1.PatchOptions{
 		FieldManager: fieldManager,
-	})
+		Force:        &force,
+	}
+
+	// try to apply new update using server-side apply
+	result, err := restHelper.Patch(namespace, name, patchTypes.ApplyPatchType, data, patchOptions)
+
+	if err != nil && (strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "failed to create typed patch object")) {
+		result, err = restHelper.CreateWithOptions(namespace, true, &obj, &metav1.CreateOptions{
+			FieldManager: fieldManager,
+		})
+	}
+
+	// replace if it already exist
+	if err != nil && strings.Contains(err.Error(), "already exist") {
+		result, err = restHelper.Replace(namespace, name, true, &obj)
+	}
+
+	// ignore immutability failure to apply patch
+	if err != nil && strings.Contains(err.Error(), "field is immutable") {
+		return &obj, nil
+	}
+	return result, err
 }
 
 func newRestClient(restConfig *rest.Config, gv schema.GroupVersion) (rest.Interface, error) {
