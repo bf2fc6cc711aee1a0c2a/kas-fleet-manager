@@ -34,18 +34,18 @@ var AllConnectorClusterStatus = []ConnectorClusterPhaseEnum{
 
 type ConnectorCluster struct {
 	api.Meta
-	Owner          string                 `json:"owner"`
-	OrganisationId string                 `json:"organisation_id"`
-	Name           string                 `json:"name"`
-	Status         ConnectorClusterStatus `json:"status" gorm:"embedded;embeddedPrefix:status_"`
+	Owner          string
+	OrganisationId string
+	Name           string
+	Status         ConnectorClusterStatus `gorm:"embedded;embeddedPrefix:status_"`
 }
 
 type ConnectorClusterStatus struct {
-	Phase ConnectorClusterPhaseEnum `json:"phase,omitempty"`
+	Phase ConnectorClusterPhaseEnum
 	// the version of the agent
-	Version    string        `json:"version,omitempty"`
-	Conditions ConditionList `json:"conditions,omitempty" gorm:"type:text"`
-	Operators  OperatorList  `json:"operators,omitempty" gorm:"type:text"`
+	Version    string
+	Conditions ConditionList `gorm:"type:jsonb"`
+	Operators  OperatorList  `gorm:"type:jsonb"`
 }
 
 type ConditionList []Condition
@@ -91,24 +91,24 @@ func (o OperatorList) Value() (driver.Value, error) {
 }
 
 type Condition struct {
-	Type               string `json:"type,omitempty"`
-	Reason             string `json:"reason,omitempty"`
-	Message            string `json:"message,omitempty"`
-	Status             string `json:"status,omitempty"`
-	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
+	Type               string
+	Reason             string
+	Message            string
+	Status             string
+	LastTransitionTime string
 }
 
 type OperatorStatus struct {
 	// the id of the operator
-	Id string `json:"id,omitempty"`
+	Id string
 	// the type of the operator
-	Type string `json:"type,omitempty"`
+	Type string
 	// the version of the operator
-	Version string `json:"version,omitempty"`
+	Version string
 	// the namespace to which the operator has been installed
-	Namespace string `json:"namespace,omitempty"`
+	Namespace string
 	// the status of the operator
-	Status string `json:"status,omitempty"`
+	Status string
 }
 
 func (org *ConnectorCluster) BeforeCreate(tx *gorm.DB) error {
