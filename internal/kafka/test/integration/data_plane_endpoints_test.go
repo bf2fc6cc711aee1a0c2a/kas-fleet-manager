@@ -614,7 +614,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			return c.RoutesCreated, nil
 		}).Build().Poll()
 
-	Expect(waitErr).To(BeNil())
+	Expect(waitErr).NotTo(HaveOccurred())
 
 	// Send the requests again, this time the instances should be ready because routes are created
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)

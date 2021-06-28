@@ -38,6 +38,6 @@ func TestInjections(t *testing.T) {
 
 	var workerList []workers.Worker
 	env.MustResolve(&workerList)
-	Expect(len(workerList)).To(Equal(8))
+	Expect(workerList).To(HaveLen(8))
 
 }
