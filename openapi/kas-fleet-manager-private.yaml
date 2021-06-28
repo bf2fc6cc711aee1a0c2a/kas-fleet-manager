@@ -603,7 +603,7 @@ components:
           items:
             type: object
             properties:
-              domain:
+              route:
                 type: string
               router:
                 type: string

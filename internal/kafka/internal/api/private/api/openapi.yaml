@@ -787,7 +787,7 @@ components:
           type: string
     DataPlaneKafkaStatus_routes:
       properties:
-        domain:
+        route:
           type: string
         router:
           type: string

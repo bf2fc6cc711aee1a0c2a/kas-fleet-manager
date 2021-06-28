@@ -1,6 +1,7 @@
 package dbapi
 
 import (
+	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
@@ -26,6 +27,10 @@ type KafkaRequest struct {
 	Version     string `json:"version"`
 	// the quota service type for the kafka, e.g. ams, allow-list
 	QuotaType string `json:"quota_type"`
+	// Routes routes mapping for the kafka instance. It is an array and each item in the array contains a domain value and the corresponding route url
+	Routes api.JSON `json:"routes"`
+	// RoutesCreated if the routes mapping have been created in the DNS provider like Route53. Use a separate field to make it easier to query.
+	RoutesCreated bool `json:"routes_created"`
 }
 
 type KafkaList []*KafkaRequest
@@ -39,11 +44,29 @@ func (l KafkaList) Index() KafkaIndex {
 	return index
 }
 
-func (kafkaRequest *KafkaRequest) BeforeCreate(scope *gorm.DB) error {
+func (k *KafkaRequest) BeforeCreate(scope *gorm.DB) error {
 	// To allow the id set on the KafkaRequest object to be used. This is useful for testing purposes.
-	id := kafkaRequest.ID
+	id := k.ID
 	if id == "" {
-		kafkaRequest.ID = api.NewID()
+		k.ID = api.NewID()
 	}
 	return nil
+}
+
+func (k *KafkaRequest) GetRoutes() ([]DataPlaneKafkaRoute, error) {
+	var routes []DataPlaneKafkaRoute
+	if err := json.Unmarshal(k.Routes, &routes); err != nil {
+		return nil, err
+	} else {
+		return routes, nil
+	}
+}
+
+func (k *KafkaRequest) SetRoutes(routes []DataPlaneKafkaRoute) error {
+	if r, err := json.Marshal(routes); err != nil {
+		return err
+	} else {
+		k.Routes = r
+		return nil
+	}
 }

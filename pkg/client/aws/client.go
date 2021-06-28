@@ -15,10 +15,39 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53/route53iface"
 )
 
+//go:generate moq -out client_moq.go . Client
 type Client interface {
 	// route53
 	ListHostedZonesByNameInput(dnsName string) (*route53.ListHostedZonesByNameOutput, error)
 	ChangeResourceRecordSets(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error)
+}
+
+type ClientFactory interface {
+	NewClient(credentials Config, region string) (Client, error)
+}
+
+type DefaultClientFactory struct{}
+
+func (f *DefaultClientFactory) NewClient(credentials Config, region string) (Client, error) {
+	return newClient(credentials, region)
+}
+
+func NewDefaultClientFactory() *DefaultClientFactory {
+	return &DefaultClientFactory{}
+}
+
+type MockClientFactory struct {
+	mock Client
+}
+
+func (m *MockClientFactory) NewClient(credentials Config, region string) (Client, error) {
+	return m.mock, nil
+}
+
+func NewMockClientFactory(client Client) *MockClientFactory {
+	return &MockClientFactory{
+		mock: client,
+	}
 }
 
 type awsClient struct {
@@ -33,7 +62,7 @@ type Config struct {
 	SecretAccessKey string
 }
 
-func NewClient(credentials Config, region string) (Client, error) {
+func newClient(credentials Config, region string) (Client, error) {
 	cfg := &aws.Config{
 		Credentials: awscredentials.NewStaticCredentials(
 			credentials.AccessKeyID,
