@@ -4,15 +4,15 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
 type amsQuotaService struct {
-	ocmClient ocm.Client
+	ocmClient   ocm.Client
+	kafkaConfig *config.KafkaConfig
 }
-
-const productId = "RHOSAK"
 
 func newQuotaResource() amsv1.ReservedResourceBuilder {
 	rr := amsv1.ReservedResourceBuilder{}
@@ -36,7 +36,7 @@ func (q amsQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceEr
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
-		ProductID(productId).
+		ProductID(q.kafkaConfig.ProductType).
 		Managed(false).
 		ClusterID(kafkaId).
 		ExternalClusterID(kafkaId).
@@ -67,7 +67,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *error
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
-		ProductID(productId).
+		ProductID(q.kafkaConfig.ProductType).
 		Managed(false).
 		ClusterID(kafkaId).
 		ExternalClusterID(kafkaId).
