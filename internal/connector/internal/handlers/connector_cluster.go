@@ -2,21 +2,22 @@ package handlers
 
 import (
 	"fmt"
+	"net/http"
+	"net/url"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/goava/di"
-	"net/http"
-	"net/url"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
@@ -175,8 +176,8 @@ const (
 	connectorFleetshardOperatorParamControlPlaneBaseURL  = "control-plane-base-url"
 )
 
-func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.AddonParameter {
-	p := []ocm.AddonParameter{
+func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
+	p := []types.Parameter{
 		{
 			Id:    connectorFleetshardOperatorParamMasSSOBaseUrl,
 			Value: o.KeycloakConfig.BaseURL,

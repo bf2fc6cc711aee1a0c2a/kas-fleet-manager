@@ -16,19 +16,15 @@ classDiagram
       + DeleteResources()
       + ScaleUp()
       + ScaleDown()
+      + InstallStrimzi()
+      + InstallClusterLogging()
+      + InstallKasFleetshard()
       + OtherMethods...()
-  }
-
-  class AddonProvider {
-      <<Interface>>
-      + InstallAddon()
-      + InstallAddonWithParams()
   }
 
   class ProviderFactory {
       <<Interface>>
       +GetProvider(providerType) Provider
-      +GetAddonProvider(providerType) AddonProvider
   }
 
   class OCMProvider{
@@ -58,9 +54,7 @@ classDiagram
 
   Provider <|.. OCMProvider: Implements
   Provider <|.. StandaloneProvider: Implements
-  AddonProvider <|.. OCMProvider: Implements
   ProviderFactory --|> Provider: Return concrete impl based on ProviderType
-  ProviderFactory --|> AddonProvider: Return concrete impl based on ProviderType
   ClusterService ..> ProviderFactory: Depends
   ClusterService ..> ConnectionFactory: Depends
   ClusterManager ..> ClusterService: Depends
