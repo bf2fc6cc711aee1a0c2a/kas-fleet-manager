@@ -2,7 +2,9 @@ package integration
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"testing"
@@ -26,13 +28,13 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := NewKafkaHelperWithHooks(t, ocmServer, func(c *config.OCMConfig) {
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.OCMConfig) {
 		c.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
 	})
 	defer teardown()
 
 	// setup required services
-	ocmClient := ocm.NewClient(testServices.OCM2Client.Connection)
+	ocmClient := ocm.NewClient(test.TestServices.OCM2Client.Connection)
 
 	kasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
@@ -40,7 +42,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer kasfFleetshardSync.Stop()
 
 	// create a cluster - this will need to be done manually until cluster creation is implemented in the cluster manager reconcile
-	clusterRegisterError := testServices.ClusterService.RegisterClusterJob(&api.Cluster{
+	clusterRegisterError := test.TestServices.ClusterService.RegisterClusterJob(&api.Cluster{
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Region:        mocks.MockCluster.Region().ID(),
 		MultiAZ:       testMultiAZ,
@@ -50,7 +52,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}
 
-	clusterID, err := common2.WaitForClusterIDToBeAssigned(testServices.DBFactory, &testServices.ClusterService, &services.FindClusterCriteria{
+	clusterID, err := common2.WaitForClusterIDToBeAssigned(test.TestServices.DBFactory, &test.TestServices.ClusterService, &services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
 	},
@@ -59,7 +61,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	cluster, checkReadyErr := common2.WaitForClusterStatus(testServices.DBFactory, &testServices.ClusterService, clusterID, api.ClusterReady)
+	cluster, checkReadyErr := common2.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
@@ -82,14 +84,14 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(cluster.ExternalID).To(Equal(ocmCluster.ExternalID()))
 
 	// check the state of the managed kafka addon on ocm to ensure it was installed successfully
-	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, testServices.OCMConfig.StrimziOperatorAddonID)
+	strimziOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.StrimziOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the strimzi operator addon for cluster %s", cluster.ClusterID)
 	}
 	Expect(strimziOperatorAddonInstallation.State()).To(Equal(clustersmgmtv1.AddOnInstallationStateReady))
 
 	// check the state of the cluster logging operator addon on ocm to ensure it was installed successfully
-	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, testServices.OCMConfig.ClusterLoggingOperatorAddonID)
+	clusterLoggingOperatorAddonInstallation, err := ocmClient.GetAddon(cluster.ClusterID, test.TestServices.OCMConfig.ClusterLoggingOperatorAddonID)
 	if err != nil {
 		t.Fatalf("failed to get the cluster logging addon installation for cluster %s", cluster.ClusterID)
 	}
@@ -117,7 +119,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	kasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
@@ -135,11 +137,11 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	db := testServices.DBFactory.New()
-	cluster, _ := testServices.ClusterService.FindClusterByID(clusterID)
+	db := test.TestServices.DBFactory.New()
+	cluster, _ := test.TestServices.ClusterService.FindClusterByID(clusterID)
 
 	// create dummy kafkas and assign it to current cluster to make it not empty
-	kafka := api.KafkaRequest{
+	kafka := dbapi.KafkaRequest{
 		ClusterID:     cluster.ClusterID,
 		MultiAZ:       false,
 		Region:        cluster.Region,
@@ -177,7 +179,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
-	err := common2.WaitForClusterToBeDeleted(testServices.DBFactory, &testServices.ClusterService, dummyCluster.ClusterID)
+	err := common2.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

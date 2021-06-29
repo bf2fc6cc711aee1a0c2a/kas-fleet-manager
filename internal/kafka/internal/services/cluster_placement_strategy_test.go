@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -15,7 +16,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		ClusterService ClusterService
 	}
 	type args struct {
-		kafka *api.KafkaRequest
+		kafka *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -38,7 +39,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    &api.Cluster{},
 			wantErr: false,
@@ -57,7 +58,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    nil,
 			wantErr: false,
@@ -76,7 +77,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    nil,
 			wantErr: true,
@@ -106,7 +107,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		ClusterService ClusterService
 	}
 	type args struct {
-		kafka *api.KafkaRequest
+		kafka *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -138,7 +139,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    &api.Cluster{ClusterID: "test01"},
 			wantErr: false,
@@ -166,7 +167,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    nil,
 			wantErr: false,
@@ -197,7 +198,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    &api.Cluster{ClusterID: "test02"},
 			wantErr: false,
@@ -223,7 +224,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    nil,
 			wantErr: false,
@@ -246,7 +247,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			want:    nil,
 			wantErr: true,

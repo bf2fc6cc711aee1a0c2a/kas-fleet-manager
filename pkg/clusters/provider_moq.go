@@ -168,15 +168,15 @@ type ProviderMock struct {
 		InstallClusterLogging []struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
-			// AddonParams is the params argument value.
-			AddonParams []types.Parameter
+			// Params is the params argument value.
+			Params []types.Parameter
 		}
 		// InstallKasFleetshard holds details about calls to the InstallKasFleetshard method.
 		InstallKasFleetshard []struct {
 			// ClusterSpec is the clusterSpec argument value.
 			ClusterSpec *types.ClusterSpec
-			// AddonParams is the params argument value.
-			AddonParams []types.Parameter
+			// Params is the params argument value.
+			Params []types.Parameter
 		}
 		// InstallStrimzi holds details about calls to the InstallStrimzi method.
 		InstallStrimzi []struct {
@@ -511,10 +511,10 @@ func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types.ClusterSpec, 
 	}
 	callInfo := struct {
 		ClusterSpec *types.ClusterSpec
-		AddonParams []types.Parameter
+		Params      []types.Parameter
 	}{
 		ClusterSpec: clusterSpec,
-		AddonParams: params,
+		Params:      params,
 	}
 	mock.lockInstallClusterLogging.Lock()
 	mock.calls.InstallClusterLogging = append(mock.calls.InstallClusterLogging, callInfo)
@@ -527,11 +527,11 @@ func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types.ClusterSpec, 
 //     len(mockedProvider.InstallClusterLoggingCalls())
 func (mock *ProviderMock) InstallClusterLoggingCalls() []struct {
 	ClusterSpec *types.ClusterSpec
-	AddonParams []types.Parameter
+	Params      []types.Parameter
 } {
 	var calls []struct {
 		ClusterSpec *types.ClusterSpec
-		AddonParams []types.Parameter
+		Params      []types.Parameter
 	}
 	mock.lockInstallClusterLogging.RLock()
 	calls = mock.calls.InstallClusterLogging
@@ -546,10 +546,10 @@ func (mock *ProviderMock) InstallKasFleetshard(clusterSpec *types.ClusterSpec, p
 	}
 	callInfo := struct {
 		ClusterSpec *types.ClusterSpec
-		AddonParams []types.Parameter
+		Params      []types.Parameter
 	}{
 		ClusterSpec: clusterSpec,
-		AddonParams: params,
+		Params:      params,
 	}
 	mock.lockInstallKasFleetshard.Lock()
 	mock.calls.InstallKasFleetshard = append(mock.calls.InstallKasFleetshard, callInfo)
@@ -562,11 +562,11 @@ func (mock *ProviderMock) InstallKasFleetshard(clusterSpec *types.ClusterSpec, p
 //     len(mockedProvider.InstallKasFleetshardCalls())
 func (mock *ProviderMock) InstallKasFleetshardCalls() []struct {
 	ClusterSpec *types.ClusterSpec
-	AddonParams []types.Parameter
+	Params      []types.Parameter
 } {
 	var calls []struct {
 		ClusterSpec *types.ClusterSpec
-		AddonParams []types.Parameter
+		Params      []types.Parameter
 	}
 	mock.lockInstallKasFleetshard.RLock()
 	calls = mock.calls.InstallKasFleetshard

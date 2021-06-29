@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
 
@@ -18,7 +19,7 @@ func TestDeletingKafkaManager(t *testing.T) {
 		configService services.ConfigService
 	}
 	type args struct {
-		kafka *api.KafkaRequest
+		kafka *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -29,11 +30,11 @@ func TestDeletingKafkaManager(t *testing.T) {
 		{
 			name: "successful reconcile",
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					DeleteFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					DeleteFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
@@ -50,11 +51,11 @@ func TestDeletingKafkaManager(t *testing.T) {
 		{
 			name: "failed reconcile",
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					DeleteFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					DeleteFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
 				},

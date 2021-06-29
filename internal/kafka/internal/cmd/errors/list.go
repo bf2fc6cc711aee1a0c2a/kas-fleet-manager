@@ -2,16 +2,16 @@ package errors
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
 	"os"
 	"sort"
 
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	svcErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -36,7 +36,7 @@ func NewListCommand(env *environments.Env) *cobra.Command {
 func runList(cmd *cobra.Command, _ []string) {
 	filePath := flags.MustGetString(FlagsSaveToFile, cmd.Flags())
 
-	var svcErrors []openapi.Error
+	var svcErrors []public.Error
 	errors := svcErr.Errors()
 
 	// Sort errors by code

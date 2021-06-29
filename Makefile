@@ -286,8 +286,6 @@ test/cluster/cleanup:
 # generate files
 generate: moq openapi/generate
 	$(GO) generate ./...
-	$(GOFMT) -w pkg/api/openapi
-	$(GOFMT) -w pkg/api/private/openapi
 	$(GO) mod vendor
 	$(MOQ) -out ./pkg/client/keycloak/gocloak_moq.go -pkg keycloak vendor/github.com/Nerzal/gocloak/v8 GoCloak:GoCloakMock
 .PHONY: generate
@@ -301,25 +299,26 @@ openapi/validate: openapi-generator
 
 # generate the openapi schema and data/generated/openapi/openapi.go
 openapi/generate: go-bindata openapi-generator
-	rm -rf pkg/api/openapi
-	rm -rf pkg/api/private/openapi
+	rm -rf internal/kafka/internal/api/public
+	rm -rf internal/kafka/internal/api/private
 	rm -rf internal/connector/internal/api/public
 	rm -rf internal/connector/internal/api/private
-
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o pkg/api/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o pkg/api/private/openapi -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
-	$(GOBINDATA) -o ./data/generated/openapi/openapi.go -pkg openapi -mode 420 -modtime 1 -prefix ./openapi/ ./openapi
+	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix ./openapi/ ./openapi
 	$(GOBINDATA) -o ./internal/connector/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix ./internal/connector/internal/api/public/api ./internal/connector/internal/api/public/api
-	$(GOFMT) -w pkg/api/openapi
-	$(GOFMT) -w pkg/api/private/openapi
+	$(GOFMT) -w internal/kafka/internal/api/public
+	$(GOFMT) -w internal/kafka/internal/api/private
+	$(GOFMT) -w internal/kafka/internal/generated
 	$(GOFMT) -w internal/connector/internal/api/public
 	$(GOFMT) -w internal/connector/internal/api/private
+	$(GOFMT) -w internal/connector/internal/generated
 .PHONY: openapi/generate
 
 # clean up code and dependencies

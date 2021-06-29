@@ -3,11 +3,11 @@ package serviceaccounts
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"strconv"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -58,13 +58,13 @@ func runList(env *environments.Env, cmd *cobra.Command) {
 	if svcErr != nil {
 		glog.Fatalf("Unable to list service account list: %s", svcErr.Error())
 	}
-	serviceAccountList := openapi.ServiceAccountList{
+	serviceAccountList := public.ServiceAccountList{
 		Kind:  "ServiceAccountList",
-		Items: []openapi.ServiceAccountListItem{},
+		Items: []public.ServiceAccountListItem{},
 	}
 
 	for _, account := range sa {
-		converted := presenters.PresentServiceAccountListItem(&account)
+		converted := presenters2.PresentServiceAccountListItem(&account)
 		serviceAccountList.Items = append(serviceAccountList.Items, converted)
 	}
 

@@ -2,9 +2,9 @@ package cloudprovider
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -39,7 +39,7 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 		glog.Fatalf("Unable to list cloud provider regions: %s", err.Error())
 	}
 
-	regionList := openapi.CloudRegionList{
+	regionList := public.CloudRegionList{
 		Kind:  "CloudRegionList",
 		Total: int32(len(cloudRegions)),
 		Size:  int32(len(cloudRegions)),
@@ -47,7 +47,7 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 	for _, cloudRegion := range cloudRegions {
 		cloudRegion.Enabled = config.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
-		converted := presenters.PresentCloudRegion(&cloudRegion)
+		converted := presenters2.PresentCloudRegion(&cloudRegion)
 		regionList.Items = append(regionList.Items, converted)
 	}
 

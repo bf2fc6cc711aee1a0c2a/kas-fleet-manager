@@ -3,14 +3,15 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -29,10 +30,10 @@ func TestObservatorium_ResourceStateMetric(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	_, _, teardown := NewKafkaHelper(t, ocmServer)
+	_, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	service := services.NewObservatoriumService(testServices.ObservatoriumClient, testServices.KafkaService)
+	service := services.NewObservatoriumService(test.TestServices.ObservatoriumClient, test.TestServices.KafkaService)
 	kafkaState, err := service.GetKafkaState(mockKafkaClusterName, mockResourceNamespace)
 	Expect(err).NotTo(HaveOccurred(), "Error getting kafka state:  %v", err)
 	Expect(kafkaState.State).NotTo(BeEmpty(), "Should return state")
@@ -43,7 +44,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
@@ -53,7 +54,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := openapi.KafkaRequestPayload{
+	k := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -65,7 +66,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	service := services.NewObservatoriumService(testServices.ObservatoriumClient, testServices.KafkaService)
+	service := services.NewObservatoriumService(test.TestServices.ObservatoriumClient, test.TestServices.KafkaService)
 	metricsList := &observatorium.KafkaMetrics{}
 	q := observatorium.MetricsReqParams{}
 	q.ResultType = observatorium.RangeQuery
@@ -88,7 +89,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
@@ -106,7 +107,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := openapi.KafkaRequestPayload{
+	k := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -118,7 +119,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, _ := common.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, _ := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -142,7 +143,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
-	filters := openapi.GetMetricsByRangeQueryOpts{}
+	filters := public.GetMetricsByRangeQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByRangeQuery(context, kafka.Id, 5, 30, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
@@ -160,7 +161,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
@@ -178,7 +179,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := openapi.KafkaRequestPayload{
+	k := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -190,7 +191,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, testServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -214,7 +215,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 
-	filters := openapi.GetMetricsByInstantQueryOpts{}
+	filters := public.GetMetricsByInstantQueryOpts{}
 	metrics, resp, err := client.DefaultApi.GetMetricsByInstantQuery(context, kafka.Id, &filters)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get metrics data:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))

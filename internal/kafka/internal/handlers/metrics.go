@@ -1,14 +1,14 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
@@ -42,11 +42,11 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 			if err != nil {
 				return nil, err
 			}
-			metricList := openapi.MetricsRangeQueryList{
+			metricList := public.MetricsRangeQueryList{
 				Kind: "MetricsRangeQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
+			metrics, err := presenters2.PresentMetricsByRangeQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -71,11 +71,11 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 			if err != nil {
 				return nil, err
 			}
-			metricList := openapi.MetricsInstantQueryList{
+			metricList := public.MetricsInstantQueryList{
 				Kind: "MetricsInstantQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
+			metrics, err := presenters2.PresentMetricsByInstantQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}

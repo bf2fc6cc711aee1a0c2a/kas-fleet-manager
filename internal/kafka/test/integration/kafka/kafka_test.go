@@ -1,10 +1,10 @@
 package kafka
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"os"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/integration"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 )
@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := integration.NewKafkaHelper(&testing.T{}, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(&testing.T{}, ocmServer)
 	defer teardown()
 
 	status := cucumber.TestMain(h)

@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
@@ -27,7 +30,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 			name: "throw an error when the KafkaService call throws an error",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
 				},
@@ -40,7 +43,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 			name: "throw an error when name is already used",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
 				},
@@ -57,7 +60,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 			name: "does not throw an error when name is unique",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 0}, nil
 					},
 				},
@@ -126,6 +129,151 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 			} else {
 				gomega.Expect(err).ShouldNot(gomega.HaveOccurred())
 			}
+		})
+	}
+}
+
+func Test_Validation_validateCloudProvider(t *testing.T) {
+	type args struct {
+		kafkaRequest  public.KafkaRequestPayload
+		configService coreServices.ConfigService
+	}
+
+	type result struct {
+		wantErr      bool
+		reason       string
+		kafkaRequest public.KafkaRequest
+	}
+
+	tests := []struct {
+		name string
+		arg  args
+		want result
+	}{
+		{
+			name: "do not throw an error when default provider and region are picked",
+			arg: args{
+				kafkaRequest: public.KafkaRequestPayload{},
+				configService: coreServices.NewConfigService(
+					&config.ApplicationConfig{
+						SupportedProviders: &config.ProviderConfig{
+							ProvidersConfig: config.ProviderConfiguration{
+								SupportedProviders: config.ProviderList{
+									config.Provider{
+										Name:    "aws",
+										Default: true,
+										Regions: config.RegionList{
+											config.Region{
+												Name:    "us-east-1",
+												Default: true,
+											},
+										},
+									},
+								},
+							},
+						},
+					}),
+			},
+			want: result{
+				wantErr: false,
+				kafkaRequest: public.KafkaRequest{
+					CloudProvider: "aws",
+					Region:        "us-east-1",
+				},
+			},
+		},
+		{
+			name: "do not throw an error when cloud provider and region matches",
+			arg: args{
+				kafkaRequest: public.KafkaRequestPayload{
+					CloudProvider: "aws",
+					Region:        "us-east-1",
+				},
+				configService: coreServices.NewConfigService(
+					&config.ApplicationConfig{
+						SupportedProviders: &config.ProviderConfig{
+							ProvidersConfig: config.ProviderConfiguration{
+								SupportedProviders: config.ProviderList{
+									config.Provider{
+										Name: "gcp",
+										Regions: config.RegionList{
+											config.Region{
+												Name: "eu-east-1",
+											},
+										},
+									},
+									config.Provider{
+										Name: "aws",
+										Regions: config.RegionList{
+											config.Region{
+												Name: "us-east-1",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				),
+			},
+			want: result{
+				wantErr: false,
+				kafkaRequest: public.KafkaRequest{
+					CloudProvider: "aws",
+					Region:        "us-east-1",
+				},
+			},
+		},
+		{
+			name: "throws an error when cloud provider and region do not match",
+			arg: args{
+				kafkaRequest: public.KafkaRequestPayload{
+					CloudProvider: "aws",
+					Region:        "us-east",
+				},
+				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+					SupportedProviders: &config.ProviderConfig{
+						ProvidersConfig: config.ProviderConfiguration{
+							SupportedProviders: config.ProviderList{
+								config.Provider{
+									Name: "aws",
+									Regions: config.RegionList{
+										config.Region{
+											Name: "us-east-1",
+										},
+									},
+								},
+							},
+						},
+					},
+				}),
+			},
+			want: result{
+				wantErr: true,
+				reason:  "region us-east is not supported for aws, supported regions are: [us-east-1]",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			validateFn := ValidateCloudProvider(&tt.arg.kafkaRequest, tt.arg.configService, "creating-kafka")
+			err := validateFn()
+			if !tt.want.wantErr && err != nil {
+				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)
+			} else if tt.want.wantErr {
+				gomega.Expect(err.Reason).To(gomega.Equal(tt.want.reason))
+				return
+			}
+
+			gomega.Expect(tt.want.wantErr).To(gomega.Equal(err != nil))
+
+			if !tt.want.wantErr {
+				gomega.Expect(tt.arg.kafkaRequest.CloudProvider).To(gomega.Equal(tt.want.kafkaRequest.CloudProvider))
+				gomega.Expect(tt.arg.kafkaRequest.Region).To(gomega.Equal(tt.want.kafkaRequest.Region))
+			}
+
 		})
 	}
 }

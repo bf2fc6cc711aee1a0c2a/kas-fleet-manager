@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"reflect"
@@ -189,7 +190,7 @@ func Test_buildKafkaNamespaceIdentifier(t *testing.T) {
 	namespaceLimit := 63 // Maximum namespace name length as validated by OpenShift
 
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name string
@@ -199,7 +200,7 @@ func Test_buildKafkaNamespaceIdentifier(t *testing.T) {
 		{
 			name: "build kafka namespace id successfully with a short owner username",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Owner: mockShortOwnerUsername,
 				},
 			},
@@ -208,7 +209,7 @@ func Test_buildKafkaNamespaceIdentifier(t *testing.T) {
 		{
 			name: "build kafka namespace id successfully with a long owner username",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Owner: mockLongOwnerUsername,
 				},
 			},
@@ -234,7 +235,7 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 	mockLongKafkaName := "sample-kafka-name-long"
 
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name string
@@ -244,7 +245,7 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 		{
 			name: "build kafka identifier with a short name successfully",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Name: mockShortKafkaName,
 				},
 			},
@@ -253,7 +254,7 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 		{
 			name: "build kafka identifier with a long name successfully",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Name: mockLongKafkaName,
 				},
 			},
@@ -275,7 +276,7 @@ func Test_buildSyncsetIdentifier(t *testing.T) {
 	mockLongKafkaName := "sample-kafka-name-long-test"
 
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name string
@@ -285,7 +286,7 @@ func Test_buildSyncsetIdentifier(t *testing.T) {
 		{
 			name: "build syncset identifier with a short name successfully",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Name: mockShortKafkaName,
 				},
 			},
@@ -294,7 +295,7 @@ func Test_buildSyncsetIdentifier(t *testing.T) {
 		{
 			name: "build syncset identifier with a long name successfully",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Name: mockLongKafkaName,
 				},
 			},
@@ -490,7 +491,7 @@ func Test_BuildNamespaceName(t *testing.T) {
 	mockKafkaNamespace := "a1ilzo99dvkvaoqnjeovhp8pfizs"
 
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -501,7 +502,7 @@ func Test_BuildNamespaceName(t *testing.T) {
 		{
 			name: "Build namespace name successfully",
 			args: args{
-				kafkaRequest: &api.KafkaRequest{
+				kafkaRequest: &dbapi.KafkaRequest{
 					Name: mockKafkaName,
 					Meta: api.Meta{
 						ID: mockKafkaRequestID,

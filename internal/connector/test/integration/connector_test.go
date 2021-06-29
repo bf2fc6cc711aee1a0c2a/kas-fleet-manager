@@ -160,7 +160,7 @@ func TestMain(m *testing.M) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := test.NewHelperWithHooks(t, ocmServer,
+	h, teardown := test.NewHelperWithHooks(t, ocmServer,
 		func(c *config.ConnectorsConfig) {
 			c.Enabled = true
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}

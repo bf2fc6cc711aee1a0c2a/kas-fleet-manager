@@ -3,6 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -10,9 +14,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -27,8 +28,8 @@ type TestServer struct {
 	TearDown      func()
 	ClusterID     string
 	Token         string
-	Client        *publicOpenapi.APIClient
-	PrivateClient *openapi.APIClient
+	Client        *public.APIClient
+	PrivateClient *private.APIClient
 	Helper        *test.Helper
 	Ctx           context.Context
 }
@@ -38,7 +39,7 @@ type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.
 func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	h, client, tearDown := NewKafkaHelperWithHooks(t, ocmServer, startupHook)
+	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, startupHook)
 
 	clusterId, getClusterErr := common.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {
@@ -49,12 +50,12 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 	ctx := h.NewAuthenticatedContext(account, claims(account, clusterId, h))
 	token := h.CreateJWTStringWithClaim(account, claims(account, clusterId, h))
 
-	config := openapi.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", testServices.ServerConfig.BindAddress)
+	config := private.NewConfiguration()
+	config.BasePath = fmt.Sprintf("http://%s", test2.TestServices.ServerConfig.BindAddress)
 	config.DefaultHeader = map[string]string{
 		"Authorization": "Bearer " + token,
 	}
-	privateClient := openapi.NewAPIClient(config)
+	privateClient := private.NewAPIClient(config)
 
 	return TestServer{
 		OcmServer:     ocmServer,
@@ -75,7 +76,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 	clusterId := "test-cluster-id"
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss": test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -85,7 +86,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 
 	defer testServer.TearDown()
 
-	body := map[string]openapi.DataPlaneKafkaStatus{
+	body := map[string]private.DataPlaneKafkaStatus{
 		testServer.ClusterID: {},
 	}
 	restyResp, err := resty.R().
@@ -97,7 +98,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
 
-	clusterStatusUpdateRequest := openapi.DataPlaneClusterUpdateStatusRequest{}
+	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
@@ -113,7 +114,7 @@ func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
 	clusterId := "test-cluster-id"
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss": test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -123,7 +124,7 @@ func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
 
 	defer testServer.TearDown()
 
-	body := map[string]openapi.DataPlaneKafkaStatus{
+	body := map[string]private.DataPlaneKafkaStatus{
 		testServer.ClusterID: {},
 	}
 	restyResp, err := resty.R().
@@ -139,14 +140,14 @@ func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss":                                testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":                                test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"kas-fleetshard-operator-cluster-id": "test-cluster-id",
 		}
 	}, nil)
 
 	defer testServer.TearDown()
 
-	body := map[string]openapi.DataPlaneKafkaStatus{
+	body := map[string]private.DataPlaneKafkaStatus{
 		"test-cluster-id": {},
 	}
 	restyResp, err := resty.R().
@@ -158,7 +159,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
 
-	clusterStatusUpdateRequest := openapi.DataPlaneClusterUpdateStatusRequest{}
+	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
@@ -172,7 +173,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss": test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -181,7 +182,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	}, nil)
 	defer testServer.TearDown()
 
-	body := map[string]openapi.DataPlaneKafkaStatus{
+	body := map[string]private.DataPlaneKafkaStatus{
 		"test-cluster-id": {},
 	}
 	restyResp, err := resty.R().
@@ -193,7 +194,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
 
-	clusterStatusUpdateRequest := openapi.DataPlaneClusterUpdateStatusRequest{}
+	clusterStatusUpdateRequest := private.DataPlaneClusterUpdateStatusRequest{}
 	restyResp, err = resty.R().
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
@@ -209,7 +210,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -221,7 +222,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	var testKafkas = []*api.KafkaRequest{
+	var testKafkas = []*dbapi.KafkaRequest{
 		{
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
@@ -274,7 +275,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		},
 	}
 
-	db := testServices.DBFactory.New()
+	db := test2.TestServices.DBFactory.New()
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
@@ -284,7 +285,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// kafka failed in preparing state and should not be returned in the list
-	additionalKafka := &api.KafkaRequest{
+	additionalKafka := &dbapi.KafkaRequest{
 		ClusterID: testServer.ClusterID,
 		MultiAZ:   false,
 		Name:      mockKafkaName4,
@@ -302,7 +303,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(4)) // only count valid Managed Kafka CR
 
-	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -313,7 +314,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	for _, k := range testKafkas {
 		if k.Status != constants.KafkaRequestStatusPreparing.String() {
-			if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Id == k.ID }); mk != nil {
+			if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotations.DeprecatedBf2OrgPlacementId).To(Equal(k.PlacementId))
 				Expect(mk.Metadata.Annotations.DeprecatedBf2OrgId).To(Equal(k.ID))
@@ -331,19 +332,19 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	}
 
 	var readyClusters, deletedClusters []string
-	updates := map[string]openapi.DataPlaneKafkaStatus{}
+	updates := map[string]private.DataPlaneKafkaStatus{}
 	for _, item := range list.Items {
 		if !item.Spec.Deleted {
-			updates[item.Metadata.Annotations.Id] = openapi.DataPlaneKafkaStatus{
-				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{{
+			updates[item.Metadata.Annotations.Id] = private.DataPlaneKafkaStatus{
+				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 				}},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.Id)
 		} else {
-			updates[item.Metadata.Annotations.Id] = openapi.DataPlaneKafkaStatus{
-				Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{{
+			updates[item.Metadata.Annotations.Id] = private.DataPlaneKafkaStatus{
+				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "False",
 					Reason: "Deleted",
@@ -357,7 +358,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {
-		c := &api.KafkaRequest{}
+		c := &dbapi.KafkaRequest{}
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
@@ -365,7 +366,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	}
 
 	for _, cid := range deletedClusters {
-		c := &api.KafkaRequest{}
+		c := &dbapi.KafkaRequest{}
 		// need to use Unscoped here as there is a chance the entry is soft deleted already
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
@@ -386,7 +387,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -398,7 +399,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	testKafka := &api.KafkaRequest{
+	testKafka := &dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -410,7 +411,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		Version:             "2.7.0",
 	}
 
-	db := testServices.DBFactory.New()
+	db := test2.TestServices.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -423,7 +424,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -431,7 +432,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
 		Expect(mk.Spec.Endpoint.Tls.Cert).To(Equal(cert))
 		Expect(mk.Spec.Endpoint.Tls.Key).To(Equal(key))
 	} else {
@@ -447,7 +448,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -459,7 +460,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	testKafka := &api.KafkaRequest{
+	testKafka := &dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -473,7 +474,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 
 	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 
-	db := testServices.DBFactory.New()
+	db := test2.TestServices.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -486,7 +487,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -494,7 +495,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
 		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).To(BeNil())
 	} else {
@@ -512,7 +513,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -524,7 +525,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	testKafka := &api.KafkaRequest{
+	testKafka := &dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -538,7 +539,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 
 	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
 
-	db := testServices.DBFactory.New()
+	db := test2.TestServices.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -551,7 +552,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
 
-	find := func(slice []openapi.ManagedKafka, match func(kafka openapi.ManagedKafka) bool) *openapi.ManagedKafka {
+	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
 		for _, item := range slice {
 			if match(item) {
 				return &item
@@ -559,7 +560,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item openapi.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
 		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).ToNot(BeNil())
 	} else {
@@ -573,7 +574,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      testServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -585,9 +586,9 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	db := testServices.DBFactory.New()
+	db := test2.TestServices.DBFactory.New()
 
-	testKafka := api.KafkaRequest{
+	testKafka := dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -611,13 +612,13 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	kafkaReqID := list.Items[0].Metadata.Annotations.Id
 
 	errMessage := "test-err-message"
-	updateReq := map[string]openapi.DataPlaneKafkaStatus{
+	updateReq := map[string]private.DataPlaneKafkaStatus{
 		kafkaReqID: kasfleetshardsync2.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
 	}
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
 	Expect(err).NotTo(HaveOccurred())
 
-	c := &api.KafkaRequest{}
+	c := &dbapi.KafkaRequest{}
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}

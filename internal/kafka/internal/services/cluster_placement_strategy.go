@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/pkg/errors"
@@ -9,7 +10,7 @@ import (
 //go:generate moq -out cluster_placement_strategy_moq.go . ClusterPlacementStrategy
 type ClusterPlacementStrategy interface {
 	// FindCluster finds and returns a Cluster depends on the specific impl.
-	FindCluster(kafka *api.KafkaRequest) (*api.Cluster, error)
+	FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error)
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
@@ -29,7 +30,7 @@ type FirstReadyCluster struct {
 	ClusterService ClusterService
 }
 
-func (f *FirstReadyCluster) FindCluster(kafka *api.KafkaRequest) (*api.Cluster, error) {
+func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	criteria := FindClusterCriteria{
 		Provider: kafka.CloudProvider,
 		Region:   kafka.Region,
@@ -52,7 +53,7 @@ type FirstSchedulableWithinLimit struct {
 	ClusterService ClusterService
 }
 
-func (f *FirstSchedulableWithinLimit) FindCluster(kafka *api.KafkaRequest) (*api.Cluster, error) {
+func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	criteria := FindClusterCriteria{
 		Provider: kafka.CloudProvider,
 		Region:   kafka.Region,
