@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
 	"net/http"
 	"sort"
 	"strconv"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -33,12 +33,12 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 			})
 
 			list, total := DetermineListRange(allErrors, listArgs.Page, listArgs.Size)
-			errorList := openapi.ErrorList{
+			errorList := compat.ErrorList{
 				Kind:  "ErrorList",
 				Page:  int32(listArgs.Page),
 				Size:  int32(len(list)),
 				Total: int32(total),
-				Items: []openapi.Error{},
+				Items: []compat.Error{},
 			}
 			for _, e := range list {
 				err := e.(errors.ServiceError)

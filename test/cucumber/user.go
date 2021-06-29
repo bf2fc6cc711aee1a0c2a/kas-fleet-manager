@@ -11,7 +11,7 @@ package cucumber
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/cucumber/godog"
 )
 
@@ -52,7 +52,7 @@ func (s *TestSuite) createUserNamedInOrganization(name string, orgid string) err
 	s.users[name] = &TestUser{
 		Name:  name,
 		Token: token,
-		Ctx:   context.WithValue(context.Background(), openapi.ContextAccessToken, token),
+		Ctx:   context.WithValue(context.Background(), compat.ContextAccessToken, token),
 	}
 	return nil
 }

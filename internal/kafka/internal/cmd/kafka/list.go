@@ -3,12 +3,12 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"net/url"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -66,16 +66,16 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	// format output
-	kafkaRequestList := openapi.KafkaRequestList{
+	kafkaRequestList := public.KafkaRequestList{
 		Kind:  "KafkaRequestList",
 		Page:  int32(paging.Page),
 		Size:  int32(paging.Size),
 		Total: int32(paging.Total),
-		Items: []openapi.KafkaRequest{},
+		Items: []public.KafkaRequest{},
 	}
 
 	for _, kafkaRequest := range kafkaList {
-		converted := presenters.PresentKafkaRequest(kafkaRequest)
+		converted := presenters2.PresentKafkaRequest(kafkaRequest)
 		kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 	}
 

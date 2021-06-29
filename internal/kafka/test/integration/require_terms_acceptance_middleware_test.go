@@ -1,10 +1,11 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -13,7 +14,7 @@ import (
 
 type TestEnv struct {
 	helper   *test.Helper
-	client   *openapi.APIClient
+	client   *public.APIClient
 	teardown func()
 }
 
@@ -28,7 +29,7 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := NewKafkaHelperWithHooks(t, ocmServer, func(serverConfig *config.ServerConfig) {
+	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(serverConfig *config.ServerConfig) {
 		serverConfig.EnableTermsAcceptance = true
 	})
 
@@ -46,7 +47,7 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
-	if testServices.OCMConfig.MockMode != config.MockModeEmulateServer {
+	if test2.TestServices.OCMConfig.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -54,7 +55,7 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	k := openapi.KafkaRequestPayload{
+	k := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -71,7 +72,7 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
-	if testServices.OCMConfig.MockMode != config.MockModeEmulateServer {
+	if test2.TestServices.OCMConfig.MockMode != config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -79,7 +80,7 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	k := openapi.KafkaRequestPayload{
+	k := public.KafkaRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,

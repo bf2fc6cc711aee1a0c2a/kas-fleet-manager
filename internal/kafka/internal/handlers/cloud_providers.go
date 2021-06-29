@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
@@ -8,8 +10,6 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
@@ -47,16 +47,16 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 			if err != nil {
 				return nil, err
 			}
-			regionList := openapi.CloudRegionList{
+			regionList := public.CloudRegionList{
 				Kind:  "CloudRegionList",
 				Total: int32(len(cloudRegions)),
 				Size:  int32(len(cloudRegions)),
 				Page:  int32(1),
-				Items: []openapi.CloudRegion{},
+				Items: []public.CloudRegion{},
 			}
 			for _, cloudRegion := range cloudRegions {
 				cloudRegion.Enabled = h.config.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
-				converted := presenters.PresentCloudRegion(&cloudRegion)
+				converted := presenters2.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}
 			h.cache.Set(id, regionList, cache.DefaultExpiration)
@@ -77,17 +77,17 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 			if err != nil {
 				return nil, err
 			}
-			cloudProviderList := openapi.CloudProviderList{
+			cloudProviderList := public.CloudProviderList{
 				Kind:  "CloudProviderList",
 				Total: int32(len(cloudProviders)),
 				Size:  int32(len(cloudProviders)),
 				Page:  int32(1),
-				Items: []openapi.CloudProvider{},
+				Items: []public.CloudProvider{},
 			}
 
 			for _, cloudProvider := range cloudProviders {
 				cloudProvider.Enabled = h.config.IsProviderSupported(cloudProvider.Id)
-				converted := presenters.PresentCloudProvider(&cloudProvider)
+				converted := presenters2.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)
 			}
 			h.cache.Set(cloudProvidersCacheKey, cloudProviderList, cache.DefaultExpiration)

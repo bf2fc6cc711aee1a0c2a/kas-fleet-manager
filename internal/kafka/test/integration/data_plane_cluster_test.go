@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"net/http"
@@ -9,11 +11,10 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
@@ -32,7 +33,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -44,14 +45,14 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	}
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync2.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	cluster, err := testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterReady))
@@ -66,14 +67,14 @@ func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID := "test-cluster-id"
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 
-	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, private.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest)) // We expect 400 error in this test because the cluster ID does not exist
 	Expect(err).To(HaveOccurred())
 
@@ -86,14 +87,14 @@ func TestDataPlaneCluster_UnauthorizedWhenNoAuthProvided(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 	ctx := context.Background()
 	testDataPlaneclusterID := "test-cluster-id"
 
-	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, private.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(err).To(HaveOccurred())
 
@@ -106,14 +107,14 @@ func TestDataPlaneCluster_NotFoundWhenNoProperAuthRole(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 	testDataPlaneclusterID := "test-cluster-id"
 	ctx := newAuthContextWithNotAllowedRoleForDataPlaneCluster(h, testDataPlaneclusterID)
 
-	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, private.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
 
@@ -126,14 +127,14 @@ func TestDataPlaneCluster_NotFoundWhenNotAllowedClusterID(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 	testDataPlaneclusterID := "test-cluster-id"
 	ctx := newAuthContextWithNotAllowedClusterIDForDataPlaneCluster(h)
 
-	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, openapi.DataPlaneClusterUpdateStatusRequest{})
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, private.DataPlaneClusterUpdateStatusRequest{})
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 	Expect(err).To(HaveOccurred())
 
@@ -146,7 +147,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -158,7 +159,7 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 	}
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 	config, resp, err := privateAPIClient.AgentClustersApi.GetKafkaAgent(ctx, testDataPlaneclusterID)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).NotTo(HaveOccurred())
@@ -180,7 +181,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -191,7 +192,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		t.Fatalf("Cluster not found")
 	}
 
-	cluster, err := testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 
@@ -212,7 +213,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		Status:        api.ClusterReady,
 	}
 
-	db := testServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 	if err := db.Save(&dummyCluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")
 		return
@@ -250,7 +251,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{1000000}[0]
@@ -260,21 +261,21 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	cluster, err = testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterFull))
 
 	// We force status to 'ready' at DB level to ensure no cluster is recreated
 	// again
-	err = testServices.DBFactory.DB.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
+	err = test.TestServices.DBFactory.DB.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
 }
 func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWhenOperatorIsNotReady(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -289,7 +290,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.Conditions[0].Status = "False"
@@ -298,7 +299,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	cluster, err := testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterWaitingForKasFleetShardOperator))
@@ -315,11 +316,11 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	// only run this test when real OCM API is being used
-	if testServices.OCMConfig.MockMode == config.MockModeEmulateServer {
+	if test.TestServices.OCMConfig.MockMode == config.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -335,9 +336,9 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 
-	ocmClient := ocm.NewClient(testServices.OCM2Client.Connection)
+	ocmClient := ocm.NewClient(test.TestServices.OCM2Client.Connection)
 
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
 	initialComputeNodes := ocmCluster.Nodes().Compute()
@@ -361,7 +362,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
 
-	cluster, err := testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterComputeNodeScalingUp))
@@ -390,7 +391,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 
 	// Check that desired and existing compute nodes end being the
 	// expected ones
-	err = common.NewPollerBuilder(testServices.DBFactory).
+	err = common.NewPollerBuilder(test.TestServices.DBFactory).
 		OutputFunction(t.Logf).
 		IntervalAndTimeout(5*time.Second, 60*time.Minute).
 		RetryLogMessagef("Waiting for cluster '%s' to scale up to %d nodes", testDataPlaneclusterID, expectedNodesAfterScaleUp).
@@ -408,14 +409,14 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
-	cluster, err = testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterReady))
 
 	// Check that desired and existing compute nodes end being the
 	// expected ones
-	err = common.NewPollerBuilder(testServices.DBFactory).
+	err = common.NewPollerBuilder(test.TestServices.DBFactory).
 		OutputFunction(t.Logf).
 		IntervalAndTimeout(5*time.Second, 60*time.Minute).
 		RetryLogMessagef("Waiting for cluster '%s' to scale down to %d nodes", testDataPlaneclusterID, initialComputeNodes).
@@ -437,7 +438,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, _, tearDown := NewKafkaHelper(t, ocmServer)
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
@@ -455,16 +456,16 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster
-	db := testServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 	var count int64
 	err = db.Model(&api.Cluster{}).Count(&count).Error
 	Expect(err).ToNot(HaveOccurred())
 	Expect(count).To(Equal(int64(initialExpectedOSDClusters)))
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
-	privateAPIClient := h.NewPrivateAPIClient()
+	privateAPIClient := test.NewPrivateAPIClient(h)
 
-	ocmClient := ocm.NewClient(testServices.OCM2Client.Connection)
+	ocmClient := ocm.NewClient(test.TestServices.OCM2Client.Connection)
 
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
@@ -496,7 +497,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 
-	cluster, err := testServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterFull))
@@ -514,7 +515,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	clusterCreationTimeout := 3 * time.Hour
 	var newCluster *api.Cluster
 	// wait for the new cluster to have an ID
-	err = common.NewPollerBuilder(testServices.DBFactory).
+	err = common.NewPollerBuilder(test.TestServices.DBFactory).
 		OutputFunction(t.Logf).
 		IntervalAndTimeout(5*time.Second, clusterCreationTimeout).
 		OnRetry(func(attempt int, maxRetries int) (bool, error) {
@@ -537,7 +538,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 
 	Expect(err).NotTo(HaveOccurred())
 	// Wait until new cluster is created and ClusterWaitingForKasFleetShardOperator in OCM
-	newCluster, err = common.WaitForClusterStatus(testServices.DBFactory, &testServices.ClusterService, newCluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator)
+	newCluster, err = common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, newCluster.ClusterID, api.ClusterWaitingForKasFleetShardOperator)
 
 	Expect(err).ToNot(HaveOccurred())
 
@@ -550,12 +551,12 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", newCluster.ClusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
 
-	err = common.WaitForClusterToBeDeleted(testServices.DBFactory, &testServices.ClusterService, newCluster.ClusterID)
+	err = common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, newCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }
 
-func newAuthContextWithNotAllowedRoleForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
+func newAuthContextWithNotAllowedRoleForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
 		"realm_access": map[string][]string{
@@ -564,12 +565,12 @@ func newAuthContextWithNotAllowedRoleForDataPlaneCluster(h *test.Helper, cluster
 		"kas-fleetshard-operator-cluster-id": clusterID,
 	}
 	token := h.CreateJWTStringWithClaim(account, claims)
-	ctx := context.WithValue(context.Background(), openapi.ContextAccessToken, token)
+	ctx := context.WithValue(context.Background(), private.ContextAccessToken, token)
 
 	return ctx
 }
 
-func newAuthContextWithNotAllowedClusterIDForDataPlaneCluster(h *test.Helper) context.Context {
+func newAuthContextWithNotAllowedClusterIDForDataPlaneCluster(h *coreTest.Helper) context.Context {
 	account := h.NewAllowedServiceAccount()
 	claims := jwt.MapClaims{
 		"realm_access": map[string][]string{
@@ -578,41 +579,41 @@ func newAuthContextWithNotAllowedClusterIDForDataPlaneCluster(h *test.Helper) co
 		"kas-fleetshard-operator-cluster-id": "differentcluster",
 	}
 	token := h.CreateJWTStringWithClaim(account, claims)
-	ctx := context.WithValue(context.Background(), openapi.ContextAccessToken, token)
+	ctx := context.WithValue(context.Background(), private.ContextAccessToken, token)
 
 	return ctx
 }
 
 // sampleValidBaseDataPlaneClusterStatusRequest returns a valid
-func sampleValidBaseDataPlaneClusterStatusRequest() *openapi.DataPlaneClusterUpdateStatusRequest {
-	return &openapi.DataPlaneClusterUpdateStatusRequest{
-		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
+func sampleValidBaseDataPlaneClusterStatusRequest() *private.DataPlaneClusterUpdateStatusRequest {
+	return &private.DataPlaneClusterUpdateStatusRequest{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Status: "True",
 			},
 		},
-		Total: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
 			IngressEgressThroughputPerSec: &[]string{""}[0],
 			Connections:                   &[]int32{0}[0],
 			DataRetentionSize:             &[]string{""}[0],
 			Partitions:                    &[]int32{0}[0],
 		},
-		NodeInfo: &openapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
+		NodeInfo: &private.DataPlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{0}[0],
 			Floor:                  &[]int32{0}[0],
 			Current:                &[]int32{0}[0],
 			CurrentWorkLoadMinimum: &[]int32{0}[0],
 		},
-		Remaining: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
 			Connections:                   &[]int32{0}[0],
 			Partitions:                    &[]int32{0}[0],
 			IngressEgressThroughputPerSec: &[]string{""}[0],
 			DataRetentionSize:             &[]string{""}[0],
 		},
-		ResizeInfo: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
+		ResizeInfo: &private.DataPlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &openapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
+			Delta: &private.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{0}[0],
 				Partitions:                    &[]int32{0}[0],
 				IngressEgressThroughputPerSec: &[]string{""}[0],
@@ -655,35 +656,35 @@ func mockedClusterWithClusterID(clusterID string) (*clustersmgmtv1.Cluster, erro
 }
 
 // Returns a sample data plane cluster status request with available capacity
-func sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity() *openapi.DataPlaneClusterUpdateStatusRequest {
-	return &openapi.DataPlaneClusterUpdateStatusRequest{
-		Conditions: []openapi.DataPlaneClusterUpdateStatusRequestConditions{
+func sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity() *private.DataPlaneClusterUpdateStatusRequest {
+	return &private.DataPlaneClusterUpdateStatusRequest{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Status: "True",
 			},
 		},
-		Total: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],
 			Connections:                   &[]int32{1000000}[0],
 			DataRetentionSize:             &[]string{"test"}[0],
 			Partitions:                    &[]int32{1000000}[0],
 		},
-		DeprecatedNodeInfo: &openapi.DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo{
+		DeprecatedNodeInfo: &private.DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo{
 			Ceiling:                          &[]int32{20}[0],
 			Floor:                            &[]int32{3}[0],
 			Current:                          &[]int32{5}[0],
 			DeprecatedCurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		Remaining: openapi.DataPlaneClusterUpdateStatusRequestTotal{
+		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
 			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
 			Partitions:                    &[]int32{1000000}[0],
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],
 			DataRetentionSize:             &[]string{"test"}[0],
 		},
-		DeprecatedResizeInfo: &openapi.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo{
+		DeprecatedResizeInfo: &private.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo{
 			DeprecatedNodeDelta: &[]int32{3}[0],
-			Delta: &openapi.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfoDelta{
+			Delta: &private.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfoDelta{
 				Connections:                             &[]int32{10000}[0],
 				Partitions:                              &[]int32{10000}[0],
 				DeprecatedIngressEgressThroughputPerSec: &[]string{"test"}[0],

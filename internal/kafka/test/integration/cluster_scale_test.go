@@ -1,6 +1,7 @@
 package integration
 
 import (
+	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"net/http"
@@ -23,7 +24,7 @@ func TestClusterComputeNodesScaling(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test2.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	kasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
@@ -68,13 +69,13 @@ func getClusterForScaleTest(replicas int) *clustersmgmtv1.Cluster {
 
 // scaleUpComputeNodes and confirm that it is scaled without error
 func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, increment int) {
-	_, err := testServices.ClusterService.ScaleUpComputeNodes(clusterID, increment)
+	_, err := test2.TestServices.ClusterService.ScaleUpComputeNodes(clusterID, increment)
 	Expect(err).To(BeNil())
 }
 
 // scaleDownComputeNodes and confirm that it is scaled without error
 func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, decrement int) {
-	_, err := testServices.ClusterService.ScaleDownComputeNodes(clusterID, decrement)
+	_, err := test2.TestServices.ClusterService.ScaleDownComputeNodes(clusterID, decrement)
 	Expect(err).To(BeNil())
 }
 

@@ -1,12 +1,12 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
@@ -27,7 +27,7 @@ func NewDataPlaneClusterHandler(service services.DataPlaneClusterService, config
 func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWriter, r *http.Request) {
 	dataPlaneClusterID := mux.Vars(r)["id"]
 
-	var dataPlaneClusterUpdateRequest openapi.DataPlaneClusterUpdateStatusRequest
+	var dataPlaneClusterUpdateRequest private.DataPlaneClusterUpdateStatusRequest
 
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &dataPlaneClusterUpdateRequest,
@@ -37,7 +37,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			dataPlaneClusterStatus := presenters.ConvertDataPlaneClusterStatus(dataPlaneClusterUpdateRequest)
+			dataPlaneClusterStatus := presenters2.ConvertDataPlaneClusterStatus(dataPlaneClusterUpdateRequest)
 			err := h.service.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
 			return nil, err
 		},
@@ -60,14 +60,14 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentDataPlaneClusterConfig(dataClusterConfig), nil
+			return presenters2.PresentDataPlaneClusterConfig(dataClusterConfig), nil
 		},
 	}
 
 	handlers.HandleGet(w, r, cfg)
 }
 
-func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneClusterUpdateStatusRequest) handlers.Validate {
+func (h *dataPlaneClusterHandler) validateBody(request *private.DataPlaneClusterUpdateStatusRequest) handlers.Validate {
 	return func() *errors.ServiceError {
 		err := h.validateNodeInfo(request)
 		if err != nil {
@@ -97,7 +97,7 @@ func (h *dataPlaneClusterHandler) validateBody(request *openapi.DataPlaneCluster
 	}
 }
 
-func (h *dataPlaneClusterHandler) validateNodeInfo(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
+func (h *dataPlaneClusterHandler) validateNodeInfo(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
 	if request.NodeInfo != nil {
 		nodeInfo := *request.NodeInfo
 		if nodeInfo.Ceiling == nil {
@@ -127,7 +127,7 @@ func (h *dataPlaneClusterHandler) validateNodeInfo(request *openapi.DataPlaneClu
 	return nil
 }
 
-func (h *dataPlaneClusterHandler) validateResizeInfo(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
+func (h *dataPlaneClusterHandler) validateResizeInfo(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
 	if request.ResizeInfo != nil {
 		resizeInfo := *request.ResizeInfo
 
@@ -173,7 +173,7 @@ func (h *dataPlaneClusterHandler) validateResizeInfo(request *openapi.DataPlaneC
 	return nil
 }
 
-func (h *dataPlaneClusterHandler) validateTotal(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
+func (h *dataPlaneClusterHandler) validateTotal(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
 	total := request.Total
 	if total.Connections == nil {
 		return errors.FieldValidationError("total connections must be set")
@@ -191,7 +191,7 @@ func (h *dataPlaneClusterHandler) validateTotal(request *openapi.DataPlaneCluste
 	return nil
 }
 
-func (h *dataPlaneClusterHandler) validateRemaining(request *openapi.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
+func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
 	remaining := request.Remaining
 
 	if remaining.Connections == nil {

@@ -1,7 +1,8 @@
 package integration
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
 	"net/http"
@@ -18,7 +19,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -31,7 +32,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	currTime := time.Now().Format(time.RFC3339)
 	createdAt, _ := time.Parse(time.RFC3339, currTime)
 	//verify create
-	r := openapi.ServiceAccountRequest{
+	r := public.ServiceAccountRequest{
 		Name:        "managed-service-integration-test-account",
 		Description: "created by the managed service integration tests",
 	}
@@ -92,7 +93,7 @@ func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewAccount(faker.Username(), faker.Name(), faker.Email(), faker.ID)
@@ -104,7 +105,7 @@ func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
 
 	//verify create
-	r := openapi.ServiceAccountRequest{
+	r := public.ServiceAccountRequest{
 		Name:        "managed-service-integration-test-account",
 		Description: "created by the managed service integration tests",
 	}
@@ -135,7 +136,7 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
@@ -158,12 +159,12 @@ func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      testServices.OCMConfig.TokenIssuerURL,
+		"iss":      test.TestServices.OCMConfig.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}
@@ -181,14 +182,14 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	//length check
-	r := openapi.ServiceAccountRequest{
+	r := public.ServiceAccountRequest{
 		Name:        "length-more-than-50-is-not-allowed-managed-service-integration-test",
 		Description: "created by the managed service integration",
 	}
@@ -197,7 +198,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	//xss prevention
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "<script>alert(\"TEST\");</script>",
 		Description: "created by the managed service integration",
 	}
@@ -206,7 +207,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	//description length can not be more than 255
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "test-svc-1",
 		Description: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv",
 	}
@@ -215,7 +216,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	//min length required for name
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "",
 		Description: "test",
 	}
@@ -224,7 +225,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest))
 
 	//min length required is not required for desc
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "test",
 		Description: "",
 	}
@@ -242,7 +243,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 
 	// certain characters are allowed in the description
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "test",
 		Description: "Created by the managed-services integration tests.,",
 	}
@@ -260,7 +261,7 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 
 	//xss prevention
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "service-account-1",
 		Description: "created by the managed service integration #$@#$#@$#@$$#",
 	}
@@ -281,13 +282,13 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
-	r := openapi.ServiceAccountRequest{
+	r := public.ServiceAccountRequest{
 		Name:        "test-account-acc-1",
 		Description: "created by the managed service integration tests",
 	}
@@ -302,7 +303,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
 
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "test-account-acc-2",
 		Description: "created by the managed service integration tests",
 	}
@@ -317,7 +318,7 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 	Expect(sa2.Id).NotTo(BeEmpty())
 
 	// limit has reached for 2 service accounts
-	r = openapi.ServiceAccountRequest{
+	r = public.ServiceAccountRequest{
 		Name:        "test-account-acc-3",
 		Description: "created by the managed service integration tests",
 	}

@@ -22,17 +22,16 @@
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
 
-pkg/api/openapi/README.md
-pkg/api/openapi/docs/**.md
-pkg/api/openapi/**all_of.go
-pkg/api/openapi/go.mod
-pkg/api/openapi/go.sum
-pkg/api/private/openapi/README.md
-pkg/api/private/openapi/docs/**.md
-pkg/api/private/openapi/**all_of.go
-pkg/api/private/openapi/go.mod
-pkg/api/private/openapi/go.sum
-
+internal/kafka/internal/api/public/README.md
+internal/kafka/internal/api/public/docs/**.md
+internal/kafka/internal/api/public/**all_of.go
+internal/kafka/internal/api/public/go.mod
+internal/kafka/internal/api/public/go.sum
+internal/kafka/internal/api/private/README.md
+internal/kafka/internal/api/private/docs/**.md
+internal/kafka/internal/api/private/**all_of.go
+internal/kafka/internal/api/private/go.mod
+internal/kafka/internal/api/private/go.sum
 
 internal/connector/internal/api/public/README.md
 internal/connector/internal/api/public/docs/**.md

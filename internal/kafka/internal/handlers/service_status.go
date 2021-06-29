@@ -1,11 +1,11 @@
 package handlers
 
 import (
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -30,7 +30,7 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			context := r.Context()
 			claims, err := auth.GetClaimsFromContext(context)
 			if err != nil {
-				return presenters.PresentServiceStatus(true, false), nil
+				return presenters2.PresentServiceStatus(true, false), nil
 			}
 
 			username := auth.GetUsernameFromClaims(claims)
@@ -39,7 +39,7 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 				userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
 				if userIsDenied {
 					glog.V(5).Infof("User %s is denied to access the service. Setting kafka maximum capacity to 'true'", username)
-					return presenters.PresentServiceStatus(true, false), nil
+					return presenters2.PresentServiceStatus(true, false), nil
 				}
 			}
 
@@ -52,12 +52,12 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 				}
 				if !userIsAllowed {
 					glog.V(5).Infof("User %s is not in allow list and cannot access the service. Setting kafka maximum capacity to 'true'", username)
-					return presenters.PresentServiceStatus(true, false), nil
+					return presenters2.PresentServiceStatus(true, false), nil
 				}
 			}
 
 			hasAvailableKafkaCapacity, capacityErr := h.kafkaService.HasAvailableCapacity()
-			return presenters.PresentServiceStatus(false, !hasAvailableKafkaCapacity), capacityErr
+			return presenters2.PresentServiceStatus(false, !hasAvailableKafkaCapacity), capacityErr
 		},
 	}
 	handlers.HandleGet(w, r, cfg)

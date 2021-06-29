@@ -2,9 +2,9 @@ package cloudprovider
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
@@ -33,7 +33,7 @@ func runProviderList(
 	if err != nil {
 		glog.Fatalf("Unable to list cloud providers: %s", err.Error())
 	}
-	cloudProviderList := openapi.CloudProviderList{
+	cloudProviderList := public.CloudProviderList{
 		Kind:  "CloudProviderList",
 		Total: int32(len(cloudProviders)),
 		Size:  int32(len(cloudProviders)),
@@ -42,7 +42,7 @@ func runProviderList(
 
 	for _, cloudProvider := range cloudProviders {
 		cloudProvider.Enabled = config.IsProviderSupported(cloudProvider.Id)
-		converted := presenters.PresentCloudProvider(&cloudProvider)
+		converted := presenters2.PresentCloudProvider(&cloudProvider)
 		cloudProviderList.Items = append(cloudProviderList.Items, converted)
 	}
 

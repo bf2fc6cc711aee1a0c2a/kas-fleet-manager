@@ -3,7 +3,9 @@ package kasfleetshardsync
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	clientOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
@@ -14,13 +16,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/dgrijalva/jwt-go"
 
-	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
-var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error {
+var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
 	var clusterService services.ClusterService
 	var ocmConfig *config.OCMConfig
 	helper.Env.MustResolveAll(&clusterService, &ocmConfig)
@@ -64,7 +65,7 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateC
 // This function retrieves and updates Kafkas in all ready and full data plane clusters.
 // Any Kafkas marked for deletion are updated to 'deleting'
 // Kafkas with any other status are updated to 'ready'
-var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *privateopenapi.APIClient) error {
+var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *private.APIClient) error {
 	var clusterService services.ClusterService
 	helper.Env.MustResolveAll(&clusterService)
 
@@ -95,7 +96,7 @@ var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *priv
 			return err
 		}
 
-		kafkaStatusList := make(map[string]privateopenapi.DataPlaneKafkaStatus)
+		kafkaStatusList := make(map[string]private.DataPlaneKafkaStatus)
 		for _, kafka := range kafkaList.Items {
 			id := kafka.Metadata.Annotations.Id
 			if kafka.Spec.Deleted {
@@ -115,9 +116,9 @@ var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *priv
 
 type MockKasFleetshardSyncBuilder interface {
 	// SetUpdateDataplaneClusterStatusFunc - Sets behaviour for updating dataplane clusters in each KAS Fleetshard sync reconcile
-	SetUpdateDataplaneClusterStatusFunc(func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error)
+	SetUpdateDataplaneClusterStatusFunc(func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error)
 	// SetUpdateKafkaStatusFunc - Sets behaviour for updating kafka clusters in each KAS Fleetshard sync reconcile
-	SetUpdateKafkaStatusFunc(func(helper *test.Helper, privateClient *privateopenapi.APIClient) error)
+	SetUpdateKafkaStatusFunc(func(helper *test.Helper, privateClient *private.APIClient) error)
 	// SetInterval - Sets the repeat interval for the mock KAS Fleetshard sync
 	SetInterval(interval time.Duration)
 	// Build - Builds a mock KAS Fleetshard sync
@@ -139,7 +140,7 @@ func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasF
 			helper:                       helper,
 			t:                            t,
 			ocmClient:                    ocm.NewClient(ocm2Client.Connection),
-			privateClient:                helper.NewPrivateAPIClient(),
+			privateClient:                test2.NewPrivateAPIClient(helper),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,
 			interval:                     10 * time.Second,
@@ -147,11 +148,11 @@ func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasF
 	}
 }
 
-func (m *mockKasFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error) {
+func (m *mockKasFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error) {
 	m.kfsync.updateDataplaneClusterStatus = updateDataplaneClusterStatusFunc
 }
 
-func (m *mockKasFleetshardSyncBuilder) SetUpdateKafkaStatusFunc(updateKafkaStatusFunc func(helper *test.Helper, privateClient *privateopenapi.APIClient) error) {
+func (m *mockKasFleetshardSyncBuilder) SetUpdateKafkaStatusFunc(updateKafkaStatusFunc func(helper *test.Helper, privateClient *private.APIClient) error) {
 	m.kfsync.updateKafkaClusterStatus = updateKafkaStatusFunc
 }
 
@@ -175,10 +176,10 @@ type mockKasFleetshardSync struct {
 	t                            *testing.T
 	ocmClient                    ocm.Client
 	ticker                       *time.Ticker
-	privateClient                *privateopenapi.APIClient
+	privateClient                *private.APIClient
 	interval                     time.Duration
-	updateDataplaneClusterStatus func(helper *test.Helper, privateClient *privateopenapi.APIClient, ocmClient ocm.Client) error
-	updateKafkaClusterStatus     func(helper *test.Helper, privateClient *privateopenapi.APIClient) error
+	updateDataplaneClusterStatus func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error
+	updateKafkaClusterStatus     func(helper *test.Helper, privateClient *private.APIClient) error
 }
 
 var _ MockKasFleetshardSync = &mockKasFleetshardSync{}
@@ -226,41 +227,41 @@ func NewAuthenticatedContextForDataPlaneCluster(h *test.Helper, clusterID string
 		"kas-fleetshard-operator-cluster-id": clusterID,
 	}
 	token := h.CreateJWTStringWithClaim(account, claims)
-	ctx := context.WithValue(context.Background(), privateopenapi.ContextAccessToken, token)
+	ctx := context.WithValue(context.Background(), private.ContextAccessToken, token)
 
 	return ctx
 }
 
 // Returns a sample data plane cluster status request with available capacity
-func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *privateopenapi.DataPlaneClusterUpdateStatusRequest {
-	return &privateopenapi.DataPlaneClusterUpdateStatusRequest{
-		Conditions: []privateopenapi.DataPlaneClusterUpdateStatusRequestConditions{
+func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPlaneClusterUpdateStatusRequest {
+	return &private.DataPlaneClusterUpdateStatusRequest{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Status: "True",
 			},
 		},
-		Total: privateopenapi.DataPlaneClusterUpdateStatusRequestTotal{
+		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],
 			Connections:                   &[]int32{1000000}[0],
 			DataRetentionSize:             &[]string{"test"}[0],
 			Partitions:                    &[]int32{1000000}[0],
 		},
-		NodeInfo: &privateopenapi.DataPlaneClusterUpdateStatusRequestNodeInfo{
+		NodeInfo: &private.DataPlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{20}[0],
 			Floor:                  &[]int32{3}[0],
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		Remaining: privateopenapi.DataPlaneClusterUpdateStatusRequestTotal{
+		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
 			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
 			Partitions:                    &[]int32{1000000}[0],
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],
 			DataRetentionSize:             &[]string{"test"}[0],
 		},
-		ResizeInfo: &privateopenapi.DataPlaneClusterUpdateStatusRequestResizeInfo{
+		ResizeInfo: &private.DataPlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &privateopenapi.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
+			Delta: &private.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{10000}[0],
 				Partitions:                    &[]int32{10000}[0],
 				IngressEgressThroughputPerSec: &[]string{"test"}[0],
@@ -271,9 +272,9 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *privateopenapi.
 }
 
 // Return a Kafka status for a deleted cluster
-func GetDeletedKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
-	return privateopenapi.DataPlaneKafkaStatus{
-		Conditions: []privateopenapi.DataPlaneClusterUpdateStatusRequestConditions{
+func GetDeletedKafkaStatusResponse() private.DataPlaneKafkaStatus {
+	return private.DataPlaneKafkaStatus{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Reason: "Deleted",
@@ -283,9 +284,9 @@ func GetDeletedKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
 }
 
 // Return a kafka status for a ready cluster
-func GetReadyKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
-	return privateopenapi.DataPlaneKafkaStatus{
-		Conditions: []privateopenapi.DataPlaneClusterUpdateStatusRequestConditions{
+func GetReadyKafkaStatusResponse() private.DataPlaneKafkaStatus {
+	return private.DataPlaneKafkaStatus{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Status: "True",
@@ -294,9 +295,9 @@ func GetReadyKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
 	}
 }
 
-func GetErrorKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
-	return privateopenapi.DataPlaneKafkaStatus{
-		Conditions: []privateopenapi.DataPlaneClusterUpdateStatusRequestConditions{
+func GetErrorKafkaStatusResponse() private.DataPlaneKafkaStatus {
+	return private.DataPlaneKafkaStatus{
+		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Reason: "Error",
@@ -306,7 +307,7 @@ func GetErrorKafkaStatusResponse() privateopenapi.DataPlaneKafkaStatus {
 	}
 }
 
-func GetErrorWithCustomMessageKafkaStatusResponse(message string) privateopenapi.DataPlaneKafkaStatus {
+func GetErrorWithCustomMessageKafkaStatusResponse(message string) private.DataPlaneKafkaStatus {
 	res := GetErrorKafkaStatusResponse()
 	res.Conditions[0].Message = message
 	return res

@@ -3,11 +3,12 @@ package integration
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"net/http"
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -24,7 +25,7 @@ func TestAuth_success(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
@@ -42,7 +43,7 @@ func TestAuthSucess_publicUrls(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 	restyResp, err := resty.R().
 		SetHeader("Content-Type", "application/json").
@@ -55,7 +56,7 @@ func TestAuthSuccess_usingSSORHToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -77,7 +78,7 @@ func TestAuthFailure_withoutToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	restyResp, err := resty.R().
@@ -94,7 +95,7 @@ func TestAuthFailure_invalidTokenWithTypMissing(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -118,7 +119,7 @@ func TestAuthFailure_ExpiredToken(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -141,7 +142,7 @@ func TestAuthFailure_invalidTokenMissingIat(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -164,7 +165,7 @@ func TestAuthFailure_invalidTokenMissingAlgHeader(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -196,7 +197,7 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, _, teardown := NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	serviceAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "13640203")
 	defer teardown()
 	claims := jwt.MapClaims{
@@ -222,8 +223,8 @@ func TestAuthFailure_invalidTokenUnsigned(t *testing.T) {
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusUnauthorized))
 }
 
-func parseResponse(restyResp *resty.Response) openapi.Error {
-	var re openapi.Error
+func parseResponse(restyResp *resty.Response) public.Error {
+	var re public.Error
 	if err := json.Unmarshal(restyResp.Body(), &re); err != nil {
 		panic(err)
 	}
