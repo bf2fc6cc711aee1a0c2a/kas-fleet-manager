@@ -1,17 +1,19 @@
 package clusters
 
 import (
+	"net/http"
+	"reflect"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"net/http"
-	"reflect"
-	"strings"
 )
 
 const (
@@ -21,6 +23,7 @@ const (
 type OCMProvider struct {
 	ocmClient      ocm.Client
 	clusterBuilder ocm.ClusterBuilder
+	ocmConfig      *config.OCMConfig
 }
 
 func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
@@ -190,7 +193,19 @@ func (o *OCMProvider) GetComputeNodes(clusterSpec *types.ClusterSpec) (*types.Co
 	}, nil
 }
 
-func (o *OCMProvider) InstallAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
+func (o *OCMProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
+	return o.installAddon(clusterSpec, o.ocmConfig.StrimziOperatorAddonID)
+}
+
+func (o *OCMProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+	return o.installAddonWithParams(clusterSpec, o.ocmConfig.ClusterLoggingOperatorAddonID, params)
+}
+
+func (o *OCMProvider) InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+	return o.installAddonWithParams(clusterSpec, o.ocmConfig.KasFleetshardAddonID, params)
+}
+
+func (o *OCMProvider) installAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
 	clusterId := clusterSpec.InternalID
 	addonInstallation, err := o.ocmClient.GetAddon(clusterId, addonID)
 	if err != nil {
@@ -213,7 +228,7 @@ func (o *OCMProvider) InstallAddon(clusterSpec *types.ClusterSpec, addonID strin
 	return false, nil
 }
 
-func (o *OCMProvider) InstallAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+func (o *OCMProvider) installAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, params []types.Parameter) (bool, error) {
 	addonInstallation, addonErr := o.ocmClient.GetAddon(clusterSpec.InternalID, addonId)
 	if addonErr != nil {
 		return false, errors.Wrapf(addonErr, "failed to get addon %s for cluster %s", addonId, clusterSpec.InternalID)
@@ -221,14 +236,14 @@ func (o *OCMProvider) InstallAddonWithParams(clusterSpec *types.ClusterSpec, add
 
 	if addonInstallation != nil && addonInstallation.ID() == "" {
 		glog.V(5).Infof("No existing %s addon found, create a new one", addonId)
-		addonInstallation, addonErr = o.ocmClient.CreateAddonWithParams(clusterSpec.InternalID, addonId, addonParams)
+		addonInstallation, addonErr = o.ocmClient.CreateAddonWithParams(clusterSpec.InternalID, addonId, params)
 		if addonErr != nil {
 			return false, errors.Wrapf(addonErr, "failed to create addon %s for cluster %s", addonId, clusterSpec.InternalID)
 		}
 	}
 
 	if addonInstallation != nil && addonInstallation.State() == clustersmgmtv1.AddOnInstallationStateReady {
-		addonInstallation, addonErr = o.ocmClient.UpdateAddonParameters(clusterSpec.InternalID, addonInstallation.ID(), addonParams)
+		addonInstallation, addonErr = o.ocmClient.UpdateAddonParameters(clusterSpec.InternalID, addonInstallation.ID(), params)
 		if addonErr != nil {
 			return false, errors.Wrapf(addonErr, "failed to update parameters for addon %s on cluster %s", addonInstallation.ID(), clusterSpec.InternalID)
 		}
@@ -287,10 +302,11 @@ func (o *OCMProvider) GetCloudProviderRegions(providerInfo types.CloudProviderIn
 // ensure OCMProvider implements Provider interface
 var _ Provider = &OCMProvider{}
 
-func newOCMProvider(ocmClient ocm.Client, clusterBuilder ocm.ClusterBuilder) *OCMProvider {
+func newOCMProvider(ocmClient ocm.Client, clusterBuilder ocm.ClusterBuilder, ocmConfig *config.OCMConfig) *OCMProvider {
 	return &OCMProvider{
 		ocmClient:      ocmClient,
 		clusterBuilder: clusterBuilder,
+		ocmConfig:      ocmConfig,
 	}
 }
 

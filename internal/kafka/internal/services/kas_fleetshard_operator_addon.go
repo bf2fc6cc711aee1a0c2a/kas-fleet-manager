@@ -3,7 +3,6 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -55,7 +54,7 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 	if paramsErr != nil {
 		return false, paramsErr
 	}
-	p, err := o.ProviderFactory.GetAddonProvider(cluster.ProviderType)
+	p, err := o.ProviderFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
@@ -66,7 +65,7 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-	if ready, err := p.InstallAddonWithParams(spec, kasFleetshardAddonID, params); err != nil {
+	if ready, err := p.InstallKasFleetshard(spec, params); err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to install addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	} else {
 		return ready, nil
@@ -79,7 +78,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 	if paramsErr != nil {
 		return paramsErr
 	}
-	p, err := o.ProviderFactory.GetAddonProvider(cluster.ProviderType)
+	p, err := o.ProviderFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
@@ -91,7 +90,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
-	if updated, err := p.InstallAddonWithParams(spec, kasFleetshardAddonID, params); err != nil {
+	if updated, err := p.InstallKasFleetshard(spec, params); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update parameters for addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
 	} else if updated {
 		glog.V(5).Infof("Addon parameters for addon %s on cluster %s are updated", kasFleetshardAddonID, cluster.ClusterID)
@@ -102,7 +101,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 	}
 }
 
-func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]ocm.AddonParameter, *errors.ServiceError) {
+func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.Parameter, *errors.ServiceError) {
 	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
 	if pErr != nil {
 		return nil, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
@@ -116,8 +115,8 @@ func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (
 	return o.SsoService.RegisterKasFleetshardOperatorServiceAccount(clusterId, KasFleetshardOperatorRoleName)
 }
 
-func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.AddonParameter {
-	p := []ocm.AddonParameter{
+func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
+	p := []types.Parameter{
 
 		{
 			Id:    kasFleetshardOperatorParamMasSSOBaseUrl,

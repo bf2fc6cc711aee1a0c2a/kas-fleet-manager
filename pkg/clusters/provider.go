@@ -37,36 +37,30 @@ type Provider interface {
 	GetCloudProviders() (*types.CloudProviderInfoList, error)
 	// GetCloudProviderRegions Get the regions information for the given cloud provider from the cluster provider
 	GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error)
-}
-
-//go:generate moq -out addon_provider_moq.go . AddonProvider
-type AddonProvider interface {
-	InstallAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error)
-	InstallAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error)
+	// Install the strimzi operator in a given cluster
+	InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error)
+	// Install the cluster logging operator for a given cluster
+	InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
+	// Install the cluster logging operator for a given cluster
+	InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
 }
 
 // ProviderFactory used to return an instance of Provider implementation
 //go:generate moq -out provider_factory_moq.go . ProviderFactory
 type ProviderFactory interface {
 	GetProvider(providerType api.ClusterProviderType) (Provider, error)
-	GetAddonProvider(providerType api.ClusterProviderType) (AddonProvider, error)
 }
 
 // DefaultProviderFactory the default implementation for ProviderFactory
 type DefaultProviderFactory struct {
-	providerContainer      map[api.ClusterProviderType]Provider
-	addonProviderContainer map[api.ClusterProviderType]AddonProvider
+	providerContainer map[api.ClusterProviderType]Provider
 }
 
-func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory) *DefaultProviderFactory {
+func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory, ocmConfig *config.OCMConfig) *DefaultProviderFactory {
 	standaloneProvider := newStandaloneProvider(connectionFactory)
-	ocmProvider := newOCMProvider(ocmClient, ocm.NewClusterBuilder(appConfig.AWS, appConfig.OSDClusterConfig))
+	ocmProvider := newOCMProvider(ocmClient, ocm.NewClusterBuilder(appConfig.AWS, appConfig.OSDClusterConfig), ocmConfig)
 	return &DefaultProviderFactory{
 		providerContainer: map[api.ClusterProviderType]Provider{
-			api.ClusterProviderStandalone: standaloneProvider,
-			api.ClusterProviderOCM:        ocmProvider,
-		},
-		addonProviderContainer: map[api.ClusterProviderType]AddonProvider{
 			api.ClusterProviderStandalone: standaloneProvider,
 			api.ClusterProviderOCM:        ocmProvider,
 		},
@@ -79,19 +73,6 @@ func (d *DefaultProviderFactory) GetProvider(providerType api.ClusterProviderTyp
 	}
 
 	provider, ok := d.providerContainer[providerType]
-	if !ok {
-		return nil, errors.Errorf("invalid provider type: %v", providerType)
-	}
-
-	return provider, nil
-}
-
-func (d *DefaultProviderFactory) GetAddonProvider(providerType api.ClusterProviderType) (AddonProvider, error) {
-	if providerType == "" {
-		providerType = api.ClusterProviderOCM
-	}
-
-	provider, ok := d.addonProviderContainer[providerType]
 	if !ok {
 		return nil, errors.Errorf("invalid provider type: %v", providerType)
 	}

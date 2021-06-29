@@ -1,6 +1,10 @@
 package clusters
 
 import (
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
@@ -14,9 +18,6 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestOCMProvider_Create(t *testing.T) {
@@ -90,7 +91,7 @@ func TestOCMProvider_Create(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, cb)
+			p := newOCMProvider(test.fields.ocmClient, cb, &config.OCMConfig{})
 			resp, err := p.Create(&test.args.clusterReq)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -187,7 +188,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.CheckClusterStatus(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -271,7 +272,7 @@ func TestOCMProvider_Delete(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.Delete(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -342,7 +343,7 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.GetClusterDNS(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -468,7 +469,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.AddIdentityProvider(test.args.clusterSpec, test.args.identityProviderInfo)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -617,7 +618,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.ApplyResources(test.args.clusterSpec, test.args.resources)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -689,7 +690,7 @@ func TestOCMProvider_ScaleUp(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.ScaleUp(test.args.clusterSpec, test.args.increment)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -761,7 +762,7 @@ func TestOCMProvider_ScaleDown(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.ScaleDown(test.args.clusterSpec, test.args.decrement)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -833,7 +834,7 @@ func TestOCMProvider_SetComputeNodes(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.SetComputeNodes(test.args.clusterSpec, test.args.numNodes)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -929,7 +930,7 @@ func TestOCMProvider_GetComputeNodes(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.GetComputeNodes(test.args.clusterSpec)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -1027,8 +1028,8 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
-			resp, err := p.InstallAddon(test.args.clusterSpec, test.args.addonID)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
+			resp, err := p.installAddon(test.args.clusterSpec, test.args.addonID)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
 				Expect(err).NotTo(BeNil())
@@ -1044,7 +1045,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 	type args struct {
 		clusterSpec *types.ClusterSpec
 		addonID     string
-		params      []ocm.AddonParameter
+		params      []types.Parameter
 	}
 
 	internalId := "test-internal-id"
@@ -1057,7 +1058,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 	}
 
 	testAddonId := "test-addon-id"
-	testParams := []ocm.AddonParameter{
+	testParams := []types.Parameter{
 		{
 			Id:    "param1",
 			Value: "param-value-1",
@@ -1078,7 +1079,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 						return clustersmgmtv1.NewAddOnInstallation().Build()
 					},
-					CreateAddonWithParamsFunc: func(clusterId string, addonId string, params []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+					CreateAddonWithParamsFunc: func(clusterId string, addonId string, params []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 						Expect(addonId).To(Equal(testAddonId))
 						Expect(params).To(Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
@@ -1100,7 +1101,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 						return clustersmgmtv1.NewAddOnInstallation().ID("test-addon-id").State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
-					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []ocm.AddonParameter) (*clustersmgmtv1.AddOnInstallation, error) {
+					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 						Expect(addonId).To(Equal(testAddonId))
 						Expect(parameters).To(Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateReady).Build()
@@ -1135,8 +1136,8 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
-			resp, err := p.InstallAddonWithParams(test.args.clusterSpec, test.args.addonID, test.args.params)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
+			resp, err := p.installAddonWithParams(test.args.clusterSpec, test.args.addonID, test.args.params)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
 				Expect(err).NotTo(BeNil())
@@ -1206,7 +1207,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.GetCloudProviders()
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
@@ -1310,7 +1311,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			p := newOCMProvider(test.fields.ocmClient, nil)
+			p := newOCMProvider(test.fields.ocmClient, nil, &config.OCMConfig{})
 			resp, err := p.GetCloudProviderRegions(test.args.providerInfo)
 			Expect(resp).To(Equal(test.want))
 			if test.wantErr {
