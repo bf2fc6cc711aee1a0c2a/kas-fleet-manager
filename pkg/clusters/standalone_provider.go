@@ -1,8 +1,8 @@
 package clusters
 
 import (
+	"context"
 	"encoding/json"
-	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
@@ -12,11 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	patchTypes "k8s.io/apimachinery/pkg/types"
-	"k8s.io/cli-runtime/pkg/resource"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/discovery/cached/memory"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -28,8 +26,7 @@ const fieldManager = "kas-fleet-manager"
 // this is used to decide whether a new apply request should be taken into account or not
 const lastAppliedConfigurationAnnotation = "kas-fleet-manager/last-applied-resource-configuration"
 
-// force is a patch option to force applying new changes when conflicts occurs
-var force = true
+var ctx = context.Background()
 
 type StandaloneProvider struct {
 	connectionFactory      *db.ConnectionFactory
@@ -85,16 +82,30 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, reso
 
 	contextName := s.dataplaneClusterConfig.FindClusterNameByClusterId(clusterSpec.InternalID)
 	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
-	clientConfig, err := clientcmd.NewNonInteractiveClientConfig(*s.dataplaneClusterConfig.RawKubernetesConfig, override.CurrentContext,
-		override, &clientcmd.ClientConfigLoadingRules{}).
+	config := *s.dataplaneClusterConfig.RawKubernetesConfig
+	restConfig, err := clientcmd.NewNonInteractiveClientConfig(config, override.CurrentContext, override, &clientcmd.ClientConfigLoadingRules{}).
 		ClientConfig()
 
 	if err != nil {
 		return nil, err
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a REST mapper that tracks information about the available resources in the cluster.
+	dc, err := discovery.NewDiscoveryClientForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	discoveryCachedClient := memory.NewMemCacheClient(dc)
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(discoveryCachedClient)
+
 	for _, resource := range resources.Resources {
-		_, err = applyResource(clientConfig, resource)
+		_, err = applyResource(dynamicClient, mapper, resource)
 		if err != nil {
 			return nil, err
 		}
@@ -179,8 +190,8 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 	return &types.CloudProviderRegionInfoList{Items: items}, nil
 }
 
-func applyResource(restConfig *rest.Config, resourceObj interface{}) (runtime.Object, error) {
-	// parse resource obj
+func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredDiscoveryRESTMapper, resourceObj interface{}) (runtime.Object, error) {
+	// parse resource obj to unstructure.Unstructered
 	data, err := json.Marshal(resourceObj)
 	if err != nil {
 		return nil, err
@@ -204,125 +215,72 @@ func applyResource(restConfig *rest.Config, resourceObj interface{}) (runtime.Ob
 	newAnnotations[lastAppliedConfigurationAnnotation] = newConfiguration
 	obj.SetAnnotations(newAnnotations)
 
-	kubeClientset, err := kubernetes.NewForConfig(restConfig)
-	if err != nil {
-		return nil, err
-	}
-	// Create a REST mapper that tracks information about the available resources in the cluster.
-	groupResources, err := restmapper.GetAPIGroupResources(kubeClientset.Discovery())
-	if err != nil {
-		return nil, err
-	}
-	rm := restmapper.NewDiscoveryRESTMapper(groupResources)
-
-	// Get some metadata needed to make the REST request.
-	gvk := obj.GetObjectKind().GroupVersionKind()
-	gk := schema.GroupKind{Group: gvk.Group, Kind: gvk.Kind}
-	mapping, err := rm.RESTMapping(gk, gvk.Version)
+	// Find Group Version resource for rest mapping
+	gvk := obj.GroupVersionKind()
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil {
 		return nil, err
 	}
 
-	namespace, err := meta.NewAccessor().Namespace(&obj)
+	resourceToApply := &obj
+	namespace, err := meta.NewAccessor().Namespace(resourceToApply)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create a client specifically for creating the object.
-	restClient, err := newRestClient(restConfig, mapping.GroupVersionKind.GroupVersion())
-	if err != nil {
-		return nil, err
+	var dr dynamic.ResourceInterface
+	if namespace != "" && mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		// namespaced resources should specify the namespace
+		dr = dynamicClient.Resource(mapping.Resource).Namespace(namespace)
+	} else {
+		// for cluster-wide resources
+		dr = dynamicClient.Resource(mapping.Resource)
 	}
 
-	restHelper := resource.NewHelper(restClient, mapping)
-	name, err := meta.NewAccessor().Name(&obj)
+	name, err := meta.NewAccessor().Name(resourceToApply)
 	if err != nil {
 		return nil, err
 	}
 
 	// check if resources needs to be applied
-	applyChanges, err := shouldApplyChanges(restHelper, namespace, name, newConfiguration)
-	if err != nil {
-		return &obj, err
-	}
+	existingObj, _ := dr.Get(ctx, name, metav1.GetOptions{})
+	applyChanges := shouldApplyChanges(dr, existingObj, newConfiguration)
 
 	if !applyChanges { // no need to apply changes as resource has not changed
-		return &obj, nil
+		return existingObj, nil
 	}
 
 	// apply new changes which will lead to creation of new resources
-	return applyChangesFn(restHelper, namespace, name, obj)
+	return applyChangesFn(dr, name, resourceToApply, existingObj)
 }
 
-func shouldApplyChanges(restHelper *resource.Helper, namespace string, name string, newConfiguration string) (bool, error) {
-	existingObj, err := restHelper.Get(namespace, name)
-	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			return true, nil
-		} else {
-			return false, err
-		}
+func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *unstructured.Unstructured, newConfiguration string) bool {
+	if existingObj == nil {
+		return true
 	}
 
-	existing, err := runtime.DefaultUnstructuredConverter.ToUnstructured(existingObj)
-	if err != nil {
-		return false, err
-	}
-	original := unstructured.Unstructured{
-		Object: existing,
-	}
-	originalAnnotations := original.GetAnnotations()
+	originalAnnotations := existingObj.GetAnnotations()
 	if originalAnnotations != nil {
 		lastApplied, ok := originalAnnotations[lastAppliedConfigurationAnnotation]
 		if !ok {
-			return true, nil // new object, create it
+			return true // new object, create it
 		} else {
-			return newConfiguration != lastApplied, nil // check if configuration has changed before applying changes
+			return newConfiguration != lastApplied // check if configuration has changed before applying changes
 		}
 	}
 
-	return true, nil
+	return true
 }
 
-func applyChangesFn(restHelper *resource.Helper, namespace string, name string, obj unstructured.Unstructured) (runtime.Object, error) {
-	data, err := obj.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-
-	patchOptions := &metav1.PatchOptions{
-		FieldManager: fieldManager,
-		Force:        &force,
-	}
-
-	// try to apply new update using server-side apply
-	result, err := restHelper.Patch(namespace, name, patchTypes.ApplyPatchType, data, patchOptions)
-
-	if err != nil && (strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "failed to create typed patch object")) {
-		result, err = restHelper.CreateWithOptions(namespace, true, &obj, &metav1.CreateOptions{
+func applyChangesFn(client dynamic.ResourceInterface, name string, obj *unstructured.Unstructured, existingObj *unstructured.Unstructured) (runtime.Object, error) {
+	if existingObj == nil { // create object if it does not exist
+		return client.Create(ctx, obj, metav1.CreateOptions{
 			FieldManager: fieldManager,
 		})
 	}
 
-	// replace if it already exist
-	if err != nil && strings.Contains(err.Error(), "already exist") {
-		result, err = restHelper.Replace(namespace, name, true, &obj)
-	}
-
-	// ignore immutability failure to apply patch
-	if err != nil && strings.Contains(err.Error(), "field is immutable") {
-		return &obj, nil
-	}
-	return result, err
-}
-
-func newRestClient(restConfig *rest.Config, gv schema.GroupVersion) (rest.Interface, error) {
-	restConfig.ContentConfig = resource.UnstructuredPlusDefaultContentConfig()
-	restConfig.GroupVersion = &gv
-	if len(gv.Group) == 0 {
-		restConfig.APIPath = "/api"
-	} else {
-		restConfig.APIPath = "/apis"
-	}
-	return rest.RESTClientFor(restConfig)
+	obj.SetResourceVersion(existingObj.GetResourceVersion())
+	return client.Update(ctx, obj, metav1.UpdateOptions{
+		FieldManager: fieldManager,
+	})
 }
