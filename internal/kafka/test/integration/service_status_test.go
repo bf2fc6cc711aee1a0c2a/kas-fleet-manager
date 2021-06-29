@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"net/http"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestServiceStatus(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, teardown := NewKafkaHelper(t, ocmServer)
+	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// these values are taken from config/deny-list-configuration.yaml
@@ -60,7 +61,7 @@ func TestServiceStatus(t *testing.T) {
 
 	// now modify the maximum capacity of kafkas and set it to 2 so that when we insert two kafkas in the database, we'll reach maximum capacity
 	h.Env.Config.Kafka.KafkaCapacity.MaxCapacity = 2
-	db := testServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	kafkas := []*api.KafkaRequest{

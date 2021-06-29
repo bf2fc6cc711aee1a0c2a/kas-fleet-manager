@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
@@ -22,8 +23,6 @@ import (
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/segmentio/ksuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -53,14 +52,14 @@ type Helper struct {
 	Env           *environments.Env
 }
 
-func NewHelper(t *testing.T, server *httptest.Server, options ...di.Option) (*Helper, *openapi.APIClient, func()) {
+func NewHelper(t *testing.T, server *httptest.Server, options ...di.Option) (*Helper, func()) {
 	return NewHelperWithHooks(t, server, nil, options...)
 }
 
 // NewHelperWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hook.
 // The startHook will be invoked after the environments.Env is created but before the api server is started, which will allow caller to change configurations.
 // The startHook can should be a function and can optionally have type arguments that can be injected from the configuration container.
-func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, *openapi.APIClient, func()) {
+func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, func()) {
 
 	// Register the test with gomega
 	gm.RegisterTestingT(t)
@@ -144,10 +143,8 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 
 	h.CleanDB()
 	h.ResetDB()
-	client := h.NewApiClient()
-
 	env.Start()
-	return h, client, buildTeardownHelperFn(
+	return h, buildTeardownHelperFn(
 		env.Stop,
 		h.CleanDB,
 		metrics.Reset,
@@ -218,26 +215,6 @@ func (helper *Helper) HealthCheckURL(path string) string {
 	return fmt.Sprintf("http://%s%s", healthCheckConfig.BindAddress, path)
 }
 
-func (helper *Helper) NewApiClient() *openapi.APIClient {
-	var serverConfig *config.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
-	openapiConfig := openapi.NewConfiguration()
-	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
-	client := openapi.NewAPIClient(openapiConfig)
-	return client
-}
-
-func (helper *Helper) NewPrivateAPIClient() *privateopenapi.APIClient {
-	var serverConfig *config.ServerConfig
-	helper.Env.MustResolveAll(&serverConfig)
-
-	openapiConfig := privateopenapi.NewConfiguration()
-	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
-	client := privateopenapi.NewAPIClient(openapiConfig)
-	return client
-}
-
 // NewRandAccount returns a random account that has the control plane team org id as its organisation id
 // The org id value is taken from config/allow-list-configuration.yaml
 func (helper *Helper) NewRandAccount() *amv1.Account {
@@ -281,7 +258,7 @@ func (helper *Helper) NewAuthenticatedContext(account *amv1.Account, claims jwt.
 		helper.T.Errorf(fmt.Sprintf("Unable to create a signed token: %s", err.Error()))
 	}
 
-	return context.WithValue(context.Background(), openapi.ContextAccessToken, token)
+	return context.WithValue(context.Background(), compat.ContextAccessToken, token)
 }
 
 func (helper *Helper) StartJWKCertServerMock() (string, func()) {
@@ -372,9 +349,9 @@ func (helper *Helper) CreateJWTToken(account *amv1.Account, jwtClaims jwt.MapCla
 }
 
 // Convert an error response from the openapi client to an openapi error struct
-func (helper *Helper) OpenapiError(err error) openapi.Error {
-	generic := err.(openapi.GenericOpenAPIError)
-	var exErr openapi.Error
+func (helper *Helper) OpenapiError(err error) compat.Error {
+	generic := err.(compat.GenericOpenAPIError)
+	var exErr compat.Error
 	jsonErr := json.Unmarshal(generic.Body(), &exErr)
 	if jsonErr != nil {
 		helper.T.Errorf("Unable to convert error response to openapi error: %s", jsonErr)

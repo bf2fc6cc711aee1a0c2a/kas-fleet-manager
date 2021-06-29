@@ -254,7 +254,7 @@ paths:
       summary: Create a new connector
       tags:
       - Connectors
-  /api/connector_mgmt/v1/kafkas_connectors/{id}:
+  /api/connector_mgmt/v1/kafka_connectors/{id}:
     delete:
       operationId: deleteConnector
       parameters:

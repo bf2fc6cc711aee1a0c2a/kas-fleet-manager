@@ -3,8 +3,8 @@ package presenters
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 	KindConnectorType = "ConnectorType"
 )
 
-func PresentReference(id, obj interface{}) openapi.ObjectReference {
+func PresentReference(id, obj interface{}) compat.ObjectReference {
 	return presenters.PresentReferenceWith(id, obj, objectKind, objectPath)
 }
 

@@ -168,7 +168,7 @@ func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -284,7 +284,7 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, loc
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -514,7 +514,7 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, b
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafkas_connectors/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
