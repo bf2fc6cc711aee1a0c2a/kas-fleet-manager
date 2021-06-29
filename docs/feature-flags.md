@@ -1,7 +1,7 @@
 # Feature Flags
 This lists the feature flags and their sub-configurations to enable/disable and configure features of the KAS Fleet Manager. This set of features can be seen below.
 
-- [Feature Flags](#feature-flags)
+   - [Feature Flags](#feature-flags)
   - [Access Control](#access-control)
   - [Connectors](#connectors)
   - [Database](#database)

@@ -43,7 +43,20 @@ clusters:
     schedulable: true # change this to false if you do not want the cluster to be schedulable
     kafka_instance_limit: 2 # change this to match any value of configuration
 ```
+### Connecting to a standalone cluster
 
+kas-fleet-manager allows provisioning of kafkas in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) giving the:
+ - `name` of the kubeconfig context to use. This option is required and it has to be an existing name of a context in kubeconfig
+ - `provider_type` must be set to `standalone`. This is required to indicate that we are using a standalone
+ - `cluster_dns` This will be used to build kafka bootstrap url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
+ - `cloud_provider` the cloud provider where the standalone cluster is provisioned in
+ - `region` the cloud region where the standalone cluster is provisioned
+ - ... rest of the options
+
+> NOTE: `kubeconfig` path can be configured via the `--kubeconfig` CLI flag. Otherwise is defaults to `$HOME/.kube/config`
+
+> NOTE: Make sure that strimzi and kas-fleet-shard operators are installed on each of the standalone clusters. This has to be done manually at the moment. See [kas-installer](https://github.com/bf2fc6cc711aee1a0c2a/kas-installer) for information on how to install the operators.
+ 
 ## Configuring OSD Cluster Creation and AutoScaling
 
 To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
