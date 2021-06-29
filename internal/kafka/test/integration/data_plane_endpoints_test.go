@@ -472,7 +472,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		Version:             "2.7.0",
 	}
 
-	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
+	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
 
 	db := test2.TestServices.DBFactory.New()
 
@@ -537,7 +537,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		Version:             "2.7.0",
 	}
 
-	testServer.Helper.Env.Config.Keycloak.EnableAuthenticationOnKafka = true
+	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
 
 	db := test2.TestServices.DBFactory.New()
 
@@ -567,6 +567,11 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
 
+}
+
+func KeycloakConfig(helper *test.Helper) (c *config.KeycloakConfig) {
+	helper.Env.MustResolveAll(&c)
+	return
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {

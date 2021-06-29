@@ -60,7 +60,7 @@ func TestServiceStatus(t *testing.T) {
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(false))
 
 	// now modify the maximum capacity of kafkas and set it to 2 so that when we insert two kafkas in the database, we'll reach maximum capacity
-	h.Env.Config.Kafka.KafkaCapacity.MaxCapacity = 2
+	KafkaConfig(h).KafkaCapacity.MaxCapacity = 2
 	db := test.TestServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned

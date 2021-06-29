@@ -261,9 +261,11 @@ func TestMain(helper *test.Helper) int {
 		nextOrgId: 20000000,
 	}
 
+	var allow *config.AccessControlListConfig
+	helper.Env.MustResolveAll(&allow)
+
 	// Generate lots of org id's that scenarios can use to avoid
 	// conflicting with each other..
-	allow := helper.Env.Config.AccessControlList
 	if allow != nil {
 		for i := 0; i < 1000; i++ {
 			allow.AllowList.Organisations = append(allow.AllowList.Organisations, config.Organisation{

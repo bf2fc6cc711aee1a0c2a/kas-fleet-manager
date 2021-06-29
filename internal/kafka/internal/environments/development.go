@@ -1,8 +1,10 @@
 package environments
 
+import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+
 // The development environment is intended for use while developing features, requiring manual verification
-func newDevelopmentEnvLoader() EnvLoader {
-	return SimpleEnvLoader{
+func NewDevelopmentEnvLoader() environments.EnvLoader {
+	return environments.SimpleEnvLoader{
 		"v":                                 "10",
 		"ocm-debug":                         "false",
 		"ocm-base-url":                      "https://api.stage.openshift.com",

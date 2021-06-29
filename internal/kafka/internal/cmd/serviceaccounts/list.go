@@ -46,7 +46,8 @@ func runList(env *environments.Env, cmd *cobra.Command) {
 	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	// setup required services
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
+	keycloakConfig := KeycloakConfig(env)
+	keycloakService := services.NewKeycloakService(keycloakConfig, keycloakConfig.KafkaRealm)
 
 	// create jwt with claims and set it in the context
 	jwt := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.MapClaims{

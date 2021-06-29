@@ -12,6 +12,10 @@ type ConfigModule interface {
 	ReadFiles() error
 }
 
+type ServiceValidator interface {
+	Validate() error
+}
+
 // BootService are services that get started on application boot.
 type BootService interface {
 	Start()
