@@ -1,23 +1,23 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
-func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus) []*api.DataPlaneKafkaStatus {
-	var r []*api.DataPlaneKafkaStatus
+func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus) []*dbapi.DataPlaneKafkaStatus {
+	var r []*dbapi.DataPlaneKafkaStatus
 	for k, v := range status {
-		var c []api.DataPlaneKafkaStatusCondition
+		var c []dbapi.DataPlaneKafkaStatusCondition
 		for _, s := range v.Conditions {
-			c = append(c, api.DataPlaneKafkaStatusCondition{
+			c = append(c, dbapi.DataPlaneKafkaStatusCondition{
 				Type:    s.Type,
 				Reason:  s.Reason,
 				Status:  s.Status,
 				Message: s.Message,
 			})
 		}
-		r = append(r, &api.DataPlaneKafkaStatus{
+		r = append(r, &dbapi.DataPlaneKafkaStatus{
 			KafkaClusterId: k,
 			Conditions:     c,
 		})

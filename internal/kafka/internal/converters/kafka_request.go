@@ -1,10 +1,10 @@
 package converters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 )
 
-func ConvertKafkaRequest(request *api.KafkaRequest) []map[string]interface{} {
+func ConvertKafkaRequest(request *dbapi.KafkaRequest) []map[string]interface{} {
 	return []map[string]interface{}{
 		{
 			"id":                    request.ID,
@@ -24,7 +24,7 @@ func ConvertKafkaRequest(request *api.KafkaRequest) []map[string]interface{} {
 }
 
 // ConvertKafkaRequestList converts a KafkaRequestList to the response type expected by mocket
-func ConvertKafkaRequestList(kafkaList api.KafkaList) []map[string]interface{} {
+func ConvertKafkaRequestList(kafkaList dbapi.KafkaList) []map[string]interface{} {
 	var kafkaRequestList []map[string]interface{}
 
 	for _, kafkaRequest := range kafkaList {

@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
@@ -221,7 +222,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// Create dummy kafka and assign it to dummy cluster to make it not empty.
 	// This is done so it is not scaled down by the dynamic scaling
 	// functionality
-	dummyKafka := api.KafkaRequest{
+	dummyKafka := dbapi.KafkaRequest{
 		ClusterID:     dummyClusterID,
 		MultiAZ:       false,
 		Region:        cluster.Region,
@@ -546,7 +547,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// again when deleting the new cluster
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
-	err = db.Save(&api.KafkaRequest{ClusterID: testDataPlaneclusterID, Status: string(constants.KafkaRequestStatusReady)}).Error
+	err = db.Save(&dbapi.KafkaRequest{ClusterID: testDataPlaneclusterID, Status: string(constants.KafkaRequestStatusReady)}).Error
 	Expect(err).ToNot(HaveOccurred())
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", newCluster.ClusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())

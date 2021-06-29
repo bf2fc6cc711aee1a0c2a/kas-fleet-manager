@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"reflect"
 	"testing"
 	"time"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	mocket "github.com/selvatico/go-mocket"
 )
 
@@ -424,7 +424,7 @@ func Test_FindCluster(t *testing.T) {
 			},
 			want: buildCluster(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertCluster(buildCluster(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertCluster(buildCluster(nil)))
 			},
 		},
 	}
@@ -512,7 +512,7 @@ func Test_ListByStatus(t *testing.T) {
 			want:    emptyClusterList,
 			wantErr: false,
 			setupFn: func() {
-				response := dbConverters.ConvertClusterList(emptyClusterList)
+				response := converters.ConvertClusterList(emptyClusterList)
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
 			},
 		},
@@ -527,7 +527,7 @@ func Test_ListByStatus(t *testing.T) {
 			want:    nonEmptyClusterList,
 			wantErr: false,
 			setupFn: func() {
-				response := dbConverters.ConvertClusterList(nonEmptyClusterList)
+				response := converters.ConvertClusterList(nonEmptyClusterList)
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
 			},
 		},
@@ -743,7 +743,7 @@ func Test_RegisterClusterJob(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(dbConverters.ConvertCluster(buildCluster(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(converters.ConvertCluster(buildCluster(nil)))
 			},
 		},
 	}
@@ -1291,7 +1291,7 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertClusters(clusters))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertClusters(clusters))
 			},
 			args: args{
 				criteria: clusterReady,

@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
 
@@ -18,10 +19,10 @@ func TestAcceptedKafkaManager(t *testing.T) {
 		kafkaService        services.KafkaService
 		configService       coreServices.ConfigService
 		clusterPlmtStrategy services.ClusterPlacementStrategy
-		quotaService        coreServices.QuotaService
+		quotaService        services.QuotaService
 	}
 	type args struct {
-		kafka *api.KafkaRequest
+		kafka *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name       string
@@ -34,21 +35,21 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			name: "error when finding cluster fails",
 			fields: fields{
 				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return nil, errors.GeneralError("test")
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
-				quotaService: &coreServices.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "", nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			wantErr: true,
 		},
@@ -56,26 +57,26 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			name: "error when kafka service update fails",
 			fields: fields{
 				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("test")
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
-				quotaService: &coreServices.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "some-subscription", nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			wantErr:    true,
 			wantStatus: constants.KafkaRequestStatusPreparing.String(),
@@ -84,12 +85,12 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			name: "set kafka status to failed when quota is insufficient",
 			fields: fields{
 				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
@@ -98,14 +99,14 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						Quota: config.NewKafkaQuotaConfig(),
 					},
 				}),
-				quotaService: &coreServices.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "", errors.InsufficientQuotaError("quota insufficient")
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			wantStatus: constants.KafkaRequestStatusFailed.String(),
 		},
@@ -113,16 +114,16 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			name: "successful reconcile",
 			fields: fields{
 				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 						return &api.Cluster{}, nil
 					},
 				},
 				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{}, nil
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{}, nil
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
@@ -130,14 +131,14 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						Quota: config.NewKafkaQuotaConfig(),
 					},
 				}),
-				quotaService: &coreServices.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "sub-scription", nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			wantStatus: constants.KafkaRequestStatusPreparing.String(),
 		},
@@ -149,8 +150,8 @@ func TestAcceptedKafkaManager(t *testing.T) {
 				kafkaService:        tt.fields.kafkaService,
 				configService:       tt.fields.configService,
 				clusterPlmtStrategy: tt.fields.clusterPlmtStrategy,
-				quotaServiceFactory: &coreServices.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (coreServices.QuotaService, *errors.ServiceError) {
+				quotaServiceFactory: &services.QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},

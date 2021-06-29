@@ -2,15 +2,13 @@ package presenters
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
 // ConvertKafkaRequest from payload to KafkaRequest
-func ConvertKafkaRequest(kafkaRequest public.KafkaRequestPayload) *api.KafkaRequest {
-	return &api.KafkaRequest{
+func ConvertKafkaRequest(kafkaRequest public.KafkaRequestPayload) *dbapi.KafkaRequest {
+	return &dbapi.KafkaRequest{
 		Region:        kafkaRequest.Region,
 		Name:          kafkaRequest.Name,
 		CloudProvider: kafkaRequest.CloudProvider,
@@ -19,8 +17,8 @@ func ConvertKafkaRequest(kafkaRequest public.KafkaRequestPayload) *api.KafkaRequ
 }
 
 // PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
-func PresentKafkaRequest(kafkaRequest *api.KafkaRequest) public.KafkaRequest {
-	reference := presenters.PresentReference(kafkaRequest.ID, kafkaRequest)
+func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
+	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	return public.KafkaRequest{
 		Id:                            reference.Id,

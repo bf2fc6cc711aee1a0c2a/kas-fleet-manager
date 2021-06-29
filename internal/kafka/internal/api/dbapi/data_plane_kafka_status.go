@@ -1,4 +1,4 @@
-package api
+package dbapi
 
 import (
 	"strings"

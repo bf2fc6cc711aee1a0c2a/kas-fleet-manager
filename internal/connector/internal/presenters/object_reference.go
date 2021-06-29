@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
 )
 
@@ -16,6 +17,8 @@ const (
 	KindConnectorDeployment = "ConnectorDeployment"
 	// KindConnectorType is a string identifier for the type dbapi.ConnectorType
 	KindConnectorType = "ConnectorType"
+	// KindError is a string identifier for the type api.ServiceError
+	KindError = "Error"
 )
 
 func PresentReference(id, obj interface{}) compat.ObjectReference {
@@ -32,6 +35,8 @@ func objectKind(i interface{}) string {
 		return KindConnectorDeployment
 	case dbapi.ConnectorType, *dbapi.ConnectorType:
 		return KindConnectorType
+	case errors.ServiceError, *errors.ServiceError:
+		return KindError
 	default:
 		return ""
 	}

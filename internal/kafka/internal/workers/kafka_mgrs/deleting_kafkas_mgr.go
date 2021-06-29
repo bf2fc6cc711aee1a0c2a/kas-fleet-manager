@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
@@ -24,14 +25,14 @@ type DeletingKafkaManager struct {
 	isRunning           bool
 	kafkaService        services.KafkaService
 	configService       coreServices.ConfigService
-	quotaServiceFactory coreServices.QuotaServiceFactory
+	quotaServiceFactory services.QuotaServiceFactory
 	imStop              chan struct{}
 	syncTeardown        sync.WaitGroup
 	reconciler          workers.Reconciler
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory coreServices.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
+func NewDeletingKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		id:                  uuid.New().String(),
 		workerType:          "deleting_kafka",
@@ -132,7 +133,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *DeletingKafkaManager) reconcileDeletingKafkas(kafka *api.KafkaRequest) error {
+func (k *DeletingKafkaManager) reconcileDeletingKafkas(kafka *dbapi.KafkaRequest) error {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(kafka.QuotaType))
 	if factoryErr != nil {
 		return factoryErr

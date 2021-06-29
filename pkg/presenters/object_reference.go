@@ -4,10 +4,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 )
 
-func PresentReference(id, obj interface{}) compat.ObjectReference {
-	return PresentReferenceWith(id, obj, ObjectKind, ObjectPath)
-}
-
 func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) string, ObjectPath func(id string, obj interface{}) string) compat.ObjectReference {
 	refId, ok := MakeReferenceId(id)
 

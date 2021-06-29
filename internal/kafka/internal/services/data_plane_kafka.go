@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"strings"
 	"time"
 
@@ -27,7 +28,7 @@ const (
 )
 
 type DataPlaneKafkaService interface {
-	UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*api.DataPlaneKafkaStatus) *serviceError.ServiceError
+	UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError
 }
 
 type dataPlaneKafkaService struct {
@@ -42,7 +43,7 @@ func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService) 
 	}
 }
 
-func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*api.DataPlaneKafkaStatus) *serviceError.ServiceError {
+func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context, clusterId string, status []*dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
 	cluster, err := d.clusterService.FindClusterByID(clusterId)
 	log := logger.NewUHCLogger(ctx)
 	if err != nil {
@@ -87,7 +88,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *serviceError.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants.KafkaRequestStatusProvisioning)
 	if err != nil {
@@ -108,7 +109,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *api.KafkaRequest) *s
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest, errMessage string) *serviceError.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *dbapi.KafkaRequest, errMessage string) *serviceError.ServiceError {
 	// if kafka was already reported as failed we don't do anything
 	if kafka.Status == string(constants.KafkaRequestStatusFailed) {
 		return nil
@@ -135,7 +136,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterFailed(kafka *api.KafkaRequest, e
 	return nil
 }
 
-func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *api.KafkaRequest) *serviceError.ServiceError {
+func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	// If the Kafka cluster is deleted from the data plane cluster, we will make it as "deleting" in db and the reconcilier will ensure it is cleaned up properly
 	if ok, updateErr := d.kafkaService.UpdateStatus(kafka.ID, constants.KafkaRequestStatusDeleting); ok {
 		if updateErr != nil {
@@ -147,7 +148,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterDeleting(kafka *api.KafkaRequest)
 	return nil
 }
 
-func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *api.KafkaRequest) *serviceError.ServiceError {
+func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
 	if kafka.Status == constants.KafkaRequestStatusProvisioning.String() {
 		// If a Kafka cluster is rejected by the kas-fleetshard-operator, it should be assigned to another OSD cluster (via some scheduler service in the future).
 		// But now we only have one OSD cluster, so we need to change the placementId field so that the kas-fleetshard-operator will try it again
@@ -164,7 +165,7 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *api.KafkaRequest) *s
 	return nil
 }
 
-func getStatus(status *api.DataPlaneKafkaStatus) kafkaStatus {
+func getStatus(status *dbapi.DataPlaneKafkaStatus) kafkaStatus {
 	for _, c := range status.Conditions {
 		if strings.EqualFold(c.Type, "Ready") {
 			if strings.EqualFold(c.Status, "True") {
@@ -189,7 +190,7 @@ func getStatus(status *api.DataPlaneKafkaStatus) kafkaStatus {
 	}
 	return statusInstalling
 }
-func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *api.KafkaRequest, status constants.KafkaStatus) (bool, *serviceError.ServiceError) {
+func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *dbapi.KafkaRequest, status constants.KafkaStatus) (bool, *serviceError.ServiceError) {
 	matchStatus := false
 	if currentInstance, err := d.kafkaService.GetById(kafka.ID); err != nil {
 		return matchStatus, err

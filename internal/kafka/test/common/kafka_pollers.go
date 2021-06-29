@@ -3,8 +3,8 @@ package common
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
@@ -119,8 +119,8 @@ func WaitForKafkaToBeDeleted(ctx context.Context, db *db.ConnectionFactory, clie
 		Build().Poll()
 }
 
-func WaitForKafkaClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, kafkaRequestName string) (*api.KafkaRequest, error) {
-	kafkaFound := &api.KafkaRequest{}
+func WaitForKafkaClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, kafkaRequestName string) (*dbapi.KafkaRequest, error) {
+	kafkaFound := &dbapi.KafkaRequest{}
 
 	kafkaErr := NewPollerBuilder(dbFactory).
 		IntervalAndTimeout(defaultPollInterval, defaultKafkaClusterAssignmentTimeout).

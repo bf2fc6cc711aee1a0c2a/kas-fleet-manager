@@ -1,14 +1,14 @@
 package presenters
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
-func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) *api.DataPlaneClusterStatus {
-	conds := []api.DataPlaneClusterStatusCondition{}
+func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) *dbapi.DataPlaneClusterStatus {
+	conds := []dbapi.DataPlaneClusterStatusCondition{}
 	for _, statusCond := range status.Conditions {
-		conds = append(conds, api.DataPlaneClusterStatusCondition{
+		conds = append(conds, dbapi.DataPlaneClusterStatusCondition{
 			Type:    statusCond.Type,
 			Status:  statusCond.Status,
 			Reason:  statusCond.Reason,
@@ -16,7 +16,7 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 		})
 	}
 
-	return &api.DataPlaneClusterStatus{
+	return &dbapi.DataPlaneClusterStatus{
 		Conditions: conds,
 		NodeInfo:   getNodeInfo(status),
 		ResizeInfo: getResizeInfo(status),
@@ -24,17 +24,17 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 	}
 }
 
-func getNodeInfo(status private.DataPlaneClusterUpdateStatusRequest) api.DataPlaneClusterStatusNodeInfo {
-	var nodeInfo api.DataPlaneClusterStatusNodeInfo
+func getNodeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatusNodeInfo {
+	var nodeInfo dbapi.DataPlaneClusterStatusNodeInfo
 	if status.NodeInfo != nil {
-		nodeInfo = api.DataPlaneClusterStatusNodeInfo{
+		nodeInfo = dbapi.DataPlaneClusterStatusNodeInfo{
 			Ceiling:                int(*status.NodeInfo.Ceiling),
 			Floor:                  int(*status.NodeInfo.Floor),
 			Current:                int(*status.NodeInfo.Current),
 			CurrentWorkLoadMinimum: int(*status.NodeInfo.CurrentWorkLoadMinimum),
 		}
 	} else if status.DeprecatedNodeInfo != nil {
-		nodeInfo = api.DataPlaneClusterStatusNodeInfo{
+		nodeInfo = dbapi.DataPlaneClusterStatusNodeInfo{
 			Ceiling:                int(*status.DeprecatedNodeInfo.Ceiling),
 			Floor:                  int(*status.DeprecatedNodeInfo.Floor),
 			Current:                int(*status.DeprecatedNodeInfo.Current),
@@ -44,12 +44,12 @@ func getNodeInfo(status private.DataPlaneClusterUpdateStatusRequest) api.DataPla
 	return nodeInfo
 }
 
-func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) api.DataPlaneClusterStatusResizeInfo {
-	var resizeInfo api.DataPlaneClusterStatusResizeInfo
+func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatusResizeInfo {
+	var resizeInfo dbapi.DataPlaneClusterStatusResizeInfo
 	if status.ResizeInfo != nil {
-		resizeInfo = api.DataPlaneClusterStatusResizeInfo{
+		resizeInfo = dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: int(*status.ResizeInfo.NodeDelta),
-			Delta: api.DataPlaneClusterStatusCapacity{
+			Delta: dbapi.DataPlaneClusterStatusCapacity{
 				IngressEgressThroughputPerSec: *status.ResizeInfo.Delta.IngressEgressThroughputPerSec,
 				Connections:                   int(*status.ResizeInfo.Delta.Connections),
 				DataRetentionSize:             *status.ResizeInfo.Delta.DataRetentionSize,
@@ -57,9 +57,9 @@ func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) api.DataP
 			},
 		}
 	} else if status.DeprecatedResizeInfo != nil {
-		resizeInfo = api.DataPlaneClusterStatusResizeInfo{
+		resizeInfo = dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: int(*status.DeprecatedResizeInfo.DeprecatedNodeDelta),
-			Delta: api.DataPlaneClusterStatusCapacity{
+			Delta: dbapi.DataPlaneClusterStatusCapacity{
 				IngressEgressThroughputPerSec: *status.DeprecatedResizeInfo.Delta.DeprecatedIngressEgressThroughputPerSec,
 				Connections:                   int(*status.DeprecatedResizeInfo.Delta.Connections),
 				DataRetentionSize:             *status.DeprecatedResizeInfo.Delta.DeprecatedDataRetentionSize,
@@ -70,8 +70,8 @@ func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) api.DataP
 	return resizeInfo
 }
 
-func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) api.DataPlaneClusterStatusCapacity {
-	remaining := api.DataPlaneClusterStatusCapacity{
+func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatusCapacity {
+	remaining := dbapi.DataPlaneClusterStatusCapacity{
 		Connections: int(*status.Remaining.Connections),
 		Partitions:  int(*status.Remaining.Partitions),
 	}
@@ -88,7 +88,7 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) api.DataPl
 	return remaining
 }
 
-func PresentDataPlaneClusterConfig(config *api.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
+func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {
 	accessToken := config.Observability.AccessToken
 	return private.DataplaneClusterAgentConfig{
 		Spec: private.DataplaneClusterAgentConfigSpec{

@@ -3,14 +3,15 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
 	"net/http"
 	"strings"
 	"testing"
@@ -103,7 +104,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.Version).To(Equal(test2.TestServices.AppConfig.Kafka.DefaultKafkaVersion))
 
 	db := test2.TestServices.DBFactory.New()
-	var kafkaRequest api.KafkaRequest
+	var kafkaRequest dbapi.KafkaRequest
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find kafka request")
 	}
@@ -156,7 +157,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	// create dummy kafkas
 	db := test2.TestServices.DBFactory.New()
-	kafkas := []*api.KafkaRequest{
+	kafkas := []*dbapi.KafkaRequest{
 		{
 			MultiAZ:        false,
 			Owner:          "dummyuser1",
@@ -490,7 +491,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	db := test2.TestServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
-	kafkas := []*api.KafkaRequest{
+	kafkas := []*dbapi.KafkaRequest{
 		{
 			MultiAZ:        false,
 			Owner:          username1,
@@ -1199,7 +1200,7 @@ func deleteTestKafka(t *testing.T, h *test.Helper, ctx context.Context, client *
 		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaID).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
 			db := test2.TestServices.DBFactory.New()
-			var kafkaRequest api.KafkaRequest
+			var kafkaRequest dbapi.KafkaRequest
 			if err := db.Unscoped().Where("id = ?", kafkaID).First(&kafkaRequest).Error; err != nil {
 				return false, err
 			}
@@ -1286,7 +1287,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 
-	kafkas := []*api.KafkaRequest{
+	kafkas := []*dbapi.KafkaRequest{
 		{
 			MultiAZ:        false,
 			Owner:          testuser1,
@@ -1379,7 +1380,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	longLivedKafkaId := "123456"
 	h.Env.Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{longLivedKafkaId}
 
-	kafkas := []*api.KafkaRequest{
+	kafkas := []*dbapi.KafkaRequest{
 		{
 			MultiAZ:        false,
 			Owner:          testuser1,

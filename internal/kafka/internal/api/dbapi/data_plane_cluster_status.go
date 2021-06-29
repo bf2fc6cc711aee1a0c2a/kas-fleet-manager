@@ -1,4 +1,4 @@
-package api
+package dbapi
 
 type DataPlaneClusterStatus struct {
 	Conditions []DataPlaneClusterStatusCondition

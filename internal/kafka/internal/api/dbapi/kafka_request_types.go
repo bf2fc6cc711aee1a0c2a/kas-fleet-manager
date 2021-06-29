@@ -1,11 +1,12 @@
-package api
+package dbapi
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
 
 type KafkaRequest struct {
-	Meta
+	api.Meta
 	Region              string `json:"region"`
 	ClusterID           string `json:"cluster_id" gorm:"index"`
 	CloudProvider       string `json:"cloud_provider"`
@@ -42,7 +43,7 @@ func (kafkaRequest *KafkaRequest) BeforeCreate(scope *gorm.DB) error {
 	// To allow the id set on the KafkaRequest object to be used. This is useful for testing purposes.
 	id := kafkaRequest.ID
 	if id == "" {
-		kafkaRequest.ID = NewID()
+		kafkaRequest.ID = api.NewID()
 	}
 	return nil
 }

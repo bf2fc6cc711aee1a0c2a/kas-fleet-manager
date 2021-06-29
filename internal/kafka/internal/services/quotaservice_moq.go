@@ -4,7 +4,7 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -19,13 +19,13 @@ var _ QuotaService = &QuotaServiceMock{}
 //
 // 		// make and configure a mocked QuotaService
 // 		mockedQuotaService := &QuotaServiceMock{
-// 			CheckQuotaFunc: func(kafka *api.KafkaRequest) *apiErrors.ServiceError {
+// 			CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *apiErrors.ServiceError {
 // 				panic("mock out the CheckQuota method")
 // 			},
 // 			DeleteQuotaFunc: func(subscriptionId string) *apiErrors.ServiceError {
 // 				panic("mock out the DeleteQuota method")
 // 			},
-// 			ReserveQuotaFunc: func(kafka *api.KafkaRequest) (string, *apiErrors.ServiceError) {
+// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
 // 				panic("mock out the ReserveQuota method")
 // 			},
 // 		}
@@ -36,20 +36,20 @@ var _ QuotaService = &QuotaServiceMock{}
 // 	}
 type QuotaServiceMock struct {
 	// CheckQuotaFunc mocks the CheckQuota method.
-	CheckQuotaFunc func(kafka *api.KafkaRequest) *apiErrors.ServiceError
+	CheckQuotaFunc func(kafka *dbapi.KafkaRequest) *apiErrors.ServiceError
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
 	DeleteQuotaFunc func(subscriptionId string) *apiErrors.ServiceError
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(kafka *api.KafkaRequest) (string, *apiErrors.ServiceError)
+	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// CheckQuota holds details about calls to the CheckQuota method.
 		CheckQuota []struct {
 			// Kafka is the kafka argument value.
-			Kafka *api.KafkaRequest
+			Kafka *dbapi.KafkaRequest
 		}
 		// DeleteQuota holds details about calls to the DeleteQuota method.
 		DeleteQuota []struct {
@@ -59,7 +59,7 @@ type QuotaServiceMock struct {
 		// ReserveQuota holds details about calls to the ReserveQuota method.
 		ReserveQuota []struct {
 			// Kafka is the kafka argument value.
-			Kafka *api.KafkaRequest
+			Kafka *dbapi.KafkaRequest
 		}
 	}
 	lockCheckQuota   sync.RWMutex
@@ -68,12 +68,12 @@ type QuotaServiceMock struct {
 }
 
 // CheckQuota calls CheckQuotaFunc.
-func (mock *QuotaServiceMock) CheckQuota(kafka *api.KafkaRequest) *apiErrors.ServiceError {
+func (mock *QuotaServiceMock) CheckQuota(kafka *dbapi.KafkaRequest) *apiErrors.ServiceError {
 	if mock.CheckQuotaFunc == nil {
 		panic("QuotaServiceMock.CheckQuotaFunc: method is nil but QuotaService.CheckQuota was just called")
 	}
 	callInfo := struct {
-		Kafka *api.KafkaRequest
+		Kafka *dbapi.KafkaRequest
 	}{
 		Kafka: kafka,
 	}
@@ -87,10 +87,10 @@ func (mock *QuotaServiceMock) CheckQuota(kafka *api.KafkaRequest) *apiErrors.Ser
 // Check the length with:
 //     len(mockedQuotaService.CheckQuotaCalls())
 func (mock *QuotaServiceMock) CheckQuotaCalls() []struct {
-	Kafka *api.KafkaRequest
+	Kafka *dbapi.KafkaRequest
 } {
 	var calls []struct {
-		Kafka *api.KafkaRequest
+		Kafka *dbapi.KafkaRequest
 	}
 	mock.lockCheckQuota.RLock()
 	calls = mock.calls.CheckQuota
@@ -130,12 +130,12 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(kafka *api.KafkaRequest) (string, *apiErrors.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
 	callInfo := struct {
-		Kafka *api.KafkaRequest
+		Kafka *dbapi.KafkaRequest
 	}{
 		Kafka: kafka,
 	}
@@ -149,10 +149,10 @@ func (mock *QuotaServiceMock) ReserveQuota(kafka *api.KafkaRequest) (string, *ap
 // Check the length with:
 //     len(mockedQuotaService.ReserveQuotaCalls())
 func (mock *QuotaServiceMock) ReserveQuotaCalls() []struct {
-	Kafka *api.KafkaRequest
+	Kafka *dbapi.KafkaRequest
 } {
 	var calls []struct {
-		Kafka *api.KafkaRequest
+		Kafka *dbapi.KafkaRequest
 	}
 	mock.lockReserveQuota.RLock()
 	calls = mock.calls.ReserveQuota

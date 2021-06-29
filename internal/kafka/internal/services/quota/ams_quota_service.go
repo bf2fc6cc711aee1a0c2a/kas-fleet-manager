@@ -1,6 +1,7 @@
 package quota
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -23,7 +24,7 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 	return rr
 }
 
-func (q amsQuotaService) CheckQuota(kafka *api.KafkaRequest) *errors.ServiceError {
+func (q amsQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 	kafkaId := kafka.ID
 
 	if kafkaId == "" {
@@ -58,7 +59,7 @@ func (q amsQuotaService) CheckQuota(kafka *api.KafkaRequest) *errors.ServiceErro
 	return nil
 }
 
-func (q amsQuotaService) ReserveQuota(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	kafkaId := kafka.ID
 
 	rr := newQuotaResource()

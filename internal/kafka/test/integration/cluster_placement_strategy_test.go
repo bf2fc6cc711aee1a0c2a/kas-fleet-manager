@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
@@ -40,7 +41,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	db := test.TestServices.DBFactory.New()
 	clusterWithKafkaID := "cluster-id-that-should-not-be-deleted"
 
-	kafka := api.KafkaRequest{
+	kafka := dbapi.KafkaRequest{
 		ClusterID:     clusterWithKafkaID,
 		MultiAZ:       true,
 		Region:        "us-east-1",
@@ -123,7 +124,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// Need to mark the clusters to be ready so that placement can actually happen
 	updateErr := test.TestServices.ClusterService.UpdateMultiClusterStatus([]string{"test01", "test02", "test03"}, api.ClusterReady)
 	Expect(updateErr).NotTo(HaveOccurred())
-	kafkas := []*api.KafkaRequest{
+	kafkas := []*dbapi.KafkaRequest{
 		{MultiAZ: true,
 			Region:        "us-east-1",
 			CloudProvider: "aws",

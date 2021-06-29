@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
@@ -140,7 +141,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	cluster, _ := test.TestServices.ClusterService.FindClusterByID(clusterID)
 
 	// create dummy kafkas and assign it to current cluster to make it not empty
-	kafka := api.KafkaRequest{
+	kafka := dbapi.KafkaRequest{
 		ClusterID:     cluster.ClusterID,
 		MultiAZ:       false,
 		Region:        cluster.Region,

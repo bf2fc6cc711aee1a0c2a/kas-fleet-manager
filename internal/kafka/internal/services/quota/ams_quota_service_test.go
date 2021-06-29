@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -84,7 +85,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
-			kafka := &api.KafkaRequest{
+			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
@@ -157,7 +158,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
-			kafka := &api.KafkaRequest{
+			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
 				},
