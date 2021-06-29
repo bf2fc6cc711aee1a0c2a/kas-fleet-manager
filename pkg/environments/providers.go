@@ -38,7 +38,7 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewServerConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewOCMConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(func(c *config.ApplicationConfig) *config.OSDClusterConfig { return c.OSDClusterConfig }),
+		di.Provide(func(c *config.ApplicationConfig) *config.DataplaneClusterConfig { return c.DataplaneClusterConfig }),
 		di.Provide(func(c *config.ApplicationConfig) *config.KafkaConfig { return c.Kafka }),
 		di.Provide(func(c *config.ApplicationConfig) *config.KeycloakConfig { return c.Keycloak }),
 		di.Provide(func(c *config.ApplicationConfig) *config.AccessControlListConfig { return c.AccessControlList }),

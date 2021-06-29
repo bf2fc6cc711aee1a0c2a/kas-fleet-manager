@@ -32,16 +32,16 @@ const lastAppliedConfigurationAnnotation = "kas-fleet-manager/last-applied-resou
 var force = true
 
 type StandaloneProvider struct {
-	connectionFactory *db.ConnectionFactory
-	osdClusterConfig  *config.OSDClusterConfig
+	connectionFactory      *db.ConnectionFactory
+	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 var _ Provider = &StandaloneProvider{}
 
-func newStandaloneProvider(connectionFactory *db.ConnectionFactory, osdClusterConfig *config.OSDClusterConfig) *StandaloneProvider {
+func newStandaloneProvider(connectionFactory *db.ConnectionFactory, dataplaneClusterConfig *config.DataplaneClusterConfig) *StandaloneProvider {
 	return &StandaloneProvider{
-		connectionFactory: connectionFactory,
-		osdClusterConfig:  osdClusterConfig,
+		connectionFactory:      connectionFactory,
+		dataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }
 
@@ -79,13 +79,13 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec,
 }
 
 func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
-	if s.osdClusterConfig.RawKubernetesConfig == nil {
+	if s.dataplaneClusterConfig.RawKubernetesConfig == nil {
 		return &resources, nil // no kubeconfig read, do nothing.
 	}
 
-	contextName := s.osdClusterConfig.FindClusterNameByClusterId(clusterSpec.InternalID)
+	contextName := s.dataplaneClusterConfig.FindClusterNameByClusterId(clusterSpec.InternalID)
 	override := &clientcmd.ConfigOverrides{CurrentContext: contextName}
-	clientConfig, err := clientcmd.NewNonInteractiveClientConfig(*s.osdClusterConfig.RawKubernetesConfig, override.CurrentContext,
+	clientConfig, err := clientcmd.NewNonInteractiveClientConfig(*s.dataplaneClusterConfig.RawKubernetesConfig, override.CurrentContext,
 		override, &clientcmd.ClientConfigLoadingRules{}).
 		ClientConfig()
 

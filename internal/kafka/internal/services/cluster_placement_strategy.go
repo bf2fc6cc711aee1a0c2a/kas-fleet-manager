@@ -16,7 +16,7 @@ type ClusterPlacementStrategy interface {
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
 func NewClusterPlacementStrategy(configService services.ConfigService, clusterService ClusterService) ClusterPlacementStrategy {
 	var clusterSelection ClusterPlacementStrategy
-	if configService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
+	if configService.GetConfig().DataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 		clusterSelection = &FirstSchedulableWithinLimit{configService, clusterService}
 	} else {
 		clusterSelection = &FirstReadyCluster{configService, clusterService}
@@ -67,12 +67,12 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 		return nil, err
 	}
 
-	osdClusterConfig := f.ConfigService.GetConfig().OSDClusterConfig.ClusterConfig
+	dataplaneClusterConfig := f.ConfigService.GetConfig().DataplaneClusterConfig.ClusterConfig
 
 	//#2 - collect schedulable clusters
 	clusterSchIds := []string{}
 	for _, cluster := range clusterObj {
-		isSchedulable := osdClusterConfig.IsClusterSchedulable(cluster.ClusterID)
+		isSchedulable := dataplaneClusterConfig.IsClusterSchedulable(cluster.ClusterID)
 		if isSchedulable {
 			clusterSchIds = append(clusterSchIds, cluster.ClusterID)
 		}
@@ -92,7 +92,7 @@ func (f *FirstSchedulableWithinLimit) FindCluster(kafka *dbapi.KafkaRequest) (*a
 	//we want to make sure the order of the ids configuration is always respected: e.g the first cluster in the configuration that passes all the checks should be picked first
 	for _, schClusterid := range clusterSchIds {
 		cnt := clusterWithinLimit[schClusterid]
-		if osdClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
+		if dataplaneClusterConfig.IsNumberOfKafkaWithinClusterLimit(schClusterid, cnt+1) {
 			return searchClusterObjInArray(clusterObj, schClusterid), nil
 		}
 	}
