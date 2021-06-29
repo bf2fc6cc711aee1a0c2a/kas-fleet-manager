@@ -190,9 +190,9 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 	return &types.CloudProviderRegionInfoList{Items: items}, nil
 }
 
-func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredDiscoveryRESTMapper, resourceObj interface{}) (runtime.Object, error) {
+func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredDiscoveryRESTMapper, resource interface{}) (runtime.Object, error) {
 	// parse resource obj to unstructure.Unstructered
-	data, err := json.Marshal(resourceObj)
+	data, err := json.Marshal(resource)
 	if err != nil {
 		return nil, err
 	}
@@ -222,8 +222,8 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 		return nil, err
 	}
 
-	resourceToApply := &obj
-	namespace, err := meta.NewAccessor().Namespace(resourceToApply)
+	desiredObj := &obj
+	namespace, err := meta.NewAccessor().Namespace(desiredObj)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 		dr = dynamicClient.Resource(mapping.Resource)
 	}
 
-	name, err := meta.NewAccessor().Name(resourceToApply)
+	name, err := meta.NewAccessor().Name(desiredObj)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredD
 	}
 
 	// apply new changes which will lead to creation of new resources
-	return applyChangesFn(dr, name, resourceToApply, existingObj)
+	return applyChangesFn(dr, desiredObj, existingObj)
 }
 
 func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *unstructured.Unstructured, newConfiguration string) bool {
@@ -272,15 +272,18 @@ func shouldApplyChanges(dynamicClient dynamic.ResourceInterface, existingObj *un
 	return true
 }
 
-func applyChangesFn(client dynamic.ResourceInterface, name string, obj *unstructured.Unstructured, existingObj *unstructured.Unstructured) (runtime.Object, error) {
+func applyChangesFn(client dynamic.ResourceInterface, desiredObj *unstructured.Unstructured, existingObj *unstructured.Unstructured) (runtime.Object, error) {
 	if existingObj == nil { // create object if it does not exist
-		return client.Create(ctx, obj, metav1.CreateOptions{
+		return client.Create(ctx, desiredObj, metav1.CreateOptions{
 			FieldManager: fieldManager,
 		})
 	}
 
-	obj.SetResourceVersion(existingObj.GetResourceVersion())
-	return client.Update(ctx, obj, metav1.UpdateOptions{
+	desiredObj.SetResourceVersion(existingObj.GetResourceVersion())
+
+	// we are replacing the whole object instead of using server-side apply which is in beta
+	// the object is set to exactly desired object
+	return client.Update(ctx, desiredObj, metav1.UpdateOptions{
 		FieldManager: fieldManager,
 	})
 }
