@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 
@@ -16,13 +17,13 @@ func TestClusterCreate_InvalidAwsCredentials(t *testing.T) {
 	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	_, _, teardown := NewKafkaHelperWithHooks(t, ocmServer, func(aws *config.AWSConfig) {
+	_, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(aws *config.AWSConfig) {
 		// setting AWS.AccountID to invalid value
 		aws.AccountID = "123456789012"
 	})
 	defer teardown()
 
-	cluster, err := testServices.ClusterService.Create(&api.Cluster{
+	cluster, err := test.TestServices.ClusterService.Create(&api.Cluster{
 		CloudProvider: "aws",
 		Region:        "us-east-1",
 		MultiAZ:       true,

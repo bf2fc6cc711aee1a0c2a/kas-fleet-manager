@@ -1,13 +1,13 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
@@ -103,7 +103,7 @@ func (k *PreparingKafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *PreparingKafkaManager) reconcilePreparingKafka(kafka *api.KafkaRequest) error {
+func (k *PreparingKafkaManager) reconcilePreparingKafka(kafka *dbapi.KafkaRequest) error {
 	if err := k.kafkaService.PrepareKafkaRequest(kafka); err != nil {
 		return k.handleKafkaRequestCreationError(kafka, err)
 	}
@@ -111,7 +111,7 @@ func (k *PreparingKafkaManager) reconcilePreparingKafka(kafka *api.KafkaRequest)
 	return nil
 }
 
-func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *api.KafkaRequest, err *serviceErr.ServiceError) error {
+func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *dbapi.KafkaRequest, err *serviceErr.ServiceError) error {
 	if err.IsServerErrorClass() {
 		// retry the kafka creation request only if the failure is caused by server errors
 		// and the time elapsed since its db record was created is still within the threshold.

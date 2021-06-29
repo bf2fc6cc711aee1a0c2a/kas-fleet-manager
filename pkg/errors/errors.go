@@ -2,14 +2,13 @@ package errors
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 )
 
 type stackTracer interface {
@@ -415,7 +414,7 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 	return e.Code == FailedToCheckQuota("").Code
 }
 
-func (e *ServiceError) AsOpenapiError(operationID string, basePath string) openapi.Error {
+func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
 	href := Href(e.Code)
 	code := CodeStr(e.Code)
 
@@ -431,7 +430,7 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) opena
 	}
 
 	// end-temporary code
-	return openapi.Error{
+	return compat.Error{
 		Kind:        "Error",
 		Id:          strconv.Itoa(int(e.Code)),
 		Href:        href,

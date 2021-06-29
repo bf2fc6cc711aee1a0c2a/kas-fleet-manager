@@ -2,7 +2,7 @@ package routes
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/data/generated/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
@@ -61,7 +61,7 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 }
 
 func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
-	openAPIDefinitions, err := shared.LoadOpenAPISpec(openapi.Asset, openApiFilePath)
+	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
 	if err != nil {
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
@@ -69,7 +69,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ConfigService)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ConfigService)
 	errorsHandler := coreHandlers.NewErrorsHandler()
-	serviceAccountsHandler := coreHandlers.NewServiceAccountHandler(s.Keycloak)
+	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.ConfigService)
 

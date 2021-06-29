@@ -3,9 +3,9 @@ package observatorium
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -50,11 +50,11 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 		glog.Error("An error occurred while attempting to get metrics data ", err.Error())
 		return
 	}
-	metricsList := openapi.MetricsRangeQueryList{
+	metricsList := public.MetricsRangeQueryList{
 		Kind: "MetricsRangeQueryList",
 		Id:   kafkaId,
 	}
-	metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
+	metrics, err := presenters2.PresentMetricsByRangeQuery(kafkaMetrics)
 	if err != nil {
 		glog.Error("An error occurred while attempting to present metrics data ", err.Error())
 		return

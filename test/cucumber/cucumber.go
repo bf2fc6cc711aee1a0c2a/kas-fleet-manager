@@ -254,10 +254,9 @@ func init() {
 // TestMain runs the scenarios found in the "features" directory.  If m is not nil, it
 // also runs it's tests.  Panics if helper is nil.
 func TestMain(helper *test.Helper) int {
-	helper.NewApiClient()
 	s := &TestSuite{
 		Helper:    helper,
-		ApiURL:    helper.NewApiClient().GetConfig().BasePath,
+		ApiURL:    "http://localhost:8000",
 		users:     map[string]*TestUser{},
 		nextOrgId: 20000000,
 	}

@@ -2,10 +2,10 @@ package services
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"regexp"
 	"strings"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -36,25 +36,25 @@ func truncateString(str string, num int) string {
 
 // buildKafkaNamespaceIdentifier creates a unique identifier for a namespace to be used for
 // the kafka request
-func buildKafkaNamespaceIdentifier(kafkaRequest *api.KafkaRequest) string {
+func buildKafkaNamespaceIdentifier(kafkaRequest *dbapi.KafkaRequest) string {
 	return fmt.Sprintf("%s-%s", truncateString(kafkaRequest.Owner, truncatedNamespaceLen), strings.ToLower(kafkaRequest.ID))
 }
 
 // buildKafkaIdentifier creates a unique identifier for a kafka cluster given
 // the kafka request object
-func buildKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
+func buildKafkaIdentifier(kafkaRequest *dbapi.KafkaRequest) string {
 	return fmt.Sprintf("%s-%s", kafkaRequest.Name, strings.ToLower(kafkaRequest.ID))
 }
 
 // buildTruncateKafkaIdentifier creates a unique identifier for a kafka cluster given
 // the kafka request object
-func buildTruncateKafkaIdentifier(kafkaRequest *api.KafkaRequest) string {
+func buildTruncateKafkaIdentifier(kafkaRequest *dbapi.KafkaRequest) string {
 	return fmt.Sprintf("%s-%s", truncateString(kafkaRequest.Name, truncatedNameLen), strings.ToLower(kafkaRequest.ID))
 }
 
 // buildSyncsetIdentifier creates a unique identifier for the syncset given
 // the unique kafka identifier
-func buildSyncsetIdentifier(kafkaRequest *api.KafkaRequest) string {
+func buildSyncsetIdentifier(kafkaRequest *dbapi.KafkaRequest) string {
 	fullSyncSetId := fmt.Sprintf("ext-%s", buildKafkaIdentifier(kafkaRequest))
 	// Max SyncSetID length in OCM is 50
 	return truncateString(fullSyncSetId, truncatedSyncsetIdLen)
@@ -103,7 +103,7 @@ func replaceHostSpecialChar(name string) (string, error) {
 	return replacedName, nil
 }
 
-func BuildNamespaceName(kafka *api.KafkaRequest) (string, error) {
+func BuildNamespaceName(kafka *dbapi.KafkaRequest) (string, error) {
 	namespaceName := buildKafkaNamespaceIdentifier(kafka)
 	namespaceName, err := replaceNamespaceSpecialChar(namespaceName)
 	if err != nil {
@@ -117,6 +117,6 @@ func BuildKeycloakClientNameIdentifier(kafkaRequestID string) string {
 	return fmt.Sprintf("%s-%s", "kafka", strings.ToLower(kafkaRequestID))
 }
 
-func BuildCustomClaimCheck(kafkaRequest *api.KafkaRequest) string {
+func BuildCustomClaimCheck(kafkaRequest *dbapi.KafkaRequest) string {
 	return fmt.Sprintf("@.rh-org-id == '%s' && (( @.rh-user-id && @.rh-user-id =='%s') || !@.rh-user-id)", kafkaRequest.OrganisationId, kafkaRequest.OwnerAccountId)
 }

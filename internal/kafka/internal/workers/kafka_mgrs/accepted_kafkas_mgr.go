@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
@@ -26,7 +27,7 @@ type AcceptedKafkaManager struct {
 	isRunning           bool
 	kafkaService        services.KafkaService
 	configService       coreServices.ConfigService
-	quotaServiceFactory coreServices.QuotaServiceFactory
+	quotaServiceFactory services.QuotaServiceFactory
 	imStop              chan struct{}
 	syncTeardown        sync.WaitGroup
 	reconciler          workers.Reconciler
@@ -34,7 +35,7 @@ type AcceptedKafkaManager struct {
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory coreServices.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		id:                  uuid.New().String(),
 		workerType:          "accepted_kafka",
@@ -109,7 +110,7 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) error {
+func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest) error {
 	cluster, err := k.clusterPlmtStrategy.FindCluster(kafka)
 	if err != nil {
 		return errors.Wrapf(err, "failed to find cluster for kafka request %s", kafka.ID)
@@ -141,7 +142,7 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *api.KafkaRequest) e
 }
 
 // reserve: true creating the subscription, cluster_authorization is an idempotent endpoint. We will get the same subscription id for a KafkaRequest(id).
-func (k *AcceptedKafkaManager) reconcileQuota(kafka *api.KafkaRequest) (bool, error) {
+func (k *AcceptedKafkaManager) reconcileQuota(kafka *dbapi.KafkaRequest) (bool, error) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(kafka.QuotaType))
 	if factoryErr != nil {
 		return false, factoryErr

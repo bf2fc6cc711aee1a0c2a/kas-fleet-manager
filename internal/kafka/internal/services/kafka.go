@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"strings"
 	"sync"
@@ -37,28 +38,28 @@ type KafkaService interface {
 	// PrepareKafkaRequest sets any required information (i.e. bootstrap server host, sso client id and secret)
 	// to the Kafka Request record in the database. The kafka request will also be updated with an updated_at
 	// timestamp and the corresponding cluster identifier.
-	PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *errors.ServiceError
+	PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	// Get method will retrieve the kafkaRequest instance that the give ctx has access to from the database.
 	// This should be used when you want to make sure the result is filtered based on the request context.
-	Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError)
+	Get(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError)
 	// GetById method will retrieve the KafkaRequest instance from the database without checking any permissions.
 	// You should only use this if you are sure permission check is not required.
-	GetById(id string) (*api.KafkaRequest, *errors.ServiceError)
+	GetById(id string) (*dbapi.KafkaRequest, *errors.ServiceError)
 	// Delete cleans up all dependencies for a Kafka request and soft deletes the Kafka Request record from the database.
 	// The Kafka Request in the database will be updated with a deleted_at timestamp.
-	Delete(*api.KafkaRequest) *errors.ServiceError
-	List(ctx context.Context, listArgs *services2.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError)
+	Delete(*dbapi.KafkaRequest) *errors.ServiceError
+	List(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
-	RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError
-	ListByStatus(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError)
+	RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
+	ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Kafka cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
 	// original status is 'deprovision' (cluster in deprovision state can't be change state) or if the final status is the
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
 	UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError)
-	Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError
-	ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
+	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
@@ -74,11 +75,11 @@ type kafkaService struct {
 	keycloakService     services2.KeycloakService
 	kafkaConfig         *config.KafkaConfig
 	awsConfig           *config.AWSConfig
-	quotaServiceFactory services2.QuotaServiceFactory
+	quotaServiceFactory QuotaServiceFactory
 	mu                  sync.Mutex
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory services2.QuotaServiceFactory) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory) *kafkaService {
 	return &kafkaService{
 		connectionFactory:   connectionFactory,
 		clusterService:      clusterService,
@@ -93,7 +94,7 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 	var count int64
 
-	if err := dbConn.Model(&api.KafkaRequest{}).Count(&count).Error; err != nil {
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Count(&count).Error; err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka request")
 	}
 
@@ -102,7 +103,7 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 }
 
 // RegisterKafkaJob registers a new job in the kafka table
-func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
@@ -138,7 +139,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *api.KafkaRequest) *errors.
 	return nil
 }
 
-func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	truncatedKafkaIdentifier := buildTruncateKafkaIdentifier(kafkaRequest)
 	truncatedKafkaIdentifier, replaceErr := replaceHostSpecialChar(truncatedKafkaIdentifier)
 	if replaceErr != nil {
@@ -172,7 +173,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *erro
 
 	// Update the Kafka Request record in the database
 	// Only updates the fields below
-	updatedKafkaRequest := &api.KafkaRequest{
+	updatedKafkaRequest := &dbapi.KafkaRequest{
 		Meta: api.Meta{
 			ID: kafkaRequest.ID,
 		},
@@ -189,22 +190,22 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *api.KafkaRequest) *erro
 	return nil
 }
 
-func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*api.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 	if len(status) == 0 {
 		return nil, errors.GeneralError("no status provided")
 	}
 	dbConn := k.connectionFactory.New()
 
-	var kafkas []*api.KafkaRequest
+	var kafkas []*dbapi.KafkaRequest
 
-	if err := dbConn.Model(&api.KafkaRequest{}).Where("status IN (?)", status).Scan(&kafkas).Error; err != nil {
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Where("status IN (?)", status).Scan(&kafkas).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list by status")
 	}
 
 	return kafkas, nil
 }
 
-func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) Get(ctx context.Context, id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
@@ -231,20 +232,20 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*api.KafkaRequest, *
 		dbConn = dbConn.Where("owner = ?", user)
 	}
 
-	var kafkaRequest api.KafkaRequest
+	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
 		return nil, services2.HandleGetError("KafkaResource for user "+user, "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
 
-func (k *kafkaService) GetById(id string) (*api.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) GetById(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
 	if id == "" {
 		return nil, errors.Validation("id is undefined")
 	}
 
 	dbConn := k.connectionFactory.New()
-	var kafkaRequest api.KafkaRequest
+	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
 		return nil, services2.HandleGetError("KafkaResource", "id", id, err)
 	}
@@ -273,7 +274,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 		dbConn = dbConn.Where("id = ?", id).Where("owner = ? ", user)
 	}
 
-	var kafkaRequest api.KafkaRequest
+	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
 		return services2.HandleGetError("KafkaResource", "id", id, err)
 	}
@@ -294,7 +295,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
-		Model(&api.KafkaRequest{}).
+		Model(&dbapi.KafkaRequest{}).
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", kafkaDeletionStatuses).
 		Update("status", constants.KafkaRequestStatusDeprovision)
@@ -318,7 +319,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
-		Model(&api.KafkaRequest{}).
+		Model(&dbapi.KafkaRequest{}).
 		Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour)).
 		Where("status NOT IN (?)", kafkaDeletionStatuses)
 
@@ -344,7 +345,7 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 	return nil
 }
 
-func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	// if the we don't have the clusterID we can only delete the row from the database
@@ -384,8 +385,8 @@ func (k *kafkaService) Delete(kafkaRequest *api.KafkaRequest) *errors.ServiceErr
 }
 
 // List returns all Kafka requests belonging to a user.
-func (k *kafkaService) List(ctx context.Context, listArgs *services2.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
-	var kafkaRequestList api.KafkaList
+func (k *kafkaService) List(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+	var kafkaRequestList dbapi.KafkaList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
 		Page: listArgs.Page,
@@ -462,7 +463,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 			Where("sso_client_secret != ''")
 	}
 
-	var kafkaRequestList api.KafkaList
+	var kafkaRequestList dbapi.KafkaList
 	if err := dbConn.Find(&kafkaRequestList).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "unable to list kafka requests")
 	}
@@ -478,7 +479,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	return res, nil
 }
 
-func (k *kafkaService) Update(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+func (k *kafkaService) Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(kafkaRequest).
 		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
@@ -507,14 +508,14 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 		}
 	}
 
-	if err := dbConn.Model(&api.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
+	if err := dbConn.Model(&dbapi.KafkaRequest{Meta: api.Meta{ID: id}}).Update("status", status).Error; err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka status")
 	}
 
 	return true, nil
 }
 
-func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *api.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(kafkaRequest.BootstrapServerHost, clusterDNS, action, k.kafkaConfig)
 
 	// Create AWS client with the region of this Kafka Cluster
@@ -543,7 +544,7 @@ type KafkaStatusCount struct {
 func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []KafkaStatusCount
-	if err := dbConn.Model(&api.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Failed to count kafkas")
 	}
 
@@ -564,7 +565,7 @@ func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaSta
 	return results, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *api.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{

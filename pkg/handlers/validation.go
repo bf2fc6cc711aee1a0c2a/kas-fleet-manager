@@ -9,9 +9,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 var (
@@ -71,39 +69,6 @@ func ValidateMultiAZEnabled(value *bool, action string) Validate {
 		if !*value {
 			return errors.NotMultiAzActionNotSupported()
 		}
-		return nil
-	}
-}
-
-// ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
-// provider and region
-func ValidateCloudProvider(kafkaRequest *openapi.KafkaRequestPayload, configService services.ConfigService, action string) Validate {
-	return func() *errors.ServiceError {
-		// Set Cloud Provider default if not received in the request
-		if kafkaRequest.CloudProvider == "" {
-			defaultProvider, _ := configService.GetDefaultProvider()
-			kafkaRequest.CloudProvider = defaultProvider.Name
-		}
-
-		// Validation for Cloud Provider
-		provider, providerSupported := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
-		if !providerSupported {
-			return errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, configService.GetSupportedProviders())
-		}
-
-		// Set Cloud Region default if not received in the request
-		if kafkaRequest.Region == "" {
-			defaultRegion, _ := configService.GetDefaultRegionForProvider(provider)
-			kafkaRequest.Region = defaultRegion.Name
-		}
-
-		// Validation for Cloud Region
-		regionSupported := configService.IsRegionSupportedForProvider(kafkaRequest.CloudProvider, kafkaRequest.Region)
-		if !regionSupported {
-			provider, _ := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
-			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
-		}
-
 		return nil
 	}
 }

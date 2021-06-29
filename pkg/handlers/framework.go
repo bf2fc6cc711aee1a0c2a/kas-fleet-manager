@@ -3,10 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"net/http"
-
-	publicOpenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -169,7 +167,7 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 				} else {
 					ulog.Error(err)
 				}
-				result := openapi.WatchEvent{
+				result := compat.WatchEvent{
 					Type:  "error",
 					Error: ConvertToPrivateError(err.AsOpenapiError(operationID, r.RequestURI)),
 				}
@@ -189,8 +187,8 @@ func HandleList(w http.ResponseWriter, r *http.Request, cfg *HandlerConfig) {
 	}
 
 }
-func ConvertToPrivateError(e publicOpenapi.Error) openapi.Error {
-	return openapi.Error{
+func ConvertToPrivateError(e compat.Error) compat.PrivateError {
+	return compat.PrivateError{
 		Id:          e.Id,
 		Kind:        e.Kind,
 		Href:        e.Href,

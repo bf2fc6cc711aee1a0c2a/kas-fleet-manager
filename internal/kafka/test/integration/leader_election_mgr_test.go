@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"testing"
 	"time"
 
@@ -18,13 +19,13 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	_, _, teardown := NewKafkaHelper(t, ocmServer)
+	_, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
 	// wait and validate all workers are started.
 	var clusterState bool
 	err := wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		clusterState = testServices.ClusterManager.IsRunning()
+		clusterState = test.TestServices.ClusterManager.IsRunning()
 		return clusterState, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
@@ -32,10 +33,10 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 
 	kafkaState := false
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		if len(testServices.Workers) < 1 {
+		if len(test.TestServices.Workers) < 1 {
 			return false, nil
 		}
-		for _, worker := range testServices.Workers {
+		for _, worker := range test.TestServices.Workers {
 			if !worker.IsRunning() {
 				return false, nil
 			}
@@ -48,18 +49,18 @@ func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {
 	Expect(kafkaState).To(Equal(true))
 
 	// Take down a worker and valid it is really down
-	testServices.LeaderElectionManager.Stop()
+	test.TestServices.LeaderElectionManager.Stop()
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		clusterState = testServices.ClusterManager.IsRunning()
+		clusterState = test.TestServices.ClusterManager.IsRunning()
 		return !clusterState, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)
 	Expect(clusterState).To(Equal(false))
 
-	testServices.LeaderElectionManager.Start()
+	test.TestServices.LeaderElectionManager.Start()
 	// Wait for Leader Election Manager to start it up again
 	err = wait.PollImmediate(pollInterval, pollTimeout, func() (done bool, err error) {
-		clusterState = testServices.ClusterManager.IsRunning()
+		clusterState = test.TestServices.ClusterManager.IsRunning()
 		return clusterState, nil
 	})
 	Expect(err).NotTo(HaveOccurred(), "", clusterState, err)

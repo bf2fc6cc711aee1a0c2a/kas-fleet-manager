@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
 	"time"
@@ -17,7 +18,7 @@ func TestPreparingKafkaManager(t *testing.T) {
 		kafkaService services.KafkaService
 	}
 	type args struct {
-		kafka *api.KafkaRequest
+		kafka *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name                string
@@ -31,13 +32,13 @@ func TestPreparingKafkaManager(t *testing.T) {
 			name: "Encounter a 5xx error Kafka preparation and performed the retry",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("simulate 5xx error")
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{
+				kafka: &dbapi.KafkaRequest{
 					Meta: api.Meta{
 						CreatedAt: time.Now().Add(time.Minute * time.Duration(30)),
 					},
@@ -52,16 +53,16 @@ func TestPreparingKafkaManager(t *testing.T) {
 			name: "Encounter a 5xx error Kafka preparation and skipped the retry",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.GeneralError("simulate 5xx error")
 					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{
+				kafka: &dbapi.KafkaRequest{
 					Meta: api.Meta{
 						CreatedAt: time.Now().Add(time.Minute * time.Duration(-30)),
 					},
@@ -76,16 +77,16 @@ func TestPreparingKafkaManager(t *testing.T) {
 			name: "Encounter a Client error (4xx) in Kafka preparation",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.NotFound("simulate a 4xx error")
 					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{
+				kafka: &dbapi.KafkaRequest{
 					Status: string(constants.KafkaRequestStatusPreparing),
 				},
 			},
@@ -97,16 +98,16 @@ func TestPreparingKafkaManager(t *testing.T) {
 			name: "Encounter an SSO Client internal error in Kafka creation and performed the retry",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.FailedToCreateSSOClient("ErrorFailedToCreateSSOClientReason")
 					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(30))}},
+				kafka: &dbapi.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(30))}},
 			},
 			wantErr:    true,
 			wantErrMsg: "",
@@ -115,16 +116,16 @@ func TestPreparingKafkaManager(t *testing.T) {
 			name: "Encounter an SSO Client internal error in Kafka creation and skipped the retry",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.FailedToCreateSSOClient("ErrorFailedToCreateSSOClientReason")
 					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(-30))}},
+				kafka: &dbapi.KafkaRequest{Meta: api.Meta{CreatedAt: time.Now().Add(time.Minute * time.Duration(-30))}},
 			},
 			wantErr:             true,
 			wantErrMsg:          "ErrorFailedToCreateSSOClientReason",
@@ -134,16 +135,16 @@ func TestPreparingKafkaManager(t *testing.T) {
 			name: "Successful reconcile",
 			fields: fields{
 				kafkaService: &services.KafkaServiceMock{
-					PrepareKafkaRequestFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafka: &api.KafkaRequest{},
+				kafka: &dbapi.KafkaRequest{},
 			},
 			wantErr:    false,
 			wantErrMsg: "",

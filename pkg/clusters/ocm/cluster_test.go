@@ -1,11 +1,11 @@
 package ocm
 
 import (
+	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"reflect"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
@@ -103,13 +103,13 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 			},
 			args: args{
 				clusterRequest: &types.ClusterRequest{
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					Region:        clusterservicetest.MockClusterRegion,
-					MultiAZ:       clusterservicetest.MockClusterMultiAZ,
+					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest2.MockClusterRegion,
+					MultiAZ:       clusterservicetest2.MockClusterMultiAZ,
 				},
 			},
 			wantFn: func() *clustersmgmtv1.Cluster {
-				cluster, err := clusterservicetest.NewMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
+				cluster, err := clusterservicetest2.NewMockCluster(func(builder *clustersmgmtv1.ClusterBuilder) {
 					// these values will be ignored by the conversion as they're unsupported. so expect different
 					// values than we provide.
 					builder.CCS(clustersmgmtv1.NewCCS().Enabled(true))

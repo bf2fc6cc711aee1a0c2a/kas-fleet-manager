@@ -3,6 +3,9 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
+	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"net/http"
 	"reflect"
@@ -11,11 +14,9 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	dbConverters "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
 	"gorm.io/gorm"
@@ -39,8 +40,8 @@ var (
 )
 
 // build a test kafka request
-func buildKafkaRequest(modifyFn func(kafkaRequest *api.KafkaRequest)) *api.KafkaRequest {
-	kafkaRequest := &api.KafkaRequest{
+func buildKafkaRequest(modifyFn func(kafkaRequest *dbapi.KafkaRequest)) *dbapi.KafkaRequest {
+	kafkaRequest := &dbapi.KafkaRequest{
 		Meta: api.Meta{
 			ID:        testID,
 			DeletedAt: gorm.DeletedAt{Valid: true},
@@ -98,7 +99,7 @@ func Test_kafkaService_Get(t *testing.T) {
 		args   args
 		// want (there can be more than one) is the outputs that we expect, they can be compared after the test
 		// function has been executed
-		want *api.KafkaRequest
+		want *dbapi.KafkaRequest
 		// wantErr is similar to want, but instead of testing the actual returned error, we're just testing than any
 		// error has been returned
 		wantErr bool
@@ -143,7 +144,7 @@ func Test_kafkaService_Get(t *testing.T) {
 			},
 			want: buildKafkaRequest(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}
@@ -199,7 +200,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 		args   args
 		// want (there can be more than one) is the outputs that we expect, they can be compared after the test
 		// function has been executed
-		want *api.KafkaRequest
+		want *dbapi.KafkaRequest
 		// wantErr is similar to want, but instead of testing the actual returned error, we're just testing than any
 		// error has been returned
 		wantErr bool
@@ -241,7 +242,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 			},
 			want: buildKafkaRequest(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}
@@ -351,7 +352,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 
 	longKafkaName := "long-kafka-name-which-will-be-truncated-since-route-host-names-are-limited-to-63-characters"
@@ -450,7 +451,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.Name = longKafkaName
 				}),
 			},
@@ -521,10 +522,10 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		quotaService      services.QuotaService
+		quotaService      QuotaService
 	}
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -537,14 +538,14 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			name: "error when id is undefined",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				quotaService: &services.QuotaServiceMock{
+				quotaService: &QuotaServiceMock{
 					DeleteQuotaFunc: func(id string) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
 			},
@@ -554,14 +555,14 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			name: "error when sql where query fails",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				quotaService: &services.QuotaServiceMock{
+				quotaService: &QuotaServiceMock{
 					DeleteQuotaFunc: func(id string) *errors.ServiceError {
 						return nil
 					},
 				},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
 			},
@@ -598,7 +599,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -624,12 +625,12 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
@@ -654,18 +655,18 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					Region:        clusterservicetest2.MockClusterRegion,
+					ClusterID:     clusterservicetest2.MockClusterID,
+					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
 					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
@@ -688,18 +689,18 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					Region:        clusterservicetest2.MockClusterRegion,
+					ClusterID:     clusterservicetest2.MockClusterID,
+					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
 					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
@@ -730,18 +731,18 @@ func Test_kafkaService_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(dbConverters.ConvertKafkaRequest(&api.KafkaRequest{
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
+					Region:        clusterservicetest2.MockClusterRegion,
+					ClusterID:     clusterservicetest2.MockClusterID,
+					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
 					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
@@ -774,7 +775,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
-		quotaService      services.QuotaService
+		quotaService      QuotaService
 	}
 
 	type errorCheck struct {
@@ -784,7 +785,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	}
 
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string
@@ -798,8 +799,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &services.QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
+				quotaService: &QuotaServiceMock{
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
@@ -820,8 +821,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &services.QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
+				quotaService: &QuotaServiceMock{
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
@@ -844,8 +845,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &services.QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
+				quotaService: &QuotaServiceMock{
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				},
@@ -868,8 +869,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
-				quotaService: &services.QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *api.KafkaRequest) *errors.ServiceError {
+				quotaService: &QuotaServiceMock{
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 						return errors.InsufficientQuotaError("insufficient quota error")
 					},
 				},
@@ -907,8 +908,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       &kafkaConf,
 				awsConfig:         config.NewAWSConfig(),
-				quotaServiceFactory: &services.QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {
+				quotaServiceFactory: &QuotaServiceFactoryMock{
+					GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},
@@ -942,7 +943,7 @@ func Test_kafkaService_List(t *testing.T) {
 	}
 
 	type want struct {
-		kafkaList  api.KafkaList
+		kafkaList  dbapi.KafkaList
 		pagingMeta *api.PagingMeta
 	}
 
@@ -968,7 +969,7 @@ func Test_kafkaService_List(t *testing.T) {
 		args    args
 		want    want
 		wantErr bool
-		setupFn func(api.KafkaList)
+		setupFn func(dbapi.KafkaList)
 	}{
 		{
 			name: "success: list with default values",
@@ -983,8 +984,8 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			want: want{
-				kafkaList: api.KafkaList{
-					&api.KafkaRequest{
+				kafkaList: dbapi.KafkaList{
+					&dbapi.KafkaRequest{
 						Region:        testKafkaRequestRegion,
 						ClusterID:     testClusterID,
 						CloudProvider: testKafkaRequestProvider,
@@ -998,7 +999,7 @@ func Test_kafkaService_List(t *testing.T) {
 							DeletedAt: gorm.DeletedAt{Valid: true},
 						},
 					},
-					&api.KafkaRequest{
+					&dbapi.KafkaRequest{
 						Region:        testKafkaRequestRegion,
 						ClusterID:     testClusterID,
 						CloudProvider: testKafkaRequestProvider,
@@ -1020,7 +1021,7 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			setupFn: func(kafkaList api.KafkaList) {
+			setupFn: func(kafkaList dbapi.KafkaList) {
 				mocket.Catcher.Reset()
 
 				// total count query
@@ -1029,7 +1030,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+				response := converters.ConvertKafkaRequestList(kafkaList)
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
 		},
@@ -1046,8 +1047,8 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			want: want{
-				kafkaList: api.KafkaList{
-					&api.KafkaRequest{
+				kafkaList: dbapi.KafkaList{
+					&dbapi.KafkaRequest{
 						Region:        testKafkaRequestRegion,
 						ClusterID:     testClusterID,
 						CloudProvider: testKafkaRequestProvider,
@@ -1069,7 +1070,7 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			setupFn: func(kafkaList api.KafkaList) {
+			setupFn: func(kafkaList dbapi.KafkaList) {
 				mocket.Catcher.Reset()
 
 				// total count query
@@ -1078,7 +1079,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+				response := converters.ConvertKafkaRequestList(kafkaList)
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
@@ -1096,7 +1097,7 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			want: want{
-				kafkaList: api.KafkaList{},
+				kafkaList: dbapi.KafkaList{},
 				pagingMeta: &api.PagingMeta{
 					Page:  1,
 					Size:  0,
@@ -1104,7 +1105,7 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			setupFn: func(kafkaList api.KafkaList) {
+			setupFn: func(kafkaList dbapi.KafkaList) {
 				mocket.Catcher.Reset()
 
 				// total count query
@@ -1113,7 +1114,7 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+				response := converters.ConvertKafkaRequestList(kafkaList)
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
@@ -1135,14 +1136,14 @@ func Test_kafkaService_List(t *testing.T) {
 				pagingMeta: nil,
 			},
 			wantErr: true,
-			setupFn: func(kafkaList api.KafkaList) {
+			setupFn: func(kafkaList dbapi.KafkaList) {
 				mocket.Catcher.Reset()
 
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
 				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
 
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
-				response := dbConverters.ConvertKafkaRequestList(kafkaList)
+				response := converters.ConvertKafkaRequestList(kafkaList)
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
 			},
@@ -1160,7 +1161,7 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			want: want{
-				kafkaList: api.KafkaList{},
+				kafkaList: dbapi.KafkaList{},
 				pagingMeta: &api.PagingMeta{
 					Page:  1,
 					Size:  0,
@@ -1168,7 +1169,7 @@ func Test_kafkaService_List(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			setupFn: func(kafkaList api.KafkaList) {
+			setupFn: func(kafkaList dbapi.KafkaList) {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
 			},
 		},
@@ -1221,7 +1222,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []*api.KafkaRequest
+		want    []*dbapi.KafkaRequest
 		wantErr bool
 		setupFn func()
 	}{
@@ -1240,9 +1241,9 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
-			want: []*api.KafkaRequest{buildKafkaRequest(nil)},
+			want: []*dbapi.KafkaRequest{buildKafkaRequest(nil)},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}
@@ -1305,7 +1306,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			wantExecuted: false,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
 				})))
 			},
@@ -1323,7 +1324,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			wantExecuted: true,
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
 				})))
 			},
@@ -1339,7 +1340,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(dbConverters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *api.KafkaRequest) {
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
 				})))
 			},
@@ -1376,7 +1377,7 @@ func Test_kafkaService_Update(t *testing.T) {
 		clusterService    ClusterService
 	}
 	type args struct {
-		kafkaRequest *api.KafkaRequest
+		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
 		name    string

@@ -10,7 +10,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -61,7 +60,7 @@ func ServiceProviders() di.Option {
 		di.Provide(customOcm.NewClient),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(services.NewConfigService),
-		di.Provide(quota.NewDefaultQuotaServiceFactory),
+
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
 		di.Provide(func(c *config.KeycloakConfig) services.KafkaKeycloakService {

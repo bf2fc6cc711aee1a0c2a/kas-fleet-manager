@@ -1,14 +1,14 @@
 package handlers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -27,7 +27,7 @@ func NewKafkaHandler(service services.KafkaService, configService coreServices.C
 }
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var kafkaRequest openapi.KafkaRequestPayload
+	var kafkaRequest public.KafkaRequestPayload
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []handlers.Validate{
@@ -35,12 +35,12 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
 			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
-			handlers.ValidateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
+			ValidateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
+			convKafka := presenters2.ConvertKafkaRequest(kafkaRequest)
 
 			claims, err := auth.GetClaimsFromContext(ctx)
 			if err != nil {
@@ -54,7 +54,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters.PresentKafkaRequest(convKafka), nil
+			return presenters2.PresentKafkaRequest(convKafka), nil
 		},
 	}
 
@@ -71,7 +71,7 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentKafkaRequest(kafkaRequest), nil
+			return presenters2.PresentKafkaRequest(kafkaRequest), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -110,16 +110,16 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			kafkaRequestList := openapi.KafkaRequestList{
+			kafkaRequestList := public.KafkaRequestList{
 				Kind:  "KafkaRequestList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
-				Items: []openapi.KafkaRequest{},
+				Items: []public.KafkaRequest{},
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
-				converted := presenters.PresentKafkaRequest(kafkaRequest)
+				converted := presenters2.PresentKafkaRequest(kafkaRequest)
 				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 			}
 

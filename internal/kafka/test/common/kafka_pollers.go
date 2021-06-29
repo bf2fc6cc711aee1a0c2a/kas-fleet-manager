@@ -3,8 +3,8 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/openapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
@@ -19,7 +19,7 @@ const (
 )
 
 // WaitForNumberOfKafkaToBeGivenCount - Awaits for the number of kafkas to be exactly X
-func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFactory, client *openapi.APIClient, count int32) error {
+func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, count int32) error {
 	currentCount := int32(-1)
 
 	return NewPollerBuilder(db).
@@ -43,7 +43,7 @@ func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFa
 }
 
 // WaitForKafkaCreateToBeAccepted - Creates a kafka and awaits for the request to be accepted
-func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactory, client *openapi.APIClient, k openapi.KafkaRequestPayload) (kafka openapi.KafkaRequest, resp *http.Response, err error) {
+func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, k public.KafkaRequestPayload) (kafka public.KafkaRequest, resp *http.Response, err error) {
 	currentStatus := ""
 
 	err = NewPollerBuilder(db).
@@ -67,7 +67,7 @@ func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactor
 }
 
 // WaitForKafkaToReachStatus - Awaits for a kafka to reach a specified status
-func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *openapi.APIClient, kafkaId string, status constants.KafkaStatus) (kafka openapi.KafkaRequest, err error) {
+func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string, status constants.KafkaStatus) (kafka public.KafkaRequest, err error) {
 	currentStatus := ""
 
 	err = NewPollerBuilder(db).
@@ -102,7 +102,7 @@ func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, cl
 }
 
 // WaitForKafkaToBeDeleted - Awaits for a kafka to be deleted
-func WaitForKafkaToBeDeleted(ctx context.Context, db *db.ConnectionFactory, client *openapi.APIClient, kafkaId string) error {
+func WaitForKafkaToBeDeleted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string) error {
 	return NewPollerBuilder(db).
 		IntervalAndTimeout(defaultPollInterval, defaultKafkaReadyTimeout).
 		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaId).
@@ -119,8 +119,8 @@ func WaitForKafkaToBeDeleted(ctx context.Context, db *db.ConnectionFactory, clie
 		Build().Poll()
 }
 
-func WaitForKafkaClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, kafkaRequestName string) (*api.KafkaRequest, error) {
-	kafkaFound := &api.KafkaRequest{}
+func WaitForKafkaClusterIDToBeAssigned(dbFactory *db.ConnectionFactory, kafkaRequestName string) (*dbapi.KafkaRequest, error) {
+	kafkaFound := &dbapi.KafkaRequest{}
 
 	kafkaErr := NewPollerBuilder(dbFactory).
 		IntervalAndTimeout(defaultPollInterval, defaultKafkaClusterAssignmentTimeout).
