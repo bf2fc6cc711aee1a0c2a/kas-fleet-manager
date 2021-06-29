@@ -2,7 +2,6 @@ package clusters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 )
@@ -17,6 +16,18 @@ func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.Clust
 
 func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
+}
+
+func (s *StandaloneProvider) InstallStrimzi(spec *types.ClusterSpec) (bool, error) {
+	return true, nil // NOOP for now. TODO See kas-installer repo on how to install strimzi
+}
+
+func (s *StandaloneProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+	return true, nil // NOOP for now
+}
+
+func (s *StandaloneProvider) InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+	return true, nil // NOOP for now. TODO see kas-installer repo on how to install kas-fleet-shard
 }
 
 func (s *StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
@@ -110,14 +121,6 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProv
 	}
 
 	return &types.CloudProviderRegionInfoList{Items: items}, nil
-}
-
-func (s *StandaloneProvider) InstallAddon(clusterSpec *types.ClusterSpec, addonID string) (bool, error) {
-	return false, nil
-}
-
-func (s *StandaloneProvider) InstallAddonWithParams(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
-	return false, nil
 }
 
 var _ Provider = &StandaloneProvider{}

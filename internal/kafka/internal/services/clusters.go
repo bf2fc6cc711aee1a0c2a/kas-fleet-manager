@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -59,8 +58,12 @@ type ClusterService interface {
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
 	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
-	InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
-	InstallAddonWithParams(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError)
+	// Install the strimzi operator in a given cluster
+	InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
+	// Install the cluster logging operator for a given cluster
+	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
+	// Install the cluster logging operator for a given cluster
+	InstallKasFleetshard(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 }
 
 type clusterService struct {
@@ -642,25 +645,37 @@ func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.Res
 	return nil
 }
 
-func (c clusterService) InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
-	p, err := c.providerFactory.GetAddonProvider(cluster.ProviderType)
+func (c clusterService) InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if ready, err := p.InstallAddon(buildClusterSpec(cluster), addonID); err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install addon %s for cluster %s", addonID, cluster.ClusterID)
+	if ready, err := p.InstallStrimzi(buildClusterSpec(cluster)); err != nil {
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install strimzi for cluster %s", cluster.ClusterID)
 	} else {
 		return ready, nil
 	}
 }
 
-func (c clusterService) InstallAddonWithParams(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError) {
-	p, err := c.providerFactory.GetAddonProvider(cluster.ProviderType)
+func (c clusterService) InstallKasFleetshard(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
 	}
-	if ready, err := p.InstallAddonWithParams(buildClusterSpec(cluster), addonID, addonParams); err != nil {
-		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install addon with parameters %s for cluster %s", addonID, cluster.ClusterID)
+	if ready, err := p.InstallKasFleetshard(buildClusterSpec(cluster), params); err != nil {
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install kas-fleet-shard for cluster %s", cluster.ClusterID)
+	} else {
+		return ready, nil
+	}
+}
+
+func (c clusterService) InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
+	if err != nil {
+		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
+	}
+	if ready, err := p.InstallClusterLogging(buildClusterSpec(cluster), params); err != nil {
+		return ready, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to install cluster-logging for cluster %s", cluster.ClusterID)
 	} else {
 		return ready, nil
 	}
