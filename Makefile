@@ -515,6 +515,7 @@ deploy: deploy/db
 		-p KAFKA_TLS_CERT="$(KAFKA_TLS_CERT)" \
 		-p KAFKA_TLS_KEY="$(KAFKA_TLS_KEY)" \
 		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
+		-p KUBE_CONFIG="${KUBE_CONFIG}" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
 	@oc apply -f ./templates/connector-catalog-configmap.yml -n $(NAMESPACE)

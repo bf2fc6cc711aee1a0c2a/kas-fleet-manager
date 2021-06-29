@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/spf13/pflag"
 )
@@ -13,7 +14,7 @@ type ApplicationConfig struct {
 	ObservabilityConfiguration *ObservabilityConfiguration `json:"observability"`
 	Keycloak                   *KeycloakConfig             `json:"keycloak"`
 	Kafka                      *KafkaConfig                `json:"kafka_tls"`
-	OSDClusterConfig           *OSDClusterConfig           `json:"osd_cluster"`
+	DataplaneClusterConfig     *DataplaneClusterConfig     `json:"osd_cluster"`
 }
 
 var _ provider.ConfigModule = &ApplicationConfig{}
@@ -26,7 +27,7 @@ func NewApplicationConfig() *ApplicationConfig {
 		ObservabilityConfiguration: NewObservabilityConfigurationConfig(),
 		Keycloak:                   NewKeycloakConfig(),
 		Kafka:                      NewKafkaConfig(),
-		OSDClusterConfig:           NewOSDClusterConfig(),
+		DataplaneClusterConfig:     NewDataplaneClusterConfig(),
 	}
 }
 
@@ -38,7 +39,7 @@ func (c *ApplicationConfig) AddFlags(flagset *pflag.FlagSet) {
 	c.ObservabilityConfiguration.AddFlags(flagset)
 	c.Keycloak.AddFlags(flagset)
 	c.Kafka.AddFlags(flagset)
-	c.OSDClusterConfig.AddFlags(flagset)
+	c.DataplaneClusterConfig.AddFlags(flagset)
 }
 
 func (c *ApplicationConfig) ReadFiles() (err error) {
@@ -66,7 +67,7 @@ func (c *ApplicationConfig) ReadFiles() (err error) {
 	if err != nil {
 		return err
 	}
-	err = c.OSDClusterConfig.ReadFiles()
+	err = c.DataplaneClusterConfig.ReadFiles()
 	if err != nil {
 		return err
 	}

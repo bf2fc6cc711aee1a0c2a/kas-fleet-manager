@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
 	"github.com/pkg/errors"
@@ -78,7 +79,7 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			test.setupFn()
-			provider := newStandaloneProvider(test.fields.connectionFactory)
+			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviders()
 			Expect(test.wantErr).To(Equal(err != nil))
 			if !test.wantErr {
@@ -160,7 +161,7 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			test.setupFn()
-			provider := newStandaloneProvider(test.fields.connectionFactory)
+			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviderRegions(types.CloudProviderInfo{ID: "aws"})
 			Expect(test.wantErr).To(Equal(err != nil))
 			if !test.wantErr {

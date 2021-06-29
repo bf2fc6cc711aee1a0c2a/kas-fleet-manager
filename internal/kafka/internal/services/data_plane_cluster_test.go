@@ -2,10 +2,11 @@ package services
 
 import (
 	"context"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"reflect"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -40,7 +41,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 			clusterID: testClusterID,
 			clusterStatus: &dbapi.DataPlaneClusterStatus{
 				Conditions: []dbapi.DataPlaneClusterStatusCondition{
-					dbapi.DataPlaneClusterStatusCondition{
+					{
 						Type:   "Ready",
 						Status: "True",
 					},
@@ -490,7 +491,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 			name: "When KAS Fleet operator reports ready condition set to true the fleet shard operator is considered ready",
 			clusterStatus: &dbapi.DataPlaneClusterStatus{
 				Conditions: []dbapi.DataPlaneClusterStatusCondition{
-					dbapi.DataPlaneClusterStatusCondition{
+					{
 						Type:   "Ready",
 						Status: "True",
 					},
@@ -506,7 +507,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 			name: "When KAS Fleet operator reports ready condition set to false the fleet shard operator is considered not ready",
 			clusterStatus: &dbapi.DataPlaneClusterStatus{
 				Conditions: []dbapi.DataPlaneClusterStatusCondition{
-					dbapi.DataPlaneClusterStatusCondition{
+					{
 						Type:   "Ready",
 						Status: "False",
 					},
@@ -533,7 +534,7 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 			name: "When KAS Fleet operator reports reports a Ready condition with an unknown value an error is returned",
 			clusterStatus: &dbapi.DataPlaneClusterStatus{
 				Conditions: []dbapi.DataPlaneClusterStatusCondition{
-					dbapi.DataPlaneClusterStatusCondition{
+					{
 						Type:   "Ready",
 						Status: "InventedValue",
 					},
@@ -697,7 +698,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						ObservabilityConfigAccessToken: "test-token",
 						ObservabilityConfigTag:         "test-tag",
 					},
-					OSDClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest().OSDClusterConfig,
+					DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest().DataplaneClusterConfig,
 				},
 			},
 			wantErr: false,
@@ -723,7 +724,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						ObservabilityConfigAccessToken: "test-token",
 						ObservabilityConfigTag:         "test-tag",
 					},
-					OSDClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest().OSDClusterConfig},
+					DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest().DataplaneClusterConfig},
 			},
 			wantErr: true,
 			want:    nil,
@@ -846,7 +847,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 			inputFactory: func() (*input, *api.ClusterStatus) {
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				applicationConfig := sampleValidApplicationConfigForDataPlaneClusterTest()
-				applicationConfig.OSDClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+				applicationConfig.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -952,7 +953,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatus {
 	return &dbapi.DataPlaneClusterStatus{
 		Conditions: []dbapi.DataPlaneClusterStatusCondition{
-			dbapi.DataPlaneClusterStatusCondition{
+			{
 				Type:   "Ready",
 				Status: "True",
 			},
@@ -982,8 +983,8 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatu
 }
 
 func sampleValidApplicationConfigForDataPlaneClusterTest() *config.ApplicationConfig {
-	osdClusterConfig := config.NewOSDClusterConfig()
-	osdClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	dataplaneClusterConfig := config.NewDataplaneClusterConfig()
+	dataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	return &config.ApplicationConfig{
 		Kafka: &config.KafkaConfig{
@@ -992,6 +993,6 @@ func sampleValidApplicationConfigForDataPlaneClusterTest() *config.ApplicationCo
 				TotalMaxConnections: 100,
 			},
 		},
-		OSDClusterConfig: osdClusterConfig,
+		DataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }

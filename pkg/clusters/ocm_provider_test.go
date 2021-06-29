@@ -32,7 +32,7 @@ func TestOCMProvider_Create(t *testing.T) {
 		AccessKey:       "",
 		SecretAccessKey: "",
 	}
-	osdCreateConfig := &config.OSDClusterConfig{
+	osdCreateConfig := &config.DataplaneClusterConfig{
 		OpenshiftVersion: "4.7",
 	}
 	cb := ocm.NewClusterBuilder(awsConfig, osdCreateConfig)
