@@ -33,16 +33,16 @@ type clusterBuilder struct {
 	// awsConfig contains aws credentials for use with the OCM cluster service.
 	awsConfig *config.AWSConfig
 
-	// osdClusterConfig contains cluster creation configuration.
-	osdClusterConfig *config.OSDClusterConfig
+	// dataplaneClusterConfig contains cluster creation configuration.
+	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 // NewClusterBuilder create a new default implementation of ClusterBuilder.
-func NewClusterBuilder(awsConfig *config.AWSConfig, osdClusterConfig *config.OSDClusterConfig) ClusterBuilder {
+func NewClusterBuilder(awsConfig *config.AWSConfig, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterBuilder {
 	return &clusterBuilder{
-		idGenerator:      NewIDGenerator(ClusterNamePrefix),
-		awsConfig:        awsConfig,
-		osdClusterConfig: osdClusterConfig,
+		idGenerator:            NewIDGenerator(ClusterNamePrefix),
+		awsConfig:              awsConfig,
+		dataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }
 
@@ -62,8 +62,8 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	clusterBuilder.Region(clustersmgmtv1.NewCloudRegion().ID(clusterRequest.Region))
 	// currently only enabled for MultiAZ.
 	clusterBuilder.MultiAZ(true)
-	if r.osdClusterConfig.OpenshiftVersion != "" {
-		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.osdClusterConfig.OpenshiftVersion))
+	if r.dataplaneClusterConfig.OpenshiftVersion != "" {
+		clusterBuilder.Version(clustersmgmtv1.NewVersion().ID(r.dataplaneClusterConfig.OpenshiftVersion))
 	}
 	// setting CCS to always be true for now as this is the only available cluster type within our quota.
 	clusterBuilder.CCS(clustersmgmtv1.NewCCS().Enabled(true))
@@ -75,7 +75,7 @@ func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRe
 	clusterBuilder.AWS(awsBuilder)
 
 	// Set compute node size
-	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(r.osdClusterConfig.ComputeMachineType)))
+	clusterBuilder.Nodes(clustersmgmtv1.NewClusterNodes().ComputeMachineType(clustersmgmtv1.NewMachineType().ID(r.dataplaneClusterConfig.ComputeMachineType)))
 
 	return clusterBuilder.Build()
 }
@@ -90,8 +90,8 @@ func (r clusterBuilder) validate() error {
 		return errors.Errorf("awsConfig is not defined")
 	}
 
-	if r.osdClusterConfig == nil {
-		return errors.Errorf("osdClusterConfig is not defined")
+	if r.dataplaneClusterConfig == nil {
+		return errors.Errorf("dataplaneClusterConfig is not defined")
 	}
 
 	return nil

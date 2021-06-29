@@ -137,7 +137,7 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 							SupportedProviders:         &config.ProviderConfig{},
 							AccessControlList:          &config.AccessControlListConfig{},
 							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-							OSDClusterConfig:           &config.OSDClusterConfig{},
+							DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
 						},
 					),
 					OCMConfig: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
@@ -196,7 +196,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 							SupportedProviders:         &config.ProviderConfig{},
 							AccessControlList:          &config.AccessControlListConfig{},
 							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-							OSDClusterConfig:           &config.OSDClusterConfig{},
+							DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
 						},
 					),
 					OCMConfig: &config.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
@@ -244,7 +244,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 						&config.ApplicationConfig{
 							AccessControlList:          &config.AccessControlListConfig{},
 							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-							OSDClusterConfig:           config.NewOSDClusterConfig(),
+							DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 						}),
 				},
 			}
@@ -372,7 +372,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 						SupportedProviders:         &tt.fields.providersConfig,
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-						OSDClusterConfig:           config.NewOSDClusterConfig(),
+						DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 					}),
 				},
 			}
@@ -497,7 +497,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 	const ingressDNS = "foo.bar.example.com"
 	observabilityConfig := buildObservabilityConfig()
-	clusterCreateConfig := config.OSDClusterConfig{
+	clusterCreateConfig := config.DataplaneClusterConfig{
 		ImagePullDockerConfigContent: "image-pull-secret-test",
 		IngressControllerReplicas:    12,
 	}
@@ -562,7 +562,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 						SupportedProviders:         &config.ProviderConfig{},
 						AccessControlList:          &config.AccessControlListConfig{},
 						ObservabilityConfiguration: &observabilityConfig,
-						OSDClusterConfig:           &clusterCreateConfig,
+						DataplaneClusterConfig:     &clusterCreateConfig,
 						Kafka:                      &config.KafkaConfig{},
 					}),
 				},
@@ -756,7 +756,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
 				}),
@@ -775,7 +775,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
 				}),
@@ -795,7 +795,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
 				}),
@@ -817,7 +817,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "auto",
 					},
 				}),
@@ -837,7 +837,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},
 				}),
@@ -856,7 +856,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},
 				}),
@@ -875,7 +875,7 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: &config.OSDClusterConfig{
+					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},
 				}),
@@ -1156,7 +1156,7 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 	return observabilityConfig
 }
 
-func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.OSDClusterConfig, ingressDNS string) (types.ResourceSet, error) {
+func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types.ResourceSet, error) {
 	r := int32(clusterCreateConfig.IngressControllerReplicas)
 	resources := []interface{}{
 		&ingressoperatorv1.IngressController{
@@ -1370,7 +1370,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 		clusterService services.ClusterService
 		configService  coreServices.ConfigService
 	}
-	testOsdConfig := config.NewOSDClusterConfig()
+	testOsdConfig := config.NewDataplaneClusterConfig()
 	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{config.ManualCluster{Schedulable: true, KafkaInstanceLimit: 2}})
 	tests := []struct {
 		name    string
@@ -1402,7 +1402,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: testOsdConfig,
+					DataplaneClusterConfig: testOsdConfig,
 				}),
 			},
 			wantErr: false,
@@ -1425,7 +1425,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 					},
 				},
 				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					OSDClusterConfig: testOsdConfig,
+					DataplaneClusterConfig: testOsdConfig,
 				}),
 			},
 			wantErr: true,

@@ -98,16 +98,16 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 
 	parseCommandLineFlags(env)
 
-	var osdClusterConfig *config.OSDClusterConfig
+	var dataplaneClusterConfig *config.DataplaneClusterConfig
 	var kafkaConfig *config.KafkaConfig
 	var ocmConfig *config.OCMConfig
 	var observabilityConfiguration *config.ObservabilityConfiguration
 	var serverConfig *config.ServerConfig
 	var keycloakConfig *config.KeycloakConfig
-	env.MustResolveAll(&osdClusterConfig, &kafkaConfig, &ocmConfig, &observabilityConfiguration, &serverConfig, &keycloakConfig)
+	env.MustResolveAll(&dataplaneClusterConfig, &kafkaConfig, &ocmConfig, &observabilityConfiguration, &serverConfig, &keycloakConfig)
 
-	osdClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-	osdClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
+	dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+	dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
 	kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 

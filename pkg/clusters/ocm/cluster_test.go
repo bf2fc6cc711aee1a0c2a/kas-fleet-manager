@@ -1,10 +1,11 @@
 package ocm
 
 import (
-	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"reflect"
 	"testing"
+
+	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -15,7 +16,7 @@ const openshiftVersion = "openshift-v4.6.1"
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 	awsConfig := &config.AWSConfig{}
 
-	osdClusterConfig := &config.OSDClusterConfig{
+	dataplaneClusterConfig := &config.DataplaneClusterConfig{
 		OpenshiftVersion:   openshiftVersion,
 		ComputeMachineType: ComputeMachineType,
 	}
@@ -27,9 +28,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		SecretAccessKey(awsConfig.SecretAccessKey)
 
 	type fields struct {
-		idGenerator      IDGenerator
-		awsConfig        *config.AWSConfig
-		osdClusterConfig *config.OSDClusterConfig
+		idGenerator            IDGenerator
+		awsConfig              *config.AWSConfig
+		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 
 	type args struct {
@@ -45,9 +46,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil aws config results in error",
 			fields: fields{
-				idGenerator:      NewIDGenerator(""),
-				awsConfig:        nil,
-				osdClusterConfig: osdClusterConfig,
+				idGenerator:            NewIDGenerator(""),
+				awsConfig:              nil,
+				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
 				clusterRequest: &types.ClusterRequest{},
@@ -57,9 +58,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil cluster creation config results in error",
 			fields: fields{
-				idGenerator:      NewIDGenerator(""),
-				awsConfig:        awsConfig,
-				osdClusterConfig: nil,
+				idGenerator:            NewIDGenerator(""),
+				awsConfig:              awsConfig,
+				dataplaneClusterConfig: nil,
 			},
 			args: args{
 				clusterRequest: &types.ClusterRequest{},
@@ -69,9 +70,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil cluster results in error",
 			fields: fields{
-				idGenerator:      NewIDGenerator(""),
-				awsConfig:        awsConfig,
-				osdClusterConfig: osdClusterConfig,
+				idGenerator:            NewIDGenerator(""),
+				awsConfig:              awsConfig,
+				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
 				clusterRequest: nil,
@@ -81,9 +82,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil id generator results in error",
 			fields: fields{
-				idGenerator:      nil,
-				awsConfig:        awsConfig,
-				osdClusterConfig: osdClusterConfig,
+				idGenerator:            nil,
+				awsConfig:              awsConfig,
+				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
 				clusterRequest: &types.ClusterRequest{},
@@ -98,8 +99,8 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 						return ""
 					},
 				},
-				awsConfig:        awsConfig,
-				osdClusterConfig: osdClusterConfig,
+				awsConfig:              awsConfig,
+				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
 				clusterRequest: &types.ClusterRequest{
@@ -136,9 +137,9 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		}
 		t.Run(tt.name, func(t *testing.T) {
 			r := clusterBuilder{
-				idGenerator:      tt.fields.idGenerator,
-				awsConfig:        tt.fields.awsConfig,
-				osdClusterConfig: tt.fields.osdClusterConfig,
+				idGenerator:            tt.fields.idGenerator,
+				awsConfig:              tt.fields.awsConfig,
+				dataplaneClusterConfig: tt.fields.dataplaneClusterConfig,
 			}
 			got, err := r.NewOCMClusterFromCluster(tt.args.clusterRequest)
 			if (err != nil) != tt.wantErr {

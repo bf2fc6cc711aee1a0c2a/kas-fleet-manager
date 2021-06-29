@@ -29,10 +29,10 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	clusterService      ClusterService
-	kafkaConfig         *config.KafkaConfig
-	observabilityConfig *config.ObservabilityConfiguration
-	osdClusterConfig    *config.OSDClusterConfig
+	clusterService         ClusterService
+	kafkaConfig            *config.KafkaConfig
+	observabilityConfig    *config.ObservabilityConfiguration
+	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -42,10 +42,10 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 
 func NewDataPlaneClusterService(clusterService ClusterService, config *config.ApplicationConfig) *dataPlaneClusterService {
 	return &dataPlaneClusterService{
-		clusterService:      clusterService,
-		kafkaConfig:         config.Kafka,
-		observabilityConfig: config.ObservabilityConfiguration,
-		osdClusterConfig:    config.OSDClusterConfig,
+		clusterService:         clusterService,
+		kafkaConfig:            config.Kafka,
+		observabilityConfig:    config.ObservabilityConfiguration,
+		dataplaneClusterConfig: config.DataplaneClusterConfig,
 	}
 }
 
@@ -108,7 +108,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.ToServiceError(err)
 	}
 
-	if d.osdClusterConfig.IsDataPlaneAutoScalingEnabled() {
+	if d.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		computeNodeScalingInProgress, err := d.computeNodeScalingActionInProgress(cluster, status)
 		if err != nil {
 			return errors.ToServiceError(err)
@@ -206,7 +206,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
 	remainingCapacity := true
-	if d.osdClusterConfig.IsDataPlaneAutoScalingEnabled() {
+	if d.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		var err error
 		remainingCapacity, err = d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
 		if err != nil {

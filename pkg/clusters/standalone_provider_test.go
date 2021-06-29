@@ -79,7 +79,7 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			test.setupFn()
-			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewOSDClusterConfig())
+			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviders()
 			Expect(test.wantErr).To(Equal(err != nil))
 			if !test.wantErr {
@@ -161,7 +161,7 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			RegisterTestingT(t)
 			test.setupFn()
-			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewOSDClusterConfig())
+			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
 			resp, err := provider.GetCloudProviderRegions(types.CloudProviderInfo{ID: "aws"})
 			Expect(test.wantErr).To(Equal(err != nil))
 			if !test.wantErr {

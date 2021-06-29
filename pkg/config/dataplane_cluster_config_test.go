@@ -11,7 +11,7 @@ import (
 	"github.com/onsi/gomega"
 )
 
-func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
+func TestDataplaneClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 	}
@@ -39,7 +39,7 @@ func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			conf := OSDClusterConfig{
+			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
 			got := conf.IsDataPlaneAutoScalingEnabled()
@@ -48,7 +48,7 @@ func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
+func TestDataplaneClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 	}
@@ -76,7 +76,7 @@ func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			conf := OSDClusterConfig{
+			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
 			got := conf.IsDataPlaneManualScalingEnabled()
@@ -85,7 +85,7 @@ func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
+func TestDataplaneClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 		ClusterList                 ClusterList
@@ -140,7 +140,7 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
+func TestDataplaneClusterConfig_IsClusterSchedulable(t *testing.T) {
 	type fields struct {
 		ClusterList ClusterList
 	}
@@ -188,7 +188,7 @@ func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_MissingClusters(t *testing.T) {
+func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 	type fields struct {
 		ClusterList ClusterList
 	}
@@ -247,7 +247,7 @@ func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
+func TestDataplaneClusterConfig_ExcessClusters(t *testing.T) {
 	type fields struct {
 		ClusterList ClusterList
 	}
@@ -459,10 +459,10 @@ func TestFindClusterNameByClusterId(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			clusterConfig := NewClusterConfig(tt.fields.ClusterList)
-			osdClusterConfig := &OSDClusterConfig{
+			dataplaneClusterConfig := &DataplaneClusterConfig{
 				ClusterConfig: clusterConfig,
 			}
-			got := osdClusterConfig.FindClusterNameByClusterId(tt.args.clusterId)
+			got := dataplaneClusterConfig.FindClusterNameByClusterId(tt.args.clusterId)
 			gomega.Expect(got).To(gomega.Equal(tt.want))
 		})
 	}

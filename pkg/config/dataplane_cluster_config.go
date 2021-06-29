@@ -16,7 +16,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-type OSDClusterConfig struct {
+type DataplaneClusterConfig struct {
 	IngressControllerReplicas    int    `json:"ingress_controller_replicas"`
 	OpenshiftVersion             string `json:"cluster_openshift_version"`
 	ComputeMachineType           string `json:"cluster_compute_machine_type"`
@@ -56,8 +56,8 @@ func getDefaultKubeconfig() string {
 	return filepath.Join(homeDir, ".kube", "config")
 }
 
-func NewOSDClusterConfig() *OSDClusterConfig {
-	return &OSDClusterConfig{
+func NewDataplaneClusterConfig() *DataplaneClusterConfig {
+	return &DataplaneClusterConfig{
 		OpenshiftVersion:                      "",
 		ComputeMachineType:                    "m5.4xlarge",
 		StrimziOperatorVersion:                "v0.21.3",
@@ -175,19 +175,19 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	return res
 }
 
-func (c *OSDClusterConfig) IsDataPlaneManualScalingEnabled() bool {
+func (c *DataplaneClusterConfig) IsDataPlaneManualScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == ManualScaling
 }
 
-func (c *OSDClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
+func (c *DataplaneClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == AutoScaling
 }
 
-func (c *OSDClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
+func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
+func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
 	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
 	fs.StringVar(&c.StrimziOperatorVersion, "strimzi-operator-version", c.StrimziOperatorVersion, "The version of the Strimzi operator to install")
@@ -201,7 +201,7 @@ func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
 }
 
-func (c *OSDClusterConfig) ReadFiles() error {
+func (c *DataplaneClusterConfig) ReadFiles() error {
 	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
 		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
 		if err != nil {
@@ -249,7 +249,7 @@ func (c *OSDClusterConfig) ReadFiles() error {
 	return nil
 }
 
-func (c *OSDClusterConfig) readKubeconfig() error {
+func (c *DataplaneClusterConfig) readKubeconfig() error {
 	_, err := os.Stat(c.Kubeconfig)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -292,7 +292,7 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	}
 }
 
-func (c *OSDClusterConfig) FindClusterNameByClusterId(clusterId string) string {
+func (c *DataplaneClusterConfig) FindClusterNameByClusterId(clusterId string) string {
 	for _, cluster := range c.ClusterConfig.clusterList {
 		if cluster.ClusterId == clusterId {
 			return cluster.Name

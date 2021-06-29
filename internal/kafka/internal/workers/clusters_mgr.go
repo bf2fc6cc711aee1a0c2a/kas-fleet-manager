@@ -321,7 +321,7 @@ func (c *ClusterManager) processReadyClusters() []error {
 		glog.V(10).Infof("ready cluster ClusterID = %s", readyCluster.ClusterID)
 		emptyClusterReconciled := false
 		var recErr error
-		if c.ConfigService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
+		if c.ConfigService.GetConfig().DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 			emptyClusterReconciled, recErr = c.reconcileEmptyCluster(readyCluster)
 		}
 		if !emptyClusterReconciled && recErr == nil {
@@ -337,7 +337,7 @@ func (c *ClusterManager) processReadyClusters() []error {
 }
 
 func (c *ClusterManager) reconcileDeprovisioningCluster(cluster *api.Cluster) error {
-	if c.ConfigService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
+	if c.ConfigService.GetConfig().DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		siblingCluster, findClusterErr := c.ClusterService.FindCluster(services.FindClusterCriteria{
 			Region:   cluster.Region,
 			Provider: cluster.CloudProvider,
@@ -396,7 +396,7 @@ func (c *ClusterManager) reconcileCleanupCluster(cluster api.Cluster) error {
 }
 
 func (c *ClusterManager) reconcileReadyCluster(cluster api.Cluster) error {
-	if !c.ConfigService.GetConfig().OSDClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
+	if !c.ConfigService.GetConfig().DataplaneClusterConfig.IsReadyDataPlaneClustersReconcileEnabled() {
 		glog.Infof("Reconcile of dataplane ready clusters is disabled. Skipped reconcile of ready ClusterID '%s'", cluster.ClusterID)
 		return nil
 	}
@@ -595,7 +595,7 @@ func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.
 // New clusters will be registered if it is not yet in the database.
 // A cluster will be deprovisioned if it is in the database but not in the config file.
 func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
-	if !c.ConfigService.GetConfig().OSDClusterConfig.IsDataPlaneManualScalingEnabled() {
+	if !c.ConfigService.GetConfig().DataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
 		return []error{}
 	}
@@ -611,7 +611,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	//Create all missing clusters
-	for _, p := range c.ConfigService.GetConfig().OSDClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
+	for _, p := range c.ConfigService.GetConfig().DataplaneClusterConfig.ClusterConfig.MissingClusters(clusterIdsMap) {
 		clusterRequest := api.Cluster{
 			CloudProvider: p.CloudProvider,
 			Region:        p.Region,
@@ -629,7 +629,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	}
 
 	// Remove all clusters that are not in the config file
-	excessClusterIds := c.ConfigService.GetConfig().OSDClusterConfig.ClusterConfig.ExcessClusters(clusterIdsMap)
+	excessClusterIds := c.ConfigService.GetConfig().DataplaneClusterConfig.ClusterConfig.ExcessClusters(clusterIdsMap)
 	if len(excessClusterIds) == 0 {
 		return nil
 	}
@@ -666,7 +666,7 @@ func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 // reconcileClustersForRegions creates an OSD cluster for each supported cloud provider and region where no cluster exists.
 func (c *ClusterManager) reconcileClustersForRegions() []error {
 	var errs []error
-	if !c.ConfigService.GetConfig().OSDClusterConfig.IsDataPlaneAutoScalingEnabled() {
+	if !c.ConfigService.GetConfig().DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		return errs
 	}
 	glog.Infoln("reconcile cloud providers and regions")
@@ -832,7 +832,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 }
 
 func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressoperatorv1.IngressController {
-	r := int32(c.ConfigService.GetConfig().OSDClusterConfig.IngressControllerReplicas)
+	r := int32(c.ConfigService.GetConfig().DataplaneClusterConfig.IngressControllerReplicas)
 	return &ingressoperatorv1.IngressController{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "operator.openshift.io/v1",
@@ -874,7 +874,7 @@ func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressopera
 }
 
 func (c *ClusterManager) buildImagePullSecret(namespace string) *k8sCoreV1.Secret {
-	content := c.ConfigService.GetConfig().OSDClusterConfig.ImagePullDockerConfigContent
+	content := c.ConfigService.GetConfig().DataplaneClusterConfig.ImagePullDockerConfigContent
 	if strings.TrimSpace(content) == "" {
 		return nil
 	}
@@ -907,7 +907,7 @@ func (c *ClusterManager) buildReadOnlyGroupResource() *userv1.Group {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: mkReadOnlyGroupName,
 		},
-		Users: c.ConfigService.GetConfig().OSDClusterConfig.ReadOnlyUserList,
+		Users: c.ConfigService.GetConfig().DataplaneClusterConfig.ReadOnlyUserList,
 	}
 }
 
@@ -946,7 +946,7 @@ func (c *ClusterManager) buildKafkaSREGroupResource() *userv1.Group {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: mkSREGroupName,
 		},
-		Users: c.ConfigService.GetConfig().OSDClusterConfig.KafkaSREUsers,
+		Users: c.ConfigService.GetConfig().DataplaneClusterConfig.KafkaSREUsers,
 	}
 }
 
