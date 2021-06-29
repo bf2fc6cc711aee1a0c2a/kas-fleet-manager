@@ -4,6 +4,7 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"sync"
 )
@@ -18,7 +19,7 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 //
 // 		// make and configure a mocked ClusterPlacementStrategy
 // 		mockedClusterPlacementStrategy := &ClusterPlacementStrategyMock{
-// 			FindClusterFunc: func(kafka *api.KafkaRequest) (*api.Cluster, error) {
+// 			FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 // 				panic("mock out the FindCluster method")
 // 			},
 // 		}
@@ -29,26 +30,26 @@ var _ ClusterPlacementStrategy = &ClusterPlacementStrategyMock{}
 // 	}
 type ClusterPlacementStrategyMock struct {
 	// FindClusterFunc mocks the FindCluster method.
-	FindClusterFunc func(kafka *api.KafkaRequest) (*api.Cluster, error)
+	FindClusterFunc func(kafka *dbapi.KafkaRequest) (*api.Cluster, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// FindCluster holds details about calls to the FindCluster method.
 		FindCluster []struct {
 			// Kafka is the kafka argument value.
-			Kafka *api.KafkaRequest
+			Kafka *dbapi.KafkaRequest
 		}
 	}
 	lockFindCluster sync.RWMutex
 }
 
 // FindCluster calls FindClusterFunc.
-func (mock *ClusterPlacementStrategyMock) FindCluster(kafka *api.KafkaRequest) (*api.Cluster, error) {
+func (mock *ClusterPlacementStrategyMock) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
 	if mock.FindClusterFunc == nil {
 		panic("ClusterPlacementStrategyMock.FindClusterFunc: method is nil but ClusterPlacementStrategy.FindCluster was just called")
 	}
 	callInfo := struct {
-		Kafka *api.KafkaRequest
+		Kafka *dbapi.KafkaRequest
 	}{
 		Kafka: kafka,
 	}
@@ -62,10 +63,10 @@ func (mock *ClusterPlacementStrategyMock) FindCluster(kafka *api.KafkaRequest) (
 // Check the length with:
 //     len(mockedClusterPlacementStrategy.FindClusterCalls())
 func (mock *ClusterPlacementStrategyMock) FindClusterCalls() []struct {
-	Kafka *api.KafkaRequest
+	Kafka *dbapi.KafkaRequest
 } {
 	var calls []struct {
-		Kafka *api.KafkaRequest
+		Kafka *dbapi.KafkaRequest
 	}
 	mock.lockFindCluster.RLock()
 	calls = mock.calls.FindCluster

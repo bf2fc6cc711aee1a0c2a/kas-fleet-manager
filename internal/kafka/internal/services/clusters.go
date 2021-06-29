@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
@@ -415,7 +416,7 @@ func (c clusterService) FindNonEmptyClusterById(clusterID string) (*api.Cluster,
 		ClusterID: clusterID,
 	}
 
-	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants.KafkaRequestStatusFailed, clusterID).Model(api.KafkaRequest{})
+	subQuery := dbConn.Select("cluster_id").Where("status != ? AND cluster_id = ?", constants.KafkaRequestStatusFailed, clusterID).Model(dbapi.KafkaRequest{})
 	if err := dbConn.Where(clusterDetails).Where("cluster_id IN (?)", subQuery).First(cluster).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -464,7 +465,7 @@ func (c clusterService) GetExternalID(clusterID string) (string, *apiErrors.Serv
 func (c clusterService) FindKafkaInstanceCount(clusterIDs []string) ([]ResKafkaInstanceCount, *apiErrors.ServiceError) {
 	var res []ResKafkaInstanceCount
 	query := c.connectionFactory.New().
-		Model(&api.KafkaRequest{}).
+		Model(&dbapi.KafkaRequest{}).
 		Select("cluster_id as Clusterid, count(1) as Count").
 		Where("status != ?", constants.KafkaRequestStatusAccepted.String()) // kafka in accepted state do not have a cluster_id assigned to them
 

@@ -1,6 +1,7 @@
 package quota
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"net/http"
 	"testing"
 
@@ -245,7 +246,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			}
 			factory := NewDefaultQuotaServiceFactory(nil, tt.arg.connectionFactory, tt.arg.configService)
 			quotaService, _ := factory.GetQuotaService(api.AllowListQuotaType)
-			kafka := &api.KafkaRequest{
+			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}

@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"reflect"
 	"strings"
 	"testing"
@@ -18,7 +19,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		clusterService ClusterService
 		kafkaService   func(c map[string]int) KafkaService
 		clusterId      string
-		status         []*api.DataPlaneKafkaStatus
+		status         []*dbapi.DataPlaneKafkaStatus
 		wantErr        bool
 		expectCounters map[string]int
 	}{
@@ -33,7 +34,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				return &KafkaServiceMock{}
 			},
 			clusterId: "test-cluster-id",
-			status:    []*api.DataPlaneKafkaStatus{},
+			status:    []*dbapi.DataPlaneKafkaStatus{},
 			wantErr:   true,
 			expectCounters: map[string]int{
 				"ready":    0,
@@ -51,13 +52,13 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			},
 			kafkaService: func(c map[string]int) KafkaService {
 				return &KafkaServiceMock{
-					GetByIdFunc: func(id string) (*api.KafkaRequest, *errors.ServiceError) {
-						return &api.KafkaRequest{
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
 							ClusterID: "test-cluster-id",
 							Status:    constants.KafkaRequestStatusProvisioning.String(),
 						}, nil
 					},
-					UpdateFunc: func(kafkaRequest *api.KafkaRequest) *errors.ServiceError {
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 						if kafkaRequest.Status == string(constants.KafkaRequestStatusFailed) {
 							if !strings.Contains(kafkaRequest.FailedReason, testErrorCondMessage) {
 								return errors.GeneralError("Test failure error. Expected FailedReason is empty")
@@ -79,15 +80,15 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						}
 						return true, nil
 					},
-					DeleteFunc: func(in1 *api.KafkaRequest) *errors.ServiceError {
+					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
 						return nil
 					},
 				}
 			},
 			clusterId: "test-cluster-id",
-			status: []*api.DataPlaneKafkaStatus{
+			status: []*dbapi.DataPlaneKafkaStatus{
 				{
-					Conditions: []api.DataPlaneKafkaStatusCondition{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
 							Type:   "Ready",
 							Status: "True",
@@ -95,7 +96,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 					},
 				},
 				{
-					Conditions: []api.DataPlaneKafkaStatusCondition{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
 							Type:   "Ready",
 							Status: "False",
@@ -104,7 +105,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 					},
 				},
 				{
-					Conditions: []api.DataPlaneKafkaStatusCondition{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
 							Type:    "Ready",
 							Status:  "False",
@@ -114,7 +115,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 					},
 				},
 				{
-					Conditions: []api.DataPlaneKafkaStatusCondition{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
 							Type:   "Ready",
 							Status: "False",
@@ -123,7 +124,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 					},
 				},
 				{
-					Conditions: []api.DataPlaneKafkaStatusCondition{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
 						{
 							Type:   "Ready",
 							Status: "False",

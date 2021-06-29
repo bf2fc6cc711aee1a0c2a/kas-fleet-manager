@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/google/uuid"
@@ -10,8 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -107,7 +106,7 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *api.KafkaRequest) error {
+func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.KafkaRequest) error {
 	if kafkaRequest.SsoClientID == "" && kafkaRequest.SsoClientSecret == "" {
 		kafkaRequest.SsoClientID = services.BuildKeycloakClientNameIdentifier(kafkaRequest.ID)
 		secret, err := k.keycloakService.GetKafkaClientSecret(kafkaRequest.SsoClientID)

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
@@ -51,7 +51,7 @@ func setUp(t *testing.T) *testEnv {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	db := test.TestServices.DBFactory.New()
-	kafkas := []*api.KafkaRequest{
+	kafkas := []*dbapi.KafkaRequest{
 		{
 			MultiAZ:        false,
 			Owner:          usernameWithSpecialChars,

@@ -3,7 +3,6 @@ package presenters
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
 )
 
 func ConvertServiceAccountRequest(account public.ServiceAccountRequest) *api.ServiceAccountRequest {
@@ -14,7 +13,7 @@ func ConvertServiceAccountRequest(account public.ServiceAccountRequest) *api.Ser
 }
 
 func PresentServiceAccount(account *api.ServiceAccount) *public.ServiceAccount {
-	reference := presenters.PresentReference(account.ID, account)
+	reference := PresentReference(account.ID, account)
 	return &public.ServiceAccount{
 		ClientId:               account.ClientID,
 		ClientSecret:           account.ClientSecret,
@@ -31,7 +30,7 @@ func PresentServiceAccount(account *api.ServiceAccount) *public.ServiceAccount {
 }
 
 func PresentServiceAccountListItem(account *api.ServiceAccount) public.ServiceAccountListItem {
-	ref := presenters.PresentReference(account.ID, account)
+	ref := PresentReference(account.ID, account)
 	return public.ServiceAccountListItem{
 		Id:                 ref.Id,
 		Kind:               ref.Kind,

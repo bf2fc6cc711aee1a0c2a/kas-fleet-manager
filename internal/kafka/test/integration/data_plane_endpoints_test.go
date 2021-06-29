@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
@@ -13,7 +14,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -222,7 +222,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	var testKafkas = []*api.KafkaRequest{
+	var testKafkas = []*dbapi.KafkaRequest{
 		{
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
@@ -285,7 +285,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// kafka failed in preparing state and should not be returned in the list
-	additionalKafka := &api.KafkaRequest{
+	additionalKafka := &dbapi.KafkaRequest{
 		ClusterID: testServer.ClusterID,
 		MultiAZ:   false,
 		Name:      mockKafkaName4,
@@ -358,7 +358,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	for _, cid := range readyClusters {
-		c := &api.KafkaRequest{}
+		c := &dbapi.KafkaRequest{}
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
@@ -366,7 +366,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	}
 
 	for _, cid := range deletedClusters {
-		c := &api.KafkaRequest{}
+		c := &dbapi.KafkaRequest{}
 		// need to use Unscoped here as there is a chance the entry is soft deleted already
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
@@ -399,7 +399,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	testKafka := &api.KafkaRequest{
+	testKafka := &dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -460,7 +460,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	testKafka := &api.KafkaRequest{
+	testKafka := &dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -525,7 +525,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	testKafka := &api.KafkaRequest{
+	testKafka := &dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -588,7 +588,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 
 	db := test2.TestServices.DBFactory.New()
 
-	testKafka := api.KafkaRequest{
+	testKafka := dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
@@ -618,7 +618,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
 	Expect(err).NotTo(HaveOccurred())
 
-	c := &api.KafkaRequest{}
+	c := &dbapi.KafkaRequest{}
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}

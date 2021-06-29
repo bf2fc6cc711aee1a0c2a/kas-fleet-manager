@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"reflect"
 	"testing"
@@ -16,7 +17,7 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 	tests := []struct {
 		name                           string
 		clusterID                      string
-		clusterStatus                  *api.DataPlaneClusterStatus
+		clusterStatus                  *dbapi.DataPlaneClusterStatus
 		dataPlaneClusterServiceFactory func() *dataPlaneClusterService
 		wantErr                        bool
 	}{
@@ -37,14 +38,14 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 		{
 			name:      "It succeeds when there are no issues",
 			clusterID: testClusterID,
-			clusterStatus: &api.DataPlaneClusterStatus{
-				Conditions: []api.DataPlaneClusterStatusCondition{
-					api.DataPlaneClusterStatusCondition{
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{
+					dbapi.DataPlaneClusterStatusCondition{
 						Type:   "Ready",
 						Status: "True",
 					},
 				},
-				NodeInfo: api.DataPlaneClusterStatusNodeInfo{
+				NodeInfo: dbapi.DataPlaneClusterStatusNodeInfo{
 					Current: 6,
 				},
 			},
@@ -91,7 +92,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 	testClusterID := "test-cluster-id"
 
 	type input struct {
-		status                  *api.DataPlaneClusterStatus
+		status                  *dbapi.DataPlaneClusterStatus
 		cluster                 *api.Cluster
 		dataPlaneClusterService *dataPlaneClusterService
 	}
@@ -401,7 +402,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 	testClusterID := "test-cluster-id"
 	tests := []struct {
 		name                           string
-		clusterStatus                  *api.DataPlaneClusterStatus
+		clusterStatus                  *dbapi.DataPlaneClusterStatus
 		dataPlaneClusterServiceFactory func() *dataPlaneClusterService
 		wantErr                        bool
 		want                           bool
@@ -480,16 +481,16 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 	tests := []struct {
 		name                           string
-		clusterStatus                  *api.DataPlaneClusterStatus
+		clusterStatus                  *dbapi.DataPlaneClusterStatus
 		dataPlaneClusterServiceFactory func() *dataPlaneClusterService
 		wantErr                        bool
 		want                           bool
 	}{
 		{
 			name: "When KAS Fleet operator reports ready condition set to true the fleet shard operator is considered ready",
-			clusterStatus: &api.DataPlaneClusterStatus{
-				Conditions: []api.DataPlaneClusterStatusCondition{
-					api.DataPlaneClusterStatusCondition{
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{
+					dbapi.DataPlaneClusterStatusCondition{
 						Type:   "Ready",
 						Status: "True",
 					},
@@ -503,9 +504,9 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 		{
 			name: "When KAS Fleet operator reports ready condition set to false the fleet shard operator is considered not ready",
-			clusterStatus: &api.DataPlaneClusterStatus{
-				Conditions: []api.DataPlaneClusterStatusCondition{
-					api.DataPlaneClusterStatusCondition{
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{
+					dbapi.DataPlaneClusterStatusCondition{
 						Type:   "Ready",
 						Status: "False",
 					},
@@ -519,8 +520,8 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 		{
 			name: "When KAS Fleet operator reports doesn't report a Ready condition the fleet shard operator is considered not ready",
-			clusterStatus: &api.DataPlaneClusterStatus{
-				Conditions: []api.DataPlaneClusterStatusCondition{},
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{},
 			},
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
 				return NewDataPlaneClusterService(nil, sampleValidApplicationConfigForDataPlaneClusterTest())
@@ -530,9 +531,9 @@ func Test_DataPlaneCluster_isFleetShardOperatorReady(t *testing.T) {
 		},
 		{
 			name: "When KAS Fleet operator reports reports a Ready condition with an unknown value an error is returned",
-			clusterStatus: &api.DataPlaneClusterStatus{
-				Conditions: []api.DataPlaneClusterStatusCondition{
-					api.DataPlaneClusterStatusCondition{
+			clusterStatus: &dbapi.DataPlaneClusterStatus{
+				Conditions: []dbapi.DataPlaneClusterStatusCondition{
+					dbapi.DataPlaneClusterStatusCondition{
 						Type:   "Ready",
 						Status: "InventedValue",
 					},
@@ -679,7 +680,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 		name    string
 		fields  fields
 		wantErr bool
-		want    *api.DataPlaneClusterConfig
+		want    *dbapi.DataPlaneClusterConfig
 	}{
 		{
 			name: "should success",
@@ -700,7 +701,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 				},
 			},
 			wantErr: false,
-			want: &api.DataPlaneClusterConfig{Observability: api.DataPlaneClusterConfigObservability{
+			want: &dbapi.DataPlaneClusterConfig{Observability: dbapi.DataPlaneClusterConfigObservability{
 				AccessToken: "test-token",
 				Channel:     "test-channel",
 				Repository:  "test-repo",
@@ -745,7 +746,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 
 func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 	type input struct {
-		status                  *api.DataPlaneClusterStatus
+		status                  *dbapi.DataPlaneClusterStatus
 		cluster                 *api.Cluster
 		dataPlaneClusterService *dataPlaneClusterService
 	}
@@ -948,29 +949,29 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 	}
 }
 
-func sampleValidBaseDataPlaneClusterStatusRequest() *api.DataPlaneClusterStatus {
-	return &api.DataPlaneClusterStatus{
-		Conditions: []api.DataPlaneClusterStatusCondition{
-			api.DataPlaneClusterStatusCondition{
+func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatus {
+	return &dbapi.DataPlaneClusterStatus{
+		Conditions: []dbapi.DataPlaneClusterStatusCondition{
+			dbapi.DataPlaneClusterStatusCondition{
 				Type:   "Ready",
 				Status: "True",
 			},
 		},
-		NodeInfo: api.DataPlaneClusterStatusNodeInfo{
+		NodeInfo: dbapi.DataPlaneClusterStatusNodeInfo{
 			Ceiling:                0,
 			Floor:                  0,
 			Current:                0,
 			CurrentWorkLoadMinimum: 0,
 		},
-		Remaining: api.DataPlaneClusterStatusCapacity{
+		Remaining: dbapi.DataPlaneClusterStatusCapacity{
 			Connections:                   0,
 			Partitions:                    0,
 			IngressEgressThroughputPerSec: "",
 			DataRetentionSize:             "",
 		},
-		ResizeInfo: api.DataPlaneClusterStatusResizeInfo{
+		ResizeInfo: dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: multiAZClusterNodeScalingMultiple,
-			Delta: api.DataPlaneClusterStatusCapacity{
+			Delta: dbapi.DataPlaneClusterStatusCapacity{
 				Connections:                   0,
 				Partitions:                    0,
 				IngressEgressThroughputPerSec: "",

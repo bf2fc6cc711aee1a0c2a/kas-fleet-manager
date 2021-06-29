@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"strconv"
 	"time"
 
@@ -19,8 +20,8 @@ import (
 const multiAZClusterNodeScalingMultiple = 3
 
 type DataPlaneClusterService interface {
-	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError
-	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*api.DataPlaneClusterConfig, *errors.ServiceError)
+	UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError
+	GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError)
 }
 
 var _ DataPlaneClusterService = &dataPlaneClusterService{}
@@ -48,7 +49,7 @@ func NewDataPlaneClusterService(clusterService ClusterService, config *config.Ap
 	}
 }
 
-func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*api.DataPlaneClusterConfig, *errors.ServiceError) {
+func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError) {
 	cluster, svcErr := d.clusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
 		return nil, svcErr
@@ -58,8 +59,8 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 		return nil, errors.BadRequest("Cluster agent with ID '%s' not found", clusterID)
 	}
 
-	return &api.DataPlaneClusterConfig{
-		Observability: api.DataPlaneClusterConfigObservability{
+	return &dbapi.DataPlaneClusterConfig{
+		Observability: dbapi.DataPlaneClusterConfigObservability{
 			AccessToken: d.observabilityConfig.ObservabilityConfigAccessToken,
 			Channel:     d.observabilityConfig.ObservabilityConfigChannel,
 			Repository:  d.observabilityConfig.ObservabilityConfigRepo,
@@ -68,7 +69,7 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 	}, nil
 }
 
-func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *api.DataPlaneClusterStatus) *errors.ServiceError {
+func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError {
 	cluster, svcErr := d.clusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
 		return svcErr
@@ -126,7 +127,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 	return nil
 }
 
-func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *api.Cluster, status *api.DataPlaneClusterStatus) (bool, error) {
+func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	nodesInfo, err := d.clusterService.GetComputeNodes(cluster.ClusterID)
 	if err != nil {
 		return false, errors.ToServiceError(err)
@@ -141,7 +142,7 @@ func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *ap
 // the data plane cluster based on the reported status by the kas fleet shard
 // operator. The state of the number of desired nodes after the scaling
 // actions is returned
-func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Cluster, status *api.DataPlaneClusterStatus) (int, error) {
+func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) (int, error) {
 	// Current assumptions of how the kas-fleet-shard-operator works:
 	// 1 - Reported "current" will always be equal or higher than
 	//     "workload minimum" because workload minimum is the nodes required
@@ -203,7 +204,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 	return desiredNodesAfterScaleActions, nil
 }
 
-func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *api.DataPlaneClusterStatus) error {
+func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
 	remainingCapacity := true
 	if d.osdClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		var err error
@@ -245,7 +246,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 	return nil
 }
 
-func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *api.DataPlaneClusterStatus) (bool, error) {
+func (d *dataPlaneClusterService) isFleetShardOperatorReady(status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	for _, cond := range status.Conditions {
 		if cond.Type == dataPlaneClusterStatusCondReadyName {
 			condVal, err := strconv.ParseBool(cond.Status)
@@ -270,7 +271,7 @@ func (d *dataPlaneClusterService) clusterCanProcessStatusReports(cluster *api.Cl
 // restrictions. The result of this method should only be used
 // when it's been checked that scale up can be performed with the scaleUpNeeded
 // method
-func (d *dataPlaneClusterService) calculateDesiredNodesToScaleUp(cluster *api.Cluster, status *api.DataPlaneClusterStatus) int {
+func (d *dataPlaneClusterService) calculateDesiredNodesToScaleUp(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) int {
 	nodesToScaleUp := status.ResizeInfo.NodeDelta
 	if cluster.MultiAZ {
 		// We round-up to the nearest Multi-AZ node multiple
@@ -284,7 +285,7 @@ func (d *dataPlaneClusterService) calculateDesiredNodesToScaleUp(cluster *api.Cl
 // and restrictions. The result of this method should only be used
 // when it's been checked that scale down can be performed with the scaleDownNeeded
 // method
-func (d *dataPlaneClusterService) calculateDesiredNodesToScaleDown(cluster *api.Cluster, status *api.DataPlaneClusterStatus) int {
+func (d *dataPlaneClusterService) calculateDesiredNodesToScaleDown(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) int {
 	nodesToScaleDown := status.ResizeInfo.NodeDelta
 	// We round-up to the nearest Multi-AZ node multiple
 	if cluster.MultiAZ {
@@ -296,7 +297,7 @@ func (d *dataPlaneClusterService) calculateDesiredNodesToScaleDown(cluster *api.
 
 // scaleUpNeeded returns whether the cluster needs to be scaled up based on
 // the reported status.
-func (d *dataPlaneClusterService) scaleUpNeeded(cluster *api.Cluster, status *api.DataPlaneClusterStatus) (bool, error) {
+func (d *dataPlaneClusterService) scaleUpNeeded(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	anyScaleUpthresholdCrossed, err := d.anyComputeNodesScaleUpThresholdsCrossed(status)
 	if err != nil {
 		return false, err
@@ -315,7 +316,7 @@ func (d *dataPlaneClusterService) scaleUpNeeded(cluster *api.Cluster, status *ap
 
 // scaleDownNeeded returns whether the cluster needs to be scaled down based
 // on the reported status.
-func (d *dataPlaneClusterService) scaleDownNeeded(cluster *api.Cluster, status *api.DataPlaneClusterStatus) (bool, error) {
+func (d *dataPlaneClusterService) scaleDownNeeded(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	allScaleDownThresholdsCrossed, err := d.allComputeNodesScaleDownThresholdsCrossed(status)
 	if err != nil {
 		return false, err
@@ -342,7 +343,7 @@ func (d *dataPlaneClusterService) scaleDownNeeded(cluster *api.Cluster, status *
 // getRestrictedCeiling returns the maximum ceiling value that can be used
 // according to Multi-AZ restrictions in case the cluster is Multi-AZ. The
 // ceiling value is rounded-down to the nearest Multi-AZ node multiple
-func (d *dataPlaneClusterService) getRestrictedCeiling(cluster *api.Cluster, status *api.DataPlaneClusterStatus) int {
+func (d *dataPlaneClusterService) getRestrictedCeiling(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) int {
 	restrictedCeiling := status.NodeInfo.Ceiling
 	if cluster.MultiAZ {
 		restrictedCeiling = shared.RoundDown(restrictedCeiling, multiAZClusterNodeScalingMultiple)
@@ -353,7 +354,7 @@ func (d *dataPlaneClusterService) getRestrictedCeiling(cluster *api.Cluster, sta
 // getRestrictedCeiling returns the minimum ceiling value that can be used
 // according to Multi-AZ restrictions in case the cluster is Multi-AZ. The
 // floor value is rounded-up to the nearest Multi-AZ node multiple
-func (d *dataPlaneClusterService) getRestrictedFloor(cluster *api.Cluster, status *api.DataPlaneClusterStatus) int {
+func (d *dataPlaneClusterService) getRestrictedFloor(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) int {
 	restrictedFloor := status.NodeInfo.Floor
 	if cluster.MultiAZ {
 		restrictedFloor = shared.RoundUp(restrictedFloor, multiAZClusterNodeScalingMultiple)
@@ -364,7 +365,7 @@ func (d *dataPlaneClusterService) getRestrictedFloor(cluster *api.Cluster, statu
 // anyComputeNodesScaleUpThresholdsCrossed returns true when at least one of the
 // reported remaining kafka attributes is smaller than its corresponding
 // scale-up capacity threshold
-func (d *dataPlaneClusterService) anyComputeNodesScaleUpThresholdsCrossed(status *api.DataPlaneClusterStatus) (bool, error) {
+func (d *dataPlaneClusterService) anyComputeNodesScaleUpThresholdsCrossed(status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	scaleUpThresholds := d.scaleUpThresholds(status)
 	connectionsThresholdCrossed := status.Remaining.Connections < scaleUpThresholds.Connections
 	partitionsThresholdCrossed := status.Remaining.Partitions < scaleUpThresholds.Partitions
@@ -374,7 +375,7 @@ func (d *dataPlaneClusterService) anyComputeNodesScaleUpThresholdsCrossed(status
 
 // allComputeNodesScaleDownThresholdsCrossed returns true when all of the reported remaining
 // kafka attributes is higher than its corresponding scale-down capacity threshold
-func (d *dataPlaneClusterService) allComputeNodesScaleDownThresholdsCrossed(status *api.DataPlaneClusterStatus) (bool, error) {
+func (d *dataPlaneClusterService) allComputeNodesScaleDownThresholdsCrossed(status *dbapi.DataPlaneClusterStatus) (bool, error) {
 	scaleDownThresholds := d.scaleDownThresholds(status)
 	connectionsThresholdCrossed := status.Remaining.Connections > scaleDownThresholds.Connections
 	partitionsThresholdCrossed := status.Remaining.Partitions > scaleDownThresholds.Partitions
@@ -385,7 +386,7 @@ func (d *dataPlaneClusterService) allComputeNodesScaleDownThresholdsCrossed(stat
 // kafkaClustersCapacityAvailable returns true when all the reported remaining
 // kafka attributes are higher than their corresponding capacity attribute
 // provided in minCapacity
-func (d *dataPlaneClusterService) kafkaClustersCapacityAvailable(status *api.DataPlaneClusterStatus, minCapacity *dataPlaneComputeNodesKafkaCapacityAttributes) (bool, error) {
+func (d *dataPlaneClusterService) kafkaClustersCapacityAvailable(status *dbapi.DataPlaneClusterStatus, minCapacity *dataPlaneComputeNodesKafkaCapacityAttributes) (bool, error) {
 	remainingConnectionsCapacity := status.Remaining.Connections
 	minConnectionsCapacity := minCapacity.Connections
 	connectionsCapacityAvailable := remainingConnectionsCapacity >= minConnectionsCapacity
@@ -397,7 +398,7 @@ func (d *dataPlaneClusterService) kafkaClustersCapacityAvailable(status *api.Dat
 	return connectionsCapacityAvailable && partitionsCapacityAvailable, nil
 }
 
-func (d *dataPlaneClusterService) scaleDownThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
+func (d *dataPlaneClusterService) scaleDownThresholds(status *dbapi.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
 	var res *dataPlaneComputeNodesKafkaCapacityAttributes = &dataPlaneComputeNodesKafkaCapacityAttributes{}
 
 	res.Connections = status.ResizeInfo.Delta.Connections
@@ -406,7 +407,7 @@ func (d *dataPlaneClusterService) scaleDownThresholds(status *api.DataPlaneClust
 	return res
 }
 
-func (d *dataPlaneClusterService) scaleUpThresholds(status *api.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
+func (d *dataPlaneClusterService) scaleUpThresholds(status *dbapi.DataPlaneClusterStatus) *dataPlaneComputeNodesKafkaCapacityAttributes {
 	return d.minimumKafkaCapacity()
 }
 

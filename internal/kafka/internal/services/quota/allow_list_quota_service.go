@@ -2,8 +2,8 @@ package quota
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -15,7 +15,7 @@ type allowListQuotaService struct {
 	configService     services.ConfigService
 }
 
-func (q allowListQuotaService) CheckQuota(kafka *api.KafkaRequest) *errors.ServiceError {
+func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 	if !q.configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
 		return nil
 	}
@@ -38,7 +38,7 @@ func (q allowListQuotaService) CheckQuota(kafka *api.KafkaRequest) *errors.Servi
 		}
 	}
 
-	dbConn := q.connectionFactory.New().Model(&api.KafkaRequest{})
+	dbConn := q.connectionFactory.New().Model(&dbapi.KafkaRequest{})
 	if filterByOrd {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
@@ -64,7 +64,7 @@ func (q allowListQuotaService) CheckQuota(kafka *api.KafkaRequest) *errors.Servi
 	return nil
 }
 
-func (q allowListQuotaService) ReserveQuota(kafka *api.KafkaRequest) (string, *errors.ServiceError) {
+func (q allowListQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	return "", nil // NOOP
 }
 

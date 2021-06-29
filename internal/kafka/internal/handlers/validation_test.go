@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -29,7 +30,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 			name: "throw an error when the KafkaService call throws an error",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 4}, errors.GeneralError("count failed from database")
 					},
 				},
@@ -42,7 +43,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 			name: "throw an error when name is already used",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 1}, nil
 					},
 				},
@@ -59,7 +60,7 @@ func Test_Validation_validateKafkaClusterNameIsUnique(t *testing.T) {
 			name: "does not throw an error when name is unique",
 			arg: args{
 				kafkaService: &services.KafkaServiceMock{
-					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (api.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+					ListFunc: func(ctx context.Context, listArgs *coreServices.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 						return nil, &api.PagingMeta{Total: 0}, nil
 					},
 				},
