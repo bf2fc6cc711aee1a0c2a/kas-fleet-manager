@@ -1,23 +1,22 @@
 package acl
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 )
 
 type AccessControlListMiddleware struct {
-	configService services.ConfigService
+	accessControlListConfig *config.AccessControlListConfig
 }
 
-func NewAccessControlListMiddleware(configService services.ConfigService) *AccessControlListMiddleware {
+func NewAccessControlListMiddleware(accessControlListConfig *config.AccessControlListConfig) *AccessControlListMiddleware {
 	middleware := AccessControlListMiddleware{
-		configService: configService,
+		accessControlListConfig: accessControlListConfig,
 	}
-
 	return &middleware
 }
 
@@ -33,9 +32,8 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 
 		username := auth.GetUsernameFromClaims(claims)
 
-		accessControlListConfig := middleware.configService.GetConfig().AccessControlList
-		if accessControlListConfig.EnableDenyList {
-			userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
+		if middleware.accessControlListConfig.EnableDenyList {
+			userIsDenied := middleware.accessControlListConfig.DenyList.IsUserDenied(username)
 			if userIsDenied {
 				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
 				return
@@ -44,11 +42,11 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 
 		orgId := auth.GetOrgIdFromClaims(claims)
 
-		if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
+		if !middleware.accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
 			// check if user is in the allow list
-			org, _ := middleware.configService.GetOrganisationById(orgId)
+			org, _ := middleware.accessControlListConfig.AllowList.Organisations.GetById(orgId)
 			userIsAnAllowListOrgMember := org.IsUserAllowed(username)
-			_, userIsAnAllowListServiceAccount := middleware.configService.GetServiceAccountByUsername(username)
+			_, userIsAnAllowListServiceAccount := middleware.accessControlListConfig.AllowList.ServiceAccounts.GetByUsername(username)
 
 			// If the user is not in the allow list as an org member or service account, they are not authorised
 			if !userIsAnAllowListServiceAccount && !userIsAnAllowListOrgMember {

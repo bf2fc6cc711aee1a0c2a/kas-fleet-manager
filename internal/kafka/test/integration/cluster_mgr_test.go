@@ -177,7 +177,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
 	err := common2.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)

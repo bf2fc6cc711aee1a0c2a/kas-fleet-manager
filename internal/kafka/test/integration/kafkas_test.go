@@ -110,7 +110,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	}
 	Expect(kafkaRequest.SsoClientID).To(BeEmpty())
 	Expect(kafkaRequest.SsoClientSecret).To(BeEmpty())
-	Expect(kafkaRequest.QuotaType).To(Equal(h.Env.Config.Kafka.Quota.Type))
+	Expect(kafkaRequest.QuotaType).To(Equal(KafkaConfig(h).Quota.Type))
 	Expect(kafkaRequest.PlacementId).To(Not(BeEmpty()))
 
 	common2.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
@@ -1378,7 +1378,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
 	// set the long lived kafka id list at the beginning of the tests to avoid potential timing issues when testing its case
 	longLivedKafkaId := "123456"
-	h.Env.Config.Kafka.KafkaLifespan.LongLivedKafkas = []string{longLivedKafkaId}
+	KafkaConfig(h).KafkaLifespan.LongLivedKafkas = []string{longLivedKafkaId}
 
 	kafkas := []*dbapi.KafkaRequest{
 		{

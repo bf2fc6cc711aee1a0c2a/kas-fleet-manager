@@ -32,7 +32,8 @@ func runDelete(env *environments.Env, cmd *cobra.Command) {
 	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	// setup required services
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
+	keycloakConfig := KeycloakConfig(env)
+	keycloakService := services.NewKeycloakService(keycloakConfig, keycloakConfig.KafkaRealm)
 
 	ctx := cmd.Context()
 	// create jwt with claims and set it in the context

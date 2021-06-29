@@ -1,6 +1,7 @@
 package environments
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"os"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -8,9 +9,9 @@ import (
 
 type IntegrationEnvLoader struct{}
 
-var _ EnvLoader = IntegrationEnvLoader{}
+var _ environments.EnvLoader = IntegrationEnvLoader{}
 
-func newIntegrationEnvLoader() EnvLoader {
+func NewIntegrationEnvLoader() environments.EnvLoader {
 	return IntegrationEnvLoader{}
 }
 
@@ -46,7 +47,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 // The integration environment is specifically for automated integration testing using an emulated server
 // Mocks are loaded by default.
 // The environment is expected to be modified as needed
-func (b IntegrationEnvLoader) ModifyConfiguration(env *Env) error {
+func (b IntegrationEnvLoader) ModifyConfiguration(env *environments.Env) error {
 	// Support a one-off env to allow enabling db debug in testing
 	var databaseConfig *config.DatabaseConfig
 	var observabilityConfiguration *config.ObservabilityConfiguration

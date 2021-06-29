@@ -3,21 +3,16 @@ package environments
 import (
 	"context"
 	goerrors "errors"
+	"flag"
 	"os"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/goava/di"
 	"github.com/pkg/errors"
 
 	sentryGo "github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 const (
@@ -32,7 +27,6 @@ const (
 
 type Env struct {
 	Name             string
-	Config           *config.ApplicationConfig
 	ConfigContainer  *di.Container
 	ServiceContainer *di.Container
 }
@@ -48,6 +42,8 @@ func GetEnvironmentStrFromEnv() string {
 
 // Adds environment flags, using the environment's config struct, to the flagset 'flags'
 func (e *Env) AddFlags(flags *pflag.FlagSet) error {
+
+	flags.AddGoFlagSet(flag.CommandLine)
 
 	var namedEnv EnvLoader
 	err := e.ConfigContainer.Resolve(&namedEnv, di.Tags{"env": e.Name})
@@ -74,19 +70,11 @@ func NewEnv(name string, options ...di.Option) (env *Env, err error) {
 	//di.SetTracer(di.StdTracer{})
 	env.ConfigContainer, err = di.New(append(options,
 		di.ProvideValue(env),
-		ConfigProviders(),
-		vault.ConfigProviders(),
-		sentry.ConfigProviders(),
-		signalbus.ConfigProviders(),
 	)...)
 	if err != nil {
 		return nil, err
 	}
 
-	err = env.ConfigContainer.Resolve(&env.Config)
-	if err != nil {
-		return nil, err
-	}
 	return env, nil
 }
 
@@ -157,10 +145,18 @@ func (env *Env) CreateServices() error {
 		return err
 	}
 
-	var configService services.ConfigService
-	env.MustResolve(&configService)
-	if err := configService.Validate(); err != nil {
-		return err
+	var validators []provider.ServiceValidator
+	err = env.ServiceContainer.Resolve(&validators)
+	if err != nil {
+		if !errors.Is(err, di.ErrTypeNotExists) {
+			return err
+		}
+	} else {
+		for _, validator := range validators {
+			if err := validator.Validate(); err != nil {
+				return err
+			}
+		}
 	}
 
 	for _, hook := range in.AfterCreateServicesHooks {

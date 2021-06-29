@@ -3,6 +3,7 @@ package acl_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/golang/glog"
 	"io"
@@ -15,7 +16,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/dgrijalva/jwt-go"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 
@@ -32,7 +32,9 @@ var ocmConfig *config.OCMConfig
 
 func TestMain(m *testing.M) {
 	var err error
-	env, err = environments.NewEnv(environments.GetEnvironmentStrFromEnv())
+	env, err = environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
+		kafka.ConfigProviders(),
+	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
@@ -58,123 +60,99 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		arg                  services.ConfigService
+		arg                  *config.AccessControlListConfig
 		ctx                  context.Context
 		filterByOrganisation bool
 	}{
 		{
 			name: "returns 200 Ok response for internal users who belong to an organisation listed in the allow list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: false,
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
 						},
 					},
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 Ok response for internal users who are listed in the allow list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: false,
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username"},
-							},
-						},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username"},
 					},
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 OK response for internal users who do not have access through their organisation but as a service account in the allow list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: false,
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowAll:        false,
-									AllowedAccounts: config.AllowedAccounts{},
-								},
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username"},
-							},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowAll:        false,
+							AllowedAccounts: config.AllowedAccounts{},
 						},
 					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username"},
+					},
 				},
-			),
+			},
 			filterByOrganisation: false,
 			ctx:                  getAuthenticatedContext(authHelper, t, svcAcc, nil),
 		},
 		{
 			name: "returns 200 Ok response for external users",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: false,
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-						},
-					},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 Ok response for external users who are not included in their organisation in the allow list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: false,
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowAll:        false,
-									AllowedAccounts: config.AllowedAccounts{},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowAll:        false,
+							AllowedAccounts: config.AllowedAccounts{},
 						},
 					},
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 Ok response for external service accounts",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: false,
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: true,
-						},
-					},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: false,
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: true,
 				},
-			),
+			},
 			filterByOrganisation: false,
 			ctx:                  getAuthenticatedContext(authHelper, t, svcAcc, nil),
 		},
@@ -214,112 +192,92 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 	tests := []struct {
 		name string
-		arg  services.ConfigService
+		arg  *config.AccessControlListConfig
 	}{
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableDenyList: true,
-						DenyList:       config.DeniedUsers{"username"},
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:       "org-id-0",
-									AllowAll: true,
-								},
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username"},
-							},
+			arg: &config.AccessControlListConfig{
+				EnableDenyList: true,
+				DenyList:       config.DeniedUsers{"username"},
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:       "org-id-0",
+							AllowAll: true,
 						},
 					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username"},
+					},
 				},
-			),
+			},
 		},
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with allowed users",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "another-username"}},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "another-username"}},
 						},
 					},
 				},
-			),
+			},
 		},
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with empty allowed users and no users is allowed to access the service",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowAll:        false,
-									AllowedAccounts: config.AllowedAccounts{},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowAll:        false,
+							AllowedAccounts: config.AllowedAccounts{},
 						},
 					},
 				},
-			),
+			},
 		},
 		{
 			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allowed service accounts list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:       "org-id-3",
-									AllowAll: false,
-								},
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "allowed-user-1"},
-								config.AllowedAccount{Username: "allowed-user-2"},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:       "org-id-3",
+							AllowAll: false,
 						},
 					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "allowed-user-1"},
+						config.AllowedAccount{Username: "allowed-user-2"},
+					},
 				},
-			),
+			},
 		},
 		{
 			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the service accounts allow list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowAll:        false,
-									AllowedAccounts: config.AllowedAccounts{},
-								},
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "allowed-user-1"},
-								config.AllowedAccount{Username: "allowed-user-2"},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowAll:        false,
+							AllowedAccounts: config.AllowedAccounts{},
 						},
 					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "allowed-user-1"},
+						config.AllowedAccount{Username: "allowed-user-2"},
+					},
 				},
-			),
+			},
 		},
 	}
 
@@ -393,93 +351,77 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		arg                  services.ConfigService
+		arg                  *config.AccessControlListConfig
 		ctx                  context.Context
 		filterByOrganisation bool
 	}{
 		{
 			name: "returns 200 Ok response when user is allowed to access service for the given organisation with allowed users",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
 						},
 					},
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowAll:        true,
-									AllowedAccounts: config.AllowedAccounts{},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowAll:        true,
+							AllowedAccounts: config.AllowedAccounts{},
 						},
 					},
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx:                  getAuthenticatedContext(authHelper, t, acc, nil),
 		},
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowAll:        false,
-									AllowedAccounts: config.AllowedAccounts{},
-								},
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "allowed-user-1"},
-								config.AllowedAccount{Username: "svc-acc-username"},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowAll:        false,
+							AllowedAccounts: config.AllowedAccounts{},
 						},
 					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "allowed-user-1"},
+						config.AllowedAccount{Username: "svc-acc-username"},
+					},
 				},
-			),
+			},
 			filterByOrganisation: false,
 			ctx:                  getAuthenticatedContext(authHelper, t, svcAcc, nil),
 		},
 		{
 			name: "returns 200 Ok response when token used is retrieved from sso.redhat.com and user is allowed access to the service",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id:              "org-id-0",
-									AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
-								},
-							},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id:              "org-id-0",
+							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
 						},
 					},
 				},
-			),
+			},
 			filterByOrganisation: true,
 			ctx: getAuthenticatedContext(authHelper, t, acc, jwt.MapClaims{
 				"username":           nil,
@@ -488,19 +430,15 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		},
 		{
 			name: "returns 200 OK response when user is allowed access as a service account",
-			arg: services.NewConfigService(
-				&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							AllowAnyRegisteredUsers: false,
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "allowed-user-1"},
-								config.AllowedAccount{Username: "svc-acc-username"},
-							},
-						},
+			arg: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					AllowAnyRegisteredUsers: false,
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "allowed-user-1"},
+						config.AllowedAccount{Username: "svc-acc-username"},
 					},
 				},
-			),
+			},
 			filterByOrganisation: false,
 			ctx:                  getAuthenticatedContext(authHelper, t, svcAcc, nil),
 		},
