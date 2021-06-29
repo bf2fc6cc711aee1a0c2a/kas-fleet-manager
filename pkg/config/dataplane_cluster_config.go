@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
@@ -10,9 +12,11 @@ import (
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
-type OSDClusterConfig struct {
+type DataplaneClusterConfig struct {
 	IngressControllerReplicas    int    `json:"ingress_controller_replicas"`
 	OpenshiftVersion             string `json:"cluster_openshift_version"`
 	ComputeMachineType           string `json:"cluster_compute_machine_type"`
@@ -31,6 +35,8 @@ type OSDClusterConfig struct {
 	KafkaSREUsersFile                     string
 	ClusterConfig                         *ClusterConfig `json:"clusters_config"`
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
+	Kubeconfig                            string         `json:"kubeconfig"`
+	RawKubernetesConfig                   *clientcmdapi.Config
 }
 
 const (
@@ -42,8 +48,16 @@ const (
 	NoScaling string = "none"
 )
 
-func NewOSDClusterConfig() *OSDClusterConfig {
-	return &OSDClusterConfig{
+func getDefaultKubeconfig() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(homeDir, ".kube", "config")
+}
+
+func NewDataplaneClusterConfig() *DataplaneClusterConfig {
+	return &DataplaneClusterConfig{
 		OpenshiftVersion:                      "",
 		ComputeMachineType:                    "m5.4xlarge",
 		StrimziOperatorVersion:                "v0.21.3",
@@ -56,6 +70,7 @@ func NewOSDClusterConfig() *OSDClusterConfig {
 		DataPlaneClusterScalingType:           ManualScaling,
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
+		Kubeconfig:                            getDefaultKubeconfig(),
 	}
 }
 
@@ -92,6 +107,10 @@ func (c *ManualCluster) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if c.ProviderType == api.ClusterProviderStandalone {
 		if c.ClusterDNS == "" {
 			return errors.Errorf("Standalone cluster with id %s does not have the cluster dns field provided", c.ClusterId)
+		}
+
+		if c.Name == "" {
+			return errors.Errorf("Standalone cluster with id %s does not have the name field provided", c.ClusterId)
 		}
 
 		c.Status = api.ClusterProvisioning // force to cluster provisioning status as we do not want to call StandaloneProvider to create the cluster.
@@ -156,19 +175,19 @@ func (conf *ClusterConfig) MissingClusters(clusterMap map[string]api.Cluster) []
 	return res
 }
 
-func (c *OSDClusterConfig) IsDataPlaneManualScalingEnabled() bool {
+func (c *DataplaneClusterConfig) IsDataPlaneManualScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == ManualScaling
 }
 
-func (c *OSDClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
+func (c *DataplaneClusterConfig) IsDataPlaneAutoScalingEnabled() bool {
 	return c.DataPlaneClusterScalingType == AutoScaling
 }
 
-func (c *OSDClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
+func (c *DataplaneClusterConfig) IsReadyDataPlaneClustersReconcileEnabled() bool {
 	return c.EnableReadyDataPlaneClustersReconcile
 }
 
-func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
+func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.OpenshiftVersion, "cluster-openshift-version", c.OpenshiftVersion, "The version of openshift installed on the cluster. An empty string indicates that the latest stable version should be used")
 	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
 	fs.StringVar(&c.StrimziOperatorVersion, "strimzi-operator-version", c.StrimziOperatorVersion, "The version of the Strimzi operator to install")
@@ -179,21 +198,41 @@ func (c *OSDClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")
 	fs.StringVar(&c.KafkaSREUsersFile, "kafka-sre-user-list-file", c.KafkaSREUsersFile, "File contains a list of kafka-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
+	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
 }
 
-func (c *OSDClusterConfig) ReadFiles() error {
+func (c *DataplaneClusterConfig) ReadFiles() error {
 	if c.ImagePullDockerConfigContent == "" && c.ImagePullDockerConfigFile != "" {
 		err := shared.ReadFileValueString(c.ImagePullDockerConfigFile, &c.ImagePullDockerConfigContent)
 		if err != nil {
 			return err
 		}
 	}
+
 	if c.IsDataPlaneManualScalingEnabled() {
 		list, err := readDataPlaneClusterConfig(c.DataPlaneClusterConfigFile)
 		if err == nil {
 			c.ClusterConfig = NewClusterConfig(list)
 		} else {
 			return err
+		}
+
+		// read kubeconfig and validate standalone clusters are in kubeconfig context
+		for _, cluster := range c.ClusterConfig.clusterList {
+			if cluster.ProviderType != api.ClusterProviderStandalone {
+				continue
+			}
+			// make sure we only read kubeconfig once
+			if c.RawKubernetesConfig == nil {
+				err = c.readKubeconfig()
+				if err != nil {
+					return err
+				}
+			}
+			validationErr := validateClusterIsInKubeconfigContext(*c.RawKubernetesConfig, cluster)
+			if validationErr != nil {
+				return validationErr
+			}
 		}
 	}
 
@@ -208,6 +247,32 @@ func (c *OSDClusterConfig) ReadFiles() error {
 	}
 
 	return nil
+}
+
+func (c *DataplaneClusterConfig) readKubeconfig() error {
+	_, err := os.Stat(c.Kubeconfig)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return errors.Errorf("The kubeconfig file %s does not exist", c.Kubeconfig)
+		}
+		return err
+	}
+	config := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{Precedence: []string{c.Kubeconfig}},
+		&clientcmd.ConfigOverrides{})
+	rawConfig, err := config.RawConfig()
+	if err != nil {
+		return err
+	}
+	c.RawKubernetesConfig = &rawConfig
+	return nil
+}
+
+func validateClusterIsInKubeconfigContext(rawConfig clientcmdapi.Config, cluster ManualCluster) error {
+	if _, found := rawConfig.Contexts[cluster.Name]; found {
+		return nil
+	}
+	return errors.Errorf("standalone cluster with ID: %s, and Name %s not in kubeconfig context", cluster.ClusterId, cluster.Name)
 }
 
 func readDataPlaneClusterConfig(file string) (ClusterList, error) {
@@ -225,6 +290,15 @@ func readDataPlaneClusterConfig(file string) (ClusterList, error) {
 	} else {
 		return c.ClusterList, nil
 	}
+}
+
+func (c *DataplaneClusterConfig) FindClusterNameByClusterId(clusterId string) string {
+	for _, cluster := range c.ClusterConfig.clusterList {
+		if cluster.ClusterId == clusterId {
+			return cluster.Name
+		}
+	}
+	return ""
 }
 
 // Read the read-only users in the file into the read-only user list config

@@ -1,11 +1,13 @@
 package integration
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -17,7 +19,7 @@ import (
 func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	// Start with no cluster config and manual scaling.
-	configHook := func(clusterConfig *config.OSDClusterConfig) {
+	configHook := func(clusterConfig *config.DataplaneClusterConfig) {
 		clusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 	}
 
@@ -65,7 +67,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// pre-create clusters
 	//*********************************************************************
 	clusterDns := "apps.example.com"
-	h.Env.Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+	h.Env.Config.DataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{
 			ClusterId:          "test03",
 			KafkaInstanceLimit: 1,
@@ -101,7 +103,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//*********************************************************************
 	//data plane cluster config - with new clusters
 	//*********************************************************************
-	h.Env.Config.OSDClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+	h.Env.Config.DataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},

@@ -2,14 +2,15 @@ package integration
 
 import (
 	"context"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"net/http"
-	"testing"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
@@ -249,7 +250,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -288,7 +289,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	}
 
 	// enable dynamic autoscaling
-	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -334,7 +335,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	}
 
 	// enable auto scaling
-	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -453,7 +454,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env.Config.OSDClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster

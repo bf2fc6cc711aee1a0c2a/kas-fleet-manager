@@ -1,15 +1,17 @@
 package config
 
 import (
-	"gopkg.in/yaml.v2"
 	"reflect"
 	"testing"
+
+	"gopkg.in/yaml.v2"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/onsi/gomega"
 )
 
-func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
+func TestDataplaneClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 	}
@@ -37,7 +39,7 @@ func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			conf := OSDClusterConfig{
+			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
 			got := conf.IsDataPlaneAutoScalingEnabled()
@@ -46,7 +48,7 @@ func TestOSDClusterConfig_IsDataPlaneAutoScalingEnabled(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
+func TestDataplaneClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 	}
@@ -74,7 +76,7 @@ func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			conf := OSDClusterConfig{
+			conf := DataplaneClusterConfig{
 				DataPlaneClusterScalingType: tt.fields.DataPlaneClusterScalingType,
 			}
 			got := conf.IsDataPlaneManualScalingEnabled()
@@ -83,7 +85,7 @@ func TestOSDClusterConfig_IsDataPlaneManualScalingEnabled(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
+func TestDataplaneClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	type fields struct {
 		DataPlaneClusterScalingType string
 		ClusterList                 ClusterList
@@ -138,7 +140,7 @@ func TestOSDClusterConfig_IsWithinClusterLimit(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
+func TestDataplaneClusterConfig_IsClusterSchedulable(t *testing.T) {
 	type fields struct {
 		ClusterList ClusterList
 	}
@@ -186,7 +188,7 @@ func TestOSDClusterConfig_IsClusterSchedulable(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_MissingClusters(t *testing.T) {
+func TestDataplaneClusterConfig_MissingClusters(t *testing.T) {
 	type fields struct {
 		ClusterList ClusterList
 	}
@@ -245,7 +247,7 @@ func TestOSDClusterConfig_MissingClusters(t *testing.T) {
 	}
 }
 
-func TestOSDClusterConfig_ExcessClusters(t *testing.T) {
+func TestDataplaneClusterConfig_ExcessClusters(t *testing.T) {
 	type fields struct {
 		ClusterList ClusterList
 	}
@@ -404,6 +406,115 @@ provider_type: "invalid"
 			if !reflect.DeepEqual(v, tt.output) {
 				t.Errorf("want %v but got %v", tt.output, v)
 			}
+		})
+	}
+}
+
+func TestFindClusterNameByClusterId(t *testing.T) {
+	type fields struct {
+		ClusterList ClusterList
+	}
+	type args struct {
+		clusterId string
+	}
+
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{
+			name: "return empty when clusterId does not exist",
+			fields: fields{
+				ClusterList{
+					ManualCluster{
+						ClusterId: "12",
+						Name:      "sturgis",
+					},
+				},
+			},
+			args: args{
+				clusterId: "123",
+			},
+			want: "",
+		},
+		{
+			name: "return correct cluster name when clusterId does exist",
+			fields: fields{
+				ClusterList{
+					ManualCluster{
+						ClusterId: "123",
+						Name:      "sturgis",
+					},
+				},
+			},
+			args: args{
+				clusterId: "123",
+			},
+			want: "sturgis",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			clusterConfig := NewClusterConfig(tt.fields.ClusterList)
+			dataplaneClusterConfig := &DataplaneClusterConfig{
+				ClusterConfig: clusterConfig,
+			}
+			got := dataplaneClusterConfig.FindClusterNameByClusterId(tt.args.clusterId)
+			gomega.Expect(got).To(gomega.Equal(tt.want))
+		})
+	}
+}
+
+func TestValidateClusterIsInKubeContext(t *testing.T) {
+	type args struct {
+		rawKubeconfig clientcmdapi.Config
+		cluster       ManualCluster
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "return error if cluster is not in kubeconfig context ",
+			args: args{
+				rawKubeconfig: clientcmdapi.Config{
+					Contexts: map[string]*clientcmdapi.Context{},
+				},
+				cluster: ManualCluster{
+					Name:      "glen",
+					ClusterId: "123",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "return nil if cluster is in kubeconfig context ",
+			args: args{
+				rawKubeconfig: clientcmdapi.Config{
+					Contexts: map[string]*clientcmdapi.Context{
+						"glen": {},
+					},
+				},
+				cluster: ManualCluster{
+					Name:      "glen",
+					ClusterId: "123",
+				},
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gomega.RegisterTestingT(t)
+			err := validateClusterIsInKubeconfigContext(tt.args.rawKubeconfig, tt.args.cluster)
+			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
 }
