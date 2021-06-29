@@ -1,16 +1,16 @@
 package services
 
 import (
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestAgentOperatorAddon_Provision(t *testing.T) {
@@ -33,9 +33,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
-					return &clusters.AddonProviderMock{
-						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return false, nil
 						},
 					}, nil
@@ -53,9 +53,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return nil, errors.GeneralError("error")
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
-					return &clusters.AddonProviderMock{
-						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return false, errors.GeneralError("error")
 						},
 					}, nil
@@ -155,9 +155,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
-					return &clusters.AddonProviderMock{
-						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return true, nil
 						},
 					}, nil
@@ -173,9 +173,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetAddonProviderFunc: func(providerType api.ClusterProviderType) (clusters.AddonProvider, error) {
-					return &clusters.AddonProviderMock{
-						InstallAddonWithParamsFunc: func(clusterSpec *types.ClusterSpec, addonId string, addonParams []ocm.AddonParameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return false, errors.GeneralError("test error")
 						},
 					}, nil

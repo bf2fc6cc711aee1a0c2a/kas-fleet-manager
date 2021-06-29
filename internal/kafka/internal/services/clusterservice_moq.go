@@ -5,7 +5,6 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
@@ -66,11 +65,14 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			GetExternalIDFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 // 				panic("mock out the GetExternalID method")
 // 			},
-// 			InstallAddonFunc: func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
-// 				panic("mock out the InstallAddon method")
+// 			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the InstallClusterLogging method")
 // 			},
-// 			InstallAddonWithParamsFunc: func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError) {
-// 				panic("mock out the InstallAddonWithParams method")
+// 			InstallKasFleetshardFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the InstallKasFleetshard method")
+// 			},
+// 			InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+// 				panic("mock out the InstallStrimzi method")
 // 			},
 // 			ListAllClusterIdsFunc: func() ([]api.Cluster, *apiErrors.ServiceError) {
 // 				panic("mock out the ListAllClusterIds method")
@@ -154,11 +156,14 @@ type ClusterServiceMock struct {
 	// GetExternalIDFunc mocks the GetExternalID method.
 	GetExternalIDFunc func(clusterID string) (string, *apiErrors.ServiceError)
 
-	// InstallAddonFunc mocks the InstallAddon method.
-	InstallAddonFunc func(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError)
+	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
+	InstallClusterLoggingFunc func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
 
-	// InstallAddonWithParamsFunc mocks the InstallAddonWithParams method.
-	InstallAddonWithParamsFunc func(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError)
+	// InstallKasFleetshardFunc mocks the InstallKasFleetshard method.
+	InstallKasFleetshardFunc func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
+
+	// InstallStrimziFunc mocks the InstallStrimzi method.
+	InstallStrimziFunc func(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 
 	// ListAllClusterIdsFunc mocks the ListAllClusterIds method.
 	ListAllClusterIdsFunc func() ([]api.Cluster, *apiErrors.ServiceError)
@@ -271,21 +276,24 @@ type ClusterServiceMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
-		// InstallAddon holds details about calls to the InstallAddon method.
-		InstallAddon []struct {
+		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
+		InstallClusterLogging []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
-			// AddonID is the addonID argument value.
-			AddonID string
+			// Params is the params argument value.
+			Params []types.Parameter
 		}
-		// InstallAddonWithParams holds details about calls to the InstallAddonWithParams method.
-		InstallAddonWithParams []struct {
+		// InstallKasFleetshard holds details about calls to the InstallKasFleetshard method.
+		InstallKasFleetshard []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
-			// AddonID is the addonID argument value.
-			AddonID string
-			// AddonParams is the addonParams argument value.
-			AddonParams []ocm.AddonParameter
+			// Params is the params argument value.
+			Params []types.Parameter
+		}
+		// InstallStrimzi holds details about calls to the InstallStrimzi method.
+		InstallStrimzi []struct {
+			// Cluster is the cluster argument value.
+			Cluster *api.Cluster
 		}
 		// ListAllClusterIds holds details about calls to the ListAllClusterIds method.
 		ListAllClusterIds []struct {
@@ -365,8 +373,9 @@ type ClusterServiceMock struct {
 	lockGetClusterDNS                    sync.RWMutex
 	lockGetComputeNodes                  sync.RWMutex
 	lockGetExternalID                    sync.RWMutex
-	lockInstallAddon                     sync.RWMutex
-	lockInstallAddonWithParams           sync.RWMutex
+	lockInstallClusterLogging            sync.RWMutex
+	lockInstallKasFleetshard             sync.RWMutex
+	lockInstallStrimzi                   sync.RWMutex
 	lockListAllClusterIds                sync.RWMutex
 	lockListByStatus                     sync.RWMutex
 	lockListGroupByProviderAndRegion     sync.RWMutex
@@ -852,77 +861,104 @@ func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 	return calls
 }
 
-// InstallAddon calls InstallAddonFunc.
-func (mock *ClusterServiceMock) InstallAddon(cluster *api.Cluster, addonID string) (bool, *apiErrors.ServiceError) {
-	if mock.InstallAddonFunc == nil {
-		panic("ClusterServiceMock.InstallAddonFunc: method is nil but ClusterService.InstallAddon was just called")
+// InstallClusterLogging calls InstallClusterLoggingFunc.
+func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+	if mock.InstallClusterLoggingFunc == nil {
+		panic("ClusterServiceMock.InstallClusterLoggingFunc: method is nil but ClusterService.InstallClusterLogging was just called")
 	}
 	callInfo := struct {
 		Cluster *api.Cluster
-		AddonID string
+		Params  []types.Parameter
 	}{
 		Cluster: cluster,
-		AddonID: addonID,
+		Params:  params,
 	}
-	mock.lockInstallAddon.Lock()
-	mock.calls.InstallAddon = append(mock.calls.InstallAddon, callInfo)
-	mock.lockInstallAddon.Unlock()
-	return mock.InstallAddonFunc(cluster, addonID)
+	mock.lockInstallClusterLogging.Lock()
+	mock.calls.InstallClusterLogging = append(mock.calls.InstallClusterLogging, callInfo)
+	mock.lockInstallClusterLogging.Unlock()
+	return mock.InstallClusterLoggingFunc(cluster, params)
 }
 
-// InstallAddonCalls gets all the calls that were made to InstallAddon.
+// InstallClusterLoggingCalls gets all the calls that were made to InstallClusterLogging.
 // Check the length with:
-//     len(mockedClusterService.InstallAddonCalls())
-func (mock *ClusterServiceMock) InstallAddonCalls() []struct {
+//     len(mockedClusterService.InstallClusterLoggingCalls())
+func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
 	Cluster *api.Cluster
-	AddonID string
+	Params  []types.Parameter
 } {
 	var calls []struct {
 		Cluster *api.Cluster
-		AddonID string
+		Params  []types.Parameter
 	}
-	mock.lockInstallAddon.RLock()
-	calls = mock.calls.InstallAddon
-	mock.lockInstallAddon.RUnlock()
+	mock.lockInstallClusterLogging.RLock()
+	calls = mock.calls.InstallClusterLogging
+	mock.lockInstallClusterLogging.RUnlock()
 	return calls
 }
 
-// InstallAddonWithParams calls InstallAddonWithParamsFunc.
-func (mock *ClusterServiceMock) InstallAddonWithParams(cluster *api.Cluster, addonID string, addonParams []ocm.AddonParameter) (bool, *apiErrors.ServiceError) {
-	if mock.InstallAddonWithParamsFunc == nil {
-		panic("ClusterServiceMock.InstallAddonWithParamsFunc: method is nil but ClusterService.InstallAddonWithParams was just called")
+// InstallKasFleetshard calls InstallKasFleetshardFunc.
+func (mock *ClusterServiceMock) InstallKasFleetshard(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+	if mock.InstallKasFleetshardFunc == nil {
+		panic("ClusterServiceMock.InstallKasFleetshardFunc: method is nil but ClusterService.InstallKasFleetshard was just called")
 	}
 	callInfo := struct {
-		Cluster     *api.Cluster
-		AddonID     string
-		AddonParams []ocm.AddonParameter
+		Cluster *api.Cluster
+		Params  []types.Parameter
 	}{
-		Cluster:     cluster,
-		AddonID:     addonID,
-		AddonParams: addonParams,
+		Cluster: cluster,
+		Params:  params,
 	}
-	mock.lockInstallAddonWithParams.Lock()
-	mock.calls.InstallAddonWithParams = append(mock.calls.InstallAddonWithParams, callInfo)
-	mock.lockInstallAddonWithParams.Unlock()
-	return mock.InstallAddonWithParamsFunc(cluster, addonID, addonParams)
+	mock.lockInstallKasFleetshard.Lock()
+	mock.calls.InstallKasFleetshard = append(mock.calls.InstallKasFleetshard, callInfo)
+	mock.lockInstallKasFleetshard.Unlock()
+	return mock.InstallKasFleetshardFunc(cluster, params)
 }
 
-// InstallAddonWithParamsCalls gets all the calls that were made to InstallAddonWithParams.
+// InstallKasFleetshardCalls gets all the calls that were made to InstallKasFleetshard.
 // Check the length with:
-//     len(mockedClusterService.InstallAddonWithParamsCalls())
-func (mock *ClusterServiceMock) InstallAddonWithParamsCalls() []struct {
-	Cluster     *api.Cluster
-	AddonID     string
-	AddonParams []ocm.AddonParameter
+//     len(mockedClusterService.InstallKasFleetshardCalls())
+func (mock *ClusterServiceMock) InstallKasFleetshardCalls() []struct {
+	Cluster *api.Cluster
+	Params  []types.Parameter
 } {
 	var calls []struct {
-		Cluster     *api.Cluster
-		AddonID     string
-		AddonParams []ocm.AddonParameter
+		Cluster *api.Cluster
+		Params  []types.Parameter
 	}
-	mock.lockInstallAddonWithParams.RLock()
-	calls = mock.calls.InstallAddonWithParams
-	mock.lockInstallAddonWithParams.RUnlock()
+	mock.lockInstallKasFleetshard.RLock()
+	calls = mock.calls.InstallKasFleetshard
+	mock.lockInstallKasFleetshard.RUnlock()
+	return calls
+}
+
+// InstallStrimzi calls InstallStrimziFunc.
+func (mock *ClusterServiceMock) InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
+	if mock.InstallStrimziFunc == nil {
+		panic("ClusterServiceMock.InstallStrimziFunc: method is nil but ClusterService.InstallStrimzi was just called")
+	}
+	callInfo := struct {
+		Cluster *api.Cluster
+	}{
+		Cluster: cluster,
+	}
+	mock.lockInstallStrimzi.Lock()
+	mock.calls.InstallStrimzi = append(mock.calls.InstallStrimzi, callInfo)
+	mock.lockInstallStrimzi.Unlock()
+	return mock.InstallStrimziFunc(cluster)
+}
+
+// InstallStrimziCalls gets all the calls that were made to InstallStrimzi.
+// Check the length with:
+//     len(mockedClusterService.InstallStrimziCalls())
+func (mock *ClusterServiceMock) InstallStrimziCalls() []struct {
+	Cluster *api.Cluster
+} {
+	var calls []struct {
+		Cluster *api.Cluster
+	}
+	mock.lockInstallStrimzi.RLock()
+	calls = mock.calls.InstallStrimzi
+	mock.lockInstallStrimzi.RUnlock()
 	return calls
 }
 

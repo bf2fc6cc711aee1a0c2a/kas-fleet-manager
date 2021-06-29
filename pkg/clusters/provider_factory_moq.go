@@ -18,9 +18,6 @@ var _ ProviderFactory = &ProviderFactoryMock{}
 //
 // 		// make and configure a mocked ProviderFactory
 // 		mockedProviderFactory := &ProviderFactoryMock{
-// 			GetAddonProviderFunc: func(providerType api.ClusterProviderType) (AddonProvider, error) {
-// 				panic("mock out the GetAddonProvider method")
-// 			},
 // 			GetProviderFunc: func(providerType api.ClusterProviderType) (Provider, error) {
 // 				panic("mock out the GetProvider method")
 // 			},
@@ -31,58 +28,18 @@ var _ ProviderFactory = &ProviderFactoryMock{}
 //
 // 	}
 type ProviderFactoryMock struct {
-	// GetAddonProviderFunc mocks the GetAddonProvider method.
-	GetAddonProviderFunc func(providerType api.ClusterProviderType) (AddonProvider, error)
-
 	// GetProviderFunc mocks the GetProvider method.
 	GetProviderFunc func(providerType api.ClusterProviderType) (Provider, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
-		// GetAddonProvider holds details about calls to the GetAddonProvider method.
-		GetAddonProvider []struct {
-			// ProviderType is the providerType argument value.
-			ProviderType api.ClusterProviderType
-		}
 		// GetProvider holds details about calls to the GetProvider method.
 		GetProvider []struct {
 			// ProviderType is the providerType argument value.
 			ProviderType api.ClusterProviderType
 		}
 	}
-	lockGetAddonProvider sync.RWMutex
-	lockGetProvider      sync.RWMutex
-}
-
-// GetAddonProvider calls GetAddonProviderFunc.
-func (mock *ProviderFactoryMock) GetAddonProvider(providerType api.ClusterProviderType) (AddonProvider, error) {
-	if mock.GetAddonProviderFunc == nil {
-		panic("ProviderFactoryMock.GetAddonProviderFunc: method is nil but ProviderFactory.GetAddonProvider was just called")
-	}
-	callInfo := struct {
-		ProviderType api.ClusterProviderType
-	}{
-		ProviderType: providerType,
-	}
-	mock.lockGetAddonProvider.Lock()
-	mock.calls.GetAddonProvider = append(mock.calls.GetAddonProvider, callInfo)
-	mock.lockGetAddonProvider.Unlock()
-	return mock.GetAddonProviderFunc(providerType)
-}
-
-// GetAddonProviderCalls gets all the calls that were made to GetAddonProvider.
-// Check the length with:
-//     len(mockedProviderFactory.GetAddonProviderCalls())
-func (mock *ProviderFactoryMock) GetAddonProviderCalls() []struct {
-	ProviderType api.ClusterProviderType
-} {
-	var calls []struct {
-		ProviderType api.ClusterProviderType
-	}
-	mock.lockGetAddonProvider.RLock()
-	calls = mock.calls.GetAddonProvider
-	mock.lockGetAddonProvider.RUnlock()
-	return calls
+	lockGetProvider sync.RWMutex
 }
 
 // GetProvider calls GetProviderFunc.

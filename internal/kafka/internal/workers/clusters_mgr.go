@@ -2,16 +2,16 @@ package workers
 
 import (
 	"fmt"
+	"strings"
+	"sync"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
-	"strings"
-	"sync"
 
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	authv1 "github.com/openshift/api/authorization/v1"
@@ -70,7 +70,7 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 
 type Worker = workers.Worker
 
-var clusterLoggingOperatorAddonParams = []ocm.AddonParameter{
+var clusterLoggingOperatorAddonParams = []types.Parameter{
 	{
 		Id:    "use-cloudwatch",
 		Value: "true",
@@ -573,23 +573,21 @@ func (c *ClusterManager) reconcileAddonOperator(provisionedCluster api.Cluster) 
 
 // reconcileStrimziOperator installs the Strimzi operator on a provisioned clusters
 func (c *ClusterManager) reconcileStrimziOperator(provisionedCluster api.Cluster) (bool, error) {
-	strimziOperatorAddonID := c.OCMConfig.StrimziOperatorAddonID
-	ready, err := c.ClusterService.InstallAddon(&provisionedCluster, strimziOperatorAddonID)
+	ready, err := c.ClusterService.InstallStrimzi(&provisionedCluster)
 	if err != nil {
 		return false, err
 	}
-	glog.V(5).Infof("ready status of %s addon on cluster %s is %t", strimziOperatorAddonID, provisionedCluster.ClusterID, ready)
+	glog.V(5).Infof("ready status of strimzi installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 
 // reconcileClusterLoggingOperator installs the cluster logging operator on provisioned clusters
 func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.Cluster) (bool, error) {
-	clusterLoggingOperatorAddonID := c.OCMConfig.ClusterLoggingOperatorAddonID
-	ready, err := c.ClusterService.InstallAddonWithParams(&provisionedCluster, clusterLoggingOperatorAddonID, clusterLoggingOperatorAddonParams)
+	ready, err := c.ClusterService.InstallClusterLogging(&provisionedCluster, clusterLoggingOperatorAddonParams)
 	if err != nil {
 		return false, err
 	}
-	glog.V(5).Infof("ready status of %s addon on cluster %s is %t", clusterLoggingOperatorAddonID, provisionedCluster.ClusterID, ready)
+	glog.V(5).Infof("ready status of cluster logging installation on cluster %s is %t", provisionedCluster.ClusterID, ready)
 	return ready, nil
 }
 
