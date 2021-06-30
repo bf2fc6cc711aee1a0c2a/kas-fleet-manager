@@ -46,7 +46,6 @@ OCM_MOCK_MODE ?= emulate-server
 JWKS_URL ?= "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/certs"
 MAS_SSO_BASE_URL ?="https://identity.api.stage.openshift.com"
 MAS_SSO_REALM ?="rhoas"
-ENABLE_CONNECTORS ?= false
 VAULT_KIND ?= tmp
 
 GO := go
@@ -533,7 +532,6 @@ deploy: deploy/db
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		-p ALLOW_ANY_REGISTERED_USERS="$(ALLOW_ANY_REGISTERED_USERS)" \
 		-p VAULT_KIND=$(VAULT_KIND) \
-		-p ENABLE_CONNECTORS=$(ENABLE_CONNECTORS) \
 		-p SERVICE_PUBLIC_HOST_URL="$(SERVICE_PUBLIC_HOST_URL)" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
