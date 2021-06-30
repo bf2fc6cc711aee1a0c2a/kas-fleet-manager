@@ -3,12 +3,12 @@ package itest
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers/connector"
 	"net/url"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
@@ -165,7 +165,7 @@ func TestMain(m *testing.M) {
 			c.Enabled = true
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 		},
-		connector.ConfigProviders(),
+		connector.ConfigProviders(false),
 	)
 	defer teardown()
 

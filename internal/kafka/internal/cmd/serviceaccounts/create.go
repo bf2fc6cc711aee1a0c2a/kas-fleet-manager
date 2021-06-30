@@ -2,6 +2,7 @@ package serviceaccounts
 
 import (
 	"encoding/json"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -37,7 +38,8 @@ func runCreate(env *environments.Env, cmd *cobra.Command, args []string) {
 	orgId := flags.MustGetDefinedString(FlagOrgID, cmd.Flags())
 
 	// setup required services
-	keycloakService := services.NewKeycloakService(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
+	var keycloak = KeycloakConfig(env)
+	keycloakService := services.NewKeycloakService(keycloak, keycloak.KafkaRealm)
 
 	sa := &api.ServiceAccountRequest{
 		Name:        name,
@@ -60,4 +62,9 @@ func runCreate(env *environments.Env, cmd *cobra.Command, args []string) {
 		glog.Fatalf("Failed to format service account request: %s", err.Error())
 	}
 	glog.V(10).Infof("%s", output)
+}
+
+func KeycloakConfig(env *environments.Env) (c *config.KeycloakConfig) {
+	env.MustResolve(&c)
+	return
 }

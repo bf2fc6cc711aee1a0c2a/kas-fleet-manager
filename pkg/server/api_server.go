@@ -3,18 +3,17 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/goava/di"
 
-	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 
 	_ "github.com/auth0/go-jwt-middleware"
@@ -25,7 +24,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
@@ -43,6 +41,7 @@ type ServerOptions struct {
 	KeycloakConfig *config.KeycloakConfig
 	SentryConfig   *sentry.Config
 	RouteLoaders   []provider.RouteLoader
+	Env            *environments.Env
 }
 
 func NewAPIServer(options ServerOptions) *ApiServer {
@@ -84,29 +83,11 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
 	if options.ServerConfig.EnableJWT {
-		authnLogger, err := sdk.NewGlogLoggerBuilder().
-			InfoV(glog.Level(1)).
-			DebugV(glog.Level(5)).
-			Build()
-		check(err, "Unable to create authentication logger", options.SentryConfig.Timeout)
+		var builder *authentication.HandlerBuilder
+		options.Env.MustResolve(&builder)
 
-		mainHandler, err = authentication.NewHandler().
-			Logger(authnLogger).
-			KeysURL(options.ServerConfig.JwksURL).                      //ocm JWK JSON web token signing certificates URL
-			KeysFile(options.ServerConfig.JwksFile).                    //ocm JWK backup JSON web token signing certificates
-			KeysURL(options.KeycloakConfig.KafkaRealm.JwksEndpointURI). // mas-sso JWK Cert URL
-			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
-			Service(errors.ERROR_CODE_PREFIX).
-			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix)).
-			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
-			// TODO remove this as it is temporary code to ensure api backward compatibility
-			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix)).
-			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix, routes.Version)).
-			// END TODO
-			Next(mainHandler).
-			Build()
+		var err error
+		mainHandler, err = builder.Next(mainHandler).Build()
 		check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
 	}
 

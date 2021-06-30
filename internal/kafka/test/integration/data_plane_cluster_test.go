@@ -250,7 +250,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -289,7 +289,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	}
 
 	// enable dynamic autoscaling
-	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -305,6 +305,11 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterWaitingForKasFleetShardOperator))
+}
+
+func DataplaneClusterConfig(h *coreTest.Helper) (dataplaneClusterConfig *config.DataplaneClusterConfig) {
+	h.Env.MustResolve(&dataplaneClusterConfig)
+	return
 }
 
 func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
@@ -335,7 +340,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	}
 
 	// enable auto scaling
-	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -348,7 +353,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	expectedNodesAfterScaleUp := initialComputeNodes + 3
 
-	kafkaCapacityConfig := h.Env.Config.Kafka.KafkaCapacity
+	kafkaCapacityConfig := KafkaConfig(h).KafkaCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
 	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
@@ -454,7 +459,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	h.Env.Config.DataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster
@@ -477,7 +482,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// Simulate there's no capacity and we've already reached ceiling to
 	// set status as full and force the cluster mgr reconciler to create a new
 	// OSD cluster
-	kafkaCapacityConfig := h.Env.Config.Kafka.KafkaCapacity
+	kafkaCapacityConfig := KafkaConfig(h).KafkaCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
 	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(kafkaCapacityConfig.TotalMaxConnections) * 30}[0]
@@ -556,6 +561,11 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	err = common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, newCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
+}
+
+func KafkaConfig(h *coreTest.Helper) (c *config.KafkaConfig) {
+	h.Env.MustResolve(&c)
+	return
 }
 
 func newAuthContextWithNotAllowedRoleForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {

@@ -1,6 +1,8 @@
-package environments
+package providers
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/migrate"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/cmd/kas-fleet-manager/serve"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -8,44 +10,43 @@ import (
 	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 )
 
-func ConfigProviders() di.Option {
+func CoreConfigProviders() di.Option {
 	return di.Options(
-		di.Provide(func(env *Env) config.EnvName {
+		di.Provide(func(env *environments.Env) config.EnvName {
 			return config.EnvName(env.Name)
 		}),
 
-		// Add the env types
-		di.Provide(newDevelopmentEnvLoader, di.Tags{"env": DevelopmentEnv}),
-		di.Provide(newProductionEnvLoader, di.Tags{"env": ProductionEnv}),
-		di.Provide(newStageEnvLoader, di.Tags{"env": StageEnv}),
-		di.Provide(newIntegrationEnvLoader, di.Tags{"env": IntegrationEnv}),
-		di.Provide(newTestingEnvLoader, di.Tags{"env": TestingEnv}),
-
 		// Add config types
-		di.Provide(config.NewApplicationConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewMetricsConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewHealthCheckConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewDatabaseConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewServerConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewOCMConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(func(c *config.ApplicationConfig) *config.DataplaneClusterConfig { return c.DataplaneClusterConfig }),
-		di.Provide(func(c *config.ApplicationConfig) *config.KafkaConfig { return c.Kafka }),
-		di.Provide(func(c *config.ApplicationConfig) *config.KeycloakConfig { return c.Keycloak }),
-		di.Provide(func(c *config.ApplicationConfig) *config.AccessControlListConfig { return c.AccessControlList }),
-		di.Provide(func(c *config.ApplicationConfig) *config.AWSConfig { return c.AWS }),
-		di.Provide(func(c *config.ApplicationConfig) *config.ObservabilityConfiguration {
-			return c.ObservabilityConfiguration
-		}),
+		di.Provide(config.NewKeycloakConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewAccessControlListConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewMetricsConfig, di.As(new(provider.ConfigModule))),
+
+		// Add common CLI sub commands
+		di.Provide(serve.NewServeCommand),
+		di.Provide(migrate.NewMigrateCommand),
+
+		// Add other core config providers..
+		vault.ConfigProviders(),
+		sentry.ConfigProviders(),
+		signalbus.ConfigProviders(),
+
 		di.Provide(provider.Func(ServiceProviders)),
 	)
 }
@@ -59,7 +60,6 @@ func ServiceProviders() di.Option {
 		di.Provide(ocm.NewOCMClient),
 		di.Provide(customOcm.NewClient),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
-		di.Provide(services.NewConfigService),
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
