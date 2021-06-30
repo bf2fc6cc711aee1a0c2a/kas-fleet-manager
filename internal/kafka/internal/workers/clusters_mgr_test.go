@@ -565,6 +565,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 						DataplaneClusterConfig:     &clusterCreateConfig,
 						Kafka:                      &config.KafkaConfig{},
 					}),
+					OCMConfig: &config.OCMConfig{},
 				},
 			}
 

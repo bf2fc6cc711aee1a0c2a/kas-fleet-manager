@@ -44,6 +44,8 @@ const (
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
 	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
+	strimziQEAddonNamespace         = "redhat-managed-kafka-operator-qe"
+	kasFleetshardQEAddonNamespace   = "redhat-kas-fleetshard-operator-qe"
 	openIDIdentityProviderName      = "Kafka_SRE"
 	mkReadOnlyGroupName             = "mk-readonly-access"
 	mkSREGroupName                  = "kafka-sre"
@@ -730,11 +732,19 @@ func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 		c.buildKafkaSREGroupResource(),
 		c.buildKafkaSreClusterRoleBindingResource(),
 	}
+	strimiNS := strimziAddonNamespace
+	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {
+		strimiNS = strimziQEAddonNamespace
+	}
+	kasFleetshardNS := kasFleetshardAddonNamespace
+	if c.OCMConfig.KasFleetshardAddonID == "kas-fleetshard-operator-qe" {
+		kasFleetshardNS = kasFleetshardQEAddonNamespace
+	}
 
-	if s := c.buildImagePullSecret(strimziAddonNamespace); s != nil {
+	if s := c.buildImagePullSecret(strimiNS); s != nil {
 		r = append(r, s)
 	}
-	if s := c.buildImagePullSecret(kasFleetshardAddonNamespace); s != nil {
+	if s := c.buildImagePullSecret(kasFleetshardNS); s != nil {
 		r = append(r, s)
 	}
 	return types.ResourceSet{
