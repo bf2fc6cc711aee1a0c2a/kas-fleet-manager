@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
@@ -27,7 +28,9 @@ func main() {
 		panic(err)
 	}
 
-	kcClient := keycloak.NewClient(env.Config.Keycloak, env.Config.Keycloak.KafkaRealm)
+	var keycloakConfig *config.KeycloakConfig
+	env.MustResolve(&keycloakConfig)
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
 	accessToken, _ := kcClient.GetToken()
 
 	last := 0

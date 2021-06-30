@@ -100,15 +100,22 @@ func addConnectorTables(migrationId string) *gormigrate.Migration {
 	}
 
 	return db.CreateMigrationFromActions(migrationId,
-		db.CreateTableAction(&LeaderLease{}),
 		db.FuncAction(func(tx *gorm.DB) error {
+			// We don't want to delete the leader lease table on rollback because it's shared with the kas-fleet-manager
+			// so we just create it here if it does not exist yet.. but we don't drop it on rollback.
+			err := tx.Migrator().AutoMigrate(&LeaderLease{})
+			if err != nil {
+				return err
+			}
 			now := time.Now().Add(-time.Minute) //set to a expired time
 			return tx.Create(&api.LeaderLease{
 				Expires:   &now,
 				LeaseType: "connector",
 			}).Error
 		}, func(tx *gorm.DB) error {
-			return tx.Where("lease_type = ?", "connector").Delete(&api.LeaderLease{}).Error
+			// The leader lease table may have already been dropped, by the kafka migration rollback, ignore error
+			_ = tx.Where("lease_type = ?", "connector").Delete(&api.LeaderLease{})
+			return nil
 		}),
 		db.CreateTableAction(&ConnectorStatus{}),
 		db.CreateTableAction(&Connector{}),

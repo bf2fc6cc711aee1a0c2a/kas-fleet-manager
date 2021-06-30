@@ -38,6 +38,8 @@ type options struct {
 	DataPlaneCluster      services.DataPlaneClusterService
 	DataPlaneKafkaService services.DataPlaneKafkaService
 	DB                    *db.ConnectionFactory
+
+	AccessControlListMiddleware *acl.AccessControlListMiddleware
 }
 
 func NewRouteLoader(s options) provider.RouteLoader {
@@ -73,7 +75,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.ConfigService)
 
-	authorizeMiddleware := acl.NewAccessControlListMiddleware(s.ConfigService).Authorize
+	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.OCMConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.OCM, errors.ErrorTermsNotAccepted)

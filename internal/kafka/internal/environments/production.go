@@ -1,7 +1,9 @@
 package environments
 
-func newProductionEnvLoader() EnvLoader {
-	return SimpleEnvLoader{
+import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+
+func NewProductionEnvLoader() environments.EnvLoader {
+	return environments.SimpleEnvLoader{
 		"v":                                 "1",
 		"ocm-debug":                         "false",
 		"enable-ocm-mock":                   "false",

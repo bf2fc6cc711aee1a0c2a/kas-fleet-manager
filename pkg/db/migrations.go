@@ -24,6 +24,7 @@ func NewMigration(dbConfig *config.DatabaseConfig, gormOptions *gormigrate.Optio
 		return nil, nil, err
 	}
 	dbFactory, cleanup := NewConnectionFactory(dbConfig)
+
 	return &Migration{
 		DbFactory:   dbFactory,
 		GormOptions: gormOptions,

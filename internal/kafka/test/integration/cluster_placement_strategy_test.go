@@ -67,7 +67,10 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	// pre-create clusters
 	//*********************************************************************
 	clusterDns := "apps.example.com"
-	h.Env.Config.DataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+
+	dataplaneClusterConfig := DataplaneClusterConfig(h)
+
+	dataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{
 			ClusterId:          "test03",
 			KafkaInstanceLimit: 1,
@@ -103,7 +106,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	//*********************************************************************
 	//data plane cluster config - with new clusters
 	//*********************************************************************
-	h.Env.Config.DataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
+	dataplaneClusterConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{
 		config.ManualCluster{ClusterId: "test03", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 		config.ManualCluster{ClusterId: "test01", KafkaInstanceLimit: 0, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},

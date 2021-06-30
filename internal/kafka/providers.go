@@ -7,18 +7,49 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/serviceaccounts"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/environments"
+	handlers2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/goava/di"
 )
 
+func EnvConfigProviders() di.Option {
+	return di.Options(
+		di.Provide(environments.NewDevelopmentEnvLoader, di.Tags{"env": constants.DevelopmentEnv}),
+		di.Provide(environments.NewProductionEnvLoader, di.Tags{"env": constants.ProductionEnv}),
+		di.Provide(environments.NewStageEnvLoader, di.Tags{"env": constants.StageEnv}),
+		di.Provide(environments.NewIntegrationEnvLoader, di.Tags{"env": constants.IntegrationEnv}),
+		di.Provide(environments.NewTestingEnvLoader, di.Tags{"env": constants.TestingEnv}),
+	)
+}
+
 func ConfigProviders() di.Option {
 	return di.Options(
+
+		EnvConfigProviders(),
+		providers.CoreConfigProviders(),
+		di.Provide(coreServices.NewConfigService, di.As(new(provider.ServiceValidator))),
+
+		// Configuration for the Kafka service...
+		di.Provide(config.NewAWSConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewSupportedProvidersConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewObservabilityConfigurationConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewKafkaConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewApplicationConfig),
+
+		// Additional CLI subcommands
 		di.Provide(cluster.NewClusterCommand),
 		di.Provide(kafka.NewKafkaCommand),
 		di.Provide(cloudprovider.NewCloudProviderCommand),
@@ -40,6 +71,7 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewClusterPlacementStrategy),
 		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
 		di.Provide(services.NewDataPlaneKafkaService, di.As(new(services.DataPlaneKafkaService))),
+		di.Provide(handlers2.NewAuthenticationBuilder),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),

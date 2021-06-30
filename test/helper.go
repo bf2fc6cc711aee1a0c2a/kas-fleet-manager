@@ -98,17 +98,12 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 
 	parseCommandLineFlags(env)
 
-	var dataplaneClusterConfig *config.DataplaneClusterConfig
-	var kafkaConfig *config.KafkaConfig
 	var ocmConfig *config.OCMConfig
-	var observabilityConfiguration *config.ObservabilityConfiguration
 	var serverConfig *config.ServerConfig
 	var keycloakConfig *config.KeycloakConfig
-	env.MustResolveAll(&dataplaneClusterConfig, &kafkaConfig, &ocmConfig, &observabilityConfiguration, &serverConfig, &keycloakConfig)
 
-	dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-	dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
-	kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
+	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig)
+
 	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
 	// Create a new helper
@@ -121,7 +116,6 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 	h.AuthHelper = authHelper
 
 	// Set server if provided
-	observabilityConfiguration.EnableMock = true
 	if server != nil && ocmConfig.MockMode == config.MockModeEmulateServer {
 		workers.RepeatInterval = 1 * time.Second
 		fmt.Printf("Setting OCM base URL to %s\n", server.URL)
