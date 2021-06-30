@@ -373,7 +373,6 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 	//http request's info
 	orgId := auth.GetOrgIdFromClaims(claims)
 	userId := auth.GetAccountIdFromClaims(claims)
-	owner := auth.GetUsernameFromClaims(claims)
 	if kc.kcClient.IsSameOrg(c, orgId) && (kc.kcClient.IsOwner(c, userId) || auth.GetIsOrgAdminFromClaims(claims)) {
 		credRep, err := kc.kcClient.RegenerateClientSecret(accessToken, id)
 		if err != nil { //5xx
@@ -390,7 +389,7 @@ func (kc *keycloakService) ResetServiceAccountCredentials(ctx context.Context, i
 			ID:           *c.ID,
 			ClientID:     *c.ClientID,
 			CreatedAt:    createdAt,
-			Owner:        owner,
+			Owner:        att["username"],
 			ClientSecret: value,
 			Name:         shared.SafeString(c.Name),
 			Description:  shared.SafeString(c.Description),
