@@ -15,7 +15,6 @@ import (
 )
 
 type ConnectorsConfig struct {
-	Enabled              bool                    `json:"enabled"`
 	ConnectorCatalogDirs []string                `json:"connector_types"`
 	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
 }
@@ -34,20 +33,15 @@ type ConnectorCatalogEntry struct {
 
 func NewConnectorsConfig() *ConnectorsConfig {
 	return &ConnectorsConfig{
-		Enabled:              false,
-		ConnectorCatalogDirs: []string{"config/connector-types"},
+		ConnectorCatalogDirs: []string{},
 	}
 }
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&c.Enabled, "enable-connectors", c.Enabled, "Enable connectors")
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {
-	if !c.Enabled {
-		return nil
-	}
 	typesLoaded := map[string]string{}
 	var values []ConnectorCatalogEntry
 	for _, dir := range c.ConnectorCatalogDirs {
