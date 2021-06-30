@@ -19,6 +19,11 @@ parameters:
   description: Which Kafka Service Fleet Manager environment to use for this deployment
   value: production
 
+- name: PRODUCT_TYPE
+  displayName: The product type
+  description: The product type to be associated with the current environment
+  value: "RHOSAK"
+
 - name: IMAGE_REGISTRY
   displayName: Image Registry
   required: true
@@ -719,6 +724,7 @@ objects:
             command:
             - /usr/local/bin/kas-fleet-manager
             - serve
+            - --product-type=${PRODUCT_TYPE}
             - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}

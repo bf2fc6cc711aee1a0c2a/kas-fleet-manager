@@ -29,7 +29,8 @@ type KafkaConfig struct {
 
 	DefaultKafkaVersion string               `json:"default_kafka_version"`
 	KafkaLifespan       *KafkaLifespanConfig `json:"kafka_lifespan"`
-	Quota               *KafkaQuotaConfig    `json:"kafka_qouta"`
+	Quota               *KafkaQuotaConfig    `json:"kafka_quota"`
+	ProductType         string               `json:"product_type"`
 }
 
 func NewKafkaConfig() *KafkaConfig {
@@ -56,6 +57,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
 	fs.StringVar(&c.KafkaLifespan.LongLivedKafkaConfigFile, "long-lived-kafkas-config-file", c.KafkaLifespan.LongLivedKafkaConfigFile, "The file containing the long lived kafkas")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
+	fs.StringVar(&c.ProductType, "product-type", c.ProductType, "The product type to be used when reserving an AMS resource")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'allow-list' for allow list backed implementation (default).")
 }
 

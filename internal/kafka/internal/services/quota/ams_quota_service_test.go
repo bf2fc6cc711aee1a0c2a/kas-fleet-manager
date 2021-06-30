@@ -3,6 +3,8 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -17,9 +19,10 @@ func Test_AMSCheckQuota(t *testing.T) {
 		ocmClient ocm.Client
 	}
 	type args struct {
-		kafkaID string
-		reserve bool
-		owner   string
+		kafkaID     string
+		reserve     bool
+		owner       string
+		productType string
 	}
 	tests := []struct {
 		name    string
@@ -34,6 +37,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"",
 				false,
 				"testUser",
+				"RHOSAK",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -46,11 +50,34 @@ func Test_AMSCheckQuota(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "no quota error",
+			args: args{
+				"",
+				false,
+				"testUser",
+				"BAD-PRODUCT-TYPE",
+			},
+			fields: fields{
+				ocmClient: &ocm.ClientMock{
+					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
+						if cb.ProductID() == "RHOSAK" {
+							ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
+							return ca, nil
+						}
+						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
+						return ca, nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "owner not allowed to reserve quota",
 			args: args{
 				"",
 				false,
 				"testUser",
+				"RHOSAK",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -68,6 +95,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"12231",
 				false,
 				"testUser",
+				"RHOSAK",
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -81,9 +109,17 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		cfgService := services.NewConfigService(
+			&config.ApplicationConfig{
+				Kafka: &config.KafkaConfig{
+					ProductType: tt.args.productType,
+				},
+			},
+		)
+
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
@@ -153,10 +189,18 @@ func Test_AMSReserveQuota(t *testing.T) {
 		},
 	}
 
+	cfgService := services.NewConfigService(
+		&config.ApplicationConfig{
+			Kafka: &config.KafkaConfig{
+				ProductType: "RHOSAK",
+			},
+		},
+	)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
@@ -219,9 +263,17 @@ func Test_Delete_Quota(t *testing.T) {
 		},
 	}
 
+	cfgService := services.NewConfigService(
+		&config.ApplicationConfig{
+			Kafka: &config.KafkaConfig{
+				ProductType: "RHOSAK",
+			},
+		},
+	)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {

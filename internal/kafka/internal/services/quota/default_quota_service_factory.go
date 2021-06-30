@@ -17,7 +17,7 @@ type DefaultQuotaServiceFactory struct {
 func NewDefaultQuotaServiceFactory(ocmClient ocm.Client, connectionFactory *db.ConnectionFactory,
 	configService services.ConfigService) services2.QuotaServiceFactory {
 	quoataServiceContainer := map[api.QuotaType]services2.QuotaService{
-		api.AMSQuotaType:       &amsQuotaService{ocmClient: ocmClient},
+		api.AMSQuotaType:       &amsQuotaService{ocmClient: ocmClient, kafkaConfig: configService.GetConfig().Kafka},
 		api.AllowListQuotaType: &allowListQuotaService{connectionFactory: connectionFactory, configService: configService},
 	}
 	return &DefaultQuotaServiceFactory{quoataServiceContainer: quoataServiceContainer}

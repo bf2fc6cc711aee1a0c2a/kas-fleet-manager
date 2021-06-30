@@ -55,7 +55,8 @@ This lists the feature flags and their sub-configurations to enable/disable and 
             - `max-allowed-instances` [Optional]: The default maximum Kafka instance limit a user can create (default: `1`).
 
             > See the [max allowed instances](./access-control.md#max-allowed-instances) section for more information about setting Kafka instance limits for users.
-    - If this is set to `ams`, quotas will be managed via OCM's accounts management service (AMS). No additional sub-configurations are needed to be specified.
+    - If this is set to `ams`, quotas will be managed via OCM's accounts management service (AMS).
+       - `product-type` [Required]: Sets the product type to be used to reserve quota in AMS (RHOSAK or RHOSAKTrial)
 
 ## Keycloak
 - **mas-sso-debug**: Enables Keycloak debug logging.
