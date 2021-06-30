@@ -5,7 +5,7 @@ metadata:
   name: kas-fleet-manager-service
   annotations:
     openshift.io/display-name: Kas Fleet Manager API
-    description: Kafka Services Fleet Manager API to managed Kafka and kafka connectors deployment
+    description: Kafka Services Fleet Manager API to managed Kafka
     tags: golang
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
@@ -86,11 +86,6 @@ parameters:
   displayName: Enable HTTPS
   description: Enable HTTPS rather than HTTP
   value: "true"
-
-- name: ENABLE_CONNECTORS
-  displayName: Enable Connectors API
-  description: Enable the connectors API
-  value: "false"
 
 - name: API_SERVER_BINDADDRESS
   displayName: API Server Bindaddress
@@ -611,24 +606,6 @@ objects:
           - name: ocm-managed-services-read-only-user-list
             configMap:
               name: ocm-managed-services-read-only-user-list
-          - name: ocm-managed-services-kafka-sre-user-list
-            configMap:
-              name: ocm-managed-services-kafka-sre-user-list
-          - name: connector-catalog-camel-aws
-            configMap:
-              name: connector-catalog-camel-aws
-          - name: connector-catalog-camel-misc
-            configMap:
-              name: connector-catalog-camel-misc
-          - name: connector-catalog-debezium-mongodb
-            configMap:
-              name: connector-catalog-debezium-mongodb
-          - name: connector-catalog-debezium-mysql
-            configMap:
-              name: connector-catalog-debezium-mysql
-          - name: connector-catalog-debezium-postgres
-            configMap:
-              name: connector-catalog-debezium-postgres
           - name: ocm-managed-services-kafka-capacity-config
             configMap:
               name: ocm-managed-services-kafka-capacity-config
@@ -697,16 +674,6 @@ objects:
             - name: ocm-managed-services-kafka-sre-user-list
               mountPath: /config/kafka-sre-user-list.yaml
               subPath: kafka-sre-user-list.yaml
-            - name: connector-catalog-camel-aws
-              mountPath: /config/connector-catalog/camel-aws
-            - name: connector-catalog-camel-misc
-              mountPath: /config/connector-catalog/camel-misc
-            - name: connector-catalog-debezium-mongodb
-              mountPath: /config/connector-catalog/debezium-mongodb
-            - name: connector-catalog-debezium-mysql
-              mountPath: /config/connector-catalog/debezium-mysql
-            - name: connector-catalog-debezium-postgres
-              mountPath: /config/connector-catalog/debezium-postgres
             - name: ocm-managed-services-kafka-capacity-config
               mountPath: /config/kafka-capacity-config.yaml
               subPath: kafka-capacity-config.yaml
@@ -797,12 +764,6 @@ objects:
             - --sentry-project=${SENTRY_PROJECT}
             - --sentry-timeout=${SENTRY_TIMEOUT}
             - --sentry-key-file=/secrets/service/sentry.key
-            - --enable-connectors=${ENABLE_CONNECTORS}
-            - --connector-catalog=/config/connector-catalog/camel-aws
-            - --connector-catalog=/config/connector-catalog/camel-misc
-            - --connector-catalog=/config/connector-catalog/debezium-mongodb
-            - --connector-catalog=/config/connector-catalog/debezium-mysql
-            - --connector-catalog=/config/connector-catalog/debezium-postgres
             - --enable-terms-acceptance=${ENABLE_TERMS_ACCEPTANCE}
             - --enable-deny-list=${ENABLE_DENY_LIST}
             - --enable-instance-limit-control=${ENABLE_INSTANCE_LIMIT_CONTROL}
