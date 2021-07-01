@@ -293,6 +293,7 @@ generate: moq openapi/generate
 openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 .PHONY: openapi/validate
 
@@ -300,20 +301,24 @@ openapi/validate: openapi-generator
 openapi/generate: go-bindata openapi-generator
 	rm -rf internal/kafka/internal/api/public
 	rm -rf internal/kafka/internal/api/private
+	rm -rf internal/kafka/internal/api/admin/private
 	rm -rf internal/connector/internal/api/public
 	rm -rf internal/connector/internal/api/private
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/kafka/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix ./openapi/ ./openapi
 	$(GOBINDATA) -o ./internal/connector/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix ./internal/connector/internal/api/public/api ./internal/connector/internal/api/public/api
 	$(GOFMT) -w internal/kafka/internal/api/public
 	$(GOFMT) -w internal/kafka/internal/api/private
+	$(GOFMT) -w internal/kafka/internal/api/admin/private
 	$(GOFMT) -w internal/kafka/internal/generated
 	$(GOFMT) -w internal/connector/internal/api/public
 	$(GOFMT) -w internal/connector/internal/api/private
@@ -337,7 +342,9 @@ run/docs:
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
 		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
-		{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" }, {url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"}]"\
+		{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" },\
+		{ url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
+		{ url: \"./openapi/kas-fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 
