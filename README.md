@@ -191,52 +191,6 @@ curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/
 curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
 ```
 
-### Connectors
-#### Listing Connector Types
-```
-# (optional) Adjust the curl command so it renders results a little nicer (shows response headers and formats results with jq).
-function curl { `which curl` -S -s -D /dev/stderr "$@" | jq; }
-
-# Lists all connector Types
-curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/connector-types
-```
-
-#### Creating a Connector Deployment
-
-```
-# set KAFKA_ID to the ID of a Kafka cluster to do connector operations against
-KAFKA_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq -r '.items[0].id')
-
-# create a new connector
-curl -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments?async=true -d \
-    '{
-       "kind": "Connector",
-       "metadata": {
-         "name": "example 1"
-       },
-       "deployment_location": {
-         "cloud_provider": "aws",
-         "multi_az": true,
-         "region": "us-east-1"
-       },
-       "connector_type_id": "aws-sqs-source-v1alpha1",
-       "connector_spec": {
-           "queueNameOrArn": "test",
-           "accessKey": "test",
-           "secretKey": "test",
-           "region": "east"
-        }
-     }'
-
-# list all connector deployments
-curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments
-
-# set CONNECTOR_ID to the ID of the first connector deployment found
-CONNECTOR_ID=$(curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments | jq -r '.items[0].id')
-
-# get a single connector deployment
-curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/${KAFKA_ID}/connector-deployments/${CONNECTOR_ID}
-```
 ### View the API docs
 ```
 # Start Swagger UI container
@@ -313,6 +267,13 @@ make db/teardown
 
 ### Running performance tests
 See this [README](./test/performance/README.md) for more info about performance tests
+
+### Connector Service
+
+The https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager is used to build the `cos-fleet-manager` 
+binary which is a fleet manager for connectors similar to how `kas-fleet-manager` is fleet manager for Kafka 
+instances.  The `cos-fleet-manager` just imports most of the code from the `kas-fleet-manager` enabling only
+connector APIs that are in this repo's `internal/connector` package.
 
 ## Additional documentation:
 * [kas-fleet-manager Implementation](docs/implementation.md)
