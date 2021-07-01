@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # This bash script is used to clean up an OSD cluster created and used by integration tests
-# against real OCM environment. It uses a /test/integration/test_cluster.json file with cluster details created by the tests.
+# against real OCM environment. It uses a internal/kafka/test/integration/test_cluster.json file with cluster details created by the tests.
 
-FILE=test/integration/test_cluster.json
+FILE=internal/kafka/test/integration/test_cluster.json
 INTEGRATION_ENV="integration"
 ENV=$(echo "$OCM_ENV")
 if test -f "$FILE"; then
