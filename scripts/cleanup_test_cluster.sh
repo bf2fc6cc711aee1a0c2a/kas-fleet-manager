@@ -5,7 +5,7 @@
 
 FILE=internal/kafka/test/integration/test_cluster.json
 INTEGRATION_ENV="integration"
-ENV=$(echo "$OCM_ENV")
+ENV="$OCM_ENV"
 if test -f "$FILE"; then
   if [[ $ENV != "$INTEGRATION_ENV" ]] ; then
     clusterID=$(jq -r .cluster_id ${FILE})
@@ -15,4 +15,7 @@ if test -f "$FILE"; then
       rm $FILE
     fi
   fi
+else 
+  echo "File $FILE does not exist"
+  exit 1  
 fi
