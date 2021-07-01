@@ -606,6 +606,9 @@ objects:
           - name: ocm-managed-services-read-only-user-list
             configMap:
               name: ocm-managed-services-read-only-user-list
+          - name: ocm-managed-services-kafka-sre-user-list
+            configMap:
+              name: ocm-managed-services-kafka-sre-user-list
           - name: ocm-managed-services-kafka-capacity-config
             configMap:
               name: ocm-managed-services-kafka-capacity-config
