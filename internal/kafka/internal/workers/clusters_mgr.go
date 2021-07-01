@@ -11,35 +11,34 @@ import (
 	"github.com/goava/di"
 	"github.com/google/uuid"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	authv1 "github.com/openshift/api/authorization/v1"
-	"github.com/pkg/errors"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 
+	authv1 "github.com/openshift/api/authorization/v1"
+	projectv1 "github.com/openshift/api/project/v1"
+	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
+	"github.com/pkg/errors"
 
-	projectv1 "github.com/openshift/api/project/v1"
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	userv1 "github.com/openshift/api/user/v1"
 )
 
 const (
 	observabilityNamespace          = "managed-application-services-observability"
 	openshiftIngressNamespace       = "openshift-ingress-operator"
-	observabilityDexCredentials     = "observatorium-dex-credentials"
-	observabilityCatalogSourceImage = "quay.io/bf2fc6cc711aee1a0c2a82e312df7f2e6b37baa12bd9b1f2fd752e260d93a6f8144ac730947f25caa2bfe6ad0f410da360940ee6d28d6c1688d3822c4055650e/observability-operator-index:v3.0.2"
+	observabilityCatalogSourceImage = "quay.io/bf2fc6cc711aee1a0c2a82e312df7f2e6b37baa12bd9b1f2fd752e260d93a6f8144ac730947f25caa2bfe6ad0f410da360940ee6d28d6c1688d3822c4055650e/observability-operator-index:v3.0.3"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
 	observabilitySubscriptionName   = "observability-operator"
+	observatoriumDexSecretName      = "observatorium-configuration-dex"
+	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	imagePullSecretName             = "rhoas-image-pull-secret"
 	strimziAddonNamespace           = "redhat-managed-kafka-operator"
@@ -723,7 +722,8 @@ func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 	r := []interface{}{
 		c.buildIngressController(ingressDNS),
 		c.buildObservabilityNamespaceResource(),
-		c.buildObservabilityDexSecretResource(),
+		c.buildObservatoriumDexSecretResource(),
+		c.buildObservatoriumSSOSecretResource(),
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
@@ -765,21 +765,24 @@ func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Projec
 	}
 }
 
-func (c *ClusterManager) buildObservabilityDexSecretResource() *k8sCoreV1.Secret {
-	observabilityConfig := c.ConfigService.GetObservabilityConfiguration()
+func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret {
+	observabilityConfig := c.ConfigService.GetConfig().ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"password": observabilityConfig.DexPassword,
-		"secret":   observabilityConfig.DexSecret,
-		"username": observabilityConfig.DexUsername,
+		"authType":    config.AuthTypeDex,
+		"gateway":     observabilityConfig.ObservatoriumGateway,
+		"tenant":      observabilityConfig.ObservatoriumTenant,
+		"dexUrl":      observabilityConfig.DexUrl,
+		"dexPassword": observabilityConfig.DexPassword,
+		"dexSecret":   observabilityConfig.DexSecret,
+		"dexUsername": observabilityConfig.DexUsername,
 	}
-
 	return &k8sCoreV1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: metav1.SchemeGroupVersion.Version,
 			Kind:       "Secret",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      observabilityDexCredentials,
+			Name:      observatoriumDexSecretName,
 			Namespace: observabilityNamespace,
 		},
 		Type:       k8sCoreV1.SecretTypeOpaque,
@@ -787,6 +790,32 @@ func (c *ClusterManager) buildObservabilityDexSecretResource() *k8sCoreV1.Secret
 	}
 }
 
+func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret {
+	observabilityConfig := c.ConfigService.GetConfig().ObservabilityConfiguration
+	stringDataMap := map[string]string{
+		"authType":               config.AuthTypeSso,
+		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
+		"tenant":                 observabilityConfig.RedHatSsoTenant,
+		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,
+		"redHatSsoRealm":         observabilityConfig.RedHatSsoRealm,
+		"metricsClientId":        observabilityConfig.MetricsClientId,
+		"metricsSecret":          observabilityConfig.MetricsSecret,
+		"logsClientId":           observabilityConfig.LogsClientId,
+		"logsSecret":             observabilityConfig.LogsSecret,
+	}
+	return &k8sCoreV1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: metav1.SchemeGroupVersion.Version,
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      observatoriumSSOSecretName,
+			Namespace: observabilityNamespace,
+		},
+		Type:       k8sCoreV1.SecretTypeOpaque,
+		StringData: stringDataMap,
+	}
+}
 func (c *ClusterManager) buildObservabilityCatalogSourceResource() *v1alpha1.CatalogSource {
 	return &v1alpha1.CatalogSource{
 		TypeMeta: metav1.TypeMeta{
@@ -834,7 +863,7 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			CatalogSource:          observabilityCatalogSourceName,
 			Channel:                "alpha",
 			CatalogSourceNamespace: observabilityNamespace,
-			StartingCSV:            "observability-operator.v3.0.2",
+			StartingCSV:            "observability-operator.v3.0.3",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
 		},
