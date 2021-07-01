@@ -32,6 +32,11 @@ internal/kafka/internal/api/private/docs/**.md
 internal/kafka/internal/api/private/**all_of.go
 internal/kafka/internal/api/private/go.mod
 internal/kafka/internal/api/private/go.sum
+internal/kafka/internal/api/admin/private/README.md
+internal/kafka/internal/api/admin/private/docs/**.md
+internal/kafka/internal/api/admin/private/**all_of.go
+internal/kafka/internal/api/admin/private/go.mod
+internal/kafka/internal/api/admin/private/go.sum
 
 internal/connector/internal/api/public/README.md
 internal/connector/internal/api/public/docs/**.md
