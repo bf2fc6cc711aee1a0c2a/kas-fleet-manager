@@ -8,13 +8,14 @@ package cucumber
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/messages-go/v10"
 	"github.com/olekukonko/tablewriter"
 	"github.com/pmezard/go-difflib/difflib"
-	"reflect"
-	"strings"
 )
 
 func init() {
@@ -66,7 +67,7 @@ func (s *TestScenario) iRunSQLGivesResults(sql string, expected *godog.Table) er
 	}
 	gorm := dbFactory.New()
 
-	rows, err := gorm.Debug().Raw(sql).Rows()
+	rows, err := gorm.Raw(sql).Rows()
 	if err != nil {
 		return err
 	}
