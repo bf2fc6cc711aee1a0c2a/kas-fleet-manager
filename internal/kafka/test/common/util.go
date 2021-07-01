@@ -3,13 +3,14 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	. "github.com/onsi/gomega"
 
@@ -25,7 +26,7 @@ const (
 )
 
 // GetRunningOsdClusterID - is used by tests to get a ClusterID value of an existing OSD cluster in a 'ready' state.
-// If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
+// If executed against real OCM client, content of internal/kafka/test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
 // If no such file is present, new cluster is created and its clusterID is retrieved.
 func GetRunningOsdClusterID(h *test.Helper, t *testing.T) (string, *ocmErrors.ServiceError) {
@@ -37,7 +38,7 @@ func GetOSDClusterIDAndWaitForStatus(h *test.Helper, t *testing.T, expectedStatu
 }
 
 // GetOSDClusterID - is used by tests to get a ClusterID value of an existing OSD cluster.
-// If executed against real OCM client, content of /test/integration/test_cluster.json file (if present) is read
+// If executed against real OCM client, content of internal/kafka/test/integration/test_cluster.json file (if present) is read
 // to determine if there is a cluster running and new entry is added to the clusters table.
 // If no such file is present, new cluster is created and its clusterID is retrieved.
 // If expectedStatus is not nil then it will wait until expectedStatus is reached.
