@@ -17,6 +17,8 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 // fieldManager indicates that the kas-fleet-manager will be used as a field manager for conflict resolution
@@ -25,6 +27,9 @@ const fieldManager = "kas-fleet-manager"
 // lastAppliedConfigurationAnnotation is an annotation applied in a resources which tracks the last applied configuration of a resource.
 // this is used to decide whether a new apply request should be taken into account or not
 const lastAppliedConfigurationAnnotation = "kas-fleet-manager/last-applied-resource-configuration"
+
+// kafkaSREOpenIDPSecretName is the secret name holding the clientSecret content
+const kafkaSREOpenIDPSecretName = "kafka-sre-idp-secret"
 
 var ctx = context.Background()
 
@@ -72,7 +77,69 @@ func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (stri
 }
 
 func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
-	return &identityProvider, nil // NOOP
+	// setup identity provider
+	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
+		Resources: []interface{}{
+			buildOpenIDPClientSecret(identityProvider),
+			buildIdentityProviderResource(identityProvider),
+		},
+	})
+
+	return &identityProvider, err
+}
+
+// buildOpenIDPClientSecret builds the k8s secret which holds OpenIDP clientSecret value
+// The clientSecret as indicated in https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-creating-secret_configuring-oidc-identity-provider
+func buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: metav1.SchemeGroupVersion.Version,
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kafkaSREOpenIDPSecretName,
+			Namespace: "openshift-config",
+		},
+		Type: corev1.SecretTypeOpaque,
+		StringData: map[string]string{
+			"clientSecret": identityProvider.OpenID.ClientSecret,
+		},
+	}
+}
+
+// buildIdentityProviderResource builds the identity provider resource to be applied
+// The resource is taken from https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-oidc-CR_configuring-oidc-identity-provider
+func buildIdentityProviderResource(identityProvider types.IdentityProviderInfo) map[string]interface{} {
+	// Using unstructured type for now.
+	// we might want to pull the type information from github.com/openshift/api at a later stage
+	return map[string]interface{}{
+		"apiVersion": "config.openshift.io/v1",
+		"kind":       "OAuth",
+		"metadata": map[string]string{
+			"name": "cluster",
+		},
+		"spec": map[string]interface{}{
+			"identityProviders": []map[string]interface{}{
+				{
+					"name":          identityProvider.OpenID.Name,
+					"mappingMethod": "claim",
+					"type":          "OpenID",
+					"openID": map[string]interface{}{
+						"clientID": identityProvider.OpenID.ClientID,
+						"issuer":   identityProvider.OpenID.Issuer,
+						"clientSecret": map[string]string{
+							"name": kafkaSREOpenIDPSecretName,
+						},
+						"claims": map[string][]string{
+							"email":             {"email"},
+							"preferredUsername": {"preferred_username"},
+							"last_name":         {"preferred_username"},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
