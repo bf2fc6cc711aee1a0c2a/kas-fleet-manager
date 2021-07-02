@@ -6,13 +6,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	clientOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/dgrijalva/jwt-go"
 
@@ -133,13 +132,13 @@ type mockKasFleetshardSyncBuilder struct {
 var _ MockKasFleetshardSyncBuilder = &mockKasFleetshardSyncBuilder{}
 
 func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasFleetshardSyncBuilder {
-	var ocm2Client *clientOcm.Client
-	helper.Env.MustResolveAll(&ocm2Client)
+	var ocmClient ocm.Client
+	helper.Env.MustResolveAll(&ocmClient)
 	return &mockKasFleetshardSyncBuilder{
 		kfsync: mockKasFleetshardSync{
 			helper:                       helper,
 			t:                            t,
-			ocmClient:                    ocm.NewClient(ocm2Client.Connection),
+			ocmClient:                    ocmClient,
 			privateClient:                test2.NewPrivateAPIClient(helper),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,

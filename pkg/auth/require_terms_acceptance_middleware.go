@@ -1,10 +1,10 @@
 package auth
 
 import (
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/patrickmn/go-cache"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -14,7 +14,7 @@ import (
 type RequireTermsAcceptanceMiddleware interface {
 	// RequireTermsAcceptance will check that the user has accepted the required terms.
 	// The current implementation is backed by OCM and can be disabled with the "enabled" flag set to false.
-	RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
+	RequireTermsAcceptance(enabled bool, ocmClient ocm2.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
 
 type requireTermsAcceptanceMiddleware struct {
@@ -30,7 +30,7 @@ func NewRequireTermsAcceptanceMiddleware() RequireTermsAcceptanceMiddleware {
 	}
 }
 
-func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, ocmClient ocm2.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			if enabled {

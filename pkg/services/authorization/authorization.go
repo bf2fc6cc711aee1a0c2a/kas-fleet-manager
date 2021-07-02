@@ -1,27 +1,32 @@
-package ocm
+package authorization
 
 import (
 	"context"
 	"fmt"
+	sdkClient "github.com/openshift-online/ocm-sdk-go"
 
 	azv1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
 )
 
-type OCMAuthorization interface {
+type Authorization interface {
 	SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 	AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 }
 
-type service struct {
-	client *Client //nolint
+type authorization struct {
+	client *sdkClient.Connection
 }
 
-type authorization service
+var _ Authorization = &authorization{}
 
-var _ OCMAuthorization = &authorization{}
+func NewOCMAuthorization(client *sdkClient.Connection) Authorization {
+	return &authorization{
+		client: client,
+	}
+}
 
 func (a authorization) SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error) {
-	con := a.client.Connection
+	con := a.client
 	selfAccessReview := con.Authorizations().V1().SelfAccessReview()
 
 	request, err := azv1.NewSelfAccessReviewRequest().
@@ -50,7 +55,7 @@ func (a authorization) SelfAccessReview(ctx context.Context, action, resourceTyp
 }
 
 func (a authorization) AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error) {
-	con := a.client.Connection
+	con := a.client
 	accessReview := con.Authorizations().V1().AccessReview()
 
 	request, err := azv1.NewAccessReviewRequest().

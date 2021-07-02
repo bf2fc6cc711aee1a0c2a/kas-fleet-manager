@@ -11,7 +11,7 @@ import (
 	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"net/http"
 	"strings"
 	"testing"
@@ -1115,9 +1115,9 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Kind).To(Equal(presenters.KindKafka))
 	Expect(seedKafka.Href).To(Equal(listItem.Href))
 	Expect(seedKafka.Region).To(Equal(listItem.Region))
-	Expect(listItem.Region).To(Equal(clusterservicetest2.MockClusterRegion))
+	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
 	Expect(seedKafka.CloudProvider).To(Equal(listItem.CloudProvider))
-	Expect(listItem.CloudProvider).To(Equal(clusterservicetest2.MockClusterCloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
@@ -1144,9 +1144,9 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Kind).To(Equal(presenters.KindKafka))
 	Expect(seedKafka.Href).To(Equal(listItem.Href))
 	Expect(seedKafka.Region).To(Equal(listItem.Region))
-	Expect(listItem.Region).To(Equal(clusterservicetest2.MockClusterRegion))
+	Expect(listItem.Region).To(Equal(clusterservicetest.MockClusterRegion))
 	Expect(seedKafka.CloudProvider).To(Equal(listItem.CloudProvider))
-	Expect(listItem.CloudProvider).To(Equal(clusterservicetest2.MockClusterCloudProvider))
+	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
 	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -16,7 +16,7 @@ import (
 
 func Test_AMSCheckQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocm2.Client
 	}
 	type args struct {
 		kafkaID     string
@@ -40,7 +40,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"RHOSAK",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return ca, nil
@@ -58,7 +58,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"BAD-PRODUCT-TYPE",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						if cb.ProductID() == "RHOSAK" {
 							ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
@@ -80,7 +80,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"RHOSAK",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
@@ -98,7 +98,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"RHOSAK",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
 					},
@@ -135,7 +135,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 
 func Test_AMSReserveQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocm2.Client
 	}
 	type args struct {
 		kafkaID string
@@ -157,7 +157,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				"testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						sub := v1.SubscriptionBuilder{}
 						sub.ID("1234")
@@ -178,7 +178,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				"testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
@@ -217,7 +217,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 
 func Test_Delete_Quota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm.Client
+		ocmClient ocm2.Client
 	}
 	type args struct {
 		subscriptionId string
@@ -239,7 +239,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionId: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 1, nil
 					},
@@ -253,7 +253,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionId: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm.ClientMock{
+				ocmClient: &ocm2.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 0, errors.GeneralError("failed to delete subscription")
 					},

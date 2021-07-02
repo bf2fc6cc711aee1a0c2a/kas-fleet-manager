@@ -2,7 +2,7 @@ package clusters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -56,8 +56,8 @@ type DefaultProviderFactory struct {
 	providerContainer map[api.ClusterProviderType]Provider
 }
 
-func NewDefaultProviderFactory(ocmClient ocm.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory, ocmConfig *config.OCMConfig) *DefaultProviderFactory {
-	ocmProvider := newOCMProvider(ocmClient, ocm.NewClusterBuilder(appConfig.AWS, appConfig.DataplaneClusterConfig), ocmConfig)
+func NewDefaultProviderFactory(ocmClient ocm2.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory, ocmConfig *config.OCMConfig) *DefaultProviderFactory {
+	ocmProvider := newOCMProvider(ocmClient, ocm2.NewClusterBuilder(appConfig.AWS, appConfig.DataplaneClusterConfig), ocmConfig)
 	standaloneProvider := newStandaloneProvider(connectionFactory, appConfig.DataplaneClusterConfig)
 	return &DefaultProviderFactory{
 		providerContainer: map[api.ClusterProviderType]Provider{

@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	customOcm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	migrate2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/migrate"
 	serve2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/serve"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -16,12 +15,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
-	sdkClient "github.com/openshift-online/ocm-sdk-go"
 )
 
 func CoreConfigProviders() di.Option {
@@ -47,6 +46,7 @@ func CoreConfigProviders() di.Option {
 		vault.ConfigProviders(),
 		sentry.ConfigProviders(),
 		signalbus.ConfigProviders(),
+		authorization.ConfigProviders(),
 
 		di.Provide(provider.Func(ServiceProviders)),
 	)
@@ -58,8 +58,10 @@ func ServiceProviders() di.Option {
 		// provide the service constructors
 		di.Provide(db.NewConnectionFactory),
 		di.Provide(observatorium.NewObservatoriumClient),
-		di.Provide(ocm.NewOCMClient),
-		di.Provide(customOcm.NewClient),
+
+		di.Provide(ocm.NewOCMConnection),
+		di.Provide(ocm.NewClient),
+
 		di.Provide(aws.NewDefaultClientFactory, di.As(new(aws.ClientFactory))),
 		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 
@@ -70,9 +72,6 @@ func ServiceProviders() di.Option {
 		}),
 		di.Provide(func(c *config.KeycloakConfig) services.OsdKeycloakService {
 			return services.NewKeycloakService(c, c.OSDClusterIDPRealm)
-		}),
-		di.Provide(func(client *ocm.Client) (ocmClient *sdkClient.Connection) {
-			return client.Connection
 		}),
 
 		// Types registered as a BootService are started when the env is started

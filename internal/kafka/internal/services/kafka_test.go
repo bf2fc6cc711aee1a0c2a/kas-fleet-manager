@@ -7,7 +7,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
-	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	goerrors "github.com/pkg/errors"
 	"net/http"
@@ -667,9 +667,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest2.MockClusterRegion,
-					ClusterID:     clusterservicetest2.MockClusterID,
-					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
@@ -701,9 +701,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest2.MockClusterRegion,
-					ClusterID:     clusterservicetest2.MockClusterID,
-					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
@@ -743,9 +743,9 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest2.MockClusterRegion,
-					ClusterID:     clusterservicetest2.MockClusterID,
-					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       true,
 					Status:        constants.KafkaRequestStatusPreparing.String(),
 				}))
