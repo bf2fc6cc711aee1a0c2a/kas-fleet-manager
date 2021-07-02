@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"strings"
 	"sync"
@@ -79,14 +80,14 @@ type kafkaService struct {
 	connectionFactory   *db.ConnectionFactory
 	clusterService      ClusterService
 	keycloakService     services2.KeycloakService
-	kafkaConfig         *config.KafkaConfig
+	kafkaConfig         *config2.KafkaConfig
 	awsConfig           *config.AWSConfig
 	quotaServiceFactory QuotaServiceFactory
 	mu                  sync.Mutex
 	awsClientFactory    aws.ClientFactory
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config2.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory) *kafkaService {
 	return &kafkaService{
 		connectionFactory:   connectionFactory,
 		clusterService:      clusterService,
@@ -582,7 +583,7 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config2.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{

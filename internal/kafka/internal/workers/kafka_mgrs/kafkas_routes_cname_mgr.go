@@ -1,8 +1,8 @@
 package kafka_mgrs
 
 import (
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
@@ -13,12 +13,12 @@ import (
 type KafkaRoutesCNAMEManager struct {
 	workers.BaseWorker
 	kafkaService services.KafkaService
-	kafkaConfig  *config.KafkaConfig
+	kafkaConfig  *config2.KafkaConfig
 }
 
 var _ workers.Worker = &KafkaRoutesCNAMEManager{}
 
-func NewKafkaCNAMEManager(kafkaService services.KafkaService, kafkfConfig *config.KafkaConfig, bus signalbus.SignalBus) *KafkaRoutesCNAMEManager {
+func NewKafkaCNAMEManager(kafkaService services.KafkaService, kafkfConfig *config2.KafkaConfig, bus signalbus.SignalBus) *KafkaRoutesCNAMEManager {
 	return &KafkaRoutesCNAMEManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

@@ -3,6 +3,7 @@ package services
 import (
 	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -43,7 +44,7 @@ type kasFleetshardOperatorAddon struct {
 	SsoService          services.KafkaKeycloakService
 	ProviderFactory     clusters2.ProviderFactory
 	ServerConfig        *config.ServerConfig
-	KasFleetShardConfig *config.KasFleetshardConfig
+	KasFleetShardConfig *config2.KasFleetshardConfig
 	OCMConfig           *config.OCMConfig
 	KeycloakConfig      *config.KeycloakConfig
 }
