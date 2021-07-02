@@ -2,6 +2,7 @@ package workers
 
 import (
 	"fmt"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"strings"
 	"sync"
 
@@ -13,7 +14,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -71,7 +71,7 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 
 type Worker = workers.Worker
 
-var clusterLoggingOperatorAddonParams = []types.Parameter{
+var clusterLoggingOperatorAddonParams = []types2.Parameter{
 	{
 		Id:    "use-cloudwatch",
 		Value: "true",
@@ -718,7 +718,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	return errs
 }
 
-func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
+func (c *ClusterManager) buildResourceSet(ingressDNS string) types2.ResourceSet {
 	r := []interface{}{
 		c.buildIngressController(ingressDNS),
 		c.buildObservabilityNamespaceResource(),
@@ -747,7 +747,7 @@ func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 	if s := c.buildImagePullSecret(kasFleetshardNS); s != nil {
 		r = append(r, s)
 	}
-	return types.ResourceSet{
+	return types2.ResourceSet{
 		Name:      syncsetName,
 		Resources: r,
 	}
@@ -1032,8 +1032,8 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}
 
-	idpInfo := types.IdentityProviderInfo{
-		OpenID: &types.OpenIDIdentityProviderInfo{
+	idpInfo := types2.IdentityProviderInfo{
+		OpenID: &types2.OpenIDIdentityProviderInfo{
 			Name:         openIDIdentityProviderName,
 			ClientID:     cluster.ID,
 			ClientSecret: clientSecret,

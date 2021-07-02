@@ -1,11 +1,11 @@
-package ocm
+package clusters
 
 import (
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"reflect"
 	"testing"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -28,13 +28,13 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		SecretAccessKey(awsConfig.SecretAccessKey)
 
 	type fields struct {
-		idGenerator            IDGenerator
+		idGenerator            ocm.IDGenerator
 		awsConfig              *config.AWSConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 
 	type args struct {
-		clusterRequest *types.ClusterRequest
+		clusterRequest *types2.ClusterRequest
 	}
 	tests := []struct {
 		name    string
@@ -46,31 +46,31 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 		{
 			name: "nil aws config results in error",
 			fields: fields{
-				idGenerator:            NewIDGenerator(""),
+				idGenerator:            ocm.NewIDGenerator(""),
 				awsConfig:              nil,
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
-				clusterRequest: &types.ClusterRequest{},
+				clusterRequest: &types2.ClusterRequest{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "nil cluster creation config results in error",
 			fields: fields{
-				idGenerator:            NewIDGenerator(""),
+				idGenerator:            ocm.NewIDGenerator(""),
 				awsConfig:              awsConfig,
 				dataplaneClusterConfig: nil,
 			},
 			args: args{
-				clusterRequest: &types.ClusterRequest{},
+				clusterRequest: &types2.ClusterRequest{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "nil cluster results in error",
 			fields: fields{
-				idGenerator:            NewIDGenerator(""),
+				idGenerator:            ocm.NewIDGenerator(""),
 				awsConfig:              awsConfig,
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
@@ -87,14 +87,14 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
-				clusterRequest: &types.ClusterRequest{},
+				clusterRequest: &types2.ClusterRequest{},
 			},
 			wantErr: true,
 		},
 		{
 			name: "successful conversion of all supported provided values",
 			fields: fields{
-				idGenerator: &IDGeneratorMock{
+				idGenerator: &ocm.IDGeneratorMock{
 					GenerateFunc: func() string {
 						return ""
 					},
@@ -103,7 +103,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 				dataplaneClusterConfig: dataplaneClusterConfig,
 			},
 			args: args{
-				clusterRequest: &types.ClusterRequest{
+				clusterRequest: &types2.ClusterRequest{
 					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					Region:        clusterservicetest.MockClusterRegion,
 					MultiAZ:       clusterservicetest.MockClusterMultiAZ,

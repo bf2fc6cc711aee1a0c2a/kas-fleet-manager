@@ -1,13 +1,13 @@
 package types
 
-import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+)
 
 // Specify the parameters for an installation
 // Value will be string here and the provider will convert it to the right type
-type Parameter struct {
-	Id    string
-	Value string
-}
+type Parameter = ocm.Parameter
 
 // OpenIDIdentityProviderInfo information for configuring an OpenID identity provider
 type OpenIDIdentityProviderInfo struct {

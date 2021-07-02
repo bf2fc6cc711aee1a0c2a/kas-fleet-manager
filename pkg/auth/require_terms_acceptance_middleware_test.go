@@ -1,7 +1,7 @@
 package auth
 
 import (
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,14 +16,14 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 	tests := []struct {
 		name     string
 		enabled  bool
-		client   ocm2.Client
+		client   ocm.Client
 		next     http.Handler
 		wantCode int
 	}{
 		{
 			name:    "should fail if terms checks is enabled and terms are required",
 			enabled: true,
-			client: &ocm2.ClientMock{
+			client: &ocm.ClientMock{
 				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 					return true, "", nil
 				},
@@ -36,7 +36,7 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 		{
 			name:    "should succeed if terms check is not a enabled even and terms are required",
 			enabled: false,
-			client: &ocm2.ClientMock{
+			client: &ocm.ClientMock{
 				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 					return true, "", nil
 				},
@@ -49,7 +49,7 @@ func TestRequireTermsAcceptanceMiddleware(t *testing.T) {
 		{
 			name:    "should succeed if terms checks is enabled and terms are not required",
 			enabled: true,
-			client: &ocm2.ClientMock{
+			client: &ocm.ClientMock{
 				GetRequiresTermsAcceptanceFunc: func(username string) (bool, string, error) {
 					return false, "", nil
 				},

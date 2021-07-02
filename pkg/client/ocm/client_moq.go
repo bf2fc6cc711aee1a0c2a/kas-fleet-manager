@@ -4,7 +4,6 @@
 package ocm
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -30,7 +29,7 @@ var _ Client = &ClientMock{}
 // 			CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the CreateAddon method")
 // 			},
-// 			CreateAddonWithParamsFunc: func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+// 			CreateAddonWithParamsFunc: func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the CreateAddonWithParams method")
 // 			},
 // 			CreateClusterFunc: func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error) {
@@ -96,7 +95,7 @@ var _ Client = &ClientMock{}
 // 			SetComputeNodesFunc: func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error) {
 // 				panic("mock out the SetComputeNodes method")
 // 			},
-// 			UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+// 			UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the UpdateAddonParameters method")
 // 			},
 // 			UpdateSyncSetFunc: func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
@@ -119,7 +118,7 @@ type ClientMock struct {
 	CreateAddonFunc func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// CreateAddonWithParamsFunc mocks the CreateAddonWithParams method.
-	CreateAddonWithParamsFunc func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddonWithParamsFunc func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// CreateClusterFunc mocks the CreateCluster method.
 	CreateClusterFunc func(cluster *clustersmgmtv1.Cluster) (*clustersmgmtv1.Cluster, error)
@@ -185,7 +184,7 @@ type ClientMock struct {
 	SetComputeNodesFunc func(clusterID string, numNodes int) (*clustersmgmtv1.Cluster, error)
 
 	// UpdateAddonParametersFunc mocks the UpdateAddonParameters method.
-	UpdateAddonParametersFunc func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	UpdateAddonParametersFunc func(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 
 	// UpdateSyncSetFunc mocks the UpdateSyncSet method.
 	UpdateSyncSetFunc func(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
@@ -214,7 +213,7 @@ type ClientMock struct {
 			// AddonId is the addonId argument value.
 			AddonId string
 			// Parameters is the parameters argument value.
-			Parameters []types.Parameter
+			Parameters []Parameter
 		}
 		// CreateCluster holds details about calls to the CreateCluster method.
 		CreateCluster []struct {
@@ -342,7 +341,7 @@ type ClientMock struct {
 			// AddonId is the addonId argument value.
 			AddonId string
 			// Parameters is the parameters argument value.
-			Parameters []types.Parameter
+			Parameters []Parameter
 		}
 		// UpdateSyncSet holds details about calls to the UpdateSyncSet method.
 		UpdateSyncSet []struct {
@@ -476,14 +475,14 @@ func (mock *ClientMock) CreateAddonCalls() []struct {
 }
 
 // CreateAddonWithParams calls CreateAddonWithParamsFunc.
-func (mock *ClientMock) CreateAddonWithParams(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+func (mock *ClientMock) CreateAddonWithParams(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	if mock.CreateAddonWithParamsFunc == nil {
 		panic("ClientMock.CreateAddonWithParamsFunc: method is nil but Client.CreateAddonWithParams was just called")
 	}
 	callInfo := struct {
 		ClusterId  string
 		AddonId    string
-		Parameters []types.Parameter
+		Parameters []Parameter
 	}{
 		ClusterId:  clusterId,
 		AddonId:    addonId,
@@ -501,12 +500,12 @@ func (mock *ClientMock) CreateAddonWithParams(clusterId string, addonId string, 
 func (mock *ClientMock) CreateAddonWithParamsCalls() []struct {
 	ClusterId  string
 	AddonId    string
-	Parameters []types.Parameter
+	Parameters []Parameter
 } {
 	var calls []struct {
 		ClusterId  string
 		AddonId    string
-		Parameters []types.Parameter
+		Parameters []Parameter
 	}
 	mock.lockCreateAddonWithParams.RLock()
 	calls = mock.calls.CreateAddonWithParams
@@ -1193,14 +1192,14 @@ func (mock *ClientMock) SetComputeNodesCalls() []struct {
 }
 
 // UpdateAddonParameters calls UpdateAddonParametersFunc.
-func (mock *ClientMock) UpdateAddonParameters(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+func (mock *ClientMock) UpdateAddonParameters(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	if mock.UpdateAddonParametersFunc == nil {
 		panic("ClientMock.UpdateAddonParametersFunc: method is nil but Client.UpdateAddonParameters was just called")
 	}
 	callInfo := struct {
 		ClusterId  string
 		AddonId    string
-		Parameters []types.Parameter
+		Parameters []Parameter
 	}{
 		ClusterId:  clusterId,
 		AddonId:    addonId,
@@ -1218,12 +1217,12 @@ func (mock *ClientMock) UpdateAddonParameters(clusterId string, addonId string, 
 func (mock *ClientMock) UpdateAddonParametersCalls() []struct {
 	ClusterId  string
 	AddonId    string
-	Parameters []types.Parameter
+	Parameters []Parameter
 } {
 	var calls []struct {
 		ClusterId  string
 		AddonId    string
-		Parameters []types.Parameter
+		Parameters []Parameter
 	}
 	mock.lockUpdateAddonParameters.RLock()
 	calls = mock.calls.UpdateAddonParameters

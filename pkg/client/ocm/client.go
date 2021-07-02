@@ -7,7 +7,6 @@ import (
 
 	pkgerrors "github.com/pkg/errors"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -27,9 +26,9 @@ type Client interface {
 	GetCloudProviders() (*clustersmgmtv1.CloudProviderList, error)
 	GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
 	GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
-	CreateAddonWithParams(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	CreateAddonWithParams(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 	CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
-	UpdateAddonParameters(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error)
+	UpdateAddonParameters(clusterId string, addonId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error)
 	GetClusterDNS(clusterID string) (string, error)
 	CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
 	UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error)
@@ -212,7 +211,7 @@ func (c *client) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmg
 	return regionList, nil
 }
 
-func (c client) CreateAddonWithParams(clusterId string, addonId string, params []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+func (c client) CreateAddonWithParams(clusterId string, addonId string, params []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	addon := clustersmgmtv1.NewAddOn().ID(addonId)
 	addonParameters := newAddonParameterListBuilder(params)
 	addonInstallationBuilder := clustersmgmtv1.NewAddOnInstallation().Addon(addon)
@@ -231,7 +230,7 @@ func (c client) CreateAddonWithParams(clusterId string, addonId string, params [
 }
 
 func (c client) CreateAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
-	return c.CreateAddonWithParams(clusterId, addonId, []types.Parameter{})
+	return c.CreateAddonWithParams(clusterId, addonId, []Parameter{})
 }
 
 func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
@@ -252,7 +251,7 @@ func (c client) GetAddon(clusterId string, addonId string) (*clustersmgmtv1.AddO
 	return addon, nil
 }
 
-func (c client) UpdateAddonParameters(clusterId string, addonInstallationId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+func (c client) UpdateAddonParameters(clusterId string, addonInstallationId string, parameters []Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 	addonInstallationResp, err := c.connection.ClustersMgmt().V1().Clusters().Cluster(clusterId).Addons().Addoninstallation(addonInstallationId).Get().Send()
 	if err != nil {
 		return nil, err
@@ -447,7 +446,7 @@ func (c client) SetComputeNodes(clusterID string, numNodes int) (*clustersmgmtv1
 	return resp.Body(), nil
 }
 
-func newAddonParameterListBuilder(params []types.Parameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {
+func newAddonParameterListBuilder(params []Parameter) *clustersmgmtv1.AddOnInstallationParameterListBuilder {
 	if len(params) > 0 {
 		var items []*clustersmgmtv1.AddOnInstallationParameterBuilder
 		for _, p := range params {
@@ -459,7 +458,7 @@ func newAddonParameterListBuilder(params []types.Parameter) *clustersmgmtv1.AddO
 	return nil
 }
 
-func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList, params []types.Parameter) bool {
+func sameParameters(parameterList *clustersmgmtv1.AddOnInstallationParameterList, params []Parameter) bool {
 	if parameterList.Len() != len(params) {
 		return false
 	}

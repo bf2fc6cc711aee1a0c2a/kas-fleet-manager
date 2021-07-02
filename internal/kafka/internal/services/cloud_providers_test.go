@@ -2,12 +2,12 @@ package services
 
 import (
 	"errors"
+	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
 	"github.com/patrickmn/go-cache"
@@ -16,7 +16,7 @@ import (
 
 func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 	type fields struct {
-		providerFactory   clusters.ProviderFactory
+		providerFactory   clusters2.ProviderFactory
 		connectionFactory *db.ConnectionFactory
 	}
 
@@ -43,9 +43,9 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			name: "fail to get cloud provider",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-					return &clusters.ProviderMock{
-						GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
+					return &clusters2.ProviderMock{
+						GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
 							return nil, errors.New("GetCloudProviders fail to get the list of providers")
 						},
 						GetCloudProviderRegionsFunc: nil, // should not be called
@@ -79,13 +79,13 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			name: "successful merge the various list of cloud providers from different providers and return it",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providerFactory: &clusters.ProviderFactoryMock{
-					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
 						if providerType == "ocm" {
-							return &clusters.ProviderMock{
-								GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-									return &types.CloudProviderInfoList{
-										Items: []types.CloudProviderInfo{
+							return &clusters2.ProviderMock{
+								GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+									return &types2.CloudProviderInfoList{
+										Items: []types2.CloudProviderInfo{
 											{
 												ID:          "aws",
 												Name:        "aws",
@@ -98,10 +98,10 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 							}, nil
 						}
 
-						return &clusters.ProviderMock{
-							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-								return &types.CloudProviderInfoList{
-									Items: []types.CloudProviderInfo{
+						return &clusters2.ProviderMock{
+							GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+								return &types2.CloudProviderInfoList{
+									Items: []types2.CloudProviderInfo{
 										{
 											ID:          "azure",
 											Name:        "azure",
@@ -157,7 +157,7 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 
 func Test_CachedCloudProviderWithRegions(t *testing.T) {
 	type fields struct {
-		providerFactory   clusters.ProviderFactory
+		providerFactory   clusters2.ProviderFactory
 		connectionFactory *db.ConnectionFactory
 		cache             *cache.Cache
 	}
@@ -186,9 +186,9 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			name: "fail to get cloud provider regions",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-					return &clusters.ProviderMock{
-						GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
+					return &clusters2.ProviderMock{
+						GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
 							return nil, errors.New("GetCloudProviders fail to get the list of providers")
 						},
 					}, nil
@@ -223,13 +223,13 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			name: "successful get cloud provider regions from various provider types",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providerFactory: &clusters.ProviderFactoryMock{
-					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
 						if providerType == "ocm" {
-							return &clusters.ProviderMock{
-								GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-									return &types.CloudProviderInfoList{
-										Items: []types.CloudProviderInfo{
+							return &clusters2.ProviderMock{
+								GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+									return &types2.CloudProviderInfoList{
+										Items: []types2.CloudProviderInfo{
 											{
 												ID:          "aws",
 												Name:        "aws",
@@ -238,9 +238,9 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 										},
 									}, nil
 								},
-								GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-									return &types.CloudProviderRegionInfoList{
-										Items: []types.CloudProviderRegionInfo{
+								GetCloudProviderRegionsFunc: func(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+									return &types2.CloudProviderRegionInfoList{
+										Items: []types2.CloudProviderRegionInfo{
 											{
 												ID:              "af-east-1",
 												CloudProviderID: providerInf.ID,
@@ -253,10 +253,10 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 							}, nil
 						}
 
-						return &clusters.ProviderMock{
-							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-								return &types.CloudProviderInfoList{
-									Items: []types.CloudProviderInfo{
+						return &clusters2.ProviderMock{
+							GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+								return &types2.CloudProviderInfoList{
+									Items: []types2.CloudProviderInfo{
 										{
 											ID:          "azure",
 											Name:        "azure",
@@ -270,9 +270,9 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 									},
 								}, nil
 							},
-							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-								return &types.CloudProviderRegionInfoList{
-									Items: []types.CloudProviderRegionInfo{
+							GetCloudProviderRegionsFunc: func(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+								return &types2.CloudProviderRegionInfoList{
+									Items: []types2.CloudProviderRegionInfo{
 										{
 											ID:              "af-east-1",
 											CloudProviderID: providerInf.ID,
@@ -302,8 +302,8 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			want: []CloudProviderWithRegions{
 				{
 					ID: "aws",
-					RegionList: &types.CloudProviderRegionInfoList{
-						Items: []types.CloudProviderRegionInfo{
+					RegionList: &types2.CloudProviderRegionInfoList{
+						Items: []types2.CloudProviderRegionInfo{
 							{
 								CloudProviderID: "aws",
 								Name:            "af-east-1",
@@ -321,8 +321,8 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 				},
 				{
 					ID: "azure",
-					RegionList: &types.CloudProviderRegionInfoList{
-						Items: []types.CloudProviderRegionInfo{
+					RegionList: &types2.CloudProviderRegionInfoList{
+						Items: []types2.CloudProviderRegionInfo{
 							{
 								CloudProviderID: "azure",
 								Name:            "af-east-1",
@@ -359,7 +359,7 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 
 func Test_ListCloudProviderRegions(t *testing.T) {
 	type fields struct {
-		providerFactory   clusters.ProviderFactory
+		providerFactory   clusters2.ProviderFactory
 		connectionFactory *db.ConnectionFactory
 		cache             *cache.Cache
 	}
@@ -388,13 +388,13 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 			name: "successful get cloud provider regions from various provider types",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				providerFactory: &clusters.ProviderFactoryMock{
-					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{
+					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
 						if providerType == "ocm" {
-							return &clusters.ProviderMock{
-								GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-									return &types.CloudProviderInfoList{
-										Items: []types.CloudProviderInfo{
+							return &clusters2.ProviderMock{
+								GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+									return &types2.CloudProviderInfoList{
+										Items: []types2.CloudProviderInfo{
 											{
 												ID:          "aws",
 												Name:        "aws",
@@ -403,9 +403,9 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 										},
 									}, nil
 								},
-								GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-									return &types.CloudProviderRegionInfoList{
-										Items: []types.CloudProviderRegionInfo{
+								GetCloudProviderRegionsFunc: func(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+									return &types2.CloudProviderRegionInfoList{
+										Items: []types2.CloudProviderRegionInfo{
 											{
 												ID:              "af-east-1",
 												CloudProviderID: providerInf.ID,
@@ -418,10 +418,10 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 							}, nil
 						}
 
-						return &clusters.ProviderMock{
-							GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
-								return &types.CloudProviderInfoList{
-									Items: []types.CloudProviderInfo{
+						return &clusters2.ProviderMock{
+							GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+								return &types2.CloudProviderInfoList{
+									Items: []types2.CloudProviderInfo{
 										{
 											ID:          "azure",
 											Name:        "azure",
@@ -435,9 +435,9 @@ func Test_ListCloudProviderRegions(t *testing.T) {
 									},
 								}, nil
 							},
-							GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
-								return &types.CloudProviderRegionInfoList{
-									Items: []types.CloudProviderRegionInfo{
+							GetCloudProviderRegionsFunc: func(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+								return &types2.CloudProviderRegionInfoList{
+									Items: []types2.CloudProviderRegionInfo{
 										{
 											ID:              "af-east-1",
 											CloudProviderID: providerInf.ID,

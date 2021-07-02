@@ -5,9 +5,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	migrate2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/migrate"
-	serve2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/serve"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/migrate"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/serve"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -39,8 +38,8 @@ func CoreConfigProviders() di.Option {
 		di.Provide(config.NewMetricsConfig, di.As(new(provider.ConfigModule))),
 
 		// Add common CLI sub commands
-		di.Provide(serve2.NewServeCommand),
-		di.Provide(migrate2.NewMigrateCommand),
+		di.Provide(serve.NewServeCommand),
+		di.Provide(migrate.NewMigrateCommand),
 
 		// Add other core config providers..
 		vault.ConfigProviders(),
@@ -63,7 +62,6 @@ func ServiceProviders() di.Option {
 		di.Provide(ocm.NewClient),
 
 		di.Provide(aws.NewDefaultClientFactory, di.As(new(aws.ClientFactory))),
-		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),

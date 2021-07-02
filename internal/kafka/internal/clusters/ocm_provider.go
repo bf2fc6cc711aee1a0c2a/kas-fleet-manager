@@ -1,13 +1,13 @@
 package clusters
 
 import (
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"reflect"
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
@@ -21,8 +21,8 @@ const (
 )
 
 type OCMProvider struct {
-	ocmClient      ocm2.Client
-	clusterBuilder ocm2.ClusterBuilder
+	ocmClient      ocm.Client
+	clusterBuilder ClusterBuilder
 	ocmConfig      *config.OCMConfig
 }
 
@@ -305,7 +305,7 @@ func (o *OCMProvider) GetCloudProviderRegions(providerInfo types.CloudProviderIn
 // ensure OCMProvider implements Provider interface
 var _ Provider = &OCMProvider{}
 
-func newOCMProvider(ocmClient ocm2.Client, clusterBuilder ocm2.ClusterBuilder, ocmConfig *config.OCMConfig) *OCMProvider {
+func newOCMProvider(ocmClient ocm.Client, clusterBuilder ClusterBuilder, ocmConfig *config.OCMConfig) *OCMProvider {
 	return &OCMProvider{
 		ocmClient:      ocmClient,
 		clusterBuilder: clusterBuilder,
