@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
@@ -29,11 +28,11 @@ var kafkaMetricsStatuses = []constants.KafkaStatus{
 type KafkaManager struct {
 	workers.BaseWorker
 	kafkaService  services.KafkaService
-	configService coreServices.ConfigService
+	configService services.ConfigService
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

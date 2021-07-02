@@ -3,8 +3,8 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -109,7 +109,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		cfgService := services.NewConfigService(
+		cfgService := services2.NewConfigService(
 			&config.ApplicationConfig{
 				Kafka: &config.KafkaConfig{
 					ProductType: tt.args.productType,
@@ -189,7 +189,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 		},
 	}
 
-	cfgService := services.NewConfigService(
+	cfgService := services2.NewConfigService(
 		&config.ApplicationConfig{
 			Kafka: &config.KafkaConfig{
 				ProductType: "RHOSAK",
@@ -263,7 +263,7 @@ func Test_Delete_Quota(t *testing.T) {
 		},
 	}
 
-	cfgService := services.NewConfigService(
+	cfgService := services2.NewConfigService(
 		&config.ApplicationConfig{
 			Kafka: &config.KafkaConfig{
 				ProductType: "RHOSAK",

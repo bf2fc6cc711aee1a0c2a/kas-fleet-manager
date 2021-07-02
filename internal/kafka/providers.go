@@ -19,7 +19,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/goava/di"
 )
 
@@ -38,7 +37,7 @@ func ConfigProviders() di.Option {
 
 		EnvConfigProviders(),
 		providers.CoreConfigProviders(),
-		di.Provide(coreServices.NewConfigService, di.As(new(provider.ServiceValidator))),
+		di.Provide(services.NewConfigService, di.As(new(provider.ServiceValidator))),
 
 		// Configuration for the Kafka service...
 		di.Provide(config.NewAWSConfig, di.As(new(provider.ConfigModule))),

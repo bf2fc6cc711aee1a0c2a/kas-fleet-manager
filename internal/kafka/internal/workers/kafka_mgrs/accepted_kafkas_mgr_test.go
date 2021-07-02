@@ -11,13 +11,12 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 func TestAcceptedKafkaManager(t *testing.T) {
 	type fields struct {
 		kafkaService        services.KafkaService
-		configService       coreServices.ConfigService
+		configService       services.ConfigService
 		clusterPlmtStrategy services.ClusterPlacementStrategy
 		quotaService        services.QuotaService
 	}
@@ -39,7 +38,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 				quotaService: &services.QuotaServiceMock{
@@ -66,7 +65,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return errors.GeneralError("test")
 					},
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 				quotaService: &services.QuotaServiceMock{
@@ -94,7 +93,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: &config.KafkaConfig{
 						Quota: config.NewKafkaQuotaConfig(),
 					},
@@ -126,7 +125,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return &dbapi.KafkaRequest{}, nil
 					},
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: &config.KafkaConfig{
 						Quota: config.NewKafkaQuotaConfig(),
 					},

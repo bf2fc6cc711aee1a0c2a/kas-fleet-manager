@@ -136,7 +136,7 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	type args struct {
 		kafkaRequest  public.KafkaRequestPayload
-		configService coreServices.ConfigService
+		configService services.ConfigService
 	}
 
 	type result struct {
@@ -154,7 +154,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				kafkaRequest: public.KafkaRequestPayload{},
-				configService: coreServices.NewConfigService(
+				configService: services.NewConfigService(
 					&config.ApplicationConfig{
 						SupportedProviders: &config.ProviderConfig{
 							ProvidersConfig: config.ProviderConfiguration{
@@ -189,7 +189,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
-				configService: coreServices.NewConfigService(
+				configService: services.NewConfigService(
 					&config.ApplicationConfig{
 						SupportedProviders: &config.ProviderConfig{
 							ProvidersConfig: config.ProviderConfiguration{
@@ -231,7 +231,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					SupportedProviders: &config.ProviderConfig{
 						ProvidersConfig: config.ProviderConfiguration{
 							SupportedProviders: config.ProviderList{

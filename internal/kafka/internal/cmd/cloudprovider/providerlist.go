@@ -6,7 +6,6 @@ import (
 	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +24,7 @@ func NewProviderListCommand(env *environments.Env) *cobra.Command {
 }
 
 func runProviderList(
-	config coreServices.ConfigService,
+	config services.ConfigService,
 	cloudProviderService services.CloudProvidersService,
 ) {
 

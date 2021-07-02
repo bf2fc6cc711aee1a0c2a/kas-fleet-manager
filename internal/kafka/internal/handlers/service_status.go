@@ -8,16 +8,15 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
 type serviceStatusHandler struct {
 	kafkaService  services.KafkaService
-	configService coreServices.ConfigService
+	configService services.ConfigService
 }
 
-func NewServiceStatusHandler(service services.KafkaService, configService coreServices.ConfigService) *serviceStatusHandler {
+func NewServiceStatusHandler(service services.KafkaService, configService services.ConfigService) *serviceStatusHandler {
 	return &serviceStatusHandler{
 		kafkaService:  service,
 		configService: configService,

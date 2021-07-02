@@ -17,11 +17,11 @@ type ReadyKafkaManager struct {
 	workers.BaseWorker
 	kafkaService    services.KafkaService
 	keycloakService coreServices.KeycloakService
-	configService   coreServices.ConfigService
+	configService   services.ConfigService
 }
 
 // NewReadyKafkaManager creates a new kafka manager
-func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, configService coreServices.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
+func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, configService services.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

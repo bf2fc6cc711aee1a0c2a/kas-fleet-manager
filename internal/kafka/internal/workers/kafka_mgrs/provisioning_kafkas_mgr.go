@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -20,11 +19,11 @@ type ProvisioningKafkaManager struct {
 	workers.BaseWorker
 	kafkaService         services.KafkaService
 	observatoriumService services.ObservatoriumService
-	configService        coreServices.ConfigService
+	configService        services.ConfigService
 }
 
 // NewProvisioningKafkaManager creates a new kafka manager
-func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, configService coreServices.ConfigService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
+func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, configService services.ConfigService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

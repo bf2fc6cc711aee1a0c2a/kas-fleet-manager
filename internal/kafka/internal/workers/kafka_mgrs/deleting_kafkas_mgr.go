@@ -11,7 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -19,12 +18,12 @@ import (
 type DeletingKafkaManager struct {
 	workers.BaseWorker
 	kafkaService        services.KafkaService
-	configService       coreServices.ConfigService
+	configService       services.ConfigService
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
+func NewDeletingKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
