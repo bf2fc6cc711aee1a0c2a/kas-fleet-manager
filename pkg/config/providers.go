@@ -1,7 +1,9 @@
 package config
 
 import (
+	"errors"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
@@ -71,6 +73,37 @@ func NewSupportedProvidersConfig() *ProviderConfig {
 	}
 }
 
+var _ provider.ServiceValidator = &ProviderConfig{}
+
+func (c *ProviderConfig) Validate() error {
+	providerDefaultCount := 0
+	for _, p := range c.ProvidersConfig.SupportedProviders {
+		if err := p.Validate(); err != nil {
+			return err
+		}
+		if p.Default {
+			providerDefaultCount++
+		}
+	}
+	if providerDefaultCount != 1 {
+		return fmt.Errorf("expected 1 default provider in provider list, got %d", providerDefaultCount)
+	}
+	return nil
+}
+
+func (provider Provider) Validate() error {
+	defaultCount := 0
+	for _, p := range provider.Regions {
+		if p.Default {
+			defaultCount++
+		}
+	}
+	if defaultCount != 1 {
+		return fmt.Errorf("expected 1 default region in provider %s, got %d", provider.Name, defaultCount)
+	}
+	return nil
+}
+
 func (c *ProviderConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ProvidersConfigFile, "providers-config-file", c.ProvidersConfigFile, "SupportedProviders configuration file")
 }
@@ -86,4 +119,34 @@ func readFileProvidersConfig(file string, val *ProviderConfiguration) error {
 		return err
 	}
 	return yaml.UnmarshalStrict([]byte(fileContents), val)
+}
+
+func (c ProviderList) GetDefault() (Provider, error) {
+	for _, p := range c {
+		if p.Default {
+			return p, nil
+		}
+	}
+	return Provider{}, errors.New("no default provider found in list of supported providers")
+}
+
+func (provider Provider) GetDefaultRegion() (Region, error) {
+	for _, r := range provider.Regions {
+		if r.Default {
+			return r, nil
+		}
+	}
+	return Region{}, fmt.Errorf("no default region found for provider %s", provider.Name)
+}
+
+func (provider Provider) IsRegionSupported(regionName string) bool {
+	_, ok := provider.Regions.GetByName(regionName)
+	return ok
+}
+
+func (h ProviderList) IsRegionSupportedForProvider(provider string, id string) bool {
+	if p, ok := h.GetByName(provider); ok {
+		return p.IsRegionSupported(id)
+	}
+	return false
 }

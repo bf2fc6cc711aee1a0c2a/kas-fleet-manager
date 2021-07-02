@@ -3,7 +3,6 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
@@ -109,17 +108,13 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		cfgService := services2.NewConfigService(
-			&config.ApplicationConfig{
-				Kafka: &config.KafkaConfig{
-					ProductType: tt.args.productType,
-				},
-			},
-		)
+		kafkaConfig := &config.KafkaConfig{
+			ProductType: tt.args.productType,
+		}
 
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, kafkaConfig, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
@@ -189,18 +184,14 @@ func Test_AMSReserveQuota(t *testing.T) {
 		},
 	}
 
-	cfgService := services2.NewConfigService(
-		&config.ApplicationConfig{
-			Kafka: &config.KafkaConfig{
-				ProductType: "RHOSAK",
-			},
-		},
-	)
+	cfgService := &config.KafkaConfig{
+		ProductType: "RHOSAK",
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
@@ -263,17 +254,12 @@ func Test_Delete_Quota(t *testing.T) {
 		},
 	}
 
-	cfgService := services2.NewConfigService(
-		&config.ApplicationConfig{
-			Kafka: &config.KafkaConfig{
-				ProductType: "RHOSAK",
-			},
-		},
-	)
-
+	cfgService := &config.KafkaConfig{
+		ProductType: "RHOSAK",
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService)
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService, nil)
 			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {

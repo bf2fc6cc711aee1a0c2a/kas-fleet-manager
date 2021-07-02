@@ -3,8 +3,9 @@ package cloudprovider
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -24,7 +25,7 @@ func NewProviderListCommand(env *environments.Env) *cobra.Command {
 }
 
 func runProviderList(
-	config services.ConfigService,
+	providerConfig *config.ProviderConfig,
 	cloudProviderService services.CloudProvidersService,
 ) {
 
@@ -39,9 +40,10 @@ func runProviderList(
 		Page:  int32(1),
 	}
 
+	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 	for _, cloudProvider := range cloudProviders {
-		cloudProvider.Enabled = config.IsProviderSupported(cloudProvider.Id)
-		converted := presenters2.PresentCloudProvider(&cloudProvider)
+		_, cloudProvider.Enabled = supportedProviders.GetByName(cloudProvider.Id)
+		converted := presenters.PresentCloudProvider(&cloudProvider)
 		cloudProviderList.Items = append(cloudProviderList.Items, converted)
 	}
 

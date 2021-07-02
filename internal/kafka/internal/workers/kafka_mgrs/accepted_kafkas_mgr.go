@@ -22,13 +22,12 @@ import (
 type AcceptedKafkaManager struct {
 	workers.BaseWorker
 	kafkaService        services.KafkaService
-	configService       services.ConfigService
 	quotaServiceFactory services.QuotaServiceFactory
 	clusterPlmtStrategy services.ClusterPlacementStrategy
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -38,7 +37,6 @@ func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService s
 			},
 		},
 		kafkaService:        kafkaService,
-		configService:       configService,
 		quotaServiceFactory: quotaServiceFactory,
 		clusterPlmtStrategy: clusterPlmtStrategy,
 	}

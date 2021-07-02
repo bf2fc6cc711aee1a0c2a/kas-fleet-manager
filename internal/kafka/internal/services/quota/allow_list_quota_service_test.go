@@ -2,7 +2,6 @@ package quota
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"net/http"
 	"testing"
 
@@ -17,7 +16,8 @@ import (
 func Test_AllowListCheckQuota(t *testing.T) {
 	type args struct {
 		connectionFactory *db.ConnectionFactory
-		configService     services2.ConfigService
+		KafkaConfig       *config.KafkaConfig
+		AccessControlList *config.AccessControlListConfig
 	}
 
 	tests := []struct {
@@ -30,13 +30,9 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "do not throw an error when instance limit control is disabled",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(
-					&config.ApplicationConfig{
-						AccessControlList: &config.AccessControlListConfig{
-							EnableInstanceLimitControl: false,
-						},
-					},
-				),
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: false,
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -48,19 +44,17 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when the query db throws an error",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableInstanceLimitControl: true,
-						AllowList: config.AllowListConfiguration{
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{
-									Username:            "username",
-									MaxAllowedInstances: 4,
-								},
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+					AllowList: config.AllowListConfiguration{
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{
+								Username:            "username",
+								MaxAllowedInstances: 4,
 							},
 						},
 					},
-				}),
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -72,22 +66,18 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding allowed organisation limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(
-					&config.ApplicationConfig{
-						AccessControlList: &config.AccessControlListConfig{
-							EnableInstanceLimitControl: true,
-							AllowList: config.AllowListConfiguration{
-								Organisations: config.OrganisationList{
-									config.Organisation{
-										Id:                  "org-id",
-										MaxAllowedInstances: 4,
-										AllowAll:            true,
-									},
-								},
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							config.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 4,
+								AllowAll:            true,
 							},
 						},
 					},
-				),
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -103,21 +93,17 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding allowed limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(
-					&config.ApplicationConfig{
-						AccessControlList: &config.AccessControlListConfig{
-							EnableInstanceLimitControl: true,
-							AllowList: config.AllowListConfiguration{
-								ServiceAccounts: config.AllowedAccounts{
-									config.AllowedAccount{
-										Username:            "username",
-										MaxAllowedInstances: 4,
-									},
-								},
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+					AllowList: config.AllowListConfiguration{
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{
+								Username:            "username",
+								MaxAllowedInstances: 4,
 							},
 						},
 					},
-				),
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -133,20 +119,16 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(
-					&config.ApplicationConfig{
-						AccessControlList: &config.AccessControlListConfig{
-							EnableInstanceLimitControl: true,
-							AllowList: config.AllowListConfiguration{
-								ServiceAccounts: config.AllowedAccounts{
-									config.AllowedAccount{
-										Username: "username",
-									},
-								},
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+					AllowList: config.AllowListConfiguration{
+						ServiceAccounts: config.AllowedAccounts{
+							config.AllowedAccount{
+								Username: "username",
 							},
 						},
 					},
-				),
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -162,11 +144,9 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allow list",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(&config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						EnableInstanceLimitControl: true,
-					},
-				}),
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -182,22 +162,18 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error if user is not allowed in their org and they cannot create any more instances after exceeding default allowed user limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(
-					&config.ApplicationConfig{
-						AccessControlList: &config.AccessControlListConfig{
-							EnableInstanceLimitControl: true,
-							AllowList: config.AllowListConfiguration{
-								Organisations: config.OrganisationList{
-									config.Organisation{
-										Id:                  "org-id",
-										MaxAllowedInstances: 4,
-										AllowAll:            false,
-									},
-								},
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							config.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 4,
+								AllowAll:            false,
 							},
 						},
 					},
-				),
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -213,22 +189,18 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "does not return an error if user is within limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				configService: services2.NewConfigService(
-					&config.ApplicationConfig{
-						AccessControlList: &config.AccessControlListConfig{
-							EnableInstanceLimitControl: true,
-							AllowList: config.AllowListConfiguration{
-								Organisations: config.OrganisationList{
-									config.Organisation{
-										Id:                  "org-id",
-										MaxAllowedInstances: 4,
-										AllowAll:            true,
-									},
-								},
+				AccessControlList: &config.AccessControlListConfig{
+					EnableInstanceLimitControl: true,
+					AllowList: config.AllowListConfiguration{
+						Organisations: config.OrganisationList{
+							config.Organisation{
+								Id:                  "org-id",
+								MaxAllowedInstances: 4,
+								AllowAll:            true,
 							},
 						},
 					},
-				),
+				},
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
@@ -244,7 +216,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			factory := NewDefaultQuotaServiceFactory(nil, tt.arg.connectionFactory, tt.arg.configService)
+			factory := NewDefaultQuotaServiceFactory(nil, tt.arg.connectionFactory, tt.arg.KafkaConfig, tt.arg.AccessControlList)
 			quotaService, _ := factory.GetQuotaService(api.AllowListQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",

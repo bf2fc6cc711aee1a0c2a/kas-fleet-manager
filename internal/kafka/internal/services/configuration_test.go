@@ -76,12 +76,8 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				&config.ApplicationConfig{
-					SupportedProviders: &tt.fields.providersConfig,
-				},
-			}
-			got, err := c.GetDefaultProvider()
+			c := tt.fields.providersConfig
+			got, err := c.ProvidersConfig.SupportedProviders.GetDefault()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetDefaultProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -94,15 +90,11 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 }
 
 func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
-	type fields struct {
-		providersConfig config.ProviderConfig
-	}
 	type args struct {
 		provider config.Provider
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		want    config.Region
 		wantErr bool
@@ -158,12 +150,7 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				&config.ApplicationConfig{
-					SupportedProviders: &tt.fields.providersConfig,
-				},
-			}
-			got, err := c.GetDefaultRegionForProvider(tt.args.provider)
+			got, err := tt.args.provider.GetDefaultRegion()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetDefaultRegionForProvider() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -206,12 +193,8 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				&config.ApplicationConfig{
-					SupportedProviders: &tt.fields.providersConfig,
-				},
-			}
-			if got := c.GetSupportedProviders(); !reflect.DeepEqual(got, tt.want) {
+			c := tt.fields.providersConfig
+			if got := c.ProvidersConfig.SupportedProviders; !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetSupportedProviders() = %v, want %v", got, tt.want)
 			}
 		})
@@ -266,12 +249,8 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				&config.ApplicationConfig{
-					SupportedProviders: &tt.fields.providersConfig,
-				},
-			}
-			if got := c.IsProviderSupported(tt.args.providerName); got != tt.want {
+			c := tt.fields.providersConfig
+			if _, got := c.ProvidersConfig.SupportedProviders.GetByName(tt.args.providerName); got != tt.want {
 				t.Errorf("IsProviderSupported() = %v, want %v", got, tt.want)
 			}
 		})
@@ -353,12 +332,8 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{
-				&config.ApplicationConfig{
-					SupportedProviders: &tt.fields.providersConfig,
-				},
-			}
-			if got := c.IsRegionSupportedForProvider(tt.args.providerName, tt.args.regionName); got != tt.want {
+			c := tt.fields.providersConfig
+			if got := c.ProvidersConfig.SupportedProviders.IsRegionSupportedForProvider(tt.args.providerName, tt.args.regionName); got != tt.want {
 				t.Errorf("IsRegionSupportedForProvider() = %v, want %v", got, tt.want)
 			}
 		})
@@ -371,23 +346,19 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		service configService
-		arg     string
-		want    result
+		name              string
+		AccessControlList *config.AccessControlListConfig
+		arg               string
+		want              result
 	}{
 		{
 			name: "return 'false' when organisation does not exist in the allowed list",
 			arg:  "some-id",
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id: "different-id",
-								},
-							},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id: "different-id",
 						},
 					},
 				},
@@ -400,15 +371,11 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 		{
 			name: "return 'true' when organisation exists in the allowed list",
 			arg:  "some-id",
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								config.Organisation{
-									Id: "some-id",
-								},
-							},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						config.Organisation{
+							Id: "some-id",
 						},
 					},
 				},
@@ -424,7 +391,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			org, found := tt.service.GetOrganisationById(tt.arg)
+			org, found := tt.AccessControlList.AllowList.Organisations.GetById(tt.arg)
 			Expect(org).To(Equal(tt.want.organisation))
 			Expect(found).To(Equal(tt.want.found))
 		})
@@ -451,10 +418,10 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		service configService
-		arg     args
-		want    result
+		name              string
+		arg               args
+		want              result
+		AccessControlList *config.AccessControlListConfig
 	}{
 		{
 			name: "return 'true' and the found user when organisation contains the user",
@@ -462,14 +429,10 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-1",
 				orgId:    organisation.Id,
 			},
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								organisation,
-							},
-						},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						organisation,
 					},
 				},
 			},
@@ -484,19 +447,15 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-10",
 				orgId:    organisation.Id,
 			},
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								organisation,
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username-0"},
-								config.AllowedAccount{Username: "username-10"},
-								config.AllowedAccount{Username: "username-3"},
-							},
-						},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						organisation,
+					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username-0"},
+						config.AllowedAccount{Username: "username-10"},
+						config.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
@@ -511,18 +470,14 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-10",
 				orgId:    "some-org-id",
 			},
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								organisation,
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username-0"},
-								config.AllowedAccount{Username: "username-3"},
-							},
-						},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						organisation,
+					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username-0"},
+						config.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
@@ -535,7 +490,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			user, ok := tt.service.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
+			user, ok := tt.AccessControlList.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
 			Expect(user).To(Equal(tt.want.AllowedAccount))
 			Expect(ok).To(Equal(tt.want.found))
 		})
@@ -561,29 +516,25 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 	}
 
 	tests := []struct {
-		name    string
-		service configService
-		arg     args
-		want    result
+		name              string
+		arg               args
+		want              result
+		AccessControlList *config.AccessControlListConfig
 	}{
 		{
 			name: "return 'true' and the user when user is contained in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
 			},
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								organisation,
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username-0"},
-								config.AllowedAccount{Username: "username-10"},
-								config.AllowedAccount{Username: "username-3"},
-							},
-						},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						organisation,
+					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username-0"},
+						config.AllowedAccount{Username: "username-10"},
+						config.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
@@ -597,18 +548,14 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 			arg: args{
 				username: "username-10",
 			},
-			service: configService{
-				appConfig: &config.ApplicationConfig{
-					AccessControlList: &config.AccessControlListConfig{
-						AllowList: config.AllowListConfiguration{
-							Organisations: config.OrganisationList{
-								organisation,
-							},
-							ServiceAccounts: config.AllowedAccounts{
-								config.AllowedAccount{Username: "username-0"},
-								config.AllowedAccount{Username: "username-3"},
-							},
-						},
+			AccessControlList: &config.AccessControlListConfig{
+				AllowList: config.AllowListConfiguration{
+					Organisations: config.OrganisationList{
+						organisation,
+					},
+					ServiceAccounts: config.AllowedAccounts{
+						config.AllowedAccount{Username: "username-0"},
+						config.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
@@ -621,7 +568,7 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			user, ok := tt.service.GetServiceAccountByUsername(tt.arg.username)
+			user, ok := tt.AccessControlList.AllowList.ServiceAccounts.GetByUsername(tt.arg.username)
 			Expect(user).To(Equal(tt.want.AllowedAccount))
 			Expect(ok).To(Equal(tt.want.found))
 		})
@@ -758,9 +705,7 @@ func Test_configService_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{appConfig: &config.ApplicationConfig{
-				SupportedProviders: &tt.fields.providersConfig,
-			}}
+			c := tt.fields.providersConfig
 			if err := c.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -769,15 +714,11 @@ func Test_configService_Validate(t *testing.T) {
 }
 
 func Test_configService_validateProvider(t *testing.T) {
-	type fields struct {
-		providersConfig config.ProviderConfig
-	}
 	type args struct {
 		provider config.Provider
 	}
 	tests := []struct {
 		name    string
-		fields  fields
 		args    args
 		wantErr bool
 	}{
@@ -827,10 +768,7 @@ func Test_configService_validateProvider(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := configService{appConfig: &config.ApplicationConfig{
-				SupportedProviders: &tt.fields.providersConfig,
-			}}
-			if err := c.validateProvider(tt.args.provider); (err != nil) != tt.wantErr {
+			if err := tt.args.provider.Validate(); (err != nil) != tt.wantErr {
 				t.Errorf("validateProvider() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

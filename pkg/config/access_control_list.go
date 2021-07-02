@@ -165,3 +165,14 @@ func readDenyListConfigFile(file string, val *DeniedUsers) error {
 
 	return yaml.UnmarshalStrict([]byte(fileContents), val)
 }
+
+func (c *AccessControlListConfig) GetAllowedAccountByUsernameAndOrgId(username string, orgId string) (AllowedAccount, bool) {
+	var user AllowedAccount
+	var found bool
+	org, _ := c.AllowList.Organisations.GetById(orgId)
+	user, found = org.AllowedAccounts.GetByUsername(username)
+	if found {
+		return user, found
+	}
+	return c.AllowList.ServiceAccounts.GetByUsername(username)
+}

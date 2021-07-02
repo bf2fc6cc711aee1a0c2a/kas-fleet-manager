@@ -5,6 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"github.com/golang/glog"
@@ -29,9 +30,9 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 
 	id := flags.MustGetDefinedString(FlagID, cmd.Flags())
 
-	var config services.ConfigService
+	var providerConfig *config.ProviderConfig
 	var cloudProviderService services.CloudProvidersService
-	env.MustResolveAll(&config, &cloudProviderService)
+	env.MustResolveAll(&providerConfig, &cloudProviderService)
 
 	cloudRegions, err := cloudProviderService.ListCloudProviderRegions(id)
 	if err != nil {
@@ -44,8 +45,10 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 		Size:  int32(len(cloudRegions)),
 		Page:  int32(1),
 	}
+
+	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 	for _, cloudRegion := range cloudRegions {
-		cloudRegion.Enabled = config.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
+		cloudRegion.Enabled = supportedProviders.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
 		converted := presenters2.PresentCloudRegion(&cloudRegion)
 		regionList.Items = append(regionList.Items, converted)
 	}

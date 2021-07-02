@@ -13,14 +13,12 @@ import (
 
 type dataPlaneKafkaHandler struct {
 	service      services.DataPlaneKafkaService
-	config       services.ConfigService
 	kafkaService services.KafkaService
 }
 
-func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService services.ConfigService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
+func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
 	return &dataPlaneKafkaHandler{
 		service:      service,
-		config:       configService,
 		kafkaService: kafkaService,
 	}
 }
