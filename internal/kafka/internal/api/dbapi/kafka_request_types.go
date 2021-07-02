@@ -2,8 +2,11 @@ package dbapi
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type KafkaRequest struct {
@@ -55,11 +58,39 @@ func (k *KafkaRequest) BeforeCreate(scope *gorm.DB) error {
 
 func (k *KafkaRequest) GetRoutes() ([]DataPlaneKafkaRoute, error) {
 	var routes []DataPlaneKafkaRoute
+	if k.Routes == nil {
+		return routes, nil
+	}
 	if err := json.Unmarshal(k.Routes, &routes); err != nil {
 		return nil, err
 	} else {
 		return routes, nil
 	}
+}
+
+func (k *KafkaRequest) GetDefaultRoutes(clusterDNS string, numberOfBrokers int) []DataPlaneKafkaRoute {
+	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+	clusterIngress := fmt.Sprintf("elb.%s", clusterDNS)
+
+	routes := []DataPlaneKafkaRoute{
+		{
+			Domain: k.BootstrapServerHost,
+			Router: clusterIngress,
+		},
+		{
+			Domain: fmt.Sprintf("admin-server-%s", k.BootstrapServerHost),
+			Router: clusterIngress,
+		},
+	}
+
+	for i := 0; i < numberOfBrokers; i++ {
+		r := DataPlaneKafkaRoute{
+			Domain: fmt.Sprintf("broker-%d-%s", i, k.BootstrapServerHost),
+			Router: clusterIngress,
+		}
+		routes = append(routes, r)
+	}
+	return routes
 }
 
 func (k *KafkaRequest) SetRoutes(routes []DataPlaneKafkaRoute) error {
