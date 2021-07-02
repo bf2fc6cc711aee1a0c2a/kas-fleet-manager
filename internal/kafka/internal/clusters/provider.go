@@ -56,9 +56,15 @@ type DefaultProviderFactory struct {
 	providerContainer map[api.ClusterProviderType]Provider
 }
 
-func NewDefaultProviderFactory(ocmClient ocm2.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory, ocmConfig *config.OCMConfig) *DefaultProviderFactory {
-	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(appConfig.AWS, appConfig.DataplaneClusterConfig), ocmConfig)
-	standaloneProvider := newStandaloneProvider(connectionFactory, appConfig.DataplaneClusterConfig)
+func NewDefaultProviderFactory(
+	ocmClient ocm2.Client,
+	connectionFactory *db.ConnectionFactory,
+	ocmConfig *config.OCMConfig,
+	awsConfig *config.AWSConfig,
+	dataplaneClusterConfig *config.DataplaneClusterConfig,
+) *DefaultProviderFactory {
+	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(awsConfig, dataplaneClusterConfig), ocmConfig)
+	standaloneProvider := newStandaloneProvider(connectionFactory, dataplaneClusterConfig)
 	return &DefaultProviderFactory{
 		providerContainer: map[api.ClusterProviderType]Provider{
 			api.ClusterProviderStandalone: standaloneProvider,

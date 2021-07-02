@@ -95,13 +95,13 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.DeprecatedBootstrapServerHost).To(Not(BeEmpty()))
-	Expect(foundKafka.Version).To(Equal(test2.TestServices.AppConfig.Kafka.DefaultKafkaVersion))
+	Expect(foundKafka.Version).To(Equal(test2.TestServices.KafkaConfig.DefaultKafkaVersion))
 
 	// checking kafka_request bootstrap server port number being present
 	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
-	Expect(kafka.Version).To(Equal(test2.TestServices.AppConfig.Kafka.DefaultKafkaVersion))
+	Expect(kafka.Version).To(Equal(test2.TestServices.KafkaConfig.DefaultKafkaVersion))
 
 	db := test2.TestServices.DBFactory.New()
 	var kafkaRequest dbapi.KafkaRequest
@@ -693,7 +693,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
 	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusAccepted.String()))
-	Expect(kafka.Version).To(Equal(test2.TestServices.AppConfig.Kafka.DefaultKafkaVersion))
+	Expect(kafka.Version).To(Equal(test2.TestServices.KafkaConfig.DefaultKafkaVersion))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
