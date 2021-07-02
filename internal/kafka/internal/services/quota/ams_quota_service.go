@@ -3,14 +3,14 @@ package quota
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
+	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 )
 
 type amsQuotaService struct {
-	ocmClient   ocm.Client
+	ocmClient   ocm2.Client
 	kafkaConfig *config.KafkaConfig
 }
 

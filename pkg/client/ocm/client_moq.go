@@ -5,6 +5,7 @@ package ocm
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	sdkClient "github.com/openshift-online/ocm-sdk-go"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"sync"
@@ -22,6 +23,9 @@ var _ Client = &ClientMock{}
 // 		mockedClient := &ClientMock{
 // 			ClusterAuthorizationFunc: func(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error) {
 // 				panic("mock out the ClusterAuthorization method")
+// 			},
+// 			ConnectionFunc: func() *sdkClient.Connection {
+// 				panic("mock out the Connection method")
 // 			},
 // 			CreateAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 // 				panic("mock out the CreateAddon method")
@@ -108,6 +112,9 @@ type ClientMock struct {
 	// ClusterAuthorizationFunc mocks the ClusterAuthorization method.
 	ClusterAuthorizationFunc func(cb *amsv1.ClusterAuthorizationRequest) (*amsv1.ClusterAuthorizationResponse, error)
 
+	// ConnectionFunc mocks the Connection method.
+	ConnectionFunc func() *sdkClient.Connection
+
 	// CreateAddonFunc mocks the CreateAddon method.
 	CreateAddonFunc func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error)
 
@@ -189,6 +196,9 @@ type ClientMock struct {
 		ClusterAuthorization []struct {
 			// Cb is the cb argument value.
 			Cb *amsv1.ClusterAuthorizationRequest
+		}
+		// Connection holds details about calls to the Connection method.
+		Connection []struct {
 		}
 		// CreateAddon holds details about calls to the CreateAddon method.
 		CreateAddon []struct {
@@ -345,6 +355,7 @@ type ClientMock struct {
 		}
 	}
 	lockClusterAuthorization       sync.RWMutex
+	lockConnection                 sync.RWMutex
 	lockCreateAddon                sync.RWMutex
 	lockCreateAddonWithParams      sync.RWMutex
 	lockCreateCluster              sync.RWMutex
@@ -400,6 +411,32 @@ func (mock *ClientMock) ClusterAuthorizationCalls() []struct {
 	mock.lockClusterAuthorization.RLock()
 	calls = mock.calls.ClusterAuthorization
 	mock.lockClusterAuthorization.RUnlock()
+	return calls
+}
+
+// Connection calls ConnectionFunc.
+func (mock *ClientMock) Connection() *sdkClient.Connection {
+	if mock.ConnectionFunc == nil {
+		panic("ClientMock.ConnectionFunc: method is nil but Client.Connection was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockConnection.Lock()
+	mock.calls.Connection = append(mock.calls.Connection, callInfo)
+	mock.lockConnection.Unlock()
+	return mock.ConnectionFunc()
+}
+
+// ConnectionCalls gets all the calls that were made to Connection.
+// Check the length with:
+//     len(mockedClient.ConnectionCalls())
+func (mock *ClientMock) ConnectionCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockConnection.RLock()
+	calls = mock.calls.Connection
+	mock.lockConnection.RUnlock()
 	return calls
 }
 

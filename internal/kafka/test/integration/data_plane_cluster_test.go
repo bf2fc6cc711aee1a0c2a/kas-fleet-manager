@@ -13,7 +13,6 @@ import (
 	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	ocm "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -345,7 +344,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
-	ocmClient := ocm.NewClient(test.TestServices.OCM2Client.Connection)
+	ocmClient := test.TestServices.OCMClient
 
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
 	initialComputeNodes := ocmCluster.Nodes().Compute()
@@ -472,7 +471,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	ctx := kasfleetshardsync2.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
-	ocmClient := ocm.NewClient(test.TestServices.OCM2Client.Connection)
+	ocmClient := test.TestServices.OCMClient
 
 	ocmCluster, err := ocmClient.GetCluster(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
