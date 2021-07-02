@@ -228,7 +228,7 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 			return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
 		}
 		// TODO: This is here for keep backward compatibility. Remove this once the kas-fleetshard added implementation for routes. We no longer need to produce default routes at all.
-		routes = defaultRoutes(kafka, clusterDNS, d.kafkaConfig)
+		routes = kafka.GetDefaultRoutes(clusterDNS, d.kafkaConfig.NumOfBrokers)
 	} else {
 		routes = ensureValidDomainInRoutes(routes, kafka)
 	}
@@ -241,31 +241,6 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 		return serviceError.NewWithCause(err.Code, err, "failed to update routes for kafka cluster %s", kafka.ID)
 	}
 	return nil
-}
-
-func defaultRoutes(kafka *dbapi.KafkaRequest, clusterDNS string, kafkaConfig *config.KafkaConfig) []dbapi.DataPlaneKafkaRoute {
-	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
-	clusterIngress := fmt.Sprintf("elb.%s", clusterDNS)
-
-	routes := []dbapi.DataPlaneKafkaRoute{
-		{
-			Domain: kafka.BootstrapServerHost,
-			Router: clusterIngress,
-		},
-		{
-			Domain: fmt.Sprintf("admin-server-%s", kafka.BootstrapServerHost),
-			Router: clusterIngress,
-		},
-	}
-
-	for i := 0; i < kafkaConfig.NumOfBrokers; i++ {
-		r := dbapi.DataPlaneKafkaRoute{
-			Domain: fmt.Sprintf("broker-%d-%s", i, kafka.BootstrapServerHost),
-			Router: clusterIngress,
-		}
-		routes = append(routes, r)
-	}
-	return routes
 }
 
 func ensureValidDomainInRoutes(routes []dbapi.DataPlaneKafkaRoute, kafka *dbapi.KafkaRequest) []dbapi.DataPlaneKafkaRoute {

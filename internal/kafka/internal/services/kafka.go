@@ -515,8 +515,14 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 
 func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	routes, err := kafkaRequest.GetRoutes()
-	if err != nil {
-		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to parse routes data for kafka %s", kafkaRequest.ID)
+	if routes == nil || err != nil {
+		glog.Infof("failed to parse routes data for kafka %s, routes := %v", kafkaRequest.ID, kafkaRequest.Routes)
+		if clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID); err != nil {
+			return nil, err
+		} else {
+			routes = kafkaRequest.GetDefaultRoutes(clusterDNS, k.kafkaConfig.NumOfBrokers)
+			glog.Infof("built default routes %v for kafka %s", kafkaRequest.ID, routes)
+		}
 	}
 	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, string(action))
 
