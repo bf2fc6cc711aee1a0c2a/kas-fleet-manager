@@ -5,7 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	. "github.com/onsi/gomega"
 	"testing"
