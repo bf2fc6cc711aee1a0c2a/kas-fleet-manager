@@ -49,14 +49,16 @@ type connectorClusterService struct {
 	bus                   signalbus.SignalBus
 	connectorTypesService ConnectorTypesService
 	vaultService          vault.VaultService
+	connectorsService     ConnectorsService
 }
 
-func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService, connectorTypesService ConnectorTypesService) *connectorClusterService {
+func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus signalbus.SignalBus, vaultService vault.VaultService, connectorTypesService ConnectorTypesService, connectorsService ConnectorsService) *connectorClusterService {
 	return &connectorClusterService{
 		connectionFactory:     connectionFactory,
 		bus:                   bus,
 		connectorTypesService: connectorTypesService,
 		vaultService:          vaultService,
+		connectorsService:     connectorsService,
 	}
 }
 
@@ -362,24 +364,48 @@ func (k *connectorClusterService) ListConnectorDeployments(ctx context.Context, 
 	return resourceList, pagingMeta, nil
 }
 
-func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, resource dbapi.ConnectorDeploymentStatus) *errors.ServiceError {
+func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Context, deploymentStatus dbapi.ConnectorDeploymentStatus) *errors.ServiceError {
 	dbConn := k.connectionFactory.New()
 
 	// lets get the connector id of the deployment..
 	deployment := dbapi.ConnectorDeployment{}
 	if err := dbConn.Select("connector_id").
-		Where("id = ?", resource.ID).
+		Where("id = ?", deploymentStatus.ID).
 		First(&deployment).Error; err != nil {
-		return services.HandleGetError("connector deployment", "id", resource.ID, err)
+		return services.HandleGetError("connector deployment", "id", deploymentStatus.ID, err)
 	}
 
-	if err := dbConn.Model(&resource).Where("id = ?", resource.ID).Save(&resource).Error; err != nil {
+	if err := dbConn.Model(&deploymentStatus).Where("id = ?", deploymentStatus.ID).Save(&deploymentStatus).Error; err != nil {
 		return errors.GeneralError("failed to update deployment status: %s", err.Error())
+	}
+
+	connector := dbapi.Connector{}
+	if err := dbConn.Select("desired_state").
+		Where("id = ?", deployment.ConnectorID).
+		First(&connector).Error; err != nil {
+		return services.HandleGetError("connector", "id", deployment.ConnectorID, err)
 	}
 
 	// TODO: use post the deployment status to the type service to simplify the connector status.
 	c := dbapi.ConnectorStatus{
-		Phase: resource.Phase,
+		Phase: deploymentStatus.Phase,
+	}
+
+	if deploymentStatus.Phase == dbapi.ConnectorStatusPhaseDeleted {
+		// we don't need the deployment anymore...
+		if err := deleteConnectorDeployment(dbConn, deploymentStatus.ID); err != nil {
+			return err
+		}
+
+		switch connector.DesiredState {
+		case dbapi.ConnectorStatusPhaseStopped:
+			c.Phase = dbapi.ConnectorStatusPhaseStopped
+		case dbapi.ConnectorStatusPhaseDeleted:
+			if err := k.connectorsService.Delete(ctx, deployment.ConnectorID); err != nil {
+				return err
+			}
+			return nil // return now since we don't need to update the status of the connector
+		}
 	}
 	if err := dbConn.Model(&c).Where("id = ?", deployment.ConnectorID).Updates(&c).Error; err != nil {
 		return errors.GeneralError("failed to update connector status: %s", err.Error())

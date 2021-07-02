@@ -134,7 +134,6 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	if id == "" {
 		return errors.Validation("id is undefined")
 	}
-
 	dbConn := k.connectionFactory.New()
 
 	var resource dbapi.Connector
@@ -150,34 +149,11 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 		return services.HandleGetError("ConnectorStatus", "id", id, err)
 	}
 
-	var deployment dbapi.ConnectorDeployment
-	err := dbConn.Select("id").Where("connector_id = ?", id).First(&deployment).Error
-	switch err {
-	case nil:
-		// no err, deployment existed..
-		if err := dbConn.Where("id = ?", deployment.ID).Delete(&dbapi.ConnectorDeployment{}).Error; err != nil {
-			err := services.HandleGetError("ConnectorDeployment", "id", deployment.ID, err)
-			if err != nil {
-				return err
-			}
-		}
-		if err := dbConn.Where("id = ?", deployment.ID).Delete(&dbapi.ConnectorDeploymentStatus{}).Error; err != nil {
-			err := services.HandleGetError("ConnectorDeploymentStatus", "id", deployment.ID, err)
-			if err != nil {
-				return err
-			}
-		}
-	case gorm.ErrRecordNotFound:
-		// deployment did not exist, so we don't need to clean up after it..
-	default:
-		return services.HandleGetError("ConnectorDeployment", "connector_id", id, err)
-	}
-
 	_ = db.AddPostCommitAction(ctx, func() {
 		// delete related distributed resources...
 
 		if resource.Kafka.ClientSecretRef != "" {
-			err = k.vaultService.DeleteSecretString(resource.Kafka.ClientSecretRef)
+			err := k.vaultService.DeleteSecretString(resource.Kafka.ClientSecretRef)
 			if err != nil {
 				logger.Logger.Errorf("failed to delete vault secret key '%s': %v", resource.Kafka.ClientSecretRef, err)
 			}
