@@ -20,7 +20,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"github.com/pkg/errors"
 	"gopkg.in/resty.v1"
+	"time"
 )
 
 type TestServer struct {
@@ -354,6 +356,25 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		}
 	}
 
+	// routes will be stored the first time status are updated
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	Expect(err).NotTo(HaveOccurred())
+
+	// wait for the CNAMEs for routes to be created
+	waitErr := common.NewPollerBuilder(test2.TestServices.DBFactory).
+		IntervalAndTimeout(1*time.Second, 1*time.Minute).
+		RetryLogMessage("waiting for Kafka routes to be created").
+		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			c := &dbapi.KafkaRequest{}
+			if err := db.First(c, "routes IS NOT NULL").Error; err != nil {
+				return false, err
+			}
+			// if one route is created, it is safe to assume all routes are created
+			return c.RoutesCreated, nil
+		}).Build().Poll()
+	Expect(waitErr).To(BeNil())
+
+	// Send the requests again, this time the instances should be ready because routes are created
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
 	Expect(err).NotTo(HaveOccurred())
 
@@ -500,6 +521,111 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).To(BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
+	}
+}
+
+func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
+	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, nil)
+	defer testServer.TearDown()
+	bootstrapServerHost := "prefix.some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
+	var testKafkas = []*dbapi.KafkaRequest{
+		{
+			ClusterID:           testServer.ClusterID,
+			MultiAZ:             false,
+			Name:                mockKafkaName2,
+			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost: bootstrapServerHost,
+			SsoClientID:         ssoClientID,
+			SsoClientSecret:     ssoSecret,
+			Version:             "2.6.0",
+		},
+	}
+
+	db := test2.TestServices.DBFactory.New()
+
+	// create dummy kafkas
+	if err := db.Create(&testKafkas).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // only count valid Managed Kafka CR
+
+	var readyClusters []string
+	updates := map[string]private.DataPlaneKafkaStatus{}
+	for _, item := range list.Items {
+		updates[item.Metadata.Annotations.Id] = private.DataPlaneKafkaStatus{
+			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
+				Type:   "Ready",
+				Status: "True",
+			}},
+			Routes: &[]private.DataPlaneKafkaStatusRoutes{
+				{
+					Route: "admin-api",
+					Router: "router.external.example.com",
+				},
+			},
+		}
+		readyClusters = append(readyClusters, item.Metadata.Annotations.Id)
+	}
+
+	// routes will be stored the first time status are updated
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	Expect(err).NotTo(HaveOccurred())
+
+	// wait for the CNAMEs for routes to be created
+	waitErr := common.NewPollerBuilder(test2.TestServices.DBFactory).
+		IntervalAndTimeout(1*time.Second, 1*time.Minute).
+		RetryLogMessage("waiting for Kafka routes to be created").
+		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
+			c := &dbapi.KafkaRequest{}
+			if err := db.First(c, "routes IS NOT NULL").Error; err != nil {
+				return false, err
+			}
+			routes, err := c.GetRoutes()
+			if err != nil {
+				return false, err
+			}
+			if len(routes) != 1 {
+				return false, errors.Errorf("expected length of routes array to be 1")
+			}
+			wantDomain := "admin-api.some-bootstrap⁻host"
+			if routes[0].Domain != wantDomain {
+				return false, errors.Errorf("route domain value is %s but want %s", routes[0].Domain, wantDomain)
+			}
+
+			// if one route is created, it is safe to assume all routes are created
+			return c.RoutesCreated, nil
+		}).Build().Poll()
+
+	Expect(waitErr).NotTo(HaveOccurred())
+
+	// Send the requests again, this time the instances should be ready because routes are created
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updates)
+	Expect(err).NotTo(HaveOccurred())
+
+	for _, cid := range readyClusters {
+		c := &dbapi.KafkaRequest{}
+		if err := db.First(c, "id = ?", cid).Error; err != nil {
+			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
+		}
+		Expect(c.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
 	}
 }
 

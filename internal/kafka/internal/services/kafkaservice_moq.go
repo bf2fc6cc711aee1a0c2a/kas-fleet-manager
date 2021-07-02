@@ -25,7 +25,7 @@ var _ KafkaService = &KafkaServiceMock{}
 //
 // 		// make and configure a mocked KafkaService
 // 		mockedKafkaService := &KafkaServiceMock{
-// 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
+// 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
 // 				panic("mock out the ChangeKafkaCNAMErecords method")
 // 			},
 // 			CountByStatusFunc: func(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
@@ -58,6 +58,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
 // 				panic("mock out the ListByStatus method")
 // 			},
+// 			ListKafkasWithRoutesNotCreatedFunc: func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+// 				panic("mock out the ListKafkasWithRoutesNotCreated method")
+// 			},
 // 			PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
 // 				panic("mock out the PrepareKafkaRequest method")
 // 			},
@@ -81,7 +84,7 @@ var _ KafkaService = &KafkaServiceMock{}
 // 	}
 type KafkaServiceMock struct {
 	// ChangeKafkaCNAMErecordsFunc mocks the ChangeKafkaCNAMErecords method.
-	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError)
+	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError)
 
 	// CountByStatusFunc mocks the CountByStatus method.
 	CountByStatusFunc func(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
@@ -113,6 +116,9 @@ type KafkaServiceMock struct {
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
 
+	// ListKafkasWithRoutesNotCreatedFunc mocks the ListKafkasWithRoutesNotCreated method.
+	ListKafkasWithRoutesNotCreatedFunc func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
+
 	// PrepareKafkaRequestFunc mocks the PrepareKafkaRequest method.
 	PrepareKafkaRequestFunc func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
 
@@ -134,10 +140,8 @@ type KafkaServiceMock struct {
 		ChangeKafkaCNAMErecords []struct {
 			// KafkaRequest is the kafkaRequest argument value.
 			KafkaRequest *dbapi.KafkaRequest
-			// ClusterDNS is the clusterDNS argument value.
-			ClusterDNS string
 			// Action is the action argument value.
-			Action string
+			Action KafkaRoutesAction
 		}
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
@@ -191,6 +195,9 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status []constants.KafkaStatus
 		}
+		// ListKafkasWithRoutesNotCreated holds details about calls to the ListKafkasWithRoutesNotCreated method.
+		ListKafkasWithRoutesNotCreated []struct {
+		}
 		// PrepareKafkaRequest holds details about calls to the PrepareKafkaRequest method.
 		PrepareKafkaRequest []struct {
 			// KafkaRequest is the kafkaRequest argument value.
@@ -221,42 +228,41 @@ type KafkaServiceMock struct {
 			Status constants.KafkaStatus
 		}
 	}
-	lockChangeKafkaCNAMErecords     sync.RWMutex
-	lockCountByStatus               sync.RWMutex
-	lockDelete                      sync.RWMutex
-	lockDeprovisionExpiredKafkas    sync.RWMutex
-	lockDeprovisionKafkaForUsers    sync.RWMutex
-	lockGet                         sync.RWMutex
-	lockGetById                     sync.RWMutex
-	lockGetManagedKafkaByClusterID  sync.RWMutex
-	lockHasAvailableCapacity        sync.RWMutex
-	lockList                        sync.RWMutex
-	lockListByStatus                sync.RWMutex
-	lockPrepareKafkaRequest         sync.RWMutex
-	lockRegisterKafkaDeprovisionJob sync.RWMutex
-	lockRegisterKafkaJob            sync.RWMutex
-	lockUpdate                      sync.RWMutex
-	lockUpdateStatus                sync.RWMutex
+	lockChangeKafkaCNAMErecords        sync.RWMutex
+	lockCountByStatus                  sync.RWMutex
+	lockDelete                         sync.RWMutex
+	lockDeprovisionExpiredKafkas       sync.RWMutex
+	lockDeprovisionKafkaForUsers       sync.RWMutex
+	lockGet                            sync.RWMutex
+	lockGetById                        sync.RWMutex
+	lockGetManagedKafkaByClusterID     sync.RWMutex
+	lockHasAvailableCapacity           sync.RWMutex
+	lockList                           sync.RWMutex
+	lockListByStatus                   sync.RWMutex
+	lockListKafkasWithRoutesNotCreated sync.RWMutex
+	lockPrepareKafkaRequest            sync.RWMutex
+	lockRegisterKafkaDeprovisionJob    sync.RWMutex
+	lockRegisterKafkaJob               sync.RWMutex
+	lockUpdate                         sync.RWMutex
+	lockUpdateStatus                   sync.RWMutex
 }
 
 // ChangeKafkaCNAMErecords calls ChangeKafkaCNAMErecordsFunc.
-func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
 	if mock.ChangeKafkaCNAMErecordsFunc == nil {
 		panic("KafkaServiceMock.ChangeKafkaCNAMErecordsFunc: method is nil but KafkaService.ChangeKafkaCNAMErecords was just called")
 	}
 	callInfo := struct {
 		KafkaRequest *dbapi.KafkaRequest
-		ClusterDNS   string
-		Action       string
+		Action       KafkaRoutesAction
 	}{
 		KafkaRequest: kafkaRequest,
-		ClusterDNS:   clusterDNS,
 		Action:       action,
 	}
 	mock.lockChangeKafkaCNAMErecords.Lock()
 	mock.calls.ChangeKafkaCNAMErecords = append(mock.calls.ChangeKafkaCNAMErecords, callInfo)
 	mock.lockChangeKafkaCNAMErecords.Unlock()
-	return mock.ChangeKafkaCNAMErecordsFunc(kafkaRequest, clusterDNS, action)
+	return mock.ChangeKafkaCNAMErecordsFunc(kafkaRequest, action)
 }
 
 // ChangeKafkaCNAMErecordsCalls gets all the calls that were made to ChangeKafkaCNAMErecords.
@@ -264,13 +270,11 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaR
 //     len(mockedKafkaService.ChangeKafkaCNAMErecordsCalls())
 func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
 	KafkaRequest *dbapi.KafkaRequest
-	ClusterDNS   string
-	Action       string
+	Action       KafkaRoutesAction
 } {
 	var calls []struct {
 		KafkaRequest *dbapi.KafkaRequest
-		ClusterDNS   string
-		Action       string
+		Action       KafkaRoutesAction
 	}
 	mock.lockChangeKafkaCNAMErecords.RLock()
 	calls = mock.calls.ChangeKafkaCNAMErecords
@@ -588,6 +592,32 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
+	return calls
+}
+
+// ListKafkasWithRoutesNotCreated calls ListKafkasWithRoutesNotCreatedFunc.
+func (mock *KafkaServiceMock) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+	if mock.ListKafkasWithRoutesNotCreatedFunc == nil {
+		panic("KafkaServiceMock.ListKafkasWithRoutesNotCreatedFunc: method is nil but KafkaService.ListKafkasWithRoutesNotCreated was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListKafkasWithRoutesNotCreated.Lock()
+	mock.calls.ListKafkasWithRoutesNotCreated = append(mock.calls.ListKafkasWithRoutesNotCreated, callInfo)
+	mock.lockListKafkasWithRoutesNotCreated.Unlock()
+	return mock.ListKafkasWithRoutesNotCreatedFunc()
+}
+
+// ListKafkasWithRoutesNotCreatedCalls gets all the calls that were made to ListKafkasWithRoutesNotCreated.
+// Check the length with:
+//     len(mockedKafkaService.ListKafkasWithRoutesNotCreatedCalls())
+func (mock *KafkaServiceMock) ListKafkasWithRoutesNotCreatedCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListKafkasWithRoutesNotCreated.RLock()
+	calls = mock.calls.ListKafkasWithRoutesNotCreated
+	mock.lockListKafkasWithRoutesNotCreated.RUnlock()
 	return calls
 }
 

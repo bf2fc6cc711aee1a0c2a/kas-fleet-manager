@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"strings"
-	"time"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
+	"strings"
+	"time"
 )
 
 type kafkaStatus string
@@ -34,12 +34,14 @@ type DataPlaneKafkaService interface {
 type dataPlaneKafkaService struct {
 	kafkaService   KafkaService
 	clusterService ClusterService
+	kafkaConfig    *config.KafkaConfig
 }
 
-func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService) *dataPlaneKafkaService {
+func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService, kafkaConfig *config.KafkaConfig) *dataPlaneKafkaService {
 	return &dataPlaneKafkaService{
 		kafkaService:   kafkaSrv,
 		clusterService: clusterSrv,
+		kafkaConfig:    kafkaConfig,
 	}
 }
 
@@ -66,7 +68,14 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 		var e *serviceError.ServiceError
 		switch s := getStatus(ks); s {
 		case statusReady:
-			e = d.setKafkaClusterReady(kafka)
+			// for now, only store the routes (and create them) when the Kafkas are ready, as by the time they are ready,
+			// the routes should definitely be there if they are set by kas-fleetshard.
+			// If they are not there then we can set the default ones because it means fleetshard won't set them.
+			// Once the changes are made on the fleetshard side, we can move this outside the ready state
+			e = d.persistKafkaRoutes(kafka, ks, cluster)
+			if e == nil {
+				e = d.setKafkaClusterReady(kafka)
+			}
 		case statusError:
 			// when getStatus returns statusError we know that the ready
 			// condition will be there so there's no need to check for it
@@ -89,6 +98,12 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 }
 
 func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) *serviceError.ServiceError {
+	if !kafka.RoutesCreated {
+		logger.Logger.V(10).Infof("routes for kafka %s are not created", kafka.ID)
+		return nil
+	} else {
+		logger.Logger.Infof("routes for kafka %s are created", kafka.ID)
+	}
 	// only send metrics data if the current kafka request is in "provisioning" status as this is the only case we want to report
 	shouldSendMetric, err := d.checkKafkaRequestCurrentStatus(kafka, constants.KafkaRequestStatusProvisioning)
 	if err != nil {
@@ -198,4 +213,70 @@ func (d *dataPlaneKafkaService) checkKafkaRequestCurrentStatus(kafka *dbapi.Kafk
 		matchStatus = true
 	}
 	return matchStatus, nil
+}
+
+func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, kafkaStatus *dbapi.DataPlaneKafkaStatus, cluster *api.Cluster) *serviceError.ServiceError {
+	if kafka.Routes != nil {
+		logger.Logger.V(10).Infof("skip persisting routes for Kafka %s as they are already stored", kafka.ID)
+		return nil
+	}
+	logger.Logger.Infof("store routes information for kafka %s", kafka.ID)
+	routes := kafkaStatus.Routes
+	if len(routes) == 0 {
+		clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
+		if err != nil {
+			return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
+		}
+		// TODO: This is here for keep backward compatibility. Remove this once the kas-fleetshard added implementation for routes. We no longer need to produce default routes at all.
+		routes = defaultRoutes(kafka, clusterDNS, d.kafkaConfig)
+	} else {
+		routes = ensureValidDomainInRoutes(routes, kafka)
+	}
+
+	if err := kafka.SetRoutes(routes); err != nil {
+		return serviceError.NewWithCause(serviceError.ErrorGeneral, err, "failed to set routes for kafka %s", kafka.ID)
+	}
+
+	if err := d.kafkaService.Update(kafka); err != nil {
+		return serviceError.NewWithCause(err.Code, err, "failed to update routes for kafka cluster %s", kafka.ID)
+	}
+	return nil
+}
+
+func defaultRoutes(kafka *dbapi.KafkaRequest, clusterDNS string, kafkaConfig *config.KafkaConfig) []dbapi.DataPlaneKafkaRoute {
+	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+	clusterIngress := fmt.Sprintf("elb.%s", clusterDNS)
+
+	routes := []dbapi.DataPlaneKafkaRoute{
+		{
+			Domain: kafka.BootstrapServerHost,
+			Router: clusterIngress,
+		},
+		{
+			Domain: fmt.Sprintf("admin-server-%s", kafka.BootstrapServerHost),
+			Router: clusterIngress,
+		},
+	}
+
+	for i := 0; i < kafkaConfig.NumOfBrokers; i++ {
+		r := dbapi.DataPlaneKafkaRoute{
+			Domain: fmt.Sprintf("broker-%d-%s", i, kafka.BootstrapServerHost),
+			Router: clusterIngress,
+		}
+		routes = append(routes, r)
+	}
+	return routes
+}
+
+func ensureValidDomainInRoutes(routes []dbapi.DataPlaneKafkaRoute, kafka *dbapi.KafkaRequest) []dbapi.DataPlaneKafkaRoute {
+	bootstrapServer := kafka.BootstrapServerHost
+	domain := strings.SplitN(bootstrapServer, ".", 2)[1]
+	for i, r := range routes {
+		if r.Domain == "bootstrap" {
+			routes[i].Domain = bootstrapServer
+		} else if !strings.HasSuffix(r.Domain, domain) {
+			routes[i].Domain = fmt.Sprintf("%s.%s", r.Domain, domain)
+		}
+	}
+	return routes
 }

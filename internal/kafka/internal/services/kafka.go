@@ -32,6 +32,11 @@ import (
 var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String()}
 var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusFailed.String()}
 
+type KafkaRoutesAction string
+
+const KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
+const KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
+
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
 	HasAvailableCapacity() (bool, *errors.ServiceError)
@@ -59,12 +64,13 @@ type KafkaService interface {
 	// why no attempt has been done
 	UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError)
 	Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
-	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
+	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError
 	CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
+	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -77,9 +83,10 @@ type kafkaService struct {
 	awsConfig           *config.AWSConfig
 	quotaServiceFactory QuotaServiceFactory
 	mu                  sync.Mutex
+	awsClientFactory    aws.ClientFactory
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory) *kafkaService {
 	return &kafkaService{
 		connectionFactory:   connectionFactory,
 		clusterService:      clusterService,
@@ -87,6 +94,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 		kafkaConfig:         kafkaConfig,
 		awsConfig:           awsConfig,
 		quotaServiceFactory: quotaServiceFactory,
+		awsClientFactory:    awsClientFactory,
 	}
 }
 
@@ -157,10 +165,6 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
-		_, err = k.ChangeKafkaCNAMErecords(kafkaRequest, clusterDNS, "CREATE")
-		if err != nil {
-			return err
-		}
 	}
 
 	if k.keycloakService.GetConfig().EnableAuthenticationOnKafka {
@@ -360,13 +364,7 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 		}
 
 		if k.kafkaConfig.EnableKafkaExternalCertificate {
-			clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID)
-			if err != nil {
-				return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
-			}
-			clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
-
-			_, err = k.ChangeKafkaCNAMErecords(kafkaRequest, clusterDNS, "DELETE")
+			_, err := k.ChangeKafkaCNAMErecords(kafkaRequest, KafkaRoutesActionDelete)
 			if err != nil {
 				return err
 			}
@@ -515,15 +513,19 @@ func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bo
 	return true, nil
 }
 
-func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, clusterDNS string, action string) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
-	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(kafkaRequest.BootstrapServerHost, clusterDNS, action, k.kafkaConfig)
+func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
+	routes, err := kafkaRequest.GetRoutes()
+	if err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to parse routes data for kafka %s", kafkaRequest.ID)
+	}
+	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, string(action))
 
 	// Create AWS client with the region of this Kafka Cluster
 	awsConfig := aws.Config{
 		AccessKeyID:     k.awsConfig.Route53AccessKey,
 		SecretAccessKey: k.awsConfig.Route53SecretAccessKey,
 	}
-	awsClient, err := aws.NewClient(awsConfig, kafkaRequest.Region)
+	awsClient, err := k.awsClientFactory.NewClient(awsConfig, kafkaRequest.Region)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "Unable to create aws client")
 	}
@@ -562,6 +564,15 @@ func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaSta
 		}
 	}
 
+	return results, nil
+}
+
+func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+	dbConn := k.connectionFactory.New()
+	var results []*dbapi.KafkaRequest
+	if err := dbConn.Where("routes IS NOT NULL").Where("routes_created = ?", "no").Find(&results).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list kafka requests")
+	}
 	return results, nil
 }
 
@@ -629,20 +640,14 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 	return managedKafkaCR
 }
 
-func buildKafkaClusterCNAMESRecordBatch(recordName string, clusterIngress string, action string, kafkaConfig *config.KafkaConfig) *route53.ChangeBatch {
-	// Need to append some string to the start of the clusterIngress for the CNAME record
-	clusterIngress = fmt.Sprintf("elb.%s", clusterIngress)
-
-	recordChangeBatch := &route53.ChangeBatch{
-		Changes: []*route53.Change{
-			buildResourceRecordChange(recordName, clusterIngress, action),
-			buildResourceRecordChange(fmt.Sprintf("admin-server-%s", recordName), clusterIngress, action),
-		},
+func buildKafkaClusterCNAMESRecordBatch(routes []dbapi.DataPlaneKafkaRoute, action string) *route53.ChangeBatch {
+	var changes []*route53.Change
+	for _, r := range routes {
+		c := buildResourceRecordChange(r.Domain, r.Router, action)
+		changes = append(changes, c)
 	}
-
-	for i := 0; i < kafkaConfig.NumOfBrokers; i++ {
-		recordName := fmt.Sprintf("broker-%d-%s", i, recordName)
-		recordChangeBatch.Changes = append(recordChangeBatch.Changes, buildResourceRecordChange(recordName, clusterIngress, action))
+	recordChangeBatch := &route53.ChangeBatch{
+		Changes: changes,
 	}
 
 	return recordChangeBatch
