@@ -42,6 +42,16 @@ func (k *TmpVaultService) Kind() string {
 	return "tmp"
 }
 
+func (k *TmpVaultService) ResetCounters() {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.deleteCounter = 0
+	k.insertCounter = 0
+	k.updateCounter = 0
+	k.getCounter = 0
+	k.missCounter = 0
+}
+
 func (k *TmpVaultService) Counters() Counters {
 	k.mu.Lock()
 	defer k.mu.Unlock()

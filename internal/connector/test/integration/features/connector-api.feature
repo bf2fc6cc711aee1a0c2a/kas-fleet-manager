@@ -411,23 +411,24 @@ Feature: create a a connector
       }
       """
 
-    # We can update secrets of a connector
-    And the vault delete counter should be 0
-    Given I set the "Content-Type" header to "application/merge-patch+json"
-    When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
-      """
-      {
-          "kafka": {
-            "client_secret": "patched_secret 1"
-          },
-          "connector_spec": {
-              "secretKey": "patched_secret 2"
-          }
-      }
-      """
-
-    Then the response code should be 202
-    And the vault delete counter should be 2
+    # Check that we can update secrets of a connector
+    Given LOCK--------------------------------------------------------------
+      Given I reset the vault counters
+      Given I set the "Content-Type" header to "application/merge-patch+json"
+      When I PATCH path "/v1/kafka-connectors/${connector_id}" with json body:
+        """
+        {
+            "kafka": {
+              "client_secret": "patched_secret 1"
+            },
+            "connector_spec": {
+                "secretKey": "patched_secret 2"
+            }
+        }
+        """
+      Then the response code should be 202
+      And the vault delete counter should be 2
+    And UNLOCK---------------------------------------------------------------
 
 
     # Before deleting the connector, lets make sure the access control work as expected for other users beside Greg
@@ -440,17 +441,21 @@ Feature: create a a connector
     Then the response code should be 404
 
     # We are going to delete the connector...
-    Given I am logged in as "Greg"
-    Given the vault delete counter should be 2
-    When I DELETE path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 204
-    And the response should match ""
+    Given LOCK--------------------------------------------------------------
+      Given I reset the vault counters
+      Given I am logged in as "Greg"
+      When I DELETE path "/v1/kafka_connectors/${connector_id}"
+      Then the response code should be 204
+      And the response should match ""
+
+      # The delete occurs async in a worker, so we have to wait a little for the counters to update.
+      Given I sleep for 2 seconds
+      Then the vault delete counter should be 2
+    Given UNLOCK--------------------------------------------------------------
 
     Given I wait up to "5" seconds for a GET on path "/v1/kafka_connectors/${connector_id}" response code to match "404"
     When I GET path "/v1/kafka_connectors/${connector_id}"
     Then the response code should be 404
-    # This verifies that kafka client secret and the connector_spec.secretKey vault entries are deleted.
-    Then the vault delete counter should be 4
 
   Scenario: Greg can discover the API endpoints
     Given I am logged in as "Greg"
@@ -835,7 +840,6 @@ Feature: create a a connector
     type and the connector_spec section should be empty since we have lost the json schema for the field.
     The user should still be able to delete the connector.
 
-    Given this is the only scenario running
     Given I am logged in as "Jim"
     When I POST path "/v1/kafka_connectors?async=true" with json body:
       """
@@ -939,6 +943,16 @@ Feature: create a a connector
       }
       """
 
-    When I DELETE path "/v1/kafka_connectors/${connector_id}"
-    Then the response code should be 204
-    And the response should match ""
+    Given LOCK--------------------------------------------------------------
+      Given I reset the vault counters
+
+      When I DELETE path "/v1/kafka_connectors/${connector_id}"
+      Then the response code should be 204
+      And the response should match ""
+
+      # The delete occurs async in a worker, so we have to wait a little for the counters to update.
+      Given I sleep for 2 seconds
+      # Notice that only 1 key is the deleted.. since we don't have the schema,
+      # we can't tell which connector fields are secrets, so we can't clean those up.
+      And the vault delete counter should be 1
+    And UNLOCK--------------------------------------------------------------

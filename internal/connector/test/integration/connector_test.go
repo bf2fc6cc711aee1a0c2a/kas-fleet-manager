@@ -25,6 +25,17 @@ type extender struct {
 	*cucumber.TestScenario
 }
 
+func (s *extender) iResetTheVaultCounters() error {
+	var service vault.VaultService
+	if err := s.Suite.Helper.Env.ServiceContainer.Resolve(&service); err != nil {
+		return err
+	}
+	if vault, ok := service.(*vault.TmpVaultService); ok {
+		vault.ResetCounters()
+	}
+	return nil
+}
+
 func (s *extender) theVaultDeleteCounterShouldBe(expected int64) error {
 	// we can only check the delete count on the TmpVault service impl...
 	var service vault.VaultService
@@ -146,6 +157,7 @@ func init() {
 		e := &extender{s}
 		ctx.Step(`^get and store access token using the addon parameter response as \${([^"]*)}$`, e.getAndStoreAccessTokenUsingTheAddonParameterResponseAs)
 		ctx.Step(`^the vault delete counter should be (\d+)$`, e.theVaultDeleteCounterShouldBe)
+		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^connector deployment upgrades available are:$`, e.connectorDeploymentUpgradesAvailableAre)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
 
