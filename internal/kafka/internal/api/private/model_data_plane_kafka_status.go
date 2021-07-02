@@ -15,4 +15,6 @@ type DataPlaneKafkaStatus struct {
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
 	Capacity   DataPlaneKafkaStatusCapacity                    `json:"capacity,omitempty"`
 	Versions   DataPlaneKafkaStatusVersions                    `json:"versions,omitempty"`
+	// Routes created for a Kafka cluster
+	Routes *[]DataPlaneKafkaStatusRoutes `json:"routes,omitempty"`
 }

@@ -8,6 +8,7 @@ type DataPlaneKafkaStatus struct {
 	KafkaClusterId string
 	Conditions     []DataPlaneKafkaStatusCondition
 	// Going to ignore the rest of fields (like capacity and versions) for now, until when they are needed
+	Routes []DataPlaneKafkaRoute
 }
 
 type DataPlaneKafkaStatusCondition struct {
@@ -15,6 +16,11 @@ type DataPlaneKafkaStatusCondition struct {
 	Reason  string
 	Status  string
 	Message string
+}
+
+type DataPlaneKafkaRoute struct {
+	Domain string
+	Router string
 }
 
 func (d *DataPlaneKafkaStatus) GetReadyCondition() (DataPlaneKafkaStatusCondition, bool) {

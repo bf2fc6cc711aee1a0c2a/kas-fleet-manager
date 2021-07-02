@@ -4,11 +4,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/google/uuid"
-	"sync"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -20,66 +17,36 @@ import (
 
 // DeletingKafkaManager represents a kafka manager that periodically reconciles kafka requests
 type DeletingKafkaManager struct {
-	id                  string
-	workerType          string
-	isRunning           bool
+	workers.BaseWorker
 	kafkaService        services.KafkaService
 	configService       coreServices.ConfigService
 	quotaServiceFactory services.QuotaServiceFactory
-	imStop              chan struct{}
-	syncTeardown        sync.WaitGroup
-	reconciler          workers.Reconciler
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
 func NewDeletingKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
-		id:                  uuid.New().String(),
-		workerType:          "deleting_kafka",
+		BaseWorker: workers.BaseWorker{
+			Id:         uuid.New().String(),
+			WorkerType: "deleting_kafka",
+			Reconciler: workers.Reconciler{
+				SignalBus: bus,
+			},
+		},
 		kafkaService:        kafkaService,
 		configService:       configService,
 		quotaServiceFactory: quotaServiceFactory,
-		reconciler: workers.Reconciler{
-			SignalBus: bus,
-		},
 	}
-}
-
-func (k *DeletingKafkaManager) GetStopChan() *chan struct{} {
-	return &k.imStop
-}
-
-func (k *DeletingKafkaManager) GetSyncGroup() *sync.WaitGroup {
-	return &k.syncTeardown
-}
-
-func (k *DeletingKafkaManager) GetID() string {
-	return k.id
-}
-
-func (c *DeletingKafkaManager) GetWorkerType() string {
-	return c.workerType
 }
 
 // Start initializes the kafka manager to reconcile kafka requests
 func (k *DeletingKafkaManager) Start() {
-	metrics.SetLeaderWorkerMetric(k.workerType, true)
-	k.reconciler.Start(k)
+	k.StartWorker(k)
 }
 
 // Stop causes the process for reconciling kafka requests to stop.
 func (k *DeletingKafkaManager) Stop() {
-	k.reconciler.Stop(k)
-	metrics.ResetMetricsForKafkaManagers()
-	metrics.SetLeaderWorkerMetric(k.workerType, false)
-}
-
-func (c *DeletingKafkaManager) IsRunning() bool {
-	return c.isRunning
-}
-
-func (c *DeletingKafkaManager) SetIsRunning(val bool) {
-	c.isRunning = val
+	k.StopWorker(k)
 }
 
 func (k *DeletingKafkaManager) Reconcile() []error {

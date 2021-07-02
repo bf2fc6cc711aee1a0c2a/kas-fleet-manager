@@ -447,6 +447,12 @@ components:
           $ref: '#/components/schemas/DataPlaneKafkaStatus_capacity'
         versions:
           $ref: '#/components/schemas/DataPlaneKafkaStatus_versions'
+        routes:
+          description: Routes created for a Kafka cluster
+          items:
+            $ref: '#/components/schemas/DataPlaneKafkaStatus_routes'
+          nullable: true
+          type: array
       type: object
     DataPlaneKafkaStatusUpdateRequest:
       additionalProperties:
@@ -778,6 +784,12 @@ components:
         kafka:
           type: string
         strimzi:
+          type: string
+    DataPlaneKafkaStatus_routes:
+      properties:
+        route:
+          type: string
+        router:
           type: string
     DataplaneClusterAgentConfig_spec_observability:
       description: Observability configurations

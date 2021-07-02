@@ -3,10 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	goerrors "github.com/pkg/errors"
 	"net/http"
 	"reflect"
 	"testing"
@@ -1611,4 +1614,104 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
+	type fields struct {
+		awsClient aws.Client
+	}
+
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+		action       KafkaRoutesAction
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "should create CNAMEs for kafka",
+			fields: fields{
+				awsClient: &aws.ClientMock{
+					ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+						if len(recordChangeBatch.Changes) != 1 {
+							return nil, goerrors.Errorf("number of record changes should be 1")
+						}
+						if *recordChangeBatch.Changes[0].Action != "CREATE" {
+							return nil, goerrors.Errorf("the action of the record change is not CREATE")
+						}
+						return nil, nil
+					},
+					ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "test-kafka-id",
+					},
+					Name:   "test-kafka-cname",
+					Routes: []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
+					Region: "us-east-1",
+				},
+				action: KafkaRoutesActionCreate,
+			},
+		},
+		{
+			name: "should delete CNAMEs for kafka",
+			fields: fields{
+				awsClient: &aws.ClientMock{
+					ChangeResourceRecordSetsFunc: func(dnsName string, recordChangeBatch *route53.ChangeBatch) (*route53.ChangeResourceRecordSetsOutput, error) {
+						if len(recordChangeBatch.Changes) != 1 {
+							return nil, goerrors.Errorf("number of record changes should be 1")
+						}
+						if *recordChangeBatch.Changes[0].Action != "DELETE" {
+							return nil, goerrors.Errorf("the action of the record change is not DELETE")
+						}
+						return nil, nil
+					},
+					ListHostedZonesByNameInputFunc: func(dnsName string) (*route53.ListHostedZonesByNameOutput, error) {
+						return nil, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: &dbapi.KafkaRequest{
+					Meta: api.Meta{
+						ID: "test-kafka-id",
+					},
+					Name:   "test-kafka-cname",
+					Routes: []byte("[{\"domain\": \"test-kafka-id.example.com\", \"router\": \"test-kafka-id.rhcloud.com\"}]"),
+					Region: "us-east-1",
+				},
+				action: KafkaRoutesActionDelete,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kafkaService := &kafkaService{
+				awsClientFactory: aws.NewMockClientFactory(tt.fields.awsClient),
+				awsConfig: &config.AWSConfig{
+					Route53AccessKey:       "test-route-53-key",
+					Route53SecretAccessKey: "test-route-53-secret-key",
+				},
+				kafkaConfig: &config.KafkaConfig{
+					KafkaDomainName: "rhcloud.com",
+				},
+			}
+
+			_, err := kafkaService.ChangeKafkaCNAMErecords(tt.args.kafkaRequest, tt.args.action)
+			if err != nil && !tt.wantErr {
+				t.Errorf("unexpected error for ChangeKafkaCNAMErecords %v", err)
+			}
+		})
+	}
+
 }

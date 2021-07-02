@@ -2,18 +2,15 @@ package kafka_mgrs
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
-	"github.com/google/uuid"
-	"sync"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -30,64 +27,34 @@ var kafkaMetricsStatuses = []constants.KafkaStatus{
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
-	id            string
-	workerType    string
-	isRunning     bool
+	workers.BaseWorker
 	kafkaService  services.KafkaService
 	configService coreServices.ConfigService
-	imStop        chan struct{}
-	syncTeardown  sync.WaitGroup
-	reconciler    workers.Reconciler
 }
 
 // NewKafkaManager creates a new kafka manager
 func NewKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
-		id:            uuid.New().String(),
-		workerType:    "general_kafka_worker",
+		BaseWorker: workers.BaseWorker{
+			Id:         uuid.New().String(),
+			WorkerType: "general_kafka_worker",
+			Reconciler: workers.Reconciler{
+				SignalBus: bus,
+			},
+		},
 		kafkaService:  kafkaService,
 		configService: configService,
-		reconciler: workers.Reconciler{
-			SignalBus: bus,
-		},
 	}
-}
-
-func (k *KafkaManager) GetStopChan() *chan struct{} {
-	return &k.imStop
-}
-
-func (k *KafkaManager) GetSyncGroup() *sync.WaitGroup {
-	return &k.syncTeardown
-}
-
-func (k *KafkaManager) GetID() string {
-	return k.id
-}
-
-func (c *KafkaManager) GetWorkerType() string {
-	return c.workerType
 }
 
 // Start initializes the kafka manager to reconcile kafka requests
 func (k *KafkaManager) Start() {
-	metrics.SetLeaderWorkerMetric(k.workerType, true)
-	k.reconciler.Start(k)
+	k.StartWorker(k)
 }
 
 // Stop causes the process for reconciling kafka requests to stop.
 func (k *KafkaManager) Stop() {
-	k.reconciler.Stop(k)
-	metrics.ResetMetricsForKafkaManagers()
-	metrics.SetLeaderWorkerMetric(k.workerType, false)
-}
-
-func (c *KafkaManager) IsRunning() bool {
-	return c.isRunning
-}
-
-func (c *KafkaManager) SetIsRunning(val bool) {
-	c.isRunning = val
+	k.StopWorker(k)
 }
 
 func (k *KafkaManager) Reconcile() []error {
