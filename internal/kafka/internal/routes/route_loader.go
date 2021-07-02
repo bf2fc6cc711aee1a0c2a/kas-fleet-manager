@@ -32,7 +32,7 @@ type options struct {
 	OCM                   ocm.Client
 	Kafka                 services.KafkaService
 	CloudProviders        services.CloudProvidersService
-	ConfigService         coreServices.ConfigService
+	ConfigService         services.ConfigService
 	Observatorium         services.ObservatoriumService
 	Keycloak              coreServices.KafkaKeycloakService
 	DataPlaneCluster      services.DataPlaneClusterService

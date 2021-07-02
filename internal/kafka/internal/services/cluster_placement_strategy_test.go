@@ -9,12 +9,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 func TestFirstReadyCluster_FindCluster(t *testing.T) {
 	type fields struct {
-		ConfigService  services.ConfigService
+		ConfigService  ConfigService
 		ClusterService ClusterService
 	}
 	type args struct {
@@ -30,7 +29,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		{
 			name: "Find ready cluster",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					Kafka:                  config.NewKafkaConfig(),
 					DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				}),
@@ -49,7 +48,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		{
 			name: "Cannot find ready cluster",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					Kafka:                  config.NewKafkaConfig(),
 					DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				}),
@@ -68,7 +67,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		{
 			name: "find ready cluster with error",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					Kafka:                  config.NewKafkaConfig(),
 					DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				}),
@@ -105,7 +104,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 
 func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 	type fields struct {
-		ConfigService  services.ConfigService
+		ConfigService  ConfigService
 		ClusterService ClusterService
 	}
 	type args struct {
@@ -121,7 +120,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		{
 			name: "find an available schedule cluster and within limit",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 						ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 3}}),
@@ -149,7 +148,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		{
 			name: "Failed to find an available schedulable cluster as exceeds limit",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 						ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: true, KafkaInstanceLimit: 1}}),
@@ -177,7 +176,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		{
 			name: "Find an available schedulable cluster after one exceeds limit",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 						ClusterConfig: config.NewClusterConfig(config.ClusterList{
@@ -208,7 +207,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		{
 			name: "Failed to find an available cluster as non is schedulable",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 						ClusterConfig:               config.NewClusterConfig(config.ClusterList{config.ManualCluster{ClusterId: "test01", Schedulable: false, KafkaInstanceLimit: 1}}),
@@ -234,7 +233,7 @@ func TestFirstScheduleWithinLimit_FindCluster(t *testing.T) {
 		{
 			name: "Failed to find an available cluster due to error",
 			fields: fields{
-				ConfigService: services.NewConfigService(&config.ApplicationConfig{
+				ConfigService: NewConfigService(&config.ApplicationConfig{
 					DataplaneClusterConfig: &config.DataplaneClusterConfig{
 						DataPlaneClusterScalingType: "manual",
 					},

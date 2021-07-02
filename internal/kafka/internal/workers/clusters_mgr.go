@@ -107,7 +107,7 @@ type ClusterManagerOptions struct {
 	OCMConfig                  *config.OCMConfig
 	ClusterService             services.ClusterService
 	CloudProvidersService      services.CloudProvidersService
-	ConfigService              coreServices.ConfigService
+	ConfigService              services.ConfigService
 	KasFleetshardOperatorAddon services.KasFleetshardOperatorAddon
 	OsdIdpKeycloakService      coreServices.OsdKeycloakService
 }

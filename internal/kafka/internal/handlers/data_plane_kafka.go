@@ -8,17 +8,16 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
 type dataPlaneKafkaHandler struct {
 	service      services.DataPlaneKafkaService
-	config       coreServices.ConfigService
+	config       services.ConfigService
 	kafkaService services.KafkaService
 }
 
-func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService coreServices.ConfigService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
+func NewDataPlaneKafkaHandler(service services.DataPlaneKafkaService, configService services.ConfigService, kafkaService services.KafkaService) *dataPlaneKafkaHandler {
 	return &dataPlaneKafkaHandler{
 		service:      service,
 		config:       configService,

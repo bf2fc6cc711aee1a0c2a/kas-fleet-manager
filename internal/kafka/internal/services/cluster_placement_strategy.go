@@ -3,7 +3,6 @@ package services
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/pkg/errors"
 )
 
@@ -14,7 +13,7 @@ type ClusterPlacementStrategy interface {
 }
 
 // NewClusterPlacementStrategy return a concrete strategy impl. depends on the placement configuration
-func NewClusterPlacementStrategy(configService services.ConfigService, clusterService ClusterService) ClusterPlacementStrategy {
+func NewClusterPlacementStrategy(configService ConfigService, clusterService ClusterService) ClusterPlacementStrategy {
 	var clusterSelection ClusterPlacementStrategy
 	if configService.GetConfig().DataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 		clusterSelection = &FirstSchedulableWithinLimit{configService, clusterService}
@@ -26,7 +25,7 @@ func NewClusterPlacementStrategy(configService services.ConfigService, clusterSe
 
 // FirstReadyCluster finds and returns the first cluster with Ready status
 type FirstReadyCluster struct {
-	ConfigService  services.ConfigService
+	ConfigService  ConfigService
 	ClusterService ClusterService
 }
 
@@ -49,7 +48,7 @@ func (f *FirstReadyCluster) FindCluster(kafka *dbapi.KafkaRequest) (*api.Cluster
 // FirstSchedulableWithinLimit finds and returns the first cluster which is schedulable and the number of
 // Kafka clusters associated with it is within the defined limit.
 type FirstSchedulableWithinLimit struct {
-	ConfigService  services.ConfigService
+	ConfigService  ConfigService
 	ClusterService ClusterService
 }
 

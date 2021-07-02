@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 // DefaultQuotaServiceFactory the default implementation for ProviderFactory
@@ -15,7 +14,7 @@ type DefaultQuotaServiceFactory struct {
 }
 
 func NewDefaultQuotaServiceFactory(ocmClient ocm.Client, connectionFactory *db.ConnectionFactory,
-	configService services.ConfigService) services2.QuotaServiceFactory {
+	configService services2.ConfigService) services2.QuotaServiceFactory {
 	quoataServiceContainer := map[api.QuotaType]services2.QuotaService{
 		api.AMSQuotaType:       &amsQuotaService{ocmClient: ocmClient, kafkaConfig: configService.GetConfig().Kafka},
 		api.AllowListQuotaType: &allowListQuotaService{connectionFactory: connectionFactory, configService: configService},

@@ -11,7 +11,6 @@ import (
 	"github.com/patrickmn/go-cache"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
@@ -19,11 +18,11 @@ const cloudProvidersCacheKey = "cloudProviderList"
 
 type cloudProvidersHandler struct {
 	service services.CloudProvidersService
-	config  coreServices.ConfigService
+	config  services.ConfigService
 	cache   *cache.Cache
 }
 
-func NewCloudProviderHandler(service services.CloudProvidersService, configService coreServices.ConfigService) *cloudProvidersHandler {
+func NewCloudProviderHandler(service services.CloudProvidersService, configService services.ConfigService) *cloudProvidersHandler {
 	return &cloudProvidersHandler{
 		service: service,
 		config:  configService,

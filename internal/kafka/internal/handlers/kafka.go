@@ -16,10 +16,10 @@ import (
 
 type kafkaHandler struct {
 	service services.KafkaService
-	config  coreServices.ConfigService
+	config  services.ConfigService
 }
 
-func NewKafkaHandler(service services.KafkaService, configService coreServices.ConfigService) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, configService services.ConfigService) *kafkaHandler {
 	return &kafkaHandler{
 		service: service,
 		config:  configService,

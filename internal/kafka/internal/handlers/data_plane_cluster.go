@@ -8,16 +8,15 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
 type dataPlaneClusterHandler struct {
 	service services.DataPlaneClusterService
-	config  coreServices.ConfigService
+	config  services.ConfigService
 }
 
-func NewDataPlaneClusterHandler(service services.DataPlaneClusterService, configService coreServices.ConfigService) *dataPlaneClusterHandler {
+func NewDataPlaneClusterHandler(service services.DataPlaneClusterService, configService services.ConfigService) *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
 		service: service,
 		config:  configService,

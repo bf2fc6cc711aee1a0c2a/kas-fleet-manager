@@ -9,7 +9,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 func TestDeletingKafkaManager(t *testing.T) {
@@ -43,7 +42,7 @@ func TestDeletingKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 			},
@@ -64,7 +63,7 @@ func TestDeletingKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
+				configService: services.NewConfigService(&config.ApplicationConfig{
 					Kafka: config.NewKafkaConfig(),
 				}),
 			},
