@@ -27,12 +27,13 @@ var kafkaMetricsStatuses = []constants.KafkaStatus{
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
 	workers.BaseWorker
-	kafkaService  services.KafkaService
-	configService services.ConfigService
+	kafkaService            services.KafkaService
+	accessControlListConfig *config.AccessControlListConfig
+	kafkaConfig             *config.KafkaConfig
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, accessControlList *config.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -41,8 +42,9 @@ func NewKafkaManager(kafkaService services.KafkaService, configService services.
 				SignalBus: bus,
 			},
 		},
-		kafkaService:  kafkaService,
-		configService: configService,
+		kafkaService:            kafkaService,
+		accessControlListConfig: accessControlList,
+		kafkaConfig:             kafka,
 	}
 }
 
@@ -68,7 +70,7 @@ func (k *KafkaManager) Reconcile() []error {
 	}
 
 	// delete kafkas of denied owners
-	accessControlListConfig := k.configService.GetConfig().AccessControlList
+	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
 		glog.Infoln("reconciling denied kafka owners")
 		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
@@ -78,8 +80,8 @@ func (k *KafkaManager) Reconcile() []error {
 		}
 	}
 
-	// cleaning up expired kafkas
-	kafkaConfig := k.configService.GetConfig().Kafka
+	// cleaning up expired qkafkas
+	kafkaConfig := k.kafkaConfig
 	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
 		glog.Infoln("deprovisioning expired kafkas")
 		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifespan.KafkaLifespanInHours)

@@ -13,13 +13,11 @@ import (
 
 type dataPlaneClusterHandler struct {
 	service services.DataPlaneClusterService
-	config  services.ConfigService
 }
 
-func NewDataPlaneClusterHandler(service services.DataPlaneClusterService, configService services.ConfigService) *dataPlaneClusterHandler {
+func NewDataPlaneClusterHandler(service services.DataPlaneClusterService) *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
 		service: service,
-		config:  configService,
 	}
 }
 

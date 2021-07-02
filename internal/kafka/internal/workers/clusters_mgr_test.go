@@ -132,16 +132,11 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(
-						&config.ApplicationConfig{
-							SupportedProviders:         &config.ProviderConfig{},
-							AccessControlList:          &config.AccessControlListConfig{},
-							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-							DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
-						},
-					),
-					OCMConfig: &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					ClusterService:             tt.fields.clusterService,
+					SupportedProviders:         &config.ProviderConfig{},
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
+					OCMConfig:                  &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 				},
 			}
 			_, err := c.reconcileStrimziOperator(api.Cluster{
@@ -191,16 +186,11 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(
-						&config.ApplicationConfig{
-							SupportedProviders:         &config.ProviderConfig{},
-							AccessControlList:          &config.AccessControlListConfig{},
-							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-							DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
-						},
-					),
-					OCMConfig: &config.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
+					ClusterService:             tt.fields.clusterService,
+					SupportedProviders:         &config.ProviderConfig{},
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
+					OCMConfig:                  &config.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 				},
 			}
 			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
@@ -240,13 +230,9 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(
-						&config.ApplicationConfig{
-							AccessControlList:          &config.AccessControlListConfig{},
-							ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-							DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
-						}),
+					ClusterService:             tt.fields.clusterService,
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 				},
 			}
 
@@ -367,14 +353,10 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-
-					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(&config.ApplicationConfig{
-						SupportedProviders:         &tt.fields.providersConfig,
-						AccessControlList:          &config.AccessControlListConfig{},
-						ObservabilityConfiguration: &config.ObservabilityConfiguration{},
-						DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
-					}),
+					ClusterService:             tt.fields.clusterService,
+					SupportedProviders:         &tt.fields.providersConfig,
+					ObservabilityConfiguration: &config.ObservabilityConfiguration{},
+					DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 				},
 			}
 			err := c.reconcileClustersForRegions()
@@ -481,7 +463,6 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					OCMConfig:                  &config.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 					ClusterService:             tt.fields.clusterService,
-					ConfigService:              services.NewConfigService(&config.ApplicationConfig{}),
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},
 			}
@@ -557,16 +538,11 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			RegisterTestingT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-
-					ClusterService: tt.fields.clusterService,
-					ConfigService: services.NewConfigService(&config.ApplicationConfig{
-						SupportedProviders:         &config.ProviderConfig{},
-						AccessControlList:          &config.AccessControlListConfig{},
-						ObservabilityConfiguration: &observabilityConfig,
-						DataplaneClusterConfig:     &clusterCreateConfig,
-						Kafka:                      &config.KafkaConfig{},
-					}),
-					OCMConfig: &config.OCMConfig{},
+					ClusterService:             tt.fields.clusterService,
+					SupportedProviders:         &config.ProviderConfig{},
+					ObservabilityConfiguration: &observabilityConfig,
+					DataplaneClusterConfig:     &clusterCreateConfig,
+					OCMConfig:                  &config.OCMConfig{},
 				},
 			}
 
@@ -739,8 +715,8 @@ func TestClusterManager_reconcileClusterDNS(t *testing.T) {
 
 func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 	type fields struct {
-		clusterService services.ClusterService
-		configService  services.ConfigService
+		clusterService         services.ClusterService
+		DataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 	tests := []struct {
 		name    string
@@ -757,11 +733,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 					},
 					UpdateStatusFunc: nil, // set to nil as it should not be called
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "auto",
+				},
 			},
 			wantErr: true,
 		},
@@ -776,11 +750,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "auto",
+				},
 			},
 			wantErr: false,
 		},
@@ -796,11 +768,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return false, apiErrors.GeneralError("failed to remove cluster")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "auto",
+				},
 			},
 			wantErr: true,
 		},
@@ -818,11 +788,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return true, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "auto",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "auto",
+				},
 			},
 			wantErr: false,
 		},
@@ -838,11 +806,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return true, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "manual",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "manual",
+				},
 			},
 			wantErr: false,
 		},
@@ -857,11 +823,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return true, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "manual",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "manual",
+				},
 			},
 			wantErr: true,
 		},
@@ -876,11 +840,9 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 						return errors.Errorf("this should not be called")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: &config.DataplaneClusterConfig{
-						DataPlaneClusterScalingType: "manual",
-					},
-				}),
+				DataplaneClusterConfig: &config.DataplaneClusterConfig{
+					DataPlaneClusterScalingType: "manual",
+				},
 			},
 			wantErr: false,
 		},
@@ -891,8 +853,8 @@ func TestClusterManager_reconcileDeprovisioningCluster(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ClusterService: tt.fields.clusterService,
-					ConfigService:  tt.fields.configService,
+					ClusterService:         tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
 				},
 			}
 
@@ -1402,8 +1364,8 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 
 func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 	type fields struct {
-		clusterService services.ClusterService
-		configService  services.ConfigService
+		clusterService         services.ClusterService
+		DataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 	testOsdConfig := config.NewDataplaneClusterConfig()
 	testOsdConfig.ClusterConfig = config.NewClusterConfig(config.ClusterList{config.ManualCluster{Schedulable: true, KafkaInstanceLimit: 2}})
@@ -1436,9 +1398,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 						}, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: testOsdConfig,
-				}),
+				DataplaneClusterConfig: testOsdConfig,
 			},
 			wantErr: false,
 		},
@@ -1459,9 +1419,7 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 						return []services.ResKafkaInstanceCount{}, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					DataplaneClusterConfig: testOsdConfig,
-				}),
+				DataplaneClusterConfig: testOsdConfig,
 			},
 			wantErr: true,
 		},
@@ -1470,8 +1428,8 @@ func TestClusterManager_reconcileClusterWithManualConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					ConfigService:  tt.fields.configService,
-					ClusterService: tt.fields.clusterService,
+					DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
+					ClusterService:         tt.fields.clusterService,
 				},
 			}
 			if err := c.reconcileClusterWithManualConfig(); (len(err) > 0) != tt.wantErr {

@@ -3,6 +3,7 @@ package kafka_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
@@ -17,11 +18,11 @@ type ReadyKafkaManager struct {
 	workers.BaseWorker
 	kafkaService    services.KafkaService
 	keycloakService coreServices.KeycloakService
-	configService   services.ConfigService
+	keycloakConfig  *config.KeycloakConfig
 }
 
 // NewReadyKafkaManager creates a new kafka manager
-func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, configService services.ConfigService, bus signalbus.SignalBus) *ReadyKafkaManager {
+func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, keycloakConfig *config.KeycloakConfig, bus signalbus.SignalBus) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -32,7 +33,7 @@ func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService co
 		},
 		kafkaService:    kafkaService,
 		keycloakService: keycloakService,
-		configService:   configService,
+		keycloakConfig:  keycloakConfig,
 	}
 }
 
@@ -48,7 +49,7 @@ func (k *ReadyKafkaManager) Stop() {
 
 func (k *ReadyKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling ready kafkas")
-	if !k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka {
+	if !k.keycloakConfig.EnableAuthenticationOnKafka {
 		return nil
 	}
 

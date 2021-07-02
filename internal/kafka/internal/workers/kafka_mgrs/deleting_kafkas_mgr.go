@@ -3,6 +3,7 @@ package kafka_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/google/uuid"
@@ -18,12 +19,12 @@ import (
 type DeletingKafkaManager struct {
 	workers.BaseWorker
 	kafkaService        services.KafkaService
-	configService       services.ConfigService
+	keycloakConfig      *config.KeycloakConfig
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, configService services.ConfigService, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
+func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig *config.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -33,7 +34,7 @@ func NewDeletingKafkaManager(kafkaService services.KafkaService, configService s
 			},
 		},
 		kafkaService:        kafkaService,
-		configService:       configService,
+		keycloakConfig:      keycloakConfig,
 		quotaServiceFactory: quotaServiceFactory,
 	}
 }
@@ -81,7 +82,7 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 		}
 
 		// If EnableAuthenticationOnKafka is not set, these fields would also be empty even when provisioned to an OSD cluster
-		if k.configService.GetConfig().Keycloak.EnableAuthenticationOnKafka && (deprovisioningKafka.SsoClientID == "" || deprovisioningKafka.SsoClientSecret == "") {
+		if k.keycloakConfig.EnableAuthenticationOnKafka && (deprovisioningKafka.SsoClientID == "" || deprovisioningKafka.SsoClientSecret == "") {
 			deletingKafkas = append(deletingKafkas, deprovisioningKafka)
 		}
 	}

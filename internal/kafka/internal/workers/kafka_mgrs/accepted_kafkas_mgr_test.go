@@ -5,7 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/onsi/gomega"
 
@@ -16,7 +15,6 @@ import (
 func TestAcceptedKafkaManager(t *testing.T) {
 	type fields struct {
 		kafkaService        services.KafkaService
-		configService       services.ConfigService
 		clusterPlmtStrategy services.ClusterPlacementStrategy
 		quotaService        services.QuotaService
 	}
@@ -38,9 +36,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil, errors.GeneralError("test")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
 				quotaService: &services.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "", nil
@@ -65,9 +60,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return errors.GeneralError("test")
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					Kafka: config.NewKafkaConfig(),
-				}),
 				quotaService: &services.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "some-subscription", nil
@@ -93,11 +85,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					Kafka: &config.KafkaConfig{
-						Quota: config.NewKafkaQuotaConfig(),
-					},
-				}),
 				quotaService: &services.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "", errors.InsufficientQuotaError("quota insufficient")
@@ -125,11 +112,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return &dbapi.KafkaRequest{}, nil
 					},
 				},
-				configService: services.NewConfigService(&config.ApplicationConfig{
-					Kafka: &config.KafkaConfig{
-						Quota: config.NewKafkaQuotaConfig(),
-					},
-				}),
 				quotaService: &services.QuotaServiceMock{
 					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 						return "sub-scription", nil
@@ -147,7 +129,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			gomega.RegisterTestingT(t)
 			k := &AcceptedKafkaManager{
 				kafkaService:        tt.fields.kafkaService,
-				configService:       tt.fields.configService,
 				clusterPlmtStrategy: tt.fields.clusterPlmtStrategy,
 				quotaServiceFactory: &services.QuotaServiceFactoryMock{
 					GetQuotaServiceFunc: func(quoataType api.QuotaType) (services.QuotaService, *errors.ServiceError) {

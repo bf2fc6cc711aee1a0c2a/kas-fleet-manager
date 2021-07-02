@@ -19,11 +19,10 @@ type ProvisioningKafkaManager struct {
 	workers.BaseWorker
 	kafkaService         services.KafkaService
 	observatoriumService services.ObservatoriumService
-	configService        services.ConfigService
 }
 
 // NewProvisioningKafkaManager creates a new kafka manager
-func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, configService services.ConfigService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
+func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -34,7 +33,6 @@ func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatori
 		},
 		kafkaService:         kafkaService,
 		observatoriumService: observatoriumService,
-		configService:        configService,
 	}
 }
 

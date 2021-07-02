@@ -3,8 +3,6 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -12,11 +10,11 @@ import (
 
 type allowListQuotaService struct {
 	connectionFactory *db.ConnectionFactory
-	configService     services2.ConfigService
+	accessControlList *config.AccessControlListConfig
 }
 
 func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-	if !q.configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
+	if !q.accessControlList.EnableInstanceLimitControl {
 		return nil
 	}
 
@@ -24,14 +22,14 @@ func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.Ser
 	orgId := kafka.OrganisationId
 	var allowListItem config.AllowedListItem
 	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, config.GetDefaultMaxAllowedInstances())
-	org, orgFound := q.configService.GetOrganisationById(orgId)
+	org, orgFound := q.accessControlList.AllowList.Organisations.GetById(orgId)
 	filterByOrd := false
 	if orgFound && org.IsUserAllowed(username) {
 		allowListItem = org
 		message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
 		filterByOrd = true
 	} else {
-		user, userFound := q.configService.GetServiceAccountByUsername(username)
+		user, userFound := q.accessControlList.AllowList.ServiceAccounts.GetByUsername(username)
 		if userFound {
 			allowListItem = user
 			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())

@@ -4,6 +4,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
@@ -15,14 +16,14 @@ import (
 )
 
 type kafkaHandler struct {
-	service services.KafkaService
-	config  services.ConfigService
+	service        services.KafkaService
+	providerConfig *config.ProviderConfig
 }
 
-func NewKafkaHandler(service services.KafkaService, configService services.ConfigService) *kafkaHandler {
+func NewKafkaHandler(service services.KafkaService, providerConfig *config.ProviderConfig) *kafkaHandler {
 	return &kafkaHandler{
-		service: service,
-		config:  configService,
+		service:        service,
+		providerConfig: providerConfig,
 	}
 }
 
@@ -35,7 +36,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.ValidateLength(&kafkaRequest.Name, "name", &handlers.MinRequiredFieldLength, &MaxKafkaNameLength),
 			ValidKafkaClusterName(&kafkaRequest.Name, "name"),
 			ValidateKafkaClusterNameIsUnique(&kafkaRequest.Name, h.service, r.Context()),
-			ValidateCloudProvider(&kafkaRequest, h.config, "creating kafka requests"),
+			ValidateCloudProvider(&kafkaRequest, h.providerConfig, "creating kafka requests"),
 			handlers.ValidateMultiAZEnabled(&kafkaRequest.MultiAz, "creating kafka requests"),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {

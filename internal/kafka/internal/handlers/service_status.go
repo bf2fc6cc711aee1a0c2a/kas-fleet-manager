@@ -3,6 +3,7 @@ package handlers
 import (
 	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
@@ -12,14 +13,14 @@ import (
 )
 
 type serviceStatusHandler struct {
-	kafkaService  services.KafkaService
-	configService services.ConfigService
+	kafkaService      services.KafkaService
+	accessControlList *config.AccessControlListConfig
 }
 
-func NewServiceStatusHandler(service services.KafkaService, configService services.ConfigService) *serviceStatusHandler {
+func NewServiceStatusHandler(service services.KafkaService, accessControlList *config.AccessControlListConfig) *serviceStatusHandler {
 	return &serviceStatusHandler{
-		kafkaService:  service,
-		configService: configService,
+		kafkaService:      service,
+		accessControlList: accessControlList,
 	}
 }
 
@@ -33,7 +34,7 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 			}
 
 			username := auth.GetUsernameFromClaims(claims)
-			accessControlListConfig := h.configService.GetConfig().AccessControlList
+			accessControlListConfig := h.accessControlList
 			if accessControlListConfig.EnableDenyList {
 				userIsDenied := accessControlListConfig.DenyList.IsUserDenied(username)
 				if userIsDenied {
@@ -44,10 +45,10 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 			if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
 				orgId := auth.GetOrgIdFromClaims(claims)
-				org, _ := h.configService.GetOrganisationById(orgId)
+				org, _ := h.accessControlList.AllowList.Organisations.GetById(orgId)
 				userIsAllowed := org.IsUserAllowed(username)
 				if !userIsAllowed {
-					_, userIsAllowed = h.configService.GetServiceAccountByUsername(username)
+					_, userIsAllowed = h.accessControlList.AllowList.ServiceAccounts.GetByUsername(username)
 				}
 				if !userIsAllowed {
 					glog.V(5).Infof("User %s is not in allow list and cannot access the service. Setting kafka maximum capacity to 'true'", username)
