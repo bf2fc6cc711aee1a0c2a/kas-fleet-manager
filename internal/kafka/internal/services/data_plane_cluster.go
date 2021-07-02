@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/goava/di"
 	"strconv"
 	"time"
 
@@ -29,6 +30,7 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
+	di.Inject
 	clusterService         ClusterService
 	kafkaConfig            *config.KafkaConfig
 	observabilityConfig    *config.ObservabilityConfiguration
@@ -40,13 +42,8 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 	Partitions  int
 }
 
-func NewDataPlaneClusterService(clusterService ClusterService, config *config.ApplicationConfig) *dataPlaneClusterService {
-	return &dataPlaneClusterService{
-		clusterService:         clusterService,
-		kafkaConfig:            config.Kafka,
-		observabilityConfig:    config.ObservabilityConfiguration,
-		dataplaneClusterConfig: config.DataplaneClusterConfig,
-	}
+func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {
+	return &config
 }
 
 func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError) {

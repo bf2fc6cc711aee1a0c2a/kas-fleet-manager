@@ -46,7 +46,6 @@ func ConfigProviders() di.Option {
 		di.Provide(config.NewKafkaConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewApplicationConfig),
 
 		// Additional CLI subcommands
 		di.Provide(cluster.NewClusterCommand),

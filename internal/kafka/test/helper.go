@@ -25,7 +25,8 @@ import (
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
-	AppConfig             *config.ApplicationConfig
+	KeycloakConfig        *config.KeycloakConfig
+	KafkaConfig           *config.KafkaConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
