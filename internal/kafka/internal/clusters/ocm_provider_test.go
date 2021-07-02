@@ -1,13 +1,13 @@
 package clusters
 
 import (
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
@@ -25,7 +25,7 @@ func TestOCMProvider_Create(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterReq types.ClusterRequest
+		clusterReq types2.ClusterRequest
 	}
 	awsConfig := &config.AWSConfig{
 		AccountID:       "",
@@ -35,12 +35,12 @@ func TestOCMProvider_Create(t *testing.T) {
 	osdCreateConfig := &config.DataplaneClusterConfig{
 		OpenshiftVersion: "4.7",
 	}
-	cb := ocm2.NewClusterBuilder(awsConfig, osdCreateConfig)
+	cb := NewClusterBuilder(awsConfig, osdCreateConfig)
 
 	internalId := "test-internal-id"
 	externalId := "test-external-id"
 
-	cr := types.ClusterRequest{
+	cr := types2.ClusterRequest{
 		CloudProvider:  "aws",
 		Region:         "east-1",
 		MultiAZ:        true,
@@ -50,7 +50,7 @@ func TestOCMProvider_Create(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ClusterSpec
+		want    *types2.ClusterSpec
 		wantErr bool
 	}{
 		{
@@ -65,7 +65,7 @@ func TestOCMProvider_Create(t *testing.T) {
 			args: args{
 				clusterReq: cr,
 			},
-			want: &types.ClusterSpec{
+			want: &types2.ClusterSpec{
 				InternalID:     internalId,
 				ExternalID:     externalId,
 				Status:         api.ClusterProvisioning,
@@ -106,13 +106,13 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 	}
 
 	internalId := "test-internal-id"
 	externalId := "test-external-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -123,7 +123,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ClusterSpec
+		want    *types2.ClusterSpec
 		wantErr bool
 	}{
 		{
@@ -139,7 +139,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 			args: args{
 				clusterSpec: spec,
 			},
-			want: &types.ClusterSpec{
+			want: &types2.ClusterSpec{
 				InternalID:     internalId,
 				ExternalID:     externalId,
 				Status:         api.ClusterProvisioned,
@@ -160,7 +160,7 @@ func TestOCMProvider_CheckClusterStatus(t *testing.T) {
 			args: args{
 				clusterSpec: spec,
 			},
-			want: &types.ClusterSpec{
+			want: &types2.ClusterSpec{
 				InternalID:     internalId,
 				ExternalID:     externalId,
 				Status:         api.ClusterFailed,
@@ -203,12 +203,12 @@ func TestOCMProvider_Delete(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -287,12 +287,12 @@ func TestOCMProvider_GetClusterDNS(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -358,13 +358,13 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec          *types.ClusterSpec
-		identityProviderInfo types.IdentityProviderInfo
+		clusterSpec          *types2.ClusterSpec
+		identityProviderInfo types2.IdentityProviderInfo
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -376,7 +376,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 	testIdpClientId := "test-client-id"
 	testIdpClientSecret := "test-client-secret"
 	testIdpIssuer := "test-issuer"
-	idpInfo := types.IdentityProviderInfo{OpenID: &types.OpenIDIdentityProviderInfo{
+	idpInfo := types2.IdentityProviderInfo{OpenID: &types2.OpenIDIdentityProviderInfo{
 		Name:         testIdpName,
 		ClientID:     testIdpClientId,
 		ClientSecret: testIdpClientSecret,
@@ -387,7 +387,7 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.IdentityProviderInfo
+		want    *types2.IdentityProviderInfo
 		wantErr bool
 	}{
 		{
@@ -406,8 +406,8 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 				clusterSpec:          spec,
 				identityProviderInfo: idpInfo,
 			},
-			want: &types.IdentityProviderInfo{
-				OpenID: &types.OpenIDIdentityProviderInfo{
+			want: &types2.IdentityProviderInfo{
+				OpenID: &types2.OpenIDIdentityProviderInfo{
 					ID:           testIdpId,
 					Name:         testIdpName,
 					ClientID:     testIdpClientId,
@@ -434,8 +434,8 @@ func TestOCMProvider_AddIdentityProvider(t *testing.T) {
 				clusterSpec:          spec,
 				identityProviderInfo: idpInfo,
 			},
-			want: &types.IdentityProviderInfo{
-				OpenID: &types.OpenIDIdentityProviderInfo{
+			want: &types2.IdentityProviderInfo{
+				OpenID: &types2.OpenIDIdentityProviderInfo{
 					ID:           testIdpId,
 					Name:         testIdpName,
 					ClientID:     testIdpClientId,
@@ -484,13 +484,13 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
-		resources   types.ResourceSet
+		clusterSpec *types2.ClusterSpec
+		resources   types2.ResourceSet
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -498,7 +498,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 	}
 
 	name := "test-resource-set"
-	resources := types.ResourceSet{
+	resources := types2.ResourceSet{
 		Name:      name,
 		Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
 	}
@@ -507,7 +507,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ResourceSet
+		want    *types2.ResourceSet
 		wantErr bool
 	}{
 		{
@@ -531,7 +531,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 				clusterSpec: spec,
 				resources:   resources,
 			},
-			want: &types.ResourceSet{
+			want: &types2.ResourceSet{
 				Name:      name,
 				Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
 			},
@@ -558,7 +558,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 				clusterSpec: spec,
 				resources:   resources,
 			},
-			want: &types.ResourceSet{
+			want: &types2.ResourceSet{
 				Name:      name,
 				Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
 			},
@@ -585,7 +585,7 @@ func TestOCMProvider_ApplyResources(t *testing.T) {
 				clusterSpec: spec,
 				resources:   resources,
 			},
-			want: &types.ResourceSet{
+			want: &types2.ResourceSet{
 				Name:      name,
 				Resources: []interface{}{sampleProjectCR(), sampleOperatorGroup()},
 			},
@@ -633,13 +633,13 @@ func TestOCMProvider_ScaleUp(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 		increment   int
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -650,7 +650,7 @@ func TestOCMProvider_ScaleUp(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ClusterSpec
+		want    *types2.ClusterSpec
 		wantErr bool
 	}{
 		{
@@ -705,13 +705,13 @@ func TestOCMProvider_ScaleDown(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 		decrement   int
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -722,7 +722,7 @@ func TestOCMProvider_ScaleDown(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ClusterSpec
+		want    *types2.ClusterSpec
 		wantErr bool
 	}{
 		{
@@ -777,13 +777,13 @@ func TestOCMProvider_SetComputeNodes(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 		numNodes    int
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -794,7 +794,7 @@ func TestOCMProvider_SetComputeNodes(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ClusterSpec
+		want    *types2.ClusterSpec
 		wantErr bool
 	}{
 		{
@@ -849,12 +849,12 @@ func TestOCMProvider_GetComputeNodes(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -865,7 +865,7 @@ func TestOCMProvider_GetComputeNodes(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.ComputeNodesInfo
+		want    *types2.ComputeNodesInfo
 		wantErr bool
 	}{
 		{
@@ -885,7 +885,7 @@ func TestOCMProvider_GetComputeNodes(t *testing.T) {
 			args: args{
 				clusterSpec: spec,
 			},
-			want: &types.ComputeNodesInfo{
+			want: &types2.ComputeNodesInfo{
 				Actual:  3,
 				Desired: 6,
 			},
@@ -945,13 +945,13 @@ func TestOCMProvider_InstallAddon(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 		addonID     string
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -1043,14 +1043,14 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 		ocmClient ocm2.Client
 	}
 	type args struct {
-		clusterSpec *types.ClusterSpec
+		clusterSpec *types2.ClusterSpec
 		addonID     string
-		params      []types.Parameter
+		params      []types2.Parameter
 	}
 
 	internalId := "test-internal-id"
 
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     internalId,
 		ExternalID:     "",
 		Status:         "",
@@ -1058,7 +1058,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 	}
 
 	testAddonId := "test-addon-id"
-	testParams := []types.Parameter{
+	testParams := []types2.Parameter{
 		{
 			Id:    "param1",
 			Value: "param-value-1",
@@ -1079,7 +1079,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 						return clustersmgmtv1.NewAddOnInstallation().Build()
 					},
-					CreateAddonWithParamsFunc: func(clusterId string, addonId string, params []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+					CreateAddonWithParamsFunc: func(clusterId string, addonId string, params []types2.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 						Expect(addonId).To(Equal(testAddonId))
 						Expect(params).To(Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateInstalling).Build()
@@ -1101,7 +1101,7 @@ func TestOCMProvider_InstallAddonWithParams(t *testing.T) {
 					GetAddonFunc: func(clusterId string, addonId string) (*clustersmgmtv1.AddOnInstallation, error) {
 						return clustersmgmtv1.NewAddOnInstallation().ID("test-addon-id").State(clustersmgmtv1.AddOnInstallationStateReady).Build()
 					},
-					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []types.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
+					UpdateAddonParametersFunc: func(clusterId string, addonId string, parameters []types2.Parameter) (*clustersmgmtv1.AddOnInstallation, error) {
 						Expect(addonId).To(Equal(testAddonId))
 						Expect(parameters).To(Equal(testParams))
 						return clustersmgmtv1.NewAddOnInstallation().State(clustersmgmtv1.AddOnInstallationStateReady).Build()
@@ -1158,7 +1158,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *types.CloudProviderInfoList
+		want    *types2.CloudProviderInfoList
 		wantErr bool
 	}{
 		{
@@ -1170,7 +1170,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 					},
 				},
 			},
-			want:    &types.CloudProviderInfoList{Items: nil},
+			want:    &types2.CloudProviderInfoList{Items: nil},
 			wantErr: false,
 		},
 		{
@@ -1183,7 +1183,7 @@ func TestOCMProvider_GetCloudProviders(t *testing.T) {
 					},
 				},
 			},
-			want: &types.CloudProviderInfoList{Items: []types.CloudProviderInfo{{
+			want: &types2.CloudProviderInfoList{Items: []types2.CloudProviderInfo{{
 				ID:          providerId1,
 				Name:        providerName1,
 				DisplayName: providerDisplayName1,
@@ -1223,7 +1223,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	}
 
 	type args struct {
-		providerInfo types.CloudProviderInfo
+		providerInfo types2.CloudProviderInfo
 	}
 
 	providerId1 := "provider-id-1"
@@ -1239,7 +1239,7 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *types.CloudProviderRegionInfoList
+		want    *types2.CloudProviderRegionInfoList
 		wantErr bool
 	}{
 		{
@@ -1254,12 +1254,12 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 					},
 				},
 			},
-			args: args{providerInfo: types.CloudProviderInfo{
+			args: args{providerInfo: types2.CloudProviderInfo{
 				ID:          providerId1,
 				Name:        providerName1,
 				DisplayName: providerDisplayName1,
 			}},
-			want:    &types.CloudProviderRegionInfoList{Items: nil},
+			want:    &types2.CloudProviderRegionInfoList{Items: nil},
 			wantErr: false,
 		},
 		{
@@ -1276,13 +1276,13 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 					},
 				},
 			},
-			args: args{providerInfo: types.CloudProviderInfo{
+			args: args{providerInfo: types2.CloudProviderInfo{
 				ID:          providerId1,
 				Name:        providerName1,
 				DisplayName: providerDisplayName1,
 			}},
-			want: &types.CloudProviderRegionInfoList{
-				Items: []types.CloudProviderRegionInfo{
+			want: &types2.CloudProviderRegionInfoList{
+				Items: []types2.CloudProviderRegionInfo{
 					{
 						ID:              regionId1,
 						CloudProviderID: providerId1,

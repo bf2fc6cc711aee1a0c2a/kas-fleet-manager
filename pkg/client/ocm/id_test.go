@@ -18,11 +18,11 @@ func Test_idGenerator_Generate(t *testing.T) {
 		{
 			name: "valid prefix",
 			fields: fields{
-				prefix: ClusterNamePrefix,
+				prefix: "mk-",
 			},
 			validateFn: func(id string) error {
-				if !strings.HasPrefix(id, ClusterNamePrefix) {
-					return fmt.Errorf("expected id to have prefix %s, got = %s", ClusterNamePrefix, id)
+				if !strings.HasPrefix(id, "mk-") {
+					return fmt.Errorf("expected id to have prefix %s, got = %s", "mk-", id)
 				}
 				return nil
 			},

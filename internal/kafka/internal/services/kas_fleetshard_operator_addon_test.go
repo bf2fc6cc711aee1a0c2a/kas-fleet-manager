@@ -1,11 +1,11 @@
 package services
 
 import (
+	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -16,7 +16,7 @@ import (
 func TestAgentOperatorAddon_Provision(t *testing.T) {
 	addonId := "test-id"
 	type fields struct {
-		providerFactory clusters.ProviderFactory
+		providerFactory clusters2.ProviderFactory
 		ssoService      services.KeycloakService
 	}
 	tests := []struct {
@@ -33,9 +33,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-					return &clusters.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
+					return &clusters2.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
 							return false, nil
 						},
 					}, nil
@@ -53,9 +53,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return nil, errors.GeneralError("error")
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-					return &clusters.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
+					return &clusters2.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
 							return false, errors.GeneralError("error")
 						},
 					}, nil
@@ -139,7 +139,7 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 
 func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 	type fields struct {
-		providerFactory clusters.ProviderFactory
+		providerFactory clusters2.ProviderFactory
 		ssoService      services.KeycloakService
 	}
 	tests := []struct {
@@ -155,9 +155,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-					return &clusters.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
+					return &clusters2.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
 							return true, nil
 						},
 					}, nil
@@ -173,9 +173,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-					return &clusters.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
+				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
+					return &clusters2.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
 							return false, errors.GeneralError("test error")
 						},
 					}, nil

@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
@@ -34,10 +34,10 @@ type ClusterService interface {
 	// If the cluster has not been found nil is returned. If there has been an issue
 	// finding the cluster an error is set
 	FindClusterByID(clusterID string) (*api.Cluster, *apiErrors.ServiceError)
-	ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError)
-	GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError)
+	ScaleUpComputeNodes(clusterID string, increment int) (*types2.ClusterSpec, *apiErrors.ServiceError)
+	ScaleDownComputeNodes(clusterID string, decrement int) (*types2.ClusterSpec, *apiErrors.ServiceError)
+	SetComputeNodes(clusterID string, numNodes int) (*types2.ClusterSpec, *apiErrors.ServiceError)
+	GetComputeNodes(clusterID string) (*types2.ComputeNodesInfo, *apiErrors.ServiceError)
 	ListGroupByProviderAndRegion(providers []string, regions []string, status []string) ([]*ResGroupCPRegion, *apiErrors.ServiceError)
 	RegisterClusterJob(clusterRequest *api.Cluster) *apiErrors.ServiceError
 	// DeleteByClusterID will delete the cluster from the database
@@ -58,8 +58,8 @@ type ClusterService interface {
 	CheckClusterStatus(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError)
 	// Delete will delete the cluster from the provider
 	Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
-	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
-	ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError
+	ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types2.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError)
+	ApplyResources(cluster *api.Cluster, resources types2.ResourceSet) *apiErrors.ServiceError
 	// Install the strimzi operator in a given cluster
 	InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	// Install the cluster logging operator for a given cluster
@@ -68,11 +68,11 @@ type ClusterService interface {
 
 type clusterService struct {
 	connectionFactory *db.ConnectionFactory
-	providerFactory   clusters.ProviderFactory
+	providerFactory   clusters2.ProviderFactory
 }
 
 // NewClusterService creates a new client for the OSD Cluster Service
-func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters.ProviderFactory) ClusterService {
+func NewClusterService(connectionFactory *db.ConnectionFactory, providerFactory clusters2.ProviderFactory) ClusterService {
 	return &clusterService{
 		connectionFactory: connectionFactory,
 		providerFactory:   providerFactory,
@@ -92,7 +92,7 @@ func (c clusterService) RegisterClusterJob(clusterRequest *api.Cluster) *apiErro
 // Returns the newly created cluster object
 func (c clusterService) Create(cluster *api.Cluster) (*api.Cluster, *apiErrors.ServiceError) {
 	dbConn := c.connectionFactory.New()
-	r := &types.ClusterRequest{
+	r := &types2.ClusterRequest{
 		CloudProvider:  cluster.CloudProvider,
 		Region:         cluster.Region,
 		MultiAZ:        cluster.MultiAZ,
@@ -302,7 +302,7 @@ func (c clusterService) FindClusterByID(clusterID string) (*api.Cluster, *apiErr
 }
 
 // ScaleUpComputeNodes adds three additional compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*types.ClusterSpec, *apiErrors.ServiceError) {
+func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*types2.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
@@ -326,7 +326,7 @@ func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*t
 }
 
 // ScaleDownComputeNodes removes three compute nodes to cluster specified by clusterID
-func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*types.ClusterSpec, *apiErrors.ServiceError) {
+func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (*types2.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
@@ -349,7 +349,7 @@ func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (
 	return clusterSpec, nil
 }
 
-func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.ClusterSpec, *apiErrors.ServiceError) {
+func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types2.ClusterSpec, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
@@ -372,7 +372,7 @@ func (c clusterService) SetComputeNodes(clusterID string, numNodes int) (*types.
 	return clusterSpec, nil
 }
 
-func (c clusterService) GetComputeNodes(clusterID string) (*types.ComputeNodesInfo, *apiErrors.ServiceError) {
+func (c clusterService) GetComputeNodes(clusterID string) (*types2.ComputeNodesInfo, *apiErrors.ServiceError) {
 	if clusterID == "" {
 		return nil, apiErrors.Validation("clusterID is undefined")
 	}
@@ -614,7 +614,7 @@ func (c clusterService) Delete(cluster *api.Cluster) (bool, *apiErrors.ServiceEr
 	}
 }
 
-func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, identityProviderInfo types2.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 	if cluster.IdentityProviderID != "" {
 		return cluster, nil
 	}
@@ -634,7 +634,7 @@ func (c clusterService) ConfigureAndSaveIdentityProvider(cluster *api.Cluster, i
 	return cluster, nil
 }
 
-func (c clusterService) ApplyResources(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+func (c clusterService) ApplyResources(cluster *api.Cluster, resources types2.ResourceSet) *apiErrors.ServiceError {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
@@ -657,7 +657,7 @@ func (c clusterService) InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.S
 	}
 }
 
-func (c clusterService) InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+func (c clusterService) InstallClusterLogging(cluster *api.Cluster, params []types2.Parameter) (bool, *apiErrors.ServiceError) {
 	p, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return false, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
@@ -669,8 +669,8 @@ func (c clusterService) InstallClusterLogging(cluster *api.Cluster, params []typ
 	}
 }
 
-func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
-	return &types.ClusterSpec{
+func buildClusterSpec(cluster *api.Cluster) *types2.ClusterSpec {
+	return &types2.ClusterSpec{
 		InternalID:     cluster.ClusterID,
 		ExternalID:     cluster.ExternalID,
 		Status:         cluster.Status,

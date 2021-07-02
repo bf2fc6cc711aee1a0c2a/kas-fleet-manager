@@ -2,13 +2,13 @@ package workers
 
 import (
 	"fmt"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -168,7 +168,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			name: "error when installing cluster logging operator",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types2.Parameter) (bool, *ocmErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install cluster logging operator")
 					},
 				},
@@ -179,7 +179,7 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 			name: "cluster logging operator installed successfully",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types2.Parameter) (bool, *ocmErrors.ServiceError) {
 						return true, nil
 					},
 				},
@@ -407,7 +407,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types2.Parameter) (bool, *ocmErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -427,7 +427,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install strimzi")
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types2.Parameter) (bool, *ocmErrors.ServiceError) {
 						return false, nil
 					},
 				},
@@ -441,7 +441,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, apiErrors.GeneralError("failed to install strimzi")
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types2.Parameter) (bool, *ocmErrors.ServiceError) {
 						return false, nil
 					},
 				},
@@ -455,7 +455,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 					InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 						return false, nil
 					},
-					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *ocmErrors.ServiceError) {
+					InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types2.Parameter) (bool, *ocmErrors.ServiceError) {
 						return false, nil
 					},
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
@@ -517,7 +517,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return ingressDNS, nil
 					},
-					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types2.ResourceSet) *apiErrors.ServiceError {
 						want, _ := buildResourceSet(observabilityConfig, clusterCreateConfig, ingressDNS)
 						Expect(resources).To(Equal(want))
 						return nil
@@ -543,7 +543,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
+					ApplyResourcesFunc: func(cluster *api.Cluster, resources types2.ResourceSet) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to apply resources")
 					},
 				},
@@ -629,7 +629,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types2.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 						return nil, apiErrors.GeneralError("failed to configure IDP")
 					},
 				},
@@ -653,7 +653,7 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 						return "test.com", nil
 					},
-					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
+					ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types2.IdentityProviderInfo) (*api.Cluster, *apiErrors.ServiceError) {
 						return cluster, nil
 					},
 				},
@@ -1165,7 +1165,7 @@ func buildObservabilityConfig() config.ObservabilityConfiguration {
 	return observabilityConfig
 }
 
-func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types.ResourceSet, error) {
+func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types2.ResourceSet, error) {
 	r := int32(clusterCreateConfig.IngressControllerReplicas)
 	resources := []interface{}{
 		&ingressoperatorv1.IngressController{
@@ -1394,7 +1394,7 @@ func buildResourceSet(observabilityConfig config.ObservabilityConfiguration, clu
 			})
 	}
 
-	return types.ResourceSet{
+	return types2.ResourceSet{
 		Name:      syncsetName,
 		Resources: resources,
 	}, nil

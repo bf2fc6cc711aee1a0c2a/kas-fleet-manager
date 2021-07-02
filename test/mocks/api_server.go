@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"io"
 	"log"
 	"net"
@@ -971,7 +970,7 @@ func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInst
 func GetMockClusterNodesBuilder(modifyFn func(*clustersmgmtv1.ClusterNodesBuilder)) *clustersmgmtv1.ClusterNodesBuilder {
 	builder := clustersmgmtv1.NewClusterNodes().
 		Compute(MockClusterComputeNodes).
-		ComputeMachineType(clustersmgmtv1.NewMachineType().ID(ocm2.ComputeMachineType))
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID("m5.4xlarge"))
 	if modifyFn != nil {
 		modifyFn(builder)
 	}

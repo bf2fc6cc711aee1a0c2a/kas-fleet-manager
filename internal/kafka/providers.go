@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/cloudprovider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/cluster"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/errors"
@@ -8,7 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/serviceaccounts"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/environments"
-	handlers2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/migrations"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -70,7 +71,8 @@ func ServiceProviders() di.Option {
 		di.Provide(services.NewClusterPlacementStrategy),
 		di.Provide(services.NewDataPlaneClusterService, di.As(new(services.DataPlaneClusterService))),
 		di.Provide(services.NewDataPlaneKafkaService, di.As(new(services.DataPlaneKafkaService))),
-		di.Provide(handlers2.NewAuthenticationBuilder),
+		di.Provide(handlers.NewAuthenticationBuilder),
+		di.Provide(clusters.NewDefaultProviderFactory, di.As(new(clusters.ProviderFactory))),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(quota.NewDefaultQuotaServiceFactory),
 		di.Provide(workers.NewClusterManager, di.As(new(workers.Worker))),

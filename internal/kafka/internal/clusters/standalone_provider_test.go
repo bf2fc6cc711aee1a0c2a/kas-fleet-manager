@@ -1,9 +1,9 @@
 package clusters
 
 import (
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
@@ -19,7 +19,7 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *types.CloudProviderInfoList
+		want    *types2.CloudProviderInfoList
 		wantErr bool
 		setupFn func()
 	}{
@@ -44,8 +44,8 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{})
 			},
-			want: &types.CloudProviderInfoList{
-				Items: []types.CloudProviderInfo{},
+			want: &types2.CloudProviderInfoList{
+				Items: []types2.CloudProviderInfo{},
 			},
 		},
 		{
@@ -58,8 +58,8 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{{"cloud_provider": "aws"}, {"cloud_provider": "azure"}})
 			},
-			want: &types.CloudProviderInfoList{
-				Items: []types.CloudProviderInfo{
+			want: &types2.CloudProviderInfoList{
+				Items: []types2.CloudProviderInfo{
 					{
 						ID:          "aws",
 						Name:        "aws",
@@ -97,7 +97,7 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 	tests := []struct {
 		name    string
 		fields  fields
-		want    *types.CloudProviderRegionInfoList
+		want    *types2.CloudProviderRegionInfoList
 		wantErr bool
 		setupFn func()
 	}{
@@ -122,8 +122,8 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{})
 			},
-			want: &types.CloudProviderRegionInfoList{
-				Items: []types.CloudProviderRegionInfo{},
+			want: &types2.CloudProviderRegionInfoList{
+				Items: []types2.CloudProviderRegionInfo{},
 			},
 		},
 		{
@@ -136,8 +136,8 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{{"region": "af-east-1", "multi_az": false}, {"region": "eu-central-0", "multi_az": true}})
 			},
-			want: &types.CloudProviderRegionInfoList{
-				Items: []types.CloudProviderRegionInfo{
+			want: &types2.CloudProviderRegionInfoList{
+				Items: []types2.CloudProviderRegionInfo{
 					{
 						ID:              "af-east-1",
 						Name:            "af-east-1",
@@ -162,7 +162,7 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 			RegisterTestingT(t)
 			test.setupFn()
 			provider := newStandaloneProvider(test.fields.connectionFactory, config.NewDataplaneClusterConfig())
-			resp, err := provider.GetCloudProviderRegions(types.CloudProviderInfo{ID: "aws"})
+			resp, err := provider.GetCloudProviderRegions(types2.CloudProviderInfo{ID: "aws"})
 			Expect(test.wantErr).To(Equal(err != nil))
 			if !test.wantErr {
 				Expect(resp.Items).To(Equal(test.want.Items))

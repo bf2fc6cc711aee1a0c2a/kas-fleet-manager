@@ -1,7 +1,8 @@
-package ocm
+package clusters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ const (
 type ClusterBuilder interface {
 	// NewOCMClusterFromCluster create an OCM cluster definition that can be used to create a new cluster with the OCM
 	// Cluster Service.
-	NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error)
+	NewOCMClusterFromCluster(clusterRequest *types2.ClusterRequest) (*clustersmgmtv1.Cluster, error)
 }
 
 var _ ClusterBuilder = &clusterBuilder{}
@@ -28,7 +29,7 @@ var _ ClusterBuilder = &clusterBuilder{}
 // clusterBuilder internal ClusterBuilder implementation.
 type clusterBuilder struct {
 	// idGenerator generates cluster IDs.
-	idGenerator IDGenerator
+	idGenerator ocm.IDGenerator
 
 	// awsConfig contains aws credentials for use with the OCM cluster service.
 	awsConfig *config.AWSConfig
@@ -40,13 +41,13 @@ type clusterBuilder struct {
 // NewClusterBuilder create a new default implementation of ClusterBuilder.
 func NewClusterBuilder(awsConfig *config.AWSConfig, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterBuilder {
 	return &clusterBuilder{
-		idGenerator:            NewIDGenerator(ClusterNamePrefix),
+		idGenerator:            ocm.NewIDGenerator(ClusterNamePrefix),
 		awsConfig:              awsConfig,
 		dataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }
 
-func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
+func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types2.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
 	// pre-req nil checks
 	if err := r.validate(); err != nil {
 		return nil, err

@@ -1,9 +1,9 @@
 package services
 
 import (
+	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -41,7 +41,7 @@ func NewKasFleetshardOperatorAddon(o kasFleetshardOperatorAddon) KasFleetshardOp
 type kasFleetshardOperatorAddon struct {
 	di.Inject
 	SsoService          services.KafkaKeycloakService
-	ProviderFactory     clusters.ProviderFactory
+	ProviderFactory     clusters2.ProviderFactory
 	ServerConfig        *config.ServerConfig
 	KasFleetShardConfig *config.KasFleetshardConfig
 	OCMConfig           *config.OCMConfig
@@ -59,7 +59,7 @@ func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *erro
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get provider implementation")
 	}
 	glog.V(5).Infof("Provision addon %s for cluster %s", kasFleetshardAddonID, cluster.ClusterID)
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     cluster.ClusterID,
 		ExternalID:     cluster.ExternalID,
 		Status:         cluster.Status,
@@ -84,7 +84,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 	}
 
 	glog.V(5).Infof("Reconcile parameters for addon %s on cluster %s", kasFleetshardAddonID, cluster.ClusterID)
-	spec := &types.ClusterSpec{
+	spec := &types2.ClusterSpec{
 		InternalID:     cluster.ClusterID,
 		ExternalID:     cluster.ExternalID,
 		Status:         cluster.Status,
@@ -101,7 +101,7 @@ func (o *kasFleetshardOperatorAddon) ReconcileParameters(cluster api.Cluster) *e
 	}
 }
 
-func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types.Parameter, *errors.ServiceError) {
+func (o *kasFleetshardOperatorAddon) getAddonParams(cluster api.Cluster) ([]types2.Parameter, *errors.ServiceError) {
 	acc, pErr := o.provisionServiceAccount(cluster.ClusterID)
 	if pErr != nil {
 		return nil, errors.GeneralError("failed to create service account for cluster %s due to error: %v", cluster.ClusterID, pErr)
@@ -115,8 +115,8 @@ func (o *kasFleetshardOperatorAddon) provisionServiceAccount(clusterId string) (
 	return o.SsoService.RegisterKasFleetshardOperatorServiceAccount(clusterId, KasFleetshardOperatorRoleName)
 }
 
-func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
-	p := []types.Parameter{
+func (o *kasFleetshardOperatorAddon) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types2.Parameter {
+	p := []types2.Parameter{
 
 		{
 			Id:    kasFleetshardOperatorParamMasSSOBaseUrl,

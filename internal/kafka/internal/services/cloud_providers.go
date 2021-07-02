@@ -1,13 +1,13 @@
 package services
 
 import (
+	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/patrickmn/go-cache"
@@ -29,7 +29,7 @@ type CloudProvidersService interface {
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
-func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
+func NewCloudProvidersService(providerFactory clusters2.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
 	return &cloudProvidersService{
 		providerFactory:   providerFactory,
 		connectionFactory: connectionFactory,
@@ -38,14 +38,14 @@ func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connecti
 }
 
 type cloudProvidersService struct {
-	providerFactory   clusters.ProviderFactory
+	providerFactory   clusters2.ProviderFactory
 	connectionFactory *db.ConnectionFactory
 	cache             *cache.Cache
 }
 
 type CloudProviderWithRegions struct {
 	ID         string
-	RegionList *types.CloudProviderRegionInfoList
+	RegionList *types2.CloudProviderRegionInfoList
 }
 
 type Cluster struct {
@@ -58,7 +58,7 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 		return nil, dbErr
 	}
 
-	cloudProvidersToRegions := map[string]*types.CloudProviderRegionInfoList{}
+	cloudProvidersToRegions := map[string]*types2.CloudProviderRegionInfoList{}
 
 	for _, result := range results {
 		provider, err := p.providerFactory.GetProvider(result.ProviderType)

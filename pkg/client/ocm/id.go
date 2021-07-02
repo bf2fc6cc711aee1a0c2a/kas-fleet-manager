@@ -13,7 +13,7 @@ const (
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider
 // moving the type into a ocmtest package.
-//go:generate moq -out idgenerator_moq_test.go . IDGenerator
+//go:generate moq -out idgenerator_moq.go . IDGenerator
 // IDGenerator interface for string ID generators.
 type IDGenerator interface {
 	// Generate create a new string ID.

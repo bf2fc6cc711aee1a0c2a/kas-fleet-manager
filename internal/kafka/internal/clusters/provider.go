@@ -1,9 +1,9 @@
 package clusters
 
 import (
+	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/pkg/errors"
@@ -12,37 +12,37 @@ import (
 //go:generate moq -out provider_moq.go . Provider
 type Provider interface {
 	// Create using the information provided to request a new OpenShift/k8s cluster from the provider
-	Create(request *types.ClusterRequest) (*types.ClusterSpec, error)
+	Create(request *types2.ClusterRequest) (*types2.ClusterSpec, error)
 	// Delete delete the cluster from the provider
-	Delete(spec *types.ClusterSpec) (bool, error)
+	Delete(spec *types2.ClusterSpec) (bool, error)
 	// CheckClusterStatus check the status of the cluster. This will be called periodically during cluster provisioning phase to see if the cluster is ready.
 	// It should set the status in the returned `ClusterSpec` to either `provisioning`, `ready` or `failed`.
 	// If there is additional data that needs to be preserved and passed between checks, add it to the returned `ClusterSpec` and it will be saved to the database and passed into this function again next time it is called.
-	CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error)
+	CheckClusterStatus(spec *types2.ClusterSpec) (*types2.ClusterSpec, error)
 	// AddIdentityProvider add an identity provider to the cluster
-	AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
+	AddIdentityProvider(clusterSpec *types2.ClusterSpec, identityProvider types2.IdentityProviderInfo) (*types2.IdentityProviderInfo, error)
 	// ApplyResources apply openshift/k8s resources to the cluster
-	ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error)
+	ApplyResources(clusterSpec *types2.ClusterSpec, resources types2.ResourceSet) (*types2.ResourceSet, error)
 	// ScaleUp scale the cluster up with the number of additional nodes specified
-	ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error)
+	ScaleUp(clusterSpec *types2.ClusterSpec, increment int) (*types2.ClusterSpec, error)
 	// ScaleDown scale the cluster down with the number of nodes specified
-	ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error)
+	ScaleDown(clusterSpec *types2.ClusterSpec, decrement int) (*types2.ClusterSpec, error)
 	// SetComputeNodes set the number of desired compute nodes for the cluster
-	SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error)
+	SetComputeNodes(clusterSpec *types2.ClusterSpec, numNodes int) (*types2.ClusterSpec, error)
 	// GetComputeNodes get the number of compute nodes for the cluster
-	GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
+	GetComputeNodes(spec *types2.ClusterSpec) (*types2.ComputeNodesInfo, error)
 	// GetClusterDNS Get the dns of the cluster
-	GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error)
+	GetClusterDNS(clusterSpec *types2.ClusterSpec) (string, error)
 	// GetCloudProviders Get the information about supported cloud providers from the cluster provider
-	GetCloudProviders() (*types.CloudProviderInfoList, error)
+	GetCloudProviders() (*types2.CloudProviderInfoList, error)
 	// GetCloudProviderRegions Get the regions information for the given cloud provider from the cluster provider
-	GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error)
+	GetCloudProviderRegions(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error)
 	// Install the strimzi operator in a given cluster
-	InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error)
+	InstallStrimzi(clusterSpec *types2.ClusterSpec) (bool, error)
 	// Install the cluster logging operator for a given cluster
-	InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
+	InstallClusterLogging(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error)
 	// Install the cluster logging operator for a given cluster
-	InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error)
+	InstallKasFleetshard(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error)
 }
 
 // ProviderFactory used to return an instance of Provider implementation
@@ -57,7 +57,7 @@ type DefaultProviderFactory struct {
 }
 
 func NewDefaultProviderFactory(ocmClient ocm2.Client, appConfig *config.ApplicationConfig, connectionFactory *db.ConnectionFactory, ocmConfig *config.OCMConfig) *DefaultProviderFactory {
-	ocmProvider := newOCMProvider(ocmClient, ocm2.NewClusterBuilder(appConfig.AWS, appConfig.DataplaneClusterConfig), ocmConfig)
+	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(appConfig.AWS, appConfig.DataplaneClusterConfig), ocmConfig)
 	standaloneProvider := newStandaloneProvider(connectionFactory, appConfig.DataplaneClusterConfig)
 	return &DefaultProviderFactory{
 		providerContainer: map[api.ClusterProviderType]Provider{
