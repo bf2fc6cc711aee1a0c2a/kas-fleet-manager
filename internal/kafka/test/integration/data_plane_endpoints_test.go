@@ -577,7 +577,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			}},
 			Routes: &[]private.DataPlaneKafkaStatusRoutes{
 				{
-					Route: "admin-api",
+					Route:  "admin-api",
 					Router: "router.external.example.com",
 				},
 			},
