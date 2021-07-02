@@ -3,6 +3,7 @@ package services
 import (
 	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -72,7 +73,7 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
 				ServerConfig:        &config.ServerConfig{},
-				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				KasFleetShardConfig: &config2.KasFleetshardConfig{},
 				OCMConfig:           &config.OCMConfig{KasFleetshardAddonID: addonId},
 				KeycloakConfig: &config.KeycloakConfig{
 					KafkaRealm: &config.KeycloakRealmConfig{},
@@ -191,7 +192,7 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
 				ServerConfig:        &config.ServerConfig{},
-				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				KasFleetShardConfig: &config2.KasFleetshardConfig{},
 				OCMConfig:           &config.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
 				KeycloakConfig: &config.KeycloakConfig{
 					KafkaRealm: &config.KeycloakRealmConfig{},

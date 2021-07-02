@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"net/http"
 	"testing"
 	"time"
@@ -562,7 +563,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }
 
-func KafkaConfig(h *coreTest.Helper) (c *config.KafkaConfig) {
+func KafkaConfig(h *coreTest.Helper) (c *config2.KafkaConfig) {
 	h.Env.MustResolve(&c)
 	return
 }

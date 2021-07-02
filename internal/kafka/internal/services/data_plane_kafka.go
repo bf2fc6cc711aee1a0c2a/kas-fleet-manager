@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	serviceError "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
@@ -34,10 +34,10 @@ type DataPlaneKafkaService interface {
 type dataPlaneKafkaService struct {
 	kafkaService   KafkaService
 	clusterService ClusterService
-	kafkaConfig    *config.KafkaConfig
+	kafkaConfig    *config2.KafkaConfig
 }
 
-func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService, kafkaConfig *config.KafkaConfig) *dataPlaneKafkaService {
+func NewDataPlaneKafkaService(kafkaSrv KafkaService, clusterSrv ClusterService, kafkaConfig *config2.KafkaConfig) *dataPlaneKafkaService {
 	return &dataPlaneKafkaService{
 		kafkaService:   kafkaSrv,
 		clusterService: clusterSrv,

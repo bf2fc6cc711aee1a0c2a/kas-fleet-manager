@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
@@ -129,7 +130,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(c *config2.KafkaConfig) {
 		c.KafkaCapacity.MaxCapacity = 2
 	})
 	defer tearDown()
@@ -1260,7 +1261,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(c *config2.KafkaConfig) {
 		c.KafkaLifespan.LongLivedKafkas = []string{}
 	})
 	defer tearDown()
@@ -1350,7 +1351,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
+	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, func(c *config2.KafkaConfig) {
 		c.KafkaLifespan.LongLivedKafkas = []string{}
 	})
 	defer tearDown()

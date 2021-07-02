@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"reflect"
 	"testing"
 
@@ -196,7 +197,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when all scale-down threshold is crossed number of compute nodes is decreased",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).kafkaConfig
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).KafkaConfig
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -235,7 +236,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when not all scale-down threshold are crossed number of compute nodes is not decreased",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).kafkaConfig
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).KafkaConfig
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -270,7 +271,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when scale-down threshold is crossed but scaled-down nodes would be less than workloadMin then no scaling is performed",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).kafkaConfig
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).KafkaConfig
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -306,7 +307,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when scale-down threshold is crossed but scaled-down nodes would be less than restricted floor then no scaling is performed",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).kafkaConfig
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).KafkaConfig
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 6
 				testStatus.NodeInfo.Ceiling = 10000
@@ -343,7 +344,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 		{
 			name: "when no scale-up or scale-down thresholds are crossed no scaling is performed",
 			inputFactory: func() *input {
-				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).kafkaConfig
+				kafkaConfig := sampleValidApplicationConfigForDataPlaneClusterTest(nil).KafkaConfig
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				testStatus.NodeInfo.Current = 12
 				testStatus.NodeInfo.Ceiling = 30
@@ -715,7 +716,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					ObservabilityConfigAccessToken: "test-token",
 					ObservabilityConfigTag:         "test-tag",
 				},
-				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).dataplaneClusterConfig,
+				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
 			},
 			wantErr: false,
 			want: &dbapi.DataPlaneClusterConfig{Observability: dbapi.DataPlaneClusterConfigObservability{
@@ -739,7 +740,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 					ObservabilityConfigAccessToken: "test-token",
 					ObservabilityConfigTag:         "test-tag",
 				},
-				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).dataplaneClusterConfig,
+				DataplaneClusterConfig: sampleValidApplicationConfigForDataPlaneClusterTest(nil).DataplaneClusterConfig,
 			},
 			wantErr: true,
 			want:    nil,
@@ -749,9 +750,9 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewDataPlaneClusterService(dataPlaneClusterService{
-				clusterService:         tt.fields.clusterService,
-				observabilityConfig:    tt.fields.ObservabilityConfiguration,
-				dataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
+				ClusterService:         tt.fields.clusterService,
+				ObservabilityConfig:    tt.fields.ObservabilityConfiguration,
+				DataplaneClusterConfig: tt.fields.DataplaneClusterConfig,
 			})
 			config, err := s.GetDataPlaneClusterConfig(context.TODO(), "test-cluster-id")
 			if err != nil && !tt.wantErr {
@@ -802,7 +803,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 					},
 				}
 				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
-				kafkaConfig := c.kafkaConfig
+				kafkaConfig := c.KafkaConfig
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -891,7 +892,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
-				c.dataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+				c.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -1010,13 +1011,13 @@ func sampleValidApplicationConfigForDataPlaneClusterTest(clusterService ClusterS
 	dataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	return dataPlaneClusterService{
-		clusterService: clusterService,
-		kafkaConfig: &config.KafkaConfig{
-			KafkaCapacity: config.KafkaCapacityConfig{
+		ClusterService: clusterService,
+		KafkaConfig: &config2.KafkaConfig{
+			KafkaCapacity: config2.KafkaCapacityConfig{
 				MaxPartitions:       100,
 				TotalMaxConnections: 100,
 			},
 		},
-		dataplaneClusterConfig: dataplaneClusterConfig,
+		DataplaneClusterConfig: dataplaneClusterConfig,
 	}
 }

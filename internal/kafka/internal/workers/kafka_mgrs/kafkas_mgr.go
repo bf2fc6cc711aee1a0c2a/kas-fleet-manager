@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -29,11 +30,11 @@ type KafkaManager struct {
 	workers.BaseWorker
 	kafkaService            services.KafkaService
 	accessControlListConfig *config.AccessControlListConfig
-	kafkaConfig             *config.KafkaConfig
+	kafkaConfig             *config2.KafkaConfig
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, accessControlList *config.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, accessControlList *config.AccessControlListConfig, kafka *config2.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

@@ -2,6 +2,7 @@ package quota
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"net/http"
 	"testing"
 
@@ -16,7 +17,7 @@ import (
 func Test_AllowListCheckQuota(t *testing.T) {
 	type args struct {
 		connectionFactory *db.ConnectionFactory
-		KafkaConfig       *config.KafkaConfig
+		KafkaConfig       *config2.KafkaConfig
 		AccessControlList *config.AccessControlListConfig
 	}
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"reflect"
 	"testing"
 
@@ -14,7 +15,7 @@ import (
 func TestFirstReadyCluster_FindCluster(t *testing.T) {
 	type fields struct {
 		ClusterService         ClusterService
-		Kafka                  *config.KafkaConfig
+		Kafka                  *config2.KafkaConfig
 		DataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 	type args struct {
@@ -30,7 +31,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		{
 			name: "Find ready cluster",
 			fields: fields{
-				Kafka:                  config.NewKafkaConfig(),
+				Kafka:                  config2.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
 					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
@@ -47,7 +48,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		{
 			name: "Cannot find ready cluster",
 			fields: fields{
-				Kafka:                  config.NewKafkaConfig(),
+				Kafka:                  config2.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
 					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
@@ -64,7 +65,7 @@ func TestFirstReadyCluster_FindCluster(t *testing.T) {
 		{
 			name: "find ready cluster with error",
 			fields: fields{
-				Kafka:                  config.NewKafkaConfig(),
+				Kafka:                  config2.NewKafkaConfig(),
 				DataplaneClusterConfig: config.NewDataplaneClusterConfig(),
 				ClusterService: &ClusterServiceMock{
 					FindClusterFunc: func(criteria FindClusterCriteria) (cluster *api.Cluster, serviceError *errors.ServiceError) {
