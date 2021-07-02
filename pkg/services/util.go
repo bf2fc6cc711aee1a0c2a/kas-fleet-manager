@@ -29,6 +29,16 @@ func HandleGetError(resourceType, field string, value interface{}, err error) *e
 	return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find %s with %s='%v'", resourceType, field, value)
 }
 
+func HandleDeleteError(resourceType string, field string, value interface{}, err error) *errors.ServiceError {
+	for _, f := range piiFields {
+		if field == f {
+			value = "<redacted>"
+			break
+		}
+	}
+	return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to delete %s with %s='%v'", resourceType, field, value)
+}
+
 func IsRecordNotFoundError(err error) bool {
 	return err == gorm.ErrRecordNotFound
 }
