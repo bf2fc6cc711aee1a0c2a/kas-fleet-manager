@@ -11,7 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
@@ -29,13 +28,13 @@ func CoreConfigProviders() di.Option {
 		}),
 
 		// Add config types
-		di.Provide(server.NewHealthCheckConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(db.NewDatabaseConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(server.NewServerConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(ocm.NewOCMConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(keycloak.NewKeycloakConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(acl.NewAccessControlListConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(server.NewMetricsConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(server.NewHealthCheckConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(db.NewDatabaseConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(server.NewServerConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(keycloak.NewKeycloakConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),
@@ -47,7 +46,7 @@ func CoreConfigProviders() di.Option {
 		signalbus.ConfigProviders(),
 		authorization.ConfigProviders(),
 
-		di.Provide(provider.Func(ServiceProviders)),
+		di.Provide(environments.Func(ServiceProviders)),
 	)
 }
 
@@ -73,9 +72,9 @@ func ServiceProviders() di.Option {
 		}),
 
 		// Types registered as a BootService are started when the env is started
-		di.Provide(server.NewAPIServer, di.As(new(provider.BootService))),
-		di.Provide(server.NewMetricsServer, di.As(new(provider.BootService))),
-		di.Provide(server.NewHealthCheckServer, di.As(new(provider.BootService))),
-		di.Provide(workers.NewLeaderElectionManager, di.As(new(provider.BootService))),
+		di.Provide(server.NewAPIServer, di.As(new(environments.BootService))),
+		di.Provide(server.NewMetricsServer, di.As(new(environments.BootService))),
+		di.Provide(server.NewHealthCheckServer, di.As(new(environments.BootService))),
+		di.Provide(workers.NewLeaderElectionManager, di.As(new(environments.BootService))),
 	)
 }

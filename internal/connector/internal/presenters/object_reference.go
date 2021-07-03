@@ -5,7 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 )
 
 func PresentReference(id, obj interface{}) compat.ObjectReference {
-	return presenters.PresentReferenceWith(id, obj, objectKind, objectPath)
+	return handlers.PresentReferenceWith(id, obj, objectKind, objectPath)
 }
 
 func objectKind(i interface{}) string {

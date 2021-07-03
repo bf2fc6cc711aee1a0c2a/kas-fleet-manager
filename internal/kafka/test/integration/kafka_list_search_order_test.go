@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/antihax/optional"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
@@ -59,7 +59,7 @@ func setUp(t *testing.T) *testEnv {
 			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
 			Name:           mockKafkaName1,
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusReady.String(),
+			Status:         constants2.KafkaRequestStatusReady.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -68,7 +68,7 @@ func setUp(t *testing.T) *testEnv {
 			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
 			Name:           mockKafkaName2,
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusReady.String(),
+			Status:         constants2.KafkaRequestStatusReady.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -77,7 +77,7 @@ func setUp(t *testing.T) *testEnv {
 			CloudProvider:  mocks.MockCluster.CloudProvider().ID(),
 			Name:           mockKafkaName3,
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusReady.String(),
+			Status:         constants2.KafkaRequestStatusReady.String(),
 		},
 	}
 

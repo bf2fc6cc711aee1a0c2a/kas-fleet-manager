@@ -1,4 +1,4 @@
-package provider
+package environments
 
 import (
 	"github.com/goava/di"
@@ -30,6 +30,5 @@ type RouteLoader interface {
 type EnvHook struct {
 	Func di.Invocation
 }
-
 type BeforeCreateServicesHook EnvHook
 type AfterCreateServicesHook EnvHook

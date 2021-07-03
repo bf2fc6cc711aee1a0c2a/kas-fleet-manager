@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
@@ -19,7 +19,7 @@ type ConnectorsConfig struct {
 	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
 }
 
-var _ provider.ConfigModule = &ConnectorsConfig{}
+var _ environments.ConfigModule = &ConnectorsConfig{}
 
 type ConnectorChannelConfig struct {
 	Revision      int64                  `json:"revision,omitempty"`

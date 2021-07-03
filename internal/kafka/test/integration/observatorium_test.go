@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -14,7 +15,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
@@ -119,7 +119,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, _ := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, _ := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
 
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -131,7 +131,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
@@ -191,7 +191,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
 	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
@@ -203,7 +203,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))

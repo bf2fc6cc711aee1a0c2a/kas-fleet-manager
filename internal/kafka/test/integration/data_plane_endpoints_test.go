@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -15,7 +16,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
@@ -230,7 +230,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName1,
-			Status:              constants.KafkaRequestStatusDeprovision.String(),
+			Status:              constants2.KafkaRequestStatusDeprovision.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -240,7 +240,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName2,
-			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -250,7 +250,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName3,
-			Status:              constants.KafkaRequestStatusPreparing.String(),
+			Status:              constants2.KafkaRequestStatusPreparing.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -260,7 +260,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName4,
-			Status:              constants.KafkaRequestStatusReady.String(),
+			Status:              constants2.KafkaRequestStatusReady.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -270,7 +270,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName4,
-			Status:              constants.KafkaRequestStatusFailed.String(),
+			Status:              constants2.KafkaRequestStatusFailed.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -292,7 +292,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		ClusterID: testServer.ClusterID,
 		MultiAZ:   false,
 		Name:      mockKafkaName4,
-		Status:    constants.KafkaRequestStatusFailed.String(),
+		Status:    constants2.KafkaRequestStatusFailed.String(),
 		Version:   "2.7.2",
 	}
 
@@ -316,7 +316,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	}
 
 	for _, k := range testKafkas {
-		if k.Status != constants.KafkaRequestStatusPreparing.String() {
+		if k.Status != constants2.KafkaRequestStatusPreparing.String() {
 			if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotations.DeprecatedBf2OrgPlacementId).To(Equal(k.PlacementId))
@@ -324,7 +324,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Annotations.PlacementId).To(Equal(k.PlacementId))
 				Expect(mk.Metadata.Annotations.Id).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
-				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
+				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Kafka).To(Equal(k.Version))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
@@ -384,7 +384,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 	}
 
 	for _, cid := range deletedClusters {
@@ -393,7 +393,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusDeleting.String()))
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusDeleting.String()))
 	}
 }
 
@@ -425,7 +425,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -486,7 +486,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -547,7 +547,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName2,
-			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -626,7 +626,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 	}
 }
 
@@ -656,7 +656,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -724,7 +724,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -754,6 +754,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
-	Expect(c.Status).To(Equal(constants.KafkaRequestStatusFailed.String()))
+	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
 	Expect(c.FailedReason).To(ContainSubstring(errMessage))
 }

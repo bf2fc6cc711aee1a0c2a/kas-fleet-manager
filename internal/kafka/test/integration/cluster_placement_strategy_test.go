@@ -1,6 +1,7 @@
 package integration
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
@@ -50,7 +50,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		Region:        "us-east-1",
 		CloudProvider: "aws",
 		Name:          "dummy-kafka",
-		Status:        constants.KafkaRequestStatusReady.String(),
+		Status:        constants2.KafkaRequestStatusReady.String(),
 	}
 
 	if err := db.Save(&kafka).Error; err != nil {
@@ -136,14 +136,14 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 			CloudProvider: "aws",
 			Owner:         "dummyuser1",
 			Name:          "dummy-kafka-1",
-			Status:        constants.KafkaRequestStatusAccepted.String(),
+			Status:        constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{MultiAZ: true,
 			Region:        "us-east-1",
 			CloudProvider: "aws",
 			Owner:         "dummyuser2",
 			Name:          "dummy-kafka-2",
-			Status:        constants.KafkaRequestStatusAccepted.String(),
+			Status:        constants2.KafkaRequestStatusAccepted.String(),
 		},
 	}
 

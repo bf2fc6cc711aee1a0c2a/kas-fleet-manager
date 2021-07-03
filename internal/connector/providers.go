@@ -8,8 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
 	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 
@@ -19,22 +18,22 @@ import (
 func ConfigProviders(kafkaEnabled bool) di.Option {
 
 	result := di.Options(
-		di.Provide(config.NewConnectorsConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(provider.Func(serviceProviders)),
+		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
+		di.Provide(environments2.Func(serviceProviders)),
 		di.Provide(migrations.New),
 	)
 
 	// If we are not running in the kas-fleet-manager.. we need to inject more types into the DI container
 	if !kafkaEnabled {
 		result = di.Options(
-			di.Provide(environments.NewDevelopmentEnvLoader, di.Tags{"env": constants.DevelopmentEnv}),
-			di.Provide(environments.NewProductionEnvLoader, di.Tags{"env": constants.ProductionEnv}),
-			di.Provide(environments.NewStageEnvLoader, di.Tags{"env": constants.StageEnv}),
-			di.Provide(environments.NewIntegrationEnvLoader, di.Tags{"env": constants.IntegrationEnv}),
-			di.Provide(environments.NewTestingEnvLoader, di.Tags{"env": constants.TestingEnv}),
+			di.Provide(environments.NewDevelopmentEnvLoader, di.Tags{"env": environments2.DevelopmentEnv}),
+			di.Provide(environments.NewProductionEnvLoader, di.Tags{"env": environments2.ProductionEnv}),
+			di.Provide(environments.NewStageEnvLoader, di.Tags{"env": environments2.StageEnv}),
+			di.Provide(environments.NewIntegrationEnvLoader, di.Tags{"env": environments2.IntegrationEnv}),
+			di.Provide(environments.NewTestingEnvLoader, di.Tags{"env": environments2.TestingEnv}),
 			providers.CoreConfigProviders(),
 			result,
-			di.Provide(provider.Func(serviceProvidersNoKafka)),
+			di.Provide(environments2.Func(serviceProvidersNoKafka)),
 		)
 	}
 

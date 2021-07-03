@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
@@ -15,7 +16,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
@@ -229,7 +229,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 		Region:        cluster.Region,
 		CloudProvider: cluster.CloudProvider,
 		Name:          "dummy-kafka",
-		Status:        constants.KafkaRequestStatusReady.String(),
+		Status:        constants2.KafkaRequestStatusReady.String(),
 	}
 
 	if err := db.Save(&dummyKafka).Error; err != nil {
@@ -553,7 +553,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// again when deleting the new cluster
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())
-	err = db.Save(&dbapi.KafkaRequest{ClusterID: testDataPlaneclusterID, Status: string(constants.KafkaRequestStatusReady)}).Error
+	err = db.Save(&dbapi.KafkaRequest{ClusterID: testDataPlaneclusterID, Status: string(constants2.KafkaRequestStatusReady)}).Error
 	Expect(err).ToNot(HaveOccurred())
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", newCluster.ClusterID).Update("status", api.ClusterReady).Error
 	Expect(err).ToNot(HaveOccurred())

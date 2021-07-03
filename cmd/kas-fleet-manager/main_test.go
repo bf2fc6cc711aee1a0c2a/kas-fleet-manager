@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -21,7 +20,7 @@ func TestInjections(t *testing.T) {
 	err = env.CreateServices()
 	Expect(err).To(BeNil())
 
-	var bootList []provider.BootService
+	var bootList []environments.BootService
 	env.MustResolve(&bootList)
 	Expect(len(bootList)).To(Equal(5))
 

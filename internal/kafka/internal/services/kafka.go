@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"fmt"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -23,15 +24,14 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 )
 
-var kafkaDeletionStatuses = []string{constants.KafkaRequestStatusDeleting.String(), constants.KafkaRequestStatusDeprovision.String()}
-var kafkaManagedCRStatuses = []string{constants.KafkaRequestStatusProvisioning.String(), constants.KafkaRequestStatusDeprovision.String(), constants.KafkaRequestStatusReady.String(), constants.KafkaRequestStatusFailed.String()}
+var kafkaDeletionStatuses = []string{constants2.KafkaRequestStatusDeleting.String(), constants2.KafkaRequestStatusDeprovision.String()}
+var kafkaManagedCRStatuses = []string{constants2.KafkaRequestStatusProvisioning.String(), constants2.KafkaRequestStatusDeprovision.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusFailed.String()}
 
 type KafkaRoutesAction string
 
@@ -57,20 +57,20 @@ type KafkaService interface {
 	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
-	ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError)
+	ListByStatus(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	// UpdateStatus change the status of the Kafka cluster
 	// The returned boolean is to be used to know if the update has been tried or not. An update is not tried if the
 	// original status is 'deprovision' (cluster in deprovision state can't be change state) or if the final status is the
 	// same as the original status. The error will contain any error encountered when attempting to update or the reason
 	// why no attempt has been done
-	UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError)
+	UpdateStatus(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError)
 	Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
 	DeprovisionKafkaForUsers(users []string) *errors.ServiceError
 	DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError
-	CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
+	CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 }
 
@@ -134,7 +134,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.Version = k.kafkaConfig.DefaultKafkaVersion
-	kafkaRequest.Status = constants.KafkaRequestStatusAccepted.String()
+	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
@@ -144,7 +144,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	if err := dbConn.Save(kafkaRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
-	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	return nil
 }
 
@@ -160,7 +160,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
 
-	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
+	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
 
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
@@ -186,7 +186,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		SsoClientID:         kafkaRequest.SsoClientID,
 		SsoClientSecret:     kafkaRequest.SsoClientSecret,
 		PlacementId:         api.NewID(),
-		Status:              constants.KafkaRequestStatusProvisioning.String(),
+		Status:              constants2.KafkaRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka request")
@@ -195,7 +195,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 	return nil
 }
 
-func (k *kafkaService) ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
+func (k *kafkaService) ListByStatus(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError) {
 	if len(status) == 0 {
 		return nil, errors.GeneralError("no status provided")
 	}
@@ -283,15 +283,15 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
 		return services.HandleGetError("KafkaResource", "id", id, err)
 	}
-	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationDeprovision)
 
-	deprovisionStatus := constants.KafkaRequestStatusDeprovision
+	deprovisionStatus := constants2.KafkaRequestStatusDeprovision
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
 			return services.HandleGetError("KafkaResource", "id", id, err)
 		}
-		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationDeprovision)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 	}
 
@@ -303,7 +303,7 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 		Model(&dbapi.KafkaRequest{}).
 		Where("owner IN (?)", users).
 		Where("status NOT IN (?)", kafkaDeletionStatuses).
-		Update("status", constants.KafkaRequestStatusDeprovision)
+		Update("status", constants2.KafkaRequestStatusDeprovision)
 
 	err := dbConn.Error
 	if err != nil {
@@ -314,8 +314,8 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 		glog.Infof("%v kafkas are now deprovisioning for users %v", dbConn.RowsAffected, users)
 		var counter int64 = 0
 		for ; counter < dbConn.RowsAffected; counter++ {
-			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
-			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+			metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationDeprovision)
+			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationDeprovision)
 		}
 	}
 
@@ -332,7 +332,7 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 		dbConn = dbConn.Where("id NOT IN (?)", k.kafkaConfig.KafkaLifespan.LongLivedKafkas)
 	}
 
-	db := dbConn.Update("status", constants.KafkaRequestStatusDeprovision)
+	db := dbConn.Update("status", constants2.KafkaRequestStatusDeprovision)
 	err := db.Error
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to deprovision expired kafkas")
@@ -342,8 +342,8 @@ func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.Ser
 		glog.Infof("%v kafka_request's lifespans are over %d hours and have had their status updated to deprovisioning", db.RowsAffected, kafkaAgeInHours)
 		var counter int64 = 0
 		for ; counter < db.RowsAffected; counter++ {
-			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
-			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
+			metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationDeprovision)
+			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationDeprovision)
 		}
 	}
 
@@ -377,8 +377,8 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 		return errors.NewWithCause(errors.ErrorGeneral, err, "unable to delete kafka request with id %s", kafkaRequest.ID)
 	}
 
-	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDelete)
-	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDelete)
+	metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationDelete)
+	metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationDelete)
 
 	return nil
 }
@@ -490,14 +490,14 @@ func (k *kafkaService) Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 	return nil
 }
 
-func (k *kafkaService) UpdateStatus(id string, status constants.KafkaStatus) (bool, *errors.ServiceError) {
+func (k *kafkaService) UpdateStatus(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
 	dbConn := k.connectionFactory.New()
 
 	if kafka, err := k.GetById(id); err != nil {
 		return true, errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 	} else {
 		// only allow to change the status to "deleting" if the cluster is already in "deprovision" status
-		if kafka.Status == constants.KafkaRequestStatusDeprovision.String() && status != constants.KafkaRequestStatusDeleting {
+		if kafka.Status == constants2.KafkaRequestStatusDeprovision.String() && status != constants2.KafkaRequestStatusDeleting {
 			return false, errors.GeneralError("failed to update status: cluster is deprovisioning")
 		}
 
@@ -546,11 +546,11 @@ func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest,
 }
 
 type KafkaStatusCount struct {
-	Status constants.KafkaStatus
+	Status constants2.KafkaStatus
 	Count  int
 }
 
-func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
+func (k *kafkaService) CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {
 	dbConn := k.connectionFactory.New()
 	var results []KafkaStatusCount
 	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("status as Status, count(1) as Count").Where("status in (?)", status).Group("status").Scan(&results).Error; err != nil {
@@ -560,7 +560,7 @@ func (k *kafkaService) CountByStatus(status []constants.KafkaStatus) ([]KafkaSta
 	// if there is no count returned for a status from the above query because there is no kafkas in such a status,
 	// we should return the count for these as well to avoid any confusion
 	if len(status) > 0 {
-		countersMap := map[constants.KafkaStatus]int{}
+		countersMap := map[constants2.KafkaStatus]int{}
 		for _, r := range results {
 			countersMap[r.Status] = r.Count
 		}
@@ -616,7 +616,7 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				//TODO: we should remove the strimzi version as it should not be specified here
 				Strimzi: "0.22.1",
 			},
-			Deleted: kafkaRequest.Status == constants.KafkaRequestStatusDeprovision.String(),
+			Deleted: kafkaRequest.Status == constants2.KafkaRequestStatusDeprovision.String(),
 		},
 		Status: managedkafka.ManagedKafkaStatus{},
 	}

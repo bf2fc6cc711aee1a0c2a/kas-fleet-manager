@@ -16,7 +16,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
@@ -86,7 +85,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	}
 
 	if configurationHook != nil {
-		envProviders = append(envProviders, di.ProvideValue(provider.BeforeCreateServicesHook{
+		envProviders = append(envProviders, di.ProvideValue(environments.BeforeCreateServicesHook{
 			Func: configurationHook,
 		}))
 	}
