@@ -2,7 +2,7 @@ package workers
 
 import (
 	"fmt"
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"strings"
 	"sync"
 
@@ -71,7 +71,7 @@ var clusterMetricsStatuses = []api.ClusterStatus{
 
 type Worker = workers.Worker
 
-var clusterLoggingOperatorAddonParams = []types2.Parameter{
+var clusterLoggingOperatorAddonParams = []types.Parameter{
 	{
 		Id:    "use-cloudwatch",
 		Value: "true",
@@ -720,7 +720,7 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	return errs
 }
 
-func (c *ClusterManager) buildResourceSet(ingressDNS string) types2.ResourceSet {
+func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 	r := []interface{}{
 		c.buildIngressController(ingressDNS),
 		c.buildObservabilityNamespaceResource(),
@@ -749,7 +749,7 @@ func (c *ClusterManager) buildResourceSet(ingressDNS string) types2.ResourceSet 
 	if s := c.buildImagePullSecret(kasFleetshardNS); s != nil {
 		r = append(r, s)
 	}
-	return types2.ResourceSet{
+	return types.ResourceSet{
 		Name:      syncsetName,
 		Resources: r,
 	}
@@ -1034,8 +1034,8 @@ func (c *ClusterManager) reconcileClusterIdentityProvider(cluster api.Cluster) e
 		return errors.WithMessagef(ssoErr, "failed to reconcile cluster identity provider %s: %s", cluster.ClusterID, ssoErr.Error())
 	}
 
-	idpInfo := types2.IdentityProviderInfo{
-		OpenID: &types2.OpenIDIdentityProviderInfo{
+	idpInfo := types.IdentityProviderInfo{
+		OpenID: &types.OpenIDIdentityProviderInfo{
 			Name:         openIDIdentityProviderName,
 			ClientID:     cluster.ID,
 			ClientSecret: clientSecret,

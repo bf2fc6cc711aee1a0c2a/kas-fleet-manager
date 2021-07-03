@@ -4,8 +4,8 @@
 package clusters
 
 import (
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"sync"
 )
 
@@ -19,49 +19,49 @@ var _ Provider = &ProviderMock{}
 //
 // 		// make and configure a mocked Provider
 // 		mockedProvider := &ProviderMock{
-// 			AddIdentityProviderFunc: func(clusterSpec *types2.ClusterSpec, identityProvider types2.IdentityProviderInfo) (*types2.IdentityProviderInfo, error) {
+// 			AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 // 				panic("mock out the AddIdentityProvider method")
 // 			},
-// 			ApplyResourcesFunc: func(clusterSpec *types2.ClusterSpec, resources types2.ResourceSet) (*types2.ResourceSet, error) {
+// 			ApplyResourcesFunc: func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 // 				panic("mock out the ApplyResources method")
 // 			},
-// 			CheckClusterStatusFunc: func(spec *types2.ClusterSpec) (*types2.ClusterSpec, error) {
+// 			CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 // 				panic("mock out the CheckClusterStatus method")
 // 			},
-// 			CreateFunc: func(request *types2.ClusterRequest) (*types2.ClusterSpec, error) {
+// 			CreateFunc: func(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 // 				panic("mock out the Create method")
 // 			},
-// 			DeleteFunc: func(spec *types2.ClusterSpec) (bool, error) {
+// 			DeleteFunc: func(spec *types.ClusterSpec) (bool, error) {
 // 				panic("mock out the Delete method")
 // 			},
-// 			GetCloudProviderRegionsFunc: func(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+// 			GetCloudProviderRegionsFunc: func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 // 				panic("mock out the GetCloudProviderRegions method")
 // 			},
-// 			GetCloudProvidersFunc: func() (*types2.CloudProviderInfoList, error) {
+// 			GetCloudProvidersFunc: func() (*types.CloudProviderInfoList, error) {
 // 				panic("mock out the GetCloudProviders method")
 // 			},
-// 			GetClusterDNSFunc: func(clusterSpec *types2.ClusterSpec) (string, error) {
+// 			GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
 // 				panic("mock out the GetClusterDNS method")
 // 			},
-// 			GetComputeNodesFunc: func(spec *types2.ClusterSpec) (*types2.ComputeNodesInfo, error) {
+// 			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 // 				panic("mock out the GetComputeNodes method")
 // 			},
-// 			InstallClusterLoggingFunc: func(clusterSpec *types2.ClusterSpec, params []ocm2.Parameter) (bool, error) {
+// 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm2.Parameter) (bool, error) {
 // 				panic("mock out the InstallClusterLogging method")
 // 			},
-// 			InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []ocm2.Parameter) (bool, error) {
+// 			InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm2.Parameter) (bool, error) {
 // 				panic("mock out the InstallKasFleetshard method")
 // 			},
-// 			InstallStrimziFunc: func(clusterSpec *types2.ClusterSpec) (bool, error) {
+// 			InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {
 // 				panic("mock out the InstallStrimzi method")
 // 			},
-// 			ScaleDownFunc: func(clusterSpec *types2.ClusterSpec, decrement int) (*types2.ClusterSpec, error) {
+// 			ScaleDownFunc: func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 // 				panic("mock out the ScaleDown method")
 // 			},
-// 			ScaleUpFunc: func(clusterSpec *types2.ClusterSpec, increment int) (*types2.ClusterSpec, error) {
+// 			ScaleUpFunc: func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 // 				panic("mock out the ScaleUp method")
 // 			},
-// 			SetComputeNodesFunc: func(clusterSpec *types2.ClusterSpec, numNodes int) (*types2.ClusterSpec, error) {
+// 			SetComputeNodesFunc: func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
 // 				panic("mock out the SetComputeNodes method")
 // 			},
 // 		}
@@ -72,85 +72,85 @@ var _ Provider = &ProviderMock{}
 // 	}
 type ProviderMock struct {
 	// AddIdentityProviderFunc mocks the AddIdentityProvider method.
-	AddIdentityProviderFunc func(clusterSpec *types2.ClusterSpec, identityProvider types2.IdentityProviderInfo) (*types2.IdentityProviderInfo, error)
+	AddIdentityProviderFunc func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error)
 
 	// ApplyResourcesFunc mocks the ApplyResources method.
-	ApplyResourcesFunc func(clusterSpec *types2.ClusterSpec, resources types2.ResourceSet) (*types2.ResourceSet, error)
+	ApplyResourcesFunc func(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error)
 
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
-	CheckClusterStatusFunc func(spec *types2.ClusterSpec) (*types2.ClusterSpec, error)
+	CheckClusterStatusFunc func(spec *types.ClusterSpec) (*types.ClusterSpec, error)
 
 	// CreateFunc mocks the Create method.
-	CreateFunc func(request *types2.ClusterRequest) (*types2.ClusterSpec, error)
+	CreateFunc func(request *types.ClusterRequest) (*types.ClusterSpec, error)
 
 	// DeleteFunc mocks the Delete method.
-	DeleteFunc func(spec *types2.ClusterSpec) (bool, error)
+	DeleteFunc func(spec *types.ClusterSpec) (bool, error)
 
 	// GetCloudProviderRegionsFunc mocks the GetCloudProviderRegions method.
-	GetCloudProviderRegionsFunc func(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error)
+	GetCloudProviderRegionsFunc func(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error)
 
 	// GetCloudProvidersFunc mocks the GetCloudProviders method.
-	GetCloudProvidersFunc func() (*types2.CloudProviderInfoList, error)
+	GetCloudProvidersFunc func() (*types.CloudProviderInfoList, error)
 
 	// GetClusterDNSFunc mocks the GetClusterDNS method.
-	GetClusterDNSFunc func(clusterSpec *types2.ClusterSpec) (string, error)
+	GetClusterDNSFunc func(clusterSpec *types.ClusterSpec) (string, error)
 
 	// GetComputeNodesFunc mocks the GetComputeNodes method.
-	GetComputeNodesFunc func(spec *types2.ClusterSpec) (*types2.ComputeNodesInfo, error)
+	GetComputeNodesFunc func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error)
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
-	InstallClusterLoggingFunc func(clusterSpec *types2.ClusterSpec, params []ocm2.Parameter) (bool, error)
+	InstallClusterLoggingFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
 
 	// InstallKasFleetshardFunc mocks the InstallKasFleetshard method.
-	InstallKasFleetshardFunc func(clusterSpec *types2.ClusterSpec, params []ocm2.Parameter) (bool, error)
+	InstallKasFleetshardFunc func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error)
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
-	InstallStrimziFunc func(clusterSpec *types2.ClusterSpec) (bool, error)
+	InstallStrimziFunc func(clusterSpec *types.ClusterSpec) (bool, error)
 
 	// ScaleDownFunc mocks the ScaleDown method.
-	ScaleDownFunc func(clusterSpec *types2.ClusterSpec, decrement int) (*types2.ClusterSpec, error)
+	ScaleDownFunc func(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error)
 
 	// ScaleUpFunc mocks the ScaleUp method.
-	ScaleUpFunc func(clusterSpec *types2.ClusterSpec, increment int) (*types2.ClusterSpec, error)
+	ScaleUpFunc func(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error)
 
 	// SetComputeNodesFunc mocks the SetComputeNodes method.
-	SetComputeNodesFunc func(clusterSpec *types2.ClusterSpec, numNodes int) (*types2.ClusterSpec, error)
+	SetComputeNodesFunc func(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
 		// AddIdentityProvider holds details about calls to the AddIdentityProvider method.
 		AddIdentityProvider []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// IdentityProvider is the identityProvider argument value.
-			IdentityProvider types2.IdentityProviderInfo
+			IdentityProvider types.IdentityProviderInfo
 		}
 		// ApplyResources holds details about calls to the ApplyResources method.
 		ApplyResources []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// Resources is the resources argument value.
-			Resources types2.ResourceSet
+			Resources types.ResourceSet
 		}
 		// CheckClusterStatus holds details about calls to the CheckClusterStatus method.
 		CheckClusterStatus []struct {
 			// Spec is the spec argument value.
-			Spec *types2.ClusterSpec
+			Spec *types.ClusterSpec
 		}
 		// Create holds details about calls to the Create method.
 		Create []struct {
 			// Request is the request argument value.
-			Request *types2.ClusterRequest
+			Request *types.ClusterRequest
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
 			// Spec is the spec argument value.
-			Spec *types2.ClusterSpec
+			Spec *types.ClusterSpec
 		}
 		// GetCloudProviderRegions holds details about calls to the GetCloudProviderRegions method.
 		GetCloudProviderRegions []struct {
 			// ProviderInf is the providerInf argument value.
-			ProviderInf types2.CloudProviderInfo
+			ProviderInf types.CloudProviderInfo
 		}
 		// GetCloudProviders holds details about calls to the GetCloudProviders method.
 		GetCloudProviders []struct {
@@ -158,50 +158,50 @@ type ProviderMock struct {
 		// GetClusterDNS holds details about calls to the GetClusterDNS method.
 		GetClusterDNS []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 		}
 		// GetComputeNodes holds details about calls to the GetComputeNodes method.
 		GetComputeNodes []struct {
 			// Spec is the spec argument value.
-			Spec *types2.ClusterSpec
+			Spec *types.ClusterSpec
 		}
 		// InstallClusterLogging holds details about calls to the InstallClusterLogging method.
 		InstallClusterLogging []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// Params is the params argument value.
-			Params []ocm2.Parameter
+			Params []ocm.Parameter
 		}
 		// InstallKasFleetshard holds details about calls to the InstallKasFleetshard method.
 		InstallKasFleetshard []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// Params is the params argument value.
-			Params []ocm2.Parameter
+			Params []ocm.Parameter
 		}
 		// InstallStrimzi holds details about calls to the InstallStrimzi method.
 		InstallStrimzi []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 		}
 		// ScaleDown holds details about calls to the ScaleDown method.
 		ScaleDown []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// Decrement is the decrement argument value.
 			Decrement int
 		}
 		// ScaleUp holds details about calls to the ScaleUp method.
 		ScaleUp []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// Increment is the increment argument value.
 			Increment int
 		}
 		// SetComputeNodes holds details about calls to the SetComputeNodes method.
 		SetComputeNodes []struct {
 			// ClusterSpec is the clusterSpec argument value.
-			ClusterSpec *types2.ClusterSpec
+			ClusterSpec *types.ClusterSpec
 			// NumNodes is the numNodes argument value.
 			NumNodes int
 		}
@@ -224,13 +224,13 @@ type ProviderMock struct {
 }
 
 // AddIdentityProvider calls AddIdentityProviderFunc.
-func (mock *ProviderMock) AddIdentityProvider(clusterSpec *types2.ClusterSpec, identityProvider types2.IdentityProviderInfo) (*types2.IdentityProviderInfo, error) {
+func (mock *ProviderMock) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	if mock.AddIdentityProviderFunc == nil {
 		panic("ProviderMock.AddIdentityProviderFunc: method is nil but Provider.AddIdentityProvider was just called")
 	}
 	callInfo := struct {
-		ClusterSpec      *types2.ClusterSpec
-		IdentityProvider types2.IdentityProviderInfo
+		ClusterSpec      *types.ClusterSpec
+		IdentityProvider types.IdentityProviderInfo
 	}{
 		ClusterSpec:      clusterSpec,
 		IdentityProvider: identityProvider,
@@ -245,12 +245,12 @@ func (mock *ProviderMock) AddIdentityProvider(clusterSpec *types2.ClusterSpec, i
 // Check the length with:
 //     len(mockedProvider.AddIdentityProviderCalls())
 func (mock *ProviderMock) AddIdentityProviderCalls() []struct {
-	ClusterSpec      *types2.ClusterSpec
-	IdentityProvider types2.IdentityProviderInfo
+	ClusterSpec      *types.ClusterSpec
+	IdentityProvider types.IdentityProviderInfo
 } {
 	var calls []struct {
-		ClusterSpec      *types2.ClusterSpec
-		IdentityProvider types2.IdentityProviderInfo
+		ClusterSpec      *types.ClusterSpec
+		IdentityProvider types.IdentityProviderInfo
 	}
 	mock.lockAddIdentityProvider.RLock()
 	calls = mock.calls.AddIdentityProvider
@@ -259,13 +259,13 @@ func (mock *ProviderMock) AddIdentityProviderCalls() []struct {
 }
 
 // ApplyResources calls ApplyResourcesFunc.
-func (mock *ProviderMock) ApplyResources(clusterSpec *types2.ClusterSpec, resources types2.ResourceSet) (*types2.ResourceSet, error) {
+func (mock *ProviderMock) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 	if mock.ApplyResourcesFunc == nil {
 		panic("ProviderMock.ApplyResourcesFunc: method is nil but Provider.ApplyResources was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
-		Resources   types2.ResourceSet
+		ClusterSpec *types.ClusterSpec
+		Resources   types.ResourceSet
 	}{
 		ClusterSpec: clusterSpec,
 		Resources:   resources,
@@ -280,12 +280,12 @@ func (mock *ProviderMock) ApplyResources(clusterSpec *types2.ClusterSpec, resour
 // Check the length with:
 //     len(mockedProvider.ApplyResourcesCalls())
 func (mock *ProviderMock) ApplyResourcesCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
-	Resources   types2.ResourceSet
+	ClusterSpec *types.ClusterSpec
+	Resources   types.ResourceSet
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
-		Resources   types2.ResourceSet
+		ClusterSpec *types.ClusterSpec
+		Resources   types.ResourceSet
 	}
 	mock.lockApplyResources.RLock()
 	calls = mock.calls.ApplyResources
@@ -294,12 +294,12 @@ func (mock *ProviderMock) ApplyResourcesCalls() []struct {
 }
 
 // CheckClusterStatus calls CheckClusterStatusFunc.
-func (mock *ProviderMock) CheckClusterStatus(spec *types2.ClusterSpec) (*types2.ClusterSpec, error) {
+func (mock *ProviderMock) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	if mock.CheckClusterStatusFunc == nil {
 		panic("ProviderMock.CheckClusterStatusFunc: method is nil but Provider.CheckClusterStatus was just called")
 	}
 	callInfo := struct {
-		Spec *types2.ClusterSpec
+		Spec *types.ClusterSpec
 	}{
 		Spec: spec,
 	}
@@ -313,10 +313,10 @@ func (mock *ProviderMock) CheckClusterStatus(spec *types2.ClusterSpec) (*types2.
 // Check the length with:
 //     len(mockedProvider.CheckClusterStatusCalls())
 func (mock *ProviderMock) CheckClusterStatusCalls() []struct {
-	Spec *types2.ClusterSpec
+	Spec *types.ClusterSpec
 } {
 	var calls []struct {
-		Spec *types2.ClusterSpec
+		Spec *types.ClusterSpec
 	}
 	mock.lockCheckClusterStatus.RLock()
 	calls = mock.calls.CheckClusterStatus
@@ -325,12 +325,12 @@ func (mock *ProviderMock) CheckClusterStatusCalls() []struct {
 }
 
 // Create calls CreateFunc.
-func (mock *ProviderMock) Create(request *types2.ClusterRequest) (*types2.ClusterSpec, error) {
+func (mock *ProviderMock) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	if mock.CreateFunc == nil {
 		panic("ProviderMock.CreateFunc: method is nil but Provider.Create was just called")
 	}
 	callInfo := struct {
-		Request *types2.ClusterRequest
+		Request *types.ClusterRequest
 	}{
 		Request: request,
 	}
@@ -344,10 +344,10 @@ func (mock *ProviderMock) Create(request *types2.ClusterRequest) (*types2.Cluste
 // Check the length with:
 //     len(mockedProvider.CreateCalls())
 func (mock *ProviderMock) CreateCalls() []struct {
-	Request *types2.ClusterRequest
+	Request *types.ClusterRequest
 } {
 	var calls []struct {
-		Request *types2.ClusterRequest
+		Request *types.ClusterRequest
 	}
 	mock.lockCreate.RLock()
 	calls = mock.calls.Create
@@ -356,12 +356,12 @@ func (mock *ProviderMock) CreateCalls() []struct {
 }
 
 // Delete calls DeleteFunc.
-func (mock *ProviderMock) Delete(spec *types2.ClusterSpec) (bool, error) {
+func (mock *ProviderMock) Delete(spec *types.ClusterSpec) (bool, error) {
 	if mock.DeleteFunc == nil {
 		panic("ProviderMock.DeleteFunc: method is nil but Provider.Delete was just called")
 	}
 	callInfo := struct {
-		Spec *types2.ClusterSpec
+		Spec *types.ClusterSpec
 	}{
 		Spec: spec,
 	}
@@ -375,10 +375,10 @@ func (mock *ProviderMock) Delete(spec *types2.ClusterSpec) (bool, error) {
 // Check the length with:
 //     len(mockedProvider.DeleteCalls())
 func (mock *ProviderMock) DeleteCalls() []struct {
-	Spec *types2.ClusterSpec
+	Spec *types.ClusterSpec
 } {
 	var calls []struct {
-		Spec *types2.ClusterSpec
+		Spec *types.ClusterSpec
 	}
 	mock.lockDelete.RLock()
 	calls = mock.calls.Delete
@@ -387,12 +387,12 @@ func (mock *ProviderMock) DeleteCalls() []struct {
 }
 
 // GetCloudProviderRegions calls GetCloudProviderRegionsFunc.
-func (mock *ProviderMock) GetCloudProviderRegions(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+func (mock *ProviderMock) GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 	if mock.GetCloudProviderRegionsFunc == nil {
 		panic("ProviderMock.GetCloudProviderRegionsFunc: method is nil but Provider.GetCloudProviderRegions was just called")
 	}
 	callInfo := struct {
-		ProviderInf types2.CloudProviderInfo
+		ProviderInf types.CloudProviderInfo
 	}{
 		ProviderInf: providerInf,
 	}
@@ -406,10 +406,10 @@ func (mock *ProviderMock) GetCloudProviderRegions(providerInf types2.CloudProvid
 // Check the length with:
 //     len(mockedProvider.GetCloudProviderRegionsCalls())
 func (mock *ProviderMock) GetCloudProviderRegionsCalls() []struct {
-	ProviderInf types2.CloudProviderInfo
+	ProviderInf types.CloudProviderInfo
 } {
 	var calls []struct {
-		ProviderInf types2.CloudProviderInfo
+		ProviderInf types.CloudProviderInfo
 	}
 	mock.lockGetCloudProviderRegions.RLock()
 	calls = mock.calls.GetCloudProviderRegions
@@ -418,7 +418,7 @@ func (mock *ProviderMock) GetCloudProviderRegionsCalls() []struct {
 }
 
 // GetCloudProviders calls GetCloudProvidersFunc.
-func (mock *ProviderMock) GetCloudProviders() (*types2.CloudProviderInfoList, error) {
+func (mock *ProviderMock) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	if mock.GetCloudProvidersFunc == nil {
 		panic("ProviderMock.GetCloudProvidersFunc: method is nil but Provider.GetCloudProviders was just called")
 	}
@@ -444,12 +444,12 @@ func (mock *ProviderMock) GetCloudProvidersCalls() []struct {
 }
 
 // GetClusterDNS calls GetClusterDNSFunc.
-func (mock *ProviderMock) GetClusterDNS(clusterSpec *types2.ClusterSpec) (string, error) {
+func (mock *ProviderMock) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error) {
 	if mock.GetClusterDNSFunc == nil {
 		panic("ProviderMock.GetClusterDNSFunc: method is nil but Provider.GetClusterDNS was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 	}{
 		ClusterSpec: clusterSpec,
 	}
@@ -463,10 +463,10 @@ func (mock *ProviderMock) GetClusterDNS(clusterSpec *types2.ClusterSpec) (string
 // Check the length with:
 //     len(mockedProvider.GetClusterDNSCalls())
 func (mock *ProviderMock) GetClusterDNSCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
+	ClusterSpec *types.ClusterSpec
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 	}
 	mock.lockGetClusterDNS.RLock()
 	calls = mock.calls.GetClusterDNS
@@ -475,12 +475,12 @@ func (mock *ProviderMock) GetClusterDNSCalls() []struct {
 }
 
 // GetComputeNodes calls GetComputeNodesFunc.
-func (mock *ProviderMock) GetComputeNodes(spec *types2.ClusterSpec) (*types2.ComputeNodesInfo, error) {
+func (mock *ProviderMock) GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 	if mock.GetComputeNodesFunc == nil {
 		panic("ProviderMock.GetComputeNodesFunc: method is nil but Provider.GetComputeNodes was just called")
 	}
 	callInfo := struct {
-		Spec *types2.ClusterSpec
+		Spec *types.ClusterSpec
 	}{
 		Spec: spec,
 	}
@@ -494,10 +494,10 @@ func (mock *ProviderMock) GetComputeNodes(spec *types2.ClusterSpec) (*types2.Com
 // Check the length with:
 //     len(mockedProvider.GetComputeNodesCalls())
 func (mock *ProviderMock) GetComputeNodesCalls() []struct {
-	Spec *types2.ClusterSpec
+	Spec *types.ClusterSpec
 } {
 	var calls []struct {
-		Spec *types2.ClusterSpec
+		Spec *types.ClusterSpec
 	}
 	mock.lockGetComputeNodes.RLock()
 	calls = mock.calls.GetComputeNodes
@@ -506,13 +506,13 @@ func (mock *ProviderMock) GetComputeNodesCalls() []struct {
 }
 
 // InstallClusterLogging calls InstallClusterLoggingFunc.
-func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types2.ClusterSpec, params []ocm2.Parameter) (bool, error) {
+func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 	if mock.InstallClusterLoggingFunc == nil {
 		panic("ProviderMock.InstallClusterLoggingFunc: method is nil but Provider.InstallClusterLogging was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
-		Params      []ocm2.Parameter
+		ClusterSpec *types.ClusterSpec
+		Params      []ocm.Parameter
 	}{
 		ClusterSpec: clusterSpec,
 		Params:      params,
@@ -527,12 +527,12 @@ func (mock *ProviderMock) InstallClusterLogging(clusterSpec *types2.ClusterSpec,
 // Check the length with:
 //     len(mockedProvider.InstallClusterLoggingCalls())
 func (mock *ProviderMock) InstallClusterLoggingCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
-	Params      []ocm2.Parameter
+	ClusterSpec *types.ClusterSpec
+	Params      []ocm.Parameter
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
-		Params      []ocm2.Parameter
+		ClusterSpec *types.ClusterSpec
+		Params      []ocm.Parameter
 	}
 	mock.lockInstallClusterLogging.RLock()
 	calls = mock.calls.InstallClusterLogging
@@ -541,13 +541,13 @@ func (mock *ProviderMock) InstallClusterLoggingCalls() []struct {
 }
 
 // InstallKasFleetshard calls InstallKasFleetshardFunc.
-func (mock *ProviderMock) InstallKasFleetshard(clusterSpec *types2.ClusterSpec, params []ocm2.Parameter) (bool, error) {
+func (mock *ProviderMock) InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 	if mock.InstallKasFleetshardFunc == nil {
 		panic("ProviderMock.InstallKasFleetshardFunc: method is nil but Provider.InstallKasFleetshard was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
-		Params      []ocm2.Parameter
+		ClusterSpec *types.ClusterSpec
+		Params      []ocm.Parameter
 	}{
 		ClusterSpec: clusterSpec,
 		Params:      params,
@@ -562,12 +562,12 @@ func (mock *ProviderMock) InstallKasFleetshard(clusterSpec *types2.ClusterSpec, 
 // Check the length with:
 //     len(mockedProvider.InstallKasFleetshardCalls())
 func (mock *ProviderMock) InstallKasFleetshardCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
-	Params      []ocm2.Parameter
+	ClusterSpec *types.ClusterSpec
+	Params      []ocm.Parameter
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
-		Params      []ocm2.Parameter
+		ClusterSpec *types.ClusterSpec
+		Params      []ocm.Parameter
 	}
 	mock.lockInstallKasFleetshard.RLock()
 	calls = mock.calls.InstallKasFleetshard
@@ -576,12 +576,12 @@ func (mock *ProviderMock) InstallKasFleetshardCalls() []struct {
 }
 
 // InstallStrimzi calls InstallStrimziFunc.
-func (mock *ProviderMock) InstallStrimzi(clusterSpec *types2.ClusterSpec) (bool, error) {
+func (mock *ProviderMock) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
 	if mock.InstallStrimziFunc == nil {
 		panic("ProviderMock.InstallStrimziFunc: method is nil but Provider.InstallStrimzi was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 	}{
 		ClusterSpec: clusterSpec,
 	}
@@ -595,10 +595,10 @@ func (mock *ProviderMock) InstallStrimzi(clusterSpec *types2.ClusterSpec) (bool,
 // Check the length with:
 //     len(mockedProvider.InstallStrimziCalls())
 func (mock *ProviderMock) InstallStrimziCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
+	ClusterSpec *types.ClusterSpec
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 	}
 	mock.lockInstallStrimzi.RLock()
 	calls = mock.calls.InstallStrimzi
@@ -607,12 +607,12 @@ func (mock *ProviderMock) InstallStrimziCalls() []struct {
 }
 
 // ScaleDown calls ScaleDownFunc.
-func (mock *ProviderMock) ScaleDown(clusterSpec *types2.ClusterSpec, decrement int) (*types2.ClusterSpec, error) {
+func (mock *ProviderMock) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 	if mock.ScaleDownFunc == nil {
 		panic("ProviderMock.ScaleDownFunc: method is nil but Provider.ScaleDown was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 		Decrement   int
 	}{
 		ClusterSpec: clusterSpec,
@@ -628,11 +628,11 @@ func (mock *ProviderMock) ScaleDown(clusterSpec *types2.ClusterSpec, decrement i
 // Check the length with:
 //     len(mockedProvider.ScaleDownCalls())
 func (mock *ProviderMock) ScaleDownCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
+	ClusterSpec *types.ClusterSpec
 	Decrement   int
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 		Decrement   int
 	}
 	mock.lockScaleDown.RLock()
@@ -642,12 +642,12 @@ func (mock *ProviderMock) ScaleDownCalls() []struct {
 }
 
 // ScaleUp calls ScaleUpFunc.
-func (mock *ProviderMock) ScaleUp(clusterSpec *types2.ClusterSpec, increment int) (*types2.ClusterSpec, error) {
+func (mock *ProviderMock) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 	if mock.ScaleUpFunc == nil {
 		panic("ProviderMock.ScaleUpFunc: method is nil but Provider.ScaleUp was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 		Increment   int
 	}{
 		ClusterSpec: clusterSpec,
@@ -663,11 +663,11 @@ func (mock *ProviderMock) ScaleUp(clusterSpec *types2.ClusterSpec, increment int
 // Check the length with:
 //     len(mockedProvider.ScaleUpCalls())
 func (mock *ProviderMock) ScaleUpCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
+	ClusterSpec *types.ClusterSpec
 	Increment   int
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 		Increment   int
 	}
 	mock.lockScaleUp.RLock()
@@ -677,12 +677,12 @@ func (mock *ProviderMock) ScaleUpCalls() []struct {
 }
 
 // SetComputeNodes calls SetComputeNodesFunc.
-func (mock *ProviderMock) SetComputeNodes(clusterSpec *types2.ClusterSpec, numNodes int) (*types2.ClusterSpec, error) {
+func (mock *ProviderMock) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
 	if mock.SetComputeNodesFunc == nil {
 		panic("ProviderMock.SetComputeNodesFunc: method is nil but Provider.SetComputeNodes was just called")
 	}
 	callInfo := struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 		NumNodes    int
 	}{
 		ClusterSpec: clusterSpec,
@@ -698,11 +698,11 @@ func (mock *ProviderMock) SetComputeNodes(clusterSpec *types2.ClusterSpec, numNo
 // Check the length with:
 //     len(mockedProvider.SetComputeNodesCalls())
 func (mock *ProviderMock) SetComputeNodesCalls() []struct {
-	ClusterSpec *types2.ClusterSpec
+	ClusterSpec *types.ClusterSpec
 	NumNodes    int
 } {
 	var calls []struct {
-		ClusterSpec *types2.ClusterSpec
+		ClusterSpec *types.ClusterSpec
 		NumNodes    int
 	}
 	mock.lockSetComputeNodes.RLock()

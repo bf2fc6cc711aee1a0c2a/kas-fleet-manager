@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
@@ -32,7 +32,7 @@ func (h *dataPlaneKafkaHandler) UpdateKafkaStatuses(w http.ResponseWriter, r *ht
 		Validate:    []handlers.Validate{},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			dataPlaneKafkaStatus := presenters2.ConvertDataPlaneKafkaStatus(data)
+			dataPlaneKafkaStatus := presenters.ConvertDataPlaneKafkaStatus(data)
 			err := h.service.UpdateDataPlaneKafkaService(ctx, clusterId, dataPlaneKafkaStatus)
 			return nil, err
 		},
@@ -59,7 +59,7 @@ func (h *dataPlaneKafkaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, mk := range managedKafkas {
-				converted := presenters2.PresentManagedKafka(&mk)
+				converted := presenters.PresentManagedKafka(&mk)
 				managedKafkaList.Items = append(managedKafkaList.Items, converted)
 			}
 			return managedKafkaList, nil

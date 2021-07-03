@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
@@ -46,7 +46,7 @@ func (h metricsHandler) GetMetricsByRangeQuery(w http.ResponseWriter, r *http.Re
 				Kind: "MetricsRangeQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters2.PresentMetricsByRangeQuery(kafkaMetrics)
+			metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}
@@ -75,7 +75,7 @@ func (h metricsHandler) GetMetricsByInstantQuery(w http.ResponseWriter, r *http.
 				Kind: "MetricsInstantQueryList",
 				Id:   foundKafkaId,
 			}
-			metrics, err := presenters2.PresentMetricsByInstantQuery(kafkaMetrics)
+			metrics, err := presenters.PresentMetricsByInstantQuery(kafkaMetrics)
 			if err != nil {
 				return nil, err
 			}

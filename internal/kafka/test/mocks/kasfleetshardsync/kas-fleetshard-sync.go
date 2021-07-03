@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/dgrijalva/jwt-go"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -20,7 +20,7 @@ import (
 
 // defaultUpdateDataplaneClusterStatusFunc - The default behaviour for updating data plane cluster status in each Kas Fleetshard Sync reconcile.
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
-var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
+var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
 	var clusterService services.ClusterService
 	var ocmConfig *config.OCMConfig
 	helper.Env.MustResolveAll(&clusterService, &ocmConfig)
@@ -64,7 +64,7 @@ var defaultUpdateDataplaneClusterStatusFunc = func(helper *test.Helper, privateC
 // This function retrieves and updates Kafkas in all ready and full data plane clusters.
 // Any Kafkas marked for deletion are updated to 'deleting'
 // Kafkas with any other status are updated to 'ready'
-var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *private.APIClient) error {
+var defaultUpdateKafkaStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient) error {
 	var clusterService services.ClusterService
 	helper.Env.MustResolveAll(&clusterService)
 
@@ -115,9 +115,9 @@ var defaultUpdateKafkaStatusFunc = func(helper *test.Helper, privateClient *priv
 
 type MockKasFleetshardSyncBuilder interface {
 	// SetUpdateDataplaneClusterStatusFunc - Sets behaviour for updating dataplane clusters in each KAS Fleetshard sync reconcile
-	SetUpdateDataplaneClusterStatusFunc(func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error)
+	SetUpdateDataplaneClusterStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error)
 	// SetUpdateKafkaStatusFunc - Sets behaviour for updating kafka clusters in each KAS Fleetshard sync reconcile
-	SetUpdateKafkaStatusFunc(func(helper *test.Helper, privateClient *private.APIClient) error)
+	SetUpdateKafkaStatusFunc(func(helper *coreTest.Helper, privateClient *private.APIClient) error)
 	// SetInterval - Sets the repeat interval for the mock KAS Fleetshard sync
 	SetInterval(interval time.Duration)
 	// Build - Builds a mock KAS Fleetshard sync
@@ -131,7 +131,7 @@ type mockKasFleetshardSyncBuilder struct {
 
 var _ MockKasFleetshardSyncBuilder = &mockKasFleetshardSyncBuilder{}
 
-func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasFleetshardSyncBuilder {
+func NewMockKasFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) MockKasFleetshardSyncBuilder {
 	var ocmClient ocm.Client
 	helper.Env.MustResolveAll(&ocmClient)
 	return &mockKasFleetshardSyncBuilder{
@@ -139,7 +139,7 @@ func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasF
 			helper:                       helper,
 			t:                            t,
 			ocmClient:                    ocmClient,
-			privateClient:                test2.NewPrivateAPIClient(helper),
+			privateClient:                test.NewPrivateAPIClient(helper),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,
 			interval:                     10 * time.Second,
@@ -147,11 +147,11 @@ func NewMockKasFleetshardSyncBuilder(helper *test.Helper, t *testing.T) MockKasF
 	}
 }
 
-func (m *mockKasFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error) {
+func (m *mockKasFleetshardSyncBuilder) SetUpdateDataplaneClusterStatusFunc(updateDataplaneClusterStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error) {
 	m.kfsync.updateDataplaneClusterStatus = updateDataplaneClusterStatusFunc
 }
 
-func (m *mockKasFleetshardSyncBuilder) SetUpdateKafkaStatusFunc(updateKafkaStatusFunc func(helper *test.Helper, privateClient *private.APIClient) error) {
+func (m *mockKasFleetshardSyncBuilder) SetUpdateKafkaStatusFunc(updateKafkaStatusFunc func(helper *coreTest.Helper, privateClient *private.APIClient) error) {
 	m.kfsync.updateKafkaClusterStatus = updateKafkaStatusFunc
 }
 
@@ -171,14 +171,14 @@ type MockKasFleetshardSync interface {
 }
 
 type mockKasFleetshardSync struct {
-	helper                       *test.Helper
+	helper                       *coreTest.Helper
 	t                            *testing.T
 	ocmClient                    ocm.Client
 	ticker                       *time.Ticker
 	privateClient                *private.APIClient
 	interval                     time.Duration
-	updateDataplaneClusterStatus func(helper *test.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error
-	updateKafkaClusterStatus     func(helper *test.Helper, privateClient *private.APIClient) error
+	updateDataplaneClusterStatus func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error
+	updateKafkaClusterStatus     func(helper *coreTest.Helper, privateClient *private.APIClient) error
 }
 
 var _ MockKasFleetshardSync = &mockKasFleetshardSync{}
@@ -213,7 +213,7 @@ func (m *mockKasFleetshardSync) reconcileKafkaClusters() {
 }
 
 // Returns an authenticated context to be used for calling the data plane endpoints
-func NewAuthenticatedContextForDataPlaneCluster(h *test.Helper, clusterID string) context.Context {
+func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
 	var keycloakConfig *config.KeycloakConfig
 	h.Env.MustResolveAll(&keycloakConfig)
 

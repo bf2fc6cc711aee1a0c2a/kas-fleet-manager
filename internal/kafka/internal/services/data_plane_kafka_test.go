@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"reflect"
 	"strings"
 	"testing"
@@ -377,7 +377,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				"deleting": 0,
 				"rejected": 0,
 			}
-			s := NewDataPlaneKafkaService(tt.kafkaService(counter), tt.clusterService, &config2.KafkaConfig{
+			s := NewDataPlaneKafkaService(tt.kafkaService(counter), tt.clusterService, &config.KafkaConfig{
 				NumOfBrokers: 1,
 			})
 			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.clusterId, tt.status)

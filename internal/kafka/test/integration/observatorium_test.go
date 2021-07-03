@@ -8,7 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
-	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"net/http"
 	"testing"
 
@@ -47,7 +47,7 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
@@ -92,7 +92,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()
@@ -164,7 +164,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
+	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
 	mockKasfFleetshardSync.Start()
 	defer mockKasfFleetshardSync.Stop()

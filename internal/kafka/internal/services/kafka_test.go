@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
@@ -18,7 +18,7 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -284,7 +284,7 @@ func Test_kafkaService_GetById(t *testing.T) {
 func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
-		kafkaConfig       *config2.KafkaConfig
+		kafkaConfig       *config.KafkaConfig
 	}
 
 	tests := []struct {
@@ -298,8 +298,8 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 			name:        "capacity exhausted",
 			hasCapacity: false,
 			fields: fields{
-				kafkaConfig: &config2.KafkaConfig{
-					KafkaCapacity: config2.KafkaCapacityConfig{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaCapacity: config.KafkaCapacityConfig{
 						MaxCapacity: 1000,
 					},
 				},
@@ -314,8 +314,8 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 			name:        "capacity available",
 			hasCapacity: true,
 			fields: fields{
-				kafkaConfig: &config2.KafkaConfig{
-					KafkaCapacity: config2.KafkaCapacityConfig{
+				kafkaConfig: &config.KafkaConfig{
+					KafkaCapacity: config.KafkaCapacityConfig{
 						MaxCapacity: 1000,
 					},
 				},
@@ -353,7 +353,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
 		keycloakService   services.KeycloakService
-		kafkaConfig       *config2.KafkaConfig
+		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
@@ -382,15 +382,15 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
+							KafkaRealm: &coreConfig.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -413,15 +413,15 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
+							KafkaRealm: &coreConfig.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -444,15 +444,15 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
+							KafkaRealm: &coreConfig.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -478,16 +478,16 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "", errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
+							KafkaRealm: &coreConfig.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
@@ -509,7 +509,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 				clusterService:    tt.fields.clusterService,
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
-				awsConfig:         config.NewAWSConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 
 			if err := k.PrepareKafkaRequest(tt.args.kafkaRequest); (err != nil) != tt.wantErr {
@@ -583,8 +583,8 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				kafkaConfig:       config2.NewKafkaConfig(),
-				awsConfig:         config.NewAWSConfig(),
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 			err := k.RegisterKafkaDeprovisionJob(context.TODO(), tt.args.kafkaRequest.ID)
 			if (err != nil) != tt.wantErr {
@@ -600,7 +600,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
 		keycloakService   services.KeycloakService
-		kafkaConfig       *config2.KafkaConfig
+		kafkaConfig       *config.KafkaConfig
 	}
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
@@ -620,13 +620,13 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -650,13 +650,13 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -684,13 +684,13 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return errors.FailedToDeleteSSOClient("failed to delete sso client")
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{},
+				kafkaConfig: &config.KafkaConfig{},
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
@@ -724,13 +724,13 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *coreConfig.KeycloakConfig {
+						return &coreConfig.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
 				},
-				kafkaConfig: &config2.KafkaConfig{
+				kafkaConfig: &config.KafkaConfig{
 					EnableKafkaExternalCertificate: true,
 				},
 			},
@@ -764,7 +764,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 				clusterService:    tt.fields.clusterService,
 				keycloakService:   tt.fields.keycloakService,
 				kafkaConfig:       tt.fields.kafkaConfig,
-				awsConfig:         config.NewAWSConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 			err := k.Delete(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
@@ -894,11 +894,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		},
 	}
 
-	kafkaConf := config2.KafkaConfig{
-		KafkaCapacity: config2.KafkaCapacityConfig{
+	kafkaConf := config.KafkaConfig{
+		KafkaCapacity: config.KafkaCapacityConfig{
 			MaxCapacity: 1000,
 		},
-		Quota: config2.NewKafkaQuotaConfig(),
+		Quota: config.NewKafkaQuotaConfig(),
 	}
 
 	for _, tt := range tests {
@@ -911,7 +911,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 				clusterService:    tt.fields.clusterService,
 				kafkaConfig:       &kafkaConf,
-				awsConfig:         config.NewAWSConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 				quotaServiceFactory: &QuotaServiceFactoryMock{
 					GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
@@ -1183,8 +1183,8 @@ func Test_kafkaService_List(t *testing.T) {
 			tt.setupFn(tt.want.kafkaList)
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				kafkaConfig:       config2.NewKafkaConfig(),
-				awsConfig:         config.NewAWSConfig(),
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 
 			result, pagingMeta, err := k.List(tt.args.ctx, tt.args.listArgs)
@@ -1257,8 +1257,8 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				clusterService:    tt.fields.clusterService,
-				kafkaConfig:       config2.NewKafkaConfig(),
-				awsConfig:         config.NewAWSConfig(),
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 			got, err := k.ListByStatus(tt.args.status)
 			// check errors
@@ -1359,8 +1359,8 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			k := kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				clusterService:    tt.fields.clusterService,
-				kafkaConfig:       config2.NewKafkaConfig(),
-				awsConfig:         config.NewAWSConfig(),
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 			executed, err := k.UpdateStatus(tt.args.id, tt.args.status)
 			if executed != tt.wantExecuted {
@@ -1422,8 +1422,8 @@ func Test_kafkaService_Update(t *testing.T) {
 			k := kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				clusterService:    tt.fields.clusterService,
-				kafkaConfig:       config2.NewKafkaConfig(),
-				awsConfig:         config.NewAWSConfig(),
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         coreConfig.NewAWSConfig(),
 			}
 			err := k.Update(tt.args.kafkaRequest)
 			if (err != nil) != tt.wantErr {
@@ -1530,7 +1530,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			}
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
-				kafkaConfig:       config2.NewKafkaConfig(),
+				kafkaConfig:       config.NewKafkaConfig(),
 			}
 			err := k.DeprovisionExpiredKafkas(tt.args.kafkaAgeInMins)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
@@ -1699,11 +1699,11 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			kafkaService := &kafkaService{
 				awsClientFactory: aws.NewMockClientFactory(tt.fields.awsClient),
-				awsConfig: &config.AWSConfig{
+				awsConfig: &coreConfig.AWSConfig{
 					Route53AccessKey:       "test-route-53-key",
 					Route53SecretAccessKey: "test-route-53-secret-key",
 				},
-				kafkaConfig: &config2.KafkaConfig{
+				kafkaConfig: &config.KafkaConfig{
 					KafkaDomainName: "rhcloud.com",
 				},
 			}

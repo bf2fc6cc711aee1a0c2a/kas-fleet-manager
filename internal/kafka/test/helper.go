@@ -5,12 +5,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
@@ -26,8 +26,8 @@ import (
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
-	KeycloakConfig        *config.KeycloakConfig
-	KafkaConfig           *config2.KafkaConfig
+	KeycloakConfig        *coreConfig.KeycloakConfig
+	KafkaConfig           *config.KafkaConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
@@ -38,11 +38,11 @@ type Services struct {
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
 	OCMClient             ocm.Client
-	OCMConfig             *config.OCMConfig
+	OCMConfig             *coreConfig.OCMConfig
 	KafkaService          services.KafkaService
 	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
-	ServerConfig          *config.ServerConfig
+	ServerConfig          *coreConfig.ServerConfig
 }
 
 var TestServices Services
@@ -55,11 +55,11 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(provider.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config2.KafkaConfig, observabilityConfiguration *config.ObservabilityConfiguration) {
+		Func: func(dataplaneClusterConfig *coreConfig.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *coreConfig.ObservabilityConfiguration) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
-			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
-			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
+			dataplaneClusterConfig.DataPlaneClusterScalingType = coreConfig.NoScaling // disable scaling by default as it will be activated in specific tests
+			dataplaneClusterConfig.RawKubernetesConfig = nil                          // disable applying resources for standalone clusters
 		},
 	}))
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
@@ -69,7 +69,7 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 }
 
 func NewApiClient(helper *test.Helper) *public.APIClient {
-	var serverConfig *config.ServerConfig
+	var serverConfig *coreConfig.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	openapiConfig := public.NewConfiguration()
@@ -79,7 +79,7 @@ func NewApiClient(helper *test.Helper) *public.APIClient {
 }
 
 func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
-	var serverConfig *config.ServerConfig
+	var serverConfig *coreConfig.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	openapiConfig := private.NewConfiguration()

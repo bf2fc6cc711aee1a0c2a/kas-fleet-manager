@@ -8,7 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/serviceaccounts"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/migrations"
@@ -17,7 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
@@ -41,12 +41,12 @@ func ConfigProviders() di.Option {
 		providers.CoreConfigProviders(),
 
 		// Configuration for the Kafka service...
-		di.Provide(config.NewAWSConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewSupportedProvidersConfig, di.As(new(provider.ConfigModule)), di.As(new(provider.ServiceValidator))),
-		di.Provide(config.NewObservabilityConfigurationConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config2.NewKafkaConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config2.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(coreConfig.NewAWSConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(coreConfig.NewSupportedProvidersConfig, di.As(new(provider.ConfigModule)), di.As(new(provider.ServiceValidator))),
+		di.Provide(coreConfig.NewObservabilityConfigurationConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewKafkaConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(coreConfig.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
 
 		// Additional CLI subcommands
 		di.Provide(cluster.NewClusterCommand),

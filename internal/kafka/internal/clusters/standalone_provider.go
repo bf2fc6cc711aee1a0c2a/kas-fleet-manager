@@ -3,7 +3,7 @@ package clusters
 import (
 	"context"
 	"encoding/json"
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
@@ -75,11 +75,11 @@ func newStandaloneProvider(connectionFactory *db.ConnectionFactory, dataplaneClu
 // blank assignment to verify that StandaloneProvider implements Provider
 var _ Provider = &StandaloneProvider{}
 
-func (s *StandaloneProvider) Create(request *types2.ClusterRequest) (*types2.ClusterSpec, error) {
+func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	return nil, nil
 }
 
-func (s *StandaloneProvider) Delete(spec *types2.ClusterSpec) (bool, error) {
+func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
 }
 
@@ -230,7 +230,7 @@ func (s *StandaloneProvider) buildKASFleetShardSyncSecret(params []types.Paramet
 	}
 }
 
-func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types2.ClusterSpec) (bool, error) {
+func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
 			s.buildStrimziOperatorNamespace(),
@@ -243,11 +243,11 @@ func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types2.ClusterSpec) (bo
 	return true, err
 }
 
-func (s *StandaloneProvider) InstallClusterLogging(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
+func (s *StandaloneProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 	return true, nil // NOOP for now
 }
 
-func (s *StandaloneProvider) InstallKasFleetshard(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
+func (s *StandaloneProvider) InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
 			s.buildKASFleetShardOperatorNamespace(),
@@ -261,18 +261,18 @@ func (s *StandaloneProvider) InstallKasFleetshard(clusterSpec *types2.ClusterSpe
 	return true, err
 }
 
-func (s *StandaloneProvider) CheckClusterStatus(spec *types2.ClusterSpec) (*types2.ClusterSpec, error) {
+func (s *StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
 	spec.Status = api.ClusterProvisioned
 	return spec, nil
 }
 
-func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types2.ClusterSpec) (string, error) {
+func (s *StandaloneProvider) GetClusterDNS(clusterSpec *types.ClusterSpec) (string, error) {
 	return "", nil // NOOP for now
 }
 
-func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types2.ClusterSpec, identityProvider types2.IdentityProviderInfo) (*types2.IdentityProviderInfo, error) {
+func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
 	// setup identity provider
-	_, err := s.ApplyResources(clusterSpec, types2.ResourceSet{
+	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
 			buildOpenIDPClientSecret(identityProvider),
 			buildIdentityProviderResource(identityProvider),
@@ -284,7 +284,7 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types2.ClusterSpec
 
 // buildOpenIDPClientSecret builds the k8s secret which holds OpenIDP clientSecret value
 // The clientSecret as indicated in https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-creating-secret_configuring-oidc-identity-provider
-func buildOpenIDPClientSecret(identityProvider types2.IdentityProviderInfo) *corev1.Secret {
+func buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *corev1.Secret {
 	return &corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: metav1.SchemeGroupVersion.Version,
@@ -303,7 +303,7 @@ func buildOpenIDPClientSecret(identityProvider types2.IdentityProviderInfo) *cor
 
 // buildIdentityProviderResource builds the identity provider resource to be applied
 // The resource is taken from https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-oidc-CR_configuring-oidc-identity-provider
-func buildIdentityProviderResource(identityProvider types2.IdentityProviderInfo) map[string]interface{} {
+func buildIdentityProviderResource(identityProvider types.IdentityProviderInfo) map[string]interface{} {
 	// Using unstructured type for now.
 	// we might want to pull the type information from github.com/openshift/api at a later stage
 	return map[string]interface{}{
@@ -336,7 +336,7 @@ func buildIdentityProviderResource(identityProvider types2.IdentityProviderInfo)
 	}
 }
 
-func (s *StandaloneProvider) ApplyResources(clusterSpec *types2.ClusterSpec, resources types2.ResourceSet) (*types2.ResourceSet, error) {
+func (s *StandaloneProvider) ApplyResources(clusterSpec *types.ClusterSpec, resources types.ResourceSet) (*types.ResourceSet, error) {
 	if s.dataplaneClusterConfig.RawKubernetesConfig == nil {
 		return &resources, nil // no kubeconfig read, do nothing.
 	}
@@ -375,23 +375,23 @@ func (s *StandaloneProvider) ApplyResources(clusterSpec *types2.ClusterSpec, res
 	return &resources, nil
 }
 
-func (s *StandaloneProvider) ScaleUp(clusterSpec *types2.ClusterSpec, increment int) (*types2.ClusterSpec, error) {
+func (s *StandaloneProvider) ScaleUp(clusterSpec *types.ClusterSpec, increment int) (*types.ClusterSpec, error) {
 	return clusterSpec, nil // NOOP
 }
 
-func (s *StandaloneProvider) ScaleDown(clusterSpec *types2.ClusterSpec, decrement int) (*types2.ClusterSpec, error) {
+func (s *StandaloneProvider) ScaleDown(clusterSpec *types.ClusterSpec, decrement int) (*types.ClusterSpec, error) {
 	return clusterSpec, nil // NOOP
 }
 
-func (s *StandaloneProvider) SetComputeNodes(clusterSpec *types2.ClusterSpec, numNodes int) (*types2.ClusterSpec, error) {
+func (s *StandaloneProvider) SetComputeNodes(clusterSpec *types.ClusterSpec, numNodes int) (*types.ClusterSpec, error) {
 	return clusterSpec, nil // NOOP
 }
 
-func (s *StandaloneProvider) GetComputeNodes(spec *types2.ClusterSpec) (*types2.ComputeNodesInfo, error) {
-	return &types2.ComputeNodesInfo{}, nil // NOOP
+func (s *StandaloneProvider) GetComputeNodes(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
+	return &types.ComputeNodesInfo{}, nil // NOOP
 }
 
-func (s *StandaloneProvider) GetCloudProviders() (*types2.CloudProviderInfoList, error) {
+func (s *StandaloneProvider) GetCloudProviders() (*types.CloudProviderInfoList, error) {
 	type Cluster struct {
 		CloudProvider string
 	}
@@ -407,19 +407,19 @@ func (s *StandaloneProvider) GetCloudProviders() (*types2.CloudProviderInfoList,
 		return nil, err
 	}
 
-	items := []types2.CloudProviderInfo{}
+	items := []types.CloudProviderInfo{}
 	for _, result := range results {
-		items = append(items, types2.CloudProviderInfo{
+		items = append(items, types.CloudProviderInfo{
 			ID:          result.CloudProvider,
 			Name:        result.CloudProvider,
 			DisplayName: result.CloudProvider,
 		})
 	}
 
-	return &types2.CloudProviderInfoList{Items: items}, nil
+	return &types.CloudProviderInfoList{Items: items}, nil
 }
 
-func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types2.CloudProviderInfo) (*types2.CloudProviderRegionInfoList, error) {
+func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types.CloudProviderInfo) (*types.CloudProviderRegionInfoList, error) {
 	type Cluster struct {
 		Region  string
 		MultiAZ bool
@@ -437,9 +437,9 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types2.CloudPro
 		return nil, err
 	}
 
-	items := []types2.CloudProviderRegionInfo{}
+	items := []types.CloudProviderRegionInfo{}
 	for _, result := range results {
-		items = append(items, types2.CloudProviderRegionInfo{
+		items = append(items, types.CloudProviderRegionInfo{
 			ID:              result.Region,
 			Name:            result.Region,
 			DisplayName:     result.Region,
@@ -448,7 +448,7 @@ func (s *StandaloneProvider) GetCloudProviderRegions(providerInf types2.CloudPro
 		})
 	}
 
-	return &types2.CloudProviderRegionInfoList{Items: items}, nil
+	return &types.CloudProviderRegionInfoList{Items: items}, nil
 }
 
 func applyResource(dynamicClient dynamic.Interface, mapper *restmapper.DeferredDiscoveryRESTMapper, resource interface{}) (runtime.Object, error) {

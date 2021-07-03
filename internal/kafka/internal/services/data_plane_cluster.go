@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/goava/di"
 	"strconv"
 	"time"
@@ -11,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
@@ -33,9 +33,9 @@ const dataPlaneClusterStatusCondReadyName = "Ready"
 type dataPlaneClusterService struct {
 	di.Inject
 	ClusterService         ClusterService
-	KafkaConfig            *config2.KafkaConfig
-	ObservabilityConfig    *config.ObservabilityConfiguration
-	DataplaneClusterConfig *config.DataplaneClusterConfig
+	KafkaConfig            *config.KafkaConfig
+	ObservabilityConfig    *coreConfig.ObservabilityConfiguration
+	DataplaneClusterConfig *coreConfig.DataplaneClusterConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {

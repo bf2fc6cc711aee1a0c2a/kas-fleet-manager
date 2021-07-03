@@ -11,7 +11,7 @@ import (
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"sync"
 )
 
@@ -111,7 +111,7 @@ type KafkaServiceMock struct {
 	HasAvailableCapacityFunc func() (bool, *apiErrors.ServiceError)
 
 	// ListFunc mocks the List method.
-	ListFunc func(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
+	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
@@ -188,7 +188,7 @@ type KafkaServiceMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ListArgs is the listArgs argument value.
-			ListArgs *services2.ListArguments
+			ListArgs *services.ListArguments
 		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
@@ -530,13 +530,13 @@ func (mock *KafkaServiceMock) HasAvailableCapacityCalls() []struct {
 }
 
 // List calls ListFunc.
-func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 	if mock.ListFunc == nil {
 		panic("KafkaServiceMock.ListFunc: method is nil but KafkaService.List was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
-		ListArgs *services2.ListArguments
+		ListArgs *services.ListArguments
 	}{
 		Ctx:      ctx,
 		ListArgs: listArgs,
@@ -552,11 +552,11 @@ func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services2.List
 //     len(mockedKafkaService.ListCalls())
 func (mock *KafkaServiceMock) ListCalls() []struct {
 	Ctx      context.Context
-	ListArgs *services2.ListArguments
+	ListArgs *services.ListArguments
 } {
 	var calls []struct {
 		Ctx      context.Context
-		ListArgs *services2.ListArguments
+		ListArgs *services.ListArguments
 	}
 	mock.lockList.RLock()
 	calls = mock.calls.List

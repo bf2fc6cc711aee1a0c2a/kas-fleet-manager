@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -57,7 +57,7 @@ func (h cloudProvidersHandler) ListCloudProviderRegions(w http.ResponseWriter, r
 
 			for _, cloudRegion := range cloudRegions {
 				cloudRegion.Enabled = h.supportedProviders.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
-				converted := presenters2.PresentCloudRegion(&cloudRegion)
+				converted := presenters.PresentCloudRegion(&cloudRegion)
 				regionList.Items = append(regionList.Items, converted)
 			}
 			h.cache.Set(id, regionList, cache.DefaultExpiration)
@@ -88,7 +88,7 @@ func (h cloudProvidersHandler) ListCloudProviders(w http.ResponseWriter, r *http
 
 			for _, cloudProvider := range cloudProviders {
 				_, cloudProvider.Enabled = h.supportedProviders.GetByName(cloudProvider.Id)
-				converted := presenters2.PresentCloudProvider(&cloudProvider)
+				converted := presenters.PresentCloudProvider(&cloudProvider)
 				cloudProviderList.Items = append(cloudProviderList.Items, converted)
 			}
 			h.cache.Set(cloudProvidersCacheKey, cloudProviderList, cache.DefaultExpiration)

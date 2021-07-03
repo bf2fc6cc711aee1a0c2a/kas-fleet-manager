@@ -1,15 +1,15 @@
 package integration
 
 import (
-	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
-	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"net/http"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -24,10 +24,10 @@ func TestClusterComputeNodesScaling(t *testing.T) {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, _, teardown := test2.NewKafkaHelper(t, ocmServer)
+	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	kasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
 	defer kasfFleetshardSync.Stop()
@@ -68,14 +68,14 @@ func getClusterForScaleTest(replicas int) *clustersmgmtv1.Cluster {
 }
 
 // scaleUpComputeNodes and confirm that it is scaled without error
-func scaleUpComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, increment int) {
-	_, err := test2.TestServices.ClusterService.ScaleUpComputeNodes(clusterID, increment)
+func scaleUpComputeNodes(h *coreTest.Helper, expectedReplicas int, clusterID string, increment int) {
+	_, err := test.TestServices.ClusterService.ScaleUpComputeNodes(clusterID, increment)
 	Expect(err).To(BeNil())
 }
 
 // scaleDownComputeNodes and confirm that it is scaled without error
-func scaleDownComputeNodes(h *test.Helper, expectedReplicas int, clusterID string, decrement int) {
-	_, err := test2.TestServices.ClusterService.ScaleDownComputeNodes(clusterID, decrement)
+func scaleDownComputeNodes(h *coreTest.Helper, expectedReplicas int, clusterID string, decrement int) {
+	_, err := test.TestServices.ClusterService.ScaleDownComputeNodes(clusterID, decrement)
 	Expect(err).To(BeNil())
 }
 

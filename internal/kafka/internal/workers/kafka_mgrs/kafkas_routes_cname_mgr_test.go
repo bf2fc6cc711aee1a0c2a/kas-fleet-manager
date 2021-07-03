@@ -3,7 +3,7 @@ package kafka_mgrs
 import (
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"testing"
@@ -75,7 +75,7 @@ func TestKafkaRoutesCNAMEManager(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			k := &KafkaRoutesCNAMEManager{
 				kafkaService: test.fields.kafkaService,
-				kafkaConfig:  &config2.KafkaConfig{EnableKafkaExternalCertificate: true},
+				kafkaConfig:  &config.KafkaConfig{EnableKafkaExternalCertificate: true},
 			}
 
 			errs := k.Reconcile()
