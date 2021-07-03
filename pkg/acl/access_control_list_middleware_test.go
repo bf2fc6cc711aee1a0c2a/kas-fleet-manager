@@ -32,7 +32,7 @@ var ocmConfig *ocm.OCMConfig
 
 func TestMain(m *testing.M) {
 	var err error
-	env, err = environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
+	env, err = environments.New(environments.GetEnvironmentStrFromEnv(),
 		kafka.ConfigProviders(),
 	)
 	if err != nil {

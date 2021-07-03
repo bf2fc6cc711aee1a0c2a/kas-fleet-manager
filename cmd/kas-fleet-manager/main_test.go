@@ -13,7 +13,7 @@ import (
 func TestInjections(t *testing.T) {
 	RegisterTestingT(t)
 
-	env, err := environments.NewEnv(environments.DevelopmentEnv,
+	env, err := environments.New(environments.DevelopmentEnv,
 		kafka.ConfigProviders(),
 	)
 	Expect(err).To(BeNil())

@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	env, err := environments.NewEnv(environments.GetEnvironmentStrFromEnv(),
+	env, err := environments.New(environments.GetEnvironmentStrFromEnv(),
 		kafka.ConfigProviders(),
 	)
 	if err != nil {

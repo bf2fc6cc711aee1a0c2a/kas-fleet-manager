@@ -91,7 +91,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	}
 
 	var err error
-	env, err := environments.NewEnv(envName, envProviders...)
+	env, err := environments.New(envName, envProviders...)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
