@@ -3,7 +3,6 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/golang/glog"
 	_ "github.com/lib/pq"
 	mocket "github.com/selvatico/go-mocket"
@@ -13,7 +12,7 @@ import (
 )
 
 type ConnectionFactory struct {
-	Config *config.DatabaseConfig
+	Config *DatabaseConfig
 	DB     *gorm.DB
 }
 
@@ -27,7 +26,7 @@ var gormConfig *gorm.Config = &gorm.Config{
 // NewConnectionFactory will initialize a singleton ConnectionFactory as needed and return the same instance.
 // Go includes database connection pooling in the platform. Gorm uses the same and provides a method to
 // clone a connection via New(), which is safe for use by concurrent Goroutines.
-func NewConnectionFactory(config *config.DatabaseConfig) (*ConnectionFactory, func()) {
+func NewConnectionFactory(config *DatabaseConfig) (*ConnectionFactory, func()) {
 	var db *gorm.DB
 	var err error
 	// refer to https://gorm.io/docs/gorm_config.html
@@ -65,9 +64,9 @@ func NewConnectionFactory(config *config.DatabaseConfig) (*ConnectionFactory, fu
 // NewMockConnectionFactory should only be used for defining mock database drivers
 // This uses mocket under the hood, use the global mocket.Catcher to change how the database should respond to SQL
 // queries
-func NewMockConnectionFactory(dbConfig *config.DatabaseConfig) *ConnectionFactory {
+func NewMockConnectionFactory(dbConfig *DatabaseConfig) *ConnectionFactory {
 	if dbConfig == nil {
-		dbConfig = &config.DatabaseConfig{}
+		dbConfig = &DatabaseConfig{}
 	}
 	mocket.Catcher.Register()
 	mocket.Catcher.Logging = true

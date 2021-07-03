@@ -42,10 +42,10 @@ func ConfigProviders() di.Option {
 
 		// Configuration for the Kafka service...
 		di.Provide(coreConfig.NewAWSConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(coreConfig.NewSupportedProvidersConfig, di.As(new(provider.ConfigModule)), di.As(new(provider.ServiceValidator))),
+		di.Provide(config.NewSupportedProvidersConfig, di.As(new(provider.ConfigModule)), di.As(new(provider.ServiceValidator))),
 		di.Provide(coreConfig.NewObservabilityConfigurationConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewKafkaConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(coreConfig.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),
 
 		// Additional CLI subcommands

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -10,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -26,8 +27,8 @@ import (
 
 type options struct {
 	di.Inject
-	ServerConfig   *config.ServerConfig
-	OCMConfig      *config.OCMConfig
+	ServerConfig   *coreConfig.ServerConfig
+	OCMConfig      *coreConfig.OCMConfig
 	ProviderConfig *config.ProviderConfig
 
 	OCM                   ocm.Client
@@ -40,7 +41,7 @@ type options struct {
 	DB                    *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
-	AccessControlListConfig     *config.AccessControlListConfig
+	AccessControlListConfig     *coreConfig.AccessControlListConfig
 }
 
 func NewRouteLoader(s options) provider.RouteLoader {

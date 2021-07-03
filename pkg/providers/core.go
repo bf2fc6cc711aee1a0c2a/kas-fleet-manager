@@ -30,7 +30,7 @@ func CoreConfigProviders() di.Option {
 
 		// Add config types
 		di.Provide(config.NewHealthCheckConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewDatabaseConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(db.NewDatabaseConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewServerConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewOCMConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewKeycloakConfig, di.As(new(provider.ConfigModule))),

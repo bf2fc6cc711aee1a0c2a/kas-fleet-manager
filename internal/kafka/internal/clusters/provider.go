@@ -2,9 +2,10 @@ package clusters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/pkg/errors"
 )
@@ -59,8 +60,8 @@ type DefaultProviderFactory struct {
 func NewDefaultProviderFactory(
 	ocmClient ocm.Client,
 	connectionFactory *db.ConnectionFactory,
-	ocmConfig *config.OCMConfig,
-	awsConfig *config.AWSConfig,
+	ocmConfig *coreConfig.OCMConfig,
+	awsConfig *coreConfig.AWSConfig,
 	dataplaneClusterConfig *config.DataplaneClusterConfig,
 ) *DefaultProviderFactory {
 	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(awsConfig, dataplaneClusterConfig), ocmConfig)

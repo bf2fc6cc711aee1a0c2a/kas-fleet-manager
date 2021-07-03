@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"runtime"
 	"time"
 
@@ -18,7 +17,7 @@ type Migration struct {
 	GormOptions *gormigrate.Options
 }
 
-func NewMigration(dbConfig *config.DatabaseConfig, gormOptions *gormigrate.Options, migrations []*gormigrate.Migration) (*Migration, func(), error) {
+func NewMigration(dbConfig *DatabaseConfig, gormOptions *gormigrate.Options, migrations []*gormigrate.Migration) (*Migration, func(), error) {
 	err := dbConfig.ReadFiles()
 	if err != nil {
 		return nil, nil, err

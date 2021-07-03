@@ -1,6 +1,7 @@
 package environments
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"os"
 
@@ -40,7 +41,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 // The environment is expected to be modified as needed
 func (b IntegrationEnvLoader) ModifyConfiguration(env *environments.Env) error {
 	// Support a one-off env to allow enabling db debug in testing
-	var databaseConfig *config.DatabaseConfig
+	var databaseConfig *db.DatabaseConfig
 	if os.Getenv("DB_DEBUG") == "true" {
 		databaseConfig.Debug = true
 	}

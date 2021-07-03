@@ -1,7 +1,6 @@
 package migrations
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
 )
@@ -26,7 +25,7 @@ var migrations = []*gormigrate.Migration{
 	addConnectorTables("202106170000"),
 }
 
-func New(dbConfig *config.DatabaseConfig) (*db.Migration, func(), error) {
+func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
 	return db.NewMigration(dbConfig, &gormigrate.Options{
 		TableName:      "connector_migrations",
 		IDColumnName:   "id",

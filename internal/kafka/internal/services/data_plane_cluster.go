@@ -35,7 +35,7 @@ type dataPlaneClusterService struct {
 	ClusterService         ClusterService
 	KafkaConfig            *config.KafkaConfig
 	ObservabilityConfig    *coreConfig.ObservabilityConfiguration
-	DataplaneClusterConfig *coreConfig.DataplaneClusterConfig
+	DataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
