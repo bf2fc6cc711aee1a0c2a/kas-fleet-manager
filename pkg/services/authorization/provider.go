@@ -2,14 +2,14 @@ package authorization
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/goava/di"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 )
 
 func ConfigProviders() di.Option {
 	return di.Options(
-		di.Provide(provider.Func(ServiceProviders)),
+		di.Provide(environments.Func(ServiceProviders)),
 	)
 }
 

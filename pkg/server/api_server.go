@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/goava/di"
@@ -40,7 +39,7 @@ type ServerOptions struct {
 	ServerConfig   *ServerConfig
 	KeycloakConfig *keycloak.KeycloakConfig
 	SentryConfig   *sentry.Config
-	RouteLoaders   []provider.RouteLoader
+	RouteLoaders   []environments.RouteLoader
 	Env            *environments.Env
 }
 

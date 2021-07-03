@@ -2,12 +2,11 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"net/http"
 	"sort"
 	"strconv"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
@@ -20,6 +19,10 @@ func NewErrorsHandler() *ErrorHandler {
 type ErrorHandler struct{}
 
 var _ RestHandler = ErrorHandler{}
+
+func PresentError(err *errors.ServiceError, url string) compat.Error {
+	return err.AsOpenapiError("", url)
+}
 
 func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 	cfg := &HandlerConfig{
@@ -42,7 +45,7 @@ func (h ErrorHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 			for _, e := range list {
 				err := e.(errors.ServiceError)
-				errorList.Items = append(errorList.Items, presenters.PresentError(&err, r.RequestURI))
+				errorList.Items = append(errorList.Items, PresentError(&err, r.RequestURI))
 			}
 
 			return errorList, nil
@@ -65,7 +68,7 @@ func (h ErrorHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if !exists {
 				return nil, errors.NotFound("No error with id %s exists", id)
 			}
-			return presenters.PresentError(sErr, r.RequestURI), nil
+			return PresentError(sErr, r.RequestURI), nil
 		},
 	}
 

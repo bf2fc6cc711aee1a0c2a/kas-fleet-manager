@@ -1,11 +1,11 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -70,7 +70,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 				kafka: &dbapi.KafkaRequest{},
 			},
 			wantErr:    true,
-			wantStatus: constants.KafkaRequestStatusPreparing.String(),
+			wantStatus: constants2.KafkaRequestStatusPreparing.String(),
 		},
 		{
 			name: "set kafka status to failed when quota is insufficient",
@@ -94,7 +94,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			args: args{
 				kafka: &dbapi.KafkaRequest{},
 			},
-			wantStatus: constants.KafkaRequestStatusFailed.String(),
+			wantStatus: constants2.KafkaRequestStatusFailed.String(),
 		},
 		{
 			name: "successful reconcile",
@@ -121,7 +121,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			args: args{
 				kafka: &dbapi.KafkaRequest{},
 			},
-			wantStatus: constants.KafkaRequestStatusPreparing.String(),
+			wantStatus: constants2.KafkaRequestStatusPreparing.String(),
 		},
 	}
 	for _, tt := range tests {

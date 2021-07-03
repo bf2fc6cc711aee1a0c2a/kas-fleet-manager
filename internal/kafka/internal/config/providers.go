@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
@@ -73,7 +73,7 @@ func NewSupportedProvidersConfig() *ProviderConfig {
 	}
 }
 
-var _ provider.ServiceValidator = &ProviderConfig{}
+var _ environments.ServiceValidator = &ProviderConfig{}
 
 func (c *ProviderConfig) Validate() error {
 	providerDefaultCount := 0

@@ -3,9 +3,9 @@ package common
 import (
 	"context"
 	"fmt"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -67,7 +67,7 @@ func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactor
 }
 
 // WaitForKafkaToReachStatus - Awaits for a kafka to reach a specified status
-func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string, status constants.KafkaStatus) (kafka public.KafkaRequest, err error) {
+func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string, status constants2.KafkaStatus) (kafka public.KafkaRequest, err error) {
 	currentStatus := ""
 
 	err = NewPollerBuilder(db).
@@ -86,16 +86,16 @@ func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, cl
 			}
 
 			switch kafka.Status {
-			case constants.KafkaRequestStatusFailed.String():
+			case constants2.KafkaRequestStatusFailed.String():
 				fallthrough
-			case constants.KafkaRequestStatusDeprovision.String():
+			case constants2.KafkaRequestStatusDeprovision.String():
 				fallthrough
-			case constants.KafkaRequestStatusDeleting.String():
+			case constants2.KafkaRequestStatusDeleting.String():
 				return false, errors.Errorf("Waiting for kafka '%s' to reach status '%s', but status '%s' has been reached instead", kafkaId, status.String(), kafka.Status)
 			}
 
 			currentStatus = kafka.Status
-			return constants.KafkaStatus(kafka.Status).CompareTo(status) >= 0, nil
+			return constants2.KafkaStatus(kafka.Status).CompareTo(status) >= 0, nil
 		}).
 		Build().Poll()
 	return kafka, err

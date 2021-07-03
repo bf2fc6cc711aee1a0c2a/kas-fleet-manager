@@ -5,7 +5,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"os"
 	"sort"
 
@@ -46,7 +46,7 @@ func runList(cmd *cobra.Command, _ []string) {
 
 	// add code prefix to service error code
 	for _, err := range errors {
-		svcErrors = append(svcErrors, presenters.PresentError(&err, ""))
+		svcErrors = append(svcErrors, handlers.PresentError(&err, ""))
 	}
 
 	svcErrorsJson, err := json.MarshalIndent(svcErrors, "", "\t")

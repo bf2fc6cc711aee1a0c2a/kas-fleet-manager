@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
@@ -21,7 +22,6 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -91,7 +91,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
@@ -116,8 +116,8 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafkaRequest.PlacementId).To(Not(BeEmpty()))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationCreate.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationCreate.String()))
 
 	// delete test kafka to free up resources on an OSD cluster
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
@@ -167,7 +167,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -176,7 +176,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka-2",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 	}
 
@@ -501,7 +501,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -510,7 +510,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka-2",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -520,7 +520,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			ClusterID:      clusterID,
 			Name:           "dummy-kafka-3",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusPreparing.String(),
+			Status:         constants2.KafkaRequestStatusPreparing.String(),
 		},
 		{
 			MultiAZ:             false,
@@ -533,7 +533,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
 			OrganisationId:      orgId,
-			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			MultiAZ:        false,
@@ -542,7 +542,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "this-kafka-will-remain",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 	}
 
@@ -694,7 +694,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.Region).To(Equal(mocks.MockCluster.Region().ID()))
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
-	Expect(kafka.Status).To(Equal(constants.KafkaRequestStatusAccepted.String()))
+	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 	Expect(kafka.Version).To(Equal(test.TestServices.KafkaConfig.DefaultKafkaVersion))
 
 	// 404 Not Found
@@ -763,7 +763,7 @@ func TestKafkaDelete_Success(t *testing.T) {
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
@@ -774,9 +774,9 @@ func TestKafkaDelete_Success(t *testing.T) {
 
 	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "It should be possible to retrieve kafka marked for deletion")
-	Expect(foundKafka.Status).To(Equal(constants.KafkaRequestStatusDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
+	Expect(foundKafka.Status).To(Equal(constants2.KafkaRequestStatusDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDeprovision.String()))
 
 	// wait for kafka to be deleted
 	err = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
@@ -922,10 +922,10 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDelete.String()))
 
 	// Test deletion of a kafka in a 'preparing' state
 	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
@@ -933,7 +933,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
-	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusPreparing)
+	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusPreparing)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
 
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
@@ -944,10 +944,10 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDelete.String()))
 
 	// Test deletion of a kafka in a 'provisioning' state
 	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
@@ -955,7 +955,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
-	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusProvisioning)
+	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusProvisioning)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
 
 	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
@@ -966,10 +966,10 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants.KafkaOperationDelete.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDeprovision.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDelete.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 3", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDelete.String()))
 }
 
 // TestKafkaDelete - tests fail kafka delete
@@ -1034,7 +1034,7 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(initCtx, test.TestServices.DBFactory, client, kafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := common.WaitForKafkaToReachStatus(initCtx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 
 	// attempt to delete kafka not created by the owner (should result in an error)
@@ -1097,7 +1097,7 @@ func TestKafkaList_Success(t *testing.T) {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(initCtx, test.TestServices.DBFactory, client, seedKafka.Id, constants.KafkaRequestStatusReady)
+	foundKafka, err := common.WaitForKafkaToReachStatus(initCtx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred while waiting for kafka to be ready:  %v", err)
 
 	// get populated list of kafka requests
@@ -1122,7 +1122,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()
@@ -1151,7 +1151,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) kafka instances
 	// this value if taken from config/allow-list-configuration.yaml
@@ -1297,7 +1297,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka-to-remain",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1313,7 +1313,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			BootstrapServerHost: "dummy-bootstrap-host",
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
-			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1329,7 +1329,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			BootstrapServerHost: "dummy-bootstrap-host",
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
-			Status:              constants.KafkaRequestStatusReady.String(),
+			Status:              constants2.KafkaRequestStatusReady.String(),
 		},
 	}
 
@@ -1390,7 +1390,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka-not-yet-expired",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1406,7 +1406,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			BootstrapServerHost: "dummy-bootstrap-host",
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
-			Status:              constants.KafkaRequestStatusReady.String(),
+			Status:              constants2.KafkaRequestStatusReady.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1423,7 +1423,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			BootstrapServerHost: "dummy-bootstrap-host",
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
-			Status:              constants.KafkaRequestStatusReady.String(),
+			Status:              constants2.KafkaRequestStatusReady.String(),
 		},
 	}
 

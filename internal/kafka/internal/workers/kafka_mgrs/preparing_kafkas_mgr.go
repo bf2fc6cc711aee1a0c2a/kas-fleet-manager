@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
@@ -11,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/golang/glog"
 
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -52,7 +52,7 @@ func (k *PreparingKafkaManager) Reconcile() []error {
 	var encounteredErrors []error
 
 	// handle preparing kafkas
-	preparingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusPreparing)
+	preparingKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusPreparing)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list preparing kafkas"))
 	} else {
@@ -61,7 +61,7 @@ func (k *PreparingKafkaManager) Reconcile() []error {
 
 	for _, kafka := range preparingKafkas {
 		glog.V(10).Infof("preparing kafka id = %s", kafka.ID)
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusPreparing, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcilePreparingKafka(kafka); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile preparing kafka %s", kafka.ID))
 			continue
@@ -85,26 +85,26 @@ func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *db
 		// retry the kafka creation request only if the failure is caused by server errors
 		// and the time elapsed since its db record was created is still within the threshold.
 		durationSinceCreation := time.Since(kafkaRequest.CreatedAt)
-		if durationSinceCreation > constants.KafkaMaxDurationWithProvisioningErrs {
-			metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-			kafkaRequest.Status = string(constants.KafkaRequestStatusFailed)
+		if durationSinceCreation > constants2.KafkaMaxDurationWithProvisioningErrs {
+			metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
+			kafkaRequest.Status = string(constants2.KafkaRequestStatusFailed)
 			kafkaRequest.FailedReason = err.Reason
 			updateErr := k.kafkaService.Update(kafkaRequest)
 			if updateErr != nil {
 				return errors.Wrapf(updateErr, "Failed to update kafka %s in failed state. Kafka failed reason %s", kafkaRequest.ID, kafkaRequest.FailedReason)
 			}
-			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 			return errors.Wrapf(err, "Kafka %s is in server error failed state. Maximum attempts has been reached", kafkaRequest.ID)
 		}
 	} else if err.IsClientErrorClass() {
-		metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationCreate)
-		kafkaRequest.Status = string(constants.KafkaRequestStatusFailed)
+		metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
+		kafkaRequest.Status = string(constants2.KafkaRequestStatusFailed)
 		kafkaRequest.FailedReason = err.Reason
 		updateErr := k.kafkaService.Update(kafkaRequest)
 		if updateErr != nil {
 			return errors.Wrapf(err, "Failed to update kafka %s in failed state", kafkaRequest.ID)
 		}
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
 		return errors.Wrapf(err, "error creating kafka %s", kafkaRequest.ID)
 	}
 

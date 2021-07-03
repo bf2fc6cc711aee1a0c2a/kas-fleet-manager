@@ -12,7 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -34,7 +34,7 @@ type Services struct {
 	LeaderElectionManager *coreWorkers.LeaderElectionManager
 	SignalBus             signalbus.SignalBus
 	APIServer             *server.ApiServer
-	BootupServices        []provider.BootService
+	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
 	OCMClient             ocm.Client
@@ -54,7 +54,7 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 }
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
-	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(provider.BeforeCreateServicesHook{
+	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
 		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true

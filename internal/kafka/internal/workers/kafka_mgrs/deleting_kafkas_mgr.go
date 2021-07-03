@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/golang/glog"
 )
 
@@ -58,20 +58,20 @@ func (k *DeletingKafkaManager) Reconcile() []error {
 	// from the data plane cluster by the KAS Fleetshard operator. This reconcile phase ensures that any other
 	// dependencies (i.e. SSO clients, CNAME records) are cleaned up for these Kafkas and their records soft deleted from the database.
 
-	deletingKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeleting)
+	deletingKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusDeleting)
 	originalTotalKafkaInDeleting := len(deletingKafkas)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list deleting kafka requests"))
 	} else {
-		glog.Infof("%s kafkas count = %d", constants.KafkaRequestStatusDeleting.String(), originalTotalKafkaInDeleting)
+		glog.Infof("%s kafkas count = %d", constants2.KafkaRequestStatusDeleting.String(), originalTotalKafkaInDeleting)
 	}
 
 	// We also want to remove Kafkas that are set to deprovisioning but have not been provisioned on a data plane cluster
-	deprovisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusDeprovision)
+	deprovisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusDeprovision)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list kafka deprovisioning requests"))
 	} else {
-		glog.Infof("%s kafkas count = %d", constants.KafkaRequestStatusDeprovision.String(), len(deprovisioningKafkas))
+		glog.Infof("%s kafkas count = %d", constants2.KafkaRequestStatusDeprovision.String(), len(deprovisioningKafkas))
 	}
 
 	for _, deprovisioningKafka := range deprovisioningKafkas {

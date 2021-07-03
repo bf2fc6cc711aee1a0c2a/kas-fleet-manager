@@ -1,4 +1,4 @@
-package provider
+package environments
 
 import (
 	"github.com/goava/di"

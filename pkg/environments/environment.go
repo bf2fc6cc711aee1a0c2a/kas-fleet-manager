@@ -6,7 +6,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/pkg/errors"
 
@@ -16,9 +15,12 @@ import (
 )
 
 const (
-	TestingEnv           string = "testing"
-	DevelopmentEnv       string = "development"
-	IntegrationEnv       string = "integration"
+	TestingEnv     string = "testing"
+	DevelopmentEnv string = "development"
+	ProductionEnv  string = "production"
+	StageEnv       string = "stage"
+	IntegrationEnv string = "integration"
+
 	EnvironmentStringKey string = "OCM_ENV"
 	EnvironmentDefault          = DevelopmentEnv
 )
@@ -49,7 +51,7 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 		return errors.Errorf("unsupported environment %q", e.Name)
 	}
 
-	modules := []provider.ConfigModule{}
+	modules := []ConfigModule{}
 	if err := e.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
@@ -84,7 +86,7 @@ func (env *Env) CreateServices() error {
 	glog.Infof("Initializing %s environment", env.Name)
 
 	// Read in all config files
-	modules := []provider.ConfigModule{}
+	modules := []ConfigModule{}
 	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
@@ -111,9 +113,9 @@ func (env *Env) CreateServices() error {
 
 	type injections struct {
 		di.Inject
-		ServiceInjections         []provider.Provider
-		BeforeCreateServicesHooks []provider.BeforeCreateServicesHook `optional:"true"`
-		AfterCreateServicesHooks  []provider.AfterCreateServicesHook  `optional:"true"`
+		ServiceInjections         []Provider
+		BeforeCreateServicesHooks []BeforeCreateServicesHook `optional:"true"`
+		AfterCreateServicesHooks  []AfterCreateServicesHook  `optional:"true"`
 	}
 	in := injections{}
 	if err := env.ConfigContainer.Resolve(&in); err != nil {
@@ -143,7 +145,7 @@ func (env *Env) CreateServices() error {
 		return err
 	}
 
-	var validators []provider.ServiceValidator
+	var validators []ServiceValidator
 	err = env.ServiceContainer.Resolve(&validators)
 	if err != nil {
 		if !errors.Is(err, di.ErrTypeNotExists) {
@@ -209,7 +211,7 @@ func (env *Env) Run(ctx context.Context) {
 }
 
 func (env *Env) Start() {
-	env.MustInvoke(func(services []provider.BootService) {
+	env.MustInvoke(func(services []BootService) {
 		for i := range services {
 			services[i].Start()
 		}
@@ -217,7 +219,7 @@ func (env *Env) Start() {
 }
 
 func (env *Env) Stop() {
-	env.MustInvoke(func(services []provider.BootService) {
+	env.MustInvoke(func(services []BootService) {
 		for i := range services {
 			i = len(services) - 1 - i // to stop in reverse order
 			services[i].Stop()
