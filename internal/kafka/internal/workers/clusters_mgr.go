@@ -3,11 +3,12 @@ package workers
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"strings"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
@@ -104,8 +105,8 @@ type ClusterManager struct {
 type ClusterManagerOptions struct {
 	di.Inject
 	Reconciler                 workers.Reconciler
-	OCMConfig                  *config.OCMConfig
-	ObservabilityConfiguration *config.ObservabilityConfiguration
+	OCMConfig                  *coreConfig.OCMConfig
+	ObservabilityConfiguration *coreConfig.ObservabilityConfiguration
 	DataplaneClusterConfig     *config.DataplaneClusterConfig
 	SupportedProviders         *config.ProviderConfig
 	ClusterService             services.ClusterService
@@ -596,7 +597,7 @@ func (c *ClusterManager) reconcileClusterLoggingOperator(provisionedCluster api.
 
 // reconcileClusterWithConfig reconciles clusters within the dataplane-cluster-configuration file.
 // New clusters will be registered if it is not yet in the database.
-// A cluster will be deprovisioned if it is in the database but not in the config file.
+// A cluster will be deprovisioned if it is in the database but not in the coreConfig file.
 func (c *ClusterManager) reconcileClusterWithManualConfig() []error {
 	if !c.DataplaneClusterConfig.IsDataPlaneManualScalingEnabled() {
 		glog.Infoln("manual cluster configuration reconciliation is skipped as it is disabled")
@@ -770,7 +771,7 @@ func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Projec
 func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret {
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"authType":    config.AuthTypeDex,
+		"authType":    coreConfig.AuthTypeDex,
 		"gateway":     observabilityConfig.ObservatoriumGateway,
 		"tenant":      observabilityConfig.ObservatoriumTenant,
 		"dexUrl":      observabilityConfig.DexUrl,
@@ -795,7 +796,7 @@ func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret
 func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret {
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"authType":               config.AuthTypeSso,
+		"authType":               coreConfig.AuthTypeSso,
 		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
 		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,

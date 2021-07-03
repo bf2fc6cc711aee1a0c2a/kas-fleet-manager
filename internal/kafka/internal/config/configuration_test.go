@@ -11,33 +11,33 @@ import (
 
 func Test_configService_GetDefaultProvider(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfig
+		providersConfig ProviderConfig
 	}
 	tests := []struct {
 		name    string
 		fields  fields
-		want    config.Provider
+		want    Provider
 		wantErr bool
 	}{
 		{
 			name: "error when no default provider found",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{},
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{},
 					},
 				},
 			},
 			wantErr: true,
-			want:    config.Provider{},
+			want:    Provider{},
 		},
 		{
 			name: "success when default provider found",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test",
 								Default: true,
 							},
@@ -45,7 +45,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 					},
 				},
 			},
-			want: config.Provider{
+			want: Provider{
 				Name:    "test",
 				Default: true,
 			},
@@ -53,14 +53,14 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 		{
 			name: "first default returned when multiple defaults specified",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test1",
 								Default: true,
 							},
-							config.Provider{
+							Provider{
 								Name:    "test2",
 								Default: true,
 							},
@@ -68,7 +68,7 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 					},
 				},
 			},
-			want: config.Provider{
+			want: Provider{
 				Name:    "test1",
 				Default: true,
 			},
@@ -91,37 +91,37 @@ func Test_configService_GetDefaultProvider(t *testing.T) {
 
 func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 	type args struct {
-		provider config.Provider
+		provider Provider
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    config.Region
+		want    Region
 		wantErr bool
 	}{
 		{
 			name: "error when no default region found",
 			args: args{
-				provider: config.Provider{
-					Regions: config.RegionList{},
+				provider: Provider{
+					Regions: RegionList{},
 				},
 			},
-			want:    config.Region{},
+			want:    Region{},
 			wantErr: true,
 		},
 		{
 			name: "success when default region found",
 			args: args{
-				provider: config.Provider{
-					Regions: config.RegionList{
-						config.Region{
+				provider: Provider{
+					Regions: RegionList{
+						Region{
 							Name:    "test",
 							Default: true,
 						},
 					},
 				},
 			},
-			want: config.Region{
+			want: Region{
 				Name:    "test",
 				Default: true,
 			},
@@ -129,20 +129,20 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 		{
 			name: "first default returned when multiple defaults specified",
 			args: args{
-				provider: config.Provider{
-					Regions: config.RegionList{
-						config.Region{
+				provider: Provider{
+					Regions: RegionList{
+						Region{
 							Name:    "test1",
 							Default: true,
 						},
-						config.Region{
+						Region{
 							Name:    "test2",
 							Default: true,
 						},
 					},
 				},
 			},
-			want: config.Region{
+			want: Region{
 				Name:    "test1",
 				Default: true,
 			},
@@ -164,28 +164,28 @@ func Test_configService_GetDefaultRegionForProvider(t *testing.T) {
 
 func Test_configService_GetSupportedProviders(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfig
+		providersConfig ProviderConfig
 	}
 	tests := []struct {
 		name   string
 		fields fields
-		want   config.ProviderList
+		want   ProviderList
 	}{
 		{
 			name: "successful get",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name: "test",
 							},
 						},
 					},
 				},
 			},
-			want: config.ProviderList{
-				config.Provider{
+			want: ProviderList{
+				Provider{
 					Name: "test",
 				},
 			},
@@ -203,7 +203,7 @@ func Test_configService_GetSupportedProviders(t *testing.T) {
 
 func Test_configService_IsProviderSupported(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfig
+		providersConfig ProviderConfig
 	}
 	type args struct {
 		providerName string
@@ -217,9 +217,9 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 		{
 			name: "false when provider not in supported list",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{},
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{},
 					},
 				},
 			},
@@ -231,10 +231,10 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 		{
 			name: "true when provider in supported list",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name: "test",
 							},
 						},
@@ -259,7 +259,7 @@ func Test_configService_IsProviderSupported(t *testing.T) {
 
 func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfig
+		providersConfig ProviderConfig
 	}
 	type args struct {
 		providerName string
@@ -274,9 +274,9 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		{
 			name: "false when provider is not supported",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{},
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{},
 					},
 				},
 			},
@@ -289,10 +289,10 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		{
 			name: "false when region is not supported",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name: "testProvider",
 							},
 						},
@@ -308,13 +308,13 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 		{
 			name: "true when region is supported",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name: "testProvider",
-								Regions: config.RegionList{
-									config.Region{
+								Regions: RegionList{
+									Region{
 										Name: "testRegion",
 									},
 								},
@@ -577,7 +577,7 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 
 func Test_configService_Validate(t *testing.T) {
 	type fields struct {
-		providersConfig config.ProviderConfig
+		providersConfig ProviderConfig
 	}
 	tests := []struct {
 		name    string
@@ -587,10 +587,10 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when no default provider provided",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test",
 								Default: false,
 							},
@@ -603,23 +603,23 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when no default region in default provider",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test",
 								Default: true,
-								Regions: config.RegionList{
-									config.Region{
+								Regions: RegionList{
+									Region{
 										Name:    "test",
 										Default: false,
 									},
 								},
 							},
-							config.Provider{
+							Provider{
 								Name: "test",
-								Regions: config.RegionList{
-									config.Region{
+								Regions: RegionList{
+									Region{
 										Name:    "test",
 										Default: true,
 									},
@@ -634,14 +634,14 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when multiple default providers provided",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test1",
 								Default: true,
 							},
-							config.Provider{
+							Provider{
 								Name:    "test2",
 								Default: true,
 							},
@@ -654,18 +654,18 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "error when multiple default regions in default provider",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test",
 								Default: true,
-								Regions: config.RegionList{
-									config.Region{
+								Regions: RegionList{
+									Region{
 										Name:    "test1",
 										Default: true,
 									},
-									config.Region{
+									Region{
 										Name:    "test2",
 										Default: true,
 									},
@@ -680,18 +680,18 @@ func Test_configService_Validate(t *testing.T) {
 		{
 			name: "success when default provider and region provided",
 			fields: fields{
-				providersConfig: config.ProviderConfig{
-					ProvidersConfig: config.ProviderConfiguration{
-						SupportedProviders: config.ProviderList{
-							config.Provider{
+				providersConfig: ProviderConfig{
+					ProvidersConfig: ProviderConfiguration{
+						SupportedProviders: ProviderList{
+							Provider{
 								Name:    "test",
 								Default: true,
-								Regions: config.RegionList{
-									config.Region{
+								Regions: RegionList{
+									Region{
 										Name:    "test1",
 										Default: true,
 									},
-									config.Region{
+									Region{
 										Name:    "test2",
 										Default: false,
 									},
@@ -715,7 +715,7 @@ func Test_configService_Validate(t *testing.T) {
 
 func Test_configService_validateProvider(t *testing.T) {
 	type args struct {
-		provider config.Provider
+		provider Provider
 	}
 	tests := []struct {
 		name    string
@@ -725,7 +725,7 @@ func Test_configService_validateProvider(t *testing.T) {
 		{
 			name: "error when no default region in provider",
 			args: args{
-				provider: config.Provider{
+				provider: Provider{
 					Name:    "test",
 					Default: false,
 				},
@@ -735,14 +735,14 @@ func Test_configService_validateProvider(t *testing.T) {
 		{
 			name: "error when more than one default region in provider",
 			args: args{
-				provider: config.Provider{
+				provider: Provider{
 					Name: "test",
-					Regions: config.RegionList{
-						config.Region{
+					Regions: RegionList{
+						Region{
 							Name:    "test1",
 							Default: true,
 						},
-						config.Region{
+						Region{
 							Name:    "test2",
 							Default: true,
 						},
@@ -754,10 +754,10 @@ func Test_configService_validateProvider(t *testing.T) {
 		{
 			name: "success when default region provided",
 			args: args{
-				provider: config.Provider{
+				provider: Provider{
 					Name: "test",
-					Regions: config.RegionList{
-						config.Region{
+					Regions: RegionList{
+						Region{
 							Name:    "test",
 							Default: true,
 						},

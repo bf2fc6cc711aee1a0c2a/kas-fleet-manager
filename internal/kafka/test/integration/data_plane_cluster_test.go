@@ -250,7 +250,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreKafkaCapacity(
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	DataplaneClusterConfig(h).DataPlaneClusterScalingType = coreConfig.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -289,7 +289,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	}
 
 	// enable dynamic autoscaling
-	DataplaneClusterConfig(h).DataPlaneClusterScalingType = coreConfig.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -307,7 +307,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToWaitingForKASFleetOperatorWh
 	Expect(cluster.Status).To(Equal(api.ClusterWaitingForKasFleetShardOperator))
 }
 
-func DataplaneClusterConfig(h *coreTest.Helper) (dataplaneClusterConfig *coreConfig.DataplaneClusterConfig) {
+func DataplaneClusterConfig(h *coreTest.Helper) (dataplaneClusterConfig *config.DataplaneClusterConfig) {
 	h.Env.MustResolve(&dataplaneClusterConfig)
 	return
 }
@@ -340,7 +340,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	}
 
 	// enable auto scaling
-	DataplaneClusterConfig(h).DataPlaneClusterScalingType = coreConfig.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
 	privateAPIClient := test.NewPrivateAPIClient(h)
@@ -459,7 +459,7 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// We enable Dynamic Scaling at this point and not in the startHook due to
 	// we want to ensure the pre-existing OSD cluster entry is stored in the DB
 	// before enabling the dynamic scaling logic
-	DataplaneClusterConfig(h).DataPlaneClusterScalingType = coreConfig.AutoScaling
+	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	initialExpectedOSDClusters := 1
 	// Check that at this moment we should only have one cluster

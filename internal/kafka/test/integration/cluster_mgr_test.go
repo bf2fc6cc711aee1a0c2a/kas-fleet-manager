@@ -2,6 +2,7 @@ package integration
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -10,7 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
@@ -28,8 +29,8 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	defer ocmServer.Close()
 
 	// start servers
-	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.OCMConfig) {
-		c.ClusterLoggingOperatorAddonID = config.ClusterLoggingOperatorAddonID
+	h, _, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *coreConfig.OCMConfig) {
+		c.ClusterLoggingOperatorAddonID = coreConfig.ClusterLoggingOperatorAddonID
 	})
 	defer teardown()
 

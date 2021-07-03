@@ -2,19 +2,20 @@ package clusters
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"reflect"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 const openshiftVersion = "openshift-v4.6.1"
 
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
-	awsConfig := &config.AWSConfig{}
+	awsConfig := &coreConfig.AWSConfig{}
 
 	dataplaneClusterConfig := &config.DataplaneClusterConfig{
 		OpenshiftVersion:   openshiftVersion,
@@ -29,7 +30,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 
 	type fields struct {
 		idGenerator            ocm.IDGenerator
-		awsConfig              *config.AWSConfig
+		awsConfig              *coreConfig.AWSConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 

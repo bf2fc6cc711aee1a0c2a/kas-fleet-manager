@@ -693,7 +693,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
 		ObservabilityConfiguration *coreConfig.ObservabilityConfiguration
-		DataplaneClusterConfig     *coreConfig.DataplaneClusterConfig
+		DataplaneClusterConfig     *config.DataplaneClusterConfig
 	}
 
 	tests := []struct {
@@ -892,7 +892,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
-				c.DataplaneClusterConfig.DataPlaneClusterScalingType = coreConfig.ManualScaling
+				c.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -1007,8 +1007,8 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatu
 }
 
 func sampleValidApplicationConfigForDataPlaneClusterTest(clusterService ClusterService) dataPlaneClusterService {
-	dataplaneClusterConfig := coreConfig.NewDataplaneClusterConfig()
-	dataplaneClusterConfig.DataPlaneClusterScalingType = coreConfig.AutoScaling
+	dataplaneClusterConfig := config.NewDataplaneClusterConfig()
+	dataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
 
 	return dataPlaneClusterService{
 		ClusterService: clusterService,

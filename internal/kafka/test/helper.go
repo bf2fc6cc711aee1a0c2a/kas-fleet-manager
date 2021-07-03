@@ -55,11 +55,11 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(provider.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *coreConfig.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *coreConfig.ObservabilityConfiguration) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *coreConfig.ObservabilityConfiguration) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
-			dataplaneClusterConfig.DataPlaneClusterScalingType = coreConfig.NoScaling // disable scaling by default as it will be activated in specific tests
-			dataplaneClusterConfig.RawKubernetesConfig = nil                          // disable applying resources for standalone clusters
+			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
+			dataplaneClusterConfig.RawKubernetesConfig = nil                      // disable applying resources for standalone clusters
 		},
 	}))
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
