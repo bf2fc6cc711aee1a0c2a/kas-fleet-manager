@@ -4,12 +4,12 @@ import (
 	"github.com/goava/di"
 )
 
-type Provider interface {
+type ServiceProvider interface {
 	Providers() di.Option
 }
 
-func Func(f func() di.Option) func() Provider {
-	return func() Provider {
+func Func(f func() di.Option) func() ServiceProvider {
+	return func() ServiceProvider {
 		return providerFunc{apply: f}
 	}
 }
