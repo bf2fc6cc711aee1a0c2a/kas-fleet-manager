@@ -1,7 +1,7 @@
 package clusters
 
 import (
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -21,7 +21,7 @@ const (
 type ClusterBuilder interface {
 	// NewOCMClusterFromCluster create an OCM cluster definition that can be used to create a new cluster with the OCM
 	// Cluster Service.
-	NewOCMClusterFromCluster(clusterRequest *types2.ClusterRequest) (*clustersmgmtv1.Cluster, error)
+	NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error)
 }
 
 var _ ClusterBuilder = &clusterBuilder{}
@@ -47,7 +47,7 @@ func NewClusterBuilder(awsConfig *config.AWSConfig, dataplaneClusterConfig *conf
 	}
 }
 
-func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types2.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
+func (r clusterBuilder) NewOCMClusterFromCluster(clusterRequest *types.ClusterRequest) (*clustersmgmtv1.Cluster, error) {
 	// pre-req nil checks
 	if err := r.validate(); err != nil {
 		return nil, err

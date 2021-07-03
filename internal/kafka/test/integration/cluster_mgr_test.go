@@ -7,8 +7,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
-	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
@@ -36,7 +36,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	// setup required services
 	ocmClient := test.TestServices.OCMClient
 
-	kasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
 	defer kasfFleetshardSync.Stop()
@@ -52,7 +52,7 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 		t.Fatalf("Failed to register cluster: %s", clusterRegisterError.Error())
 	}
 
-	clusterID, err := common2.WaitForClusterIDToBeAssigned(test.TestServices.DBFactory, &test.TestServices.ClusterService, &services.FindClusterCriteria{
+	clusterID, err := common.WaitForClusterIDToBeAssigned(test.TestServices.DBFactory, &test.TestServices.ClusterService, &services.FindClusterCriteria{
 		Region:   mocks.MockCluster.Region().ID(),
 		Provider: mocks.MockCluster.CloudProvider().ID(),
 	},
@@ -61,11 +61,11 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster id to be assigned: %v", err)
 
 	// waiting for cluster state to become `ready`
-	cluster, checkReadyErr := common2.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterReady)
+	cluster, checkReadyErr := common.WaitForClusterStatus(test.TestServices.DBFactory, &test.TestServices.ClusterService, clusterID, api.ClusterReady)
 	Expect(checkReadyErr).NotTo(HaveOccurred(), "Error waiting for cluster to be ready: %s %v", cluster.ClusterID, checkReadyErr)
 
 	// save cluster struct to be reused in subsequent tests and cleanup script
-	err = common2.PersistClusterStruct(*cluster)
+	err = common.PersistClusterStruct(*cluster)
 	if err != nil {
 		t.Fatalf("failed to persist cluster struct %v", err)
 	}
@@ -104,11 +104,11 @@ func TestClusterManager_SuccessfulReconcile(t *testing.T) {
 	}
 	Expect(cluster.ClusterDNS).To(Equal(ocmClusterDNS))
 
-	common2.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
-	common2.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
-	common2.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants.ClusterOperationCreate.String()))
-	common2.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants.ClusterOperationCreate.String()))
-	common2.CheckMetric(h, t, fmt.Sprintf("%s_%s{worker_type=\"%s\"}", metrics.KasFleetManager, metrics.ReconcilerDuration, "cluster"), true)
+	common.CheckMetricExposed(h, t, metrics.ClusterCreateRequestDuration)
+	common.CheckMetricExposed(h, t, metrics.ClusterStatusSinceCreated)
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsSuccessCount, constants.ClusterOperationCreate.String()))
+	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.ClusterOperationsTotalCount, constants.ClusterOperationCreate.String()))
+	common.CheckMetric(h, t, fmt.Sprintf("%s_%s{worker_type=\"%s\"}", metrics.KasFleetManager, metrics.ReconcilerDuration, "cluster"), true)
 }
 
 func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
@@ -122,14 +122,14 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	h, _, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	kasFleetshardSyncBuilder := kasfleetshardsync2.NewMockKasFleetshardSyncBuilder(h, t)
+	kasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
 	kasfFleetshardSync := kasFleetshardSyncBuilder.Build()
 	kasfFleetshardSync.Start()
 	defer kasfFleetshardSync.Stop()
 
 	// setup required services
 	// Get a 'ready' osd cluster
-	clusterID, getClusterErr := common2.GetRunningOsdClusterID(h, t)
+	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
 	if getClusterErr != nil {
 		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
 	}
@@ -179,7 +179,7 @@ func TestClusterManager_SuccessfulReconcileDeprovisionCluster(t *testing.T) {
 	DataplaneClusterConfig(h).DataPlaneClusterScalingType = config.AutoScaling
 
 	// checking that cluster has been deleted
-	err := common2.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
+	err := common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, dummyCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
 }

@@ -3,8 +3,8 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	ocm2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -15,7 +15,7 @@ import (
 
 func Test_AMSCheckQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm2.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		kafkaID     string
@@ -39,7 +39,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"RHOSAK",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return ca, nil
@@ -57,7 +57,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"BAD-PRODUCT-TYPE",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						if cb.ProductID() == "RHOSAK" {
 							ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
@@ -79,7 +79,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"RHOSAK",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
@@ -97,7 +97,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"RHOSAK",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
 					},
@@ -108,7 +108,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kafkaConfig := &config2.KafkaConfig{
+		kafkaConfig := &config.KafkaConfig{
 			ProductType: tt.args.productType,
 		}
 
@@ -130,7 +130,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 
 func Test_AMSReserveQuota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm2.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		kafkaID string
@@ -152,7 +152,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				"testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						sub := v1.SubscriptionBuilder{}
 						sub.ID("1234")
@@ -173,7 +173,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				"testUser",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
@@ -184,7 +184,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 		},
 	}
 
-	cfgService := &config2.KafkaConfig{
+	cfgService := &config.KafkaConfig{
 		ProductType: "RHOSAK",
 	}
 
@@ -208,7 +208,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 
 func Test_Delete_Quota(t *testing.T) {
 	type fields struct {
-		ocmClient ocm2.Client
+		ocmClient ocm.Client
 	}
 	type args struct {
 		subscriptionId string
@@ -230,7 +230,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionId: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 1, nil
 					},
@@ -244,7 +244,7 @@ func Test_Delete_Quota(t *testing.T) {
 				subscriptionId: "1223",
 			},
 			fields: fields{
-				ocmClient: &ocm2.ClientMock{
+				ocmClient: &ocm.ClientMock{
 					DeleteSubscriptionFunc: func(id string) (int, error) {
 						return 0, errors.GeneralError("failed to delete subscription")
 					},
@@ -254,7 +254,7 @@ func Test_Delete_Quota(t *testing.T) {
 		},
 	}
 
-	cfgService := &config2.KafkaConfig{
+	cfgService := &config.KafkaConfig{
 		ProductType: "RHOSAK",
 	}
 	for _, tt := range tests {

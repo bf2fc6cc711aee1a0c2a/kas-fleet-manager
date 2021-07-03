@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -41,7 +41,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			convKafka := presenters2.ConvertKafkaRequest(kafkaRequest)
+			convKafka := presenters.ConvertKafkaRequest(kafkaRequest)
 
 			claims, err := auth.GetClaimsFromContext(ctx)
 			if err != nil {
@@ -55,7 +55,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			if svcErr != nil {
 				return nil, svcErr
 			}
-			return presenters2.PresentKafkaRequest(convKafka), nil
+			return presenters.PresentKafkaRequest(convKafka), nil
 		},
 	}
 
@@ -72,7 +72,7 @@ func (h kafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentKafkaRequest(kafkaRequest), nil
+			return presenters.PresentKafkaRequest(kafkaRequest), nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -120,7 +120,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
-				converted := presenters2.PresentKafkaRequest(kafkaRequest)
+				converted := presenters.PresentKafkaRequest(kafkaRequest)
 				kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 			}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -54,7 +54,7 @@ func runGetMetricsByRangeQuery(env *environments.Env, cmd *cobra.Command, _args 
 		Kind: "MetricsRangeQueryList",
 		Id:   kafkaId,
 	}
-	metrics, err := presenters2.PresentMetricsByRangeQuery(kafkaMetrics)
+	metrics, err := presenters.PresentMetricsByRangeQuery(kafkaMetrics)
 	if err != nil {
 		glog.Error("An error occurred while attempting to present metrics data ", err.Error())
 		return

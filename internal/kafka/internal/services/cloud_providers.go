@@ -1,8 +1,8 @@
 package services
 
 import (
-	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"sort"
 	"strings"
 	"time"
@@ -29,7 +29,7 @@ type CloudProvidersService interface {
 	ListCloudProviderRegions(id string) ([]api.CloudRegion, *errors.ServiceError)
 }
 
-func NewCloudProvidersService(providerFactory clusters2.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
+func NewCloudProvidersService(providerFactory clusters.ProviderFactory, connectionFactory *db.ConnectionFactory) CloudProvidersService {
 	return &cloudProvidersService{
 		providerFactory:   providerFactory,
 		connectionFactory: connectionFactory,
@@ -38,14 +38,14 @@ func NewCloudProvidersService(providerFactory clusters2.ProviderFactory, connect
 }
 
 type cloudProvidersService struct {
-	providerFactory   clusters2.ProviderFactory
+	providerFactory   clusters.ProviderFactory
 	connectionFactory *db.ConnectionFactory
 	cache             *cache.Cache
 }
 
 type CloudProviderWithRegions struct {
 	ID         string
-	RegionList *types2.CloudProviderRegionInfoList
+	RegionList *types.CloudProviderRegionInfoList
 }
 
 type Cluster struct {
@@ -58,7 +58,7 @@ func (p cloudProvidersService) GetCloudProvidersWithRegions() ([]CloudProviderWi
 		return nil, dbErr
 	}
 
-	cloudProvidersToRegions := map[string]*types2.CloudProviderRegionInfoList{}
+	cloudProvidersToRegions := map[string]*types.CloudProviderRegionInfoList{}
 
 	for _, result := range results {
 		provider, err := p.providerFactory.GetProvider(result.ProviderType)

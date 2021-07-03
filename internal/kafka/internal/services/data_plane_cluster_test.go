@@ -2,14 +2,14 @@ package services
 
 import (
 	"context"
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -65,8 +65,8 @@ func Test_DataPlaneCluster_UpdateDataPlaneClusterStatus(t *testing.T) {
 					UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 						return nil
 					},
-					GetComputeNodesFunc: func(clusterID string) (*types2.ComputeNodesInfo, *errors.ServiceError) {
-						return &types2.ComputeNodesInfo{
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
 							Actual:  6,
 							Desired: 6,
 						}, nil
@@ -116,7 +116,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -147,7 +147,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -177,7 +177,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -215,7 +215,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -253,7 +253,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
@@ -289,7 +289,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
@@ -326,7 +326,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
@@ -365,7 +365,7 @@ func Test_DataPlaneCluster_updateDataPlaneClusterNodes(t *testing.T) {
 					Status:    api.ClusterReady,
 				}
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						return nil, nil
 					},
 				}
@@ -416,8 +416,8 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
 				clusterService := &ClusterServiceMock{
-					GetComputeNodesFunc: func(clusterID string) (*types2.ComputeNodesInfo, *errors.ServiceError) {
-						return &types2.ComputeNodesInfo{
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
 							Actual:  6,
 							Desired: 6,
 						}, nil
@@ -434,8 +434,8 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
 				clusterService := &ClusterServiceMock{
-					GetComputeNodesFunc: func(clusterID string) (*types2.ComputeNodesInfo, *errors.ServiceError) {
-						return &types2.ComputeNodesInfo{
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
+						return &types.ComputeNodesInfo{
 							Actual:  6,
 							Desired: 8,
 						}, nil
@@ -452,7 +452,7 @@ func Test_DataPlaneCluster_computeNodeScalingActionInProgress(t *testing.T) {
 			clusterStatus: nil,
 			dataPlaneClusterServiceFactory: func() *dataPlaneClusterService {
 				clusterService := &ClusterServiceMock{
-					GetComputeNodesFunc: func(clusterID string) (*types2.ComputeNodesInfo, *errors.ServiceError) {
+					GetComputeNodesFunc: func(clusterID string) (*types.ComputeNodesInfo, *errors.ServiceError) {
 						return nil, errors.GeneralError("failed to get compute nodes info")
 					},
 				}
@@ -692,8 +692,8 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
-		ObservabilityConfiguration *config.ObservabilityConfiguration
-		DataplaneClusterConfig     *config.DataplaneClusterConfig
+		ObservabilityConfiguration *coreConfig.ObservabilityConfiguration
+		DataplaneClusterConfig     *coreConfig.DataplaneClusterConfig
 	}
 
 	tests := []struct {
@@ -710,7 +710,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						return &api.Cluster{}, nil
 					},
 				},
-				ObservabilityConfiguration: &config.ObservabilityConfiguration{
+				ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{
 					ObservabilityConfigRepo:        "test-repo",
 					ObservabilityConfigChannel:     "test-channel",
 					ObservabilityConfigAccessToken: "test-token",
@@ -734,7 +734,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						return nil, errors.NotFound("not found")
 					},
 				},
-				ObservabilityConfiguration: &config.ObservabilityConfiguration{
+				ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{
 					ObservabilityConfigRepo:        "test-repo",
 					ObservabilityConfigChannel:     "test-channel",
 					ObservabilityConfigAccessToken: "test-token",
@@ -788,7 +788,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 				}
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -831,7 +831,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -875,7 +875,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -892,7 +892,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 
 				testStatus := sampleValidBaseDataPlaneClusterStatusRequest()
 				c := sampleValidApplicationConfigForDataPlaneClusterTest(clusterService)
-				c.DataplaneClusterConfig.DataPlaneClusterScalingType = config.ManualScaling
+				c.DataplaneClusterConfig.DataPlaneClusterScalingType = coreConfig.ManualScaling
 				testStatus.NodeInfo.Current = 3
 				testStatus.NodeInfo.Ceiling = 10000
 				testStatus.NodeInfo.CurrentWorkLoadMinimum = 3
@@ -919,7 +919,7 @@ func Test_DataPlaneCluster_setClusterStatus(t *testing.T) {
 				var spyReceivedUpdateStatus *api.ClusterStatus = new(api.ClusterStatus)
 
 				clusterService := &ClusterServiceMock{
-					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types2.ClusterSpec, *errors.ServiceError) {
+					SetComputeNodesFunc: func(clusterID string, numNodes int) (*types.ClusterSpec, *errors.ServiceError) {
 						if clusterID != apiCluster.ClusterID {
 							return nil, errors.GeneralError("unexpected test error")
 						}
@@ -1007,13 +1007,13 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *dbapi.DataPlaneClusterStatu
 }
 
 func sampleValidApplicationConfigForDataPlaneClusterTest(clusterService ClusterService) dataPlaneClusterService {
-	dataplaneClusterConfig := config.NewDataplaneClusterConfig()
-	dataplaneClusterConfig.DataPlaneClusterScalingType = config.AutoScaling
+	dataplaneClusterConfig := coreConfig.NewDataplaneClusterConfig()
+	dataplaneClusterConfig.DataPlaneClusterScalingType = coreConfig.AutoScaling
 
 	return dataPlaneClusterService{
 		ClusterService: clusterService,
-		KafkaConfig: &config2.KafkaConfig{
-			KafkaCapacity: config2.KafkaCapacityConfig{
+		KafkaConfig: &config.KafkaConfig{
+			KafkaCapacity: config.KafkaCapacityConfig{
 				MaxPartitions:       100,
 				TotalMaxConnections: 100,
 			},

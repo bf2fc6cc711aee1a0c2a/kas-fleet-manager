@@ -1,13 +1,13 @@
 package services
 
 import (
-	clusters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
-	types2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
@@ -17,7 +17,7 @@ import (
 func TestAgentOperatorAddon_Provision(t *testing.T) {
 	addonId := "test-id"
 	type fields struct {
-		providerFactory clusters2.ProviderFactory
+		providerFactory clusters.ProviderFactory
 		ssoService      services.KeycloakService
 	}
 	tests := []struct {
@@ -34,9 +34,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
-					return &clusters2.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return false, nil
 						},
 					}, nil
@@ -54,9 +54,9 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 						return nil, errors.GeneralError("error")
 					},
 				},
-				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
-					return &clusters2.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return false, errors.GeneralError("error")
 						},
 					}, nil
@@ -72,11 +72,11 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
-				ServerConfig:        &config.ServerConfig{},
-				KasFleetShardConfig: &config2.KasFleetshardConfig{},
-				OCMConfig:           &config.OCMConfig{KasFleetshardAddonID: addonId},
-				KeycloakConfig: &config.KeycloakConfig{
-					KafkaRealm: &config.KeycloakRealmConfig{},
+				ServerConfig:        &coreConfig.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				OCMConfig:           &coreConfig.OCMConfig{KasFleetshardAddonID: addonId},
+				KeycloakConfig: &coreConfig.KeycloakConfig{
+					KafkaRealm: &coreConfig.KeycloakRealmConfig{},
 				},
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
@@ -140,7 +140,7 @@ func TestAgentOperatorAddon_RemoveServiceAccount(t *testing.T) {
 
 func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 	type fields struct {
-		providerFactory clusters2.ProviderFactory
+		providerFactory clusters.ProviderFactory
 		ssoService      services.KeycloakService
 	}
 	tests := []struct {
@@ -156,9 +156,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
-					return &clusters2.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return true, nil
 						},
 					}, nil
@@ -174,9 +174,9 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 						return &api.ServiceAccount{}, nil
 					},
 				},
-				providerFactory: &clusters2.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters2.Provider, error) {
-					return &clusters2.ProviderMock{
-						InstallKasFleetshardFunc: func(clusterSpec *types2.ClusterSpec, params []types2.Parameter) (bool, error) {
+				providerFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
+					return &clusters.ProviderMock{
+						InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
 							return false, errors.GeneralError("test error")
 						},
 					}, nil
@@ -191,11 +191,11 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
-				ServerConfig:        &config.ServerConfig{},
-				KasFleetShardConfig: &config2.KasFleetshardConfig{},
-				OCMConfig:           &config.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
-				KeycloakConfig: &config.KeycloakConfig{
-					KafkaRealm: &config.KeycloakRealmConfig{},
+				ServerConfig:        &coreConfig.ServerConfig{},
+				KasFleetShardConfig: &config.KasFleetshardConfig{},
+				OCMConfig:           &coreConfig.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
+				KeycloakConfig: &coreConfig.KeycloakConfig{
+					KafkaRealm: &coreConfig.KeycloakRealmConfig{},
 				},
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{

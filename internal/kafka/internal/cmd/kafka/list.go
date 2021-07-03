@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"net/url"
@@ -75,7 +75,7 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	for _, kafkaRequest := range kafkaList {
-		converted := presenters2.PresentKafkaRequest(kafkaRequest)
+		converted := presenters.PresentKafkaRequest(kafkaRequest)
 		kafkaRequestList.Items = append(kafkaRequestList.Items, converted)
 	}
 

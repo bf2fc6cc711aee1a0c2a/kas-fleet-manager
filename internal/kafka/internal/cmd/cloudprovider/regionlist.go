@@ -3,7 +3,7 @@ package cloudprovider
 import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -49,7 +49,7 @@ func runRegionsList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 	for _, cloudRegion := range cloudRegions {
 		cloudRegion.Enabled = supportedProviders.IsRegionSupportedForProvider(cloudRegion.CloudProvider, cloudRegion.Id)
-		converted := presenters2.PresentCloudRegion(&cloudRegion)
+		converted := presenters.PresentCloudRegion(&cloudRegion)
 		regionList.Items = append(regionList.Items, converted)
 	}
 

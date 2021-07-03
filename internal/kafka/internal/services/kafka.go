@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	config2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"strings"
 	"sync"
 
-	services "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 
 	"time"
 
@@ -22,7 +22,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -54,7 +54,7 @@ type KafkaService interface {
 	// Delete cleans up all dependencies for a Kafka request and soft deletes the Kafka Request record from the database.
 	// The Kafka Request in the database will be updated with a deleted_at timestamp.
 	Delete(*dbapi.KafkaRequest) *errors.ServiceError
-	List(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
+	List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError)
 	GetManagedKafkaByClusterID(clusterID string) ([]managedkafka.ManagedKafka, *errors.ServiceError)
 	RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *errors.ServiceError)
@@ -79,15 +79,15 @@ var _ KafkaService = &kafkaService{}
 type kafkaService struct {
 	connectionFactory   *db.ConnectionFactory
 	clusterService      ClusterService
-	keycloakService     services2.KeycloakService
-	kafkaConfig         *config2.KafkaConfig
-	awsConfig           *config.AWSConfig
+	keycloakService     services.KeycloakService
+	kafkaConfig         *config.KafkaConfig
+	awsConfig           *coreConfig.AWSConfig
 	quotaServiceFactory QuotaServiceFactory
 	mu                  sync.Mutex
 	awsClientFactory    aws.ClientFactory
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services2.KafkaKeycloakService, kafkaConfig *config2.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *coreConfig.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory) *kafkaService {
 	return &kafkaService{
 		connectionFactory:   connectionFactory,
 		clusterService:      clusterService,
@@ -239,7 +239,7 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*dbapi.KafkaRequest,
 
 	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return nil, services2.HandleGetError("KafkaResource for user "+user, "id", id, err)
+		return nil, services.HandleGetError("KafkaResource for user "+user, "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
@@ -252,7 +252,7 @@ func (k *kafkaService) GetById(id string) (*dbapi.KafkaRequest, *errors.ServiceE
 	dbConn := k.connectionFactory.New()
 	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.Where("id = ?", id).First(&kafkaRequest).Error; err != nil {
-		return nil, services2.HandleGetError("KafkaResource", "id", id, err)
+		return nil, services.HandleGetError("KafkaResource", "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
@@ -281,7 +281,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return services2.HandleGetError("KafkaResource", "id", id, err)
+		return services.HandleGetError("KafkaResource", "id", id, err)
 	}
 	metrics.IncreaseKafkaTotalOperationsCountMetric(constants.KafkaOperationDeprovision)
 
@@ -289,7 +289,7 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	if executed, err := k.UpdateStatus(id, deprovisionStatus); executed {
 		if err != nil {
-			return services2.HandleGetError("KafkaResource", "id", id, err)
+			return services.HandleGetError("KafkaResource", "id", id, err)
 		}
 		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants.KafkaOperationDeprovision)
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(deprovisionStatus, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
@@ -384,7 +384,7 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 }
 
 // List returns all Kafka requests belonging to a user.
-func (k *kafkaService) List(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
+func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *errors.ServiceError) {
 	var kafkaRequestList dbapi.KafkaList
 	dbConn := k.connectionFactory.New()
 	pagingMeta := &api.PagingMeta{
@@ -416,7 +416,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services2.ListArgumen
 
 	// Apply search query
 	if len(listArgs.Search) > 0 {
-		searchDbQuery, err := services.NewQueryParser().Parse(listArgs.Search)
+		searchDbQuery, err := coreServices.NewQueryParser().Parse(listArgs.Search)
 		if err != nil {
 			return kafkaRequestList, pagingMeta, errors.NewWithCause(errors.ErrorFailedToParseSearch, err, "Unable to list kafka requests: %s", err.Error())
 		}
@@ -583,7 +583,7 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config2.KafkaConfig, keycloakConfig *config.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *coreConfig.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
