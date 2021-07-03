@@ -8,9 +8,9 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
@@ -26,7 +26,7 @@ import (
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
-	KeycloakConfig        *coreConfig.KeycloakConfig
+	KeycloakConfig        *keycloak.KeycloakConfig
 	KafkaConfig           *config.KafkaConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
@@ -38,11 +38,11 @@ type Services struct {
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
 	OCMClient             ocm.Client
-	OCMConfig             *coreConfig.OCMConfig
+	OCMConfig             *ocm.OCMConfig
 	KafkaService          services.KafkaService
 	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
-	ServerConfig          *coreConfig.ServerConfig
+	ServerConfig          *server.ServerConfig
 }
 
 var TestServices Services
@@ -55,7 +55,7 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
 	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(provider.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *coreConfig.ObservabilityConfiguration) {
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
@@ -69,7 +69,7 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 }
 
 func NewApiClient(helper *test.Helper) *public.APIClient {
-	var serverConfig *coreConfig.ServerConfig
+	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	openapiConfig := public.NewConfiguration()
@@ -79,7 +79,7 @@ func NewApiClient(helper *test.Helper) *public.APIClient {
 }
 
 func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
-	var serverConfig *coreConfig.ServerConfig
+	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	openapiConfig := private.NewConfiguration()

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/golang/glog"
 	"net/http"
 	"strings"
@@ -34,7 +33,7 @@ type Client struct {
 	Service    APIObservatoriumService
 }
 
-func NewObservatoriumClient(c *config.ObservabilityConfiguration) (client *Client, err error) {
+func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err error) {
 	// Create Observatorium client
 	observatoriumConfig := &Configuration{
 		BaseURL:   c.ObservatoriumGateway + "/api/metrics/v1/" + c.ObservatoriumTenant,

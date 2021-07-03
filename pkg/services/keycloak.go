@@ -14,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/google/uuid"
 )
@@ -33,8 +32,8 @@ type KeycloakService interface {
 	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
 	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
 	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
-	GetConfig() *config.KeycloakConfig
-	GetRealmConfig() *config.KeycloakRealmConfig
+	GetConfig() *keycloak.KeycloakConfig
+	GetRealmConfig() *keycloak.KeycloakRealmConfig
 	IsKafkaClientExist(clientId string) *errors.ServiceError
 	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
@@ -62,7 +61,7 @@ func NewKeycloakServiceWithClient(client keycloak.KcClient) *keycloakService {
 	}
 }
 
-func NewKeycloakService(config *config.KeycloakConfig, realmConfig *config.KeycloakRealmConfig) *keycloakService {
+func NewKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.KeycloakRealmConfig) *keycloakService {
 	client := keycloak.NewClient(config, realmConfig)
 	return &keycloakService{
 		kcClient: client,
@@ -167,11 +166,11 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 	return nil
 }
 
-func (kc *keycloakService) GetConfig() *config.KeycloakConfig {
+func (kc *keycloakService) GetConfig() *keycloak.KeycloakConfig {
 	return kc.kcClient.GetConfig()
 }
 
-func (kc *keycloakService) GetRealmConfig() *config.KeycloakRealmConfig {
+func (kc *keycloakService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return kc.kcClient.GetRealmConfig()
 }
 

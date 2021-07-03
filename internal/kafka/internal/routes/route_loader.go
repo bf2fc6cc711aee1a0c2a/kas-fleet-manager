@@ -11,11 +11,11 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
@@ -27,8 +27,8 @@ import (
 
 type options struct {
 	di.Inject
-	ServerConfig   *coreConfig.ServerConfig
-	OCMConfig      *coreConfig.OCMConfig
+	ServerConfig   *server.ServerConfig
+	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
 
 	OCM                   ocm.Client
@@ -41,7 +41,7 @@ type options struct {
 	DB                    *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
-	AccessControlListConfig     *coreConfig.AccessControlListConfig
+	AccessControlListConfig     *acl.AccessControlListConfig
 }
 
 func NewRouteLoader(s options) provider.RouteLoader {

@@ -30,6 +30,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"net/http"
 	"os"
 	"reflect"
@@ -37,7 +38,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
@@ -261,14 +261,14 @@ func TestMain(helper *test.Helper) int {
 		nextOrgId: 20000000,
 	}
 
-	var allow *config.AccessControlListConfig
+	var allow *acl.AccessControlListConfig
 	helper.Env.MustResolveAll(&allow)
 
 	// Generate lots of org id's that scenarios can use to avoid
 	// conflicting with each other..
 	if allow != nil {
 		for i := 0; i < 1000; i++ {
-			allow.AllowList.Organisations = append(allow.AllowList.Organisations, config.Organisation{
+			allow.AllowList.Organisations = append(allow.AllowList.Organisations, acl.Organisation{
 				Id:                  fmt.Sprintf("%d", 20000000+i),
 				AllowAll:            true,
 				MaxAllowedInstances: 1,

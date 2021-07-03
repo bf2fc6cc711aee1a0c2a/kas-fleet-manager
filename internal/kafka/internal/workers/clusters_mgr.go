@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"strings"
 	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/goava/di"
 	"github.com/google/uuid"
@@ -105,8 +106,8 @@ type ClusterManager struct {
 type ClusterManagerOptions struct {
 	di.Inject
 	Reconciler                 workers.Reconciler
-	OCMConfig                  *coreConfig.OCMConfig
-	ObservabilityConfiguration *coreConfig.ObservabilityConfiguration
+	OCMConfig                  *ocm.OCMConfig
+	ObservabilityConfiguration *observatorium.ObservabilityConfiguration
 	DataplaneClusterConfig     *config.DataplaneClusterConfig
 	SupportedProviders         *config.ProviderConfig
 	ClusterService             services.ClusterService
@@ -771,7 +772,7 @@ func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Projec
 func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret {
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"authType":    coreConfig.AuthTypeDex,
+		"authType":    observatorium.AuthTypeDex,
 		"gateway":     observabilityConfig.ObservatoriumGateway,
 		"tenant":      observabilityConfig.ObservatoriumTenant,
 		"dexUrl":      observabilityConfig.DexUrl,
@@ -796,7 +797,7 @@ func (c *ClusterManager) buildObservatoriumDexSecretResource() *k8sCoreV1.Secret
 func (c *ClusterManager) buildObservatoriumSSOSecretResource() *k8sCoreV1.Secret {
 	observabilityConfig := c.ObservabilityConfiguration
 	stringDataMap := map[string]string{
-		"authType":               coreConfig.AuthTypeSso,
+		"authType":               observatorium.AuthTypeSso,
 		"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
 		"tenant":                 observabilityConfig.RedHatSsoTenant,
 		"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,

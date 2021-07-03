@@ -1,3 +1,3 @@
-package config
+package environments
 
 type EnvName string

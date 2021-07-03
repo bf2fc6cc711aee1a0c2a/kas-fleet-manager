@@ -1,4 +1,4 @@
-package config
+package ocm
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"

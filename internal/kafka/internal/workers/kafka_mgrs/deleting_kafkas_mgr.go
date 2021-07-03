@@ -3,7 +3,7 @@ package kafka_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/google/uuid"
@@ -19,12 +19,12 @@ import (
 type DeletingKafkaManager struct {
 	workers.BaseWorker
 	kafkaService        services.KafkaService
-	keycloakConfig      *config.KeycloakConfig
+	keycloakConfig      *keycloak.KeycloakConfig
 	quotaServiceFactory services.QuotaServiceFactory
 }
 
 // NewDeletingKafkaManager creates a new kafka manager
-func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig *config.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
+func NewDeletingKafkaManager(kafkaService services.KafkaService, keycloakConfig *keycloak.KeycloakConfig, quotaServiceFactory services.QuotaServiceFactory, bus signalbus.SignalBus) *DeletingKafkaManager {
 	return &DeletingKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),

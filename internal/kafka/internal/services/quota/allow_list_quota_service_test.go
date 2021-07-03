@@ -3,11 +3,11 @@ package quota
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"net/http"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
@@ -18,7 +18,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 	type args struct {
 		connectionFactory *db.ConnectionFactory
 		KafkaConfig       *config.KafkaConfig
-		AccessControlList *coreConfig.AccessControlListConfig
+		AccessControlList *acl.AccessControlListConfig
 	}
 
 	tests := []struct {
@@ -31,7 +31,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "do not throw an error when instance limit control is disabled",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: false,
 				},
 			},
@@ -45,11 +45,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when the query db throws an error",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: coreConfig.AllowListConfiguration{
-						ServiceAccounts: coreConfig.AllowedAccounts{
-							coreConfig.AllowedAccount{
+					AllowList: acl.AllowListConfiguration{
+						ServiceAccounts: acl.AllowedAccounts{
+							acl.AllowedAccount{
 								Username:            "username",
 								MaxAllowedInstances: 4,
 							},
@@ -67,11 +67,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding allowed organisation limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: coreConfig.AllowListConfiguration{
-						Organisations: coreConfig.OrganisationList{
-							coreConfig.Organisation{
+					AllowList: acl.AllowListConfiguration{
+						Organisations: acl.OrganisationList{
+							acl.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
 								AllowAll:            true,
@@ -94,11 +94,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding allowed limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: coreConfig.AllowListConfiguration{
-						ServiceAccounts: coreConfig.AllowedAccounts{
-							coreConfig.AllowedAccount{
+					AllowList: acl.AllowListConfiguration{
+						ServiceAccounts: acl.AllowedAccounts{
+							acl.AllowedAccount{
 								Username:            "username",
 								MaxAllowedInstances: 4,
 							},
@@ -120,11 +120,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: coreConfig.AllowListConfiguration{
-						ServiceAccounts: coreConfig.AllowedAccounts{
-							coreConfig.AllowedAccount{
+					AllowList: acl.AllowListConfiguration{
+						ServiceAccounts: acl.AllowedAccounts{
+							acl.AllowedAccount{
 								Username: "username",
 							},
 						},
@@ -145,7 +145,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allow list",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 				},
 			},
@@ -163,11 +163,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "throw an error if user is not allowed in their org and they cannot create any more instances after exceeding default allowed user limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: coreConfig.AllowListConfiguration{
-						Organisations: coreConfig.OrganisationList{
-							coreConfig.Organisation{
+					AllowList: acl.AllowListConfiguration{
+						Organisations: acl.OrganisationList{
+							acl.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
 								AllowAll:            false,
@@ -190,11 +190,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			name: "does not return an error if user is within limits",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &coreConfig.AccessControlListConfig{
+				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: coreConfig.AllowListConfiguration{
-						Organisations: coreConfig.OrganisationList{
-							coreConfig.Organisation{
+					AllowList: acl.AllowListConfiguration{
+						Organisations: acl.OrganisationList{
+							acl.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
 								AllowAll:            true,

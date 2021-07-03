@@ -12,6 +12,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"net/http"
 	"strings"
@@ -19,7 +21,6 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -566,7 +567,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *coreConfig.AccessControlListConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *acl.AccessControlListConfig) {
 		acl.AllowList.AllowAnyRegisteredUsers = true
 		acl.EnableInstanceLimitControl = true
 	})
@@ -846,8 +847,8 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *coreConfig.OCMConfig) {
-		if ocmConfig.MockMode == coreConfig.MockModeEmulateServer {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(ocmConfig *ocm.OCMConfig) {
+		if ocmConfig.MockMode == ocm.MockModeEmulateServer {
 			// increase repeat interval to allow time to delete the kafka instance before moving onto the next state
 			// no need to reset this on teardown as it is always set at the start of each test within the registerIntegrationWithHooks setup for emulated servers.
 			workers.RepeatInterval = 10 * time.Second

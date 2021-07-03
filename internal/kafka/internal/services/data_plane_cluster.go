@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/goava/di"
 	"strconv"
 	"time"
@@ -11,7 +12,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
@@ -34,7 +34,7 @@ type dataPlaneClusterService struct {
 	di.Inject
 	ClusterService         ClusterService
 	KafkaConfig            *config.KafkaConfig
-	ObservabilityConfig    *coreConfig.ObservabilityConfiguration
+	ObservabilityConfig    *observatorium.ObservabilityConfiguration
 	DataplaneClusterConfig *config.DataplaneClusterConfig
 }
 

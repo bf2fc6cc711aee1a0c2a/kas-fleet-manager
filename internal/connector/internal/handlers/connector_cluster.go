@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"net/http"
@@ -12,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/goava/di"
@@ -35,8 +36,8 @@ type ConnectorClusterHandler struct {
 	Keycloak       coreservices.KafkaKeycloakService
 	ConnectorTypes services.ConnectorTypesService
 	Vault          vault.VaultService
-	KeycloakConfig *config.KeycloakConfig
-	ServerConfig   *config.ServerConfig
+	KeycloakConfig *keycloak.KeycloakConfig
+	ServerConfig   *server.ServerConfig
 }
 
 func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClusterHandler {

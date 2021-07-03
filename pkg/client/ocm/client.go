@@ -2,7 +2,6 @@ package ocm
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"net/http"
 
 	pkgerrors "github.com/pkg/errors"
@@ -54,8 +53,8 @@ type client struct {
 	connection *sdkClient.Connection
 }
 
-func NewOCMConnection(ocmConfig *config.OCMConfig) (*sdkClient.Connection, func(), error) {
-	if ocmConfig.EnableMock && ocmConfig.MockMode != config.MockModeEmulateServer {
+func NewOCMConnection(ocmConfig *OCMConfig) (*sdkClient.Connection, func(), error) {
+	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
 	}
 

@@ -1,7 +1,7 @@
 package authorization
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
@@ -19,7 +19,7 @@ func ServiceProviders() di.Option {
 	)
 }
 
-func NewAuthorization(OCM *config.OCMConfig, connection *sdkClient.Connection) Authorization {
+func NewAuthorization(OCM *ocm.OCMConfig, connection *sdkClient.Connection) Authorization {
 	if OCM.EnableMock {
 		return NewMockAuthroization()
 	} else {

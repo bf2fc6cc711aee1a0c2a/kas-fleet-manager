@@ -3,11 +3,11 @@ package providers
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/migrate"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/cmd/serve"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -24,18 +24,18 @@ import (
 
 func CoreConfigProviders() di.Option {
 	return di.Options(
-		di.Provide(func(env *environments.Env) config.EnvName {
-			return config.EnvName(env.Name)
+		di.Provide(func(env *environments.Env) environments.EnvName {
+			return environments.EnvName(env.Name)
 		}),
 
 		// Add config types
-		di.Provide(config.NewHealthCheckConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(server.NewHealthCheckConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(db.NewDatabaseConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewServerConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewOCMConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewKeycloakConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewAccessControlListConfig, di.As(new(provider.ConfigModule))),
-		di.Provide(config.NewMetricsConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(server.NewServerConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(ocm.NewOCMConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(keycloak.NewKeycloakConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(acl.NewAccessControlListConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(server.NewMetricsConfig, di.As(new(provider.ConfigModule))),
 
 		// Add common CLI sub commands
 		di.Provide(serve.NewServeCommand),
@@ -65,10 +65,10 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *config.KeycloakConfig) services.KafkaKeycloakService {
+		di.Provide(func(c *keycloak.KeycloakConfig) services.KafkaKeycloakService {
 			return services.NewKeycloakService(c, c.KafkaRealm)
 		}),
-		di.Provide(func(c *config.KeycloakConfig) services.OsdKeycloakService {
+		di.Provide(func(c *keycloak.KeycloakConfig) services.OsdKeycloakService {
 			return services.NewKeycloakService(c, c.OSDClusterIDPRealm)
 		}),
 

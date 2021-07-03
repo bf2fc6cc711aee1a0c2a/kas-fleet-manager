@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/golang/glog"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -23,7 +22,7 @@ const (
 type OCMProvider struct {
 	ocmClient      ocm.Client
 	clusterBuilder ClusterBuilder
-	ocmConfig      *config.OCMConfig
+	ocmConfig      *ocm.OCMConfig
 }
 
 // blank assignment to verify that OCMProvider implements Provider
@@ -305,7 +304,7 @@ func (o *OCMProvider) GetCloudProviderRegions(providerInfo types.CloudProviderIn
 // ensure OCMProvider implements Provider interface
 var _ Provider = &OCMProvider{}
 
-func newOCMProvider(ocmClient ocm.Client, clusterBuilder ClusterBuilder, ocmConfig *config.OCMConfig) *OCMProvider {
+func newOCMProvider(ocmClient ocm.Client, clusterBuilder ClusterBuilder, ocmConfig *ocm.OCMConfig) *OCMProvider {
 	return &OCMProvider{
 		ocmClient:      ocmClient,
 		clusterBuilder: clusterBuilder,
