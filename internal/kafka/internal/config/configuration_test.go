@@ -1,10 +1,9 @@
 package config
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"reflect"
 	"testing"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 
 	. "github.com/onsi/gomega"
 )
@@ -342,22 +341,22 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 func Test_configService_GetOrganisationById(t *testing.T) {
 	type result struct {
 		found        bool
-		organisation config.Organisation
+		organisation acl.Organisation
 	}
 
 	tests := []struct {
 		name              string
-		AccessControlList *config.AccessControlListConfig
+		AccessControlList *acl.AccessControlListConfig
 		arg               string
 		want              result
 	}{
 		{
 			name: "return 'false' when organisation does not exist in the allowed list",
 			arg:  "some-id",
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
-						config.Organisation{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id: "different-id",
 						},
 					},
@@ -365,16 +364,16 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			},
 			want: result{
 				found:        false,
-				organisation: config.Organisation{},
+				organisation: acl.Organisation{},
 			},
 		},
 		{
 			name: "return 'true' when organisation exists in the allowed list",
 			arg:  "some-id",
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
-						config.Organisation{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id: "some-id",
 						},
 					},
@@ -382,7 +381,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			},
 			want: result{
 				found: true,
-				organisation: config.Organisation{
+				organisation: acl.Organisation{
 					Id: "some-id",
 				},
 			},
@@ -405,15 +404,15 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	}
 
 	type result struct {
-		AllowedAccount config.AllowedAccount
+		AllowedAccount acl.AllowedAccount
 		found          bool
 	}
 
-	organisation := config.Organisation{
+	organisation := acl.Organisation{
 		Id: "some-id",
-		AllowedAccounts: config.AllowedAccounts{
-			config.AllowedAccount{Username: "username-0"},
-			config.AllowedAccount{Username: "username-1"},
+		AllowedAccounts: acl.AllowedAccounts{
+			acl.AllowedAccount{Username: "username-0"},
+			acl.AllowedAccount{Username: "username-1"},
 		},
 	}
 
@@ -421,7 +420,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 		name              string
 		arg               args
 		want              result
-		AccessControlList *config.AccessControlListConfig
+		AccessControlList *acl.AccessControlListConfig
 	}{
 		{
 			name: "return 'true' and the found user when organisation contains the user",
@@ -429,16 +428,16 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-1",
 				orgId:    organisation.Id,
 			},
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
 						organisation,
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: config.AllowedAccount{Username: "username-1"},
+				AllowedAccount: acl.AllowedAccount{Username: "username-1"},
 			},
 		},
 		{
@@ -447,21 +446,21 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-10",
 				orgId:    organisation.Id,
 			},
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username-0"},
-						config.AllowedAccount{Username: "username-10"},
-						config.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username-0"},
+						acl.AllowedAccount{Username: "username-10"},
+						acl.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: config.AllowedAccount{Username: "username-10"},
+				AllowedAccount: acl.AllowedAccount{Username: "username-10"},
 			},
 		},
 		{
@@ -470,14 +469,14 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-10",
 				orgId:    "some-org-id",
 			},
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username-0"},
-						config.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username-0"},
+						acl.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
@@ -503,15 +502,15 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 	}
 
 	type result struct {
-		AllowedAccount config.AllowedAccount
+		AllowedAccount acl.AllowedAccount
 		found          bool
 	}
 
-	organisation := config.Organisation{
+	organisation := acl.Organisation{
 		Id: "some-id",
-		AllowedAccounts: config.AllowedAccounts{
-			config.AllowedAccount{Username: "username-0"},
-			config.AllowedAccount{Username: "username-1"},
+		AllowedAccounts: acl.AllowedAccounts{
+			acl.AllowedAccount{Username: "username-0"},
+			acl.AllowedAccount{Username: "username-1"},
 		},
 	}
 
@@ -519,28 +518,28 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 		name              string
 		arg               args
 		want              result
-		AccessControlList *config.AccessControlListConfig
+		AccessControlList *acl.AccessControlListConfig
 	}{
 		{
 			name: "return 'true' and the user when user is contained in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
 			},
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username-0"},
-						config.AllowedAccount{Username: "username-10"},
-						config.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username-0"},
+						acl.AllowedAccount{Username: "username-10"},
+						acl.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: config.AllowedAccount{Username: "username-10"},
+				AllowedAccount: acl.AllowedAccount{Username: "username-10"},
 			},
 		},
 		{
@@ -548,14 +547,14 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 			arg: args{
 				username: "username-10",
 			},
-			AccessControlList: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
-					Organisations: config.OrganisationList{
+			AccessControlList: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
+					Organisations: acl.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username-0"},
-						config.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username-0"},
+						acl.AllowedAccount{Username: "username-3"},
 					},
 				},
 			},

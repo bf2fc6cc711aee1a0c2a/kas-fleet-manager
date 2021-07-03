@@ -5,7 +5,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/pkg/errors"
 )
@@ -60,8 +59,8 @@ type DefaultProviderFactory struct {
 func NewDefaultProviderFactory(
 	ocmClient ocm.Client,
 	connectionFactory *db.ConnectionFactory,
-	ocmConfig *coreConfig.OCMConfig,
-	awsConfig *coreConfig.AWSConfig,
+	ocmConfig *ocm.OCMConfig,
+	awsConfig *config.AWSConfig,
 	dataplaneClusterConfig *config.DataplaneClusterConfig,
 ) *DefaultProviderFactory {
 	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(awsConfig, dataplaneClusterConfig), ocmConfig)

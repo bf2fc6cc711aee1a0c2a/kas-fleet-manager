@@ -3,7 +3,7 @@ package kafka_mgrs
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -29,12 +29,12 @@ var kafkaMetricsStatuses = []constants.KafkaStatus{
 type KafkaManager struct {
 	workers.BaseWorker
 	kafkaService            services.KafkaService
-	accessControlListConfig *coreConfig.AccessControlListConfig
+	accessControlListConfig *acl.AccessControlListConfig
 	kafkaConfig             *config.KafkaConfig
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, accessControlList *coreConfig.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -95,7 +95,7 @@ func (k *KafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers coreConfig.DeniedUsers) *serviceErr.ServiceError {
+func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers acl.DeniedUsers) *serviceErr.ServiceError {
 	if len(deniedUsers) < 1 {
 		return nil
 	}

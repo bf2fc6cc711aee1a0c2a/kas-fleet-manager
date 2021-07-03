@@ -3,10 +3,11 @@ package integration
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -29,7 +30,7 @@ func termsRequiredSetup(termsRequired bool, t *testing.T) TestEnv {
 
 	// setup the test environment, if OCM_ENV=integration then the ocmServer provided will be used instead of actual
 	// ocm
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(serverConfig *config.ServerConfig) {
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(serverConfig *server.ServerConfig) {
 		serverConfig.EnableTermsAcceptance = true
 	})
 
@@ -47,7 +48,7 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	env := termsRequiredSetup(true, t)
 	defer env.teardown()
 
-	if test.TestServices.OCMConfig.MockMode != config.MockModeEmulateServer {
+	if test.TestServices.OCMConfig.MockMode != ocm.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -72,7 +73,7 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	env := termsRequiredSetup(false, t)
 	defer env.teardown()
 
-	if test.TestServices.OCMConfig.MockMode != config.MockModeEmulateServer {
+	if test.TestServices.OCMConfig.MockMode != ocm.MockModeEmulateServer {
 		t.SkipNow()
 	}
 

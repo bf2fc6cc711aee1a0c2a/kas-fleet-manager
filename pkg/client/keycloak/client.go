@@ -8,7 +8,6 @@ import (
 
 	"github.com/Nerzal/gocloak/v8"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/patrickmn/go-cache"
 	"github.com/pkg/errors"
@@ -29,8 +28,8 @@ type KcClient interface {
 	GetClientSecret(internalClientId string, accessToken string) (string, error)
 	GetClient(clientId string, accessToken string) (*gocloak.Client, error)
 	IsClientExist(clientId string, accessToken string) (string, error)
-	GetConfig() *config.KeycloakConfig
-	GetRealmConfig() *config.KeycloakRealmConfig
+	GetConfig() *KeycloakConfig
+	GetRealmConfig() *KeycloakRealmConfig
 	GetClientById(id string, accessToken string) (*gocloak.Client, error)
 	ClientConfig(client ClientRepresentation) gocloak.Client
 	CreateProtocolMapperConfig(string) []gocloak.ProtocolMapperRepresentation
@@ -62,14 +61,14 @@ type ClientRepresentation struct {
 type kcClient struct {
 	kcClient    gocloak.GoCloak
 	ctx         context.Context
-	config      *config.KeycloakConfig
-	realmConfig *config.KeycloakRealmConfig
+	config      *KeycloakConfig
+	realmConfig *KeycloakRealmConfig
 	cache       *cache.Cache
 }
 
 var _ KcClient = &kcClient{}
 
-func NewClient(config *config.KeycloakConfig, realmConfig *config.KeycloakRealmConfig) *kcClient {
+func NewClient(config *KeycloakConfig, realmConfig *KeycloakRealmConfig) *kcClient {
 	setTokenEndpoints(config, realmConfig)
 	client := gocloak.NewClient(config.BaseURL)
 	client.RestyClient().SetDebug(config.Debug)
@@ -118,7 +117,7 @@ func (kc *kcClient) CreateProtocolMapperConfig(name string) []gocloak.ProtocolMa
 	return protocolMapper
 }
 
-func setTokenEndpoints(config *config.KeycloakConfig, realmConfig *config.KeycloakRealmConfig) {
+func setTokenEndpoints(config *KeycloakConfig, realmConfig *KeycloakRealmConfig) {
 	realmConfig.JwksEndpointURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm + "/protocol/openid-connect/certs"
 	realmConfig.TokenEndpointURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm + "/protocol/openid-connect/token"
 	realmConfig.ValidIssuerURI = config.BaseURL + "/auth/realms/" + realmConfig.Realm
@@ -213,11 +212,11 @@ func (kc *kcClient) GetClientById(id string, accessToken string) (*gocloak.Clien
 	return client, err
 }
 
-func (kc *kcClient) GetConfig() *config.KeycloakConfig {
+func (kc *kcClient) GetConfig() *KeycloakConfig {
 	return kc.config
 }
 
-func (kc *kcClient) GetRealmConfig() *config.KeycloakRealmConfig {
+func (kc *kcClient) GetRealmConfig() *KeycloakRealmConfig {
 	return kc.realmConfig
 }
 

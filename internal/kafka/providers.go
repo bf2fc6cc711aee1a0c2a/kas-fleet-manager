@@ -17,7 +17,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services/quota"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers/kafka_mgrs"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	observatoriumClient "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
@@ -41,9 +41,9 @@ func ConfigProviders() di.Option {
 		providers.CoreConfigProviders(),
 
 		// Configuration for the Kafka service...
-		di.Provide(coreConfig.NewAWSConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(config.NewAWSConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewSupportedProvidersConfig, di.As(new(provider.ConfigModule)), di.As(new(provider.ServiceValidator))),
-		di.Provide(coreConfig.NewObservabilityConfigurationConfig, di.As(new(provider.ConfigModule))),
+		di.Provide(observatoriumClient.NewObservabilityConfigurationConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewKafkaConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewDataplaneClusterConfig, di.As(new(provider.ConfigModule))),
 		di.Provide(config.NewKasFleetshardConfig, di.As(new(provider.ConfigModule))),

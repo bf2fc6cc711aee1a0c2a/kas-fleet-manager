@@ -8,14 +8,13 @@ import (
 	"reflect"
 	"testing"
 
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )
 
 const openshiftVersion = "openshift-v4.6.1"
 
 func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
-	awsConfig := &coreConfig.AWSConfig{}
+	awsConfig := &config.AWSConfig{}
 
 	dataplaneClusterConfig := &config.DataplaneClusterConfig{
 		OpenshiftVersion:   openshiftVersion,
@@ -30,7 +29,7 @@ func Test_clusterBuilder_NewOCMClusterFromCluster(t *testing.T) {
 
 	type fields struct {
 		idGenerator            ocm.IDGenerator
-		awsConfig              *coreConfig.AWSConfig
+		awsConfig              *config.AWSConfig
 		dataplaneClusterConfig *config.DataplaneClusterConfig
 	}
 

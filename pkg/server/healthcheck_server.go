@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"net"
 	"net/http"
@@ -22,12 +21,12 @@ var _ Server = &HealthCheckServer{}
 
 type HealthCheckServer struct {
 	httpServer        *http.Server
-	serverConfig      *config.ServerConfig
+	serverConfig      *ServerConfig
 	sentryTimeout     time.Duration
-	healthCheckConfig *config.HealthCheckConfig
+	healthCheckConfig *HealthCheckConfig
 }
 
-func NewHealthCheckServer(healthCheckConfig *config.HealthCheckConfig, serverConfig *config.ServerConfig, sentryConfig *sentry.Config) *HealthCheckServer {
+func NewHealthCheckServer(healthCheckConfig *HealthCheckConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *HealthCheckServer {
 	router := mux.NewRouter()
 	health.DefaultRegistry = health.NewRegistry()
 	health.Register("maintenance_status", updater)

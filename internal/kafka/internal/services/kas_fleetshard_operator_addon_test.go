@@ -4,10 +4,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
@@ -72,11 +74,11 @@ func TestAgentOperatorAddon_Provision(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
-				ServerConfig:        &coreConfig.ServerConfig{},
+				ServerConfig:        &server.ServerConfig{},
 				KasFleetShardConfig: &config.KasFleetshardConfig{},
-				OCMConfig:           &coreConfig.OCMConfig{KasFleetshardAddonID: addonId},
-				KeycloakConfig: &coreConfig.KeycloakConfig{
-					KafkaRealm: &coreConfig.KeycloakRealmConfig{},
+				OCMConfig:           &ocm.OCMConfig{KasFleetshardAddonID: addonId},
+				KeycloakConfig: &keycloak.KeycloakConfig{
+					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
 			}
 			ready, err := agentOperatorAddon.Provision(api.Cluster{
@@ -191,11 +193,11 @@ func TestKasFleetshardOperatorAddon_ReconcileParameters(t *testing.T) {
 			agentOperatorAddon := &kasFleetshardOperatorAddon{
 				SsoService:          tt.fields.ssoService,
 				ProviderFactory:     tt.fields.providerFactory,
-				ServerConfig:        &coreConfig.ServerConfig{},
+				ServerConfig:        &server.ServerConfig{},
 				KasFleetShardConfig: &config.KasFleetshardConfig{},
-				OCMConfig:           &coreConfig.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
-				KeycloakConfig: &coreConfig.KeycloakConfig{
-					KafkaRealm: &coreConfig.KeycloakRealmConfig{},
+				OCMConfig:           &ocm.OCMConfig{KasFleetshardAddonID: "kas-fleetshard"},
+				KeycloakConfig: &keycloak.KeycloakConfig{
+					KafkaRealm: &keycloak.KeycloakRealmConfig{},
 				},
 			}
 			err := agentOperatorAddon.ReconcileParameters(api.Cluster{

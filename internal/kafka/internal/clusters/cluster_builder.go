@@ -4,7 +4,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	"github.com/pkg/errors"
 )
@@ -33,14 +32,14 @@ type clusterBuilder struct {
 	idGenerator ocm.IDGenerator
 
 	// awsConfig contains aws credentials for use with the OCM cluster service.
-	awsConfig *coreConfig.AWSConfig
+	awsConfig *config.AWSConfig
 
 	// dataplaneClusterConfig contains cluster creation configuration.
 	dataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 // NewClusterBuilder create a new default implementation of ClusterBuilder.
-func NewClusterBuilder(awsConfig *coreConfig.AWSConfig, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterBuilder {
+func NewClusterBuilder(awsConfig *config.AWSConfig, dataplaneClusterConfig *config.DataplaneClusterConfig) ClusterBuilder {
 	return &clusterBuilder{
 		idGenerator:            ocm.NewIDGenerator(ClusterNamePrefix),
 		awsConfig:              awsConfig,

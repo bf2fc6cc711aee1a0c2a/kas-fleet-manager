@@ -6,8 +6,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"testing"
 	"time"
 
@@ -22,7 +22,7 @@ import (
 // Retrieves all clusters in the database in a 'waiting_for_kas_fleetshard_operator' state and updates it to 'ready' once all of the addons are installed.
 var defaultUpdateDataplaneClusterStatusFunc = func(helper *coreTest.Helper, privateClient *private.APIClient, ocmClient ocm.Client) error {
 	var clusterService services.ClusterService
-	var ocmConfig *config.OCMConfig
+	var ocmConfig *ocm.OCMConfig
 	helper.Env.MustResolveAll(&clusterService, &ocmConfig)
 	clusters, err := clusterService.FindAllClusters(services.FindClusterCriteria{
 		Status: api.ClusterWaitingForKasFleetShardOperator,
@@ -214,7 +214,7 @@ func (m *mockKasFleetshardSync) reconcileKafkaClusters() {
 
 // Returns an authenticated context to be used for calling the data plane endpoints
 func NewAuthenticatedContextForDataPlaneCluster(h *coreTest.Helper, clusterID string) context.Context {
-	var keycloakConfig *config.KeycloakConfig
+	var keycloakConfig *keycloak.KeycloakConfig
 	h.Env.MustResolveAll(&keycloakConfig)
 
 	account := h.NewAllowedServiceAccount()

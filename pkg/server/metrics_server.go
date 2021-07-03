@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
 	"github.com/golang/glog"
 	"net"
@@ -16,7 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
 
-func NewMetricsServer(metricsConfig *config.MetricsConfig, serverConfig *config.ServerConfig, sentryConfig *sentry.Config) *MetricsServer {
+func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *MetricsServer {
 	mainRouter := mux.NewRouter()
 	mainRouter.NotFoundHandler = http.HandlerFunc(api.SendNotFound)
 
@@ -40,8 +39,8 @@ func NewMetricsServer(metricsConfig *config.MetricsConfig, serverConfig *config.
 
 type MetricsServer struct {
 	httpServer    *http.Server
-	serverConfig  *config.ServerConfig
-	metricsConfig *config.MetricsConfig
+	serverConfig  *ServerConfig
+	metricsConfig *MetricsConfig
 	sentryTimeout time.Duration
 }
 

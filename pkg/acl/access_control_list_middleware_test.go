@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/golang/glog"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,6 @@ import (
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/dgrijalva/jwt-go"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
@@ -28,7 +28,7 @@ const (
 )
 
 var env *environments.Env
-var ocmConfig *config.OCMConfig
+var ocmConfig *ocm.OCMConfig
 
 func TestMain(m *testing.M) {
 	var err error
@@ -60,20 +60,20 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		arg                  *config.AccessControlListConfig
+		arg                  *acl.AccessControlListConfig
 		ctx                  context.Context
 		filterByOrganisation bool
 	}{
 		{
 			name: "returns 200 Ok response for internal users who belong to an organisation listed in the allow list",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: true,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
-							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+							AllowedAccounts: acl.AllowedAccounts{acl.AllowedAccount{Username: "username"}},
 						},
 					},
 				},
@@ -83,12 +83,12 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		},
 		{
 			name: "returns 200 Ok response for internal users who are listed in the allow list",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: true,
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username"},
 					},
 				},
 			},
@@ -97,19 +97,19 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		},
 		{
 			name: "returns 200 OK response for internal users who do not have access through their organisation but as a service account in the allow list",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: true,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
 							AllowAll:        false,
-							AllowedAccounts: config.AllowedAccounts{},
+							AllowedAccounts: acl.AllowedAccounts{},
 						},
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username"},
 					},
 				},
 			},
@@ -118,9 +118,9 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		},
 		{
 			name: "returns 200 Ok response for external users",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: true,
 				},
 			},
@@ -129,15 +129,15 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		},
 		{
 			name: "returns 200 Ok response for external users who are not included in their organisation in the allow list",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: true,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
 							AllowAll:        false,
-							AllowedAccounts: config.AllowedAccounts{},
+							AllowedAccounts: acl.AllowedAccounts{},
 						},
 					},
 				},
@@ -147,9 +147,9 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 		},
 		{
 			name: "returns 200 Ok response for external service accounts",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: false,
-				AllowList: config.AllowListConfiguration{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: true,
 				},
 			},
@@ -192,36 +192,36 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 
 	tests := []struct {
 		name string
-		arg  *config.AccessControlListConfig
+		arg  *acl.AccessControlListConfig
 	}{
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",
-			arg: &config.AccessControlListConfig{
+			arg: &acl.AccessControlListConfig{
 				EnableDenyList: true,
-				DenyList:       config.DeniedUsers{"username"},
-				AllowList: config.AllowListConfiguration{
+				DenyList:       acl.DeniedUsers{"username"},
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:       "org-id-0",
 							AllowAll: true,
 						},
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "username"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "username"},
 					},
 				},
 			},
 		},
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with allowed users",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
-							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "another-username"}},
+							AllowedAccounts: acl.AllowedAccounts{acl.AllowedAccount{Username: "another-username"}},
 						},
 					},
 				},
@@ -229,14 +229,14 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		},
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service for the given organisation with empty allowed users and no users is allowed to access the service",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
 							AllowAll:        false,
-							AllowedAccounts: config.AllowedAccounts{},
+							AllowedAccounts: acl.AllowedAccounts{},
 						},
 					},
 				},
@@ -244,37 +244,37 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		},
 		{
 			name: "returns 403 Forbidden response when user organisation is not listed and user is not present in allowed service accounts list",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:       "org-id-3",
 							AllowAll: false,
 						},
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "allowed-user-1"},
-						config.AllowedAccount{Username: "allowed-user-2"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "allowed-user-1"},
+						acl.AllowedAccount{Username: "allowed-user-2"},
 					},
 				},
 			},
 		},
 		{
 			name: "returns 403 Forbidden response when is not allowed to access the service through users organisation or the service accounts allow list",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
 							AllowAll:        false,
-							AllowedAccounts: config.AllowedAccounts{},
+							AllowedAccounts: acl.AllowedAccounts{},
 						},
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "allowed-user-1"},
-						config.AllowedAccount{Username: "allowed-user-2"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "allowed-user-1"},
+						acl.AllowedAccount{Username: "allowed-user-2"},
 					},
 				},
 			},
@@ -351,19 +351,19 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 
 	tests := []struct {
 		name                 string
-		arg                  *config.AccessControlListConfig
+		arg                  *acl.AccessControlListConfig
 		ctx                  context.Context
 		filterByOrganisation bool
 	}{
 		{
 			name: "returns 200 Ok response when user is allowed to access service for the given organisation with allowed users",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
-							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+							AllowedAccounts: acl.AllowedAccounts{acl.AllowedAccount{Username: "username"}},
 						},
 					},
 				},
@@ -373,14 +373,14 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		},
 		{
 			name: "returns 200 OK response when user is allowed to access service for the given organisation with empty allowed users and all users are allowed to access the service",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
 							AllowAll:        true,
-							AllowedAccounts: config.AllowedAccounts{},
+							AllowedAccounts: acl.AllowedAccounts{},
 						},
 					},
 				},
@@ -390,19 +390,19 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		},
 		{
 			name: "returns 200 OK response when is not allowed to access the service through users organisation but through the service accounts allow list",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
 							AllowAll:        false,
-							AllowedAccounts: config.AllowedAccounts{},
+							AllowedAccounts: acl.AllowedAccounts{},
 						},
 					},
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "allowed-user-1"},
-						config.AllowedAccount{Username: "svc-acc-username"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "allowed-user-1"},
+						acl.AllowedAccount{Username: "svc-acc-username"},
 					},
 				},
 			},
@@ -411,13 +411,13 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		},
 		{
 			name: "returns 200 Ok response when token used is retrieved from sso.redhat.com and user is allowed access to the service",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					Organisations: config.OrganisationList{
-						config.Organisation{
+					Organisations: acl.OrganisationList{
+						acl.Organisation{
 							Id:              "org-id-0",
-							AllowedAccounts: config.AllowedAccounts{config.AllowedAccount{Username: "username"}},
+							AllowedAccounts: acl.AllowedAccounts{acl.AllowedAccount{Username: "username"}},
 						},
 					},
 				},
@@ -430,12 +430,12 @@ func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
 		},
 		{
 			name: "returns 200 OK response when user is allowed access as a service account",
-			arg: &config.AccessControlListConfig{
-				AllowList: config.AllowListConfiguration{
+			arg: &acl.AccessControlListConfig{
+				AllowList: acl.AllowListConfiguration{
 					AllowAnyRegisteredUsers: false,
-					ServiceAccounts: config.AllowedAccounts{
-						config.AllowedAccount{Username: "allowed-user-1"},
-						config.AllowedAccount{Username: "svc-acc-username"},
+					ServiceAccounts: acl.AllowedAccounts{
+						acl.AllowedAccount{Username: "allowed-user-1"},
+						acl.AllowedAccount{Username: "svc-acc-username"},
 					},
 				},
 			},

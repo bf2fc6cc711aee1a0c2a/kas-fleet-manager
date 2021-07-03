@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"reflect"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -692,7 +692,7 @@ func Test_DataPlaneCluster_clusterCanProcessStatusReports(t *testing.T) {
 func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 	type fields struct {
 		clusterService             ClusterService
-		ObservabilityConfiguration *coreConfig.ObservabilityConfiguration
+		ObservabilityConfiguration *observatorium.ObservabilityConfiguration
 		DataplaneClusterConfig     *config.DataplaneClusterConfig
 	}
 
@@ -710,7 +710,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						return &api.Cluster{}, nil
 					},
 				},
-				ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{
+				ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{
 					ObservabilityConfigRepo:        "test-repo",
 					ObservabilityConfigChannel:     "test-channel",
 					ObservabilityConfigAccessToken: "test-token",
@@ -734,7 +734,7 @@ func TestNewDataPlaneClusterService_GetDataPlaneClusterConfig(t *testing.T) {
 						return nil, errors.NotFound("not found")
 					},
 				},
-				ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{
+				ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{
 					ObservabilityConfigRepo:        "test-repo",
 					ObservabilityConfigChannel:     "test-channel",
 					ObservabilityConfigAccessToken: "test-token",

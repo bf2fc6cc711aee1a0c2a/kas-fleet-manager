@@ -3,12 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
@@ -29,7 +29,7 @@ import (
 
 type ApiServer struct {
 	httpServer    *http.Server
-	serverConfig  *config.ServerConfig
+	serverConfig  *ServerConfig
 	sentryTimeout time.Duration
 }
 
@@ -37,8 +37,8 @@ var _ Server = &ApiServer{}
 
 type ServerOptions struct {
 	di.Inject
-	ServerConfig   *config.ServerConfig
-	KeycloakConfig *config.KeycloakConfig
+	ServerConfig   *ServerConfig
+	KeycloakConfig *keycloak.KeycloakConfig
 	SentryConfig   *sentry.Config
 	RouteLoaders   []provider.RouteLoader
 	Env            *environments.Env

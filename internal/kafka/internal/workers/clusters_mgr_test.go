@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
@@ -135,9 +137,9 @@ func TestClusterManager_reconcileStrimziOperator(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{},
+					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
-					OCMConfig:                  &coreConfig.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID},
 				},
 			}
 			_, err := c.reconcileStrimziOperator(api.Cluster{
@@ -189,9 +191,9 @@ func TestClusterManager_reconcileClusterLoggingOperator(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &config.ProviderConfig{},
-					ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{},
+					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 					DataplaneClusterConfig:     &config.DataplaneClusterConfig{},
-					OCMConfig:                  &coreConfig.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
+					OCMConfig:                  &ocm.OCMConfig{ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 				},
 			}
 			_, err := c.reconcileClusterLoggingOperator(api.Cluster{
@@ -232,7 +234,7 @@ func TestClusterManager_reconcileAcceptedCluster(t *testing.T) {
 			c := ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
-					ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{},
+					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 					DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 				},
 			}
@@ -356,7 +358,7 @@ func TestClusterManager_reconcileClustersForRegions(t *testing.T) {
 				ClusterManagerOptions: ClusterManagerOptions{
 					ClusterService:             tt.fields.clusterService,
 					SupportedProviders:         &tt.fields.providersConfig,
-					ObservabilityConfiguration: &coreConfig.ObservabilityConfiguration{},
+					ObservabilityConfiguration: &observatorium.ObservabilityConfiguration{},
 					DataplaneClusterConfig:     config.NewDataplaneClusterConfig(),
 				},
 			}
@@ -462,7 +464,7 @@ func TestClusterManager_reconcileAddonOperator(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &ClusterManager{
 				ClusterManagerOptions: ClusterManagerOptions{
-					OCMConfig:                  &coreConfig.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
+					OCMConfig:                  &ocm.OCMConfig{StrimziOperatorAddonID: strimziAddonID, ClusterLoggingOperatorAddonID: clusterLoggingOperatorAddonID},
 					ClusterService:             tt.fields.clusterService,
 					KasFleetshardOperatorAddon: tt.fields.agentOperator,
 				},
@@ -543,7 +545,7 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 					SupportedProviders:         &config.ProviderConfig{},
 					ObservabilityConfiguration: &observabilityConfig,
 					DataplaneClusterConfig:     &clusterCreateConfig,
-					OCMConfig:                  &coreConfig.OCMConfig{},
+					OCMConfig:                  &ocm.OCMConfig{},
 				},
 			}
 
@@ -614,8 +616,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
-					GetRealmConfigFunc: func() *coreConfig.KeycloakRealmConfig {
-						return &coreConfig.KeycloakRealmConfig{
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{
 							ValidIssuerURI: "https://foo.bar",
 						}
 					},
@@ -638,8 +640,8 @@ func TestClusterManager_reconcileClusterIdentityProvider(t *testing.T) {
 					RegisterOSDClusterClientInSSOFunc: func(clusterId, clusterOathCallbackURI string) (string, *apiErrors.ServiceError) {
 						return "secret", nil
 					},
-					GetRealmConfigFunc: func() *coreConfig.KeycloakRealmConfig {
-						return &coreConfig.KeycloakRealmConfig{
+					GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
+						return &keycloak.KeycloakRealmConfig{
 							ValidIssuerURI: "https://foo.bar",
 						}
 					},
@@ -1105,8 +1107,8 @@ func TestClusterManager_reconcileEmptyCluster(t *testing.T) {
 }
 
 // buildObservabilityConfig builds a observability coreConfig used for testing
-func buildObservabilityConfig() coreConfig.ObservabilityConfiguration {
-	observabilityConfig := coreConfig.ObservabilityConfiguration{
+func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
+	observabilityConfig := observatorium.ObservabilityConfiguration{
 		DexUrl:                         "dex-url",
 		DexPassword:                    "dex-password",
 		DexUsername:                    "dex-username",
@@ -1128,7 +1130,7 @@ func buildObservabilityConfig() coreConfig.ObservabilityConfiguration {
 	return observabilityConfig
 }
 
-func buildResourceSet(observabilityConfig coreConfig.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types.ResourceSet, error) {
+func buildResourceSet(observabilityConfig observatorium.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types.ResourceSet, error) {
 	r := int32(clusterCreateConfig.IngressControllerReplicas)
 	resources := []interface{}{
 		&ingressoperatorv1.IngressController{
@@ -1189,7 +1191,7 @@ func buildResourceSet(observabilityConfig coreConfig.ObservabilityConfiguration,
 			},
 			Type: k8sCoreV1.SecretTypeOpaque,
 			StringData: map[string]string{
-				"authType":    coreConfig.AuthTypeDex,
+				"authType":    observatorium.AuthTypeDex,
 				"dexPassword": observabilityConfig.DexPassword,
 				"dexSecret":   observabilityConfig.DexSecret,
 				"dexUsername": observabilityConfig.DexUsername,
@@ -1209,7 +1211,7 @@ func buildResourceSet(observabilityConfig coreConfig.ObservabilityConfiguration,
 			},
 			Type: k8sCoreV1.SecretTypeOpaque,
 			StringData: map[string]string{
-				"authType":               coreConfig.AuthTypeSso,
+				"authType":               observatorium.AuthTypeSso,
 				"gateway":                observabilityConfig.RedHatSsoGatewayUrl,
 				"tenant":                 observabilityConfig.RedHatSsoTenant,
 				"redHatSsoAuthServerUrl": observabilityConfig.RedHatSsoAuthServerUrl,

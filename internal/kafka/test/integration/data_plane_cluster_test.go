@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"testing"
 	"time"
@@ -14,7 +15,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -327,7 +327,7 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	defer tearDown()
 
 	// only run this test when real OCM API is being used
-	if test.TestServices.OCMConfig.MockMode == coreConfig.MockModeEmulateServer {
+	if test.TestServices.OCMConfig.MockMode == ocm.MockModeEmulateServer {
 		t.SkipNow()
 	}
 

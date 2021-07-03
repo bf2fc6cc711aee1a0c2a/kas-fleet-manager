@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
@@ -14,10 +14,10 @@ import (
 
 type serviceStatusHandler struct {
 	kafkaService      services.KafkaService
-	accessControlList *config.AccessControlListConfig
+	accessControlList *acl.AccessControlListConfig
 }
 
-func NewServiceStatusHandler(service services.KafkaService, accessControlList *config.AccessControlListConfig) *serviceStatusHandler {
+func NewServiceStatusHandler(service services.KafkaService, accessControlList *acl.AccessControlListConfig) *serviceStatusHandler {
 	return &serviceStatusHandler{
 		kafkaService:      service,
 		accessControlList: accessControlList,

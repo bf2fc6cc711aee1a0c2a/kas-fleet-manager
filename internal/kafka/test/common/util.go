@@ -3,6 +3,8 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -15,7 +17,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -46,7 +47,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	var foundCluster *api.Cluster
 	var err *ocmErrors.ServiceError
 	var clusterService services.ClusterService
-	var ocmConfig config.OCMConfig
+	var ocmConfig ocm.OCMConfig
 	h.Env.MustResolveAll(&clusterService)
 
 	// get cluster details from persisted cluster file
@@ -59,7 +60,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 	}
 
 	// get cluster details from database when running against an emulated server and the cluster in cluster file doesn't exist
-	if foundCluster == nil && ocmConfig.MockMode == config.MockModeEmulateServer {
+	if foundCluster == nil && ocmConfig.MockMode == ocm.MockModeEmulateServer {
 		foundCluster, err = findFirstValidCluster(h)
 		if err != nil {
 			return "", err
@@ -96,7 +97,7 @@ func GetOSDClusterID(h *test.Helper, t *testing.T, expectedStatus *api.ClusterSt
 		}
 
 		// Only persist new cluster if executing against real ocm
-		if ocmConfig.MockMode != config.MockModeEmulateServer {
+		if ocmConfig.MockMode != ocm.MockModeEmulateServer {
 			pErr := PersistClusterStruct(*foundCluster)
 			if pErr != nil {
 				t.Log(fmt.Sprintf("Unable to persist struct for cluster: %s", foundCluster.ID))
@@ -200,7 +201,7 @@ func RemoveClusterFile(t *testing.T) {
 }
 
 func getMetrics(t *testing.T) string {
-	metricsConfig := config.NewMetricsConfig()
+	metricsConfig := server.NewMetricsConfig()
 	metricsAddress := metricsConfig.BindAddress
 	var metricsURL string
 	if metricsConfig.EnableHTTPS {

@@ -5,8 +5,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	coreConfig "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/goava/di"
 	"github.com/golang/glog"
@@ -43,10 +45,10 @@ type kasFleetshardOperatorAddon struct {
 	di.Inject
 	SsoService          services.KafkaKeycloakService
 	ProviderFactory     clusters.ProviderFactory
-	ServerConfig        *coreConfig.ServerConfig
+	ServerConfig        *server.ServerConfig
 	KasFleetShardConfig *config.KasFleetshardConfig
-	OCMConfig           *coreConfig.OCMConfig
-	KeycloakConfig      *coreConfig.KeycloakConfig
+	OCMConfig           *ocm.OCMConfig
+	KeycloakConfig      *keycloak.KeycloakConfig
 }
 
 func (o *kasFleetshardOperatorAddon) Provision(cluster api.Cluster) (bool, *errors.ServiceError) {
