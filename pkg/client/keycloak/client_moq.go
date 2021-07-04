@@ -54,10 +54,10 @@ var _ KcClient = &KcClientMock{}
 // 			GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 // 				panic("mock out the GetClients method")
 // 			},
-// 			GetConfigFunc: func() *config.KeycloakConfig {
+// 			GetConfigFunc: func() *KeycloakConfig {
 // 				panic("mock out the GetConfig method")
 // 			},
-// 			GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+// 			GetRealmConfigFunc: func() *KeycloakRealmConfig {
 // 				panic("mock out the GetRealmConfig method")
 // 			},
 // 			GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {

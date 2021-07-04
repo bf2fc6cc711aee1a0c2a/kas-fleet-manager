@@ -498,12 +498,12 @@ type PatchConnectorOpts struct {
 PatchConnector patch a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param body Data to patch the connector with
+ * @param connector Data to patch the connector with
  * @param optional nil or *PatchConnectorOpts - Optional Parameters:
  * @param "KafkaId" (optional.String) -  The kafka cluster id
 @return Connector
 */
-func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, body map[string]interface{}, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
+func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, connector Connector, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -525,7 +525,7 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, b
 		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
 	}
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json-patch+json", "application/merge-patch+json"}
+	localVarHTTPContentTypes := []string{"application/json", "application/merge-patch+json", "application/json-patch+json"}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -542,7 +542,7 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, b
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = &body
+	localVarPostBody = &connector
 	r, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return localVarReturnValue, nil, err

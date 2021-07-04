@@ -5,6 +5,10 @@
 //    Then the ".status" selection from the response should match "assigning"
 // Assert that the response body matches the provided text:
 //    Then the response should match "Hello"
+//    Then the response should match:
+//    """
+//    Hello
+//    """
 // Assert that response json matches the provided json.  Differences in json formatting and field order are ignored.:
 //    Then the response should match json:
 //      """
@@ -14,6 +18,13 @@
 //      """
 // Stores a json field of the response body in a scenario variable:
 //    Given I store the ".id" selection from the response as ${cid}
+// Stores a json value in a scenario variable:
+//    Given I store json as ${$input}:
+//      """
+//      {
+//          "id": "${cid}",
+//      }
+//      """
 // Assert that a response header matches the provided text:
 //    Then the response header "Content-Type" should match "application/json;stream=watch"
 // Assert that a json field of the response body is correct matches the provided json:
@@ -30,14 +41,17 @@ import (
 	"fmt"
 	"github.com/cucumber/godog"
 	"github.com/itchyny/gojq"
+	"github.com/pmezard/go-difflib/difflib"
 )
 
 func init() {
 	StepModules = append(StepModules, func(ctx *godog.ScenarioContext, s *TestScenario) {
 		ctx.Step(`^the response code should be (\d+)$`, s.theResponseCodeShouldBe)
-		ctx.Step(`^the response should match json:$`, s.theResponseShouldMatchJsonDoc)
+		ctx.Step(`^the response should match json:$`, s.TheResponseShouldMatchJsonDoc)
+		ctx.Step(`^the response should match:$`, s.theResponseShouldMatchText)
 		ctx.Step(`^the response should match "([^"]*)"$`, s.theResponseShouldMatchText)
 		ctx.Step(`^I store the "([^"]*)" selection from the response as \${([^"]*)}$`, s.iStoreTheSelectionFromTheResponseAs)
+		ctx.Step(`^I store json as \${([^"]*)}:$`, s.iStoreJsonAsInput)
 		ctx.Step(`^the "([^"]*)" selection from the response should match "([^"]*)"$`, s.theSelectionFromTheResponseShouldMatch)
 		ctx.Step(`^the response header "([^"]*)" should match "([^"]*)"$`, s.theResponseHeaderShouldMatch)
 		ctx.Step(`^the "([^"]*)" selection from the response should match json:$`, s.theSelectionFromTheResponseShouldMatchJson)
@@ -52,7 +66,7 @@ func (s *TestScenario) theResponseCodeShouldBe(expected int) error {
 	}
 	return nil
 }
-func (s *TestScenario) theResponseShouldMatchJsonDoc(expected *godog.DocString) error {
+func (s *TestScenario) TheResponseShouldMatchJsonDoc(expected *godog.DocString) error {
 	return s.theResponseShouldMatchJson(expected.Content)
 }
 
@@ -74,8 +88,18 @@ func (s *TestScenario) theResponseShouldMatchText(expected string) error {
 		return err
 	}
 
-	if expanded != string(session.RespBytes) {
-		return fmt.Errorf("reponse does not match expected: %v, actual: %v", expanded, string(session.RespBytes))
+	actual := string(session.RespBytes)
+	if expanded != actual {
+		diff, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{
+			A:        difflib.SplitLines(expanded),
+			B:        difflib.SplitLines(actual),
+			FromFile: "Expected",
+			FromDate: "",
+			ToFile:   "Actual",
+			ToDate:   "",
+			Context:  1,
+		})
+		return fmt.Errorf("actual does not match expected, diff:\n%s\n", diff)
 	}
 	return nil
 }
@@ -113,6 +137,21 @@ func (s *TestScenario) iStoreTheSelectionFromTheResponseAs(selector string, as s
 		return nil
 	}
 	return fmt.Errorf("expected JSON does not have node that matches selector: %s", selector)
+}
+
+func (s *TestScenario) iStoreJsonAsInput(as string, value *godog.DocString) error {
+	content, err := s.Expand(value.Content)
+	if err != nil {
+		return err
+	}
+	m := map[string]interface{}{}
+	err = json.Unmarshal([]byte(content), &m)
+	if err != nil {
+		return err
+	}
+
+	s.Variables[as] = m
+	return nil
 }
 
 func (s *TestScenario) theSelectionFromTheResponseShouldMatch(selector string, expected string) error {

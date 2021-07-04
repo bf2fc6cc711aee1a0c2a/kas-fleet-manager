@@ -69,9 +69,6 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the InstallClusterLogging method")
 // 			},
-// 			InstallKasFleetshardFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
-// 				panic("mock out the InstallKasFleetshard method")
-// 			},
 // 			InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the InstallStrimzi method")
 // 			},
@@ -159,9 +156,6 @@ type ClusterServiceMock struct {
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
 	InstallClusterLoggingFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError)
-
-	// InstallKasFleetshardFunc mocks the InstallKasFleetshard method.
-	InstallKasFleetshardFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError)
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
 	InstallStrimziFunc func(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
@@ -284,13 +278,6 @@ type ClusterServiceMock struct {
 			// Params is the params argument value.
 			Params []ocm.Parameter
 		}
-		// InstallKasFleetshard holds details about calls to the InstallKasFleetshard method.
-		InstallKasFleetshard []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// Params is the params argument value.
-			Params []ocm.Parameter
-		}
 		// InstallStrimzi holds details about calls to the InstallStrimzi method.
 		InstallStrimzi []struct {
 			// Cluster is the cluster argument value.
@@ -375,7 +362,6 @@ type ClusterServiceMock struct {
 	lockGetComputeNodes                  sync.RWMutex
 	lockGetExternalID                    sync.RWMutex
 	lockInstallClusterLogging            sync.RWMutex
-	lockInstallKasFleetshard             sync.RWMutex
 	lockInstallStrimzi                   sync.RWMutex
 	lockListAllClusterIds                sync.RWMutex
 	lockListByStatus                     sync.RWMutex
@@ -894,41 +880,6 @@ func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
 	mock.lockInstallClusterLogging.RLock()
 	calls = mock.calls.InstallClusterLogging
 	mock.lockInstallClusterLogging.RUnlock()
-	return calls
-}
-
-// InstallKasFleetshard calls InstallKasFleetshardFunc.
-func (mock *ClusterServiceMock) InstallKasFleetshard(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
-	if mock.InstallKasFleetshardFunc == nil {
-		panic("ClusterServiceMock.InstallKasFleetshardFunc: method is nil but ClusterService.InstallKasFleetshard was just called")
-	}
-	callInfo := struct {
-		Cluster *api.Cluster
-		Params  []ocm.Parameter
-	}{
-		Cluster: cluster,
-		Params:  params,
-	}
-	mock.lockInstallKasFleetshard.Lock()
-	mock.calls.InstallKasFleetshard = append(mock.calls.InstallKasFleetshard, callInfo)
-	mock.lockInstallKasFleetshard.Unlock()
-	return mock.InstallKasFleetshardFunc(cluster, params)
-}
-
-// InstallKasFleetshardCalls gets all the calls that were made to InstallKasFleetshard.
-// Check the length with:
-//     len(mockedClusterService.InstallKasFleetshardCalls())
-func (mock *ClusterServiceMock) InstallKasFleetshardCalls() []struct {
-	Cluster *api.Cluster
-	Params  []ocm.Parameter
-} {
-	var calls []struct {
-		Cluster *api.Cluster
-		Params  []ocm.Parameter
-	}
-	mock.lockInstallKasFleetshard.RLock()
-	calls = mock.calls.InstallKasFleetshard
-	mock.lockInstallKasFleetshard.RUnlock()
 	return calls
 }
 

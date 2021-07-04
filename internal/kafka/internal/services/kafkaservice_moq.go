@@ -28,7 +28,7 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ChangeKafkaCNAMErecordsFunc: func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError) {
 // 				panic("mock out the ChangeKafkaCNAMErecords method")
 // 			},
-// 			CountByStatusFunc: func(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
+// 			CountByStatusFunc: func(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {
 // 				panic("mock out the CountByStatus method")
 // 			},
 // 			DeleteFunc: func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
@@ -52,10 +52,10 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			HasAvailableCapacityFunc: func() (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the HasAvailableCapacity method")
 // 			},
-// 			ListFunc: func(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
+// 			ListFunc: func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 // 				panic("mock out the List method")
 // 			},
-// 			ListByStatusFunc: func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+// 			ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
 // 				panic("mock out the ListByStatus method")
 // 			},
 // 			ListKafkasWithRoutesNotCreatedFunc: func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
@@ -73,7 +73,7 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError {
 // 				panic("mock out the Update method")
 // 			},
-// 			UpdateStatusFunc: func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError) {
+// 			UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the UpdateStatus method")
 // 			},
 // 		}
