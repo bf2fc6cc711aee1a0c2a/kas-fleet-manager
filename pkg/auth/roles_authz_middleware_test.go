@@ -69,3 +69,95 @@ func TestRolesAuthMiddleware_RequireRealmRole(t *testing.T) {
 		})
 	}
 }
+
+func TestRolesAuthMiddleware_RequireRolesForMethods(t *testing.T) {
+	tests := []struct {
+		name     string
+		token    *jwt.Token
+		next     http.Handler
+		rolesMap map[string][]string
+		request  *http.Request
+		want     int
+	}{
+		{
+			name: "should allow access when required role is presented",
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"realm_access": map[string]interface{}{
+						"roles": []interface{}{"test"},
+					},
+				},
+			},
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			rolesMap: map[string][]string{
+				http.MethodGet: {"test"},
+			},
+			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
+			want:    http.StatusOK,
+		},
+		{
+			name: "should allow access when any of the required role is presented",
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"realm_access": map[string]interface{}{
+						"roles": []interface{}{"test1"},
+					},
+				},
+			},
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			rolesMap: map[string][]string{
+				http.MethodGet: {"test", "test1"},
+			},
+			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
+			want:    http.StatusOK,
+		},
+		{
+			name: "should not allow access when method is not defined in the roles mapping",
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{
+					"realm_access": map[string]interface{}{
+						"roles": []interface{}{"test"},
+					},
+				},
+			},
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			rolesMap: map[string][]string{
+				http.MethodPost: {"test"},
+			},
+			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
+			want:    http.StatusUnauthorized,
+		},
+		{
+			name: "should not allow access when required role is not presented",
+			token: &jwt.Token{
+				Claims: jwt.MapClaims{},
+			},
+			next: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				shared.WriteJSONResponse(writer, http.StatusOK, "")
+			}),
+			rolesMap: map[string][]string{
+				http.MethodGet: {"test"},
+			},
+			request: httptest.NewRequest(http.MethodGet, "http://example.com", nil),
+			want:    http.StatusUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rolesHandler := NewRolesAuhzMiddleware()
+			toTest := setContextToken(rolesHandler.RequireRolesForMethods(tt.rolesMap, errors.ErrorUnauthenticated)(tt.next), tt.token)
+			recorder := httptest.NewRecorder()
+			toTest.ServeHTTP(recorder, tt.request)
+			if recorder.Result().StatusCode != tt.want {
+				t.Errorf("expected status code %d but got %d", tt.want, recorder.Result().StatusCode)
+			}
+		})
+	}
+}
