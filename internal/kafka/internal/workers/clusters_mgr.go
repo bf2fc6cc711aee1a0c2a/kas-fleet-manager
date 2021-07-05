@@ -41,9 +41,9 @@ const (
 	observatoriumSSOSecretName      = "observatorium-configuration-red-hat-sso"
 	syncsetName                     = "ext-managedservice-cluster-mgr"
 	imagePullSecretName             = "rhoas-image-pull-secret"
-	strimziAddonNamespace           = "redhat-managed-kafka-operator"
-	kasFleetshardAddonNamespace     = "redhat-kas-fleetshard-operator"
+	strimziAddonNamespace           = constants.StrimziOperatorNamespace
 	strimziQEAddonNamespace         = "redhat-managed-kafka-operator-qe"
+	kasFleetshardAddonNamespace     = constants.KASFleetShardOperatorNamespace
 	kasFleetshardQEAddonNamespace   = "redhat-kas-fleetshard-operator-qe"
 	openIDIdentityProviderName      = "Kafka_SRE"
 	mkReadOnlyGroupName             = "mk-readonly-access"
