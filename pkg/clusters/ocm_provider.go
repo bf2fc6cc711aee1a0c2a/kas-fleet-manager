@@ -26,6 +26,9 @@ type OCMProvider struct {
 	ocmConfig      *config.OCMConfig
 }
 
+// blank assignment to verify that OCMProvider implements Provider
+var _ Provider = &OCMProvider{}
+
 func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	// Build a new OSD cluster object
 	newCluster, err := o.clusterBuilder.NewOCMClusterFromCluster(request)

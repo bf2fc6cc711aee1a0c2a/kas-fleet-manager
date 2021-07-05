@@ -7,7 +7,13 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	projectv1 "github.com/openshift/api/project/v1"
+	"github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
+	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -19,6 +25,25 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	corev1 "k8s.io/api/core/v1"
+)
+
+// TODO make OLM index images configurable?
+const (
+	strimziOperatorOLMIndexImage                 = "quay.io/osd-addons/managed-kafka:production-82b42db"
+	strimziOperatorOLMPackageName                = "managed-kafka"
+	strimziOperatorCatalogSourceName             = "managed-kafka-cs"
+	strimziOperatorCatalogSourceNamespace        = "openshift-marketplace"
+	strimziOperatorOperatorGroupName             = "managed-kafka-og"
+	strimziOperatorSubscriptionName              = "managed-kafka-sub"
+	strimziOperatorSubscriptionChannelName       = "alpha"
+	kasFleetShardOperatorOLMIndexImage           = "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+	kasFleetShardOperatorOLMPackageName          = "kas-fleetshard-operator"
+	kasFleetShardOperatorCatalogSourceName       = "kas-fleetshard-operator-cs"
+	kasFleetShardOperatorcatalogSourceNamespace  = "openshift-marketplace"
+	kasFleetShardOperatorOperatorGroupName       = "kas-fleetshard-operator-og"
+	kasFleetShardOperatorSubscriptionName        = "kas-fleetshard-operator-sub"
+	kasFleetShardOperatorSubscriptionChannelName = "alpha"
+	kasFleetShardOperatorParametersSecretName    = "addon-kas-fleetshard-operator-parameters"
 )
 
 // fieldManager indicates that the kas-fleet-manager will be used as a field manager for conflict resolution
@@ -47,6 +72,9 @@ func newStandaloneProvider(connectionFactory *db.ConnectionFactory, dataplaneClu
 	}
 }
 
+// blank assignment to verify that StandaloneProvider implements Provider
+var _ Provider = &StandaloneProvider{}
+
 func (s *StandaloneProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec, error) {
 	return nil, nil
 }
@@ -55,8 +83,164 @@ func (s *StandaloneProvider) Delete(spec *types.ClusterSpec) (bool, error) {
 	return true, nil
 }
 
-func (s *StandaloneProvider) InstallStrimzi(spec *types.ClusterSpec) (bool, error) {
-	return true, nil // NOOP for now. TODO See kas-installer repo on how to install strimzi
+func (s *StandaloneProvider) buildStrimziOperatorNamespace() *projectv1.Project {
+	return &projectv1.Project{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: projectv1.SchemeGroupVersion.String(),
+			Kind:       "Project",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.StrimziOperatorNamespace,
+		},
+	}
+}
+
+func (s *StandaloneProvider) buildStrimziOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
+	return &operatorsv1alpha1.CatalogSource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha1.CatalogSourceKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      strimziOperatorCatalogSourceName,
+			Namespace: strimziOperatorCatalogSourceNamespace,
+		},
+		Spec: operatorsv1alpha1.CatalogSourceSpec{
+			SourceType: operatorsv1alpha1.SourceTypeGrpc,
+			Image:      strimziOperatorOLMIndexImage,
+		},
+	}
+}
+
+func (s *StandaloneProvider) buildStrimziOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
+	return &operatorsv1alpha2.OperatorGroup{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha2.OperatorGroupKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      strimziOperatorOperatorGroupName,
+			Namespace: constants.StrimziOperatorNamespace,
+		},
+		//Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
+		Spec: operatorsv1alpha2.OperatorGroupSpec{},
+	}
+}
+
+func (s *StandaloneProvider) buildStrimziOperatorSubscription() *operatorsv1alpha1.Subscription {
+	return &operatorsv1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha1.SubscriptionKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      strimziOperatorSubscriptionName,
+			Namespace: constants.StrimziOperatorNamespace,
+		},
+		Spec: &operatorsv1alpha1.SubscriptionSpec{
+			CatalogSource:          strimziOperatorCatalogSourceName,
+			Channel:                strimziOperatorSubscriptionChannelName,
+			CatalogSourceNamespace: strimziOperatorCatalogSourceNamespace,
+			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
+			Package:                strimziOperatorOLMPackageName,
+		},
+	}
+}
+
+func (s *StandaloneProvider) buildKASFleetShardOperatorNamespace() *projectv1.Project {
+	return &projectv1.Project{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: projectv1.SchemeGroupVersion.String(),
+			Kind:       "Project",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: constants.KASFleetShardOperatorNamespace,
+		},
+	}
+}
+
+func (s *StandaloneProvider) buildKASFleetShardOperatorCatalogSource() *operatorsv1alpha1.CatalogSource {
+	return &operatorsv1alpha1.CatalogSource{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha1.CatalogSourceKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kasFleetShardOperatorCatalogSourceName,
+			Namespace: kasFleetShardOperatorcatalogSourceNamespace,
+		},
+		Spec: v1alpha1.CatalogSourceSpec{
+			SourceType: v1alpha1.SourceTypeGrpc,
+			Image:      kasFleetShardOperatorOLMIndexImage,
+		},
+	}
+}
+
+func (s *StandaloneProvider) buildKASFleetShardOperatorOperatorGroup() *operatorsv1alpha2.OperatorGroup {
+	return &operatorsv1alpha2.OperatorGroup{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: operatorsv1alpha2.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha2.OperatorGroupKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kasFleetShardOperatorOperatorGroupName,
+			Namespace: constants.KASFleetShardOperatorNamespace,
+		},
+		//Spec.TargetNamespaces intentionally not set, which means "select all namespaces"
+		Spec: operatorsv1alpha2.OperatorGroupSpec{},
+	}
+}
+
+func (s *StandaloneProvider) buildKASFleetShardOperatorSubscription() *operatorsv1alpha1.Subscription {
+	return &operatorsv1alpha1.Subscription{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: operatorsv1alpha1.SchemeGroupVersion.String(),
+			Kind:       operatorsv1alpha1.SubscriptionKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kasFleetShardOperatorSubscriptionName,
+			Namespace: constants.KASFleetShardOperatorNamespace,
+		},
+		Spec: &operatorsv1alpha1.SubscriptionSpec{
+			CatalogSource:          kasFleetShardOperatorCatalogSourceName,
+			Channel:                kasFleetShardOperatorSubscriptionChannelName,
+			CatalogSourceNamespace: kasFleetShardOperatorcatalogSourceNamespace,
+			InstallPlanApproval:    operatorsv1alpha1.ApprovalAutomatic,
+			Package:                kasFleetShardOperatorOLMPackageName,
+		},
+	}
+}
+
+func (s *StandaloneProvider) buildKASFleetShardSyncSecret(params []types.Parameter) *v1.Secret {
+	secretStringData := map[string]string{}
+	for _, param := range params {
+		secretStringData[param.Id] = param.Value
+	}
+
+	return &v1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "Secret",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      kasFleetShardOperatorParametersSecretName,
+			Namespace: constants.KASFleetShardOperatorNamespace,
+		},
+		StringData: secretStringData,
+	}
+}
+
+func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (bool, error) {
+	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
+		Resources: []interface{}{
+			s.buildStrimziOperatorNamespace(),
+			s.buildStrimziOperatorCatalogSource(),
+			s.buildStrimziOperatorOperatorGroup(),
+			s.buildStrimziOperatorSubscription(),
+		},
+	})
+
+	return true, err
 }
 
 func (s *StandaloneProvider) InstallClusterLogging(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
@@ -64,7 +248,17 @@ func (s *StandaloneProvider) InstallClusterLogging(clusterSpec *types.ClusterSpe
 }
 
 func (s *StandaloneProvider) InstallKasFleetshard(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-	return true, nil // NOOP for now. TODO see kas-installer repo on how to install kas-fleet-shard
+	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
+		Resources: []interface{}{
+			s.buildKASFleetShardOperatorNamespace(),
+			s.buildKASFleetShardSyncSecret(params),
+			s.buildKASFleetShardOperatorCatalogSource(),
+			s.buildKASFleetShardOperatorOperatorGroup(),
+			s.buildKASFleetShardOperatorSubscription(),
+		},
+	})
+
+	return true, err
 }
 
 func (s *StandaloneProvider) CheckClusterStatus(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
