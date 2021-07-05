@@ -2,6 +2,7 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 )
@@ -21,21 +22,20 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	return public.KafkaRequest{
-		Id:                            reference.Id,
-		Kind:                          reference.Kind,
-		Href:                          reference.Href,
-		Region:                        kafkaRequest.Region,
-		Name:                          kafkaRequest.Name,
-		CloudProvider:                 kafkaRequest.CloudProvider,
-		MultiAz:                       kafkaRequest.MultiAZ,
-		Owner:                         kafkaRequest.Owner,
-		BootstrapServerHost:           setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		DeprecatedBootstrapServerHost: setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		Status:                        kafkaRequest.Status,
-		CreatedAt:                     kafkaRequest.CreatedAt,
-		UpdatedAt:                     kafkaRequest.UpdatedAt,
-		FailedReason:                  kafkaRequest.FailedReason,
-		Version:                       kafkaRequest.Version,
+		Id:                  reference.Id,
+		Kind:                reference.Kind,
+		Href:                reference.Href,
+		Region:              kafkaRequest.Region,
+		Name:                kafkaRequest.Name,
+		CloudProvider:       kafkaRequest.CloudProvider,
+		MultiAz:             kafkaRequest.MultiAZ,
+		Owner:               kafkaRequest.Owner,
+		BootstrapServerHost: setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
+		Status:              kafkaRequest.Status,
+		CreatedAt:           kafkaRequest.CreatedAt,
+		UpdatedAt:           kafkaRequest.UpdatedAt,
+		FailedReason:        kafkaRequest.FailedReason,
+		Version:             kafkaRequest.Version,
 	}
 }
 

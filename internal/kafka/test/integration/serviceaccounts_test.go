@@ -1,13 +1,14 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
-	"net/http"
-	"testing"
-	"time"
 
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
@@ -39,9 +40,7 @@ func TestServiceAccounts_Success(t *testing.T) {
 	sa, resp, err := client.SecurityApi.CreateServiceAccount(ctx, r)
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(sa.DeprecatedClientID).NotTo(BeEmpty())
 	Expect(sa.ClientId).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
@@ -52,7 +51,6 @@ func TestServiceAccounts_Success(t *testing.T) {
 	sa, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(err).ShouldNot(HaveOccurred())
-	Expect(sa.DeprecatedClientID).NotTo(BeEmpty())
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.Owner).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
@@ -65,8 +63,6 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(Equal(oldSecret))
-	Expect(sa.DeprecatedClientSecret).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientSecret).NotTo(Equal(oldSecret))
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Owner).NotTo(BeEmpty())
 	Expect(sa.CreatedAt).Should(BeTemporally(">=", createdAt))
@@ -234,8 +230,6 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientID).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientSecret).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	//verify delete
@@ -252,8 +246,6 @@ func TestServiceAccounts_InputValidation(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientID).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientSecret).NotTo(BeEmpty())
 	Expect(sa.Id).NotTo(BeEmpty())
 
 	//verify delete
@@ -298,8 +290,6 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa.ClientId).NotTo(BeEmpty())
 	Expect(sa.ClientSecret).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientID).NotTo(BeEmpty())
-	Expect(sa.DeprecatedClientSecret).NotTo(BeEmpty())
 	Expect(sa.Owner).Should(Equal(account.Username()))
 	Expect(sa.Id).NotTo(BeEmpty())
 
@@ -312,8 +302,6 @@ func TestServiceAccount_CreationLimits(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(sa2.ClientId).NotTo(BeEmpty())
 	Expect(sa2.ClientSecret).NotTo(BeEmpty())
-	Expect(sa2.DeprecatedClientID).NotTo(BeEmpty())
-	Expect(sa2.DeprecatedClientSecret).NotTo(BeEmpty())
 	Expect(sa2.Owner).Should(Equal(account.Username()))
 	Expect(sa2.Id).NotTo(BeEmpty())
 
