@@ -2,10 +2,11 @@ package errors
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -16,8 +17,7 @@ type stackTracer interface {
 }
 
 const (
-	ERROR_CODE_PREFIX     = "KAFKAS-MGMT"
-	OLD_ERROR_CODE_PREFIX = "MDG-SERV-API"
+	ERROR_CODE_PREFIX = "KAFKAS-MGMT"
 
 	// HREF for API errors
 	ERROR_HREF = "/api/kafkas_mgmt/v1/errors/"
@@ -25,9 +25,6 @@ const (
 	// To support connector errors too..
 	CONNECTOR_MGMT_ERROR_CODE_PREFIX = "CONNECTOR-MGMT"
 	CONNECTOR_MGMT_ERROR_HREF        = "/api/connector_mgmt/v1/errors/"
-
-	// TODO - this is temporary for backward compatibility
-	oldErrorHref = "/api/managed-services-api/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
@@ -426,12 +423,6 @@ func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compa
 	if strings.Contains(basePath, "/api/connector_mgmt/") {
 		href = strings.Replace(href, ERROR_HREF, CONNECTOR_MGMT_ERROR_HREF, 1)
 		code = strings.Replace(code, ERROR_CODE_PREFIX, CONNECTOR_MGMT_ERROR_CODE_PREFIX, 1)
-	}
-
-	// TODO - temporary code added for backward compatibility
-	if strings.Contains(basePath, "/api/managed-services-api/") {
-		href = strings.Replace(href, ERROR_HREF, oldErrorHref, 1)
-		code = strings.Replace(code, ERROR_CODE_PREFIX, OLD_ERROR_CODE_PREFIX, 1)
 	}
 
 	// end-temporary code
