@@ -508,6 +508,8 @@ deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
+deploy: PRODUCT_TYPE ?= "RHOSAK"
+deploy: QUOTA_TYPE ?= "allow-list"
 deploy: deploy/db
 	@oc process -f ./templates/secrets-template.yml \
 		-p OCM_SERVICE_CLIENT_ID="$(OCM_SERVICE_CLIENT_ID)" \
@@ -559,6 +561,8 @@ deploy: deploy/db
 		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \
 		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="${OBSERVATORIUM_TOKEN_REFRESHER_URL}" \
+		-p QUOTA_TYPE="${QUOTA_TYPE}" \
+		-p PRODUCT_TYPE="${PRODUCT_TYPE}" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy
@@ -583,6 +587,6 @@ docs/generate/mermaid:
 		docker run -it -v $(DOCS_DIR)/mermaid-diagrams-source:/data -v $(DOCS_DIR)/images:/output minlag/mermaid-cli -i /data/`basename $${f}` -o /output/`basename $${f} .mmd`.png; \
 	done
 .PHONY: docs/generate/mermaid
-  
+
 # TODO CRC Deployment stuff
 
