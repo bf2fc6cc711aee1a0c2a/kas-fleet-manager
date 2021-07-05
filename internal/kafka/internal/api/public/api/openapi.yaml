@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager is a Rest API to manage Kafka instances
     and connectors.
   title: Kafka Service Fleet Manager
-  version: 1.1.1
+  version: 1.1.2
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -1422,17 +1422,9 @@ components:
       type: object
     values:
       properties:
-        Timestamp:
-          deprecated: true
-          format: int64
-          type: integer
         timestamp:
           format: int64
           type: integer
-        Value:
-          deprecated: true
-          format: double
-          type: number
         value:
           format: double
           type: number
@@ -1448,17 +1440,9 @@ components:
           additionalProperties:
             type: string
           type: object
-        Timestamp:
-          deprecated: true
-          format: int64
-          type: integer
         timestamp:
           format: int64
           type: integer
-        Value:
-          deprecated: true
-          format: double
-          type: number
         value:
           format: double
           type: number
@@ -1498,9 +1482,6 @@ components:
         owner:
           type: string
         name:
-          type: string
-        bootstrapServerHost:
-          deprecated: true
           type: string
         bootstrap_server_host:
           type: string
@@ -1564,13 +1545,7 @@ components:
           type: string
         description:
           type: string
-        clientID:
-          deprecated: true
-          type: string
         client_id:
-          type: string
-        clientSecret:
-          deprecated: true
           type: string
         client_secret:
           type: string
@@ -1583,10 +1558,6 @@ components:
       properties:
         id:
           description: server generated unique id of the service account
-          type: string
-        clientID:
-          deprecated: true
-          description: client id of the service account
           type: string
         client_id:
           description: client id of the service account
