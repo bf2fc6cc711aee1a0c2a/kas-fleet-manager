@@ -175,5 +175,13 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "id")
 
+	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
+	rolesMapping := map[string][]string{
+		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
+		http.MethodPut:    {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
+		http.MethodDelete: {auth.KasFleetManagerAdminFullRole},
+	}
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	return nil
 }
