@@ -6,6 +6,8 @@ IMAGE_TOKEN_REFRESH=kas-fleet-manager-token-refresh
 TAG_TOKEN_REFRESH=latest
 IMAGE_RESULTS=kas-fleet-manager-perf-results
 TAG_RESULTS=latest
+IMAGE_BACKUP=kas-fleet-manager-perf-test-backup
+TAG_BACKUP=latest
 
 PERF_TEST_USERS ?= 150 # number of locust test users - more users - more load can be sent
 PERF_TEST_USER_SPAWN_RATE ?= 1 # frequency of user spawning (per second)
@@ -60,12 +62,14 @@ test/performance/image/build:
 	docker build -t ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST} -f $(PWD)/test/performance/Dockerfile .
 	docker build -t ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH} -f $(PWD)/test/performance/token_api/Dockerfile .
 	docker build -t ${REGISTRY}/${IMAGE_RESULTS}:${TAG_RESULTS} -f $(PWD)/test/performance/scripts/Dockerfile .
+	docker build -t ${REGISTRY}/${IMAGE_BACKUP}:${TAG_BACKUP} -f $(PWD)/test/performance/backup/Dockerfile .
 
 .PHONY: test/performance/image/push
 test/performance/image/push:
 	docker push ${REGISTRY}/${IMAGE_LOCUST}:${TAG_LOCUST}
 	docker push ${REGISTRY}/${IMAGE_TOKEN_REFRESH}:${TAG_TOKEN_REFRESH}
 	docker push ${REGISTRY}/${IMAGE_RESULTS}:${TAG_RESULTS}
+	docker push ${REGISTRY}/${IMAGE_BACKUP}:${TAG_BACKUP}
 
 # admin-api params and make commands
 ADMIN_API_RUN_TIME ?= 1m # running time (in minutes)

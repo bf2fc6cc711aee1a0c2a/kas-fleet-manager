@@ -108,6 +108,9 @@ Make sure login quay.io using a robot account. The credentials are saved under r
  make test/performance/image/push
 ```
 
+## Horreum db perf test results backup
+There is a backup [CronJob](backup/cronjob.yaml) scheduled to run after each of the [automated performance test runs](https://ci.int.devshift.net/view/kas-fleet-manager/job/kas-fleet-manager-perf-test-stage), which dumps current state of the db and pushes it to s3 bucket in `kafka_service_1` AWS account. Image built from [CronJob](backup/Dockerfile) is used to perform the backups.
+
 ## Troubleshooting
 Very rarely, after stopping the tests manually and starting them again error similar to one below may appear:
 
