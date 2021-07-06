@@ -2,6 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"net/http"
 	"net/url"
 
@@ -9,11 +14,8 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
 	"github.com/goava/di"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -34,8 +36,8 @@ type ConnectorClusterHandler struct {
 	Keycloak       coreservices.KafkaKeycloakService
 	ConnectorTypes services.ConnectorTypesService
 	Vault          vault.VaultService
-	KeycloakConfig *config.KeycloakConfig
-	ServerConfig   *config.ServerConfig
+	KeycloakConfig *keycloak.KeycloakConfig
+	ServerConfig   *server.ServerConfig
 }
 
 func NewConnectorClusterHandler(handler ConnectorClusterHandler) *ConnectorClusterHandler {
@@ -176,8 +178,8 @@ const (
 	connectorFleetshardOperatorParamControlPlaneBaseURL  = "control-plane-base-url"
 )
 
-func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []types.Parameter {
-	p := []types.Parameter{
+func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.Parameter {
+	p := []ocm.Parameter{
 		{
 			Id:    connectorFleetshardOperatorParamMasSSOBaseUrl,
 			Value: o.KeycloakConfig.BaseURL,

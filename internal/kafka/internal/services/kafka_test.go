@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/route53"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
-	clusterservicetest2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm/clusterservicetest"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	goerrors "github.com/pkg/errors"
 	"net/http"
@@ -17,8 +20,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
@@ -381,9 +382,9 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							KafkaRealm: &keycloak.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 						}
@@ -412,9 +413,9 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							KafkaRealm: &keycloak.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 						}
@@ -443,9 +444,9 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "secret", nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							KafkaRealm: &keycloak.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 						}
@@ -477,9 +478,9 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 					RegisterKafkaClientInSSOFunc: func(kafkaNamespace string, orgId string) (string, *errors.ServiceError) {
 						return "", errors.FailedToCreateSSOClient("failed to create the sso client")
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
-							KafkaRealm: &config.KeycloakRealmConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
+							KafkaRealm: &keycloak.KeycloakRealmConfig{
 								ClientID: "test",
 							},
 							EnableAuthenticationOnKafka: true,
@@ -619,8 +620,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
@@ -637,7 +638,7 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Status: constants.KafkaRequestStatusAccepted.String(),
+					Status: constants2.KafkaRequestStatusAccepted.String(),
 				}))
 			},
 		},
@@ -649,8 +650,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
@@ -667,11 +668,11 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest2.MockClusterRegion,
-					ClusterID:     clusterservicetest2.MockClusterID,
-					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       true,
-					Status:        constants.KafkaRequestStatusPreparing.String(),
+					Status:        constants2.KafkaRequestStatusPreparing.String(),
 				}))
 			},
 		},
@@ -683,8 +684,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return errors.FailedToDeleteSSOClient("failed to delete sso client")
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
@@ -701,11 +702,11 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest2.MockClusterRegion,
-					ClusterID:     clusterservicetest2.MockClusterID,
-					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       true,
-					Status:        constants.KafkaRequestStatusPreparing.String(),
+					Status:        constants2.KafkaRequestStatusPreparing.String(),
 				}))
 			},
 			wantErr: true,
@@ -723,8 +724,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
 						return nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return &config.KeycloakConfig{
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return &keycloak.KeycloakConfig{
 							EnableAuthenticationOnKafka: true,
 						}
 					},
@@ -743,11 +744,11 @@ func Test_kafkaService_Delete(t *testing.T) {
 					Meta: api.Meta{
 						ID: testID,
 					},
-					Region:        clusterservicetest2.MockClusterRegion,
-					ClusterID:     clusterservicetest2.MockClusterID,
-					CloudProvider: clusterservicetest2.MockClusterCloudProvider,
+					Region:        clusterservicetest.MockClusterRegion,
+					ClusterID:     clusterservicetest.MockClusterID,
+					CloudProvider: clusterservicetest.MockClusterCloudProvider,
 					MultiAZ:       true,
-					Status:        constants.KafkaRequestStatusPreparing.String(),
+					Status:        constants2.KafkaRequestStatusPreparing.String(),
 				}))
 			},
 			wantErr: true,
@@ -1219,7 +1220,7 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 		clusterService    ClusterService
 	}
 	type args struct {
-		status constants.KafkaStatus
+		status constants2.KafkaStatus
 	}
 	tests := []struct {
 		name    string
@@ -1279,7 +1280,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 	}
 	type args struct {
 		id     string
-		status constants.KafkaStatus
+		status constants2.KafkaStatus
 	}
 	tests := []struct {
 		name         string
@@ -1310,12 +1311,12 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
+					kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
 				})))
 			},
 			args: args{
 				id:     testID,
-				status: constants.KafkaRequestStatusPreparing,
+				status: constants2.KafkaRequestStatusPreparing,
 			},
 		},
 		{
@@ -1328,12 +1329,12 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = constants.KafkaRequestStatusDeprovision.String()
+					kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
 				})))
 			},
 			args: args{
 				id:     testID,
-				status: constants.KafkaRequestStatusDeleting,
+				status: constants2.KafkaRequestStatusDeleting,
 			},
 		},
 		{
@@ -1344,7 +1345,7 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = constants.KafkaRequestStatusPreparing.String()
+					kafkaRequest.Status = constants2.KafkaRequestStatusPreparing.String()
 				})))
 			},
 			args: args{
@@ -1467,7 +1468,7 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 			wantErr: false,
 			args:    args{users: []string{"user"}},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants.KafkaRequestStatusDeprovision)).WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants2.KafkaRequestStatusDeprovision)).WithReply(nil)
 			},
 		},
 	}
@@ -1517,7 +1518,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants.KafkaRequestStatusDeprovision)).WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants2.KafkaRequestStatusDeprovision)).WithReply(nil)
 			},
 		},
 	}
@@ -1542,7 +1543,7 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 		connectionFactory *db.ConnectionFactory
 	}
 	type args struct {
-		status []constants.KafkaStatus
+		status []constants2.KafkaStatus
 	}
 	tests := []struct {
 		name      string
@@ -1556,7 +1557,7 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			name:   "should return the counts of Kafkas in different status",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady, constants.KafkaRequestStatusProvisioning},
+				status: []constants2.KafkaStatus{constants2.KafkaRequestStatusAccepted, constants2.KafkaRequestStatusReady, constants2.KafkaRequestStatusProvisioning},
 			},
 			wantErr: false,
 			setupFunc: func() {
@@ -1573,13 +1574,13 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
 			},
 			want: []KafkaStatusCount{{
-				Status: constants.KafkaRequestStatusAccepted,
+				Status: constants2.KafkaRequestStatusAccepted,
 				Count:  2,
 			}, {
-				Status: constants.KafkaRequestStatusReady,
+				Status: constants2.KafkaRequestStatusReady,
 				Count:  1,
 			}, {
-				Status: constants.KafkaRequestStatusProvisioning,
+				Status: constants2.KafkaRequestStatusProvisioning,
 				Count:  0,
 			}},
 		},
@@ -1587,7 +1588,7 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 			name:   "should return error",
 			fields: fields{connectionFactory: db.NewMockConnectionFactory(nil)},
 			args: args{
-				status: []constants.KafkaStatus{constants.KafkaRequestStatusAccepted, constants.KafkaRequestStatusReady},
+				status: []constants2.KafkaStatus{constants2.KafkaRequestStatusAccepted, constants2.KafkaRequestStatusReady},
 			},
 			wantErr: true,
 			setupFunc: func() {

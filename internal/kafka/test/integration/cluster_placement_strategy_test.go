@@ -1,17 +1,18 @@
 package integration
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	common2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
@@ -34,7 +35,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 
 	ocmConfig := test.TestServices.OCMConfig
 
-	if ocmConfig.MockMode != config.MockModeEmulateServer {
+	if ocmConfig.MockMode != ocm.MockModeEmulateServer {
 		t.SkipNow()
 	}
 
@@ -49,7 +50,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		Region:        "us-east-1",
 		CloudProvider: "aws",
 		Name:          "dummy-kafka",
-		Status:        constants.KafkaRequestStatusReady.String(),
+		Status:        constants2.KafkaRequestStatusReady.String(),
 	}
 
 	if err := db.Save(&kafka).Error; err != nil {
@@ -94,7 +95,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	})
 
 	// Ensure both clusters in the config file have been created
-	pollErr := common2.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 2)
+	pollErr := common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 2)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	// Ensure that cluster dns is populated with given value
@@ -112,7 +113,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		config.ManualCluster{ClusterId: "test02", KafkaInstanceLimit: 1, Region: clusterCriteria.Region, MultiAZ: clusterCriteria.MultiAZ, CloudProvider: clusterCriteria.Provider, Schedulable: true},
 	})
 
-	pollErr = common2.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 4)
+	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 4)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	// Now delete the kafka from the original cluster to check for placement strategy and wait for cluster deletion
@@ -120,7 +121,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		t.Fatal("failed to delete a dummy kafka request")
 	}
 
-	pollErr = common2.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 3)
+	pollErr = common.WaitForClustersMatchCriteriaToBeGivenCount(test.TestServices.DBFactory, &test.TestServices.ClusterService, &clusterCriteria, 3)
 	Expect(pollErr).NotTo(HaveOccurred())
 
 	//*********************************************************************
@@ -135,14 +136,14 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 			CloudProvider: "aws",
 			Owner:         "dummyuser1",
 			Name:          "dummy-kafka-1",
-			Status:        constants.KafkaRequestStatusAccepted.String(),
+			Status:        constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{MultiAZ: true,
 			Region:        "us-east-1",
 			CloudProvider: "aws",
 			Owner:         "dummyuser2",
 			Name:          "dummy-kafka-2",
-			Status:        constants.KafkaRequestStatusAccepted.String(),
+			Status:        constants2.KafkaRequestStatusAccepted.String(),
 		},
 	}
 
@@ -153,7 +154,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 	}
 
 	dbFactory := test.TestServices.DBFactory
-	kafkaFound, kafkaErr := common2.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
+	kafkaFound, kafkaErr := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-1")
 	Expect(kafkaErr).NotTo(HaveOccurred())
 	Expect(kafkaFound.ClusterID).To(Equal("test03"))
 
@@ -163,7 +164,7 @@ func TestClusterPlacementStrategy_ManualType(t *testing.T) {
 		return
 	}
 
-	kafkaFound2, kafkaErr2 := common2.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-2")
+	kafkaFound2, kafkaErr2 := common.WaitForKafkaClusterIDToBeAssigned(dbFactory, "dummy-kafka-2")
 	Expect(kafkaErr2).NotTo(HaveOccurred())
 	Expect(kafkaFound2.ClusterID).To(Equal("test02"))
 }

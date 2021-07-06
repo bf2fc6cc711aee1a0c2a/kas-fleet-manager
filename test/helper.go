@@ -5,6 +5,9 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -13,7 +16,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
@@ -26,7 +28,6 @@ import (
 	"github.com/segmentio/ksuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -54,14 +55,14 @@ type Helper struct {
 	Env           *environments.Env
 }
 
-func NewHelper(t *testing.T, server *httptest.Server, options ...di.Option) (*Helper, func()) {
-	return NewHelperWithHooks(t, server, nil, options...)
+func NewHelper(t *testing.T, httpServer *httptest.Server, options ...di.Option) (*Helper, func()) {
+	return NewHelperWithHooks(t, httpServer, nil, options...)
 }
 
 // NewHelperWithHooks will init the Helper and start the server, and it allows to customize the configurations of the server via the hook.
 // The startHook will be invoked after the environments.Env is created but before the api server is started, which will allow caller to change configurations.
 // The startHook can should be a function and can optionally have type arguments that can be injected from the configuration container.
-func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, func()) {
+func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configurationHook interface{}, envProviders ...di.Option) (*Helper, func()) {
 
 	// Register the test with gomega
 	gm.RegisterTestingT(t)
@@ -84,13 +85,13 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 	}
 
 	if configurationHook != nil {
-		envProviders = append(envProviders, di.ProvideValue(provider.BeforeCreateServicesHook{
+		envProviders = append(envProviders, di.ProvideValue(environments.BeforeCreateServicesHook{
 			Func: configurationHook,
 		}))
 	}
 
 	var err error
-	env, err := environments.NewEnv(envName, envProviders...)
+	env, err := environments.New(envName, envProviders...)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
@@ -98,9 +99,9 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 
 	parseCommandLineFlags(env)
 
-	var ocmConfig *config.OCMConfig
-	var serverConfig *config.ServerConfig
-	var keycloakConfig *config.KeycloakConfig
+	var ocmConfig *ocm.OCMConfig
+	var serverConfig *server.ServerConfig
+	var keycloakConfig *keycloak.KeycloakConfig
 
 	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig)
 
@@ -116,10 +117,10 @@ func NewHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook
 	h.AuthHelper = authHelper
 
 	// Set server if provided
-	if server != nil && ocmConfig.MockMode == config.MockModeEmulateServer {
+	if httpServer != nil && ocmConfig.MockMode == ocm.MockModeEmulateServer {
 		workers.RepeatInterval = 1 * time.Second
-		fmt.Printf("Setting OCM base URL to %s\n", server.URL)
-		ocmConfig.BaseURL = server.URL
+		fmt.Printf("Setting OCM base URL to %s\n", httpServer.URL)
+		ocmConfig.BaseURL = httpServer.URL
 	}
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
@@ -190,7 +191,7 @@ func (helper *Helper) NewUUID() string {
 }
 
 func (helper *Helper) RestURL(path string) string {
-	var serverConfig *config.ServerConfig
+	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	protocol := "http"
@@ -201,13 +202,13 @@ func (helper *Helper) RestURL(path string) string {
 }
 
 func (helper *Helper) MetricsURL(path string) string {
-	var metricsConfig *config.MetricsConfig
+	var metricsConfig *server.MetricsConfig
 	helper.Env.MustResolveAll(&metricsConfig)
 	return fmt.Sprintf("http://%s%s", metricsConfig.BindAddress, path)
 }
 
 func (helper *Helper) HealthCheckURL(path string) string {
-	var healthCheckConfig *config.HealthCheckConfig
+	var healthCheckConfig *server.HealthCheckConfig
 	helper.Env.MustResolveAll(&healthCheckConfig)
 	return fmt.Sprintf("http://%s%s", healthCheckConfig.BindAddress, path)
 }

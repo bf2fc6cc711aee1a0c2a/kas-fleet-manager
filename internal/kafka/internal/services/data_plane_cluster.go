@@ -3,13 +3,15 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/goava/di"
 	"strconv"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/golang/glog"
@@ -29,10 +31,11 @@ var _ DataPlaneClusterService = &dataPlaneClusterService{}
 const dataPlaneClusterStatusCondReadyName = "Ready"
 
 type dataPlaneClusterService struct {
-	clusterService         ClusterService
-	kafkaConfig            *config.KafkaConfig
-	observabilityConfig    *config.ObservabilityConfiguration
-	dataplaneClusterConfig *config.DataplaneClusterConfig
+	di.Inject
+	ClusterService         ClusterService
+	KafkaConfig            *config.KafkaConfig
+	ObservabilityConfig    *observatorium.ObservabilityConfiguration
+	DataplaneClusterConfig *config.DataplaneClusterConfig
 }
 
 type dataPlaneComputeNodesKafkaCapacityAttributes struct {
@@ -40,17 +43,12 @@ type dataPlaneComputeNodesKafkaCapacityAttributes struct {
 	Partitions  int
 }
 
-func NewDataPlaneClusterService(clusterService ClusterService, config *config.ApplicationConfig) *dataPlaneClusterService {
-	return &dataPlaneClusterService{
-		clusterService:         clusterService,
-		kafkaConfig:            config.Kafka,
-		observabilityConfig:    config.ObservabilityConfiguration,
-		dataplaneClusterConfig: config.DataplaneClusterConfig,
-	}
+func NewDataPlaneClusterService(config dataPlaneClusterService) *dataPlaneClusterService {
+	return &config
 }
 
 func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context, clusterID string) (*dbapi.DataPlaneClusterConfig, *errors.ServiceError) {
-	cluster, svcErr := d.clusterService.FindClusterByID(clusterID)
+	cluster, svcErr := d.ClusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
 		return nil, svcErr
 	}
@@ -61,16 +59,16 @@ func (d *dataPlaneClusterService) GetDataPlaneClusterConfig(ctx context.Context,
 
 	return &dbapi.DataPlaneClusterConfig{
 		Observability: dbapi.DataPlaneClusterConfigObservability{
-			AccessToken: d.observabilityConfig.ObservabilityConfigAccessToken,
-			Channel:     d.observabilityConfig.ObservabilityConfigChannel,
-			Repository:  d.observabilityConfig.ObservabilityConfigRepo,
-			Tag:         d.observabilityConfig.ObservabilityConfigTag,
+			AccessToken: d.ObservabilityConfig.ObservabilityConfigAccessToken,
+			Channel:     d.ObservabilityConfig.ObservabilityConfigChannel,
+			Repository:  d.ObservabilityConfig.ObservabilityConfigRepo,
+			Tag:         d.ObservabilityConfig.ObservabilityConfigTag,
 		},
 	}, nil
 }
 
 func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Context, clusterID string, status *dbapi.DataPlaneClusterStatus) *errors.ServiceError {
-	cluster, svcErr := d.clusterService.FindClusterByID(clusterID)
+	cluster, svcErr := d.ClusterService.FindClusterByID(clusterID)
 	if svcErr != nil {
 		return svcErr
 	}
@@ -90,7 +88,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 	}
 	if !fleetShardOperatorReady {
 		if cluster.Status != api.ClusterWaitingForKasFleetShardOperator {
-			err := d.clusterService.UpdateStatus(*cluster, api.ClusterWaitingForKasFleetShardOperator)
+			err := d.ClusterService.UpdateStatus(*cluster, api.ClusterWaitingForKasFleetShardOperator)
 			if err != nil {
 				return errors.ToServiceError(err)
 			}
@@ -108,7 +106,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 		return errors.ToServiceError(err)
 	}
 
-	if d.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+	if d.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		computeNodeScalingInProgress, err := d.computeNodeScalingActionInProgress(cluster, status)
 		if err != nil {
 			return errors.ToServiceError(err)
@@ -128,7 +126,7 @@ func (d *dataPlaneClusterService) UpdateDataPlaneClusterStatus(ctx context.Conte
 }
 
 func (d *dataPlaneClusterService) computeNodeScalingActionInProgress(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) (bool, error) {
-	nodesInfo, err := d.clusterService.GetComputeNodes(cluster.ClusterID)
+	nodesInfo, err := d.ClusterService.GetComputeNodes(cluster.ClusterID)
 	if err != nil {
 		return false, errors.ToServiceError(err)
 	}
@@ -175,7 +173,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 		nodesToScaleUp := d.calculateDesiredNodesToScaleUp(cluster, status)
 		desiredNodesAfterScaleActions = currentNodes + nodesToScaleUp
 		glog.V(10).Infof("Increasing reported current number of nodes '%v' by '%v'", currentNodes, nodesToScaleUp)
-		_, err := d.clusterService.SetComputeNodes(cluster.ClusterID, desiredNodesAfterScaleActions)
+		_, err := d.ClusterService.SetComputeNodes(cluster.ClusterID, desiredNodesAfterScaleActions)
 		if err != nil {
 			return currentNodes, err
 		}
@@ -194,7 +192,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 		desiredNodesAfterScaleActions = currentNodes - nodesToScaleDown
 		if desiredNodesAfterScaleActions > 0 {
 			glog.V(10).Infof("Decreasing reported current number of nodes '%v' by '%v'", currentNodes, nodesToScaleDown)
-			_, err := d.clusterService.SetComputeNodes(cluster.ClusterID, desiredNodesAfterScaleActions)
+			_, err := d.ClusterService.SetComputeNodes(cluster.ClusterID, desiredNodesAfterScaleActions)
 			if err != nil {
 				return currentNodes, err
 			}
@@ -206,7 +204,7 @@ func (d *dataPlaneClusterService) updateDataPlaneClusterNodes(cluster *api.Clust
 
 func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status *dbapi.DataPlaneClusterStatus) error {
 	remainingCapacity := true
-	if d.dataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
+	if d.DataplaneClusterConfig.IsDataPlaneAutoScalingEnabled() {
 		var err error
 		remainingCapacity, err = d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
 		if err != nil {
@@ -216,7 +214,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 
 	if remainingCapacity && cluster.Status != api.ClusterReady {
 		clusterIsWaitingForFleetShardOperator := cluster.Status == api.ClusterWaitingForKasFleetShardOperator
-		err := d.clusterService.UpdateStatus(*cluster, api.ClusterReady)
+		err := d.ClusterService.UpdateStatus(*cluster, api.ClusterReady)
 		if err != nil {
 			return err
 		}
@@ -235,7 +233,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		}
 
 		if cluster.Status != desiredStatus {
-			err := d.clusterService.UpdateStatus(*cluster, desiredStatus)
+			err := d.ClusterService.UpdateStatus(*cluster, desiredStatus)
 			if err != nil {
 				return err
 			}
@@ -415,7 +413,7 @@ func (d *dataPlaneClusterService) scaleUpThresholds(status *dbapi.DataPlaneClust
 // to consider that a kafka cluster has capacity available
 func (d *dataPlaneClusterService) minimumKafkaCapacity() *dataPlaneComputeNodesKafkaCapacityAttributes {
 	return &dataPlaneComputeNodesKafkaCapacityAttributes{
-		Connections: d.kafkaConfig.KafkaCapacity.TotalMaxConnections,
-		Partitions:  d.kafkaConfig.KafkaCapacity.MaxPartitions,
+		Connections: d.KafkaConfig.KafkaCapacity.TotalMaxConnections,
+		Partitions:  d.KafkaConfig.KafkaCapacity.MaxPartitions,
 	}
 }

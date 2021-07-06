@@ -1,11 +1,10 @@
 package metrics
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -148,7 +147,7 @@ var clusterOperationsSuccessCountMetric = prometheus.NewCounterVec(
 )
 
 // IncreaseClusterSuccessOperationsCountMetric - increase counter for clusterOperationsSuccessCountMetric
-func IncreaseClusterSuccessOperationsCountMetric(operation constants.ClusterOperation) {
+func IncreaseClusterSuccessOperationsCountMetric(operation constants2.ClusterOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
@@ -166,7 +165,7 @@ var clusterOperationsTotalCountMetric = prometheus.NewCounterVec(
 )
 
 // IncreaseClusterTotalOperationsCountMetric - increase counter for clusterOperationsTotalCountMetric
-func IncreaseClusterTotalOperationsCountMetric(operation constants.ClusterOperation) {
+func IncreaseClusterTotalOperationsCountMetric(operation constants2.ClusterOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
@@ -285,7 +284,7 @@ var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
 )
 
 //UpdateKafkaRequestsStatusSinceCreatedMetric
-func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
+func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants2.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
 		LabelID:        kafkaId,
@@ -295,7 +294,7 @@ func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants.KafkaStatus, k
 }
 
 //UpdateKafkaRequestsStatusCountMetric
-func UpdateKafkaRequestsStatusCountMetric(status constants.KafkaStatus, count int) {
+func UpdateKafkaRequestsStatusCountMetric(status constants2.KafkaStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
 	}
@@ -323,7 +322,7 @@ var kafkaStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 )
 
 // IncreaseKafkaSuccessOperationsCountMetric - increase counter for the kafkaOperationsSuccessCountMetric
-func IncreaseKafkaSuccessOperationsCountMetric(operation constants.KafkaOperation) {
+func IncreaseKafkaSuccessOperationsCountMetric(operation constants2.KafkaOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
@@ -341,7 +340,7 @@ var kafkaOperationsTotalCountMetric = prometheus.NewCounterVec(
 )
 
 // IncreaseKafkaTotalOperationsCountMetric - increase counter for the kafkaOperationsTotalCountMetric
-func IncreaseKafkaTotalOperationsCountMetric(operation constants.KafkaOperation) {
+func IncreaseKafkaTotalOperationsCountMetric(operation constants2.KafkaOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}

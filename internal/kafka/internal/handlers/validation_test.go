@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
@@ -135,8 +135,8 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	type args struct {
-		kafkaRequest  public.KafkaRequestPayload
-		configService coreServices.ConfigService
+		kafkaRequest   public.KafkaRequestPayload
+		ProviderConfig *config.ProviderConfig
 	}
 
 	type result struct {
@@ -154,25 +154,22 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
 				kafkaRequest: public.KafkaRequestPayload{},
-				configService: coreServices.NewConfigService(
-					&config.ApplicationConfig{
-						SupportedProviders: &config.ProviderConfig{
-							ProvidersConfig: config.ProviderConfiguration{
-								SupportedProviders: config.ProviderList{
-									config.Provider{
-										Name:    "aws",
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name:    "aws",
+								Default: true,
+								Regions: config.RegionList{
+									config.Region{
+										Name:    "us-east-1",
 										Default: true,
-										Regions: config.RegionList{
-											config.Region{
-												Name:    "us-east-1",
-												Default: true,
-											},
-										},
 									},
 								},
 							},
 						},
-					}),
+					},
+				},
 			},
 			want: result{
 				wantErr: false,
@@ -189,32 +186,28 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
-				configService: coreServices.NewConfigService(
-					&config.ApplicationConfig{
-						SupportedProviders: &config.ProviderConfig{
-							ProvidersConfig: config.ProviderConfiguration{
-								SupportedProviders: config.ProviderList{
-									config.Provider{
-										Name: "gcp",
-										Regions: config.RegionList{
-											config.Region{
-												Name: "eu-east-1",
-											},
-										},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "gcp",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "eu-east-1",
 									},
-									config.Provider{
-										Name: "aws",
-										Regions: config.RegionList{
-											config.Region{
-												Name: "us-east-1",
-											},
-										},
+								},
+							},
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
 									},
 								},
 							},
 						},
 					},
-				),
+				},
 			},
 			want: result{
 				wantErr: false,
@@ -231,22 +224,20 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},
-				configService: coreServices.NewConfigService(&config.ApplicationConfig{
-					SupportedProviders: &config.ProviderConfig{
-						ProvidersConfig: config.ProviderConfiguration{
-							SupportedProviders: config.ProviderList{
-								config.Provider{
-									Name: "aws",
-									Regions: config.RegionList{
-										config.Region{
-											Name: "us-east-1",
-										},
+				ProviderConfig: &config.ProviderConfig{
+					ProvidersConfig: config.ProviderConfiguration{
+						SupportedProviders: config.ProviderList{
+							config.Provider{
+								Name: "aws",
+								Regions: config.RegionList{
+									config.Region{
+										Name: "us-east-1",
 									},
 								},
 							},
 						},
 					},
-				}),
+				},
 			},
 			want: result{
 				wantErr: true,
@@ -258,7 +249,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			validateFn := ValidateCloudProvider(&tt.arg.kafkaRequest, tt.arg.configService, "creating-kafka")
+			validateFn := ValidateCloudProvider(&tt.arg.kafkaRequest, tt.arg.ProviderConfig, "creating-kafka")
 			err := validateFn()
 			if !tt.want.wantErr && err != nil {
 				t.Errorf("validatedCloudProvider() expected not to throw error but threw %v", err)

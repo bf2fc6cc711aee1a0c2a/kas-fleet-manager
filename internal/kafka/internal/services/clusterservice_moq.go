@@ -4,8 +4,9 @@
 package services
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -65,10 +66,10 @@ var _ ClusterService = &ClusterServiceMock{}
 // 			GetExternalIDFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
 // 				panic("mock out the GetExternalID method")
 // 			},
-// 			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+// 			InstallClusterLoggingFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the InstallClusterLogging method")
 // 			},
-// 			InstallKasFleetshardFunc: func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+// 			InstallKasFleetshardFunc: func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 // 				panic("mock out the InstallKasFleetshard method")
 // 			},
 // 			InstallStrimziFunc: func(cluster *api.Cluster) (bool, *apiErrors.ServiceError) {
@@ -157,10 +158,10 @@ type ClusterServiceMock struct {
 	GetExternalIDFunc func(clusterID string) (string, *apiErrors.ServiceError)
 
 	// InstallClusterLoggingFunc mocks the InstallClusterLogging method.
-	InstallClusterLoggingFunc func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
+	InstallClusterLoggingFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError)
 
 	// InstallKasFleetshardFunc mocks the InstallKasFleetshard method.
-	InstallKasFleetshardFunc func(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
+	InstallKasFleetshardFunc func(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError)
 
 	// InstallStrimziFunc mocks the InstallStrimzi method.
 	InstallStrimziFunc func(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
@@ -281,14 +282,14 @@ type ClusterServiceMock struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
 			// Params is the params argument value.
-			Params []types.Parameter
+			Params []ocm.Parameter
 		}
 		// InstallKasFleetshard holds details about calls to the InstallKasFleetshard method.
 		InstallKasFleetshard []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
 			// Params is the params argument value.
-			Params []types.Parameter
+			Params []ocm.Parameter
 		}
 		// InstallStrimzi holds details about calls to the InstallStrimzi method.
 		InstallStrimzi []struct {
@@ -862,13 +863,13 @@ func (mock *ClusterServiceMock) GetExternalIDCalls() []struct {
 }
 
 // InstallClusterLogging calls InstallClusterLoggingFunc.
-func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 	if mock.InstallClusterLoggingFunc == nil {
 		panic("ClusterServiceMock.InstallClusterLoggingFunc: method is nil but ClusterService.InstallClusterLogging was just called")
 	}
 	callInfo := struct {
 		Cluster *api.Cluster
-		Params  []types.Parameter
+		Params  []ocm.Parameter
 	}{
 		Cluster: cluster,
 		Params:  params,
@@ -884,11 +885,11 @@ func (mock *ClusterServiceMock) InstallClusterLogging(cluster *api.Cluster, para
 //     len(mockedClusterService.InstallClusterLoggingCalls())
 func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
 	Cluster *api.Cluster
-	Params  []types.Parameter
+	Params  []ocm.Parameter
 } {
 	var calls []struct {
 		Cluster *api.Cluster
-		Params  []types.Parameter
+		Params  []ocm.Parameter
 	}
 	mock.lockInstallClusterLogging.RLock()
 	calls = mock.calls.InstallClusterLogging
@@ -897,13 +898,13 @@ func (mock *ClusterServiceMock) InstallClusterLoggingCalls() []struct {
 }
 
 // InstallKasFleetshard calls InstallKasFleetshardFunc.
-func (mock *ClusterServiceMock) InstallKasFleetshard(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError) {
+func (mock *ClusterServiceMock) InstallKasFleetshard(cluster *api.Cluster, params []ocm.Parameter) (bool, *apiErrors.ServiceError) {
 	if mock.InstallKasFleetshardFunc == nil {
 		panic("ClusterServiceMock.InstallKasFleetshardFunc: method is nil but ClusterService.InstallKasFleetshard was just called")
 	}
 	callInfo := struct {
 		Cluster *api.Cluster
-		Params  []types.Parameter
+		Params  []ocm.Parameter
 	}{
 		Cluster: cluster,
 		Params:  params,
@@ -919,11 +920,11 @@ func (mock *ClusterServiceMock) InstallKasFleetshard(cluster *api.Cluster, param
 //     len(mockedClusterService.InstallKasFleetshardCalls())
 func (mock *ClusterServiceMock) InstallKasFleetshardCalls() []struct {
 	Cluster *api.Cluster
-	Params  []types.Parameter
+	Params  []ocm.Parameter
 } {
 	var calls []struct {
 		Cluster *api.Cluster
-		Params  []types.Parameter
+		Params  []ocm.Parameter
 	}
 	mock.lockInstallKasFleetshard.RLock()
 	calls = mock.calls.InstallKasFleetshard

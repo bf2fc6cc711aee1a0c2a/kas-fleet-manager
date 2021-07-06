@@ -5,7 +5,6 @@ package keycloak
 
 import (
 	"github.com/Nerzal/gocloak/v8"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"sync"
 )
 
@@ -129,10 +128,10 @@ type KcClientMock struct {
 	GetClientsFunc func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error)
 
 	// GetConfigFunc mocks the GetConfig method.
-	GetConfigFunc func() *config.KeycloakConfig
+	GetConfigFunc func() *KeycloakConfig
 
 	// GetRealmConfigFunc mocks the GetRealmConfig method.
-	GetRealmConfigFunc func() *config.KeycloakRealmConfig
+	GetRealmConfigFunc func() *KeycloakRealmConfig
 
 	// GetRealmRoleFunc mocks the GetRealmRole method.
 	GetRealmRoleFunc func(accessToken string, roleName string) (*gocloak.Role, error)
@@ -750,7 +749,7 @@ func (mock *KcClientMock) GetClientsCalls() []struct {
 }
 
 // GetConfig calls GetConfigFunc.
-func (mock *KcClientMock) GetConfig() *config.KeycloakConfig {
+func (mock *KcClientMock) GetConfig() *KeycloakConfig {
 	if mock.GetConfigFunc == nil {
 		panic("KcClientMock.GetConfigFunc: method is nil but KcClient.GetConfig was just called")
 	}
@@ -776,7 +775,7 @@ func (mock *KcClientMock) GetConfigCalls() []struct {
 }
 
 // GetRealmConfig calls GetRealmConfigFunc.
-func (mock *KcClientMock) GetRealmConfig() *config.KeycloakRealmConfig {
+func (mock *KcClientMock) GetRealmConfig() *KeycloakRealmConfig {
 	if mock.GetRealmConfigFunc == nil {
 		panic("KcClientMock.GetRealmConfigFunc: method is nil but KcClient.GetRealmConfig was just called")
 	}

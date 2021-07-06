@@ -9,7 +9,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	pkgErr "github.com/pkg/errors"
@@ -39,8 +38,8 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return testClientID, nil
@@ -60,8 +59,8 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -90,8 +89,8 @@ func TestKeycloakService_RegisterKafkaClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -163,8 +162,8 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return testClientID, nil
@@ -184,8 +183,8 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -214,8 +213,8 @@ func TestKeycloakService_RegisterOSDClusterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -271,8 +270,8 @@ func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return testClientID, nil
@@ -291,8 +290,8 @@ func TestNewKeycloakService_DeRegisterClientInSSO(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return testClientID, nil

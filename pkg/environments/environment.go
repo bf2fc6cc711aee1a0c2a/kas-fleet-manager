@@ -6,7 +6,6 @@ import (
 	"flag"
 	"os"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
 	"github.com/goava/di"
 	"github.com/pkg/errors"
 
@@ -16,17 +15,42 @@ import (
 )
 
 const (
-	TestingEnv           string = "testing"
-	DevelopmentEnv       string = "development"
-	IntegrationEnv       string = "integration"
+	TestingEnv     string = "testing"
+	DevelopmentEnv string = "development"
+	ProductionEnv  string = "production"
+	StageEnv       string = "stage"
+	IntegrationEnv string = "integration"
+
 	EnvironmentStringKey string = "OCM_ENV"
 	EnvironmentDefault          = DevelopmentEnv
 )
 
+// Env is a modular application built with dependency injection and manages
+// applying lifecycle events of types injected  into the application.
+//
+// An Env uses two dependency injection containers.  The first one
+// it constructs is the ConfigContainer
+//
 type Env struct {
 	Name             string
 	ConfigContainer  *di.Container
 	ServiceContainer *di.Container
+}
+
+// New creates and initializes an Env with the provided name and injection
+// options.  After initialization, types in the Env.ConfigContainer can
+// be resolved using dependency injection.
+func New(name string, options ...di.Option) (env *Env, err error) {
+	env = &Env{
+		Name: name,
+	}
+
+	env.ConfigContainer, err = di.New(append(options, di.ProvideValue(env))...)
+	if err != nil {
+		return nil, err
+	}
+
+	return env, nil
 }
 
 func GetEnvironmentStrFromEnv() string {
@@ -38,7 +62,12 @@ func GetEnvironmentStrFromEnv() string {
 	return envStr
 }
 
-// Adds environment flags, using the environment's config struct, to the flagset 'flags'
+// AddFlags is used allow command command line flags to modify the values of types in
+// the Env.ConfigContainer.  All types in Env.ConfigContainer that implement the ConfigModule
+// interface invoked with ConfigModule.AddFlags.
+//
+// Then flag defaults will set by getting defaults for the Env.Name by looking up a EnvLoader
+// tagged with that name in the  Env.ConfigContainer.
 func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 
 	flags.AddGoFlagSet(flag.CommandLine)
@@ -49,7 +78,7 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 		return errors.Errorf("unsupported environment %q", e.Name)
 	}
 
-	modules := []provider.ConfigModule{}
+	modules := []ConfigModule{}
 	if err := e.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
@@ -60,31 +89,26 @@ func (e *Env) AddFlags(flags *pflag.FlagSet) error {
 	return setConfigDefaults(flags, namedEnv.Defaults())
 }
 
-func NewEnv(name string, options ...di.Option) (env *Env, err error) {
-	env = &Env{
-		Name: name,
-	}
-
-	//di.SetTracer(di.StdTracer{})
-	env.ConfigContainer, err = di.New(append(options,
-		di.ProvideValue(env),
-	)...)
-	if err != nil {
-		return nil, err
-	}
-
-	return env, nil
-}
-
-// CreateServices loads the environment's resources
+// CreateServices loads, creates, and validates the applications services.
+//
 // This should be called after the environment has been configured appropriately though AddFlags and parsing,
-// done elsewhere. The environment does NOT handle flag parsing
+// done elsewhere.
+//
+// The function will look for many inject types in dependency injection container and called them in this order:
+// 1) All ConfigModule.ReadFiles functions - to load file system based configuration.
+// 2) The EnvLoader.ModifyConfiguration function - to allow named environment to apply configuration changes  (TODO: replace with a BeforeCreateServicesHook??)
+// 3) All BeforeCreateServicesHook.Func functions - configuration hooks
+// 4) All ServiceProvider.Providers  functions - to collect al dependency injection objects use to construct the Env.ServiceContainer
+// 5) The Env.ServiceContainer is created
+// 6) All ServiceValidator.Validate functions - used to validate the configuration or service types (TODO: replace with a AfterCreateServicesHook??)
+// 7) All AfterCreateServicesHook.Func functions - a hook that is called after the service container is created.
+//
 func (env *Env) CreateServices() error {
 
 	glog.Infof("Initializing %s environment", env.Name)
 
 	// Read in all config files
-	modules := []provider.ConfigModule{}
+	modules := []ConfigModule{}
 	if err := env.ConfigContainer.Resolve(&modules); err != nil && !goerrors.Is(err, di.ErrTypeNotExists) {
 		return err
 	}
@@ -111,9 +135,9 @@ func (env *Env) CreateServices() error {
 
 	type injections struct {
 		di.Inject
-		ServiceInjections         []provider.Provider
-		BeforeCreateServicesHooks []provider.BeforeCreateServicesHook `optional:"true"`
-		AfterCreateServicesHooks  []provider.AfterCreateServicesHook  `optional:"true"`
+		ServiceInjections         []ServiceProvider
+		BeforeCreateServicesHooks []BeforeCreateServicesHook `optional:"true"`
+		AfterCreateServicesHooks  []AfterCreateServicesHook  `optional:"true"`
 	}
 	in := injections{}
 	if err := env.ConfigContainer.Resolve(&in); err != nil {
@@ -143,7 +167,7 @@ func (env *Env) CreateServices() error {
 		return err
 	}
 
-	var validators []provider.ServiceValidator
+	var validators []ServiceValidator
 	err = env.ServiceContainer.Resolve(&validators)
 	if err != nil {
 		if !errors.Is(err, di.ErrTypeNotExists) {
@@ -202,22 +226,25 @@ func (env *Env) MustResolveAll(ptrs ...di.Pointer) {
 	}
 }
 
+// Run starts the Env waits for the context to be canceled and then stops the Env.
 func (env *Env) Run(ctx context.Context) {
 	env.Start()
 	<-ctx.Done()
 	env.Stop()
 }
 
+// Start calls all the BootService.Start functions found in the container.
 func (env *Env) Start() {
-	env.MustInvoke(func(services []provider.BootService) {
+	env.MustInvoke(func(services []BootService) {
 		for i := range services {
 			services[i].Start()
 		}
 	})
 }
 
+// Stop calls all the BootService.Stop functions found in the dependency injection containers.
 func (env *Env) Stop() {
-	env.MustInvoke(func(services []provider.BootService) {
+	env.MustInvoke(func(services []BootService) {
 		for i := range services {
 			i = len(services) - 1 - i // to stop in reverse order
 			services[i].Stop()
@@ -225,6 +252,7 @@ func (env *Env) Stop() {
 	})
 }
 
+// Cleanup calls all the cleanup functions registered with the dependency injection  containers.
 func (env *Env) Cleanup() {
 	if env.ServiceContainer != nil {
 		env.ServiceContainer.Cleanup()

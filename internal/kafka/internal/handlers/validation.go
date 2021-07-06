@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
@@ -43,30 +44,30 @@ func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 
 // ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
-func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, configService coreServices.ConfigService, action string) handlers.Validate {
+func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
+		supportedProviders := providerConfig.ProvidersConfig.SupportedProviders
 		if kafkaRequest.CloudProvider == "" {
-			defaultProvider, _ := configService.GetDefaultProvider()
+			defaultProvider, _ := supportedProviders.GetDefault()
 			kafkaRequest.CloudProvider = defaultProvider.Name
 		}
 
 		// Validation for Cloud Provider
-		provider, providerSupported := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
+		provider, providerSupported := supportedProviders.GetByName(kafkaRequest.CloudProvider)
 		if !providerSupported {
-			return errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, configService.GetSupportedProviders())
+			return errors.ProviderNotSupported("provider %s is not supported, supported providers are: %s", kafkaRequest.CloudProvider, supportedProviders)
 		}
 
 		// Set Cloud Region default if not received in the request
 		if kafkaRequest.Region == "" {
-			defaultRegion, _ := configService.GetDefaultRegionForProvider(provider)
+			defaultRegion, _ := provider.GetDefaultRegion()
 			kafkaRequest.Region = defaultRegion.Name
 		}
 
 		// Validation for Cloud Region
-		regionSupported := configService.IsRegionSupportedForProvider(kafkaRequest.CloudProvider, kafkaRequest.Region)
+		regionSupported := provider.IsRegionSupported(kafkaRequest.Region)
 		if !regionSupported {
-			provider, _ := configService.GetSupportedProviders().GetByName(kafkaRequest.CloudProvider)
 			return errors.RegionNotSupported("region %s is not supported for %s, supported regions are: %s", kafkaRequest.Region, kafkaRequest.CloudProvider, provider.Regions)
 		}
 

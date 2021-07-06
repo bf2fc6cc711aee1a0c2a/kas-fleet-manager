@@ -2,13 +2,13 @@ package sentry
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
 	"os"
 )
 
-func Initialize(envName config.EnvName, c *Config) error {
+func Initialize(envName environments.EnvName, c *Config) error {
 	options := sentry.ClientOptions{}
 
 	if c.Enabled {

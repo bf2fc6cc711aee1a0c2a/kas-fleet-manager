@@ -1,9 +1,10 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 	"time"
 
@@ -14,8 +15,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -23,13 +22,12 @@ import (
 type AcceptedKafkaManager struct {
 	workers.BaseWorker
 	kafkaService        services.KafkaService
-	configService       coreServices.ConfigService
 	quotaServiceFactory services.QuotaServiceFactory
 	clusterPlmtStrategy services.ClusterPlacementStrategy
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -39,7 +37,6 @@ func NewAcceptedKafkaManager(kafkaService services.KafkaService, configService c
 			},
 		},
 		kafkaService:        kafkaService,
-		configService:       configService,
 		quotaServiceFactory: quotaServiceFactory,
 		clusterPlmtStrategy: clusterPlmtStrategy,
 	}
@@ -60,7 +57,7 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 	var encounteredErrors []error
 
 	// handle accepted kafkas
-	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusAccepted)
+	acceptedKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusAccepted)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list accepted kafkas"))
 	} else {
@@ -69,7 +66,7 @@ func (k *AcceptedKafkaManager) Reconcile() []error {
 
 	for _, kafka := range acceptedKafkas {
 		glog.V(10).Infof("accepted kafka id = %s", kafka.ID)
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		if err := k.reconcileAcceptedKafka(kafka); err != nil {
 			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile accepted kafka %s", kafka.ID))
 			continue
@@ -103,7 +100,7 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	}
 
 	glog.Infof("Kafka instance with id %s is assigned to cluster with id %s", kafka.ID, kafka.ClusterID)
-	kafka.Status = constants.KafkaRequestStatusPreparing.String()
+	kafka.Status = constants2.KafkaRequestStatusPreparing.String()
 	if err2 := k.kafkaService.Update(kafka); err2 != nil {
 		return errors.Wrapf(err2, "failed to update kafka %s with cluster details", kafka.ID)
 	}
@@ -124,11 +121,11 @@ func (k *AcceptedKafkaManager) reconcileQuota(kafka *dbapi.KafkaRequest) (bool, 
 		}
 
 		kafka.FailedReason = "Insufficient quota"
-		kafka.Status = constants.KafkaRequestStatusFailed.String()
+		kafka.Status = constants2.KafkaRequestStatusFailed.String()
 		if err := k.kafkaService.Update(kafka); err != nil {
 			return false, errors.Wrapf(err, "failed to update kafka %s to failed status", kafka.ID)
 		}
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusFailed, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 		logger.Logger.Warningf("Unable to provision kafka %s in %s dataplane cluster due to insufficient quota", kafka.ID, kafka.ClusterID)
 		return false, nil
 	}

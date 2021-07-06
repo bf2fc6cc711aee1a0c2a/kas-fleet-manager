@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 	"strconv"
 
@@ -65,7 +65,7 @@ func runList(env *environments.Env, cmd *cobra.Command) {
 	}
 
 	for _, account := range sa {
-		converted := presenters2.PresentServiceAccountListItem(&account)
+		converted := presenters.PresentServiceAccountListItem(&account)
 		serviceAccountList.Items = append(serviceAccountList.Items, converted)
 	}
 
