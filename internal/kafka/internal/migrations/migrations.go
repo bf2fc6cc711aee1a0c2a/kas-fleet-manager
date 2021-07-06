@@ -54,6 +54,8 @@ var migrations = []*gormigrate.Migration{
 	addRoutes(),
 	addKafkaDNSWorkerLease(),
 	addClusterAvailableStrimziVersions(),
+	addKafkaUpgradeFunctionalityRelatedFields(),
+	renameKafkaVersionField(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {

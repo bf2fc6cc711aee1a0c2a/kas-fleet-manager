@@ -3,6 +3,11 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
@@ -12,9 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -23,7 +25,6 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/pkg/errors"
 	"gopkg.in/resty.v1"
-	"time"
 )
 
 type TestServer struct {
@@ -234,7 +235,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.0",
+			DesiredKafkaVersion: "2.7.0",
 		},
 		{
 			ClusterID:           testServer.ClusterID,
@@ -244,7 +245,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.6.0",
+			DesiredKafkaVersion: "2.6.0",
 		},
 		{
 			ClusterID:           testServer.ClusterID,
@@ -254,7 +255,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.1",
+			DesiredKafkaVersion: "2.7.1",
 		},
 		{
 			ClusterID:           testServer.ClusterID,
@@ -264,7 +265,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.2",
+			DesiredKafkaVersion: "2.7.2",
 		},
 		{
 			ClusterID:           testServer.ClusterID,
@@ -274,7 +275,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.2",
+			DesiredKafkaVersion: "2.7.2",
 		},
 	}
 
@@ -289,11 +290,11 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// kafka failed in preparing state and should not be returned in the list
 	additionalKafka := &dbapi.KafkaRequest{
-		ClusterID: testServer.ClusterID,
-		MultiAZ:   false,
-		Name:      mockKafkaName4,
-		Status:    constants2.KafkaRequestStatusFailed.String(),
-		Version:   "2.7.2",
+		ClusterID:           testServer.ClusterID,
+		MultiAZ:             false,
+		Name:                mockKafkaName4,
+		Status:              constants2.KafkaRequestStatusFailed.String(),
+		DesiredKafkaVersion: "2.7.2",
 	}
 
 	if err := db.Save(additionalKafka).Error; err != nil {
@@ -325,7 +326,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Annotations.Id).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
-				Expect(mk.Spec.Versions.Kafka).To(Equal(k.Version))
+				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
@@ -430,7 +431,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -491,7 +492,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -551,7 +552,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.6.0",
+			DesiredKafkaVersion: "2.6.0",
 		},
 	}
 
@@ -661,7 +662,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -728,7 +729,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	// create dummy kafkas
