@@ -6,7 +6,7 @@ package services
 import (
 	"context"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
@@ -86,13 +86,13 @@ type KeycloakServiceMock struct {
 	DeleteServiceAccountFunc func(ctx context.Context, clientId string) *apiErrors.ServiceError
 
 	// GetConfigFunc mocks the GetConfig method.
-	GetConfigFunc func() *config.KeycloakConfig
+	GetConfigFunc func() *keycloak.KeycloakConfig
 
 	// GetKafkaClientSecretFunc mocks the GetKafkaClientSecret method.
 	GetKafkaClientSecretFunc func(clientId string) (string, *apiErrors.ServiceError)
 
 	// GetRealmConfigFunc mocks the GetRealmConfig method.
-	GetRealmConfigFunc func() *config.KeycloakRealmConfig
+	GetRealmConfigFunc func() *keycloak.KeycloakRealmConfig
 
 	// GetServiceAccountByIdFunc mocks the GetServiceAccountById method.
 	GetServiceAccountByIdFunc func(ctx context.Context, id string) (*api.ServiceAccount, *apiErrors.ServiceError)
@@ -362,7 +362,7 @@ func (mock *KeycloakServiceMock) DeleteServiceAccountCalls() []struct {
 }
 
 // GetConfig calls GetConfigFunc.
-func (mock *KeycloakServiceMock) GetConfig() *config.KeycloakConfig {
+func (mock *KeycloakServiceMock) GetConfig() *keycloak.KeycloakConfig {
 	if mock.GetConfigFunc == nil {
 		panic("KeycloakServiceMock.GetConfigFunc: method is nil but KeycloakService.GetConfig was just called")
 	}
@@ -419,7 +419,7 @@ func (mock *KeycloakServiceMock) GetKafkaClientSecretCalls() []struct {
 }
 
 // GetRealmConfig calls GetRealmConfigFunc.
-func (mock *KeycloakServiceMock) GetRealmConfig() *config.KeycloakRealmConfig {
+func (mock *KeycloakServiceMock) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	if mock.GetRealmConfigFunc == nil {
 		panic("KeycloakServiceMock.GetRealmConfigFunc: method is nil but KeycloakService.GetRealmConfig was just called")
 	}

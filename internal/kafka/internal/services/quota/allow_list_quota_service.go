@@ -3,35 +3,33 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 )
 
 type allowListQuotaService struct {
 	connectionFactory *db.ConnectionFactory
-	configService     services.ConfigService
+	accessControlList *acl.AccessControlListConfig
 }
 
 func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-	if !q.configService.GetConfig().AccessControlList.EnableInstanceLimitControl {
+	if !q.accessControlList.EnableInstanceLimitControl {
 		return nil
 	}
 
 	username := kafka.Owner
 	orgId := kafka.OrganisationId
-	var allowListItem config.AllowedListItem
-	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, config.GetDefaultMaxAllowedInstances())
-	org, orgFound := q.configService.GetOrganisationById(orgId)
+	var allowListItem acl.AllowedListItem
+	message := fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, acl.GetDefaultMaxAllowedInstances())
+	org, orgFound := q.accessControlList.AllowList.Organisations.GetById(orgId)
 	filterByOrd := false
 	if orgFound && org.IsUserAllowed(username) {
 		allowListItem = org
 		message = fmt.Sprintf("Organization '%s' has reached a maximum number of %d allowed instances.", orgId, org.GetMaxAllowedInstances())
 		filterByOrd = true
 	} else {
-		user, userFound := q.configService.GetServiceAccountByUsername(username)
+		user, userFound := q.accessControlList.AllowList.ServiceAccounts.GetByUsername(username)
 		if userFound {
 			allowListItem = user
 			message = fmt.Sprintf("User '%s' has reached a maximum number of %d allowed instances.", username, user.GetMaxAllowedInstances())
@@ -51,7 +49,7 @@ func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.Ser
 	}
 
 	total := int(count)
-	maxInstanceReached := total >= config.GetDefaultMaxAllowedInstances()
+	maxInstanceReached := total >= acl.GetDefaultMaxAllowedInstances()
 	// check instance limit for internal users (users and orgs listed in allow list config)
 	if allowListItem != nil {
 		maxInstanceReached = !allowListItem.IsInstanceCountWithinLimit(total)

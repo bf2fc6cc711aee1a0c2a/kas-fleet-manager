@@ -5,15 +5,16 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/goava/di"
@@ -25,22 +26,23 @@ import (
 type Services struct {
 	di.Inject
 	DBFactory             *db.ConnectionFactory
-	AppConfig             *config.ApplicationConfig
+	KeycloakConfig        *keycloak.KeycloakConfig
+	KafkaConfig           *config.KafkaConfig
 	MetricsServer         *server.MetricsServer
 	HealthCheckServer     *server.HealthCheckServer
 	Workers               []coreWorkers.Worker
 	LeaderElectionManager *coreWorkers.LeaderElectionManager
 	SignalBus             signalbus.SignalBus
 	APIServer             *server.ApiServer
-	BootupServices        []provider.BootService
+	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
-	OCM2Client            *ocm.Client
-	OCMConfig             *config.OCMConfig
+	OCMClient             ocm.Client
+	OCMConfig             *ocm.OCMConfig
 	KafkaService          services.KafkaService
 	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
-	ServerConfig          *config.ServerConfig
+	ServerConfig          *server.ServerConfig
 }
 
 var TestServices Services
@@ -52,8 +54,8 @@ func NewKafkaHelper(t *testing.T, server *httptest.Server) (*test.Helper, *publi
 }
 
 func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configurationHook interface{}) (*test.Helper, *public.APIClient, func()) {
-	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(provider.BeforeCreateServicesHook{
-		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *config.ObservabilityConfiguration) {
+	h, teardown := test.NewHelperWithHooks(t, server, configurationHook, kafka.ConfigProviders(), di.ProvideValue(environments.BeforeCreateServicesHook{
+		Func: func(dataplaneClusterConfig *config.DataplaneClusterConfig, kafkaConfig *config.KafkaConfig, observabilityConfiguration *observatorium.ObservabilityConfiguration) {
 			kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka = true
 			observabilityConfiguration.EnableMock = true
 			dataplaneClusterConfig.DataPlaneClusterScalingType = config.NoScaling // disable scaling by default as it will be activated in specific tests
@@ -67,7 +69,7 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 }
 
 func NewApiClient(helper *test.Helper) *public.APIClient {
-	var serverConfig *config.ServerConfig
+	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	openapiConfig := public.NewConfiguration()
@@ -77,7 +79,7 @@ func NewApiClient(helper *test.Helper) *public.APIClient {
 }
 
 func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
-	var serverConfig *config.ServerConfig
+	var serverConfig *server.ServerConfig
 	helper.Env.MustResolveAll(&serverConfig)
 
 	openapiConfig := private.NewConfiguration()

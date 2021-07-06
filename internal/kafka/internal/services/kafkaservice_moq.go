@@ -6,12 +6,12 @@ package services
 import (
 	"context"
 	"github.com/aws/aws-sdk-go/service/route53"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	managedkafka "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/managedkafkas.managedkafka.bf2.org/v1"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	services2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"sync"
 )
 
@@ -87,7 +87,7 @@ type KafkaServiceMock struct {
 	ChangeKafkaCNAMErecordsFunc func(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *apiErrors.ServiceError)
 
 	// CountByStatusFunc mocks the CountByStatus method.
-	CountByStatusFunc func(status []constants.KafkaStatus) ([]KafkaStatusCount, error)
+	CountByStatusFunc func(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
 
 	// DeleteFunc mocks the Delete method.
 	DeleteFunc func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
@@ -111,10 +111,10 @@ type KafkaServiceMock struct {
 	HasAvailableCapacityFunc func() (bool, *apiErrors.ServiceError)
 
 	// ListFunc mocks the List method.
-	ListFunc func(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
+	ListFunc func(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError)
 
 	// ListByStatusFunc mocks the ListByStatus method.
-	ListByStatusFunc func(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
+	ListByStatusFunc func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
 
 	// ListKafkasWithRoutesNotCreatedFunc mocks the ListKafkasWithRoutesNotCreated method.
 	ListKafkasWithRoutesNotCreatedFunc func() ([]*dbapi.KafkaRequest, *apiErrors.ServiceError)
@@ -132,7 +132,7 @@ type KafkaServiceMock struct {
 	UpdateFunc func(kafkaRequest *dbapi.KafkaRequest) *apiErrors.ServiceError
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
-	UpdateStatusFunc func(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError)
+	UpdateStatusFunc func(id string, status constants2.KafkaStatus) (bool, *apiErrors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -146,7 +146,7 @@ type KafkaServiceMock struct {
 		// CountByStatus holds details about calls to the CountByStatus method.
 		CountByStatus []struct {
 			// Status is the status argument value.
-			Status []constants.KafkaStatus
+			Status []constants2.KafkaStatus
 		}
 		// Delete holds details about calls to the Delete method.
 		Delete []struct {
@@ -188,12 +188,12 @@ type KafkaServiceMock struct {
 			// Ctx is the ctx argument value.
 			Ctx context.Context
 			// ListArgs is the listArgs argument value.
-			ListArgs *services2.ListArguments
+			ListArgs *services.ListArguments
 		}
 		// ListByStatus holds details about calls to the ListByStatus method.
 		ListByStatus []struct {
 			// Status is the status argument value.
-			Status []constants.KafkaStatus
+			Status []constants2.KafkaStatus
 		}
 		// ListKafkasWithRoutesNotCreated holds details about calls to the ListKafkasWithRoutesNotCreated method.
 		ListKafkasWithRoutesNotCreated []struct {
@@ -225,7 +225,7 @@ type KafkaServiceMock struct {
 			// ID is the id argument value.
 			ID string
 			// Status is the status argument value.
-			Status constants.KafkaStatus
+			Status constants2.KafkaStatus
 		}
 	}
 	lockChangeKafkaCNAMErecords        sync.RWMutex
@@ -283,12 +283,12 @@ func (mock *KafkaServiceMock) ChangeKafkaCNAMErecordsCalls() []struct {
 }
 
 // CountByStatus calls CountByStatusFunc.
-func (mock *KafkaServiceMock) CountByStatus(status []constants.KafkaStatus) ([]KafkaStatusCount, error) {
+func (mock *KafkaServiceMock) CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error) {
 	if mock.CountByStatusFunc == nil {
 		panic("KafkaServiceMock.CountByStatusFunc: method is nil but KafkaService.CountByStatus was just called")
 	}
 	callInfo := struct {
-		Status []constants.KafkaStatus
+		Status []constants2.KafkaStatus
 	}{
 		Status: status,
 	}
@@ -302,10 +302,10 @@ func (mock *KafkaServiceMock) CountByStatus(status []constants.KafkaStatus) ([]K
 // Check the length with:
 //     len(mockedKafkaService.CountByStatusCalls())
 func (mock *KafkaServiceMock) CountByStatusCalls() []struct {
-	Status []constants.KafkaStatus
+	Status []constants2.KafkaStatus
 } {
 	var calls []struct {
-		Status []constants.KafkaStatus
+		Status []constants2.KafkaStatus
 	}
 	mock.lockCountByStatus.RLock()
 	calls = mock.calls.CountByStatus
@@ -530,13 +530,13 @@ func (mock *KafkaServiceMock) HasAvailableCapacityCalls() []struct {
 }
 
 // List calls ListFunc.
-func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services2.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services.ListArguments) (dbapi.KafkaList, *api.PagingMeta, *apiErrors.ServiceError) {
 	if mock.ListFunc == nil {
 		panic("KafkaServiceMock.ListFunc: method is nil but KafkaService.List was just called")
 	}
 	callInfo := struct {
 		Ctx      context.Context
-		ListArgs *services2.ListArguments
+		ListArgs *services.ListArguments
 	}{
 		Ctx:      ctx,
 		ListArgs: listArgs,
@@ -552,11 +552,11 @@ func (mock *KafkaServiceMock) List(ctx context.Context, listArgs *services2.List
 //     len(mockedKafkaService.ListCalls())
 func (mock *KafkaServiceMock) ListCalls() []struct {
 	Ctx      context.Context
-	ListArgs *services2.ListArguments
+	ListArgs *services.ListArguments
 } {
 	var calls []struct {
 		Ctx      context.Context
-		ListArgs *services2.ListArguments
+		ListArgs *services.ListArguments
 	}
 	mock.lockList.RLock()
 	calls = mock.calls.List
@@ -565,12 +565,12 @@ func (mock *KafkaServiceMock) ListCalls() []struct {
 }
 
 // ListByStatus calls ListByStatusFunc.
-func (mock *KafkaServiceMock) ListByStatus(status ...constants.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) ListByStatus(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *apiErrors.ServiceError) {
 	if mock.ListByStatusFunc == nil {
 		panic("KafkaServiceMock.ListByStatusFunc: method is nil but KafkaService.ListByStatus was just called")
 	}
 	callInfo := struct {
-		Status []constants.KafkaStatus
+		Status []constants2.KafkaStatus
 	}{
 		Status: status,
 	}
@@ -584,10 +584,10 @@ func (mock *KafkaServiceMock) ListByStatus(status ...constants.KafkaStatus) ([]*
 // Check the length with:
 //     len(mockedKafkaService.ListByStatusCalls())
 func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
-	Status []constants.KafkaStatus
+	Status []constants2.KafkaStatus
 } {
 	var calls []struct {
-		Status []constants.KafkaStatus
+		Status []constants2.KafkaStatus
 	}
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
@@ -750,13 +750,13 @@ func (mock *KafkaServiceMock) UpdateCalls() []struct {
 }
 
 // UpdateStatus calls UpdateStatusFunc.
-func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStatus) (bool, *apiErrors.ServiceError) {
+func (mock *KafkaServiceMock) UpdateStatus(id string, status constants2.KafkaStatus) (bool, *apiErrors.ServiceError) {
 	if mock.UpdateStatusFunc == nil {
 		panic("KafkaServiceMock.UpdateStatusFunc: method is nil but KafkaService.UpdateStatus was just called")
 	}
 	callInfo := struct {
 		ID     string
-		Status constants.KafkaStatus
+		Status constants2.KafkaStatus
 	}{
 		ID:     id,
 		Status: status,
@@ -772,11 +772,11 @@ func (mock *KafkaServiceMock) UpdateStatus(id string, status constants.KafkaStat
 //     len(mockedKafkaService.UpdateStatusCalls())
 func (mock *KafkaServiceMock) UpdateStatusCalls() []struct {
 	ID     string
-	Status constants.KafkaStatus
+	Status constants2.KafkaStatus
 } {
 	var calls []struct {
 		ID     string
-		Status constants.KafkaStatus
+		Status constants2.KafkaStatus
 	}
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus

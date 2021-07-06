@@ -1,12 +1,12 @@
 package integration
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
@@ -72,7 +72,7 @@ func TestServiceStatus(t *testing.T) {
 			CloudProvider:  kafkaCloudProvider,
 			Name:           "dummy-kafka",
 			OrganisationId: orgId,
-			Status:         constants.KafkaRequestStatusAccepted.String(),
+			Status:         constants2.KafkaRequestStatusAccepted.String(),
 		},
 		{
 			MultiAZ:       false,
@@ -80,7 +80,7 @@ func TestServiceStatus(t *testing.T) {
 			Region:        kafkaRegion,
 			CloudProvider: kafkaCloudProvider,
 			Name:          "dummy-kafka-2",
-			Status:        constants.KafkaRequestStatusAccepted.String(),
+			Status:        constants2.KafkaRequestStatusAccepted.String(),
 		},
 	}
 

@@ -1,8 +1,9 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 	"time"
 
@@ -10,8 +11,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
 )
 
@@ -20,11 +19,10 @@ type ProvisioningKafkaManager struct {
 	workers.BaseWorker
 	kafkaService         services.KafkaService
 	observatoriumService services.ObservatoriumService
-	configService        coreServices.ConfigService
 }
 
 // NewProvisioningKafkaManager creates a new kafka manager
-func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, configService coreServices.ConfigService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
+func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatoriumService services.ObservatoriumService, bus signalbus.SignalBus) *ProvisioningKafkaManager {
 	return &ProvisioningKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -35,7 +33,6 @@ func NewProvisioningKafkaManager(kafkaService services.KafkaService, observatori
 		},
 		kafkaService:         kafkaService,
 		observatoriumService: observatoriumService,
-		configService:        configService,
 	}
 }
 
@@ -57,7 +54,7 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 	// Kafkas in a "provisioning" state means that it is ready to be sent to the KAS Fleetshard Operator for Kafka creation in the data plane cluster.
 	// The update of the Kafka request status from 'provisioning' to another state will be handled by the KAS Fleetshard Operator.
 	// We only need to update the metrics here.
-	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants.KafkaRequestStatusProvisioning)
+	provisioningKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusProvisioning)
 	if serviceErr != nil {
 		encounteredErrors = append(encounteredErrors, errors.Wrap(serviceErr, "failed to list provisioning kafkas"))
 	} else {
@@ -65,7 +62,7 @@ func (k *ProvisioningKafkaManager) Reconcile() []error {
 	}
 	for _, kafka := range provisioningKafkas {
 		glog.V(10).Infof("provisioning kafka id = %s", kafka.ID)
-		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	}
 
 	return encounteredErrors

@@ -3,19 +3,20 @@ package integration
 import (
 	"context"
 	"fmt"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	test2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
-	kasfleetshardsync2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
 	. "github.com/onsi/gomega"
@@ -32,16 +33,16 @@ type TestServer struct {
 	Token         string
 	Client        *public.APIClient
 	PrivateClient *private.APIClient
-	Helper        *test.Helper
+	Helper        *coreTest.Helper
 	Ctx           context.Context
 }
 
-type claimsFunc func(account *v1.Account, clusterId string, h *test.Helper) jwt.MapClaims
+type claimsFunc func(account *v1.Account, clusterId string, h *coreTest.Helper) jwt.MapClaims
 
 func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer {
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	h, client, tearDown := test2.NewKafkaHelperWithHooks(t, ocmServer, startupHook)
+	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, startupHook)
 
 	clusterId, getClusterErr := common.GetOSDClusterID(h, t, nil)
 	if getClusterErr != nil {
@@ -53,7 +54,7 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 	token := h.CreateJWTStringWithClaim(account, claims(account, clusterId, h))
 
 	config := private.NewConfiguration()
-	config.BasePath = fmt.Sprintf("http://%s", test2.TestServices.ServerConfig.BindAddress)
+	config.BasePath = fmt.Sprintf("http://%s", test.TestServices.ServerConfig.BindAddress)
 	config.DefaultHeader = map[string]string{
 		"Authorization": "Bearer " + token,
 	}
@@ -76,9 +77,9 @@ func setup(t *testing.T, claims claimsFunc, startupHook interface{}) TestServer 
 
 func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 	clusterId := "test-cluster-id"
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss": test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -114,9 +115,9 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 //TODO: this test is added here to verify the "/agent_clusters" endpoint is backward compatible with "/agent-clusters". It should be removed once the backward compatibility is removed.
 func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
 	clusterId := "test-cluster-id"
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss": test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -140,9 +141,9 @@ func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss":                                test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":                                test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"kas-fleetshard-operator-cluster-id": "test-cluster-id",
 		}
 	}, nil)
@@ -173,9 +174,9 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		return jwt.MapClaims{
-			"iss": test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss": test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -208,11 +209,11 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -229,7 +230,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName1,
-			Status:              constants.KafkaRequestStatusDeprovision.String(),
+			Status:              constants2.KafkaRequestStatusDeprovision.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -239,7 +240,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName2,
-			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -249,7 +250,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName3,
-			Status:              constants.KafkaRequestStatusPreparing.String(),
+			Status:              constants2.KafkaRequestStatusPreparing.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -259,7 +260,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName4,
-			Status:              constants.KafkaRequestStatusReady.String(),
+			Status:              constants2.KafkaRequestStatusReady.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -269,7 +270,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName4,
-			Status:              constants.KafkaRequestStatusFailed.String(),
+			Status:              constants2.KafkaRequestStatusFailed.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -277,7 +278,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		},
 	}
 
-	db := test2.TestServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
@@ -291,7 +292,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		ClusterID: testServer.ClusterID,
 		MultiAZ:   false,
 		Name:      mockKafkaName4,
-		Status:    constants.KafkaRequestStatusFailed.String(),
+		Status:    constants2.KafkaRequestStatusFailed.String(),
 		Version:   "2.7.2",
 	}
 
@@ -315,7 +316,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	}
 
 	for _, k := range testKafkas {
-		if k.Status != constants.KafkaRequestStatusPreparing.String() {
+		if k.Status != constants2.KafkaRequestStatusPreparing.String() {
 			if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
 				Expect(mk.Metadata.Annotations.DeprecatedBf2OrgPlacementId).To(Equal(k.PlacementId))
@@ -323,7 +324,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Annotations.PlacementId).To(Equal(k.PlacementId))
 				Expect(mk.Metadata.Annotations.Id).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
-				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants.KafkaRequestStatusDeprovision.String()))
+				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Kafka).To(Equal(k.Version))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
@@ -361,7 +362,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
-	waitErr := common.NewPollerBuilder(test2.TestServices.DBFactory).
+	waitErr := common.NewPollerBuilder(test.TestServices.DBFactory).
 		IntervalAndTimeout(1*time.Second, 1*time.Minute).
 		RetryLogMessage("waiting for Kafka routes to be created").
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -383,7 +384,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 	}
 
 	for _, cid := range deletedClusters {
@@ -392,7 +393,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.Unscoped().Where("id = ?", cid).First(c).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusDeleting.String()))
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusDeleting.String()))
 	}
 }
 
@@ -404,11 +405,11 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		c.KafkaTLSCert = cert
 		c.KafkaTLSKey = key
 	}
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -424,7 +425,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -432,7 +433,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		Version:             "2.7.0",
 	}
 
-	db := test2.TestServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -462,14 +463,14 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
-	startHook := func(c *config.KeycloakConfig) {
+	startHook := func(c *keycloak.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = ""
 	}
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -485,7 +486,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -495,7 +496,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
 
-	db := test2.TestServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -525,11 +526,11 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -546,7 +547,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			ClusterID:           testServer.ClusterID,
 			MultiAZ:             false,
 			Name:                mockKafkaName2,
-			Status:              constants.KafkaRequestStatusProvisioning.String(),
+			Status:              constants2.KafkaRequestStatusProvisioning.String(),
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
@@ -554,7 +555,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		},
 	}
 
-	db := test2.TestServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
@@ -590,7 +591,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 
 	// wait for the CNAMEs for routes to be created
-	waitErr := common.NewPollerBuilder(test2.TestServices.DBFactory).
+	waitErr := common.NewPollerBuilder(test.TestServices.DBFactory).
 		IntervalAndTimeout(1*time.Second, 1*time.Minute).
 		RetryLogMessage("waiting for Kafka routes to be created").
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
@@ -625,21 +626,21 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
-		Expect(c.Status).To(Equal(constants.KafkaRequestStatusReady.String()))
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 	}
 }
 
 func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 	cert := "some-fake-cert"
-	startHook := func(c *config.KeycloakConfig) {
+	startHook := func(c *keycloak.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = cert
 		c.EnableAuthenticationOnKafka = true
 	}
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -655,7 +656,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -665,7 +666,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
 
-	db := test2.TestServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 
 	// create dummy kafka
 	if err := db.Save(testKafka).Error; err != nil {
@@ -695,17 +696,17 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 
 }
 
-func KeycloakConfig(helper *test.Helper) (c *config.KeycloakConfig) {
+func KeycloakConfig(helper *coreTest.Helper) (c *keycloak.KeycloakConfig) {
 	helper.Env.MustResolveAll(&c)
 	return
 }
 
 func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
-	testServer := setup(t, func(account *v1.Account, cid string, h *test.Helper) jwt.MapClaims {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
 		username, _ := account.GetUsername()
 		return jwt.MapClaims{
 			"username": username,
-			"iss":      test2.TestServices.AppConfig.Keycloak.KafkaRealm.ValidIssuerURI,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
 			"realm_access": map[string][]string{
 				"roles": {"kas_fleetshard_operator"},
 			},
@@ -717,13 +718,13 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
 
-	db := test2.TestServices.DBFactory.New()
+	db := test.TestServices.DBFactory.New()
 
 	testKafka := dbapi.KafkaRequest{
 		ClusterID:           testServer.ClusterID,
 		MultiAZ:             false,
 		Name:                mockKafkaName1,
-		Status:              constants.KafkaRequestStatusReady.String(),
+		Status:              constants2.KafkaRequestStatusReady.String(),
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
@@ -744,7 +745,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 
 	errMessage := "test-err-message"
 	updateReq := map[string]private.DataPlaneKafkaStatus{
-		kafkaReqID: kasfleetshardsync2.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
+		kafkaReqID: kasfleetshardsync.GetErrorWithCustomMessageKafkaStatusResponse(errMessage),
 	}
 	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
 	Expect(err).NotTo(HaveOccurred())
@@ -753,6 +754,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
 		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
 	}
-	Expect(c.Status).To(Equal(constants.KafkaRequestStatusFailed.String()))
+	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
 	Expect(c.FailedReason).To(ContainSubstring(errMessage))
 }

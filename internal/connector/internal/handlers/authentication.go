@@ -2,15 +2,16 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/golang/glog"
 	sdk "github.com/openshift-online/ocm-sdk-go"
 	"github.com/openshift-online/ocm-sdk-go/authentication"
 	pkgErrors "github.com/pkg/errors"
 )
 
-func NewAuthenticationBuilder(ServerConfig *config.ServerConfig, KeycloakConfig *config.KeycloakConfig) (*authentication.HandlerBuilder, error) {
+func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig *keycloak.KeycloakConfig) (*authentication.HandlerBuilder, error) {
 
 	authnLogger, err := sdk.NewGlogLoggerBuilder().
 		InfoV(glog.Level(1)).

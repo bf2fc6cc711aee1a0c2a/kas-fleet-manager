@@ -1,10 +1,11 @@
 package environments
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"os"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 )
 
 type IntegrationEnvLoader struct{}
@@ -25,7 +26,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-terms-acceptance":           "false",
 		"ocm-debug":                         "false",
 		"enable-ocm-mock":                   "true",
-		"ocm-mock-mode":                     config.MockModeEmulateServer,
+		"ocm-mock-mode":                     ocm.MockModeEmulateServer,
 		"enable-sentry":                     "false",
 		"enable-deny-list":                  "true",
 		"enable-instance-limit-control":     "true",
@@ -49,8 +50,8 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 // The environment is expected to be modified as needed
 func (b IntegrationEnvLoader) ModifyConfiguration(env *environments.Env) error {
 	// Support a one-off env to allow enabling db debug in testing
-	var databaseConfig *config.DatabaseConfig
-	var observabilityConfiguration *config.ObservabilityConfiguration
+	var databaseConfig *db.DatabaseConfig
+	var observabilityConfiguration *observatorium.ObservabilityConfiguration
 	env.MustResolveAll(&databaseConfig, &observabilityConfiguration)
 
 	if os.Getenv("DB_DEBUG") == "true" {

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/pkg/errors"
 
 	"github.com/Nerzal/gocloak/v8"
@@ -39,8 +38,8 @@ func Test_kcClient_GetToken(t *testing.T) {
 	type fields struct {
 		goCloakClient gocloak.GoCloak
 		ctx           context.Context
-		config        *config.KeycloakConfig
-		realmConfig   *config.KeycloakRealmConfig
+		config        *KeycloakConfig
+		realmConfig   *KeycloakRealmConfig
 		cache         *cache.Cache
 	}
 
@@ -68,7 +67,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 		{
 			name: "failed to get token",
 			fields: fields{
-				realmConfig: &config.KeycloakRealmConfig{
+				realmConfig: &KeycloakRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -88,7 +87,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 		{
 			name: "successfully get new access token when no token is in cache",
 			fields: fields{
-				realmConfig: &config.KeycloakRealmConfig{
+				realmConfig: &KeycloakRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,
@@ -113,7 +112,7 @@ func Test_kcClient_GetToken(t *testing.T) {
 				f.cache.Set(cachedTK, jwtTokenExpired, tokenLifeDuration)
 			},
 			fields: fields{
-				realmConfig: &config.KeycloakRealmConfig{
+				realmConfig: &KeycloakRealmConfig{
 					ClientID:         clientID,
 					GrantType:        grantType,
 					ValidIssuerURI:   validIssuerURI,

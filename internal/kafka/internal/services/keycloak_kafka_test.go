@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/dgrijalva/jwt-go"
 	"reflect"
@@ -68,8 +67,8 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -130,8 +129,8 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -257,8 +256,8 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -302,8 +301,8 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -347,8 +346,8 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -392,8 +391,8 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -482,8 +481,8 @@ func TestKeycloakService_ListServiceAcc(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -570,8 +569,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -630,8 +629,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -690,8 +689,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil
@@ -786,8 +785,8 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 					GetTokenFunc: func() (string, error) {
 						return token, nil
 					},
-					GetConfigFunc: func() *config.KeycloakConfig {
-						return config.NewKeycloakConfig()
+					GetConfigFunc: func() *keycloak.KeycloakConfig {
+						return keycloak.NewKeycloakConfig()
 					},
 					IsClientExistFunc: func(clientId string, accessToken string) (string, error) {
 						return "", nil

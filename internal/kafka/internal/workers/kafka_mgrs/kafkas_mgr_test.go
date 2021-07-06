@@ -2,9 +2,9 @@ package kafka_mgrs
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
 	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -15,7 +15,7 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 		kafkaService services.KafkaService
 	}
 	type args struct {
-		deniedAccounts config.DeniedUsers
+		deniedAccounts acl.DeniedUsers
 	}
 	tests := []struct {
 		name    string
@@ -31,7 +31,7 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 				},
 			},
 			args: args{
-				deniedAccounts: config.DeniedUsers{},
+				deniedAccounts: acl.DeniedUsers{},
 			},
 			wantErr: false,
 		},
@@ -45,7 +45,7 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 				},
 			},
 			args: args{
-				deniedAccounts: config.DeniedUsers{"some user"},
+				deniedAccounts: acl.DeniedUsers{"some user"},
 			},
 			wantErr: true,
 		},
@@ -59,7 +59,7 @@ func TestKafkaManager_reconcileDeniedKafkaOwners(t *testing.T) {
 				},
 			},
 			args: args{
-				deniedAccounts: config.DeniedUsers{"some user"},
+				deniedAccounts: acl.DeniedUsers{"some user"},
 			},
 			wantErr: false,
 		},

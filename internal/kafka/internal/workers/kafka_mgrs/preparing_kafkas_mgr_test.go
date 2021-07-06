@@ -1,6 +1,7 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"testing"
@@ -9,7 +10,6 @@ import (
 	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	constants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
 
@@ -26,7 +26,7 @@ func TestPreparingKafkaManager(t *testing.T) {
 		args                args
 		wantErr             bool
 		wantErrMsg          string
-		expectedKafkaStatus constants.KafkaStatus
+		expectedKafkaStatus constants2.KafkaStatus
 	}{
 		{
 			name: "Encounter a 5xx error Kafka preparation and performed the retry",
@@ -42,12 +42,12 @@ func TestPreparingKafkaManager(t *testing.T) {
 					Meta: api.Meta{
 						CreatedAt: time.Now().Add(time.Minute * time.Duration(30)),
 					},
-					Status: string(constants.KafkaRequestStatusPreparing),
+					Status: string(constants2.KafkaRequestStatusPreparing),
 				},
 			},
 			wantErr:             true,
 			wantErrMsg:          "",
-			expectedKafkaStatus: constants.KafkaRequestStatusPreparing,
+			expectedKafkaStatus: constants2.KafkaRequestStatusPreparing,
 		},
 		{
 			name: "Encounter a 5xx error Kafka preparation and skipped the retry",
@@ -66,12 +66,12 @@ func TestPreparingKafkaManager(t *testing.T) {
 					Meta: api.Meta{
 						CreatedAt: time.Now().Add(time.Minute * time.Duration(-30)),
 					},
-					Status: string(constants.KafkaRequestStatusPreparing),
+					Status: string(constants2.KafkaRequestStatusPreparing),
 				},
 			},
 			wantErr:             true,
 			wantErrMsg:          "simulate 5xx error",
-			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+			expectedKafkaStatus: constants2.KafkaRequestStatusFailed,
 		},
 		{
 			name: "Encounter a Client error (4xx) in Kafka preparation",
@@ -87,12 +87,12 @@ func TestPreparingKafkaManager(t *testing.T) {
 			},
 			args: args{
 				kafka: &dbapi.KafkaRequest{
-					Status: string(constants.KafkaRequestStatusPreparing),
+					Status: string(constants2.KafkaRequestStatusPreparing),
 				},
 			},
 			wantErr:             true,
 			wantErrMsg:          "simulate a 4xx error",
-			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+			expectedKafkaStatus: constants2.KafkaRequestStatusFailed,
 		},
 		{
 			name: "Encounter an SSO Client internal error in Kafka creation and performed the retry",
@@ -129,7 +129,7 @@ func TestPreparingKafkaManager(t *testing.T) {
 			},
 			wantErr:             true,
 			wantErrMsg:          "ErrorFailedToCreateSSOClientReason",
-			expectedKafkaStatus: constants.KafkaRequestStatusFailed,
+			expectedKafkaStatus: constants2.KafkaRequestStatusFailed,
 		},
 		{
 			name: "Successful reconcile",

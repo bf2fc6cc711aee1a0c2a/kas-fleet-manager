@@ -2,7 +2,7 @@ package serviceaccounts
 
 import (
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -64,7 +64,7 @@ func runCreate(env *environments.Env, cmd *cobra.Command, args []string) {
 	glog.V(10).Infof("%s", output)
 }
 
-func KeycloakConfig(env *environments.Env) (c *config.KeycloakConfig) {
+func KeycloakConfig(env *environments.Env) (c *keycloak.KeycloakConfig) {
 	env.MustResolve(&c)
 	return
 }

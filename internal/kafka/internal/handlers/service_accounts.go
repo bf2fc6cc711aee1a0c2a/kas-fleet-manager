@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 	"net/url"
@@ -39,7 +39,7 @@ func (s serviceAccountsHandler) ListServiceAccounts(w http.ResponseWriter, r *ht
 			}
 
 			for _, account := range sa {
-				converted := presenters2.PresentServiceAccountListItem(&account)
+				converted := presenters.PresentServiceAccountListItem(&account)
 				serviceAccountList.Items = append(serviceAccountList.Items, converted)
 			}
 
@@ -73,12 +73,12 @@ func (s serviceAccountsHandler) CreateServiceAccount(w http.ResponseWriter, r *h
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			convSA := presenters2.ConvertServiceAccountRequest(serviceAccountRequest)
+			convSA := presenters.ConvertServiceAccountRequest(serviceAccountRequest)
 			serviceAccount, err := s.service.CreateServiceAccount(convSA, ctx)
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentServiceAccount(serviceAccount), nil
+			return presenters.PresentServiceAccount(serviceAccount), nil
 		},
 	}
 	handlers.Handle(w, r, cfg, http.StatusAccepted)
@@ -114,7 +114,7 @@ func (s serviceAccountsHandler) ResetServiceAccountCredential(w http.ResponseWri
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentServiceAccount(sa), nil
+			return presenters.PresentServiceAccount(sa), nil
 		},
 	}
 
@@ -134,7 +134,7 @@ func (s serviceAccountsHandler) GetServiceAccountById(w http.ResponseWriter, r *
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentServiceAccount(sa), nil
+			return presenters.PresentServiceAccount(sa), nil
 		},
 	}
 

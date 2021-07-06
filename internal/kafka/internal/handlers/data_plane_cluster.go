@@ -2,25 +2,22 @@ package handlers
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
-	presenters2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
 type dataPlaneClusterHandler struct {
 	service services.DataPlaneClusterService
-	config  coreServices.ConfigService
 }
 
-func NewDataPlaneClusterHandler(service services.DataPlaneClusterService, configService coreServices.ConfigService) *dataPlaneClusterHandler {
+func NewDataPlaneClusterHandler(service services.DataPlaneClusterService) *dataPlaneClusterHandler {
 	return &dataPlaneClusterHandler{
 		service: service,
-		config:  configService,
 	}
 }
 
@@ -37,7 +34,7 @@ func (h *dataPlaneClusterHandler) UpdateDataPlaneClusterStatus(w http.ResponseWr
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
-			dataPlaneClusterStatus := presenters2.ConvertDataPlaneClusterStatus(dataPlaneClusterUpdateRequest)
+			dataPlaneClusterStatus := presenters.ConvertDataPlaneClusterStatus(dataPlaneClusterUpdateRequest)
 			err := h.service.UpdateDataPlaneClusterStatus(ctx, dataPlaneClusterID, dataPlaneClusterStatus)
 			return nil, err
 		},
@@ -60,7 +57,7 @@ func (h *dataPlaneClusterHandler) GetDataPlaneClusterConfig(w http.ResponseWrite
 			if err != nil {
 				return nil, err
 			}
-			return presenters2.PresentDataPlaneClusterConfig(dataClusterConfig), nil
+			return presenters.PresentDataPlaneClusterConfig(dataClusterConfig), nil
 		},
 	}
 

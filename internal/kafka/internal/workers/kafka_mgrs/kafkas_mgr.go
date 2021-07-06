@@ -1,13 +1,13 @@
 package kafka_mgrs
 
 import (
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
@@ -15,25 +15,26 @@ import (
 )
 
 // we do not add "deleted" status to the list as the kafkas are soft deleted once the status is set to "deleted", so no need to count them here.
-var kafkaMetricsStatuses = []constants.KafkaStatus{
-	constants.KafkaRequestStatusAccepted,
-	constants.KafkaRequestStatusPreparing,
-	constants.KafkaRequestStatusProvisioning,
-	constants.KafkaRequestStatusReady,
-	constants.KafkaRequestStatusDeprovision,
-	constants.KafkaRequestStatusDeleting,
-	constants.KafkaRequestStatusFailed,
+var kafkaMetricsStatuses = []constants2.KafkaStatus{
+	constants2.KafkaRequestStatusAccepted,
+	constants2.KafkaRequestStatusPreparing,
+	constants2.KafkaRequestStatusProvisioning,
+	constants2.KafkaRequestStatusReady,
+	constants2.KafkaRequestStatusDeprovision,
+	constants2.KafkaRequestStatusDeleting,
+	constants2.KafkaRequestStatusFailed,
 }
 
 // KafkaManager represents a kafka manager that periodically reconciles kafka requests
 type KafkaManager struct {
 	workers.BaseWorker
-	kafkaService  services.KafkaService
-	configService coreServices.ConfigService
+	kafkaService            services.KafkaService
+	accessControlListConfig *acl.AccessControlListConfig
+	kafkaConfig             *config.KafkaConfig
 }
 
 // NewKafkaManager creates a new kafka manager
-func NewKafkaManager(kafkaService services.KafkaService, configService coreServices.ConfigService, bus signalbus.SignalBus) *KafkaManager {
+func NewKafkaManager(kafkaService services.KafkaService, accessControlList *acl.AccessControlListConfig, kafka *config.KafkaConfig, bus signalbus.SignalBus) *KafkaManager {
 	return &KafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -42,8 +43,9 @@ func NewKafkaManager(kafkaService services.KafkaService, configService coreServi
 				SignalBus: bus,
 			},
 		},
-		kafkaService:  kafkaService,
-		configService: configService,
+		kafkaService:            kafkaService,
+		accessControlListConfig: accessControlList,
+		kafkaConfig:             kafka,
 	}
 }
 
@@ -69,7 +71,7 @@ func (k *KafkaManager) Reconcile() []error {
 	}
 
 	// delete kafkas of denied owners
-	accessControlListConfig := k.configService.GetConfig().AccessControlList
+	accessControlListConfig := k.accessControlListConfig
 	if accessControlListConfig.EnableDenyList {
 		glog.Infoln("reconciling denied kafka owners")
 		kafkaDeprovisioningForDeniedOwnersErr := k.reconcileDeniedKafkaOwners(accessControlListConfig.DenyList)
@@ -79,8 +81,8 @@ func (k *KafkaManager) Reconcile() []error {
 		}
 	}
 
-	// cleaning up expired kafkas
-	kafkaConfig := k.configService.GetConfig().Kafka
+	// cleaning up expired qkafkas
+	kafkaConfig := k.kafkaConfig
 	if kafkaConfig.KafkaLifespan.EnableDeletionOfExpiredKafka {
 		glog.Infoln("deprovisioning expired kafkas")
 		expiredKafkasError := k.kafkaService.DeprovisionExpiredKafkas(kafkaConfig.KafkaLifespan.KafkaLifespanInHours)
@@ -93,7 +95,7 @@ func (k *KafkaManager) Reconcile() []error {
 	return encounteredErrors
 }
 
-func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers config.DeniedUsers) *serviceErr.ServiceError {
+func (k *KafkaManager) reconcileDeniedKafkaOwners(deniedUsers acl.DeniedUsers) *serviceErr.ServiceError {
 	if len(deniedUsers) < 1 {
 		return nil
 	}

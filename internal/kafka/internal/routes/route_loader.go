@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -9,12 +10,12 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/provider"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
@@ -26,13 +27,13 @@ import (
 
 type options struct {
 	di.Inject
-	ServerConfig *config.ServerConfig
-	OCMConfig    *config.OCMConfig
+	ServerConfig   *server.ServerConfig
+	OCMConfig      *ocm.OCMConfig
+	ProviderConfig *config.ProviderConfig
 
 	OCM                   ocm.Client
 	Kafka                 services.KafkaService
 	CloudProviders        services.CloudProvidersService
-	ConfigService         coreServices.ConfigService
 	Observatorium         services.ObservatoriumService
 	Keycloak              coreServices.KafkaKeycloakService
 	DataPlaneCluster      services.DataPlaneClusterService
@@ -40,9 +41,10 @@ type options struct {
 	DB                    *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
+	AccessControlListConfig     *acl.AccessControlListConfig
 }
 
-func NewRouteLoader(s options) provider.RouteLoader {
+func NewRouteLoader(s options) environments.RouteLoader {
 	return &s
 }
 
@@ -68,12 +70,12 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
 	}
 
-	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ConfigService)
-	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ConfigService)
+	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig)
+	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
-	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.ConfigService)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Kafka, s.AccessControlListConfig)
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
@@ -165,8 +167,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
 
 	// /agent_clusters/{id}
-	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster, s.ConfigService)
-	dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(s.DataPlaneKafkaService, s.ConfigService, s.Kafka)
+	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
+	dataPlaneKafkaHandler := handlers.NewDataPlaneKafkaHandler(s.DataPlaneKafkaService, s.Kafka)
 	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/{_:agent[-_]clusters}").Subrouter()
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).Methods(http.MethodGet)
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
