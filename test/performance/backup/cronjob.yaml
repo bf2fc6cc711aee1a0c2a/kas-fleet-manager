@@ -1,0 +1,39 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: perf-test-db-backup
+spec:
+  schedule: "0 10 * * 2-5" # 10am UTC Tuesday to Friday
+  concurrencyPolicy: "Forbid"
+  successfulJobsHistoryLimit: 14
+  failedJobsHistoryLimit: 14
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: perf-test-db-backup
+            image: quay.io/rhoas/kas-fleet-manager-perf-test-backup
+            command: ["bash", "backup.sh"]
+            env:
+              - name: SERVER_URL
+                value: <SERVER_URL>
+              - name: ADMIN_LOGIN
+                value: <ADMIN_LOGIN>
+              - name: ADMIN_PASSWORD
+                value: <ADMIN_PASSWORD>
+              - name: BACKUP_PROJECT
+                value: <BACKUP_PROJECT>
+              - name: DB_POD_NAME
+                value: <DB_POD_NAME>
+              - name: DB_NAME
+                value: <DB_NAME>
+              - name: DB_USER
+                value: <DB_USER>
+              - name: S3_BUCKET_NAME
+                value: <S3_BUCKET_NAME>
+              - name: AWS_ACCESS_KEY
+                value: <AWS_ACCESS_KEY>
+              - name: AWS_SECRET
+                value: <AWS_SECRET>
