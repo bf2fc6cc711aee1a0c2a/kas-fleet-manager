@@ -2,11 +2,14 @@ package workers
 
 import (
 	"fmt"
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+
+	kafkaConstants "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
+
 	"strings"
 	"sync"
 
@@ -514,7 +517,7 @@ func (c *ClusterManager) reconcileClusterResources(cluster api.Cluster) error {
 	if dnsErr != nil {
 		return errors.Wrapf(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
 	}
-	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
+	clusterDNS = strings.Replace(clusterDNS, kafkaConstants.DefaultIngressDnsNamePrefix, kafkaConstants.ManagedKafkaIngressDnsNamePrefix, 1)
 	resourceSet := c.buildResourceSet(clusterDNS)
 	if err := c.ClusterService.ApplyResources(&cluster, resourceSet); err != nil {
 		return errors.Wrapf(err, "failed to apply resources for cluster %s", cluster.ClusterID)
@@ -540,7 +543,7 @@ func (c *ClusterManager) reconcileClusterStatus(cluster *api.Cluster) (*api.Clus
 	}
 	if updatedCluster.Status == api.ClusterFailed {
 		metrics.UpdateClusterStatusSinceCreatedMetric(*cluster, api.ClusterFailed)
-		metrics.IncreaseClusterTotalOperationsCountMetric(constants2.ClusterOperationCreate)
+		metrics.IncreaseClusterTotalOperationsCountMetric(kafkaConstants.ClusterOperationCreate)
 	}
 	return updatedCluster, nil
 }
