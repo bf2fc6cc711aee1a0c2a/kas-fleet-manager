@@ -2,10 +2,11 @@ package services
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/clusters/types"
@@ -2172,102 +2173,6 @@ func TestClusterService_ClusterLogging(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("InstallClusterLogging want %v, but got %v", tt.want, got)
-			}
-		})
-	}
-}
-
-func TestClusterService_KasFleetshard(t *testing.T) {
-	type fields struct {
-		connectionFactory      *db.ConnectionFactory
-		clusterProviderFactory clusters.ProviderFactory
-	}
-	type args struct {
-		cluster *api.Cluster
-		addonID string
-	}
-
-	clusterId := "test-internal-id"
-	clusterExternalId := "test-external-id"
-	clusterStatus := api.ClusterProvisioning
-
-	cluster := &api.Cluster{
-		Meta: api.Meta{
-			ID: clusterId,
-		},
-		ExternalID:   clusterExternalId,
-		ClusterID:    clusterId,
-		Status:       clusterStatus,
-		ProviderType: api.ClusterProviderOCM,
-	}
-
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		setupFn func()
-		wantErr bool
-		want    bool
-	}{
-		{
-			name: "successfully install kas-fleet-shard",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				clusterProviderFactory: &clusters.ProviderFactoryMock{
-					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{
-							InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-								return true, nil
-							}}, nil
-					},
-				},
-			},
-			args: args{
-				cluster: cluster,
-				addonID: "test-id",
-			},
-			wantErr: false,
-			want:    true,
-		},
-		{
-			name: "error when failed to install kas-fleet-shard",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				clusterProviderFactory: &clusters.ProviderFactoryMock{
-					GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
-						return &clusters.ProviderMock{
-							InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []types.Parameter) (bool, error) {
-								return false, errors.Errorf("failed to install addon")
-							},
-						}, nil
-					},
-				},
-			},
-			args: args{
-				cluster: cluster,
-				addonID: "test-addon-id",
-			},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if tt.setupFn != nil {
-				tt.setupFn()
-			}
-
-			c := &clusterService{
-				connectionFactory: tt.fields.connectionFactory,
-				providerFactory:   tt.fields.clusterProviderFactory,
-			}
-
-			got, err := c.InstallKasFleetshard(tt.args.cluster, []types.Parameter{})
-			if (err != nil) != tt.wantErr {
-				t.Errorf("InstallKasFleetshardFunc() error = %v, wantErr = %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("InstallKasFleetshardFunc want %v, but got %v", tt.want, got)
 			}
 		})
 	}
