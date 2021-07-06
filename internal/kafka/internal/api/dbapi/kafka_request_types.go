@@ -3,10 +3,11 @@ package dbapi
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
-	"strings"
 )
 
 type KafkaRequest struct {
@@ -27,7 +28,14 @@ type KafkaRequest struct {
 	FailedReason        string `json:"failed_reason"`
 	// PlacementId field should be updated every time when a KafkaRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
-	Version     string `json:"version"`
+
+	DesiredKafkaVersion   string `json:"desired_kafka_version"`
+	ActualKafkaVersion    string `json:"actual_kafka_version"`
+	DesiredStrimziVersion string `json:"desired_strimzi_version"`
+	ActualStrimziVersion  string `json:"actual_strimzi_version"`
+	KafkaUpgrading        bool   `json:"kafka_upgrading"`
+	StrimziUpgrading      bool   `json:"strimzi_upgrading"`
+
 	// the quota service type for the kafka, e.g. ams, allow-list
 	QuotaType string `json:"quota_type"`
 	// Routes routes mapping for the kafka instance. It is an array and each item in the array contains a domain value and the corresponding route url
