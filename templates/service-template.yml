@@ -456,6 +456,16 @@ parameters:
   description: Enables reconciliation for data plane clusters in the 'Ready' state
   value: "true"
 
+- name: STRIMZI_OLM_INDEX_IMAGE
+  displayName: Strimzi operator OLM index image
+  description: Strimzi operator OLM index image
+  value: "quay.io/osd-addons/managed-kafka:production-82b42db"
+
+- name: KAS_FLEETSHARD_OLM_INDEX_IMAGE
+  displayName: kas-fleetshard operator OLM index image
+  description: kas-fleetshard operator OLM index image
+  value: "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -830,6 +840,8 @@ objects:
             - --image-pull-docker-config-file=/secrets/service/image-pull.dockerconfigjson
             - --public-host-url=${SERVICE_PUBLIC_HOST_URL}
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
+            - --strimzi-operator-index-image=${STRIMZI_OLM_INDEX_IMAGE}
+            - --kas-fleetshard-operator-index-image=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}
             - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
             - --kafka-domain-name=${KAFKA_DOMAIN_NAME}

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/pkg/errors"
 
@@ -37,6 +38,16 @@ type DataplaneClusterConfig struct {
 	EnableReadyDataPlaneClustersReconcile bool           `json:"enable_ready_dataplane_clusters_reconcile"`
 	Kubeconfig                            string         `json:"kubeconfig"`
 	RawKubernetesConfig                   *clientcmdapi.Config
+	StrimziOperatorOLMConfig              OperatorInstallationConfig `json:"strimzi_operator_olm_config"`
+	KasFleetshardOperatorOLMConfig        OperatorInstallationConfig `json:"kas_fleetshard_operator_olm_config"`
+}
+
+type OperatorInstallationConfig struct {
+	Namespace              string `json:"namespace"`
+	IndexImage             string `json:"index_image"`
+	CatalogSourceNamespace string `json:"catalog_source_namespace"`
+	Package                string `json:"package"`
+	SubscriptionChannel    string `json:"subscription_channel"`
 }
 
 const (
@@ -71,6 +82,20 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		ClusterConfig:                         &ClusterConfig{},
 		EnableReadyDataPlaneClustersReconcile: true,
 		Kubeconfig:                            getDefaultKubeconfig(),
+		StrimziOperatorOLMConfig: OperatorInstallationConfig{
+			IndexImage:             "quay.io/osd-addons/managed-kafka:production-82b42db",
+			CatalogSourceNamespace: "openshift-marketplace",
+			Namespace:              constants.StrimziOperatorNamespace,
+			SubscriptionChannel:    "alpha",
+			Package:                "managed-kafka",
+		},
+		KasFleetshardOperatorOLMConfig: OperatorInstallationConfig{
+			IndexImage:             "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db",
+			CatalogSourceNamespace: "openshift-marketplace",
+			Namespace:              constants.KASFleetShardOperatorNamespace,
+			SubscriptionChannel:    "alpha",
+			Package:                "kas-fleetshard-operator",
+		},
 	}
 }
 
@@ -199,6 +224,16 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.KafkaSREUsersFile, "kafka-sre-user-list-file", c.KafkaSREUsersFile, "File contains a list of kafka-sre users with cluster-admin permissions to data plane clusters")
 	fs.BoolVar(&c.EnableReadyDataPlaneClustersReconcile, "enable-ready-dataplane-clusters-reconcile", c.EnableReadyDataPlaneClustersReconcile, "Enables reconciliation for data plane clusters in the 'Ready' state")
 	fs.StringVar(&c.Kubeconfig, "kubeconfig", c.Kubeconfig, "A path to kubeconfig file used for communication with standalone clusters")
+	fs.StringVar(&c.StrimziOperatorOLMConfig.CatalogSourceNamespace, "strimzi-operator-cs-namespace", c.StrimziOperatorOLMConfig.CatalogSourceNamespace, "Strimzi operator catalog source namespace.")
+	fs.StringVar(&c.StrimziOperatorOLMConfig.IndexImage, "strimzi-operator-index-image", c.StrimziOperatorOLMConfig.IndexImage, "Strimzi operator index image")
+	fs.StringVar(&c.StrimziOperatorOLMConfig.Namespace, "strimzi-operator-namespace", c.StrimziOperatorOLMConfig.Namespace, "Strimzi operator namespace")
+	fs.StringVar(&c.StrimziOperatorOLMConfig.Package, "strimzi-operator-package", c.StrimziOperatorOLMConfig.Package, "Strimzi operator package")
+	fs.StringVar(&c.StrimziOperatorOLMConfig.SubscriptionChannel, "strimzi-operator-sub-channel", c.StrimziOperatorOLMConfig.SubscriptionChannel, "Strimzi operator subscription channel")
+	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.CatalogSourceNamespace, "kas-fleetshard-operator-cs-namespace", c.KasFleetshardOperatorOLMConfig.CatalogSourceNamespace, "kas-fleetshard operator catalog source namespace.")
+	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.IndexImage, "kas-fleetshard-operator-index-image", c.KasFleetshardOperatorOLMConfig.IndexImage, "kas-fleetshard operator index image")
+	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.Namespace, "kas-fleetshard-operator-namespace", c.KasFleetshardOperatorOLMConfig.Namespace, "kas-fleetshard operator namespace")
+	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.Package, "kas-fleetshard-operator-package", c.KasFleetshardOperatorOLMConfig.Package, "kas-fleetshard operator package")
+	fs.StringVar(&c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard-operator-sub-channel", c.KasFleetshardOperatorOLMConfig.SubscriptionChannel, "kas-fleetshard operator subscription channel")
 }
 
 func (c *DataplaneClusterConfig) ReadFiles() error {

@@ -98,6 +98,16 @@ This lists the feature flags and their sub-configurations to enable/disable and 
         - `cluster-compute-machine-type` [Optional]: The compute machine type to be used for provisioning a new dataplane cluster (default: `m5.4xlarge`).
         - `cluster-openshift-version` [Optional]: The OpenShift version to be installed on the dataplane cluster (default: `""`, empty string indicates that the latest stable version will be used). 
 - **cluster-logging-operator-addon-id**: Enables the Cluster Logging Operator addon with Cloud Watch and application level logs enabled. (default: `""`, An empty string indicates that the operator should not be installed).
+- **strimzi-operator-cs-namespace**: Strimzi operator catalog source namespace.
+- **strimzi-operator-index-image**: Strimzi operator index image name
+- **strimzi-operator-namespace**: Strimzi operator namespace
+- **strimzi-operator-package**: Strimzi operator package name
+- **strimzi-operator-sub-channel**: Strimzi operator subscription channel
+- **kas-fleetshard-operator-cs-namespace**: kas-fleetshard operator catalog source namespace
+- **kas-fleetshard-operator-index-image**: kas-fleetshard operator index image name
+- **kas-fleetshard-operator-namespace**: kas-fleetshard operator namespace
+- **kas-fleetshard-operator-package**: kas-fleetshard operator package name
+- **kas-fleetshard-operator-sub-channel**: kas-fleetshard operator subscription channel
 
 ## Sentry
 - **enable-sentry**: Enables Sentry error reporting.
