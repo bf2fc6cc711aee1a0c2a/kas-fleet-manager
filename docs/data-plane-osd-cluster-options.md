@@ -55,7 +55,7 @@ kas-fleet-manager allows provisioning of kafkas in an already preexisting standa
 
 > NOTE: `kubeconfig` path can be configured via the `--kubeconfig` CLI flag. Otherwise is defaults to `$HOME/.kube/config`
 
-> NOTE: Make sure that strimzi and kas-fleet-shard operators are installed on each of the standalone clusters. This has to be done manually at the moment. See [kas-installer](https://github.com/bf2fc6cc711aee1a0c2a/kas-installer) for information on how to install the operators.
+> NOTE: [OLM](https://github.com/operator-framework/operator-lifecycle-manager#installation) in the destination standalone cluster/s is a prerequisite to be able to install strimzi and kas-fleetshard operators
  
 ## Configuring OSD Cluster Creation and AutoScaling
 
