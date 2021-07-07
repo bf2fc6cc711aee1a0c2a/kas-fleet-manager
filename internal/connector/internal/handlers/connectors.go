@@ -61,7 +61,7 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("kafka.client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
 			handlers.Validation("kafka.client_secret", &resource.Kafka.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
-			handlers.Validation("desired_state", &resource.DesiredState, handlers.WithDefault("ready"), handlers.IsOneOf("ready", "stopped")),
+			handlers.Validation("desired_state", &resource.DesiredState, handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 			validateConnectorSpec(h.connectorTypesService, &resource, tid),
 		},
@@ -189,6 +189,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				// handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
 				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
 				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
+				handlers.Validation("desired_state", &resource.DesiredState, handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
 			}
 
@@ -223,7 +224,12 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if originalResource.Status != dbapi.ConnectorStatusPhaseAssigning {
-				dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
+				switch originalResource.Status {
+				case dbapi.ConnectorStatusPhaseStopped:
+					dbresource.Status.Phase = dbapi.ConnectorStatusPhaseAssigning
+				default:
+					dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
+				}
 				p.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
 				serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
 				if serr != nil {
@@ -382,8 +388,8 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			if c.DesiredState != "deleted" {
-				c.DesiredState = "deleted"
+			if c.DesiredState != dbapi.ConnectorStatusPhaseDeleted {
+				c.DesiredState = dbapi.ConnectorStatusPhaseDeleted
 				err := h.connectorsService.Update(r.Context(), c)
 				if err != nil {
 					return nil, err

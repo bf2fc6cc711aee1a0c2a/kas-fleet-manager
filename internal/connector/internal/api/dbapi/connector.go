@@ -8,12 +8,19 @@ const (
 	ConnectorStatusPhaseAssigning    ConnectorStatusPhase = "assigning"    // set by kas-fleet-manager - user request
 	ConnectorStatusPhaseAssigned     ConnectorStatusPhase = "assigned"     // set by kas-fleet-manager - worker
 	ConnectorStatusPhaseUpdating     ConnectorStatusPhase = "updating"     // set by kas-fleet-manager - user request
+	ConnectorStatusPhaseStopped      ConnectorStatusPhase = "stopped"      // set by kas-fleet-manager - user request
 	ConnectorStatusPhaseProvisioning ConnectorStatusPhase = "provisioning" // set by kas-agent
 	ConnectorStatusPhaseReady        ConnectorStatusPhase = "ready"        // set by the agent
 	ConnectorStatusPhaseFailed       ConnectorStatusPhase = "failed"       // set by the agent
 	ConnectorStatusPhaseDeleting     ConnectorStatusPhase = "deleting"     // set by the kas-fleet-manager - user request
 	ConnectorStatusPhaseDeleted      ConnectorStatusPhase = "deleted"      // set by the agent
 )
+
+var ValidDesiredStates = []ConnectorStatusPhase{
+	ConnectorStatusPhaseReady,
+	ConnectorStatusPhaseStopped,
+	ConnectorStatusPhaseDeleted,
+}
 
 var AgentSetConnectorStatusPhase = []ConnectorStatusPhase{
 	ConnectorStatusPhaseProvisioning,
