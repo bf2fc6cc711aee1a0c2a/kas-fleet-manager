@@ -29,6 +29,17 @@ func HandleGetError(resourceType, field string, value interface{}, err error) *e
 	return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find %s with %s='%v'", resourceType, field, value)
 }
 
+func HandleGoneError(resourceType, field string, value interface{}) *errors.ServiceError {
+	// Sanitize errors of any personally identifiable information
+	for _, f := range piiFields {
+		if field == f {
+			value = "<redacted>"
+			break
+		}
+	}
+	return errors.New(errors.ErrorGone, "%s with %s='%v' has been deleted", resourceType, field, value)
+}
+
 func HandleDeleteError(resourceType string, field string, value interface{}, err error) *errors.ServiceError {
 	for _, f := range piiFields {
 		if field == f {

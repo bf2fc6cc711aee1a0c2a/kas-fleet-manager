@@ -660,6 +660,13 @@ Feature: create a a connector
             "reason": "The maximum number of allowed kafka instances has been reached"
           },
           {
+            "code": "CONNECTOR-MGMT-25",
+            "href": "/api/connector_mgmt/v1/errors/25",
+            "id": "25",
+            "kind": "Error",
+            "reason": "Resource gone"
+          },
+          {
             "code": "CONNECTOR-MGMT-30",
             "href": "/api/connector_mgmt/v1/errors/30",
             "id": "30",
@@ -830,8 +837,8 @@ Feature: create a a connector
         ],
         "kind": "ErrorList",
         "page": 1,
-        "size": 38,
-        "total": 38
+        "size": 39,
+        "total": 39
       }
       """
 
