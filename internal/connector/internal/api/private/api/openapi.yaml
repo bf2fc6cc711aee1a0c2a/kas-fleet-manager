@@ -179,6 +179,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is invalid
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: deployment has been deleted
         "500":
           content:
             application/json:
@@ -240,6 +246,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
           description: Auth token is not valid.
+        "410":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: deployment has been deleted
       security:
       - Bearer: []
       summary: update the connector deployment status
