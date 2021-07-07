@@ -17,7 +17,7 @@ type GraphqlHandler struct {
 	GraphIQL *graphiql.Handler
 }
 
-func NewGraphqlHandler(mainHandler http.Handler, graphQLUrl string) (*GraphqlHandler, error) {
+func NewGraphqlHandler(mainHandler http.Handler, graphQLUrl string, apiUrl string) (*GraphqlHandler, error) {
 
 	openapiBytes, err := generated.Asset("connector_mgmt.yaml")
 	if err != nil {
@@ -28,9 +28,8 @@ func NewGraphqlHandler(mainHandler http.Handler, graphQLUrl string) (*GraphqlHan
 			OpenapiDocument: openapiBytes,
 		},
 		APIBase: apis.EndpointOptions{
-			Client: &http.Client{
-				Transport: &apis.HandlerTransport{Handler: mainHandler},
-			},
+			URL:            apiUrl,
+			InsecureClient: true,
 		},
 		Log: log.New(os.Stderr, "graphql: ", 0),
 	})

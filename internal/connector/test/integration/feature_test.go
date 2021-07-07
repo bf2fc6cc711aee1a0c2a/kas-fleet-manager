@@ -20,7 +20,7 @@ func TestMain(m *testing.M) {
 
 	h, teardown := test.NewHelperWithHooks(t, ocmServer,
 		func(c *config.ConnectorsConfig) {
-			c.EnableGraphql = true
+			c.GraphqlAPIURL = "http://localhost:8000"
 			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
 		},
 		connector.ConfigProviders(false),
