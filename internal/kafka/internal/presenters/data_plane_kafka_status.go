@@ -30,6 +30,8 @@ func ConvertDataPlaneKafkaStatus(status map[string]private.DataPlaneKafkaStatus)
 			KafkaClusterId: k,
 			Conditions:     c,
 			Routes:         routes,
+			KafkaVersion:   v.Versions.Kafka,
+			StrimziVersion: v.Versions.Strimzi,
 		})
 	}
 

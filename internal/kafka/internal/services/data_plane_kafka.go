@@ -3,7 +3,11 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -12,8 +16,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"strings"
-	"time"
 )
 
 type kafkaStatus string
@@ -93,6 +95,11 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 		if e != nil {
 			log.Error(errors.Wrapf(e, "Error updating kafka %s status", ks.KafkaClusterId))
 		}
+
+		e = d.setKafkaRequestVersionFields(kafka, ks)
+		if e != nil {
+			log.Error(errors.Wrapf(e, "Error updating kafka '%s' version fields", ks.KafkaClusterId))
+		}
 	}
 	return nil
 }
@@ -121,6 +128,47 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 			metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
 		}
 	}
+	return nil
+}
+
+func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaRequest, status *dbapi.DataPlaneKafkaStatus) *serviceError.ServiceError {
+	needsUpdate := false
+	prevActualKafkaVersion := status.KafkaVersion
+	if status.KafkaVersion != "" && status.KafkaVersion != kafka.ActualKafkaVersion {
+		logger.Logger.Infof("Updating Kafka version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualKafkaVersion, status.KafkaVersion)
+		kafka.ActualKafkaVersion = status.KafkaVersion
+		needsUpdate = true
+	}
+
+	prevActualStrimziVersion := status.StrimziVersion
+	if status.StrimziVersion != "" && status.StrimziVersion != kafka.ActualStrimziVersion {
+		logger.Logger.Infof("Updating Strimzi version for Kafka ID '%s' from '%s' to '%s'", kafka.ID, prevActualStrimziVersion, status.StrimziVersion)
+		kafka.ActualStrimziVersion = status.StrimziVersion
+		needsUpdate = true
+	}
+
+	prevKafkaUpgrading := kafka.KafkaUpgrading
+	kafkaBeingUpgraded := kafka.DesiredKafkaVersion != kafka.ActualKafkaVersion
+	if kafkaBeingUpgraded != kafka.KafkaUpgrading {
+		logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaBeingUpgraded)
+		kafka.KafkaUpgrading = kafkaBeingUpgraded
+		needsUpdate = true
+	}
+
+	prevStrimziUpgrading := kafka.StrimziUpgrading
+	strimziBeingUpgraded := kafka.DesiredStrimziVersion != kafka.ActualStrimziVersion
+	if strimziBeingUpgraded != kafka.StrimziUpgrading {
+		logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziBeingUpgraded)
+		kafka.StrimziUpgrading = strimziBeingUpgraded
+		needsUpdate = true
+	}
+
+	if needsUpdate {
+		if err := d.kafkaService.Update(kafka); err != nil {
+			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for kafka cluster %s", kafka.ID)
+		}
+	}
+
 	return nil
 }
 
