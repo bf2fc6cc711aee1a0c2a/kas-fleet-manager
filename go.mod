@@ -11,25 +11,28 @@ require (
 	github.com/aws/aws-secretsmanager-caching-go v1.1.0
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
-	github.com/cucumber/godog v0.11.0
+	github.com/chirino/graphql v0.0.0-20210707003802-dfaf250c773e
+	github.com/chirino/graphql-4-apis v0.0.0-20210707024033-ee0183a3a353
+	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/getkin/kin-openapi v0.62.0
+	github.com/getkin/kin-openapi v0.66.0
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/goava/di v1.10.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
-	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.8.0
 	github.com/grokify/html-strip-tags-go v0.0.1 // indirect
+	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
+	github.com/hashicorp/go-memdb v1.3.2 // indirect
 	github.com/itchyny/gojq v0.12.2
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-sqlite3 v1.14.3 // indirect
@@ -48,7 +51,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
 	github.com/segmentio/ksuid v1.0.3
 	github.com/selvatico/go-mocket v1.0.7
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spyzhov/ajson v0.4.2
 	github.com/xeipuuv/gojsonschema v1.2.0
@@ -56,8 +59,7 @@ require (
 	github.com/zgalor/weberr v0.6.0
 	gitlab.com/c0b/go-ordered-json v0.0.0-20201030195603-febf46534d5a // indirect
 	golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1 // indirect
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/appengine v1.6.7 // indirect
+	golang.org/x/oauth2 v0.0.0-20210402161424-2e8d93401602
 	gopkg.in/resty.v1 v1.12.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.0.8

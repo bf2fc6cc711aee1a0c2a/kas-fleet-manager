@@ -10,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/goava/di"
@@ -22,6 +23,7 @@ import (
 type options struct {
 	di.Inject
 	ConnectorsConfig    *config.ConnectorsConfig
+	ServerConfig        *server.ServerConfig
 	ErrorsHandler       *coreHandlers.ErrorHandler
 	AuthorizeMiddleware *acl.AccessControlListMiddleware
 	KeycloakService     services.KafkaKeycloakService
@@ -38,7 +40,7 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 
-	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, "openapi.yaml")
+	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, "connector_mgmt.yaml")
 	if err != nil {
 		return errors.Wrap(err, "Can't load OpenAPI specification")
 	}
@@ -51,6 +53,17 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 
 	//  /api/connector_mgmt/v1/openapi
 	apiV1Router.HandleFunc("/openapi", coreHandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
+
+	//  /api/connector_mgmt/v1/graphql
+	if s.ConnectorsConfig.GraphqlAPIURL != "" {
+		graphqlHandler, err := handlers.NewGraphqlHandler(mainRouter, "/api/connector_mgmt/v1/graphql", s.ConnectorsConfig.GraphqlAPIURL)
+		if err != nil {
+			return errors.Wrap(err, "can't create graphql handler")
+		}
+		apiV1Router.Handle("/graphql", graphqlHandler.GraphQL).Methods(http.MethodGet, http.MethodPost)
+		apiV1Router.Handle("/graphiql", graphqlHandler.GraphIQL).Methods(http.MethodGet)
+		apiV1Router.HandleFunc("/schema.graphql", graphqlHandler.GetSchema).Methods(http.MethodGet)
+	}
 
 	//  /api/connector_mgmt/v1/errors
 	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()

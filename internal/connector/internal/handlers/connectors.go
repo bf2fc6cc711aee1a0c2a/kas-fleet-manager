@@ -124,9 +124,13 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		Validate: []handlers.Validate{
 			handlers.Validation("connector_id", &connectorId, handlers.MinLen(1), handlers.MaxLen(maxConnectorIdLength)),
 			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
-			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json-patch+json", "application/merge-patch+json")),
+			handlers.Validation("Content-Type header", &contentType, handlers.IsOneOf("application/json", "application/json-patch+json", "application/merge-patch+json")),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
+
+			if contentType == "application/json" {
+				contentType = "application/merge-patch+json"
+			}
 
 			dbresource, serr := h.connectorsService.Get(r.Context(), connectorId, connectorTypeId)
 			if serr != nil {
