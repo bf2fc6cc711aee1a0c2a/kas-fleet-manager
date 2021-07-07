@@ -99,8 +99,8 @@ Feature: create a a connector
             "extensions": {
               "status": 400,
               "response": {
-                "code": "KAFKAS-MGMT-21",
-                "href": "/api/kafkas_mgmt/v1/errors/21",
+                "code": "CONNECTOR-MGMT-21",
+                "href": "/api/connector_mgmt/v1/errors/21",
                 "id": "21",
                 "kind": "Error",
                 "operation_id": "${response.errors[0].extensions.response.operation_id}",

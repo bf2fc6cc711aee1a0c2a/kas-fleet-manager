@@ -55,8 +55,8 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	apiV1Router.HandleFunc("/openapi", coreHandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
 
 	//  /api/connector_mgmt/v1/graphql
-	if s.ConnectorsConfig.EnableGraphql {
-		graphqlHandler, err := handlers.NewGraphqlHandler(mainRouter, "/api/connector_mgmt/v1/graphql")
+	if s.ConnectorsConfig.GraphqlAPIURL != "" {
+		graphqlHandler, err := handlers.NewGraphqlHandler(mainRouter, "/api/connector_mgmt/v1/graphql", s.ConnectorsConfig.GraphqlAPIURL)
 		if err != nil {
 			return errors.Wrap(err, "can't create graphql handler")
 		}
