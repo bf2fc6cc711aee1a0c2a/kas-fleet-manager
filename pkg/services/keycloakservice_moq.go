@@ -33,13 +33,13 @@ var _ KeycloakService = &KeycloakServiceMock{}
 // 			DeleteServiceAccountFunc: func(ctx context.Context, clientId string) *apiErrors.ServiceError {
 // 				panic("mock out the DeleteServiceAccount method")
 // 			},
-// 			GetConfigFunc: func() *config.KeycloakConfig {
+// 			GetConfigFunc: func() *keycloak.KeycloakConfig {
 // 				panic("mock out the GetConfig method")
 // 			},
 // 			GetKafkaClientSecretFunc: func(clientId string) (string, *apiErrors.ServiceError) {
 // 				panic("mock out the GetKafkaClientSecret method")
 // 			},
-// 			GetRealmConfigFunc: func() *config.KeycloakRealmConfig {
+// 			GetRealmConfigFunc: func() *keycloak.KeycloakRealmConfig {
 // 				panic("mock out the GetRealmConfig method")
 // 			},
 // 			GetServiceAccountByIdFunc: func(ctx context.Context, id string) (*api.ServiceAccount, *apiErrors.ServiceError) {

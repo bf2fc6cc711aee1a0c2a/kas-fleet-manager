@@ -71,7 +71,7 @@ type TestScenario struct {
 	CurrentUser     string
 	PathPrefix      string
 	sessions        map[string]*TestSession
-	Variables       map[string]string
+	Variables       map[string]interface{}
 	hasTestCaseLock bool
 }
 
@@ -181,7 +181,11 @@ func (s *TestScenario) Expand(value string) (result string, rerr error) {
 				return ""
 			}
 		}
-		return s.Variables[name]
+		value, found := s.Variables[name]
+		if !found {
+			return ""
+		}
+		return fmt.Sprint(value)
 	}), rerr
 }
 
@@ -231,7 +235,7 @@ func (suite *TestSuite) InitializeScenario(ctx *godog.ScenarioContext) {
 	s := &TestScenario{
 		Suite:     suite,
 		sessions:  map[string]*TestSession{},
-		Variables: map[string]string{},
+		Variables: map[string]interface{}{},
 	}
 
 	for _, module := range StepModules {

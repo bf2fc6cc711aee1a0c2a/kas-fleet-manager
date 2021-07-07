@@ -46,10 +46,10 @@ var _ Provider = &ProviderMock{}
 // 			GetComputeNodesFunc: func(spec *types.ClusterSpec) (*types.ComputeNodesInfo, error) {
 // 				panic("mock out the GetComputeNodes method")
 // 			},
-// 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm2.Parameter) (bool, error) {
+// 			InstallClusterLoggingFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 // 				panic("mock out the InstallClusterLogging method")
 // 			},
-// 			InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm2.Parameter) (bool, error) {
+// 			InstallKasFleetshardFunc: func(clusterSpec *types.ClusterSpec, params []ocm.Parameter) (bool, error) {
 // 				panic("mock out the InstallKasFleetshard method")
 // 			},
 // 			InstallStrimziFunc: func(clusterSpec *types.ClusterSpec) (bool, error) {

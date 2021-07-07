@@ -17,6 +17,7 @@ import (
 type ConnectorsConfig struct {
 	ConnectorCatalogDirs []string                `json:"connector_types"`
 	CatalogEntries       []ConnectorCatalogEntry `json:"connector_type_urls"`
+	GraphqlAPIURL        string
 }
 
 var _ environments.ConfigModule = &ConnectorsConfig{}
@@ -32,13 +33,12 @@ type ConnectorCatalogEntry struct {
 }
 
 func NewConnectorsConfig() *ConnectorsConfig {
-	return &ConnectorsConfig{
-		ConnectorCatalogDirs: []string{},
-	}
+	return &ConnectorsConfig{}
 }
 
 func (c *ConnectorsConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringArrayVar(&c.ConnectorCatalogDirs, "connector-catalog", c.ConnectorCatalogDirs, "Directory containing connector catalog entries")
+	fs.StringVar(&c.GraphqlAPIURL, "graphql-api-url", c.GraphqlAPIURL, "URL of the API that the graphql endpoint will call.  Setting this enables the '/api/connector_mgmt/v1/graphql' endpoint\"")
 }
 
 func (c *ConnectorsConfig) ReadFiles() error {

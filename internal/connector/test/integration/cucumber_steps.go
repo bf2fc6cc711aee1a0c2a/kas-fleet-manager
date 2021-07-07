@@ -1,24 +1,20 @@
-package itest
+package integration
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers/connector"
-	"net/url"
-	"os"
-	"testing"
-	"time"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/chirino/graphql"
+	"github.com/chirino/graphql/schema"
 	"github.com/cucumber/godog"
+	"net/url"
+	"strings"
+	"time"
 )
 
 type extender struct {
@@ -151,6 +147,39 @@ func (s *extender) updateConnectorCatalogOfTypeAndChannelWithShardMetadata(conne
 	return nil
 }
 
+func (s *extender) iPOSTToAGraphQLQuery(path string, query *godog.DocString) error {
+
+	doc := &schema.QueryDocument{}
+	err := doc.Parse(query.Content)
+	if err != nil {
+		return err
+	}
+	op, err := doc.GetOperation("")
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]interface{}{}
+	request := graphql.Request{
+		Query:     query.Content,
+		Variables: vars,
+	}
+	for _, v := range op.Vars {
+		name := strings.TrimPrefix(v.Name, "$")
+		if value, ok := s.Variables[name]; ok {
+			vars[name] = value
+		} else {
+			return fmt.Errorf("graphql operation input var $%s not found in the session variable", name)
+		}
+	}
+
+	data, err := json.Marshal(request)
+	if err != nil {
+		return err
+	}
+	return s.SendHttpRequestWithJsonBodyAndStyle("POST", path, &godog.DocString{Content: string(data)}, false, false)
+}
+
 func init() {
 	// This is how we can contribute additional steps over the standard ones provided in the cucumber package.
 	cucumber.StepModules = append(cucumber.StepModules, func(ctx *godog.ScenarioContext, s *cucumber.TestScenario) {
@@ -160,29 +189,7 @@ func init() {
 		ctx.Step(`^I reset the vault counters$`, e.iResetTheVaultCounters)
 		ctx.Step(`^connector deployment upgrades available are:$`, e.connectorDeploymentUpgradesAvailableAre)
 		ctx.Step(`^update connector catalog of type "([^"]*)" and channel "([^"]*)" with shard metadata:$`, e.updateConnectorCatalogOfTypeAndChannelWithShardMetadata)
+		ctx.Step(`^I POST to "([^"]*)" a GraphQL query:$`, e.iPOSTToAGraphQLQuery)
 
 	})
-}
-
-func TestMain(m *testing.M) {
-
-	// Startup all the services and mocks that are needed to test the
-	// connector features.
-	t := &testing.T{}
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, teardown := test.NewHelperWithHooks(t, ocmServer,
-		func(c *config.ConnectorsConfig) {
-			c.ConnectorCatalogDirs = []string{"./internal/connector/test/integration/connector-catalog"}
-		},
-		connector.ConfigProviders(false),
-	)
-	defer teardown()
-
-	status := cucumber.TestMain(h)
-	if st := m.Run(); st > status {
-		status = st
-	}
-	os.Exit(status)
 }
