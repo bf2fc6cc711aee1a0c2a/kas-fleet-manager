@@ -128,13 +128,8 @@ func (k *ConnectorManager) Reconcile() []error {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
 			switch connector.Status.Phase {
 			case dbapi.ConnectorStatusPhaseAssigning:
-			case dbapi.ConnectorClusterPhaseDeleted:
-				if err := k.reconcileDeleted(ctx, connector); err != nil {
-					errs = append(errs, err)
-					glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
-				}
 			default:
-				if err := k.reconcileAssigned(ctx, connector); err != nil {
+				if err := k.reconcileConnectorUpdate(ctx, connector); err != nil {
 					return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
 				}
 			}
@@ -244,7 +239,7 @@ func (k *ConnectorManager) reconcileAssigning(ctx context.Context, connector *db
 	return nil
 }
 
-func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *dbapi.Connector) error {
+func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connector *dbapi.Connector) error {
 
 	// Get the deployment for the connector...
 	deployment, serr := k.connectorClusterService.GetDeploymentByConnectorId(ctx, connector.ID)
@@ -252,12 +247,14 @@ func (k *ConnectorManager) reconcileAssigned(ctx context.Context, connector *dba
 		return serr
 	}
 
+	// we may need to update the deployment due to connector change.
 	if deployment.ConnectorVersion != connector.Version {
 		deployment.ConnectorVersion = connector.Version
 		if err := k.connectorClusterService.SaveDeployment(ctx, &deployment); err != nil {
 			return errors.Wrapf(err, "failed to create connector deployment for connector %s", connector.ID)
 		}
 	}
+
 	return nil
 }
 
