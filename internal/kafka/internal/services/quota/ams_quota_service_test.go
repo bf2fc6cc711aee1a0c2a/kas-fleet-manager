@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"testing"
 
@@ -18,10 +19,12 @@ func Test_AMSCheckQuota(t *testing.T) {
 		ocmClient ocm.Client
 	}
 	type args struct {
-		kafkaID     string
-		reserve     bool
-		owner       string
-		productType string
+		kafkaID           string
+		reserve           bool
+		owner             string
+		kafkaInstanceType types.KafkaInstanceType
+		hasStandardQuota  bool
+		hasEvalQuota      bool
 	}
 	tests := []struct {
 		name    string
@@ -36,13 +39,21 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"",
 				false,
 				"testUser",
-				"RHOSAK",
+				types.STANDARD,
+				true,
+				false,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(true).Build()
 						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+						return filter == "cluster|rhinfra|rhosak|marketplace", nil
 					},
 				},
 			},
@@ -54,7 +65,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"",
 				false,
 				"testUser",
-				"BAD-PRODUCT-TYPE",
+				types.EVAL,
+				true,
+				false,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
@@ -66,6 +79,12 @@ func Test_AMSCheckQuota(t *testing.T) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
 					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+						return filter == "cluster|rhinfra|rhosak|marketplace", nil
+					},
 				},
 			},
 			wantErr: true,
@@ -76,13 +95,21 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"",
 				false,
 				"testUser",
-				"RHOSAK",
+				types.STANDARD,
+				false,
+				false,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						ca, _ := v1.NewClusterAuthorizationResponse().Allowed(false).Build()
 						return ca, nil
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+						return false, nil
 					},
 				},
 			},
@@ -94,12 +121,20 @@ func Test_AMSCheckQuota(t *testing.T) {
 				"12231",
 				false,
 				"testUser",
-				"RHOSAK",
+				types.STANDARD,
+				true,
+				false,
 			},
 			fields: fields{
 				ocmClient: &ocm.ClientMock{
 					ClusterAuthorizationFunc: func(cb *v1.ClusterAuthorizationRequest) (*v1.ClusterAuthorizationResponse, error) {
 						return nil, fmt.Errorf("some errors")
+					},
+					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+						return fmt.Sprintf("fake-org-id-%s", externalId), nil
+					},
+					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+						return filter == "cluster|rhinfra|rhosak|marketplace", nil
 					},
 				},
 			},
@@ -108,9 +143,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		kafkaConfig := &config.KafkaConfig{
-			ProductType: tt.args.productType,
-		}
+		kafkaConfig := &config.KafkaConfig{}
 
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
@@ -122,7 +155,14 @@ func Test_AMSCheckQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			err := quotaService.CheckQuota(kafka)
+			sq, err := quotaService.CheckQuota(kafka, types.STANDARD)
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			eq, err := quotaService.CheckQuota(kafka, types.EVAL)
+			gomega.Expect(err).ToNot(gomega.HaveOccurred())
+			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
+			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))
+
+			_, err = quotaService.ReserveQuota(kafka, tt.args.kafkaInstanceType)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}
@@ -199,7 +239,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			subId, err := quotaService.ReserveQuota(kafka)
+			subId, err := quotaService.ReserveQuota(kafka, types.STANDARD)
 			gomega.Expect(subId).To(gomega.Equal(tt.want))
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})

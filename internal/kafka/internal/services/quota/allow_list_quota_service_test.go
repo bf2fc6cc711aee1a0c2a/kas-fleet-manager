@@ -3,6 +3,7 @@ package quota
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"net/http"
 	"testing"
@@ -238,7 +239,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
-			err := quotaService.CheckQuota(kafka)
+			_, err := quotaService.CheckQuota(kafka, types.EVAL)
 			gomega.Expect(tt.want).To(gomega.Equal(err))
 		})
 	}
