@@ -369,10 +369,13 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 
 	// lets get the connector id of the deployment..
 	deployment := dbapi.ConnectorDeployment{}
-	if err := dbConn.Select("connector_id").
+	if err := dbConn.Unscoped().Select("connector_id", "deleted_at").
 		Where("id = ?", deploymentStatus.ID).
 		First(&deployment).Error; err != nil {
 		return services.HandleGetError("connector deployment", "id", deploymentStatus.ID, err)
+	}
+	if deployment.DeletedAt.Valid {
+		return services.HandleGoneError("connector deployment", "id", deploymentStatus.ID)
 	}
 
 	if err := dbConn.Model(&deploymentStatus).Where("id = ?", deploymentStatus.ID).Save(&deploymentStatus).Error; err != nil {
@@ -529,10 +532,15 @@ func (k *connectorClusterService) GetDeploymentByConnectorId(ctx context.Context
 func (k *connectorClusterService) GetDeployment(ctx context.Context, id string) (resource dbapi.ConnectorDeployment, serr *errors.ServiceError) {
 
 	dbConn := k.connectionFactory.New()
-	dbConn = dbConn.Where("id = ?", id)
+	dbConn = dbConn.Unscoped().Where("id = ?", id)
 	if err := dbConn.First(&resource).Error; err != nil {
 		return resource, services.HandleGetError("Connector deployment", "id", id, err)
 	}
+
+	if resource.DeletedAt.Valid {
+		return resource, services.HandleGoneError("Connector deployment", "id", id)
+	}
+
 	return
 }
 

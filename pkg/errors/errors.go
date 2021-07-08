@@ -85,6 +85,10 @@ const (
 	ErrorTooManyKafkaInstancesReached       ServiceErrorCode = 24
 	ErrorTooManyKafkaInstancesReachedReason string           = "The maximum number of allowed kafka instances has been reached"
 
+	// Gone occurs when a record is accessed that has been deleted
+	ErrorGone       ServiceErrorCode = 25
+	ErrorGoneReason string           = "Resource gone"
+
 	// Synchronous request not supported
 	ErrorSyncActionNotSupported       ServiceErrorCode = 103
 	ErrorSyncActionNotSupportedReason string           = "Synchronous action is not supported, use async=true parameter"
@@ -202,6 +206,7 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
+		ServiceError{ErrorGone, ErrorGoneReason, http.StatusGone, nil},
 		ServiceError{ErrorValidation, ErrorValidationReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorGeneral, ErrorGeneralReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorNotImplemented, ErrorNotImplementedReason, http.StatusMethodNotAllowed, nil},

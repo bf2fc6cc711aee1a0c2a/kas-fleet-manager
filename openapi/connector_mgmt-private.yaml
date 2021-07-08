@@ -162,6 +162,12 @@ paths:
                 401Example:
                   $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
           description: Auth token is invalid
+        '410':
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+          description: deployment has been deleted
         '500':
           content:
             application/json:
@@ -221,6 +227,12 @@ paths:
                   $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
+        '410':
+          description: deployment has been deleted
+          content:
+            application/json:
+              schema:
+                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
 
 components:
   schemas:
