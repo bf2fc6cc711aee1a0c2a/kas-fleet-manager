@@ -44,6 +44,8 @@ type Client interface {
 	FindSubscriptions(query string) (*amsv1.SubscriptionsListResponse, error)
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
+	GetOrganisationIdFromExternalId(externalId string) (string, error)
+	HasAssignedQuota(organizationId string, filter string) (bool, error)
 	Connection() *sdkClient.Connection
 }
 
@@ -141,6 +143,32 @@ func (c *client) GetExistingClusterMetrics(clusterID string) (*amsv1.Subscriptio
 	}
 
 	return subscriptionsMetrics[0], nil
+}
+
+func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, error) {
+	res, err := c.connection.AccountsMgmt().V1().Organizations().List().Search(fmt.Sprintf("external_id='%s'", externalId)).Send()
+	if err != nil {
+		return "", err
+	}
+
+	items := res.Items()
+	if items.Len() < 1 {
+		// should never happen...
+		return "", errors.New(errors.ErrorGeneral, "organisation with external_id '%s' can't be found", externalId)
+	}
+
+	return items.Get(0).ID(), nil
+}
+
+func (c *client) HasAssignedQuota(organizationId string, filter string) (bool, error) {
+	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
+	quotaCostClient := organizationClient.Organization(organizationId).QuotaCost()
+	quotaCostList, err := quotaCostClient.List().Search(filter).Send()
+	if err != nil {
+		return false, err
+	}
+
+	return quotaCostList.Size() > 0, nil
 }
 
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {

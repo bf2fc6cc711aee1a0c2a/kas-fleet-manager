@@ -1,17 +1,17 @@
 package quota
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
+	"strings"
 )
 
 type amsQuotaService struct {
-	ocmClient   ocm.Client
-	kafkaConfig *config.KafkaConfig
+	ocmClient ocm.Client
 }
 
 func newQuotaResource() amsv1.ReservedResourceBuilder {
@@ -24,42 +24,22 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 	return rr
 }
 
-func (q amsQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-	kafkaId := kafka.ID
-
-	if kafkaId == "" {
-		kafkaId = api.NewID() // use a fake to check is quota is available
-	}
-
-	rr := newQuotaResource()
-
-	cb, _ := amsv1.NewClusterAuthorizationRequest().
-		AccountUsername(kafka.Owner).
-		CloudProviderID(kafka.CloudProvider).
-		ProductID(q.kafkaConfig.ProductType).
-		Managed(false).
-		ClusterID(kafkaId).
-		ExternalClusterID(kafkaId).
-		Disconnected(false).
-		BYOC(false).
-		AvailabilityZone("single").
-		Reserve(false).
-		Resources(&rr).
-		Build()
-
-	resp, err := q.ocmClient.ClusterAuthorization(cb)
+func (q amsQuotaService) CheckQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+	quotaId := fmt.Sprintf("cluster|rhinfra|%s|marketplace", strings.ToLower(instanceType.ToProductType()))
+	orgId, err := q.ocmClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
 	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
 	}
 
-	if !resp.Allowed() {
-		return errors.InsufficientQuotaError("Insufficient Quota")
+	hasQuota, err := q.ocmClient.HasAssignedQuota(orgId, quotaId)
+	if err != nil {
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
 	}
 
-	return nil
+	return hasQuota, nil
 }
 
-func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	kafkaId := kafka.ID
 
 	rr := newQuotaResource()
@@ -67,7 +47,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *error
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
-		ProductID(q.kafkaConfig.ProductType).
+		ProductID(instanceType.ToProductType()).
 		Managed(false).
 		ClusterID(kafkaId).
 		ExternalClusterID(kafkaId).
