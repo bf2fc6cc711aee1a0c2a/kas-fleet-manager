@@ -178,6 +178,9 @@ Feature: create a a connector
             items {
               channel
               status
+              connector_type {
+                description
+              }
             }
           }
       }
@@ -192,10 +195,16 @@ Feature: create a a connector
             "items": [
               {
                 "channel": "stable",
+                "connector_type": {
+                  "description": "Receive data from AWS SQS"
+                },
                 "status": "assigning"
               },
               {
                 "channel": "stable",
+                "connector_type": {
+                  "description": "Receive data from AWS SQS"
+                },
                 "status": "assigning"
               }
             ],

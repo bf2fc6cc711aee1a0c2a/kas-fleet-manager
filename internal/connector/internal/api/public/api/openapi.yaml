@@ -847,6 +847,13 @@ components:
       - $ref: '#/components/schemas/Connector_allOf'
       description: A connector holds the configuration to connect a Kafka topic to
         another system.
+      x-links:
+        connector_type:
+          operationId: getConnectorTypeByID
+          parameters:
+            connector_type_id: connector_type_id
+          description: |
+            connector_type gets the connector type by using the the `connector_type_id` parameter in request to `GET /api/connector_mgmt/v1/kafka_connector_types/{connector_type_id}`.
     ClusterTarget:
       discriminator:
         mapping:

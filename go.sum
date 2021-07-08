@@ -142,8 +142,8 @@ github.com/cespare/xxhash/v2 v2.1.1/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XL
 github.com/chirino/graphql v0.0.0-20210706215952-25574d349bd0/go.mod h1:QJryzmxY+8v+nP7+HjPsMxT4q+tfZZq387ZdG0md+kU=
 github.com/chirino/graphql v0.0.0-20210707003802-dfaf250c773e h1:6nzwfRcXUlHwVelYS03FAjhGn1IRPrdBJ1ORzmgmk7A=
 github.com/chirino/graphql v0.0.0-20210707003802-dfaf250c773e/go.mod h1:QJryzmxY+8v+nP7+HjPsMxT4q+tfZZq387ZdG0md+kU=
-github.com/chirino/graphql-4-apis v0.0.0-20210707024033-ee0183a3a353 h1:NW3zFHb4XIfsAo/sxxWyig9nthfjLxpfk05rYsU/3R0=
-github.com/chirino/graphql-4-apis v0.0.0-20210707024033-ee0183a3a353/go.mod h1:YbxCL8Lm27+oVYZScs2InXAJOeIifCTsLqaJotl2Hnk=
+github.com/chirino/graphql-4-apis v0.0.0-20210708183827-e0ef9ee72fe3 h1:QYPhFi3XltRt7aTURUNCYcF5/C2C58eq4AJg8Kx6XDg=
+github.com/chirino/graphql-4-apis v0.0.0-20210708183827-e0ef9ee72fe3/go.mod h1:Yk+Nac2yqgOYUxEN3FPNvWdcQBdvhEBvBLk+5vWqVVk=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
