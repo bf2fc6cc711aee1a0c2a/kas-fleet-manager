@@ -25,8 +25,6 @@ const (
 	// sso.redhat.com token claim keys
 	ssoRHUsernameKey  string = "preferred_username"
 	ssoRhAccountIdKey string = "account_id"
-	// mas sso token claim keys
-	masSsoOrgIdKey string = "rh-org-id"
 )
 
 func GetUsernameFromClaims(claims jwt.MapClaims) string {
@@ -51,10 +49,6 @@ func GetAccountIdFromClaims(claims jwt.MapClaims) string {
 func GetOrgIdFromClaims(claims jwt.MapClaims) string {
 	if claims[ocmOrgIdKey] != nil {
 		return claims[ocmOrgIdKey].(string)
-	}
-
-	if claims[masSsoOrgIdKey] != nil {
-		return claims[masSsoOrgIdKey].(string)
 	}
 
 	return ""
