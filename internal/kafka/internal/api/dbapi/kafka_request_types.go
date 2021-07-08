@@ -28,6 +28,8 @@ type KafkaRequest struct {
 	// PlacementId field should be updated every time when a KafkaRequest is assigned to an OSD cluster (even if it's the same one again)
 	PlacementId string `json:"placement_id"`
 	Version     string `json:"version"`
+	// The type of kafka instance (eval or standard)
+	InstanceType string `json:"instance_type"`
 	// the quota service type for the kafka, e.g. ams, allow-list
 	QuotaType string `json:"quota_type"`
 	// Routes routes mapping for the kafka instance. It is an array and each item in the array contains a domain value and the corresponding route url

@@ -376,6 +376,8 @@ components:
           type: string
         owner_account_id:
           type: string
+        instance_type:
+          type: string
         quota_type:
           type: string
         routes:
