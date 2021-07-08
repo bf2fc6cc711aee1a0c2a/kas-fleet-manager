@@ -16,6 +16,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -779,8 +780,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
 					},
 				},
 			},
@@ -805,8 +809,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
 					},
 				},
 			},
@@ -829,8 +833,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
 					},
 				},
 			},
@@ -856,8 +863,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return errors.InsufficientQuotaError("insufficient quota error")
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return false, errors.InsufficientQuotaError("insufficient quota error")
 					},
 				},
 			},

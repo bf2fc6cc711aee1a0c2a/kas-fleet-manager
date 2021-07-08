@@ -32,7 +32,8 @@ type KafkaRequest struct {
 	ActualStrimziVersion  string `json:"actual_strimzi_version"`
 	KafkaUpgrading        bool   `json:"kafka_upgrading"`
 	StrimziUpgrading      bool   `json:"strimzi_upgrading"`
-
+	// The type of kafka instance (eval or standard)
+	InstanceType string `json:"instance_type"`
 	// the quota service type for the kafka, e.g. ams, allow-list
 	QuotaType string `json:"quota_type"`
 	// Routes routes mapping for the kafka instance. It is an array and each item in the array contains a domain value and the corresponding route url
