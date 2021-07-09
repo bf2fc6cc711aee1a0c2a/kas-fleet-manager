@@ -58,6 +58,37 @@ Feature: create a a connector
       }
       """
 
+    #
+    # Validate that cluster updates work.
+    When I PUT path "/v1/kafka_connector_clusters/${cluster_id}" with json body:
+      """
+      {
+        "metadata": {
+          "name": "My Cluster Name"
+        }
+      }
+      """
+    Then the response code should be 204
+    And the response should match ""
+
+    When I GET path "/v1/kafka_connector_clusters/${cluster_id}"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "href": "/api/connector_mgmt/v1/kafka_connector_clusters/${cluster_id}",
+        "id": "${cluster_id}",
+        "kind": "ConnectorCluster",
+        "metadata": {
+          "created_at": "${response.metadata.created_at}",
+          "name": "My Cluster Name",
+          "owner": "${response.metadata.owner}",
+          "updated_at": "${response.metadata.updated_at}"
+        },
+        "status": "unconnected"
+      }
+      """
+
     # Before deleting the connector, lets make sure the access control works as expected for other users beside Greg
     Given I am logged in as "Coworker Sally"
     When I GET path "/v1/kafka_connector_clusters/${cluster_id}"

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
@@ -49,8 +48,8 @@ func (h *ConnectorClusterHandler) Create(w http.ResponseWriter, r *http.Request)
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &resource,
 		Validate: []handlers.Validate{
-			handlers.Validation("name", &resource.Metadata.Name,
-				handlers.WithDefault("New Cluster"), handlers.MinLen(1), handlers.MaxLen(100)),
+			handlers.Validation("name", &resource.Metadata.Name, handlers.WithDefault("New Cluster"),
+				handlers.MinLen(1), handlers.MaxLen(100)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 
@@ -92,6 +91,31 @@ func (h *ConnectorClusterHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleGet(w, r, cfg)
 }
 
+func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request) {
+	var resource public.ConnectorCluster
+
+	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &resource,
+		Validate: []handlers.Validate{
+			handlers.Validation("connector_cluster_id", &connectorClusterId, handlers.MinLen(1), handlers.MaxLen(maxConnectorClusterIdLength)),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			existing, err := h.Service.Get(r.Context(), connectorClusterId)
+			if err != nil {
+				return nil, err
+			}
+
+			resource := presenters.ConvertConnectorCluster(resource)
+
+			// Copy over the fields that support being updated...
+			existing.Name = resource.Name
+
+			return nil, h.Service.Update(r.Context(), &existing)
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusNoContent)
+}
 func (h *ConnectorClusterHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorClusterId := mux.Vars(r)["connector_cluster_id"]
 	cfg := &handlers.HandlerConfig{
@@ -153,14 +177,14 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 			if err != nil {
 				return false, errors.GeneralError("failed to create service account for connector cluster %s due to error: %v", connectorClusterId, err)
 			}
-			params := h.buildAddonParams(acc, connectorClusterId)
+			u, eerr := h.buildTokenURL(acc)
+			if eerr != nil {
+				return false, errors.GeneralError("failed creating auth token url")
+			}
+			params := h.buildAddonParams(acc, connectorClusterId, u)
 			result := make([]public.AddonParameter, len(params))
 			for i, p := range params {
 				result[i] = presenters.PresentAddonParameter(p)
-			}
-			u, eerr := h.buildTokenURL(acc)
-			if eerr == nil {
-				w.Header().Set("Token-Help", fmt.Sprintf(`curl --data "grant_type=client_credentials" "%s" | jq -r .access_token`, u))
 			}
 			return result, nil
 		},
@@ -169,40 +193,38 @@ func (h *ConnectorClusterHandler) GetAddonParameters(w http.ResponseWriter, r *h
 }
 
 const (
-	connectorFleetshardOperatorRoleName                  = "connector_fleetshard_operator"
-	connectorFleetshardOperatorParamMasSSOBaseUrl        = "mas-sso-base-url"
-	connectorFleetshardOperatorParamMasSSORealm          = "mas-sso-realm"
-	connectorFleetshardOperatorParamServiceAccountId     = "client-id"
-	connectorFleetshardOperatorParamServiceAccountSecret = "client-secret"
-	connectorFleetshardOperatorParamClusterId            = "cluster-id"
-	connectorFleetshardOperatorParamControlPlaneBaseURL  = "control-plane-base-url"
+	connectorFleetshardOperatorRoleName = "connector_fleetshard_operator"
 )
 
-func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string) []ocm.Parameter {
+func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAccount, clusterId string, authTokenURL string) []ocm.Parameter {
 	p := []ocm.Parameter{
 		{
-			Id:    connectorFleetshardOperatorParamMasSSOBaseUrl,
-			Value: o.KeycloakConfig.BaseURL,
-		},
-		{
-			Id:    connectorFleetshardOperatorParamMasSSORealm,
-			Value: o.KeycloakConfig.KafkaRealm.Realm,
-		},
-		{
-			Id:    connectorFleetshardOperatorParamServiceAccountId,
-			Value: serviceAccount.ClientID,
-		},
-		{
-			Id:    connectorFleetshardOperatorParamServiceAccountSecret,
-			Value: serviceAccount.ClientSecret,
-		},
-		{
-			Id:    connectorFleetshardOperatorParamControlPlaneBaseURL,
+			Id:    "control-plane-base-url",
 			Value: o.ServerConfig.PublicHostURL,
 		},
 		{
-			Id:    connectorFleetshardOperatorParamClusterId,
+			Id:    "cluster-id",
 			Value: clusterId,
+		},
+		{
+			Id:    "auth-token-url",
+			Value: authTokenURL,
+		},
+		{
+			Id:    "mas-sso-base-url",
+			Value: o.KeycloakConfig.BaseURL,
+		},
+		{
+			Id:    "mas-sso-realm",
+			Value: o.KeycloakConfig.KafkaRealm.Realm,
+		},
+		{
+			Id:    "client-id",
+			Value: serviceAccount.ClientID,
+		},
+		{
+			Id:    "client-secret",
+			Value: serviceAccount.ClientSecret,
 		},
 	}
 	return p
