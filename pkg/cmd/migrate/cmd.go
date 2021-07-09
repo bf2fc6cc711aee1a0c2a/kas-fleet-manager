@@ -19,10 +19,14 @@ func NewMigrateCommand(env *environments.Env) *cobra.Command {
 				glog.Infoln("Migration starting")
 				for _, migration := range migrations {
 					migration.Migrate()
+					glog.Infof("Database has %d %s applied", migration.CountMigrationsApplied(), migration.GormOptions.TableName)
 				}
-				glog.Infoln("Migration done")
 			})
 		},
 	}
+	cmd.AddCommand(
+		NewRollbackAll(env),
+		NewRollbackLast(env),
+	)
 	return cmd
 }
