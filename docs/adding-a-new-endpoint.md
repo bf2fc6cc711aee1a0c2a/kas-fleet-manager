@@ -21,7 +21,10 @@ Presenters are functions responsible for converting internal types to the endpoi
 Converters/presenters are defined in the `pkg/api/presenters` directory. Please add/modify existing converters and presenters here.
 
 ## Add a new handler
-Handlers are defined in the `pkg/handlers` directory. Add a handler for your new endpoint here.
+Handlers are defined in the one of the `handlers` directory. 
+* [`pkg/handlers`](../pkg/handlers) - for generic handlers that can be resused by different services
+* [`internal/kafka/internal/handlers`](../internal/kafka/internal/handlers) - for kafka service handlers
+* [`internal/connector/internal/handlers`](../internal/connector/internal/handlers) - for connector service handlers
 
 ### Format
 All handlers should follow a specific format as defined in this [framework](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
@@ -43,10 +46,18 @@ cfg := &handlerConfig{
 Validation functions are available in [validation.go](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
 
 ### Services
-Any backend functionality called from your handler should be specified in `pkg/services`.
+Any backend functionality called from your handler should be specified in `services` or it's subdirectory.
 
-## Add your new endpoint to the API server
-The [api_server.go](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/master/cmd/kas-fleet-manager/server/api_server.go) contains the definition of the service's endpoints. Add your new endpoint to the router and attach your handler using `HandleFunc()` here.
+* [`pkg/services`](../pkg/services) - for generic services that can be resused by different services
+* [`internal/kafka/internal/services`](../internal/kafka/internal/services) - for kafka specific services
+* [`internal/connector/internal/services`](../internal/connector/internal/services) - for connector specific services
+
+## Add your new endpoint to the Route Loader
+
+The `route_loader.go` contains the definition of the service's endpoints. Add your new endpoint to the router and attach your handler using `HandleFunc()` here.
+
+* [`internal/kafka/internal/routes/route_loader.go`](../internal/kafka/internal/routes/route_loader.go) - for the kafka service
+* [`internal/connector/internal/routes/route_loader.go`](../internal/connector/internal/routes/route_loader.go) - for the connector service
 
 For example
 
@@ -64,11 +75,14 @@ router.Use(authMiddleware.AuthenticateAccountJWT)
 ```
 
 
-
 ## Add a new command to the CLI
 The CLI will only be used for local development and testing. If a new endpoint was added, a new command should be added to the CLI to reflect that new endpoint.
 
-The CLI is built using [Cobra](https://github.com/spf13/cobra) and all of the commands are located in `cmd/kas-fleet-manager`.
+The CLI is built using [Cobra](https://github.com/spf13/cobra).  All of the commands and sub commands are located at:
+
+* [`cmd`](../cmd) - main binary entry points
+* [`pkg/cmd`](../internal/kafka/internal/cmd) - common sub commands
+* [`internal/kafka/internal/cmd`](../internal/kafka/internal/cmd) - kafka sub commands
 
 ```
 /cloudprovider - command definition for the /cloudprovider endpoint
