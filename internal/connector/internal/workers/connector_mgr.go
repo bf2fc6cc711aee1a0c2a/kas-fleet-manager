@@ -140,7 +140,9 @@ func (k *ConnectorManager) Reconcile() []error {
 			}
 			return nil
 		})
-	}, "version > ?", k.lastVersion)
+	}, "version > ? AND phase NOT IN (?)", k.lastVersion, []dbapi.ConnectorStatusPhase{
+		dbapi.ConnectorStatusPhaseStopped,
+	})
 	if serviceErr != nil {
 		errs = append(errs, errors.Wrap(serviceErr, "connector manager"))
 	}
