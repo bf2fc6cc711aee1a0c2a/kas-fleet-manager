@@ -23,8 +23,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
-
-	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -274,8 +272,8 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec,
 	// setup identity provider
 	_, err := s.ApplyResources(clusterSpec, types.ResourceSet{
 		Resources: []interface{}{
-			buildOpenIDPClientSecret(identityProvider),
-			buildIdentityProviderResource(identityProvider),
+			s.buildOpenIDPClientSecret(identityProvider),
+			s.buildIdentityProviderResource(identityProvider),
 		},
 	})
 
@@ -284,8 +282,8 @@ func (s *StandaloneProvider) AddIdentityProvider(clusterSpec *types.ClusterSpec,
 
 // buildOpenIDPClientSecret builds the k8s secret which holds OpenIDP clientSecret value
 // The clientSecret as indicated in https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-creating-secret_configuring-oidc-identity-provider
-func buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *corev1.Secret {
-	return &corev1.Secret{
+func (s *StandaloneProvider) buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *v1.Secret {
+	return &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: metav1.SchemeGroupVersion.Version,
 			Kind:       "Secret",
@@ -294,7 +292,7 @@ func buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *core
 			Name:      kafkaSREOpenIDPSecretName,
 			Namespace: "openshift-config",
 		},
-		Type: corev1.SecretTypeOpaque,
+		Type: v1.SecretTypeOpaque,
 		StringData: map[string]string{
 			"clientSecret": identityProvider.OpenID.ClientSecret,
 		},
@@ -303,7 +301,7 @@ func buildOpenIDPClientSecret(identityProvider types.IdentityProviderInfo) *core
 
 // buildIdentityProviderResource builds the identity provider resource to be applied
 // The resource is taken from https://docs.openshift.com/container-platform/4.7/authentication/identity_providers/configuring-oidc-identity-provider.html#identity-provider-oidc-CR_configuring-oidc-identity-provider
-func buildIdentityProviderResource(identityProvider types.IdentityProviderInfo) map[string]interface{} {
+func (s *StandaloneProvider) buildIdentityProviderResource(identityProvider types.IdentityProviderInfo) map[string]interface{} {
 	// Using unstructured type for now.
 	// we might want to pull the type information from github.com/openshift/api at a later stage
 	return map[string]interface{}{
