@@ -50,6 +50,7 @@ func (m *Migration) RollbackLast() {
 	if err := m.Gormigrate.RollbackLast(); err != nil {
 		glog.Fatalf("Could not migrate: %v", err)
 	}
+	m.deleteMigrationTableIfEmpty(m.DbFactory.New())
 }
 
 func (m *Migration) RollbackTo(migrationID string) {
@@ -69,12 +70,38 @@ func (m *Migration) RollbackAll() {
 		var result Result
 		err := db.Raw(sql).Scan(&result).Error
 		if err != nil || result.ID == "" {
-			return
+			break
 		}
 		if err := m.Gormigrate.RollbackLast(); err != nil {
 			glog.Fatalf("Could not rollback last migration: %v", err)
 		}
 	}
+	m.deleteMigrationTableIfEmpty(db)
+}
+
+func (m *Migration) deleteMigrationTableIfEmpty(db *gorm.DB) {
+	if !db.Migrator().HasTable(m.GormOptions.TableName) {
+		return
+	}
+	result := m.CountMigrationsApplied()
+	if result == 0 {
+		if err := db.Migrator().DropTable(m.GormOptions.TableName); err != nil {
+			glog.Fatalf("Could not drop migration table: %v", err)
+		}
+	}
+}
+
+func (m *Migration) CountMigrationsApplied() int {
+	db := m.DbFactory.New()
+	if !db.Migrator().HasTable(m.GormOptions.TableName) {
+		return 0
+	}
+	sql := fmt.Sprintf("SELECT count(%s) AS id FROM %s", m.GormOptions.IDColumnName, m.GormOptions.TableName)
+	var count int
+	if err := db.Raw(sql).Scan(&count).Error; err != nil {
+		glog.Fatalf("Could not get migration count: %v", err)
+	}
+	return count
 }
 
 // Model represents the base model struct. All entities will have this struct embedded.
