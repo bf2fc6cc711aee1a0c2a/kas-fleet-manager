@@ -147,13 +147,19 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		needsUpdate = true
 	}
 
-	prevKafkaUpgrading := kafka.KafkaUpgrading
-	kafkaBeingUpgraded := kafka.DesiredKafkaVersion != kafka.ActualKafkaVersion
-	if kafkaBeingUpgraded != kafka.KafkaUpgrading {
-		logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaBeingUpgraded)
-		kafka.KafkaUpgrading = kafkaBeingUpgraded
-		needsUpdate = true
-	}
+	// TODO for now we don't set the kafka_upgrading attribute at all because
+	// kas fleet shard operator still does not explicitely report whether kafka
+	// is being upgraded, as it is being done with strimzi operator. Wait until
+	// kas fleet shard operator has a way to report it and update the logic to do
+	// appropriately set it. section wait until kas fleetshard operator has a way to report whether
+	// kafka.KafkaUpgrading = kafkaBeingUpgraded
+	// prevKafkaUpgrading := kafka.KafkaUpgrading
+	// kafkaBeingUpgraded := kafka.DesiredKafkaVersion != kafka.ActualKafkaVersion
+	// if kafkaBeingUpgraded != kafka.KafkaUpgrading {
+	// 	logger.Logger.Infof("Kafka version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevKafkaUpgrading, kafkaBeingUpgraded)
+	// 	kafka.KafkaUpgrading = kafkaBeingUpgraded
+	// 	needsUpdate = true
+	// }
 
 	prevStrimziUpgrading := kafka.StrimziUpgrading
 	readyCondition, found := status.GetReadyCondition()
