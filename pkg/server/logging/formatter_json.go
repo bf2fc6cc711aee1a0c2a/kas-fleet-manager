@@ -46,6 +46,14 @@ func (f *jsonLogFormatter) FormatResponseLog(info *ResponseInfo) (string, error)
 	return string(log[:]), nil
 }
 
+func (f *jsonLogFormatter) FormatObject(o interface{}) (string, error) {
+	log, err := json.Marshal(o)
+	if err != nil {
+		return "", err
+	}
+	return string(log), nil
+}
+
 type jsonRequestLog struct {
 	Method     string        `json:"request_method"`
 	RequestURI string        `json:"request_url"`

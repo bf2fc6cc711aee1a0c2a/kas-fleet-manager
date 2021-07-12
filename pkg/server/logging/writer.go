@@ -33,7 +33,7 @@ func (writer *loggingWriter) WriteHeader(status int) {
 	writer.ResponseWriter.WriteHeader(status)
 }
 
-func (writer *loggingWriter) log(log string, err error) {
+func (writer *loggingWriter) Log(log string, err error) {
 	ulog := logger.NewUHCLogger(writer.request.Context())
 	switch err {
 	case nil:
@@ -41,6 +41,19 @@ func (writer *loggingWriter) log(log string, err error) {
 	default:
 		ulog.Error(errors.Wrap(err, "Unable to format request/response for log."))
 	}
+}
+
+func (writer *loggingWriter) LogObject(o interface{}, err error) error {
+	log, merr := writer.formatter.FormatObject(o)
+	if merr != nil {
+		return merr
+	}
+	writer.Log(log, err)
+	return nil
+}
+
+func (writer *loggingWriter) GetResponseStatusCode() int {
+	return writer.responseStatus
 }
 
 func (writer *loggingWriter) prepareRequestLog() (string, error) {
