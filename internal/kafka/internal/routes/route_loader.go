@@ -2,6 +2,8 @@ package routes
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
@@ -22,7 +24,6 @@ import (
 	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	pkgerrors "github.com/pkg/errors"
-	"net/http"
 )
 
 type options struct {
@@ -177,6 +178,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
 	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, s.Keycloak.GetConfig().KafkaRealm.ValidIssuerURI, "id")
 
+	adminKafkaHandler := handlers.NewAdminKafkaHandler(s.Kafka, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 	rolesMapping := map[string][]string{
 		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
@@ -185,5 +187,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
+	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
 	return nil
 }
