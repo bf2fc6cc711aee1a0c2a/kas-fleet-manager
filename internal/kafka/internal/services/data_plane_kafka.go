@@ -156,11 +156,19 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 	}
 
 	prevStrimziUpgrading := kafka.StrimziUpgrading
-	strimziBeingUpgraded := kafka.DesiredStrimziVersion != kafka.ActualStrimziVersion
-	if strimziBeingUpgraded != kafka.StrimziUpgrading {
-		logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziBeingUpgraded)
-		kafka.StrimziUpgrading = strimziBeingUpgraded
-		needsUpdate = true
+	readyCondition, found := status.GetReadyCondition()
+	if found {
+		// TODO is this really correct? What happens if there is a StrimziUpdating reason
+		// but the 'status' is false? What does that mean and how should we behave?
+		strimziUpdatingReasonIsSet := readyCondition.Reason == "StrimziUpdating"
+		if strimziUpdatingReasonIsSet && !prevStrimziUpgrading {
+			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
+			kafka.StrimziUpgrading = true
+		}
+		if !strimziUpdatingReasonIsSet && prevStrimziUpgrading {
+			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
+			kafka.StrimziUpgrading = false
+		}
 	}
 
 	if needsUpdate {
