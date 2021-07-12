@@ -23,14 +23,27 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest) private.
 		UpdatedAt:           kafkaRequest.UpdatedAt,
 		FailedReason:        kafkaRequest.FailedReason,
 		KafkaVersion:        kafkaRequest.Version,
-		// StrimziVersion
+		// StrimziVersion - TODO once this column is available in the database
 		OrganisationId: kafkaRequest.OrganisationId,
 		SubscriptionId: kafkaRequest.SubscriptionId,
 		SsoClientId:    kafkaRequest.SsoClientID,
 		OwnerAccountId: kafkaRequest.OwnerAccountId,
 		QuotaType:      kafkaRequest.QuotaType,
-		// Routes:         kafkaRequest.Routes.MarshalJSON(),
-		// RoutesCreated
-		// ProductType
+		Routes:         GetRoutesFromKafkaRequest(kafkaRequest),
+		RoutesCreated:  kafkaRequest.RoutesCreated,
+		// ProductType - TODO once this column is available in the database
+	}
+}
+
+func GetRoutesFromKafkaRequest(kafkaRequest *dbapi.KafkaRequest) []private.KafkaAllOfRoutes {
+	var routes []private.KafkaAllOfRoutes
+	routesArray, err := kafkaRequest.GetRoutes()
+	if err != nil {
+		return routes
+	} else {
+		for _, r := range routesArray {
+			routes = append(routes, private.KafkaAllOfRoutes{Domain: r.Domain, Router: r.Router})
+		}
+		return routes
 	}
 }

@@ -403,9 +403,7 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArgument
 		return nil, nil, errors.Unauthenticated("user not authenticated")
 	}
 
-	// TODO replace by authz context entity
-	idAdmin := false
-	if !idAdmin {
+	if !auth.GetIsAdminFromContext(ctx) {
 		orgId := auth.GetOrgIdFromClaims(claims)
 		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 

@@ -945,7 +945,6 @@ func Test_kafkaService_List(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		listArgs *services.ListArguments
-		isAdmin  bool
 	}
 
 	type want struct {

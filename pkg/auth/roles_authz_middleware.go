@@ -1,9 +1,10 @@
 package auth
 
 import (
-	"github.com/golang/glog"
 	"net/http"
 	"strings"
+
+	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
@@ -76,6 +77,8 @@ func (m *rolesAuthMiddleware) RequireRolesForMethods(roles map[string][]string, 
 			// if the request claim has any realm role that is defined in the `roles` map, the request will be allowed
 			for _, r := range allowedRoles {
 				if hasRole(realmRoles, r) {
+					ctx = SetIsAdminContext(ctx, true)
+					request = request.WithContext(ctx)
 					next.ServeHTTP(writer, request)
 					return
 				}

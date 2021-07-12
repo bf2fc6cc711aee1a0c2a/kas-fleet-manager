@@ -16,6 +16,7 @@ const (
 	// Context Keys
 	// FilterByOrganisation is used to determine whether resources are filtered by a user's organisation or as an individual owner
 	contextFilterByOrganisation contextKey = "filter-by-organisation"
+	contextIsAdmin              contextKey = "is_admin"
 
 	// ocm token claim keys
 	ocmUsernameKey string = "username"
@@ -61,8 +62,20 @@ func GetIsOrgAdminFromClaims(claims jwt.MapClaims) bool {
 	return false
 }
 
+func GetIsAdminFromContext(ctx context.Context) bool {
+	isAdmin := ctx.Value(contextIsAdmin)
+	if isAdmin == nil {
+		return false
+	}
+	return isAdmin.(bool)
+}
+
 func SetFilterByOrganisationContext(ctx context.Context, filterByOrganisation bool) context.Context {
 	return context.WithValue(ctx, contextFilterByOrganisation, filterByOrganisation)
+}
+
+func SetIsAdminContext(ctx context.Context, isAdmin bool) context.Context {
+	return context.WithValue(ctx, contextIsAdmin, isAdmin)
 }
 
 func GetFilterByOrganisationFromContext(ctx context.Context) bool {
