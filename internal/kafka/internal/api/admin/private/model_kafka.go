@@ -24,7 +24,6 @@ type Kafka struct {
 	CloudProvider string `json:"cloud_provider,omitempty"`
 	MultiAz       bool   `json:"multi_az,omitempty"`
 	// Values will be regions of specific cloud provider. For example: us-east-1 for AWS
-<<<<<<< HEAD
 	Region                string             `json:"region,omitempty"`
 	Owner                 string             `json:"owner,omitempty"`
 	Name                  string             `json:"name,omitempty"`
@@ -42,27 +41,8 @@ type Kafka struct {
 	SubscriptionId        string             `json:"subscription_id,omitempty"`
 	SsoClientId           string             `json:"sso_client_id,omitempty"`
 	OwnerAccountId        string             `json:"owner_account_id,omitempty"`
+	InstanceType          string             `json:"instance_type,omitempty"`
 	QuotaType             string             `json:"quota_type,omitempty"`
 	Routes                []KafkaAllOfRoutes `json:"routes,omitempty"`
 	RoutesCreated         bool               `json:"routes_created,omitempty"`
-	ProductType           string             `json:"product_type,omitempty"`
-=======
-	Region              string             `json:"region,omitempty"`
-	Owner               string             `json:"owner,omitempty"`
-	Name                string             `json:"name,omitempty"`
-	BootstrapServerHost string             `json:"bootstrap_server_host,omitempty"`
-	CreatedAt           time.Time          `json:"created_at,omitempty"`
-	UpdatedAt           time.Time          `json:"updated_at,omitempty"`
-	FailedReason        string             `json:"failed_reason,omitempty"`
-	KafkaVersion        string             `json:"kafka_version,omitempty"`
-	StrimziVersion      string             `json:"strimzi_version,omitempty"`
-	OrganisationId      string             `json:"organisation_id,omitempty"`
-	SubscriptionId      string             `json:"subscription_id,omitempty"`
-	SsoClientId         string             `json:"sso_client_id,omitempty"`
-	OwnerAccountId      string             `json:"owner_account_id,omitempty"`
-	InstanceType        string             `json:"instance_type,omitempty"`
-	QuotaType           string             `json:"quota_type,omitempty"`
-	Routes              []KafkaAllOfRoutes `json:"routes,omitempty"`
-	RoutesCreated       bool               `json:"routes_created,omitempty"`
->>>>>>> ef045b1 (refactor: 💡 removed the product_type flag)
 }
