@@ -550,6 +550,44 @@ deploy/db:
 	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 .PHONY: deploy/db
 
+# deploys the secrets required by the service to an OpenShift cluster
+deploy/secrets:
+	@oc get service/kas-fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
+	@oc process -f ./templates/secrets-template.yml \
+		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
+		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
+		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
+		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
+		-p OBSERVATORIUM_SERVICE_TOKEN="$(shell ([ -s './secrets/observatorium.token' ] && [ -z '${OBSERVATORIUM_SERVICE_TOKEN}' ]) && cat ./secrets/observatorium.token || echo '${OBSERVATORIUM_SERVICE_TOKEN}')" \
+		-p SENTRY_KEY="$(shell ([ -s './secrets/sentry.key' ] && [ -z '${SENTRY_KEY}' ]) && cat ./secrets/sentry.key || echo '${SENTRY_KEY}')" \
+		-p AWS_ACCESS_KEY="$(shell ([ -s './secrets/aws.accesskey' ] && [ -z '${AWS_ACCESS_KEY}' ]) && cat ./secrets/aws.accesskey || echo '${AWS_ACCESS_KEY}')" \
+		-p AWS_ACCOUNT_ID="$(shell ([ -s './secrets/aws.accountid' ] && [ -z '${AWS_ACCOUNT_ID}' ]) && cat ./secrets/aws.accountid || echo '${AWS_ACCOUNT_ID}')" \
+		-p AWS_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.secretaccesskey' ] && [ -z '${AWS_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.secretaccesskey || echo '${AWS_SECRET_ACCESS_KEY}')" \
+		-p ROUTE53_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53accesskey' ] && [ -z '${ROUTE53_ACCESS_KEY}' ]) && cat ./secrets/aws.route53accesskey || echo '${ROUTE53_ACCESS_KEY}')" \
+		-p ROUTE53_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/aws.route53secretaccesskey' ] && [ -z '${ROUTE53_SECRET_ACCESS_KEY}' ]) && cat ./secrets/aws.route53secretaccesskey || echo '${ROUTE53_SECRET_ACCESS_KEY}')" \
+		-p VAULT_ACCESS_KEY="$(shell ([ -s './secrets/vault.accesskey' ] && [ -z '${VAULT_ACCESS_KEY}' ]) && cat ./secrets/vault.accesskey || echo '${VAULT_ACCESS_KEY}')" \
+		-p VAULT_SECRET_ACCESS_KEY="$(shell ([ -s './secrets/vault.secretaccesskey' ] && [ -z '${VAULT_SECRET_ACCESS_KEY}' ]) && cat ./secrets/vault.secretaccesskey || echo '${VAULT_SECRET_ACCESS_KEY}')" \
+		-p DEX_SECRET="$(shell ([ -s './secrets/dex.secret' ] && [ -z '${DEX_SECRET}' ]) && cat ./secrets/dex.secret || echo '${DEX_SECRET}')" \
+		-p DEX_PASSWORD="$(shell ([ -s './secrets/dex.password' ] && [ -z '${DEX_PASSWORD}' ]) && cat ./secrets/dex.password || echo '${DEX_PASSWORD}')" \
+		-p MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/keycloak-service.clientId' ] && [ -z '${MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/keycloak-service.clientId || echo '${MAS_SSO_CLIENT_ID}')" \
+		-p MAS_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/keycloak-service.clientSecret' ] && [ -z '${MAS_SSO_CLIENT_SECRET}' ]) && cat ./secrets/keycloak-service.clientSecret || echo '${MAS_SSO_CLIENT_SECRET}')" \
+		-p OSD_IDP_MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_MAS_SSO_CLIENT_ID}')" \
+		-p OSD_IDP_MAS_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_MAS_SSO_CLIENT_SECRET}')" \
+		-p MAS_SSO_CRT="$(shell ([ -s './secrets/keycloak-service.crt' ] && [ -z '${MAS_SSO_CRT}' ]) && cat ./secrets/keycloak-service.crt || echo '${MAS_SSO_CRT}')" \
+		-p KAFKA_TLS_CERT="$(shell ([ -s './secrets/kafka-tls.crt' ] && [ -z '${KAFKA_TLS_CERT}' ]) && cat ./secrets/kafka-tls.crt || echo '${KAFKA_TLS_CERT}')" \
+		-p KAFKA_TLS_KEY="$(shell ([ -s './secrets/kafka-tls.key' ] && [ -z '${KAFKA_TLS_KEY}' ]) && cat ./secrets/kafka-tls.key || echo '${KAFKA_TLS_KEY}')" \
+		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
+		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
+		-p KUBE_CONFIG="${KUBE_CONFIG}" \
+		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-logs.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}' ]) && cat ./secrets/rhsso-logs.clientId || echo '${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}')" \
+		-p OBSERVABILITY_RHSSO_LOGS_SECRET="$(shell ([ -s './secrets/rhsso-logs.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_LOGS_SECRET}' ]) && cat ./secrets/rhsso-logs.clientSecret || echo '${OBSERVABILITY_RHSSO_LOGS_SECRET}')" \
+		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="$(shell ([ -s './secrets/rhsso-metrics.clientId' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}' ]) && cat ./secrets/rhsso-metrics.clientId || echo '${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}')" \
+		-p OBSERVABILITY_RHSSO_METRICS_SECRET="$(shell ([ -s './secrets/rhsso-metrics.clientSecret' ] && [ -z '${OBSERVABILITY_RHSSO_METRICS_SECRET}' ]) && cat ./secrets/rhsso-metrics.clientSecret || echo '${OBSERVABILITY_RHSSO_METRICS_SECRET}')" \
+		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_ID}" \
+		-p OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_CLIENT_SECRET}" \
+		| oc apply -f - -n $(NAMESPACE)
+.PHONY: deploy/secrets
+
 # deploy service via templates to an OpenShift cluster
 deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy: IMAGE_REPOSITORY ?= $(image_repository)
@@ -563,33 +601,7 @@ deploy: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy: QUOTA_TYPE ?= "quota-management-list"
 deploy: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
-deploy: deploy/db
-	@oc process -f ./templates/secrets-template.yml \
-		-p OCM_SERVICE_CLIENT_ID="$(OCM_SERVICE_CLIENT_ID)" \
-		-p OCM_SERVICE_CLIENT_SECRET="$(OCM_SERVICE_CLIENT_SECRET)" \
-		-p OCM_SERVICE_TOKEN="$(OCM_SERVICE_TOKEN)" \
-		-p OBSERVATORIUM_SERVICE_TOKEN="$(OBSERVATORIUM_SERVICE_TOKEN)" \
-		-p AWS_ACCESS_KEY="$(AWS_ACCESS_KEY)" \
-		-p AWS_ACCOUNT_ID="$(AWS_ACCOUNT_ID)" \
-		-p AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)" \
-		-p MAS_SSO_CLIENT_ID="${MAS_SSO_CLIENT_ID}" \
-		-p MAS_SSO_CLIENT_SECRET="${MAS_SSO_CLIENT_SECRET}" \
-		-p MAS_SSO_CRT="${MAS_SSO_CRT}" \
-		-p DEX_SECRET="${DEX_SECRET}" \
-		-p DEX_PASSWORD="${DEX_PASSWORD}" \
-		-p ROUTE53_ACCESS_KEY="$(ROUTE53_ACCESS_KEY)" \
-		-p ROUTE53_SECRET_ACCESS_KEY="$(ROUTE53_SECRET_ACCESS_KEY)" \
-		-p VAULT_ACCESS_KEY="$(VAULT_ACCESS_KEY)" \
-		-p VAULT_SECRET_ACCESS_KEY="$(VAULT_SECRET_ACCESS_KEY)" \
-		-p KAFKA_TLS_CERT="$(KAFKA_TLS_CERT)" \
-		-p KAFKA_TLS_KEY="$(KAFKA_TLS_KEY)" \
-		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}" \
-		-p OBSERVABILITY_RHSSO_LOGS_SECRET="${OBSERVABILITY_RHSSO_LOGS_SECRET}" \
-		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}" \
-		-p OBSERVABILITY_RHSSO_METRICS_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_SECRET}" \
-		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
-		-p KUBE_CONFIG="${KUBE_CONFIG}" \
-		| oc apply -f - -n $(NAMESPACE)
+deploy: deploy/db deploy/secret
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(OCM_ENV)" \
