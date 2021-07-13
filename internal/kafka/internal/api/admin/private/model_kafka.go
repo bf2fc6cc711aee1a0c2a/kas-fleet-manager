@@ -41,5 +41,4 @@ type Kafka struct {
 	QuotaType           string             `json:"quota_type,omitempty"`
 	Routes              []KafkaAllOfRoutes `json:"routes,omitempty"`
 	RoutesCreated       bool               `json:"routes_created,omitempty"`
-	ProductType         string             `json:"product_type,omitempty"`
 }

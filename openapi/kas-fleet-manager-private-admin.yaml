@@ -247,9 +247,6 @@ components:
                     type: string
             routes_created:
               type: boolean
-            # eval or standard product
-            product_type:
-              type: string
     KafkaList:
       allOf:
         - $ref: "kas-fleet-manager.yaml#/components/schemas/List"

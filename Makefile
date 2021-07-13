@@ -532,7 +532,6 @@ deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
-deploy: PRODUCT_TYPE ?= "RHOSAK"
 deploy: QUOTA_TYPE ?= "allow-list"
 deploy: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
@@ -588,7 +587,6 @@ deploy: deploy/db
 		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="${OBSERVATORIUM_TOKEN_REFRESHER_URL}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
-		-p PRODUCT_TYPE="${PRODUCT_TYPE}" \
 		-p KAS_FLEETSHARD_OLM_INDEX_IMAGE="${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
 		| oc apply -f - -n $(NAMESPACE)
