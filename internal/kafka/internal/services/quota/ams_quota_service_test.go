@@ -224,9 +224,7 @@ func Test_AMSReserveQuota(t *testing.T) {
 		},
 	}
 
-	cfgService := &config.KafkaConfig{
-		ProductType: "RHOSAK",
-	}
+	cfgService := &config.KafkaConfig{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -294,9 +292,7 @@ func Test_Delete_Quota(t *testing.T) {
 		},
 	}
 
-	cfgService := &config.KafkaConfig{
-		ProductType: "RHOSAK",
-	}
+	cfgService := &config.KafkaConfig{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService, nil)
