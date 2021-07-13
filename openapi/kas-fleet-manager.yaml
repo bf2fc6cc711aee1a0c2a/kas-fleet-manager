@@ -2,7 +2,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
 info:
   title: Kafka Service Fleet Manager
-  version: 1.1.1
+  version: 1.1.2
   description: Kafka Service Fleet Manager is a Rest API to manage Kafka instances and connectors.
 servers:
   - url: https://api.openshift.com
@@ -733,9 +733,6 @@ components:
               type: string
             name:
               type: string
-            bootstrapServerHost:
-              type: string
-              deprecated: true
             bootstrap_server_host:
               type: string
             created_at:
@@ -906,14 +903,8 @@ components:
             description:
               description: ''
               type: string
-            clientID:
-              type: string
-              deprecated: true
             client_id:
               type: string
-            clientSecret:
-              type: string
-              deprecated: true
             client_secret:
               type: string
             owner:
@@ -946,10 +937,6 @@ components:
             id:
               description: 'server generated unique id of the service account'
               type: string
-            clientID:
-              description: 'client id of the service account'
-              type: string
-              deprecated: true
             client_id:
               description: 'client id of the service account'
               type: string
@@ -1017,17 +1004,9 @@ components:
     values:
       type: object
       properties:
-        Timestamp:
-          type: integer
-          format: int64
-          deprecated: true
         timestamp:
           type: integer
           format: int64
-        Value:
-          type: number
-          format: double
-          deprecated: true
         value:
           type: number
           format: double
@@ -1058,17 +1037,9 @@ components:
           type: object
           additionalProperties:
             type: string
-        Timestamp:
-          type: integer
-          format: int64
-          deprecated: true
         timestamp:
           type: integer
           format: int64
-        Value:
-          type: number
-          format: double
-          deprecated: true
         value:
           type: number
           format: double

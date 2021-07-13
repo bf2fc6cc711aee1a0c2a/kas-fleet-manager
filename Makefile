@@ -317,7 +317,6 @@ openapi/generate/kas-public: go-bindata openapi-generator
 
 	mkdir -p .generate/openapi
 	cp ./openapi/kas-fleet-manager.yaml .generate/openapi
-	cp ./openapi/managed-services-api-deprecated.yaml .generate/openapi
 	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
 	$(GOFMT) -w internal/kafka/internal/generated
 	rm -rf .generate/openapi
@@ -374,7 +373,6 @@ run/docs:
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
 		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
-		{ url: \"./openapi/managed-services-api-deprecated.yaml\", name: \"Deprecated Public API\" },\
 		{ url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
 		{ url: \"./openapi/kas-fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui

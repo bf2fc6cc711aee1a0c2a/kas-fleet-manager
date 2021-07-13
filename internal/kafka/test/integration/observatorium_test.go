@@ -3,15 +3,17 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"net/http"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
@@ -150,8 +152,6 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(len(metrics.Items)).NotTo(Equal(0))
 
 	firstMetric := metrics.Items[0]
-	Expect(firstMetric.Values[0].DeprecatedTimestamp).NotTo(BeNil())
-	Expect(firstMetric.Values[0].DeprecatedValue).NotTo(BeNil())
 	Expect(firstMetric.Values[0].Timestamp).NotTo(BeNil())
 	Expect(firstMetric.Values[0].Value).NotTo(BeNil())
 
@@ -222,8 +222,6 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(len(metrics.Items)).NotTo(Equal(0))
 
 	firstMetric := metrics.Items[0]
-	Expect(firstMetric.DeprecatedTimestamp).NotTo(BeNil())
-	Expect(firstMetric.DeprecatedValue).NotTo(BeNil())
 	Expect(firstMetric.Timestamp).NotTo(BeNil())
 	Expect(firstMetric.Value).NotTo(BeNil())
 
