@@ -1,10 +1,13 @@
 package dbapi
 
+import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+
 type DataPlaneClusterStatus struct {
-	Conditions []DataPlaneClusterStatusCondition
-	NodeInfo   DataPlaneClusterStatusNodeInfo
-	ResizeInfo DataPlaneClusterStatusResizeInfo
-	Remaining  DataPlaneClusterStatusCapacity
+	Conditions               []DataPlaneClusterStatusCondition
+	NodeInfo                 DataPlaneClusterStatusNodeInfo
+	ResizeInfo               DataPlaneClusterStatusResizeInfo
+	Remaining                DataPlaneClusterStatusCapacity
+	AvailableStrimziVersions []api.StrimziVersion
 }
 
 type DataPlaneClusterStatusCondition struct {
