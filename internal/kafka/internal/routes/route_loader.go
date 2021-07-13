@@ -187,6 +187,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
 	return nil
 }
