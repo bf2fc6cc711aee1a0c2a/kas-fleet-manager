@@ -548,7 +548,7 @@ paths:
           description: Unexpected error occurred
       security:
         - Bearer: [ ]
-      operationId: updateConnectorCluster
+      operationId: updateConnectorClusterById
       summary: udpate a connector cluster
       requestBody:
         description: Data to updated connector with

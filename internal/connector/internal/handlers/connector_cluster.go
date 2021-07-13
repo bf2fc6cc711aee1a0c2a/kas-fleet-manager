@@ -106,10 +106,8 @@ func (h *ConnectorClusterHandler) Update(w http.ResponseWriter, r *http.Request)
 				return nil, err
 			}
 
-			resource := presenters.ConvertConnectorCluster(resource)
-
 			// Copy over the fields that support being updated...
-			existing.Name = resource.Name
+			existing.Name = resource.Metadata.Name
 
 			return nil, h.Service.Update(r.Context(), &existing)
 		},
