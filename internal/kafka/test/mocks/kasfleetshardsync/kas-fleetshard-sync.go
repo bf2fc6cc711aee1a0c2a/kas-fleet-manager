@@ -3,13 +3,14 @@ package kasfleetshardsync
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"testing"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
@@ -282,6 +283,14 @@ func GetDeletedKafkaStatusResponse() private.DataPlaneKafkaStatus {
 	}
 }
 
+func GetDefaultReportedKafkaVersion() string {
+	return test.TestServices.KafkaConfig.DefaultKafkaVersion
+}
+
+func GetDefaultReportedStrimziVersion() string {
+	return "strimzi-cluster-operator.v0.23.0-0"
+}
+
 // Return a kafka status for a ready cluster
 func GetReadyKafkaStatusResponse() private.DataPlaneKafkaStatus {
 	return private.DataPlaneKafkaStatus{
@@ -290,6 +299,10 @@ func GetReadyKafkaStatusResponse() private.DataPlaneKafkaStatus {
 				Type:   "Ready",
 				Status: "True",
 			},
+		},
+		Versions: private.DataPlaneKafkaStatusVersions{
+			Kafka:   GetDefaultReportedKafkaVersion(),
+			Strimzi: GetDefaultReportedStrimziVersion(),
 		},
 	}
 }
