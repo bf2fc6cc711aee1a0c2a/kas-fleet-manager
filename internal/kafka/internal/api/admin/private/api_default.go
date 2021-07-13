@@ -30,9 +30,10 @@ type DefaultApiService service
 DeleteKafkaById Delete a Kafka by ID
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
+ * @param async Perform the action in an asynchronous manner
 @return Kafka
 */
-func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string) (Kafka, *_nethttp.Response, error) {
+func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string, async bool) (Kafka, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
@@ -50,6 +51,7 @@ func (a *DefaultApiService) DeleteKafkaById(ctx _context.Context, id string) (Ka
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	localVarQueryParams.Add("async", parameterToString(async, ""))
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

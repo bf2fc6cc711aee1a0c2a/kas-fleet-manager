@@ -153,6 +153,12 @@ paths:
       summary: Delete a Kafka by ID
       parameters:
         - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - in: query
+          name: async
+          description: Perform the action in an asynchronous manner
+          schema:
+            type: boolean
+          required: true
       security:
         - Bearer: [ ]
       operationId: deleteKafkaById
