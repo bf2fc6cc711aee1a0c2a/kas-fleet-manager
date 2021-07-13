@@ -1,8 +1,11 @@
 package presenters
 
 import (
+	"sort"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 )
 
 func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRequest) *dbapi.DataPlaneClusterStatus {
@@ -17,10 +20,11 @@ func ConvertDataPlaneClusterStatus(status private.DataPlaneClusterUpdateStatusRe
 	}
 
 	return &dbapi.DataPlaneClusterStatus{
-		Conditions: conds,
-		NodeInfo:   getNodeInfo(status),
-		ResizeInfo: getResizeInfo(status),
-		Remaining:  getRemaining(status),
+		Conditions:               conds,
+		NodeInfo:                 getNodeInfo(status),
+		ResizeInfo:               getResizeInfo(status),
+		Remaining:                getRemaining(status),
+		AvailableStrimziVersions: getAvailableStrimziVersions(status),
 	}
 }
 
@@ -86,6 +90,21 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Data
 		remaining.DataRetentionSize = *status.Remaining.DeprecatedDataRetentionSize
 	}
 	return remaining
+}
+
+// getAvailableStrimziVersions returns a list of api.StrimziVersion sorted
+// as lexicographically ascending sorted list of api.StrimziVersion from the
+// status content
+func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequest) []api.StrimziVersion {
+	res := []api.StrimziVersion{}
+	for _, val := range status.StrimziVersions {
+		res = append(res, api.StrimziVersion(val))
+	}
+	sort.Slice(res, func(i, j int) bool {
+		return res[i] < res[j]
+	})
+
+	return res
 }
 
 func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private.DataplaneClusterAgentConfig {

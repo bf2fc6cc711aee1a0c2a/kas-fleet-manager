@@ -2,12 +2,14 @@ package services
 
 import (
 	"context"
+	"reflect"
+	"strconv"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/goava/di"
-	"strconv"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 
@@ -208,6 +210,23 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 		var err error
 		remainingCapacity, err = d.kafkaClustersCapacityAvailable(status, d.minimumKafkaCapacity())
 		if err != nil {
+			return err
+		}
+	}
+
+	prevAvailableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	if err != nil {
+		return err
+	}
+	if len(status.AvailableStrimziVersions) > 0 && !reflect.DeepEqual(prevAvailableStrimziVersions, status.AvailableStrimziVersions) {
+		err := cluster.SetAvailableStrimziVersions(status.AvailableStrimziVersions)
+		if err != nil {
+			return err
+		}
+
+		glog.Infof("Updating Strimzi operator available versions for cluster ID '%s'. Versions: '%s'\n", cluster.ClusterID, status.AvailableStrimziVersions)
+		svcErr := d.ClusterService.Update(*cluster)
+		if svcErr != nil {
 			return err
 		}
 	}
