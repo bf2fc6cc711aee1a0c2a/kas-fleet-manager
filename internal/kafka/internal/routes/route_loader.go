@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/generated"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
@@ -56,12 +57,6 @@ func (s *options) AddRoutes(mainRouter *mux.Router) error {
 		return err
 	}
 
-	basePath = fmt.Sprintf("%s/%s", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix)
-	err = s.buildApiBaseRouter(mainRouter, basePath, "managed-services-api-deprecated.yaml")
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -83,7 +78,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.OCMConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.OCM, errors.ErrorTermsNotAccepted)
 
-	// base path. Could be /api/kafkas_mgmt or /api/managed-services-api
+	// base path. Could be /api/kafkas_mgmt
 	apiRouter := mainRouter.PathPrefix(basePath).Subrouter()
 
 	// /v1
@@ -126,11 +121,11 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 		ID:   "service_accounts",
 		Kind: "ServiceAccountList",
 	})
-	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/{_:service[_]?accounts}").Subrouter()
+	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/service_accounts").Subrouter()
 	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}/{_:reset[-_]credentials}", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 	apiV1ServiceAccountsRouter.Use(requireIssuer)
 	apiV1ServiceAccountsRouter.Use(requireOrgID)

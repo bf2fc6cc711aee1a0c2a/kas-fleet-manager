@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/routes"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -33,11 +34,6 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 			Service(errors.ERROR_CODE_PREFIX).
 			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix)).
 			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)).
-			// TODO remove this as it is temporary code to ensure api backward compatibility
-			Public(fmt.Sprintf("^%s/%s/?$", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix)).
-			Public(fmt.Sprintf("^%s/%s/%s/?$", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix, routes.Version)).
-			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.OldManagedServicesApiPrefix, routes.Version)),
-		// END TODO
+			Public(fmt.Sprintf("^%s/%s/%s/openapi/?$", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix, routes.Version)),
 		nil
 }
