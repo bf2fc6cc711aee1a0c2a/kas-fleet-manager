@@ -523,6 +523,10 @@ components:
                 partitions:
                   type: integer
                   nullable: true
+        strimziVersions:
+          type: array
+          items:
+            type: string
 
     DataPlaneKafkaStatus:
       description: "Schema of the status object for a Kafka cluster"

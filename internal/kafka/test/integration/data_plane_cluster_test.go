@@ -2,12 +2,14 @@ package integration
 
 import (
 	"context"
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"testing"
 	"time"
+
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
@@ -15,7 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/dgrijalva/jwt-go"
@@ -50,6 +51,12 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.StrimziVersions = []string{"v5", "v7", "v3"}
+	expectedAvailableStrimziVersions := []api.StrimziVersion{
+		api.StrimziVersion("v3"),
+		api.StrimziVersion("v5"),
+		api.StrimziVersion("v7"),
+	}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
 	Expect(err).ToNot(HaveOccurred())
@@ -58,6 +65,9 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	Expect(err).ToNot(HaveOccurred())
 	Expect(cluster).ToNot(BeNil())
 	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
 
 	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
 	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
@@ -561,6 +571,284 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	err = common.WaitForClusterToBeDeleted(test.TestServices.DBFactory, &test.TestServices.ClusterService, newCluster.ClusterID)
 
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for cluster deletion: %v", err)
+}
+
+func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVersionsIsEmptyItRemainsEmpty(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := test.NewPrivateAPIClient(h)
+
+	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.StrimziVersions = []string{}
+	expectedAvailableStrimziVersions := []api.StrimziVersion{}
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+
+	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
+	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersionsIsEmptyItRemainsEmpty(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := test.NewPrivateAPIClient(h)
+
+	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.StrimziVersions = nil
+	expectedAvailableStrimziVersions := []api.StrimziVersion{}
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+
+	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
+	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVersionsIsNotEmptyItRemainsUnchanged(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := test.NewPrivateAPIClient(h)
+
+	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.StrimziVersions = []string{}
+	expectedAvailableStrimziVersions := []api.StrimziVersion{
+		api.StrimziVersion("v8"),
+		api.StrimziVersion("v9"),
+		api.StrimziVersion("v10"),
+	}
+	db := test.TestServices.DBFactory.New()
+	initialAvailableStrimziVersionsStr := `["v8", "v9", "v10"]`
+	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
+	Expect(err).ToNot(HaveOccurred())
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	Expect(err).NotTo(HaveOccurred())
+
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+
+	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+
+	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
+	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersionsIsNotEmptyItRemainsUnchanged(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := test.NewPrivateAPIClient(h)
+
+	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.StrimziVersions = nil
+	expectedAvailableStrimziVersions := []api.StrimziVersion{
+		api.StrimziVersion("v8"),
+		api.StrimziVersion("v9"),
+		api.StrimziVersion("v10"),
+	}
+	db := test.TestServices.DBFactory.New()
+	initialAvailableStrimziVersionsStr := `["v8", "v9", "v10"]`
+	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
+	Expect(err).ToNot(HaveOccurred())
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+	Expect(err).NotTo(HaveOccurred())
+
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+
+	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+
+	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
+	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+}
+
+func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziVersionsIsUpdated(t *testing.T) {
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	testDataPlaneclusterID, getClusterErr := common.GetOSDClusterIDAndWaitForStatus(h, t, api.ClusterWaitingForKasFleetShardOperator)
+	if getClusterErr != nil {
+		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	}
+	if testDataPlaneclusterID == "" {
+		t.Fatalf("Cluster not found")
+	}
+
+	db := test.TestServices.DBFactory.New()
+	initialAvailableStrimziVersionsStr := `["v8", "v9", "v10"]`
+	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
+	Expect(err).ToNot(HaveOccurred())
+
+	ctx := kasfleetshardsync.NewAuthenticatedContextForDataPlaneCluster(h, testDataPlaneclusterID)
+	privateAPIClient := test.NewPrivateAPIClient(h)
+
+	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.StrimziVersions = []string{"v5", "v7", "v3"}
+	expectedAvailableStrimziVersions := []api.StrimziVersion{
+		api.StrimziVersion("v3"),
+		api.StrimziVersion("v5"),
+		api.StrimziVersion("v7"),
+	}
+
+	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
+	Expect(availableStrimziVersions).To(Equal([]api.StrimziVersion{
+		api.StrimziVersion("v8"),
+		api.StrimziVersion("v9"),
+		api.StrimziVersion("v10"),
+	}))
+	Expect(err).ToNot(HaveOccurred())
+
+	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
+
+	cluster, err = test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(cluster).ToNot(BeNil())
+	Expect(cluster.Status).To(Equal(api.ClusterReady))
+	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
+	Expect(err).ToNot(HaveOccurred())
+	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
+
+	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
+	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
+	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	Expect(err).ToNot(HaveOccurred())
 }
 
 func KafkaConfig(h *coreTest.Helper) (c *config.KafkaConfig) {

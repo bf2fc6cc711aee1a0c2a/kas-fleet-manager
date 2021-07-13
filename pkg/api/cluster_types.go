@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	"sort"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -131,6 +134,12 @@ type Cluster struct {
 	ProviderSpec JSON `json:"provider_spec"`
 	// store the specs of the openshift/k8s cluster which can be used to access the cluster
 	ClusterSpec JSON `json:"cluster_spec"`
+	// List of available strimzi versions in the cluster. Content MUST be stored
+	// as a lexicographically ascending sorted list of strings as a JSON. For example:
+	// ["v1", "v2", "v3"]. Use the `SetAvailableStrimziVersions` helper method to
+	// ensure the correct order is set.
+	// Latest position in the list is considered the newest available version.
+	AvailableStrimziVersions JSON `json:"available_strimzi_versions"`
 }
 
 type ClusterList []*Cluster
@@ -154,4 +163,39 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 	}
 
 	return nil
+}
+
+type StrimziVersion string
+
+// GetAvailableStrimziVersions returns the cluster's list of available strimzi
+// versions or an error. An empty list if there are no versions
+func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) {
+	versions := []StrimziVersion{}
+	if cluster.AvailableStrimziVersions == nil {
+		return versions, nil
+	}
+
+	if err := json.Unmarshal(cluster.AvailableStrimziVersions, &versions); err != nil {
+		return nil, err
+	} else {
+		return versions, nil
+	}
+}
+
+// SetAvailableStrimziVersions sets the cluster's list of available strimzi versions
+// or sorted in a lexicographically ascending order, or an error. If
+// availableStrimziVersions is nil an empty list is set.
+func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []StrimziVersion) error {
+	versionsToSet := []StrimziVersion{}
+	versionsToSet = append(versionsToSet, availableStrimziVersions...)
+	sort.Slice(versionsToSet, func(i, j int) bool {
+		return versionsToSet[i] < versionsToSet[j]
+	})
+
+	if v, err := json.Marshal(versionsToSet); err != nil {
+		return err
+	} else {
+		cluster.AvailableStrimziVersions = v
+		return nil
+	}
 }

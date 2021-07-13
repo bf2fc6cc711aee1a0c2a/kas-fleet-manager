@@ -2,10 +2,11 @@ package api
 
 import (
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestKasFleetManagerApi(t *testing.T) {
@@ -14,10 +15,6 @@ func TestKasFleetManagerApi(t *testing.T) {
 
 func TestConnectorManagerApi(t *testing.T) {
 	checkFile(t, "../../openapi/connector_mgmt.yaml")
-}
-
-func TestPrivateApi(t *testing.T) {
-	checkFile(t, "../../openapi/kas-fleet-manager-private.yaml")
 }
 
 func checkFile(t *testing.T, file string) {
