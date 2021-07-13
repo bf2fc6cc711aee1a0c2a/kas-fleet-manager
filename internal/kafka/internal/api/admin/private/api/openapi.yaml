@@ -402,8 +402,6 @@ components:
           type: array
         routes_created:
           type: boolean
-        product_type:
-          type: string
         cluster_id:
           type: string
     KafkaList_allOf:
