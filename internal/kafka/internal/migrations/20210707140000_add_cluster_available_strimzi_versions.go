@@ -24,7 +24,7 @@ func addClusterAvailableStrimziVersions() *gormigrate.Migration {
 
 			err := tx.Table("clusters").Where("available_strimzi_versions IS NULL").Update("available_strimzi_versions", strimziVersionToSetOnMigration).Error
 			if err != nil {
-				return nil
+				return err
 			}
 
 			return nil
