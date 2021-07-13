@@ -118,27 +118,31 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	return count < k.kafkaConfig.KafkaCapacity.MaxCapacity, nil
 }
 
-// reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
-func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (instanceType types.KafkaInstanceType, subscriptionId string, err *errors.ServiceError) {
+func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
-		return "", "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
+		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
 
 	hasRhosakQuota, err := quotaService.CheckQuota(kafkaRequest, types.STANDARD)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
-
 	if hasRhosakQuota {
-		subscriptionId, err = quotaService.ReserveQuota(kafkaRequest, types.STANDARD)
-		instanceType = types.STANDARD
-	} else {
-		subscriptionId, err = quotaService.ReserveQuota(kafkaRequest, types.EVAL)
-		instanceType = types.EVAL
+		return types.STANDARD, nil
 	}
 
-	return instanceType, subscriptionId, err
+	return types.EVAL, nil
+}
+
+// reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
+func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscriptionId string, err *errors.ServiceError) {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
+	}
+	subscriptionId, err = quotaService.ReserveQuota(kafkaRequest, types.KafkaInstanceType(kafkaRequest.InstanceType))
+	return subscriptionId, err
 }
 
 // RegisterKafkaJob registers a new job in the kafka table
@@ -155,7 +159,14 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
 	}
 
-	instanceType, subscriptionId, err := k.reserveQuota(kafkaRequest)
+	instanceType, err := k.detectInstanceType(kafkaRequest)
+	if err != nil {
+		return err
+	}
+
+	kafkaRequest.InstanceType = instanceType.String()
+
+	subscriptionId, err := k.reserveQuota(kafkaRequest)
 
 	if err != nil {
 		return err
@@ -164,7 +175,6 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.DesiredKafkaVersion = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
-	kafkaRequest.InstanceType = instanceType.String()
 	kafkaRequest.SubscriptionId = subscriptionId
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
