@@ -53,7 +53,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
-						return filter == "cluster|rhinfra|rhosak|marketplace", nil
+						return filter == "quota_id='cluster|rhinfra|rhosak|marketplace'", nil
 					},
 				},
 			},
@@ -83,7 +83,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
-						return filter == "cluster|rhinfra|rhosak|marketplace", nil
+						return filter == "quota_id='cluster|rhinfra|rhosak|marketplace'", nil
 					},
 				},
 			},
@@ -134,7 +134,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
 					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
-						return filter == "cluster|rhinfra|rhosak|marketplace", nil
+						return filter == "quota_id='cluster|rhinfra|rhosak|marketplace'", nil
 					},
 				},
 			},
