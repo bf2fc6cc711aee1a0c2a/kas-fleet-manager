@@ -13,6 +13,7 @@ package private
 type ManagedKafkaAllOfSpec struct {
 	Capacity ManagedKafkaCapacity          `json:"capacity,omitempty"`
 	Oauth    ManagedKafkaAllOfSpecOauth    `json:"oauth,omitempty"`
+	Owners   []string                      `json:"owners,omitempty"`
 	Endpoint ManagedKafkaAllOfSpecEndpoint `json:"endpoint,omitempty"`
 	Versions ManagedKafkaVersions          `json:"versions,omitempty"`
 	Deleted  bool                          `json:"deleted"`

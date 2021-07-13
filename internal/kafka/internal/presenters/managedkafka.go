@@ -62,6 +62,7 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				Strimzi: from.Spec.Versions.Strimzi,
 			},
 			Deleted: from.Spec.Deleted,
+			Owners:  from.Spec.Owners,
 		},
 	}
 
