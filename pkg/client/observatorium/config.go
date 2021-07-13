@@ -11,4 +11,5 @@ type Configuration struct {
 	Timeout   time.Duration
 	Debug     bool
 	Insecure  bool
+	AuthType  string
 }
