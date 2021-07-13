@@ -98,14 +98,13 @@ func TestKafkaCreate_Success(t *testing.T) {
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
-	Expect(foundKafka.Version).To(Equal(test.TestServices.KafkaConfig.DefaultKafkaVersion))
+	Expect(foundKafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 	Expect(foundKafka.Owner).To(Equal(kafka.Owner))
-
 	// checking kafka_request bootstrap server port number being present
 	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
-	Expect(kafka.Version).To(Equal(test.TestServices.KafkaConfig.DefaultKafkaVersion))
+	Expect(kafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 
 	db := test.TestServices.DBFactory.New()
 	var kafkaRequest dbapi.KafkaRequest
@@ -699,7 +698,11 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.CloudProvider).To(Equal(mocks.MockCluster.CloudProvider().ID()))
 	Expect(kafka.Name).To(Equal(mockKafkaName))
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
-	Expect(kafka.Version).To(Equal(test.TestServices.KafkaConfig.DefaultKafkaVersion))
+	// When kafka is in 'Accepted' state it means that it still has not been
+	// allocated to a cluster, which means that kas fleetshard-sync has not reported
+	// yet any status, so the version attribute (actual version) at this point
+	// should still be empty
+	Expect(kafka.Version).To(Equal(""))
 
 	// 404 Not Found
 	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))

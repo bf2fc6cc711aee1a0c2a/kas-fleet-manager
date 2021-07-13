@@ -228,54 +228,59 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName1,
-			Status:              constants2.KafkaRequestStatusDeprovision.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			DesiredKafkaVersion: "2.7.0",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName1,
+			Status:                constants2.KafkaRequestStatusDeprovision.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.0",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName2,
-			Status:              constants2.KafkaRequestStatusProvisioning.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			DesiredKafkaVersion: "2.6.0",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName2,
+			Status:                constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.6.0",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName3,
-			Status:              constants2.KafkaRequestStatusPreparing.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			DesiredKafkaVersion: "2.7.1",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName3,
+			Status:                constants2.KafkaRequestStatusPreparing.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.1",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName4,
-			Status:              constants2.KafkaRequestStatusReady.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			DesiredKafkaVersion: "2.7.2",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName4,
+			Status:                constants2.KafkaRequestStatusReady.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.2",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName4,
-			Status:              constants2.KafkaRequestStatusFailed.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			DesiredKafkaVersion: "2.7.2",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName4,
+			Status:                constants2.KafkaRequestStatusFailed.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.2",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 	}
 
@@ -343,7 +348,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
+					Reason: "UpdatingStrimzi",
 				}},
+				Versions: private.DataPlaneKafkaStatusVersions{
+					Kafka:   fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Id),
+					Strimzi: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Id),
+				},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.Id)
 		} else {
@@ -385,7 +395,25 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
+
+		sentUpdate, ok := updates[cid]
+		if !ok {
+			t.Errorf("failed to find sent kafka status update related to cluster with id %s", cid)
+		}
+
+		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+		Expect(c.ActualKafkaVersion).To(Equal(sentUpdate.Versions.Kafka))
+		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
+		readyCond := findManagedKafkaStatusReadyCondition(sentUpdate.Conditions)
+		if readyCond != nil && readyCond.Reason == "StrimziUpdating" {
+			Expect(c.StrimziUpgrading).To(Equal(true))
+		} else {
+			Expect(c.StrimziUpgrading).To(Equal(false))
+		}
+
+		// TODO test when kafka is being upgraded when kas fleet shard operator side
+		// appropriately reports it
 	}
 
 	for _, cid := range deletedClusters {
@@ -757,4 +785,13 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	}
 	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
 	Expect(c.FailedReason).To(ContainSubstring(errMessage))
+}
+
+func findManagedKafkaStatusReadyCondition(conditions []private.DataPlaneClusterUpdateStatusRequestConditions) *private.DataPlaneClusterUpdateStatusRequestConditions {
+	for _, cond := range conditions {
+		if cond.Type == "Ready" {
+			return &cond
+		}
+	}
+	return nil
 }
