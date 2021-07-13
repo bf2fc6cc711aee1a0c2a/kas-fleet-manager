@@ -3,13 +3,14 @@ package services
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"strings"
-	"sync"
 
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 
@@ -402,16 +403,18 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArgument
 		return nil, nil, errors.Unauthenticated("user not authenticated")
 	}
 
-	orgId := auth.GetOrgIdFromClaims(claims)
-	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
+	if !auth.GetIsAdminFromContext(ctx) {
+		orgId := auth.GetOrgIdFromClaims(claims)
+		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 
-	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-	if filterByOrganisationId {
-		// filter kafka requests by organisation_id since the user is allowed to see all kafka requests of my id
-		dbConn = dbConn.Where("organisation_id = ?", orgId)
-	} else {
-		// filter kafka requests by owner as we are dealing with service accounts which may not have an org id
-		dbConn = dbConn.Where("owner = ?", user)
+		// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+		if filterByOrganisationId {
+			// filter kafka requests by organisation_id since the user is allowed to see all kafka requests of my id
+			dbConn = dbConn.Where("organisation_id = ?", orgId)
+		} else {
+			// filter kafka requests by owner as we are dealing with service accounts which may not have an org id
+			dbConn = dbConn.Where("owner = ?", user)
+		}
 	}
 
 	// Apply search query
