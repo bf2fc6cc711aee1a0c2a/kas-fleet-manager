@@ -221,26 +221,33 @@ func (k *kafkaService) Get(ctx context.Context, id string) (*dbapi.KafkaRequest,
 		return nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 
-	user := auth.GetUsernameFromClaims(claims)
-	if user == "" {
-		return nil, errors.Unauthenticated("user not authenticated")
-	}
-
-	orgId := auth.GetOrgIdFromClaims(claims)
-	filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
-
 	dbConn := k.connectionFactory.New().Where("id = ?", id)
 
-	// filter by organisationId if a user is part of an organisation and is not allowed as a service account
-	if filterByOrganisationId {
-		dbConn = dbConn.Where("organisation_id = ?", orgId)
-	} else {
-		dbConn = dbConn.Where("owner = ?", user)
+	var user string
+	if !auth.GetIsAdminFromContext(ctx) {
+		user = auth.GetUsernameFromClaims(claims)
+		if user == "" {
+			return nil, errors.Unauthenticated("user not authenticated")
+		}
+
+		orgId := auth.GetOrgIdFromClaims(claims)
+		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
+
+		// filter by organisationId if a user is part of an organisation and is not allowed as a service account
+		if filterByOrganisationId {
+			dbConn = dbConn.Where("organisation_id = ?", orgId)
+		} else {
+			dbConn = dbConn.Where("owner = ?", user)
+		}
 	}
 
 	var kafkaRequest dbapi.KafkaRequest
 	if err := dbConn.First(&kafkaRequest).Error; err != nil {
-		return nil, services.HandleGetError("KafkaResource for user "+user, "id", id, err)
+		resourceTypeStr := "KafkaResource"
+		if user != "" {
+			resourceTypeStr = fmt.Sprintf("%s for user %s", resourceTypeStr, user)
+		}
+		return nil, services.HandleGetError(resourceTypeStr, "id", id, err)
 	}
 	return &kafkaRequest, nil
 }
