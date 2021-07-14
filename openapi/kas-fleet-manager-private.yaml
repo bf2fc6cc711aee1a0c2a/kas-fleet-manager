@@ -326,6 +326,10 @@ components:
                       nullable: true
                     custom_claim_check:
                       type: string
+                owners:
+                  type: array
+                  items:
+                    type: string
                 endpoint:
                   type: object
                   properties:
