@@ -966,6 +966,10 @@ func Test_kafkaService_List(t *testing.T) {
 	ctx := context.TODO()
 	authenticatedCtx := auth.SetTokenInContext(ctx, jwt)
 
+	adminCtx := context.TODO()
+	adminCtx = auth.SetIsAdminContext(adminCtx, true)
+	authenticatedAdminCtx := auth.SetTokenInContext(adminCtx, jwt)
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -974,6 +978,69 @@ func Test_kafkaService_List(t *testing.T) {
 		wantErr bool
 		setupFn func(dbapi.KafkaList)
 	}{
+		{
+			name: "success: list with default values for admin context",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			args: args{
+				ctx: authenticatedAdminCtx,
+				listArgs: &services.ListArguments{
+					Page: 1,
+					Size: 100,
+				},
+			},
+			want: want{
+				kafkaList: dbapi.KafkaList{
+					&dbapi.KafkaRequest{
+						Region:        testKafkaRequestRegion,
+						ClusterID:     testClusterID,
+						CloudProvider: testKafkaRequestProvider,
+						MultiAZ:       false,
+						Name:          "dummy-cluster-name",
+						Status:        "accepted",
+						Owner:         testUser,
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+							UpdatedAt: time.Now(),
+							DeletedAt: gorm.DeletedAt{Valid: true},
+						},
+					},
+					&dbapi.KafkaRequest{
+						Region:        testKafkaRequestRegion,
+						ClusterID:     testClusterID,
+						CloudProvider: testKafkaRequestProvider,
+						MultiAZ:       false,
+						Name:          "dummy-cluster-name2",
+						Status:        "accepted",
+						Owner:         testUser,
+						Meta: api.Meta{
+							CreatedAt: time.Now(),
+							UpdatedAt: time.Now(),
+							DeletedAt: gorm.DeletedAt{Valid: true},
+						},
+					},
+				},
+				pagingMeta: &api.PagingMeta{
+					Page:  1,
+					Size:  2,
+					Total: 2,
+				},
+			},
+			wantErr: false,
+			setupFn: func(kafkaList dbapi.KafkaList) {
+				mocket.Catcher.Reset()
+
+				// total count query
+				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
+				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+
+				// actual query to return list of kafka requests based on filters
+				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
+				response := converters.ConvertKafkaRequestList(kafkaList)
+				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+			},
+		},
 		{
 			name: "success: list with default values",
 			fields: fields{
