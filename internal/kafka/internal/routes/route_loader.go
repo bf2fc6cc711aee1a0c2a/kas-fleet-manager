@@ -184,6 +184,8 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
 	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
 	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Get).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Delete).Methods(http.MethodDelete)
+
 	return nil
 }
