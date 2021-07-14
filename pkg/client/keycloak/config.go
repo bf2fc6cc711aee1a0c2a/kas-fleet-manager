@@ -38,6 +38,12 @@ type KeycloakRealmConfig struct {
 	ValidIssuerURI   string `json:"valid_issuer_uri"`
 }
 
+func (c *KeycloakRealmConfig) setDefaultURIs(baseURL string) {
+	c.ValidIssuerURI = baseURL + "/auth/realms/" + c.Realm
+	c.JwksEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/certs"
+	c.TokenEndpointURI = baseURL + "/auth/realms/" + c.Realm + "/protocol/openid-connect/token"
+}
+
 func NewKeycloakConfig() *KeycloakConfig {
 	kc := &KeycloakConfig{
 		EnableAuthenticationOnKafka: true,
@@ -109,5 +115,7 @@ func (kc *KeycloakConfig) ReadFiles() error {
 		}
 	}
 
+	kc.KafkaRealm.setDefaultURIs(kc.BaseURL)
+	kc.OSDClusterIDPRealm.setDefaultURIs(kc.BaseURL)
 	return nil
 }

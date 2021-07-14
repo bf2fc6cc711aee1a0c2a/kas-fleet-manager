@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
@@ -85,5 +86,15 @@ func NewPrivateAPIClient(helper *test.Helper) *private.APIClient {
 	openapiConfig := private.NewConfiguration()
 	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
 	client := private.NewAPIClient(openapiConfig)
+	return client
+}
+
+func NewAdminPrivateAPIClient(helper *test.Helper) *adminprivate.APIClient {
+	var serverConfig *server.ServerConfig
+	helper.Env.MustResolveAll(&serverConfig)
+
+	openapiConfig := adminprivate.NewConfiguration()
+	openapiConfig.BasePath = fmt.Sprintf("http://%s", serverConfig.BindAddress)
+	client := adminprivate.NewAPIClient(openapiConfig)
 	return client
 }

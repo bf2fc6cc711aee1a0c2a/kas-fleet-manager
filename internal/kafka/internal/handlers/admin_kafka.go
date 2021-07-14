@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/gorilla/mux"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -58,4 +59,21 @@ func (h adminKafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleList(w, r, cfg)
+}
+
+func (h adminKafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Validate: []handlers.Validate{
+			handlers.ValidateAsyncEnabled(r, "deleting kafka requests"),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+
+			err := h.service.RegisterKafkaDeprovisionJob(ctx, id)
+			return nil, err
+		},
+	}
+
+	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
 }
