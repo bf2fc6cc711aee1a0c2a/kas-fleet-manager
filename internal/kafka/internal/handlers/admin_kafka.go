@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"github.com/gorilla/mux"
 	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
@@ -11,6 +10,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/gorilla/mux"
 )
 
 type adminKafkaHandler struct {
@@ -23,6 +23,21 @@ func NewAdminKafkaHandler(service services.KafkaService, providerConfig *config.
 		service:        service,
 		providerConfig: providerConfig,
 	}
+}
+
+func (h adminKafkaHandler) Get(w http.ResponseWriter, r *http.Request) {
+	cfg := &handlers.HandlerConfig{
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			kafkaRequest, err := h.service.Get(ctx, id)
+			if err != nil {
+				return nil, err
+			}
+			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest), nil
+		},
+	}
+	handlers.HandleGet(w, r, cfg)
 }
 
 func (h adminKafkaHandler) List(w http.ResponseWriter, r *http.Request) {
