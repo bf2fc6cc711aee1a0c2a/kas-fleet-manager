@@ -272,7 +272,9 @@ func (k *kafkaService) RegisterKafkaDeprovisionJob(ctx context.Context, id strin
 
 	dbConn := k.connectionFactory.New()
 
-	if auth.GetIsOrgAdminFromClaims(claims) {
+	if auth.GetIsAdminFromContext(ctx) {
+		dbConn = dbConn.Where("id = ?", id)
+	} else if auth.GetIsOrgAdminFromClaims(claims) {
 		orgId := auth.GetOrgIdFromClaims(claims)
 		dbConn = dbConn.Where("id = ?", id).Where("organisation_id = ?", orgId)
 	} else {

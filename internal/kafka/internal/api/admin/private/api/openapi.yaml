@@ -146,6 +146,14 @@ paths:
         required: true
         schema:
           type: string
+      - description: Perform the action in an asynchronous manner
+        explode: true
+        in: query
+        name: async
+        required: true
+        schema:
+          type: boolean
+        style: form
       responses:
         "200":
           content:
