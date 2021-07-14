@@ -3,6 +3,11 @@ package integration
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
@@ -12,9 +17,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -23,7 +25,6 @@ import (
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/pkg/errors"
 	"gopkg.in/resty.v1"
-	"time"
 )
 
 type TestServer struct {
@@ -227,54 +228,59 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	var testKafkas = []*dbapi.KafkaRequest{
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName1,
-			Status:              constants2.KafkaRequestStatusDeprovision.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.0",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName1,
+			Status:                constants2.KafkaRequestStatusDeprovision.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.0",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName2,
-			Status:              constants2.KafkaRequestStatusProvisioning.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			Version:             "2.6.0",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName2,
+			Status:                constants2.KafkaRequestStatusProvisioning.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.6.0",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName3,
-			Status:              constants2.KafkaRequestStatusPreparing.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.1",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName3,
+			Status:                constants2.KafkaRequestStatusPreparing.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.1",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName4,
-			Status:              constants2.KafkaRequestStatusReady.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.2",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName4,
+			Status:                constants2.KafkaRequestStatusReady.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.2",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 		{
-			ClusterID:           testServer.ClusterID,
-			MultiAZ:             false,
-			Name:                mockKafkaName4,
-			Status:              constants2.KafkaRequestStatusFailed.String(),
-			BootstrapServerHost: bootstrapServerHost,
-			SsoClientID:         ssoClientID,
-			SsoClientSecret:     ssoSecret,
-			Version:             "2.7.2",
+			ClusterID:             testServer.ClusterID,
+			MultiAZ:               false,
+			Name:                  mockKafkaName4,
+			Status:                constants2.KafkaRequestStatusFailed.String(),
+			BootstrapServerHost:   bootstrapServerHost,
+			SsoClientID:           ssoClientID,
+			SsoClientSecret:       ssoSecret,
+			DesiredKafkaVersion:   "2.7.2",
+			DesiredStrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 		},
 	}
 
@@ -289,11 +295,11 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	// create an additional kafka in failed state without "ssoSecret", "ssoClientID" and bootstrapServerHost. This indicates that the
 	// kafka failed in preparing state and should not be returned in the list
 	additionalKafka := &dbapi.KafkaRequest{
-		ClusterID: testServer.ClusterID,
-		MultiAZ:   false,
-		Name:      mockKafkaName4,
-		Status:    constants2.KafkaRequestStatusFailed.String(),
-		Version:   "2.7.2",
+		ClusterID:           testServer.ClusterID,
+		MultiAZ:             false,
+		Name:                mockKafkaName4,
+		Status:              constants2.KafkaRequestStatusFailed.String(),
+		DesiredKafkaVersion: "2.7.2",
 	}
 
 	if err := db.Save(additionalKafka).Error; err != nil {
@@ -325,7 +331,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Expect(mk.Metadata.Annotations.Id).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
-				Expect(mk.Spec.Versions.Kafka).To(Equal(k.Version))
+				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
 				Expect(mk.Spec.Endpoint.Tls).To(BeNil())
 			} else {
 				t.Error("failed matching managedkafka id with kafkarequest id")
@@ -342,7 +348,12 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
+					Reason: "UpdatingStrimzi",
 				}},
+				Versions: private.DataPlaneKafkaStatusVersions{
+					Kafka:   fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Id),
+					Strimzi: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Id),
+				},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.Id)
 		} else {
@@ -384,7 +395,25 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		if err := db.First(c, "id = ?", cid).Error; err != nil {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
+
+		sentUpdate, ok := updates[cid]
+		if !ok {
+			t.Errorf("failed to find sent kafka status update related to cluster with id %s", cid)
+		}
+
+		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+		Expect(c.ActualKafkaVersion).To(Equal(sentUpdate.Versions.Kafka))
+		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
+		readyCond := findManagedKafkaStatusReadyCondition(sentUpdate.Conditions)
+		if readyCond != nil && readyCond.Reason == "StrimziUpdating" {
+			Expect(c.StrimziUpgrading).To(Equal(true))
+		} else {
+			Expect(c.StrimziUpgrading).To(Equal(false))
+		}
+
+		// TODO test when kafka is being upgraded when kas fleet shard operator side
+		// appropriately reports it
 	}
 
 	for _, cid := range deletedClusters {
@@ -430,7 +459,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -491,7 +520,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -551,7 +580,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			BootstrapServerHost: bootstrapServerHost,
 			SsoClientID:         ssoClientID,
 			SsoClientSecret:     ssoSecret,
-			Version:             "2.6.0",
+			DesiredKafkaVersion: "2.6.0",
 		},
 	}
 
@@ -661,7 +690,7 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
 		PlacementId:         "some-placement-id",
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	KeycloakConfig(testServer.Helper).EnableAuthenticationOnKafka = true
@@ -728,7 +757,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 		BootstrapServerHost: bootstrapServerHost,
 		SsoClientID:         ssoClientID,
 		SsoClientSecret:     ssoSecret,
-		Version:             "2.7.0",
+		DesiredKafkaVersion: "2.7.0",
 	}
 
 	// create dummy kafkas
@@ -756,4 +785,13 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	}
 	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
 	Expect(c.FailedReason).To(ContainSubstring(errMessage))
+}
+
+func findManagedKafkaStatusReadyCondition(conditions []private.DataPlaneClusterUpdateStatusRequestConditions) *private.DataPlaneClusterUpdateStatusRequestConditions {
+	for _, cond := range conditions {
+		if cond.Type == "Ready" {
+			return &cond
+		}
+	}
+	return nil
 }

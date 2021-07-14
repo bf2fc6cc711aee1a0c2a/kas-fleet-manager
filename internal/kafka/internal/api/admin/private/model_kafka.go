@@ -24,21 +24,25 @@ type Kafka struct {
 	CloudProvider string `json:"cloud_provider,omitempty"`
 	MultiAz       bool   `json:"multi_az,omitempty"`
 	// Values will be regions of specific cloud provider. For example: us-east-1 for AWS
-	Region              string             `json:"region,omitempty"`
-	Owner               string             `json:"owner,omitempty"`
-	Name                string             `json:"name,omitempty"`
-	BootstrapServerHost string             `json:"bootstrap_server_host,omitempty"`
-	CreatedAt           time.Time          `json:"created_at,omitempty"`
-	UpdatedAt           time.Time          `json:"updated_at,omitempty"`
-	FailedReason        string             `json:"failed_reason,omitempty"`
-	KafkaVersion        string             `json:"kafka_version,omitempty"`
-	StrimziVersion      string             `json:"strimzi_version,omitempty"`
-	OrganisationId      string             `json:"organisation_id,omitempty"`
-	SubscriptionId      string             `json:"subscription_id,omitempty"`
-	SsoClientId         string             `json:"sso_client_id,omitempty"`
-	OwnerAccountId      string             `json:"owner_account_id,omitempty"`
-	QuotaType           string             `json:"quota_type,omitempty"`
-	Routes              []KafkaAllOfRoutes `json:"routes,omitempty"`
-	RoutesCreated       bool               `json:"routes_created,omitempty"`
-	ProductType         string             `json:"product_type,omitempty"`
+	Region                string             `json:"region,omitempty"`
+	Owner                 string             `json:"owner,omitempty"`
+	Name                  string             `json:"name,omitempty"`
+	BootstrapServerHost   string             `json:"bootstrap_server_host,omitempty"`
+	CreatedAt             time.Time          `json:"created_at,omitempty"`
+	UpdatedAt             time.Time          `json:"updated_at,omitempty"`
+	FailedReason          string             `json:"failed_reason,omitempty"`
+	ActualKafkaVersion    string             `json:"actual_kafka_version,omitempty"`
+	ActualStrimziVersion  string             `json:"actual_strimzi_version,omitempty"`
+	DesiredKafkaVersion   string             `json:"desired_kafka_version,omitempty"`
+	DesiredStrimziVersion string             `json:"desired_strimzi_version,omitempty"`
+	KafkaUpgrading        bool               `json:"kafka_upgrading,omitempty"`
+	StrimziUpgrading      bool               `json:"strimzi_upgrading,omitempty"`
+	OrganisationId        string             `json:"organisation_id,omitempty"`
+	SubscriptionId        string             `json:"subscription_id,omitempty"`
+	SsoClientId           string             `json:"sso_client_id,omitempty"`
+	OwnerAccountId        string             `json:"owner_account_id,omitempty"`
+	QuotaType             string             `json:"quota_type,omitempty"`
+	Routes                []KafkaAllOfRoutes `json:"routes,omitempty"`
+	RoutesCreated         bool               `json:"routes_created,omitempty"`
+	ProductType           string             `json:"product_type,omitempty"`
 }
