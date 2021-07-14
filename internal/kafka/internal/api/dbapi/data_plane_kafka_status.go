@@ -8,7 +8,9 @@ type DataPlaneKafkaStatus struct {
 	KafkaClusterId string
 	Conditions     []DataPlaneKafkaStatusCondition
 	// Going to ignore the rest of fields (like capacity and versions) for now, until when they are needed
-	Routes []DataPlaneKafkaRoute
+	Routes         []DataPlaneKafkaRoute
+	KafkaVersion   string
+	StrimziVersion string
 }
 
 type DataPlaneKafkaStatusCondition struct {

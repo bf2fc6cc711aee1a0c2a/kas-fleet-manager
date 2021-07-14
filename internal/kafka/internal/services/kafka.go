@@ -134,7 +134,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	}
 
 	dbConn := k.connectionFactory.New()
-	kafkaRequest.Version = k.kafkaConfig.DefaultKafkaVersion
+	kafkaRequest.DesiredKafkaVersion = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
@@ -617,7 +617,7 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			},
 			// These values must be changed as soon as we will have the real values
 			Versions: managedkafka.VersionsSpec{
-				Kafka: kafkaRequest.Version,
+				Kafka: kafkaRequest.DesiredKafkaVersion,
 				//TODO: we should remove the strimzi version as it should not be specified here
 				Strimzi: "strimzi-cluster-operator.v0.23.0-0",
 			},
