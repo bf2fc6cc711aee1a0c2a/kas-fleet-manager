@@ -419,12 +419,9 @@ func (k *kafkaService) DeprovisionKafkaForUsers(users []string) *errors.ServiceE
 func (k *kafkaService) DeprovisionExpiredKafkas(kafkaAgeInHours int) *errors.ServiceError {
 	dbConn := k.connectionFactory.New().
 		Model(&dbapi.KafkaRequest{}).
+		Where("instance_type = ?", types.EVAL.String()).
 		Where("created_at  <=  ?", time.Now().Add(-1*time.Duration(kafkaAgeInHours)*time.Hour)).
 		Where("status NOT IN (?)", kafkaDeletionStatuses)
-
-	if len(k.kafkaConfig.KafkaLifespan.LongLivedKafkas) > 0 {
-		dbConn = dbConn.Where("id NOT IN (?)", k.kafkaConfig.KafkaLifespan.LongLivedKafkas)
-	}
 
 	db := dbConn.Update("status", constants2.KafkaRequestStatusDeprovision)
 	err := db.Error

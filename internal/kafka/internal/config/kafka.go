@@ -54,7 +54,6 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.DefaultKafkaVersion, "default-kafka-version", c.DefaultKafkaVersion, "The default version of Kafka when creating Kafka instances")
 	fs.BoolVar(&c.KafkaLifespan.EnableDeletionOfExpiredKafka, "enable-deletion-of-expired-kafka", c.KafkaLifespan.EnableDeletionOfExpiredKafka, "Enable the deletion of kafkas when its life span has expired")
 	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
-	fs.StringVar(&c.KafkaLifespan.LongLivedKafkaConfigFile, "long-lived-kafkas-config-file", c.KafkaLifespan.LongLivedKafkaConfigFile, "The file containing the long lived kafkas")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
 	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of kafka evaluator instances")
@@ -74,10 +73,6 @@ func (c *KafkaConfig) ReadFiles() error {
 		return err
 	}
 	err = yaml.Unmarshal([]byte(content), &c.KafkaCapacity)
-	if err != nil {
-		return err
-	}
-	err = c.KafkaLifespan.ReadFiles()
 	if err != nil {
 		return err
 	}
