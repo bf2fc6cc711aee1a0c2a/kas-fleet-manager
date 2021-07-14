@@ -1268,9 +1268,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
-		c.KafkaLifespan.LongLivedKafkas = []string{}
-	})
+	h, client, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1358,9 +1356,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
-		c.KafkaLifespan.LongLivedKafkas = []string{}
-	})
+	h, client, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1384,9 +1380,6 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 	db := test.TestServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
-	// set the long lived kafka id list at the beginning of the tests to avoid potential timing issues when testing its case
-	longLivedKafkaId := "123456"
-	KafkaConfig(h).KafkaLifespan.LongLivedKafkas = []string{longLivedKafkaId}
 
 	kafkas := []*dbapi.KafkaRequest{
 		{
@@ -1416,7 +1409,6 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 		},
 		{
 			Meta: api.Meta{
-				ID:        longLivedKafkaId,
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
 			MultiAZ:             false,

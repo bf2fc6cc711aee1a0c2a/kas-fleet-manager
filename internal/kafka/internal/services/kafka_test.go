@@ -1591,7 +1591,10 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants2.KafkaRequestStatusDeprovision)).WithReply(nil)
+				// There is a date that is set automatically by the Deprovision function, so I can't anticipate its value.
+				// For that reason, I will be matching `instance_type = $1` to check that the new instance_type is passed to the update query
+				mocket.Catcher.Reset().NewMock().WithQuery(`instance_type = $3`).WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -1606,6 +1609,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 				kafkaConfig:       config.NewKafkaConfig(),
 			}
 			err := k.DeprovisionExpiredKafkas(tt.args.kafkaAgeInMins)
+
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))
 		})
 	}

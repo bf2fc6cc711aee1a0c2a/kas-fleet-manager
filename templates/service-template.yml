@@ -423,11 +423,6 @@ parameters:
   description: The domain name to use for Kafka instances
   value: bf2.kafka-stage.rhcloud.com
 
-- name: LONG_LIVED_KAFKAS
-  displayName: List of Kafkas that will not expire
-  description: List of Kafkas that will not expire
-  value: "[]"
-
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
   description: ID of the Strimzi operator addon
@@ -509,15 +504,6 @@ objects:
     data:
       kafka-sre-user-list.yaml: |-
         ${KAFKA_SRE_USERS}
-  - kind: ConfigMap
-    apiVersion: v1
-    metadata:
-      name: ocm-managed-services-long-lived-kafkas
-      annotations:
-        qontract.recycle: "true"
-    data:
-      long-lived-kafkas-configuration.yaml: |-
-        ${LONG_LIVED_KAFKAS}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
