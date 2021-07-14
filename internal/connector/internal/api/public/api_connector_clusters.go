@@ -571,12 +571,12 @@ func (a *ConnectorClustersApiService) ListConnectorClusters(ctx _context.Context
 }
 
 /*
-UpdateConnectorCluster udpate a connector cluster
+UpdateConnectorClusterById udpate a connector cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param connectorClusterId The id of the connector cluster
  * @param connectorCluster Data to updated connector with
 */
-func (a *ConnectorClustersApiService) UpdateConnectorCluster(ctx _context.Context, connectorClusterId string, connectorCluster ConnectorCluster) (*_nethttp.Response, error) {
+func (a *ConnectorClustersApiService) UpdateConnectorClusterById(ctx _context.Context, connectorClusterId string, connectorCluster ConnectorCluster) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
 		localVarPostBody     interface{}
