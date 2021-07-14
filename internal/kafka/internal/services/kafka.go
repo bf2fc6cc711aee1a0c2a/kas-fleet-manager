@@ -622,6 +622,9 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 				Strimzi: "strimzi-cluster-operator.v0.23.0-0",
 			},
 			Deleted: kafkaRequest.Status == constants2.KafkaRequestStatusDeprovision.String(),
+			Owners: []string{
+				kafkaRequest.Owner,
+			},
 		},
 		Status: managedkafka.ManagedKafkaStatus{},
 	}

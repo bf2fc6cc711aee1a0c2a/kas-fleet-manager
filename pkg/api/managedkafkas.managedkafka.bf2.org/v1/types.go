@@ -68,6 +68,7 @@ type ManagedKafkaSpec struct {
 	Endpoint EndpointSpec `json:"endpoint"`
 	Versions VersionsSpec `json:"versions"`
 	Deleted  bool         `json:"deleted"`
+	Owners   []string     `json:"owners"`
 }
 
 type ManagedKafka struct {

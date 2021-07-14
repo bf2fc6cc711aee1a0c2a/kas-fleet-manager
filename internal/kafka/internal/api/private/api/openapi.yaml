@@ -597,6 +597,10 @@ components:
           $ref: '#/components/schemas/ManagedKafkaCapacity'
         oauth:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec_oauth'
+        owners:
+          items:
+            type: string
+          type: array
         endpoint:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec_endpoint'
         versions:

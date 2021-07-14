@@ -13,20 +13,18 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	goerrors "github.com/pkg/errors"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/onsi/gomega"
-	"gorm.io/gorm"
-
+	goerrors "github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
+	"gorm.io/gorm"
 )
 
 const (

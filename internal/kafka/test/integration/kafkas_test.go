@@ -99,6 +99,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
 	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.Version).To(Equal(test.TestServices.KafkaConfig.DefaultKafkaVersion))
+	Expect(foundKafka.Owner).To(Equal(kafka.Owner))
 
 	// checking kafka_request bootstrap server port number being present
 	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
@@ -111,10 +112,12 @@ func TestKafkaCreate_Success(t *testing.T) {
 	if err := db.Unscoped().Where("id = ?", kafka.Id).First(&kafkaRequest).Error; err != nil {
 		t.Error("failed to find kafka request")
 	}
+
 	Expect(kafkaRequest.SsoClientID).To(BeEmpty())
 	Expect(kafkaRequest.SsoClientSecret).To(BeEmpty())
 	Expect(kafkaRequest.QuotaType).To(Equal(KafkaConfig(h).Quota.Type))
 	Expect(kafkaRequest.PlacementId).To(Not(BeEmpty()))
+	Expect(kafkaRequest.Owner).To(Not(BeEmpty()))
 
 	common.CheckMetricExposed(h, t, metrics.KafkaCreateRequestDuration)
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationCreate.String()))
