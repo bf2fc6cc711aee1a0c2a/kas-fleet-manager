@@ -400,12 +400,12 @@ func (k *kafkaService) List(ctx context.Context, listArgs *services.ListArgument
 		return nil, nil, errors.NewWithCause(errors.ErrorUnauthenticated, err, "user not authenticated")
 	}
 
-	user := auth.GetUsernameFromClaims(claims)
-	if user == "" {
-		return nil, nil, errors.Unauthenticated("user not authenticated")
-	}
-
 	if !auth.GetIsAdminFromContext(ctx) {
+		user := auth.GetUsernameFromClaims(claims)
+		if user == "" {
+			return nil, nil, errors.Unauthenticated("user not authenticated")
+		}
+
 		orgId := auth.GetOrgIdFromClaims(claims)
 		filterByOrganisationId := auth.GetFilterByOrganisationFromContext(ctx)
 

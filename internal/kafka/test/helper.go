@@ -2,6 +2,9 @@ package test
 
 import (
 	"fmt"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
@@ -20,8 +23,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/goava/di"
 	"github.com/golang/glog"
-	"net/http/httptest"
-	"testing"
 )
 
 type Services struct {
