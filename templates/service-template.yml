@@ -422,11 +422,6 @@ parameters:
   description: The domain name to use for Kafka instances
   value: bf2.kafka-stage.rhcloud.com
 
-- name: LONG_LIVED_KAFKAS
-  displayName: List of Kafkas that will not expire
-  description: List of Kafkas that will not expire
-  value: "[]"
-
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
   description: ID of the Strimzi operator addon
@@ -517,15 +512,6 @@ objects:
     data:
       kafka-sre-user-list.yaml: |-
         ${KAFKA_SRE_USERS}
-  - kind: ConfigMap
-    apiVersion: v1
-    metadata:
-      name: kas-fleet-manager-long-lived-kafkas
-      annotations:
-        qontract.recycle: "true"
-    data:
-      long-lived-kafkas-configuration.yaml: |-
-        ${LONG_LIVED_KAFKAS}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -667,9 +653,6 @@ objects:
           - name: kas-fleet-manager-kafka-capacity-config
             configMap:
               name: kas-fleet-manager-kafka-capacity-config
-          - name: kas-fleet-manager-long-lived-kafkas
-            configMap:
-              name: kas-fleet-manager-long-lived-kafkas
           - name: kas-fleet-manager-authentication
             configMap:
               name: kas-fleet-manager-authentication
@@ -740,9 +723,6 @@ objects:
             - name: kas-fleet-manager-kafka-capacity-config
               mountPath: /config/kafka-capacity-config.yaml
               subPath: kafka-capacity-config.yaml
-            - name: kas-fleet-manager-long-lived-kafkas
-              mountPath: /config/long-lived-kafkas-configuration.yaml
-              subPath: long-lived-kafkas-configuration.yaml
             - name: kas-fleet-manager-authentication
               mountPath: /config/authentication
             - name: kas-fleet-manager-dataplane-cluster-scaling-config
@@ -765,7 +745,6 @@ objects:
             - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
             - --kafka-lifespan=${KAFKA_LIFE_SPAN}
             - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
-            - --long-lived-kafkas-config-file=/config/long-lived-kafkas-configuration.yaml
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
