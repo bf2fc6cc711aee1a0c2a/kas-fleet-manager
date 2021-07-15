@@ -53,9 +53,9 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.StrimziVersions = []string{"v5", "v7", "v3"}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion("v3"),
-		api.StrimziVersion("v5"),
-		api.StrimziVersion("v7"),
+		api.StrimziVersion{Version: "v3", Ready: true},
+		api.StrimziVersion{Version: "v5", Ready: true},
+		api.StrimziVersion{Version: "v7", Ready: true},
 	}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -693,12 +693,12 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.StrimziVersions = []string{}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion("v8"),
-		api.StrimziVersion("v9"),
-		api.StrimziVersion("v10"),
+		api.StrimziVersion{Version: "v8", Ready: true},
+		api.StrimziVersion{Version: "v9", Ready: false},
+		api.StrimziVersion{Version: "v10", Ready: true},
 	}
 	db := test.TestServices.DBFactory.New()
-	initialAvailableStrimziVersionsStr := `["v8", "v9", "v10"]`
+	initialAvailableStrimziVersionsStr := `[{"version": "v8", "ready": true}, {"version": "v9", "ready": false}, {"version": "v10", "ready": true}]`
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
 	Expect(err).ToNot(HaveOccurred())
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
@@ -753,12 +753,12 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.StrimziVersions = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion("v8"),
-		api.StrimziVersion("v9"),
-		api.StrimziVersion("v10"),
+		api.StrimziVersion{Version: "v8", Ready: true},
+		api.StrimziVersion{Version: "v9", Ready: false},
+		api.StrimziVersion{Version: "v10", Ready: true},
 	}
 	db := test.TestServices.DBFactory.New()
-	initialAvailableStrimziVersionsStr := `["v8", "v9", "v10"]`
+	initialAvailableStrimziVersionsStr := `[{"version": "v8", "ready": true}, {"version": "v9", "ready": false}, {"version": "v10", "ready": true}]`
 	err = db.Model(&api.Cluster{}).Where("cluster_id = ?", testDataPlaneclusterID).Update("available_strimzi_versions", initialAvailableStrimziVersionsStr).Error
 	Expect(err).ToNot(HaveOccurred())
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
@@ -816,20 +816,23 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = []string{"v5", "v7", "v3"}
-	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion("v3"),
-		api.StrimziVersion("v5"),
-		api.StrimziVersion("v7"),
+	clusterStatusUpdateRequest.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+		private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v5", Ready: false},
+		private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v7", Ready: false},
+		private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v3", Ready: true},
 	}
-
+	expectedAvailableStrimziVersions := []api.StrimziVersion{
+		api.StrimziVersion{Version: "v3", Ready: true},
+		api.StrimziVersion{Version: "v5", Ready: false},
+		api.StrimziVersion{Version: "v7", Ready: false},
+	}
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
 	Expect(availableStrimziVersions).To(Equal([]api.StrimziVersion{
-		api.StrimziVersion("v8"),
-		api.StrimziVersion("v9"),
-		api.StrimziVersion("v10"),
+		api.StrimziVersion{Version: "v8", Ready: true},
+		api.StrimziVersion{Version: "v9", Ready: true},
+		api.StrimziVersion{Version: "v10", Ready: true},
 	}))
 	Expect(err).ToNot(HaveOccurred())
 

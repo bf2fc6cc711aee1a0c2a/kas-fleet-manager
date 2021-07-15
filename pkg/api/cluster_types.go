@@ -165,21 +165,63 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-type StrimziVersion string
+type StrimziVersion struct {
+	Version string `json:"version"`
+	Ready   bool   `json:"ready"`
+}
+
+// GetAvailableAndReadyStrimziVersions returns the cluster's list of available
+// and ready versions or an error. An empty list is returned if there are no
+// available and ready versions
+func (cluster *Cluster) GetAvailableAndReadyStrimziVersions() ([]StrimziVersion, error) {
+	strimziVersions, err := cluster.GetAvailableStrimziVersions()
+	if err != nil {
+		return nil, err
+	}
+
+	res := []StrimziVersion{}
+	for _, val := range strimziVersions {
+		if val.Ready {
+			res = append(res, val)
+		}
+	}
+	return res, nil
+}
 
 // GetAvailableStrimziVersions returns the cluster's list of available strimzi
-// versions or an error. An empty list if there are no versions
+// versions or an error. An empty list is returned if there are no versions.
+// This returns the available versions in the cluster independently on whether
+// they are ready or not. If you want to only get the available and ready
+// versions use the GetAvailableAndReadyStrimziVersions method
 func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) {
 	versions := []StrimziVersion{}
 	if cluster.AvailableStrimziVersions == nil {
 		return versions, nil
 	}
 
-	if err := json.Unmarshal(cluster.AvailableStrimziVersions, &versions); err != nil {
-		return nil, err
-	} else {
-		return versions, nil
+	fallbackToLegacyUnmarshal := false
+	err := json.Unmarshal(cluster.AvailableStrimziVersions, &versions)
+	if err != nil {
+		fallbackToLegacyUnmarshal = true
 	}
+
+	if fallbackToLegacyUnmarshal {
+		versions = []StrimziVersion{}
+		versionsListStr := []string{}
+		err := json.Unmarshal(cluster.AvailableStrimziVersions, &versionsListStr)
+		if err != nil {
+			return nil, err
+		}
+		for _, version := range versionsListStr {
+			strimziVersion := StrimziVersion{
+				Version: version,
+				Ready:   true,
+			}
+			versions = append(versions, strimziVersion)
+		}
+	}
+
+	return versions, nil
 }
 
 // SetAvailableStrimziVersions sets the cluster's list of available strimzi versions
@@ -189,7 +231,7 @@ func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []S
 	versionsToSet := []StrimziVersion{}
 	versionsToSet = append(versionsToSet, availableStrimziVersions...)
 	sort.Slice(versionsToSet, func(i, j int) bool {
-		return versionsToSet[i] < versionsToSet[j]
+		return versionsToSet[i].Version < versionsToSet[j].Version
 	})
 
 	if v, err := json.Marshal(versionsToSet); err != nil {

@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
@@ -82,6 +84,16 @@ func (h *dataPlaneClusterHandler) validateBody(request *private.DataPlaneCluster
 		}
 
 		err = h.validateResizeInfo(request)
+		if err != nil {
+			return err
+		}
+
+		err = h.validateStrimziVersions(request)
+		if err != nil {
+			return err
+		}
+
+		err = h.validateStrimzi(request)
 		if err != nil {
 			return err
 		}
@@ -202,6 +214,26 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 	}
 	if remaining.Partitions == nil {
 		return errors.FieldValidationError("remaining partitions must be set")
+	}
+
+	return nil
+}
+
+func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
+	for idx, strimziElem := range request.StrimziVersions {
+		if strimziElem == "" {
+			return errors.FieldValidationError(fmt.Sprintf(".status.strimziVersions[%d] cannot be empty", idx))
+		}
+	}
+
+	return nil
+}
+
+func (h *dataPlaneClusterHandler) validateStrimzi(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
+	for idx, strimziElem := range request.Strimzi {
+		if strimziElem.Version == "" {
+			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].version cannot be empty", idx))
+		}
 	}
 
 	return nil
