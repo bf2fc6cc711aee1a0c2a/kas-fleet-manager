@@ -667,7 +667,7 @@ paths:
       tags:
       - Connector Clusters
     put:
-      operationId: updateConnectorCluster
+      operationId: updateConnectorClusterById
       parameters:
       - description: The id of the connector cluster
         explode: false
