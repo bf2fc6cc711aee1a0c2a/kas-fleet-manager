@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -147,7 +147,11 @@ func Test_kafkaService_Get(t *testing.T) {
 			},
 			want: buildKafkaRequest(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1 AND owner = $2`).
+					WithArgs(testID, testUser).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}
@@ -245,7 +249,11 @@ func Test_kafkaService_GetById(t *testing.T) {
 			},
 			want: buildKafkaRequest(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
+					WithArgs(testID).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
 			},
 		},
 	}
@@ -305,7 +313,7 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{{"a": "1000"}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": "1000"}})
 			},
 			wantErr: false,
 		},
@@ -321,7 +329,9 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{{"a": "999"}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": "999"}})
+				// This is necessary otherwise if the query is wrong, the caller will receive a `0` result al `count`
+				mocket.Catcher.NewMock().WithExecException().WithQueryException() // With this, an expected query will throw an exception
 			},
 			wantErr: false,
 		},
@@ -395,7 +405,8 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: false,
 		},
@@ -424,9 +435,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr: true,
 		},
@@ -459,7 +467,8 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr:                 false,
 			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
@@ -467,7 +476,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 		{
 			name: "failed SSO client creation",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService: &ClusterServiceMock{
 					GetClusterDNSFunc: func(string) (string, *errors.ServiceError) {
 						return "clusterDNS", nil
@@ -490,9 +498,6 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 			},
 			args: args{
 				kafkaRequest: buildKafkaRequest(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr: true,
 		},
@@ -531,11 +536,12 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 		kafkaRequest *dbapi.KafkaRequest
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		setupFn func()
+		name       string
+		fields     fields
+		args       args
+		wantErr    bool
+		wantErrMsg string
+		setupFn    func()
 	}{
 		{
 			name: "error when id is undefined",
@@ -569,9 +575,10 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 					kafkaRequest.ID = testID
 				}),
 			},
-			wantErr: true,
+			wantErr:    true,
+			wantErrMsg: "KAFKAS-MGMT-9",
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "kafka_requests"`).WithQueryException()
 			},
 		},
 	}
@@ -589,6 +596,11 @@ func Test_kafkaService_RegisterKafkaDeprovisionJob(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if err != nil && tt.wantErrMsg != "" {
+				if !strings.Contains(err.Error(), tt.wantErrMsg) {
+					t.Errorf("Bad error message received: '%s'. Expecting to contain %s", err.Error(), tt.wantErrMsg)
+				}
 			}
 		})
 	}
@@ -633,12 +645,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
-					Meta: api.Meta{
-						ID: testID,
-					},
-					Status: constants2.KafkaRequestStatusAccepted.String(),
-				}))
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "deleted_at"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -663,16 +671,8 @@ func Test_kafkaService_Delete(t *testing.T) {
 				}),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
-					Meta: api.Meta{
-						ID: testID,
-					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       true,
-					Status:        constants2.KafkaRequestStatusPreparing.String(),
-				}))
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "deleted_at"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -695,18 +695,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
-					Meta: api.Meta{
-						ID: testID,
-					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       true,
-					Status:        constants2.KafkaRequestStatusPreparing.String(),
-				}))
 			},
 			wantErr: true,
 		},
@@ -737,18 +725,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
 					kafkaRequest.ID = testID
 				}),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(converters.ConvertKafkaRequest(&dbapi.KafkaRequest{
-					Meta: api.Meta{
-						ID: testID,
-					},
-					Region:        clusterservicetest.MockClusterRegion,
-					ClusterID:     clusterservicetest.MockClusterID,
-					CloudProvider: clusterservicetest.MockClusterCloudProvider,
-					MultiAZ:       true,
-					Status:        constants2.KafkaRequestStatusPreparing.String(),
-				}))
 			},
 			wantErr: true,
 		},
@@ -809,11 +785,15 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "200"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT").WithReply(nil)
+				mocket.Catcher.NewMock().WithQuery("INSERT")
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr: false,
@@ -835,7 +815,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "1000"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT").WithReply(nil)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -855,11 +835,14 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				},
 			},
 			args: args{
-				kafkaRequest: buildKafkaRequest(nil),
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					kafkaRequest.ID = ""
+				}),
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "200"}})
 				mocket.Catcher.NewMock().WithQuery("INSERT").WithExecException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -883,7 +866,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "200"}})
-				mocket.Catcher.NewMock().WithQuery("INSERT").WithExecException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
 				wantErr:  true,
@@ -912,7 +895,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaConfig:       &kafkaConf,
 				awsConfig:         config.NewAWSConfig(),
 				quotaServiceFactory: &QuotaServiceFactoryMock{
-					GetQuotaServiceFunc: func(quoataType api.QuotaType) (QuotaService, *errors.ServiceError) {
+					GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *errors.ServiceError) {
 						return tt.fields.quotaService, nil
 					},
 				},
@@ -1033,12 +1016,13 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
 				response := converters.ConvertKafkaRequestList(kafkaList)
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1096,12 +1080,13 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
 				response := converters.ConvertKafkaRequestList(kafkaList)
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1145,13 +1130,14 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": "5"}}
-				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
 				response := converters.ConvertKafkaRequestList(kafkaList)
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1180,13 +1166,14 @@ func Test_kafkaService_List(t *testing.T) {
 
 				// total count query
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply(totalCountResponse)
 
 				// actual query to return list of kafka requests based on filters
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
 				response := converters.ConvertKafkaRequestList(kafkaList)
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1210,12 +1197,13 @@ func Test_kafkaService_List(t *testing.T) {
 				mocket.Catcher.Reset()
 
 				totalCountResponse := []map[string]interface{}{{"count": len(kafkaList)}}
-				mocket.Catcher.NewMock().WithQuery("count").WithReply(totalCountResponse)
+				mocket.Catcher.NewMock().WithQuery("SELECT count(1) FROM \"kafka_requests\"").WithReply(totalCountResponse)
 
 				query := fmt.Sprintf(`SELECT * FROM "%s"`, kafkaRequestTableName)
 				response := converters.ConvertKafkaRequestList(kafkaList)
 
 				mocket.Catcher.NewMock().WithQuery(query).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -1313,7 +1301,11 @@ func Test_kafkaService_ListByStatus(t *testing.T) {
 			},
 			want: []*dbapi.KafkaRequest{buildKafkaRequest(nil)},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE status IN ($1)`).
+					WithArgs("").
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(nil)))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -1375,10 +1367,13 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			wantErr:      true,
 			wantExecuted: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
-				})))
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
+					WithArgs(testID).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
+					})))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				id:     testID,
@@ -1393,10 +1388,14 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 			wantErr:      false,
 			wantExecuted: true,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
-				})))
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1`)
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
+					WithArgs(testID).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.Status = constants2.KafkaRequestStatusDeprovision.String()
+					})))
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				id:     testID,
@@ -1410,9 +1409,14 @@ func Test_kafkaService_UpdateStatus(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.Status = constants2.KafkaRequestStatusPreparing.String()
-				})))
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM "kafka_requests" WHERE id = $1`).
+					WithArgs(testID).
+					WithReply(converters.ConvertKafkaRequest(buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+						kafkaRequest.Status = constants2.KafkaRequestStatusPreparing.String()
+					})))
+				mocket.Catcher.NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			args: args{
 				id: testID,
@@ -1478,7 +1482,8 @@ func Test_kafkaService_Update(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 	}
@@ -1534,7 +1539,8 @@ func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 			wantErr: false,
 			args:    args{users: []string{"user"}},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants2.KafkaRequestStatusDeprovision)).WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -1584,7 +1590,8 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(fmt.Sprintf(`UPDATE "kafka_requests" SET "status" = %s`, constants2.KafkaRequestStatusDeprovision)).WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE created_at  <=  $3 AND status NOT IN ($4,$5)`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -1637,7 +1644,11 @@ func TestKafkaService_CountByStatus(t *testing.T) {
 						"count":  1,
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT status as Status, count(1) as Count FROM "kafka_requests" WHERE status in ($1,$2,$3)`).
+					WithArgs(constants2.KafkaRequestStatusAccepted.String(), constants2.KafkaRequestStatusReady.String(), constants2.KafkaRequestStatusProvisioning.String()).
+					WithReply(counters)
 			},
 			want: []KafkaStatusCount{{
 				Status: constants2.KafkaRequestStatusAccepted,

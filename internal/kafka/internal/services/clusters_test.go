@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -107,7 +108,8 @@ func Test_Cluster_Create(t *testing.T) {
 				cluster: buildCluster(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT INTO "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			wantErr: false,
 			want:    wantedCluster,
@@ -126,9 +128,6 @@ func Test_Cluster_Create(t *testing.T) {
 			},
 			args: args{
 				cluster: buildCluster(nil),
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr: true,
 		},
@@ -219,7 +218,10 @@ func Test_GetClusterDNS(t *testing.T) {
 						"cluster_dns": "",
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
+				mocket.Catcher.Reset().
+					NewMock().WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testClusterID).
+					WithReply(res)
 			},
 			wantErr: false,
 			want:    mockClusterDNS,
@@ -227,7 +229,6 @@ func Test_GetClusterDNS(t *testing.T) {
 		{
 			name: "error when passing empty clusterID",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return &clusters.ProviderMock{GetClusterDNSFunc: func(clusterSpec *types.ClusterSpec) (string, error) {
 						return mockClusterDNS, nil
@@ -236,16 +237,6 @@ func Test_GetClusterDNS(t *testing.T) {
 			},
 			args: args{
 				clusterID: "",
-			},
-			setupFn: func() {
-				res := []map[string]interface{}{
-					{
-						"id":          "testid",
-						"cluster_id":  "testid",
-						"cluster_dns": "",
-					},
-				}
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(res)
 			},
 			wantErr: true,
 		},
@@ -335,7 +326,11 @@ func Test_Cluster_FindClusterByID(t *testing.T) {
 			want: &api.Cluster{ClusterID: testClusterID},
 			setupFn: func() {
 				mockedResponse := []map[string]interface{}{{"cluster_id": testClusterID}}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(mockedResponse)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testClusterID).
+					WithReply(mockedResponse)
 			},
 		},
 	}
@@ -399,7 +394,8 @@ func Test_FindCluster(t *testing.T) {
 			want:    nil,
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 		{
@@ -425,7 +421,7 @@ func Test_FindCluster(t *testing.T) {
 			},
 			want: buildCluster(nil),
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertCluster(buildCluster(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertCluster(buildCluster(nil)))
 			},
 		},
 	}
@@ -514,7 +510,8 @@ func Test_ListByStatus(t *testing.T) {
 			wantErr: false,
 			setupFn: func() {
 				response := converters.ConvertClusterList(emptyClusterList)
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(response)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -529,7 +526,11 @@ func Test_ListByStatus(t *testing.T) {
 			wantErr: false,
 			setupFn: func() {
 				response := converters.ConvertClusterList(nonEmptyClusterList)
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(response)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE status = $1`).
+					WithArgs(api.ClusterProvisioned.String()).
+					WithReply(response)
 			},
 		},
 	}
@@ -598,8 +599,8 @@ func Test_ClusterService_Update(t *testing.T) {
 			wantErr: false,
 			want:    nil,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (id =").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters" SET "id"=$1,"updated_at"=$2 WHERE "id" = $3`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -673,8 +674,8 @@ func Test_UpdateStatus(t *testing.T) {
 			wantErr: false,
 			want:    nil,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (id =").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters" SET "status"=$1,"updated_at"=$2 WHERE id = $3`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -689,8 +690,8 @@ func Test_UpdateStatus(t *testing.T) {
 			wantErr: false,
 			want:    nil,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (cluster_id =").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters" SET "status"=$1,"updated_at"=$2 WHERE cluster_id = $3`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -744,7 +745,8 @@ func Test_RegisterClusterJob(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT  INTO "clusters"`).WithReply(converters.ConvertCluster(buildCluster(nil)))
+				mocket.Catcher.Reset().NewMock().WithQuery(`INSERT INTO "clusters"`)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 	}
@@ -775,24 +777,32 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 	type args struct {
 		clusterID string
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
+
+	type checkError struct {
 		wantErr bool
-		setupFn func()
+		error   string
+	}
+
+	tests := []struct {
+		name       string
+		fields     fields
+		args       args
+		checkError checkError
+		setupFn    func()
 	}{
 		{
 			name: "error when cluster id is undefined",
 			args: args{
 				clusterID: "",
 			},
-			wantErr: true,
+			checkError: checkError{
+				wantErr: true,
+			},
 		},
 		{
 			name: "error when scale up compute nodes ocm function fails",
 			args: args{
-				clusterID: "test",
+				clusterID: testID,
 			},
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
@@ -810,9 +820,16 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 						"cluster_dns": "",
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testID).
+					WithReply(res)
 			},
-			wantErr: true,
+			checkError: checkError{
+				wantErr: true,
+				error:   "KAFKAS-MGMT-9: failed to scale up cluster",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -825,9 +842,12 @@ func Test_ScaleUpComputeNodes(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			_, err := k.ScaleUpComputeNodes(tt.args.clusterID, testNodeIncrement)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ScaleUpComputeNodes() error = %v, wantErr %v", err, tt.wantErr)
+			if (err != nil) != tt.checkError.wantErr {
+				t.Errorf("ScaleUpComputeNodes() error = %v, wantErr %v", err, tt.checkError.wantErr)
 				return
+			}
+			if err != nil && !strings.Contains(err.Error(), tt.checkError.error) {
+				t.Errorf("Wrong error received. Expecting '%s' but received '%s'", tt.checkError.error, err.Error())
 			}
 		})
 	}
@@ -842,24 +862,31 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 	type args struct {
 		clusterID string
 	}
+	type errorCheck struct {
+		wantErr   bool
+		expectErr string
+	}
+
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-		setupFn func()
+		name       string
+		fields     fields
+		args       args
+		errorCheck errorCheck
+		setupFn    func()
 	}{
 		{
 			name: "error when cluster id is undefined",
 			args: args{
 				clusterID: "",
 			},
-			wantErr: true,
+			errorCheck: errorCheck{
+				wantErr: true,
+			},
 		},
 		{
 			name: "error when scale down ocm function fails",
 			args: args{
-				clusterID: "test",
+				clusterID: testID,
 			},
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
@@ -877,9 +904,16 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 						"cluster_dns": "",
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testID).
+					WithReply(res)
 			},
-			wantErr: true,
+			errorCheck: errorCheck{
+				wantErr:   true,
+				expectErr: "KAFKAS-MGMT-9: failed to scale down cluster",
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -892,9 +926,12 @@ func Test_ScaleDownComputeNodes(t *testing.T) {
 				connectionFactory: tt.fields.connectionFactory,
 			}
 			_, err := k.ScaleDownComputeNodes(tt.args.clusterID, testNodeDecrement)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ScaleDownComputeNodes() error = %v, wantErr %v", err, tt.wantErr)
+			if (err != nil) != tt.errorCheck.wantErr {
+				t.Errorf("ScaleDownComputeNodes() error = %v, wantErr %v", err, tt.errorCheck.wantErr)
 				return
+			}
+			if err != nil && !strings.Contains(err.Error(), tt.errorCheck.expectErr) {
+				t.Errorf("Wrong error received. Expecting '%s' but received '%s'", tt.errorCheck.expectErr, err.Error())
 			}
 		})
 	}
@@ -931,8 +968,8 @@ func TestClusterService_ListGroupByProviderAndRegion(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{
-					map[string]interface{}{
+				mocket.Catcher.Reset().NewMock().WithQuery(`FROM "clusters"`).WithReply([]map[string]interface{}{
+					{
 						"Provider": "aws",
 						"Region":   "east-1",
 						"Count":    1,
@@ -1009,8 +1046,8 @@ func Test_DeleteByClusterId(t *testing.T) {
 			wantErr: false,
 			want:    nil,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("WHERE (cluster_id =").WithReply(nil)
-				mocket.Catcher.NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 	}
@@ -1056,6 +1093,10 @@ func Test_Cluster_FindNonEmptyClusterById(t *testing.T) {
 			},
 			wantErr: false,
 			want:    nil,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
 		},
 		{
 			name: "error when sql where query fails",
@@ -1123,7 +1164,8 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT "cluster_id" FROM "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			want:  nil,
 			want1: nil,
@@ -1134,8 +1176,8 @@ func Test_clusterService_ListAllClusterIds(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{
-					map[string]interface{}{
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT "cluster_id" FROM "clusters" WHERE cluster_id != ''`).WithReply([]map[string]interface{}{
+					{
 						"cluster_id": "test01",
 					},
 				})
@@ -1205,7 +1247,7 @@ func Test_clusterService_FindKafkaInstanceCount(t *testing.T) {
 						"count":     2,
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
+				mocket.Catcher.Reset().NewMock().WithQuery(`GROUP BY "cluster_id"`).WithReply(counters)
 			},
 		},
 		{
@@ -1283,7 +1325,8 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset()
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 		{
@@ -1292,7 +1335,8 @@ func Test_clusterService_FindAllClusters(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(converters.ConvertClusters(clusters))
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT * FROM "clusters"`).WithReply(converters.ConvertClusters(clusters))
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			args: args{
 				criteria: clusterReady,
@@ -1349,6 +1393,10 @@ func Test_clusterService_UpdateMultiClusterStatus(t *testing.T) {
 				status:     api.ClusterDeprovisioning,
 			},
 			wantErr: false,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
 		},
 		{
 			name: "error when ids is undefined",
@@ -1431,7 +1479,11 @@ func TestClusterService_CountByStatus(t *testing.T) {
 						"count":  1,
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithReply(counters)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT status as Status, count(1) as Count FROM "clusters" WHERE status in ($1,$2,$3)`).
+					WithArgs(api.ClusterAccepted.String(), api.ClusterReady.String(), api.ClusterProvisioning.String()).
+					WithReply(counters)
 			},
 			want: []ClusterStatusCount{{
 				Status: api.ClusterAccepted,
@@ -1514,12 +1566,17 @@ func TestClusterService_GetComputeNodes(t *testing.T) {
 			setupFn: func() {
 				res := []map[string]interface{}{
 					{
-						"id":          "testid",
-						"cluster_id":  "testid",
+						"id":          testClusterID,
+						"cluster_id":  testClusterID,
 						"cluster_dns": "",
 					},
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(res)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testClusterID).
+					WithReply(res)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			wantErr: false,
 			want: &types.ComputeNodesInfo{
@@ -1530,23 +1587,12 @@ func TestClusterService_GetComputeNodes(t *testing.T) {
 		{
 			name: "error when passing empty clusterID",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return nil, errors.Errorf("this function should not called")
 				}},
 			},
 			args: args{
 				clusterID: "",
-			},
-			setupFn: func() {
-				res := []map[string]interface{}{
-					{
-						"id":          "testid",
-						"cluster_id":  "testid",
-						"cluster_dns": "",
-					},
-				}
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(res)
 			},
 			wantErr: true,
 		},
@@ -1622,7 +1668,8 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 				},
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters" SET "id"=$1`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			wantErr: false,
 			want: &api.Cluster{
@@ -1635,7 +1682,6 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 		{
 			name: "error when failed to check cluster status",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return &clusters.ProviderMock{
 						CheckClusterStatusFunc: func(spec *types.ClusterSpec) (*types.ClusterSpec, error) {
@@ -1653,9 +1699,6 @@ func TestClusterService_CheckClusterStatus(t *testing.T) {
 					ClusterID:  clusterId,
 					Status:     clusterStatus,
 				},
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr: true,
 		},
@@ -1836,7 +1879,8 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 				}},
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "clusters"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 			wantErr: false,
 			want: &api.Cluster{
@@ -1852,7 +1896,6 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 		{
 			name: "error when failed to add identity provider",
 			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterProviderFactory: &clusters.ProviderFactoryMock{GetProviderFunc: func(providerType api.ClusterProviderType) (clusters.Provider, error) {
 					return &clusters.ProviderMock{
 						AddIdentityProviderFunc: func(clusterSpec *types.ClusterSpec, identityProvider types.IdentityProviderInfo) (*types.IdentityProviderInfo, error) {
@@ -1869,9 +1912,6 @@ func TestClusterService_ConfigureAndSaveIdentityProvider(t *testing.T) {
 					ClientSecret: "test-client-secret",
 					Issuer:       "test-issuer",
 				}},
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithReply(nil)
 			},
 			wantErr: true,
 		},
@@ -2206,7 +2246,12 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 			},
 			setupFn: func() {
 				mockedResponse := []map[string]interface{}{{"external_id": "test-cluster-id"}}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(mockedResponse)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testClusterID).
+					WithReply(mockedResponse)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: false,
 			want:    "test-cluster-id",
@@ -2222,7 +2267,12 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 			},
 			setupFn: func() {
 				mockedResponse := []map[string]interface{}{{"external_id": ""}}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply(mockedResponse)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testClusterID).
+					WithReply(mockedResponse)
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: false,
 			want:    "",
@@ -2237,7 +2287,11 @@ func Test_ClusterService_GetExternalID(t *testing.T) {
 				clusterID: "test-cluster-id",
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithError(gorm.ErrRecordNotFound)
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM "clusters" WHERE "clusters"."cluster_id" = $1`).
+					WithArgs(testClusterID).
+					WithError(gorm.ErrRecordNotFound)
 			},
 			wantErr: true,
 		},

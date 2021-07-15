@@ -2,6 +2,7 @@ package workers
 
 import (
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,12 +17,17 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 		workerType string
 		dbConn     *gorm.DB
 	}
+	type errorCheck struct {
+		wantErr     bool
+		expectedErr string
+	}
+
 	tests := []struct {
-		name    string
-		args    args
-		wantFn  func(*leaderLeaseAcquisition) error
-		wantErr bool
-		setupFn func()
+		name       string
+		args       args
+		wantFn     func(*leaderLeaseAcquisition) error
+		errorCheck errorCheck
+		setupFn    func()
 	}{
 		{
 			name: "failure listing any lease record in lease table",
@@ -30,10 +36,18 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
-			wantFn:  nil,
-			wantErr: true,
+			wantFn: nil,
+			errorCheck: errorCheck{
+				wantErr:     true,
+				expectedErr: "expected to find a lease entry",
+			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{})
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT * FROM leader_leases where deleted_at is null and lease_type = $1`).
+					WithArgs("cluster").
+					WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},
 		{
@@ -43,8 +57,10 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 				workerType: "cluster",
 				dbConn:     db.NewMockConnectionFactory(nil).DB,
 			},
-			wantFn:  nil,
-			wantErr: true,
+			wantFn: nil,
+			errorCheck: errorCheck{
+				wantErr: true,
+			},
 			setupFn: func() {
 				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithQueryException()
 			},
@@ -65,13 +81,15 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 				}
 				return nil
 			},
-			wantErr: false,
+			errorCheck: errorCheck{
+				wantErr: false,
+			},
 			setupFn: func() {
 				mockEntry := map[string]interface{}{
 					"leader":  "000-002",
 					"expires": time.Now().Add(time.Hour),
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{mockEntry})
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT * FROM leader_leases").WithReply([]map[string]interface{}{mockEntry})
 			},
 		},
 		{
@@ -90,14 +108,26 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 				}
 				return nil
 			},
-			wantErr: false,
+			errorCheck: errorCheck{
+				wantErr: false,
+			},
 			setupFn: func() {
 				mockEntry := map[string]interface{}{
 					"leader":  "000-003",
 					"id":      "leader-lease-id",
 					"expires": time.Now().Add(time.Second * 30),
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{mockEntry})
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM leader_leases where deleted_at is null and lease_type = $1`).
+					WithArgs("cluster").
+					WithReply([]map[string]interface{}{mockEntry})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT * FROM leader_leases where deleted_at is null and lease_type = $1 FOR UPDATE`).
+					WithArgs("cluster").
+					WithReply([]map[string]interface{}{mockEntry})
+				mocket.Catcher.NewMock().
+					WithQuery(`UPDATE "leader_leases" SET "expires"=$1,"leader"=$2,"updated_at"=$3 WHERE "id" = $4`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 		{
@@ -116,13 +146,19 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 				}
 				return nil
 			},
-			wantErr: false,
+			errorCheck: errorCheck{
+				wantErr: false,
+			},
 			setupFn: func() {
 				mockEntry := map[string]interface{}{
 					"leader":  "otherLeader",
 					"expires": time.Now().Add(time.Hour),
 				}
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT").WithReply([]map[string]interface{}{mockEntry})
+				mocket.Catcher.Reset().NewMock().
+					WithQuery(`SELECT * FROM leader_leases where deleted_at is null and lease_type = $1`).
+					WithArgs("cluster").
+					WithReply([]map[string]interface{}{mockEntry})
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
 			},
 		},
 	}
@@ -131,9 +167,12 @@ func TestLeaderElectionManager_acquireLeaderLease(t *testing.T) {
 			tt.setupFn()
 			s := &LeaderElectionManager{leaseRenewTime: 3 * time.Minute}
 			got, err := s.acquireLeaderLease(tt.args.workerId, tt.args.workerType, tt.args.dbConn)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("acquireLeaderLease() error = %v, wantErr %v", err, tt.wantErr)
+			if (err != nil) != tt.errorCheck.wantErr {
+				t.Errorf("acquireLeaderLease() error = %v, wantErr %v", err, tt.errorCheck.wantErr)
 				return
+			}
+			if err != nil && !strings.Contains(err.Error(), tt.errorCheck.expectedErr) {
+				t.Errorf("Expecting error '%s' but got '%s'", tt.errorCheck.expectedErr, err.Error())
 			}
 			if tt.wantFn == nil {
 				return
