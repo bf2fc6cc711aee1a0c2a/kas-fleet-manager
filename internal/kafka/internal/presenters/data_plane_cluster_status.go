@@ -93,15 +93,34 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Data
 }
 
 // getAvailableStrimziVersions returns a list of api.StrimziVersion sorted
-// as lexicographically ascending sorted list of api.StrimziVersion from the
-// status content
+// as lexicographically ascending sorted list of api.StrimziVersion.Version from the
+// status content.
 func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequest) []api.StrimziVersion {
 	res := []api.StrimziVersion{}
-	for _, val := range status.StrimziVersions {
-		res = append(res, api.StrimziVersion(val))
+
+	// We try to get the versions from status.Strimzi and if it has not been defined
+	// we try to fallback to status.StrimziVersions.
+	if status.Strimzi != nil {
+		for _, val := range status.Strimzi {
+			strimziVersion := api.StrimziVersion{
+				Version: val.Version,
+				Ready:   val.Ready,
+			}
+			res = append(res, api.StrimziVersion(strimziVersion))
+		}
+
+	} else { // fall back to StrimziVersions.
+		for _, val := range status.StrimziVersions {
+			strimziVersion := api.StrimziVersion{
+				Version: val,
+				Ready:   true,
+			}
+			res = append(res, api.StrimziVersion(strimziVersion))
+		}
 	}
+
 	sort.Slice(res, func(i, j int) bool {
-		return res[i] < res[j]
+		return res[i].Version < res[j].Version
 	})
 
 	return res

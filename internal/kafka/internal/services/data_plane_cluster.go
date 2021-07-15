@@ -224,7 +224,7 @@ func (d *dataPlaneClusterService) setClusterStatus(cluster *api.Cluster, status 
 			return err
 		}
 
-		glog.Infof("Updating Strimzi operator available versions for cluster ID '%s'. Versions: '%s'\n", cluster.ClusterID, status.AvailableStrimziVersions)
+		glog.Infof("Updating Strimzi operator available versions for cluster ID '%s'. Versions: '%v'\n", cluster.ClusterID, status.AvailableStrimziVersions)
 		svcErr := d.ClusterService.Update(*cluster)
 		if svcErr != nil {
 			return err

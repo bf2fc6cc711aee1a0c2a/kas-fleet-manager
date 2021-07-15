@@ -22,4 +22,5 @@ type DataPlaneClusterUpdateStatusRequest struct {
 	DeprecatedResizeInfo *DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo `json:"resizeInfo,omitempty"`
 	ResizeInfo           *DataPlaneClusterUpdateStatusRequestResizeInfo           `json:"resize_info,omitempty"`
 	StrimziVersions      []string                                                 `json:"strimziVersions,omitempty"`
+	Strimzi              []DataPlaneClusterUpdateStatusRequestStrimzi             `json:"strimzi,omitempty"`
 }

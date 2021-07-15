@@ -381,6 +381,11 @@ components:
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
+        strimzi:
+        - ready: true
+          version: version
+        - ready: true
+          version: version
         node_info:
           ceiling: 7
           current_work_load_minimum: 2
@@ -438,6 +443,10 @@ components:
         strimziVersions:
           items:
             type: string
+          type: array
+        strimzi:
+          items:
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'
           type: array
       type: object
     DataPlaneKafkaStatus:
@@ -744,6 +753,18 @@ components:
           type: integer
         delta:
           $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_resize_info_delta'
+    DataPlaneClusterUpdateStatusRequest_strimzi:
+      example:
+        ready: true
+        version: version
+      properties:
+        ready:
+          type: boolean
+        version:
+          type: string
+      required:
+      - ready
+      - version
     DataPlaneKafkaStatus_capacity:
       description: Capacity information of the data plane cluster
       properties:
