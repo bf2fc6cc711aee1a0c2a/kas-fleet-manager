@@ -190,9 +190,6 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 	converted.Spec.ShardMetadata = shardMetadata
 	converted.Spec.ConnectorSpec = pc.ConnectorSpec
 	converted.Spec.DesiredState = pc.DesiredState
-	if converted.Spec.DesiredState == dbapi.ConnectorStatusPhaseStopped {
-		converted.Spec.DesiredState = dbapi.ConnectorClusterPhaseDeleted
-	}
 	converted.Spec.ConnectorId = pc.Id
 	converted.Spec.KafkaId = pc.Metadata.KafkaId
 	converted.Spec.Kafka = private.KafkaConnectionSettings{
