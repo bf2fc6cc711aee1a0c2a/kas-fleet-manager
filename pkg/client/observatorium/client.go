@@ -4,10 +4,11 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/golang/glog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/pkg/errors"
@@ -36,13 +37,20 @@ type Client struct {
 func NewObservatoriumClient(c *ObservabilityConfiguration) (client *Client, err error) {
 	// Create Observatorium client
 	observatoriumConfig := &Configuration{
-		BaseURL:   c.ObservatoriumGateway + "/api/metrics/v1/" + c.ObservatoriumTenant,
-		AuthToken: c.AuthToken,
-		Cookie:    c.Cookie,
-		Timeout:   c.Timeout,
-		Debug:     c.Debug,
-		Insecure:  c.Insecure,
+		Cookie:   c.Cookie,
+		Timeout:  c.Timeout,
+		Debug:    c.Debug,
+		Insecure: c.Insecure,
+		AuthType: c.AuthType,
 	}
+
+	if c.AuthType == AuthTypeSso {
+		observatoriumConfig.BaseURL = c.RedHatSsoTokenRefresherUrl
+	} else {
+		observatoriumConfig.BaseURL = c.ObservatoriumGateway + "/api/metrics/v1/" + c.ObservatoriumTenant
+		observatoriumConfig.AuthToken = c.AuthToken
+	}
+
 	if c.EnableMock {
 		glog.Infof("Using Mock Observatorium Client")
 		client, err = NewClientMock(observatoriumConfig)
@@ -74,22 +82,25 @@ func NewClient(config *Configuration) (*Client, error) {
 	if config.Insecure {
 		pAPI.DefaultRoundTripper.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
-	apiClient, err := pAPI.NewClient(
-		pAPI.Config{
-			Address: client.Config.BaseURL,
-			RoundTripper: authRoundTripper{
-				config:  *client.Config,
-				wrapped: pAPI.DefaultRoundTripper,
-			},
-		},
-	)
+
+	apiConfig := pAPI.Config{
+		Address: client.Config.BaseURL,
+	}
+
+	if config.AuthType == AuthTypeDex {
+		apiConfig.RoundTripper = authRoundTripper{
+			config:  *client.Config,
+			wrapped: pAPI.DefaultRoundTripper,
+		}
+	}
+
+	apiClient, err := pAPI.NewClient(apiConfig)
 	if err != nil {
 		return nil, err
 	}
 	client.connection = pV1.NewAPI(apiClient)
 	client.Service = &ServiceObservatorium{client: client}
 	return client, nil
-
 }
 
 func NewClientMock(config *Configuration) (*Client, error) {
