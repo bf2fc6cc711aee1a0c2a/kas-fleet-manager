@@ -690,7 +690,7 @@ Feature: connector agent API
     Then the ".status" selection from the response should match "ready"
 
     #-----------------------------------------------------------------------------------------------------------------
-    # Bobby sets desired state to stopped.. Agent sees deployment delete, Bobby then see stopped status
+    # Bobby sets desired state to stopped.. Agent sees deployment stopped, it updates status to stopped,, Bobby then see stopped status
     #-----------------------------------------------------------------------------------------------------------------
     # Updating the connector config should update the deployment.
     Given I set the "Content-Type" header to "application/merge-patch+json"
@@ -704,44 +704,17 @@ Feature: connector agent API
 
     Given I am logged in as "Shard"
     Given I set the "Authorization" header to "Bearer ${shard_token}"
-    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "deleted"
+    Given I wait up to "5" seconds for a GET on path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}" response ".spec.desired_state" selection to match "stopped"
     When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
-    Then the ".spec.desired_state" selection from the response should match "deleted"
+    Then the ".spec.desired_state" selection from the response should match "stopped"
     When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
       """
       {
-        "phase":"deleted",
+        "phase":"stopped",
         "resource_version": 45
       }
       """
     Then the response code should be 204
-    And I run SQL "SELECT count(*) FROM connector_deployments WHERE id='${connector_deployment_id}' AND deleted_at IS NULL" gives results:
-      | count |
-      | 0     |
-
-
-    When I GET path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}"
-    Then the response code should be 410
-    Then the response should match json:
-      """
-      {
-        "code": "CONNECTOR-MGMT-25",
-        "href": "/api/connector_mgmt/v1/errors/25",
-        "id": "25",
-        "kind": "Error",
-        "operation_id": "${response.operation_id}",
-        "reason": "Connector deployment with id='${connector_deployment_id}' has been deleted"
-      }
-      """
-
-    When I PUT path "/v1/kafka_connector_clusters/${connector_cluster_id}/deployments/${connector_deployment_id}/status" with json body:
-      """
-      {
-        "phase":"deleted",
-        "resource_version": 45
-      }
-      """
-    Then the response code should be 410
 
     Given I am logged in as "Bobby"
     When I GET path "/v1/kafka_connectors/${connector_id}"

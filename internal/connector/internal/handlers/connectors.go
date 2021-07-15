@@ -228,12 +228,7 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if originalResource.Status != dbapi.ConnectorStatusPhaseAssigning {
-				switch originalResource.Status {
-				case dbapi.ConnectorStatusPhaseStopped:
-					dbresource.Status.Phase = dbapi.ConnectorStatusPhaseAssigning
-				default:
-					dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
-				}
+				dbresource.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
 				p.Status.Phase = dbapi.ConnectorStatusPhaseUpdating
 				serr = h.connectorsService.SaveStatus(r.Context(), dbresource.Status)
 				if serr != nil {
@@ -393,13 +388,24 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 			if c.DesiredState != dbapi.ConnectorStatusPhaseDeleted {
+
+				switch c.Status.Phase {
+				case dbapi.ConnectorStatusPhaseAssigning: // don't change..
+				case dbapi.ConnectorStatusPhaseDeleted: // don't change..
+				default:
+					c.Status.Phase = dbapi.ConnectorStatusPhaseDeleting
+					err = h.connectorsService.SaveStatus(r.Context(), c.Status)
+					if err != nil {
+						return nil, err
+					}
+				}
+
 				c.DesiredState = dbapi.ConnectorStatusPhaseDeleted
 				err := h.connectorsService.Update(r.Context(), c)
 				if err != nil {
 					return nil, err
 				}
 			}
-
 			return nil, nil
 		},
 	}
