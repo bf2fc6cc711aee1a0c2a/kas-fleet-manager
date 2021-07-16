@@ -828,6 +828,38 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
+			name: "registering kafka too many eval",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService:    nil,
+				quotaService: &QuotaServiceMock{
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						// No RHOSAK quota assigned
+						return instanceType != types.STANDARD, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL`).
+					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.
+					NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3)`).
+					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusTooManyRequests,
+			},
+		},
+		{
 			name: "registering kafka job fails: postgres error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
