@@ -206,28 +206,42 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 		{
 			name: "When setting a non empty ordered list of strimzi versions that list is stored as is",
 			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: false},
-				StrimziVersion{Version: "v7", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "v3", Ready: true},
-				StrimziVersion{Version: "v6", Ready: false},
-				StrimziVersion{Version: "v7", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
 		{
-			name: "When setting a non empty unordered list of strimzi versions that list is stored in a lexicographically ascending order",
+			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order",
 			inputStrimziVersions: []StrimziVersion{
-				StrimziVersion{Version: "v5", Ready: true},
-				StrimziVersion{Version: "v3", Ready: false},
-				StrimziVersion{Version: "v2", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
 			},
 			want: []StrimziVersion{
-				StrimziVersion{Version: "v2", Ready: true},
-				StrimziVersion{Version: "v3", Ready: false},
-				StrimziVersion{Version: "v5", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.5.0.0-0", Ready: true},
+			},
+			wantErr: false,
+		},
+		{
+			name: "When setting a non empty unordered list of strimzi versions that list is stored in semver ascending order (case 2)",
+			inputStrimziVersions: []StrimziVersion{
+				StrimziVersion{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+			},
+			want: []StrimziVersion{
+				StrimziVersion{Version: "strimzi-cluster-operator-v.2.0.0-0", Ready: true},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.5.8.0-9", Ready: false},
+				StrimziVersion{Version: "strimzi-cluster-operator-v.5.10.0-3", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -263,6 +277,99 @@ func TestSetAvailableStrimziVersions(t *testing.T) {
 					panic(err)
 				}
 
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("want: %v got: %v", tt.want, got)
+				}
+			}
+		})
+	}
+}
+
+func TestCompare(t *testing.T) {
+	tests := []struct {
+		name                 string
+		inputStrimziVersion1 StrimziVersion
+		inputStrimziVersion2 StrimziVersion
+		want                 int
+		wantErr              bool
+	}{
+		{
+			name:                 "When inputStrimziVersion1 is smaller than inputStrimziVersion2 -1 is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: false},
+			want:                 -1,
+			wantErr:              false,
+		},
+		{
+			name:                 "When inputStrimziVersion1 is equal than inputStrimziVersion2 0 is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+			want:                 0,
+			wantErr:              false,
+		},
+		{
+			name:                 "When inputStrimziVersion1 is bigger than inputStrimziVersion2 1 is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+			want:                 1,
+			wantErr:              false,
+		},
+		{
+			name:                 "Check that semver-level comparison is performed",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.3.10-6", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6.3.8-9", Ready: false},
+			want:                 1,
+			wantErr:              false,
+		},
+		{
+			name:                 "When inputStrimziVersion1 is empty an error is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.3.0.0-0", Ready: false},
+			wantErr:              true,
+		},
+		{
+			name:                 "When inputStrimziVersion2 is empty an error is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "", Ready: false},
+			wantErr:              true,
+		},
+		{
+			name:                 "When inputStrimziVersion1 has an invalid semver version format an error is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6invalid.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: false},
+			wantErr:              true,
+		},
+		{
+			name:                 "When inputStrimziVersion1 has an invalid expected format an error is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: false},
+			wantErr:              true,
+		},
+		{
+			name:                 "When inputStrimziVersion2 has an invalid semver version format an error is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6invalid.0.0-0", Ready: false},
+			wantErr:              true,
+		},
+		{
+			name:                 "When inputStrimziVersion2 has an invalid expected format an error is returned",
+			inputStrimziVersion1: StrimziVersion{Version: "strimzi-cluster-operator-v.7.0.0-0", Ready: true},
+			inputStrimziVersion2: StrimziVersion{Version: "strimzi-cluster-operator-v.6.0.0", Ready: true},
+			wantErr:              true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.inputStrimziVersion1.Compare(tt.inputStrimziVersion2)
+			gotErr := err != nil
+			errResultTestFailed := false
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				errResultTestFailed = true
+				t.Errorf("wantErr: %v got: %v", tt.wantErr, gotErr)
+			}
+
+			if !errResultTestFailed {
 				if !reflect.DeepEqual(got, tt.want) {
 					t.Errorf("want: %v got: %v", tt.want, got)
 				}
