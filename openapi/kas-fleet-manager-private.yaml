@@ -531,7 +531,18 @@ components:
           type: array
           items:
             type: string
-
+        strimzi:
+          type: array
+          items:
+            type: object
+            properties:
+              ready:
+                type: boolean
+              version:
+                type: string
+            required:
+            - ready
+            - version
     DataPlaneKafkaStatus:
       description: "Schema of the status object for a Kafka cluster"
       type: object
