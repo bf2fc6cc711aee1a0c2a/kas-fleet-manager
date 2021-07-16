@@ -30,14 +30,9 @@ func Test_AllowListCheckQuota(t *testing.T) {
 		{
 			name: "do not throw an error when instance limit control is disabled",
 			arg: args{
-				connectionFactory: db.NewMockConnectionFactory(nil),
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: false,
 				},
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "2"}})
 			},
 			want: nil,
 		},
@@ -59,7 +54,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithQueryException()
+				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).WithQueryException()
 			},
 			want: errors.GeneralError("count failed from database"),
 		},
@@ -82,7 +77,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "4"}})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE (organisation_id = $1)`).
+					WithArgs("org-id").
+					WithReply([]map[string]interface{}{{"count": "4"}})
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -108,7 +106,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "4"}})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithArgs("username").
+					WithReply([]map[string]interface{}{{"count": "4"}})
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -133,7 +134,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithArgs("username").
+					WithReply([]map[string]interface{}{{"count": "1"}})
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -151,7 +155,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithArgs("username").
+					WithReply([]map[string]interface{}{{"count": "1"}})
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -178,7 +185,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithArgs("username").
+					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
@@ -205,7 +216,11 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery("count").WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE (organisation_id = $1)`).
+					WithArgs("org-id").
+					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: nil,
 		},
