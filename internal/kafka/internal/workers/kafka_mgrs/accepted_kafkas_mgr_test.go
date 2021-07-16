@@ -1,14 +1,13 @@
 package kafka_mgrs
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"testing"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"testing"
-
 	"github.com/onsi/gomega"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -81,31 +80,6 @@ func TestAcceptedKafkaManager(t *testing.T) {
 			wantStatus: constants2.KafkaRequestStatusPreparing.String(),
 		},
 		{
-			name: "set kafka status to failed when quota is insufficient",
-			fields: fields{
-				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
-					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
-						return &api.Cluster{}, nil
-					},
-				},
-				kafkaService: &services.KafkaServiceMock{
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
-					},
-				},
-				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
-						return "", errors.InsufficientQuotaError("quota insufficient")
-					},
-				},
-				dataPlaneClusterConfig: testConfig,
-			},
-			args: args{
-				kafka: &dbapi.KafkaRequest{},
-			},
-			wantStatus: constants2.KafkaRequestStatusFailed.String(),
-		},
-		{
 			name: "error when dataPlaneClusterConfig doesn't contain strimzi version",
 			fields: fields{
 				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
@@ -122,7 +96,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 					},
 				},
 				quotaService: &services.QuotaServiceMock{
-					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 						return "sub-scription", nil
 					},
 				},

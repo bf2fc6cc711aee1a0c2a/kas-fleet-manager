@@ -11,7 +11,7 @@ import (
 )
 
 type amsQuotaService struct {
-	ocmClient ocm.Client
+	amsClient ocm.AMSClient
 }
 
 func newQuotaResource() amsv1.ReservedResourceBuilder {
@@ -26,12 +26,12 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 
 func (q amsQuotaService) CheckQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	quotaId := fmt.Sprintf("quota_id='cluster|rhinfra|%s|marketplace'", strings.ToLower(instanceType.ToProductType()))
-	orgId, err := q.ocmClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
+	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
 	}
 
-	hasQuota, err := q.ocmClient.HasAssignedQuota(orgId, quotaId)
+	hasQuota, err := q.amsClient.HasAssignedQuota(orgId, quotaId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
 	}
@@ -58,7 +58,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 		Resources(&rr).
 		Build()
 
-	resp, err := q.ocmClient.ClusterAuthorization(cb)
+	resp, err := q.amsClient.ClusterAuthorization(cb)
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, err, "Error reserving quota")
 	}
@@ -75,7 +75,7 @@ func (q amsQuotaService) DeleteQuota(subscriptionId string) *errors.ServiceError
 		return nil
 	}
 
-	_, err := q.ocmClient.DeleteSubscription(subscriptionId)
+	_, err := q.amsClient.DeleteSubscription(subscriptionId)
 	if err != nil {
 		return errors.GeneralError("failed to delete the quota: %v", err)
 	}
