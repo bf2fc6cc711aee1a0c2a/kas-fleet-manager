@@ -137,6 +137,24 @@ func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (typ
 
 // reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
 func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscriptionId string, err *errors.ServiceError) {
+	if kafkaRequest.InstanceType == types.EVAL.String() {
+		// Only one EVAL instance is admitted. Let's check if the user already owns one
+		dbConn := k.connectionFactory.New()
+		var count int64
+		if err := dbConn.Model(&dbapi.KafkaRequest{}).
+			Where("instance_type = ?", types.EVAL).
+			Where("owner = ?", kafkaRequest.Owner).
+			Where("organisation_id = ?", kafkaRequest.OrganisationId).
+			Count(&count).
+			Error; err != nil {
+			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka eval instances")
+		}
+
+		if count > 0 {
+			return "", errors.TooManyKafkaInstancesReached("only one eval instance is allowed")
+		}
+	}
+
 	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
 	if factoryErr != nil {
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
@@ -182,7 +200,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	// the API is restarted this time changing the --quota-type flag to allow-list, when kafka A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
 	kafkaRequest.QuotaType = k.kafkaConfig.Quota.Type
-	if err := dbConn.Save(kafkaRequest).Error; err != nil {
+	if err := dbConn.Create(kafkaRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
