@@ -9,18 +9,17 @@ import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"reflect"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 	"gorm.io/gorm"
+	"reflect"
 )
 
 type ConnectorClusterService interface {
@@ -40,6 +39,7 @@ type ConnectorClusterService interface {
 	GetDeploymentByConnectorId(ctx context.Context, connectorID string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetDeployment(ctx context.Context, id string) (dbapi.ConnectorDeployment, *errors.ServiceError)
 	GetAvailableDeploymentUpgrades() (upgrades []dbapi.ConnectorDeploymentAvailableUpgrades, serr *errors.ServiceError)
+	CleanupDeployments() *errors.ServiceError
 }
 
 var _ ConnectorClusterService = &connectorClusterService{}
@@ -60,6 +60,46 @@ func NewConnectorClusterService(connectionFactory *db.ConnectionFactory, bus sig
 		vaultService:          vaultService,
 		connectorsService:     connectorsService,
 	}
+}
+
+func (k *connectorClusterService) CleanupDeployments() *errors.ServiceError {
+	type Result struct {
+		DeploymentID string
+	}
+
+	// Find deployments that have not been deleted who's connector has been deleted...
+	results := []Result{}
+	dbConn := k.connectionFactory.New()
+	err := dbConn.Table("connectors").
+		Select("connector_deployments.id AS deployment_id").
+		Joins("JOIN connector_deployments ON connectors.id = connector_deployments.connector_id").
+		Where("connectors.deleted_at IS NOT NULL").
+		Where("connector_deployments.deleted_at IS NULL").
+		Scan(&results).Error
+
+	if err != nil {
+		return errors.GeneralError("Unable to list connector deployment who's connectors have been deleted: %s", err)
+	}
+
+	for _, result := range results {
+		// delete those deployments and associated status
+		if err := dbConn.Delete(&dbapi.ConnectorDeploymentStatus{
+			Meta: api.Meta{
+				ID: result.DeploymentID,
+			},
+		}).Error; err != nil {
+			return errors.GeneralError("Unable to delete connector deployment status who's connectors have been deleted: %s", err)
+		}
+		if err := dbConn.Delete(&dbapi.ConnectorDeployment{
+			Meta: api.Meta{
+				ID: result.DeploymentID,
+			},
+		}).Error; err != nil {
+			return errors.GeneralError("Unable to delete connector deployment who's connectors have been deleted: %s", err)
+		}
+	}
+
+	return nil
 }
 
 // Create creates a connector cluster in the database
@@ -279,14 +319,20 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 	}
 
 	if !reflect.DeepEqual(resource.Status, status) {
+
+		if resource.Status.Phase != status.Phase {
+			// The phase should not be changing that often.. but when it does,
+			// kick off a reconcile to get connectors deployed to the cluster.
+			_ = db.AddPostCommitAction(ctx, func() {
+				// Wake up the reconcile loop...
+				k.bus.Notify("reconcile:connector")
+			})
+		}
+
 		resource.Status = status
 		if err := dbConn.Save(&resource).Error; err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 		}
-		_ = db.AddPostCommitAction(ctx, func() {
-			// Wake up the reconcile loop...
-			k.bus.Notify("reconcile:connector")
-		})
 	}
 
 	return nil
@@ -400,16 +446,16 @@ func (k *connectorClusterService) UpdateConnectorDeploymentStatus(ctx context.Co
 			return err
 		}
 
-		switch connector.DesiredState {
-		case dbapi.ConnectorStatusPhaseStopped:
-			c.Phase = dbapi.ConnectorStatusPhaseStopped
-		case dbapi.ConnectorStatusPhaseDeleted:
+		// we might need to also delete the connector...
+		if connector.DesiredState == dbapi.ConnectorStatusPhaseDeleted {
 			if err := k.connectorsService.Delete(ctx, deployment.ConnectorID); err != nil {
 				return err
 			}
 			return nil // return now since we don't need to update the status of the connector
 		}
 	}
+
+	// update the connector status
 	if err := dbConn.Model(&c).Where("id = ?", deployment.ConnectorID).Updates(&c).Error; err != nil {
 		return errors.GeneralError("failed to update connector status: %s", err.Error())
 	}
