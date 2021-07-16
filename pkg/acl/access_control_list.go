@@ -105,9 +105,8 @@ func (deniedAccounts DeniedUsers) IsUserDenied(username string) bool {
 }
 
 type AllowListConfiguration struct {
-	AllowAnyRegisteredUsers bool             `yaml:"allow_any_registered_users"`
-	Organisations           OrganisationList `yaml:"allowed_users_per_organisation"`
-	ServiceAccounts         AllowedAccounts  `yaml:"allowed_service_accounts"`
+	Organisations   OrganisationList `yaml:"allowed_users_per_organisation"`
+	ServiceAccounts AllowedAccounts  `yaml:"allowed_service_accounts"`
 }
 
 type AccessControlListConfig struct {

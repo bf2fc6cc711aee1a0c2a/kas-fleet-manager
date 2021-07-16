@@ -27,34 +27,10 @@ func TestServiceStatus(t *testing.T) {
 	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
 	defer teardown()
 
-	// these values are taken from config/deny-list-configuration.yaml
-	deniedUser := "denied-test-user1@example.com"
-	// this value is taken from config/allow-list-configuration.yaml
-	orgId := "13640203"
-	deniedAccount := h.NewAccount(deniedUser, deniedUser, deniedUser, orgId)
-	deniedCtx := h.NewAuthenticatedContext(deniedAccount, nil)
-
-	// since this user is in the deny list and not authorized to access the service, kafkas maximum capacity should be set to true
-	serviceStatus, serviceStatusResp, err := client.DefaultApi.GetServiceStatus(deniedCtx)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
-
-	// create another user not in deny list and allow list
-	// since this user is in not in the allow list and not authorized to access the service, kafkas maximum capacity should be set to true
-	orgId = "some-org-id"
-	notAllowedUser := "user@not-allowed.com"
-	notAllowAccount := h.NewAccount(notAllowedUser, notAllowedUser, notAllowedUser, orgId)
-	notAllowedCtx := h.NewAuthenticatedContext(notAllowAccount, nil)
-	serviceStatus, serviceStatusResp, err = client.DefaultApi.GetServiceStatus(notAllowedCtx)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
-
 	// now create another user who has access to the service to perform the remaining two cases
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	serviceStatus, serviceStatusResp, err = client.DefaultApi.GetServiceStatus(ctx)
+	serviceStatus, serviceStatusResp, err := client.DefaultApi.GetServiceStatus(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
 	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(false))

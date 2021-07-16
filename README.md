@@ -156,7 +156,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `OBSERVATORIUM_SERVICE_TOKEN`: Token for observatorium service.
 - `MAS_SSO_BASE_URL`: MAS SSO base url.
 - `MAS_SSO_REALM`: MAS SSO realm url.
-- `ALLOW_ANY_REGISTERED_USERS`: Enable to allow any registered users against redhat.com to access the service.
+- `ALLOW_EVALUATOR_INSTANCE`: Whether evaluator KAFKA instances are allowed or not. Defaults to `true`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon.
 

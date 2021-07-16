@@ -18,8 +18,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 ## Access Control
 > For more information on access control for KAS Fleet Manager, see this [documentation](./access-control.md).
 
-- **allow_any_registered_users**: Allows any user registered against redhat.com access to the service.
-    - `allow-list-config-file` [Required]: The `allow_any_registered_users` flag is declared within the allow list configuration file. This configuration is used to specify the path to this config file (default: `'config/allow-list-configuration.yaml'`, example: [allow-list-configuration.yaml](../config/allow-list-configuration.yaml)).
 - **enable-deny-list**: Enables access control for denied users.
     - `deny-list-config-file` [Required]: The path to the file containing the list of users that should be denied access to the service. (default: `'config/deny-list-configuration.yaml'`, example: [deny-list-configuration.yaml](../config/deny-list-configuration.yaml)).
 
@@ -44,6 +42,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **enable-kafka-external-certificate**: Enables custom Kafka TLS certificate.
     - `kafka-tls-cert-file` [Required]: The path to the file containing the Kafka TLS certificate (default: `'secrets/kafka-tls.crt'`).
     - `kafka-tls-key-file` [Required]: The path to the file containing the Kafka TLS private key (default: `'secrets/kafka-tls.key'`).
+- **enable-evaluator-instance**: Enable the creation of one kafka evaluator instances per user    
 - **quota-type**: Sets the quota service to be used for access control when requesting Kafka instances (options: `ams` or `allow-list`, default: `allow-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
     - If this is set to `allow-list`, quotas will be managed via the allow list configuration. 
