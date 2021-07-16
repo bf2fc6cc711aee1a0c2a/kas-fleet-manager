@@ -319,14 +319,20 @@ func (k *connectorClusterService) UpdateConnectorClusterStatus(ctx context.Conte
 	}
 
 	if !reflect.DeepEqual(resource.Status, status) {
+
+		if resource.Status.Phase != status.Phase {
+			// The phase should not be changing that often.. but when it does,
+			// kick off a reconcile to get connectors deployed to the cluster.
+			_ = db.AddPostCommitAction(ctx, func() {
+				// Wake up the reconcile loop...
+				k.bus.Notify("reconcile:connector")
+			})
+		}
+
 		resource.Status = status
 		if err := dbConn.Save(&resource).Error; err != nil {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update status")
 		}
-		_ = db.AddPostCommitAction(ctx, func() {
-			// Wake up the reconcile loop...
-			k.bus.Notify("reconcile:connector")
-		})
 	}
 
 	return nil
