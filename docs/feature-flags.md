@@ -18,8 +18,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 ## Access Control
 > For more information on access control for KAS Fleet Manager, see this [documentation](./access-control.md).
 
-- **allow_any_registered_users**: Allows any user registered against redhat.com access to the service.
-    - `allow-list-config-file` [Required]: The `allow_any_registered_users` flag is declared within the allow list configuration file. This configuration is used to specify the path to this config file (default: `'config/allow-list-configuration.yaml'`, example: [allow-list-configuration.yaml](../config/allow-list-configuration.yaml)).
 - **enable-deny-list**: Enables access control for denied users.
     - `deny-list-config-file` [Required]: The path to the file containing the list of users that should be denied access to the service. (default: `'config/deny-list-configuration.yaml'`, example: [deny-list-configuration.yaml](../config/deny-list-configuration.yaml)).
 

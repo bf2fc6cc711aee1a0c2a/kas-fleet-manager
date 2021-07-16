@@ -1,8 +1,6 @@
 # Access Control 
 ## Allow List Configurations
 
-Access to the service is limited to certain organisations and users (given by their username) via the [allow list configuration](config/allow-list-configuration.yaml) by default. To disable this, set the property `allow_any_registered_users` to `true` to allow any registered users against redhat.com to access the service. 
-
 ### Adding organisations and users to the allow list
 
 To configure this list, you'll need to have the user's username and/or their organisation id.
