@@ -61,9 +61,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
-					},
+					AllowList:                  acl.AllowListConfiguration{},
 				},
 			},
 			args: args{
@@ -77,9 +75,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
-					},
+					AllowList:                  acl.AllowListConfiguration{},
 				},
 			},
 			args: args{
@@ -94,7 +90,6 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
 						ServiceAccounts: acl.AllowedAccounts{
 							acl.AllowedAccount{
 								Username:            "username",
@@ -116,7 +111,6 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
 						Organisations: acl.OrganisationList{
 							acl.Organisation{
 								Id:                  "org-id",
@@ -139,7 +133,6 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
 						Organisations: acl.OrganisationList{
 							acl.Organisation{
 								Id:                  "org-id",
@@ -209,7 +202,6 @@ func Test_AllowListReserveQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
 						ServiceAccounts: acl.AllowedAccounts{
 							acl.AllowedAccount{
 								Username:            "username",
@@ -235,7 +227,6 @@ func Test_AllowListReserveQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
 						Organisations: acl.OrganisationList{
 							acl.Organisation{
 								Id:                  "org-id",
@@ -270,7 +261,6 @@ func Test_AllowListReserveQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
-						AllowAnyRegisteredUsers: true,
 						ServiceAccounts: acl.AllowedAccounts{
 							acl.AllowedAccount{
 								Username:            "username",

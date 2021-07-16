@@ -554,68 +554,6 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 
 }
 
-// TestKafkaAllowList_UnauthorizedValidation tests the allow list API access validations is performed when enabled
-func TestKafkaAllowList_UnauthorizedValidation(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
-
-	// create an account with a random organisation id. This is different than the control plane team organisation id which is used by default
-	account := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), h.NewUUID())
-	ctx := h.NewAuthenticatedContext(account, nil)
-
-	tests := []struct {
-		name      string
-		operation func() *http.Response
-	}{
-		{
-			name: "HTTP 403 when listing kafkas",
-			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
-				return resp
-			},
-		},
-		{
-			name: "HTTP 403 when creating a new kafka request",
-			operation: func() *http.Response {
-				body := public.KafkaRequestPayload{
-					CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-					MultiAz:       mocks.MockCluster.MultiAZ(),
-					Region:        "us-east-3",
-					Name:          mockKafkaName,
-				}
-
-				_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, body)
-				return resp
-			},
-		},
-		{
-			name: "HTTP 403 when deleting new kafka request",
-			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.DeleteKafkaById(ctx, "kafka-id", true)
-				return resp
-			},
-		},
-		{
-			name: "HTTP 403 when getting a new kafka request",
-			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.GetKafkaById(ctx, "kafka-id")
-				return resp
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			RegisterTestingT(t)
-			resp := tt.operation()
-			Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-			Expect(resp.Header.Get("Content-Type")).To(Equal("application/json"))
-		})
-	}
-}
-
 // TestKafkaDenyList_UnauthorizedValidation tests the deny list API access validations is performed when enabled
 func TestKafkaDenyList_UnauthorizedValidation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
@@ -790,7 +728,6 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	defer ocmServer.Close()
 
 	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *acl.AccessControlListConfig) {
-		acl.AllowList.AllowAnyRegisteredUsers = true
 		acl.EnableInstanceLimitControl = true
 	})
 	defer teardown()

@@ -140,6 +140,10 @@ func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (typ
 // reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
 func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscriptionId string, err *errors.ServiceError) {
 	if kafkaRequest.InstanceType == types.EVAL.String() {
+		if !k.kafkaConfig.Quota.AllowEvaluatorInstance {
+			return "", errors.NewWithCause(errors.ErrorForbidden, err, "kafka eval instances are not allowed")
+		}
+
 		// Only one EVAL instance is admitted. Let's check if the user already owns one
 		dbConn := k.connectionFactory.New()
 		var count int64

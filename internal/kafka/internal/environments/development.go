@@ -23,6 +23,7 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"enable-kafka-external-certificate":               "false",
 		"cluster-compute-machine-type":                    "m5.4xlarge",
 		"ingress-controller-replicas":                     "3",
+		"allow-evaluator-instance":                        "true",
 		"quota-type":                                      "allow-list",
 		"enable-deletion-of-expired-kafka":                "true",
 		"dataplane-cluster-scaling-type":                  "manual",

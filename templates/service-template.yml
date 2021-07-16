@@ -256,11 +256,6 @@ parameters:
   description: The default value of maximum number of clients fetch from mas-sso.
   value: "100"
 
-- name: ALLOW_ANY_REGISTERED_USERS
-  displayName: Allow any registered users
-  description: Enable to allow any registered users to access the service.
-  value: "false"
-
 - name: ALLOWED_SERVICE_ACCOUNTS
   displayName: A list of allowed service accounts
   description: A list of allowed service accounts that are allowed to access the service without requiring an organisation to do so in a yaml format.
@@ -318,6 +313,11 @@ parameters:
   displayName: Compute machine type
   description: The compute machine type of each node on a new created cluster.
   value: "m5.4xlarge"
+
+- name: ALLOW_EVALUATOR_INSTANCE
+  displayName: Allow Evaluator Instance
+  description: Allow the creation of one kafka evaluator instance per user
+  value: true
 
 - name: QUOTA_TYPE
   displayName: Quota type
@@ -493,7 +493,6 @@ objects:
         qontract.recycle: "true"
     data:
       allow-list-configuration.yaml: |-
-        allow_any_registered_users: ${ALLOW_ANY_REGISTERED_USERS}
         allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
         allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
   - kind: ConfigMap
@@ -842,6 +841,7 @@ objects:
             - --kubeconfig=/secrets/service/kubeconfig
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
+            - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
             - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}
