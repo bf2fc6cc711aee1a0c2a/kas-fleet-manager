@@ -466,6 +466,11 @@ parameters:
   description: kas-fleetshard operator OLM index image
   value: "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
 
+- name: IMAGE_PULL_POLICY
+  displayName: image pull policy
+  description: image pull polilcy
+  value: "IfNotPresent"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -676,7 +681,7 @@ objects:
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
-            imagePullPolicy: IfNotPresent
+            imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
             - name: service
               mountPath: /secrets/service
@@ -695,7 +700,7 @@ objects:
           containers:
           - name: service
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
-            imagePullPolicy: IfNotPresent
+            imagePullPolicy: ${IMAGE_PULL_POLICY}
             volumeMounts:
             - name: tls
               mountPath: /secrets/tls
@@ -879,7 +884,7 @@ objects:
               periodSeconds: 10
           - name: envoy-sidecar
             image: ${ENVOY_IMAGE}
-            imagePullPolicy: IfNotPresent
+            imagePullPolicy: ${IMAGE_PULL_POLICY}
             command:
             - envoy
             - --config-path
