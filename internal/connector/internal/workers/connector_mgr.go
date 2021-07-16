@@ -27,7 +27,7 @@ type ConnectorManager struct {
 	connectorTypesService   services.ConnectorTypesService
 	vaultService            vault.VaultService
 	lastVersion             int64
-	reconcileChannels       bool
+	startupReconcileDone    bool
 	db                      *db.ConnectionFactory
 	ctx                     context.Context
 }
@@ -53,7 +53,7 @@ func NewConnectorManager(
 		connectorClusterService: connectorClusterService,
 		connectorTypesService:   connectorTypesService,
 		vaultService:            vaultService,
-		reconcileChannels:       true,
+		startupReconcileDone:    false,
 		db:                      db,
 	}
 }
@@ -72,15 +72,19 @@ func (k *ConnectorManager) Reconcile() []error {
 	glog.V(5).Infoln("reconciling connectors")
 	var errs []error
 
-	if k.reconcileChannels {
-		err := k.connectorTypesService.ForEachConnectorCatalogEntry(k.ReconcileConnectorCatalogEntry)
-		if err != nil {
-			errs = append(errs, err)
-		} else {
-			// We only need to reconcile channel updates once per process startup since,
-			// configured channel settings are only loaded on startup.
-			k.reconcileChannels = false
+	if !k.startupReconcileDone {
+
+		// We only need to reconcile channel updates once per process startup since,
+		// configured channel settings are only loaded on startup.
+		if err := k.connectorTypesService.ForEachConnectorCatalogEntry(k.ReconcileConnectorCatalogEntry); err != nil {
+			return []error{err}
 		}
+
+		if err := k.connectorClusterService.CleanupDeployments(); err != nil {
+			return []error{err}
+		}
+
+		k.startupReconcileDone = true
 	}
 
 	if k.ctx == nil {
@@ -93,15 +97,11 @@ func (k *ConnectorManager) Reconcile() []error {
 
 	serviceErr := k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
-			if err := db.AddPostCommitAction(ctx, func() {
-				k.lastVersion = connector.Version
-			}); err != nil {
-				return err
-			}
 			switch connector.Status.Phase {
 			case dbapi.ConnectorStatusPhaseAssigning:
-				// if it's not been assigned yet, we can immediately delete it.
+				// since no deployment exists...
 				if connector.DesiredState == "deleted" {
+					// we can delete the connector now...
 					if err := k.reconcileDeleted(ctx, connector); err != nil {
 						errs = append(errs, err)
 						glog.Errorf("failed to reconcile assigning connector %s: %v", connector.ID, err)
@@ -116,9 +116,7 @@ func (k *ConnectorManager) Reconcile() []error {
 			}
 			return nil
 		})
-	}, "phase IN (?)", []dbapi.ConnectorStatusPhase{
-		dbapi.ConnectorStatusPhaseAssigning,
-	})
+	}, "phase = ?", dbapi.ConnectorStatusPhaseAssigning)
 	if serviceErr != nil {
 		errs = append(errs, serviceErr)
 	}
@@ -126,12 +124,8 @@ func (k *ConnectorManager) Reconcile() []error {
 	// Process any connector updates...
 	serviceErr = k.connectorService.ForEach(func(connector *dbapi.Connector) *serviceError.ServiceError {
 		return InDBTransaction(k.ctx, func(ctx context.Context) error {
-			switch connector.Status.Phase {
-			case dbapi.ConnectorStatusPhaseAssigning:
-			default:
-				if err := k.reconcileConnectorUpdate(ctx, connector); err != nil {
-					return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
-				}
+			if err := k.reconcileConnectorUpdate(ctx, connector); err != nil {
+				return serviceError.GeneralError("failed to reconcile assigned connector %s: %v", connector.ID, err.Error())
 			}
 			if err := db.AddPostCommitAction(ctx, func() {
 				k.lastVersion = connector.Version
@@ -140,9 +134,7 @@ func (k *ConnectorManager) Reconcile() []error {
 			}
 			return nil
 		})
-	}, "version > ? AND phase NOT IN (?)", k.lastVersion, []dbapi.ConnectorStatusPhase{
-		dbapi.ConnectorStatusPhaseStopped,
-	})
+	}, "version > ? AND phase != ? ", k.lastVersion, dbapi.ConnectorStatusPhaseAssigning)
 	if serviceErr != nil {
 		errs = append(errs, errors.Wrap(serviceErr, "connector manager"))
 	}

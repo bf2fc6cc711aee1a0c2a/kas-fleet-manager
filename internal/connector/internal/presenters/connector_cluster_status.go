@@ -22,6 +22,9 @@ func PresentConnectorClusterStatus(from dbapi.ConnectorClusterStatus) private.Co
 }
 
 func ConvertConditions(in []private.MetaV1Condition) []dbapi.Condition {
+	if len(in) == 0 {
+		return nil
+	}
 	out := make([]dbapi.Condition, len(in))
 	for i, v := range in {
 		var t string
@@ -56,6 +59,9 @@ func PresentConditions(in []dbapi.Condition) []private.MetaV1Condition {
 }
 
 func ConvertOperatorStatus(in []private.ConnectorClusterStatusOperators) []dbapi.OperatorStatus {
+	if len(in) == 0 {
+		return nil
+	}
 	out := make([]dbapi.OperatorStatus, len(in))
 	for i, v := range in {
 		out[i] = dbapi.OperatorStatus{
