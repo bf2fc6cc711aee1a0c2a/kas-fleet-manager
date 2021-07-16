@@ -49,6 +49,7 @@ func TestStandaloneProvider_GetCloudProviders(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: &types.CloudProviderInfoList{
 				Items: []types.CloudProviderInfo{},
@@ -127,6 +128,7 @@ func TestStandaloneProvider_GetCloudProviderRegions(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().WithQuery("SELECT DISTINCT").WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			want: &types.CloudProviderRegionInfoList{
 				Items: []types.CloudProviderRegionInfo{},

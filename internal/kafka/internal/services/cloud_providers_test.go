@@ -55,7 +55,8 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery("SELECT DISTINCT").
+					WithQuery(`SELECT DISTINCT "provider_type" FROM "clusters" WHERE status NOT IN ($1,$2)`).
+					WithArgs(api.ClusterCleanup.String(), api.ClusterDeprovisioning.String()).
 					WithReply([]map[string]interface{}{{"provider_type": "standalone"}})
 			},
 			wantErr: true,
@@ -69,8 +70,12 @@ func Test_CloudProvider_ListCloudProviders(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery("SELECT DISTINCT").
+					WithQuery(`SELECT DISTINCT "provider_type" FROM "clusters" WHERE status NOT IN ($1,$2)`).
+					WithArgs(api.ClusterCleanup.String(), api.ClusterDeprovisioning.String()).
 					WithReply([]map[string]interface{}{})
+				// Both the caught query and any uncaught query will return an empty result. We have to ensure
+				// we are not getting the result from an unexpected query
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: false,
 			want:    []api.CloudProvider{},
@@ -213,8 +218,10 @@ func Test_CachedCloudProviderWithRegions(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery("SELECT DISTINCT").
+					WithQuery(`SELECT DISTINCT "provider_type" FROM "clusters" WHERE status NOT IN ($1,$2)`).
+					WithArgs(api.ClusterCleanup.String(), api.ClusterDeprovisioning.String()).
 					WithReply([]map[string]interface{}{})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr: false,
 			want:    []CloudProviderWithRegions{},

@@ -311,6 +311,10 @@ func (c clusterService) ScaleUpComputeNodes(clusterID string, increment int) (*t
 		return nil, serviceErr
 	}
 
+	if cluster == nil {
+		return nil, apiErrors.New(apiErrors.ErrorGeneral, "unable to find a cluster identified by '%s'", clusterID)
+	}
+
 	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
 	if err != nil {
 		return nil, apiErrors.NewWithCause(apiErrors.ErrorGeneral, err, "failed to get provider implementation")
@@ -333,6 +337,9 @@ func (c clusterService) ScaleDownComputeNodes(clusterID string, decrement int) (
 	cluster, serviceErr := c.FindClusterByID(clusterID)
 	if serviceErr != nil {
 		return nil, serviceErr
+	}
+	if cluster == nil {
+		return nil, apiErrors.New(apiErrors.ErrorGeneral, "unable to find a cluster identified by '%s'", clusterID)
 	}
 
 	provider, err := c.providerFactory.GetProvider(cluster.ProviderType)
