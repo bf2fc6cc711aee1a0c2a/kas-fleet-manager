@@ -6,7 +6,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 info:
   title: Kafka Service Fleet Manager
   version: 1.1.0
-  description: Kafka Service Fleet Manager is a Rest API to manage kafka instances and connectors.
+  description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
