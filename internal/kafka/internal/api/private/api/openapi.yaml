@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  description: Kafka Service Fleet Manager is a Rest API to manage kafka instances
-    and connectors.
+  description: Kafka Service Fleet Manager APIs that are used by internal services
+    e.g kas-fleetshard operators.
   title: Kafka Service Fleet Manager
   version: 1.1.0
 servers:
