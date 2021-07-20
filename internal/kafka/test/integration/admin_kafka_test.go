@@ -197,7 +197,7 @@ func TestAdminKafka_Get(t *testing.T) {
 			var latestStrimziVersion string = ""
 			if cluster != nil {
 				readyStrimziVersions, _ := cluster.GetAvailableAndReadyStrimziVersions()
-				if readyStrimziVersions != nil && len(readyStrimziVersions) > 0 {
+				if len(readyStrimziVersions) > 0 {
 					latestStrimziVersion = readyStrimziVersions[len(readyStrimziVersions)-1].Version
 				}
 			}
