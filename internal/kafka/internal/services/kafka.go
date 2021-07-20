@@ -622,11 +622,9 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 			Endpoint: managedkafka.EndpointSpec{
 				BootstrapServerHost: kafkaRequest.BootstrapServerHost,
 			},
-			// These values must be changed as soon as we will have the real values
 			Versions: managedkafka.VersionsSpec{
-				Kafka: kafkaRequest.DesiredKafkaVersion,
-				//TODO: we should remove the strimzi version as it should not be specified here
-				Strimzi: "strimzi-cluster-operator.v0.23.0-0",
+				Kafka:   kafkaRequest.DesiredKafkaVersion,
+				Strimzi: kafkaRequest.DesiredStrimziVersion,
 			},
 			Deleted: kafkaRequest.Status == constants2.KafkaRequestStatusDeprovision.String(),
 			Owners: []string{

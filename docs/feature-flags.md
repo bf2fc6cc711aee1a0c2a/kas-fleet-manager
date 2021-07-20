@@ -103,6 +103,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **strimzi-operator-namespace**: Strimzi operator namespace
 - **strimzi-operator-package**: Strimzi operator package name
 - **strimzi-operator-sub-channel**: Strimzi operator subscription channel
+- **strimzi-operator-version** The version of the Strimzi operator to install. If set, DesiredStrimziVersion in kafka_request will updated with this value. Otherwise value reported from kas-fleetshard operator will be used
 - **kas-fleetshard-operator-cs-namespace**: kas-fleetshard operator catalog source namespace
 - **kas-fleetshard-operator-index-image**: kas-fleetshard operator index image name
 - **kas-fleetshard-operator-namespace**: kas-fleetshard operator namespace

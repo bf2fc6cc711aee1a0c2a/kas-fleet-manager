@@ -5,7 +5,7 @@ package services
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"sync"
 )
 
@@ -15,34 +15,34 @@ var _ QuotaService = &QuotaServiceMock{}
 
 // QuotaServiceMock is a mock implementation of QuotaService.
 //
-// 	func TestSomethingThatUsesQuotaService(t *testing.T) {
+//     func TestSomethingThatUsesQuotaService(t *testing.T) {
 //
-// 		// make and configure a mocked QuotaService
-// 		mockedQuotaService := &QuotaServiceMock{
-// 			CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *apiErrors.ServiceError {
-// 				panic("mock out the CheckQuota method")
-// 			},
-// 			DeleteQuotaFunc: func(subscriptionId string) *apiErrors.ServiceError {
-// 				panic("mock out the DeleteQuota method")
-// 			},
-// 			ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
-// 				panic("mock out the ReserveQuota method")
-// 			},
-// 		}
+//         // make and configure a mocked QuotaService
+//         mockedQuotaService := &QuotaServiceMock{
+//             CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
+// 	               panic("mock out the CheckQuota method")
+//             },
+//             DeleteQuotaFunc: func(subscriptionId string) *errors.ServiceError {
+// 	               panic("mock out the DeleteQuota method")
+//             },
+//             ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+// 	               panic("mock out the ReserveQuota method")
+//             },
+//         }
 //
-// 		// use mockedQuotaService in code that requires QuotaService
-// 		// and then make assertions.
+//         // use mockedQuotaService in code that requires QuotaService
+//         // and then make assertions.
 //
-// 	}
+//     }
 type QuotaServiceMock struct {
 	// CheckQuotaFunc mocks the CheckQuota method.
-	CheckQuotaFunc func(kafka *dbapi.KafkaRequest) *apiErrors.ServiceError
+	CheckQuotaFunc func(kafka *dbapi.KafkaRequest) *errors.ServiceError
 
 	// DeleteQuotaFunc mocks the DeleteQuota method.
-	DeleteQuotaFunc func(subscriptionId string) *apiErrors.ServiceError
+	DeleteQuotaFunc func(subscriptionId string) *errors.ServiceError
 
 	// ReserveQuotaFunc mocks the ReserveQuota method.
-	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError)
+	ReserveQuotaFunc func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -68,7 +68,7 @@ type QuotaServiceMock struct {
 }
 
 // CheckQuota calls CheckQuotaFunc.
-func (mock *QuotaServiceMock) CheckQuota(kafka *dbapi.KafkaRequest) *apiErrors.ServiceError {
+func (mock *QuotaServiceMock) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
 	if mock.CheckQuotaFunc == nil {
 		panic("QuotaServiceMock.CheckQuotaFunc: method is nil but QuotaService.CheckQuota was just called")
 	}
@@ -99,7 +99,7 @@ func (mock *QuotaServiceMock) CheckQuotaCalls() []struct {
 }
 
 // DeleteQuota calls DeleteQuotaFunc.
-func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *apiErrors.ServiceError {
+func (mock *QuotaServiceMock) DeleteQuota(subscriptionId string) *errors.ServiceError {
 	if mock.DeleteQuotaFunc == nil {
 		panic("QuotaServiceMock.DeleteQuotaFunc: method is nil but QuotaService.DeleteQuota was just called")
 	}
@@ -130,7 +130,7 @@ func (mock *QuotaServiceMock) DeleteQuotaCalls() []struct {
 }
 
 // ReserveQuota calls ReserveQuotaFunc.
-func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *apiErrors.ServiceError) {
+func (mock *QuotaServiceMock) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
 	if mock.ReserveQuotaFunc == nil {
 		panic("QuotaServiceMock.ReserveQuotaFunc: method is nil but QuotaService.ReserveQuota was just called")
 	}
