@@ -9,6 +9,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -39,7 +40,6 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 
 func TestAdminKafka_Get(t *testing.T) {
 	sampleKafkaID := api.NewID()
-
 	type args struct {
 		ctx     func(h *coreTest.Helper) context.Context
 		kafkaID string
@@ -47,7 +47,7 @@ func TestAdminKafka_Get(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error)
+		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string)
 	}{
 		{
 			name: "should fail authentication when there is no role defined in the request",
@@ -57,7 +57,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).NotTo(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -70,7 +70,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).NotTo(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -83,10 +83,11 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
 			},
 		},
 		{
@@ -97,10 +98,11 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
 			},
 		},
 		{
@@ -111,10 +113,11 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
 			},
 		},
 		{
@@ -125,7 +128,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: "unexistingkafkaID",
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).To(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -147,7 +150,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
 				Expect(err).To(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -179,6 +182,8 @@ func TestAdminKafka_Get(t *testing.T) {
 	}
 	kafka.ID = sampleKafkaID
 
+	clusterPlacementStrategy := services.NewClusterPlacementStrategy(test.TestServices.ClusterService, test.TestServices.ClusterManager.DataplaneClusterConfig)
+
 	if err := db.Create(kafka).Error; err != nil {
 		t.Errorf("failed to create Kafka db record due to error: %v", err)
 	}
@@ -188,7 +193,16 @@ func TestAdminKafka_Get(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
 			result, resp, err := client.DefaultApi.GetKafkaById(ctx, tt.args.kafkaID)
-			tt.verifyResponse(result, resp, err)
+			cluster, _ := clusterPlacementStrategy.FindCluster(kafka)
+			var latestStrimziVersion string = ""
+			if cluster != nil {
+				readyStrimziVersions, _ := cluster.GetAvailableAndReadyStrimziVersions()
+				if readyStrimziVersions != nil && len(readyStrimziVersions) > 0 {
+					latestStrimziVersion = readyStrimziVersions[len(readyStrimziVersions)-1].Version
+				}
+			}
+
+			tt.verifyResponse(result, resp, err, latestStrimziVersion)
 		})
 	}
 }
