@@ -2,8 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
+	"regexp"
 	"sort"
 
+	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/blang/semver"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -135,9 +139,10 @@ type Cluster struct {
 	// store the specs of the openshift/k8s cluster which can be used to access the cluster
 	ClusterSpec JSON `json:"cluster_spec"`
 	// List of available strimzi versions in the cluster. Content MUST be stored
-	// as a lexicographically ascending sorted list of strings as a JSON. For example:
-	// ["v1", "v2", "v3"]. Use the `SetAvailableStrimziVersions` helper method to
-	// ensure the correct order is set.
+	// with the versions sorted in ascending order as a JSON. See
+	// StrimziVersionNumberPartRegex for details on the expected strimzi version
+	// format. See the StrimziVersion data type for the format of JSON stored. Use the
+	// `SetAvailableStrimziVersions` helper method to ensure the correct order is set.
 	// Latest position in the list is considered the newest available version.
 	AvailableStrimziVersions JSON `json:"available_strimzi_versions"`
 }
@@ -168,6 +173,39 @@ func (cluster *Cluster) BeforeCreate(tx *gorm.DB) error {
 type StrimziVersion struct {
 	Version string `json:"version"`
 	Ready   bool   `json:"ready"`
+}
+
+// StrimziVersionNumberPartRegex contains the regular expression needed to
+// extract the semver version number for a StrimziVersion. StrimziVersion
+// follows the format of: prefix_string-X.Y.Z-B where X,Y,Z,B are numbers
+var StrimziVersionNumberPartRegex = regexp.MustCompile(`\d+\.\d+\.\d+-\d+$`)
+
+// Compare returns compares s.Version with other.Version comparing the version
+// number suffix specified there using StrimziVersionNumberPartRegex to extract
+// the version number. If s.Version is smaller than other.Version a -1 is returned.
+// If s.Version is equal than other.Version 0 is returned. If s.Version is greater
+// than other.Version 1 is returned. If there is an error during the comparison
+// an error is returned
+func (s *StrimziVersion) Compare(other StrimziVersion) (int, error) {
+	v1VersionNumber := StrimziVersionNumberPartRegex.FindString(s.Version)
+	if v1VersionNumber == "" {
+		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
+	}
+	v1, err := semver.Parse(v1VersionNumber)
+	if err != nil {
+		return 0, err
+	}
+
+	v2VersionNumber := StrimziVersionNumberPartRegex.FindString(other.Version)
+	if v2VersionNumber == "" {
+		return 0, fmt.Errorf("'%s' does not follow expected Strimzi Version format", s.Version)
+	}
+
+	v2, err := semver.Parse(v2VersionNumber)
+	if err != nil {
+		return 0, err
+	}
+	return v1.Compare(v2), nil
 }
 
 // GetAvailableAndReadyStrimziVersions returns the cluster's list of available
@@ -224,15 +262,29 @@ func (cluster *Cluster) GetAvailableStrimziVersions() ([]StrimziVersion, error) 
 	return versions, nil
 }
 
-// SetAvailableStrimziVersions sets the cluster's list of available strimzi versions
-// or sorted in a lexicographically ascending order, or an error. If
-// availableStrimziVersions is nil an empty list is set.
+// SetAvailableStrimziVersions sets the cluster's list of available strimzi
+// versions sorted on version ascending order, or an error. If
+// availableStrimziVersions is nil an empty list is set. See
+// StrimziVersionNumberPartRegex for details on the expected strimzi version
+// format
 func (cluster *Cluster) SetAvailableStrimziVersions(availableStrimziVersions []StrimziVersion) error {
 	versionsToSet := []StrimziVersion{}
 	versionsToSet = append(versionsToSet, availableStrimziVersions...)
+
+	var errors kasfleetmanagererrors.ErrorList
+
 	sort.Slice(versionsToSet, func(i, j int) bool {
-		return versionsToSet[i].Version < versionsToSet[j].Version
+		res, err := versionsToSet[i].Compare(versionsToSet[j])
+		if err != nil {
+			fmt.Println(errors)
+			errors = append(errors, err)
+		}
+		return res == -1
 	})
+
+	if errors != nil {
+		return errors
+	}
 
 	if v, err := json.Marshal(versionsToSet); err != nil {
 		return err

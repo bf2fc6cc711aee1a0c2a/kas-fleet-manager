@@ -182,6 +182,18 @@ const (
 	ErrorTooManyRequestsReason string           = "Too Many requests"
 )
 
+type ErrorList []error
+
+func (e ErrorList) Error() string {
+	var res string
+	for _, err := range e {
+		res = res + fmt.Sprintf(";%s", err)
+	}
+
+	res = fmt.Sprintf("[%s]", res)
+	return res
+}
+
 type ServiceErrorCode int
 
 type ServiceErrors []ServiceError
