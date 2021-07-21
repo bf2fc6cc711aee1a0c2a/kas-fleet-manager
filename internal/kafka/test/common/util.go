@@ -181,6 +181,9 @@ func readClusterDetailsFromFile(h *test.Helper, t *testing.T) (string, error) {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to Unmarshal cluster details from file: %v", marshalErr))
 		}
 
+		// ignore certain fields, these should be set by each test if needed
+		cluster.AvailableStrimziVersions = nil
+
 		dbConn := h.DBFactory().New()
 		if err := dbConn.FirstOrCreate(cluster, &api.Cluster{ClusterID: cluster.ClusterID}).Error; err != nil {
 			return "", ocmErrors.GeneralError(fmt.Sprintf("Failed to save cluster details to database: %v", err))
