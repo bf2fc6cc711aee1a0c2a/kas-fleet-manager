@@ -253,6 +253,16 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
+		Strimzi: []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+			{
+				Ready:   true,
+				Version: "strimzi-cluster-operator.v0.23.0-0",
+			},
+			{
+				Ready:   true,
+				Version: "strimzi-cluster-operator.v0.21.0-0",
+			},
+		},
 		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
 			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
 			Partitions:                    &[]int32{1000000}[0],

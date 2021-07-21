@@ -357,8 +357,8 @@ parameters:
 
 - name: STRIMZI_OPERATOR_VERSION
   displayName: Strimzi operator version
-  description: The version of the Strimzi operator to install
-  value: "v0.21.3"
+  description: The version of the Strimzi operator to install. If set, DesiredStrimziVersion in kafka_request will updated with this value. Otherwise value reported from kas-fleetshard operator will be used
+  value: ""
 
 - name: KAFKA_CAPACITY_MAX_CAPACITY
   displayName: Maximum number of clusters
