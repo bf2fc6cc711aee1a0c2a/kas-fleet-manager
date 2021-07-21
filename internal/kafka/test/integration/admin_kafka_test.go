@@ -207,6 +207,78 @@ func TestAdminKafka_Get(t *testing.T) {
 	}
 }
 
+func TestAdminKafka_SetStrimziVersion(t *testing.T) {
+	sampleKafkaID := api.NewID()
+	type args struct {
+		ctx     func(h *coreTest.Helper) context.Context
+		kafkaID string
+	}
+	tests := []struct {
+		name           string
+		args           args
+		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string)
+	}{
+		{
+			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+				},
+				kafkaID: sampleKafkaID,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
+			},
+		},
+	}
+
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	test.TestServices.ClusterManager.DataplaneClusterConfig.StrimziOperatorVersion = "test"
+
+	db := test.TestServices.DBFactory.New()
+	kafka := &dbapi.KafkaRequest{
+		MultiAZ:               false,
+		Owner:                 "test-user",
+		Region:                "test",
+		CloudProvider:         "test",
+		Name:                  "test-kafka",
+		OrganisationId:        "13640203",
+		Status:                constants.KafkaRequestStatusReady.String(),
+		DesiredStrimziVersion: "test",
+	}
+	kafka.ID = sampleKafkaID
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.args.ctx(h)
+			client := test.NewAdminPrivateAPIClient(h)
+			result, resp, err := client.DefaultApi.GetKafkaById(ctx, tt.args.kafkaID)
+			var desiredStrimziVersion string = "test"
+
+			tt.verifyResponse(result, resp, err, desiredStrimziVersion)
+		})
+	}
+}
+
 func TestAdminKafka_Delete(t *testing.T) {
 	type args struct {
 		ctx func(h *coreTest.Helper) context.Context

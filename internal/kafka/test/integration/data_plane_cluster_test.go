@@ -51,6 +51,7 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.Strimzi = nil
 	clusterStatusUpdateRequest.StrimziVersions = []string{
 		"strimzi-cluster-operator.v.5.12.0-0",
 		"strimzi-cluster-operator.v.5.8.0-0",
@@ -604,6 +605,7 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.StrimziVersions = []string{}
+	clusterStatusUpdateRequest.Strimzi = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -649,7 +651,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = nil
+	// clusterStatusUpdateRequest.StrimziVersions = nil
+	// clusterStatusUpdateRequest.Strimzi = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -695,6 +698,7 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
+	clusterStatusUpdateRequest.Strimzi = nil
 	clusterStatusUpdateRequest.StrimziVersions = []string{}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
 		api.StrimziVersion{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
@@ -756,6 +760,7 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.StrimziVersions = nil
+	clusterStatusUpdateRequest.Strimzi = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
 		api.StrimziVersion{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
 		api.StrimziVersion{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},

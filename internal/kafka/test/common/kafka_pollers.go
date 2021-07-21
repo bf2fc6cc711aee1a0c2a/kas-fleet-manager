@@ -3,14 +3,15 @@ package common
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
-	"net/http"
-	"time"
 )
 
 const (
@@ -69,6 +70,8 @@ func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactor
 // WaitForKafkaToReachStatus - Awaits for a kafka to reach a specified status
 func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string, status constants2.KafkaStatus) (kafka public.KafkaRequest, err error) {
 	currentStatus := ""
+
+	glog.Infof("status: " + status.String())
 
 	err = NewPollerBuilder(db).
 		IntervalAndTimeout(1*time.Second, defaultKafkaReadyTimeout).
