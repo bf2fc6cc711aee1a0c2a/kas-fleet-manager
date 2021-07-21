@@ -22,7 +22,7 @@ const (
 	IntegrationEnv string = "integration"
 
 	EnvironmentStringKey string = "OCM_ENV"
-	EnvironmentDefault          = IntegrationEnv
+	EnvironmentDefault          = DevelopmentEnv
 )
 
 // Env is a modular application built with dependency injection and manages
