@@ -9,7 +9,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	adminprivate "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -40,6 +39,7 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 
 func TestAdminKafka_Get(t *testing.T) {
 	sampleKafkaID := api.NewID()
+	desiredStrimziVersion := "test"
 	type args struct {
 		ctx     func(h *coreTest.Helper) context.Context
 		kafkaID string
@@ -47,7 +47,7 @@ func TestAdminKafka_Get(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string)
+		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error)
 	}{
 		{
 			name: "should fail authentication when there is no role defined in the request",
@@ -57,7 +57,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -70,7 +70,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -83,11 +83,11 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
+				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 			},
 		},
 		{
@@ -98,11 +98,11 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
+				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 			},
 		},
 		{
@@ -113,11 +113,11 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
+				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 			},
 		},
 		{
@@ -128,7 +128,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: "unexistingkafkaID",
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -150,7 +150,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				},
 				kafkaID: sampleKafkaID,
 			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
 				Expect(err).To(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 			},
@@ -169,7 +169,6 @@ func TestAdminKafka_Get(t *testing.T) {
 
 	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
-
 	db := test.TestServices.DBFactory.New()
 	kafka := &dbapi.KafkaRequest{
 		MultiAZ:        false,
@@ -178,88 +177,8 @@ func TestAdminKafka_Get(t *testing.T) {
 		CloudProvider:  "test",
 		Name:           "test-kafka",
 		OrganisationId: "13640203",
-		Status:         constants.KafkaRequestStatusReady.String(),
-	}
-	kafka.ID = sampleKafkaID
-
-	clusterPlacementStrategy := services.NewClusterPlacementStrategy(test.TestServices.ClusterService, test.TestServices.ClusterManager.DataplaneClusterConfig)
-
-	if err := db.Create(kafka).Error; err != nil {
-		t.Errorf("failed to create Kafka db record due to error: %v", err)
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctx := tt.args.ctx(h)
-			client := test.NewAdminPrivateAPIClient(h)
-			result, resp, err := client.DefaultApi.GetKafkaById(ctx, tt.args.kafkaID)
-			cluster, _ := clusterPlacementStrategy.FindCluster(kafka)
-			var latestStrimziVersion string = ""
-			if cluster != nil {
-				readyStrimziVersions, _ := cluster.GetAvailableAndReadyStrimziVersions()
-				if len(readyStrimziVersions) > 0 {
-					latestStrimziVersion = readyStrimziVersions[len(readyStrimziVersions)-1].Version
-				}
-			}
-
-			tt.verifyResponse(result, resp, err, latestStrimziVersion)
-		})
-	}
-}
-
-func TestAdminKafka_SetStrimziVersion(t *testing.T) {
-	sampleKafkaID := api.NewID()
-	type args struct {
-		ctx     func(h *coreTest.Helper) context.Context
-		kafkaID string
-	}
-	tests := []struct {
-		name           string
-		args           args
-		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string)
-	}{
-		{
-			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
-			args: args{
-				ctx: func(h *coreTest.Helper) context.Context {
-					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
-				},
-				kafkaID: sampleKafkaID,
-			},
-			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error, strimziVersion string) {
-				Expect(err).To(BeNil())
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-				Expect(result.Id).To(Equal(sampleKafkaID))
-				Expect(result.DesiredStrimziVersion).To(Equal(strimziVersion))
-			},
-		},
-	}
-
-	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
-	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
-
-	ocmServer := ocmServerBuilder.Build()
-	defer ocmServer.Close()
-
-	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
-	defer tearDown()
-
-	test.TestServices.ClusterManager.DataplaneClusterConfig.StrimziOperatorVersion = "test"
-
-	db := test.TestServices.DBFactory.New()
-	kafka := &dbapi.KafkaRequest{
-		MultiAZ:               false,
-		Owner:                 "test-user",
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-kafka",
-		OrganisationId:        "13640203",
-		Status:                constants.KafkaRequestStatusReady.String(),
-		DesiredStrimziVersion: "test",
+		DesiredStrimziVersion: desiredStrimziVersion,
+		Status: constants.KafkaRequestStatusReady.String(),
 	}
 	kafka.ID = sampleKafkaID
 
@@ -272,9 +191,7 @@ func TestAdminKafka_SetStrimziVersion(t *testing.T) {
 			ctx := tt.args.ctx(h)
 			client := test.NewAdminPrivateAPIClient(h)
 			result, resp, err := client.DefaultApi.GetKafkaById(ctx, tt.args.kafkaID)
-			var desiredStrimziVersion string = "test"
-
-			tt.verifyResponse(result, resp, err, desiredStrimziVersion)
+			tt.verifyResponse(result, resp, err)
 		})
 	}
 }
