@@ -1,12 +1,15 @@
 package kafka_mgrs
 
 import (
+	"fmt"
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
@@ -21,13 +24,14 @@ import (
 // AcceptedKafkaManager represents a kafka manager that periodically reconciles kafka requests
 type AcceptedKafkaManager struct {
 	workers.BaseWorker
-	kafkaService        services.KafkaService
-	quotaServiceFactory services.QuotaServiceFactory
-	clusterPlmtStrategy services.ClusterPlacementStrategy
+	kafkaService           services.KafkaService
+	quotaServiceFactory    services.QuotaServiceFactory
+	clusterPlmtStrategy    services.ClusterPlacementStrategy
+	dataPlaneClusterConfig *config.DataplaneClusterConfig
 }
 
 // NewAcceptedKafkaManager creates a new kafka manager
-func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus) *AcceptedKafkaManager {
+func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFactory services.QuotaServiceFactory, clusterPlmtStrategy services.ClusterPlacementStrategy, bus signalbus.SignalBus, dataPlaneClusterConfig *config.DataplaneClusterConfig) *AcceptedKafkaManager {
 	return &AcceptedKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -36,9 +40,10 @@ func NewAcceptedKafkaManager(kafkaService services.KafkaService, quotaServiceFac
 				SignalBus: bus,
 			},
 		},
-		kafkaService:        kafkaService,
-		quotaServiceFactory: quotaServiceFactory,
-		clusterPlmtStrategy: clusterPlmtStrategy,
+		kafkaService:           kafkaService,
+		quotaServiceFactory:    quotaServiceFactory,
+		clusterPlmtStrategy:    clusterPlmtStrategy,
+		dataPlaneClusterConfig: dataPlaneClusterConfig,
 	}
 }
 
@@ -88,6 +93,26 @@ func (k *AcceptedKafkaManager) reconcileAcceptedKafka(kafka *dbapi.KafkaRequest)
 	}
 
 	kafka.ClusterID = cluster.ClusterID
+	if k.dataPlaneClusterConfig.StrimziOperatorVersion == "" {
+		readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+		if err != nil || len(readyStrimziVersions) == 0 {
+			kafka.Status = constants2.KafkaRequestStatusFailed.String()
+			if err != nil {
+				err = errors.Wrapf(err, "failed to get desired Strimzi version %s", kafka.ID)
+			} else {
+				err = errors.New(fmt.Sprintf("failed to get desired Strimzi version %s", kafka.ID))
+			}
+			kafka.FailedReason = err.Error()
+			if err2 := k.kafkaService.Update(kafka); err2 != nil {
+				return errors.Wrapf(err2, "failed to update failed kafka %s", kafka.ID)
+			}
+			return err
+		} else {
+			kafka.DesiredStrimziVersion = readyStrimziVersions[len(readyStrimziVersions)-1].Version
+		}
+	} else {
+		kafka.DesiredStrimziVersion = k.dataPlaneClusterConfig.StrimziOperatorVersion
+	}
 	if kafka.SubscriptionId == "" {
 		shouldContinueProvision, err := k.reconcileQuota(kafka)
 		if err != nil {

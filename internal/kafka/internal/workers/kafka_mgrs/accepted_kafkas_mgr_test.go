@@ -1,10 +1,12 @@
 package kafka_mgrs
 
 import (
+	"testing"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
-	"testing"
 
 	"github.com/onsi/gomega"
 
@@ -13,10 +15,13 @@ import (
 )
 
 func TestAcceptedKafkaManager(t *testing.T) {
+	testConfig := config.NewDataplaneClusterConfig()
+	testConfig.StrimziOperatorVersion = "strimzi-cluster-operator.v0.23.0-0"
 	type fields struct {
-		kafkaService        services.KafkaService
-		clusterPlmtStrategy services.ClusterPlacementStrategy
-		quotaService        services.QuotaService
+		kafkaService           services.KafkaService
+		clusterPlmtStrategy    services.ClusterPlacementStrategy
+		quotaService           services.QuotaService
+		dataPlaneClusterConfig *config.DataplaneClusterConfig
 	}
 	type args struct {
 		kafka *dbapi.KafkaRequest
@@ -41,6 +46,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "", nil
 					},
 				},
+				dataPlaneClusterConfig: testConfig,
 			},
 			args: args{
 				kafka: &dbapi.KafkaRequest{},
@@ -65,6 +71,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "some-subscription", nil
 					},
 				},
+				dataPlaneClusterConfig: testConfig,
 			},
 			args: args{
 				kafka: &dbapi.KafkaRequest{},
@@ -90,10 +97,40 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "", errors.InsufficientQuotaError("quota insufficient")
 					},
 				},
+				dataPlaneClusterConfig: testConfig,
 			},
 			args: args{
 				kafka: &dbapi.KafkaRequest{},
 			},
+			wantStatus: constants2.KafkaRequestStatusFailed.String(),
+		},
+		{
+			name: "error when dataPlaneClusterConfig doesn't contain strimzi version",
+			fields: fields{
+				clusterPlmtStrategy: &services.ClusterPlacementStrategyMock{
+					FindClusterFunc: func(kafka *dbapi.KafkaRequest) (*api.Cluster, error) {
+						return &api.Cluster{}, nil
+					},
+				},
+				kafkaService: &services.KafkaServiceMock{
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{}, nil
+					},
+				},
+				quotaService: &services.QuotaServiceMock{
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+						return "sub-scription", nil
+					},
+				},
+				dataPlaneClusterConfig: config.NewDataplaneClusterConfig(),
+			},
+			args: args{
+				kafka: &dbapi.KafkaRequest{},
+			},
+			wantErr:    true,
 			wantStatus: constants2.KafkaRequestStatusFailed.String(),
 		},
 		{
@@ -117,6 +154,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return "sub-scription", nil
 					},
 				},
+				dataPlaneClusterConfig: testConfig,
 			},
 			args: args{
 				kafka: &dbapi.KafkaRequest{},
@@ -135,6 +173,7 @@ func TestAcceptedKafkaManager(t *testing.T) {
 						return tt.fields.quotaService, nil
 					},
 				},
+				dataPlaneClusterConfig: tt.fields.dataPlaneClusterConfig,
 			}
 			err := k.reconcileAcceptedKafka(tt.args.kafka)
 			gomega.Expect(err != nil).To(gomega.Equal(tt.wantErr))

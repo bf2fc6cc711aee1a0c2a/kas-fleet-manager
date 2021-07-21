@@ -39,7 +39,7 @@ func NewAuthenticatedContextForAdminEndpoints(h *coreTest.Helper, realmRoles []s
 
 func TestAdminKafka_Get(t *testing.T) {
 	sampleKafkaID := api.NewID()
-
+	desiredStrimziVersion := "test"
 	type args struct {
 		ctx     func(h *coreTest.Helper) context.Context
 		kafkaID string
@@ -87,6 +87,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 			},
 		},
 		{
@@ -101,6 +102,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 			},
 		},
 		{
@@ -115,6 +117,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
+				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 			},
 		},
 		{
@@ -166,7 +169,6 @@ func TestAdminKafka_Get(t *testing.T) {
 
 	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
-
 	db := test.TestServices.DBFactory.New()
 	kafka := &dbapi.KafkaRequest{
 		MultiAZ:        false,
@@ -175,7 +177,8 @@ func TestAdminKafka_Get(t *testing.T) {
 		CloudProvider:  "test",
 		Name:           "test-kafka",
 		OrganisationId: "13640203",
-		Status:         constants.KafkaRequestStatusReady.String(),
+		DesiredStrimziVersion: desiredStrimziVersion,
+		Status: constants.KafkaRequestStatusReady.String(),
 	}
 	kafka.ID = sampleKafkaID
 
