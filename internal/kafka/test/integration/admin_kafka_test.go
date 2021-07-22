@@ -103,6 +103,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
 				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.ClusterId).ShouldNot(BeNil())
 			},
 		},
 		{
@@ -118,6 +119,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
 				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.ClusterId).ShouldNot(BeNil())
 			},
 		},
 		{
@@ -171,14 +173,14 @@ func TestAdminKafka_Get(t *testing.T) {
 	defer tearDown()
 	db := test.TestServices.DBFactory.New()
 	kafka := &dbapi.KafkaRequest{
-		MultiAZ:        false,
-		Owner:          "test-user",
-		Region:         "test",
-		CloudProvider:  "test",
-		Name:           "test-kafka",
-		OrganisationId: "13640203",
+		MultiAZ:               false,
+		Owner:                 "test-user",
+		Region:                "test",
+		CloudProvider:         "test",
+		Name:                  "test-kafka",
+		OrganisationId:        "13640203",
 		DesiredStrimziVersion: desiredStrimziVersion,
-		Status: constants.KafkaRequestStatusReady.String(),
+		Status:                constants.KafkaRequestStatusReady.String(),
 	}
 	kafka.ID = sampleKafkaID
 
