@@ -262,6 +262,8 @@ components:
             # eval or standard product
             product_type:
               type: string
+            cluster_id:
+              type: string
     KafkaList:
       allOf:
         - $ref: "kas-fleet-manager.yaml#/components/schemas/List"
