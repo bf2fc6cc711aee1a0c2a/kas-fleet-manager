@@ -27,6 +27,10 @@ objects:
         - name: http
           port: 80
           targetPort: 8080
+        - name: internal
+          port: 8081
+          targetPort: 8081
+          protocol: TCP
       selector:
         app.kubernetes.io/component: authentication-proxy
         app.kubernetes.io/name: token-refresher
@@ -57,6 +61,8 @@ objects:
             ports:
             - containerPort: 8080
               name: http
+            - containerPort: 8081
+              name: internal
             env:
             - name: CLIENT_ID
               valueFrom:
@@ -74,6 +80,8 @@ objects:
               value: ${OBSERVATORIUM_URL}
             command:
               - /bin/token-refresher
+              - --web.listen=0.0.0.0:8080
+              - --web.internal.listen=0.0.0.0:8081
               - --oidc.audience=observatorium-telemeter
               - --oidc.client-id=$(CLIENT_ID)
               - --oidc.client-secret=$(CLIENT_SECRET)
@@ -98,3 +106,4 @@ objects:
         - podSelector:
             matchLabels:
               app: kas-fleet-manager
+              prometheus: kafka-prometheus
