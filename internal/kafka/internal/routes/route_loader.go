@@ -177,7 +177,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
 	rolesMapping := map[string][]string{
 		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
-		http.MethodPut:    {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
+		http.MethodPatch:  {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
 		http.MethodDelete: {auth.KasFleetManagerAdminFullRole},
 	}
 	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
@@ -186,6 +186,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	adminRouter.HandleFunc("/kafkas", adminKafkaHandler.List).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Get).Methods(http.MethodGet)
 	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Delete).Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/kafkas/{id}", adminKafkaHandler.Update).Methods(http.MethodPatch)
 
 	return nil
 }
