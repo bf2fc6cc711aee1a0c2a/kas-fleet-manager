@@ -3,7 +3,6 @@ package services
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -65,7 +64,7 @@ type ClusterService interface {
 	InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	// Install the cluster logging operator for a given cluster
 	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
-	ValidateStrimziVersion(cluster *api.Cluster, strimziVersion string) error
+	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
 }
 
 type clusterService struct {
@@ -687,15 +686,15 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 	}
 }
 
-func (c clusterService) ValidateStrimziVersion(cluster *api.Cluster, strimziVersion string) error {
+func (c clusterService) CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error) {
 	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
 	if err != nil {
-		return err
+		return false, err
 	}
 	for _, version := range readyStrimziVersions {
 		if version.Version == strimziVersion {
-			return nil
+			return true, nil
 		}
 	}
-	return fmt.Errorf("Failed to update kafka with unsupported strimzi version: %s", strimziVersion)
+	return false, nil
 }

@@ -417,6 +417,9 @@ func TestAdminKafka_Update(t *testing.T) {
 	updateRequestWithStrimziVersion := adminprivate.KafkaUpdateRequest{
 		StrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
 	}
+	unsupportedStrimziVersionUpdateRequest := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.999.0-0",
+	}
 	type args struct {
 		ctx                func(h *coreTest.Helper) context.Context
 		kafkaID            string
@@ -527,6 +530,19 @@ func TestAdminKafka_Update(t *testing.T) {
 			},
 		},
 		{
+			name: "should fail when setting unsupported strimzi version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: unsupportedStrimziVersionUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
 			name: "should fail when kafkaUpdateRequest is empty",
 			args: args{
 				ctx: func(h *coreTest.Helper) context.Context {
@@ -606,13 +622,18 @@ func TestAdminKafka_Update(t *testing.T) {
 		ProviderType:       api.ClusterProviderStandalone,
 	}
 
-	cluster.SetAvailableStrimziVersions([]api.StrimziVersion{{
+	err2 := cluster.SetAvailableStrimziVersions([]api.StrimziVersion{{
 		Version: updateRequestWithStrimziVersion.StrimziVersion,
 		Ready:   true,
 	}, {
 		Ready:   true,
 		Version: fullyPopulatedKafkaUpdateRequest.StrimziVersion,
 	}})
+
+	if err2 != nil {
+		t.Error("failed to set available strimzi versions")
+		return
+	}
 
 	if err := db.Create(cluster).Error; err != nil {
 		t.Error("failed to create dummy cluster")

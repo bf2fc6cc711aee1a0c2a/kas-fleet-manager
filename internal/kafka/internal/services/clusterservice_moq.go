@@ -27,6 +27,9 @@ var _ ClusterService = &ClusterServiceMock{}
 //             CheckClusterStatusFunc: func(cluster *api.Cluster) (*api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the CheckClusterStatus method")
 //             },
+//             CheckStrimziVersionReadyFunc: func(cluster *api.Cluster, strimziVersion string) (bool, error) {
+// 	               panic("mock out the CheckStrimziVersionReady method")
+//             },
 //             ConfigureAndSaveIdentityProviderFunc: func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *errors.ServiceError) {
 // 	               panic("mock out the ConfigureAndSaveIdentityProvider method")
 //             },
@@ -102,9 +105,6 @@ var _ ClusterService = &ClusterServiceMock{}
 //             UpdateStatusFunc: func(cluster api.Cluster, status api.ClusterStatus) error {
 // 	               panic("mock out the UpdateStatus method")
 //             },
-//             ValidateStrimziVersionFunc: func(cluster *api.Cluster, strimziVersion string) error {
-// 	               panic("mock out the ValidateStrimziVersion method")
-//             },
 //         }
 //
 //         // use mockedClusterService in code that requires ClusterService
@@ -117,6 +117,9 @@ type ClusterServiceMock struct {
 
 	// CheckClusterStatusFunc mocks the CheckClusterStatus method.
 	CheckClusterStatusFunc func(cluster *api.Cluster) (*api.Cluster, *errors.ServiceError)
+
+	// CheckStrimziVersionReadyFunc mocks the CheckStrimziVersionReady method.
+	CheckStrimziVersionReadyFunc func(cluster *api.Cluster, strimziVersion string) (bool, error)
 
 	// ConfigureAndSaveIdentityProviderFunc mocks the ConfigureAndSaveIdentityProvider method.
 	ConfigureAndSaveIdentityProviderFunc func(cluster *api.Cluster, identityProviderInfo types.IdentityProviderInfo) (*api.Cluster, *errors.ServiceError)
@@ -193,9 +196,6 @@ type ClusterServiceMock struct {
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(cluster api.Cluster, status api.ClusterStatus) error
 
-	// ValidateStrimziVersionFunc mocks the ValidateStrimziVersion method.
-	ValidateStrimziVersionFunc func(cluster *api.Cluster, strimziVersion string) error
-
 	// calls tracks calls to the methods.
 	calls struct {
 		// ApplyResources holds details about calls to the ApplyResources method.
@@ -209,6 +209,13 @@ type ClusterServiceMock struct {
 		CheckClusterStatus []struct {
 			// Cluster is the cluster argument value.
 			Cluster *api.Cluster
+		}
+		// CheckStrimziVersionReady holds details about calls to the CheckStrimziVersionReady method.
+		CheckStrimziVersionReady []struct {
+			// Cluster is the cluster argument value.
+			Cluster *api.Cluster
+			// StrimziVersion is the strimziVersion argument value.
+			StrimziVersion string
 		}
 		// ConfigureAndSaveIdentityProvider holds details about calls to the ConfigureAndSaveIdentityProvider method.
 		ConfigureAndSaveIdentityProvider []struct {
@@ -351,16 +358,10 @@ type ClusterServiceMock struct {
 			// Status is the status argument value.
 			Status api.ClusterStatus
 		}
-		// ValidateStrimziVersion holds details about calls to the ValidateStrimziVersion method.
-		ValidateStrimziVersion []struct {
-			// Cluster is the cluster argument value.
-			Cluster *api.Cluster
-			// StrimziVersion is the strimziVersion argument value.
-			StrimziVersion string
-		}
 	}
 	lockApplyResources                   sync.RWMutex
 	lockCheckClusterStatus               sync.RWMutex
+	lockCheckStrimziVersionReady         sync.RWMutex
 	lockConfigureAndSaveIdentityProvider sync.RWMutex
 	lockCountByStatus                    sync.RWMutex
 	lockCreate                           sync.RWMutex
@@ -386,7 +387,6 @@ type ClusterServiceMock struct {
 	lockUpdate                           sync.RWMutex
 	lockUpdateMultiClusterStatus         sync.RWMutex
 	lockUpdateStatus                     sync.RWMutex
-	lockValidateStrimziVersion           sync.RWMutex
 }
 
 // ApplyResources calls ApplyResourcesFunc.
@@ -452,6 +452,41 @@ func (mock *ClusterServiceMock) CheckClusterStatusCalls() []struct {
 	mock.lockCheckClusterStatus.RLock()
 	calls = mock.calls.CheckClusterStatus
 	mock.lockCheckClusterStatus.RUnlock()
+	return calls
+}
+
+// CheckStrimziVersionReady calls CheckStrimziVersionReadyFunc.
+func (mock *ClusterServiceMock) CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error) {
+	if mock.CheckStrimziVersionReadyFunc == nil {
+		panic("ClusterServiceMock.CheckStrimziVersionReadyFunc: method is nil but ClusterService.CheckStrimziVersionReady was just called")
+	}
+	callInfo := struct {
+		Cluster        *api.Cluster
+		StrimziVersion string
+	}{
+		Cluster:        cluster,
+		StrimziVersion: strimziVersion,
+	}
+	mock.lockCheckStrimziVersionReady.Lock()
+	mock.calls.CheckStrimziVersionReady = append(mock.calls.CheckStrimziVersionReady, callInfo)
+	mock.lockCheckStrimziVersionReady.Unlock()
+	return mock.CheckStrimziVersionReadyFunc(cluster, strimziVersion)
+}
+
+// CheckStrimziVersionReadyCalls gets all the calls that were made to CheckStrimziVersionReady.
+// Check the length with:
+//     len(mockedClusterService.CheckStrimziVersionReadyCalls())
+func (mock *ClusterServiceMock) CheckStrimziVersionReadyCalls() []struct {
+	Cluster        *api.Cluster
+	StrimziVersion string
+} {
+	var calls []struct {
+		Cluster        *api.Cluster
+		StrimziVersion string
+	}
+	mock.lockCheckStrimziVersionReady.RLock()
+	calls = mock.calls.CheckStrimziVersionReady
+	mock.lockCheckStrimziVersionReady.RUnlock()
 	return calls
 }
 
@@ -1258,40 +1293,5 @@ func (mock *ClusterServiceMock) UpdateStatusCalls() []struct {
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
 	mock.lockUpdateStatus.RUnlock()
-	return calls
-}
-
-// ValidateStrimziVersion calls ValidateStrimziVersionFunc.
-func (mock *ClusterServiceMock) ValidateStrimziVersion(cluster *api.Cluster, strimziVersion string) error {
-	if mock.ValidateStrimziVersionFunc == nil {
-		panic("ClusterServiceMock.ValidateStrimziVersionFunc: method is nil but ClusterService.ValidateStrimziVersion was just called")
-	}
-	callInfo := struct {
-		Cluster        *api.Cluster
-		StrimziVersion string
-	}{
-		Cluster:        cluster,
-		StrimziVersion: strimziVersion,
-	}
-	mock.lockValidateStrimziVersion.Lock()
-	mock.calls.ValidateStrimziVersion = append(mock.calls.ValidateStrimziVersion, callInfo)
-	mock.lockValidateStrimziVersion.Unlock()
-	return mock.ValidateStrimziVersionFunc(cluster, strimziVersion)
-}
-
-// ValidateStrimziVersionCalls gets all the calls that were made to ValidateStrimziVersion.
-// Check the length with:
-//     len(mockedClusterService.ValidateStrimziVersionCalls())
-func (mock *ClusterServiceMock) ValidateStrimziVersionCalls() []struct {
-	Cluster        *api.Cluster
-	StrimziVersion string
-} {
-	var calls []struct {
-		Cluster        *api.Cluster
-		StrimziVersion string
-	}
-	mock.lockValidateStrimziVersion.RLock()
-	calls = mock.calls.ValidateStrimziVersion
-	mock.lockValidateStrimziVersion.RUnlock()
 	return calls
 }

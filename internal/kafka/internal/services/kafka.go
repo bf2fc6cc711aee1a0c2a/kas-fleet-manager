@@ -504,19 +504,27 @@ func (k *kafkaService) Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 }
 
 func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-	cluster, err := k.clusterService.FindClusterByID(kafkaRequest.ClusterID)
-	if err != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
-	}
-	if cluster == nil {
-		return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
-	}
-	err2 := k.clusterService.ValidateStrimziVersion(cluster, kafkaRequest.DesiredStrimziVersion)
-	if err2 != nil {
-		return errors.Validation(err2.Error())
-	}
+	if auth.GetIsAdminFromContext(ctx) {
+		cluster, err := k.clusterService.FindClusterByID(kafkaRequest.ClusterID)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to find cluster associated with kafka request: %s", kafkaRequest.ID)
+		}
+		if cluster == nil {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to get cluster for kafka %s", kafkaRequest.ID))
+		}
+		strimziVersionReady, err2 := k.clusterService.CheckStrimziVersionReady(cluster, kafkaRequest.DesiredStrimziVersion)
+		if err2 != nil {
+			return errors.Validation(err2.Error())
+		}
 
-	return k.Update(kafkaRequest)
+		if !strimziVersionReady {
+			return errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka: %s with strimzi version: %s", kafkaRequest.ID, kafkaRequest.DesiredStrimziVersion))
+		}
+
+		return k.Update(kafkaRequest)
+	} else {
+		return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
+	}
 }
 
 func (k *kafkaService) UpdateStatus(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
