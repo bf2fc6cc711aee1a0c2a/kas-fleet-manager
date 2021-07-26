@@ -106,4 +106,6 @@ objects:
         - podSelector:
             matchLabels:
               app: kas-fleet-manager
-              prometheus: kafka-prometheus
+        - podSelector:
+            matchLabels:
+              promethus: kafka-prometheus
