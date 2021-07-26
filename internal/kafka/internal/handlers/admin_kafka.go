@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/admin/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
@@ -10,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"github.com/gorilla/mux"
 )
 
@@ -91,4 +94,44 @@ func (h adminKafkaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handlers.HandleDelete(w, r, cfg, http.StatusAccepted)
+}
+
+func (h adminKafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
+
+	var kafkaUpdateReq private.KafkaUpdateRequest
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &kafkaUpdateReq,
+		Validate: []handlers.Validate{
+			handlers.ValidateKafkaUpdateFields(&kafkaUpdateReq.KafkaVersion, &kafkaUpdateReq.StrimziVersion),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			kafkaRequest, err2 := h.service.Get(ctx, id)
+			if err2 != nil {
+				return nil, err2
+			}
+			kafkaStatus := kafkaRequest.Status
+			if !shared.Contains(constants.GetUpdateableStatuses(), kafkaStatus) {
+				return nil, errors.New(errors.ErrorValidation, fmt.Sprintf("Unable to update kafka in %s status. Supported statuses for update are: %v", kafkaStatus, constants.GetUpdateableStatuses()))
+			}
+			updateRequired := false
+			if kafkaRequest.DesiredKafkaVersion != kafkaUpdateReq.KafkaVersion && kafkaUpdateReq.KafkaVersion != "" {
+				kafkaRequest.DesiredKafkaVersion = kafkaUpdateReq.KafkaVersion
+				updateRequired = true
+			}
+			if kafkaRequest.DesiredStrimziVersion != kafkaUpdateReq.StrimziVersion && kafkaUpdateReq.StrimziVersion != "" {
+				kafkaRequest.DesiredStrimziVersion = kafkaUpdateReq.StrimziVersion
+				updateRequired = true
+			}
+			if updateRequired {
+				err3 := h.service.VerifyAndUpdateKafkaAdmin(ctx, kafkaRequest)
+				if err3 != nil {
+					return nil, err3
+				}
+			}
+			return presenters.PresentKafkaRequestAdminEndpoint(kafkaRequest), nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
 }

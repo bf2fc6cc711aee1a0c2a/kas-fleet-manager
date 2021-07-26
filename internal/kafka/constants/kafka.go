@@ -83,3 +83,12 @@ func (k KafkaStatus) CompareTo(k1 KafkaStatus) int {
 		return -1
 	}
 }
+
+func GetUpdateableStatuses() []string {
+	return []string{
+		KafkaRequestStatusPreparing.String(),
+		KafkaRequestStatusProvisioning.String(),
+		KafkaRequestStatusFailed.String(),
+		KafkaRequestStatusReady.String(),
+	}
+}

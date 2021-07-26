@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"errors"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
@@ -63,6 +64,7 @@ type ClusterService interface {
 	InstallStrimzi(cluster *api.Cluster) (bool, *apiErrors.ServiceError)
 	// Install the cluster logging operator for a given cluster
 	InstallClusterLogging(cluster *api.Cluster, params []types.Parameter) (bool, *apiErrors.ServiceError)
+	CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error)
 }
 
 type clusterService struct {
@@ -682,4 +684,17 @@ func buildClusterSpec(cluster *api.Cluster) *types.ClusterSpec {
 		Status:         cluster.Status,
 		AdditionalInfo: cluster.ClusterSpec,
 	}
+}
+
+func (c clusterService) CheckStrimziVersionReady(cluster *api.Cluster, strimziVersion string) (bool, error) {
+	readyStrimziVersions, err := cluster.GetAvailableAndReadyStrimziVersions()
+	if err != nil {
+		return false, err
+	}
+	for _, version := range readyStrimziVersions {
+		if version.Version == strimziVersion {
+			return true, nil
+		}
+	}
+	return false, nil
 }

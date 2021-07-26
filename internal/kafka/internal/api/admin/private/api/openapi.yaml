@@ -231,7 +231,7 @@ paths:
       security:
       - Bearer: []
       summary: Return the details of Kafka instance by id
-    put:
+    patch:
       operationId: updateKafkaById
       parameters:
       - description: The ID of record

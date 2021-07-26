@@ -98,7 +98,7 @@ paths:
             application/json:
               schema:
                 $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
-    put:
+    patch:
       summary: Update a Kafka instance by id
       parameters:
         - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
