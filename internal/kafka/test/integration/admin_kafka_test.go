@@ -403,3 +403,272 @@ func TestAdminKafka_List(t *testing.T) {
 		})
 	}
 }
+
+func TestAdminKafka_Update(t *testing.T) {
+	sampleKafkaID := api.NewID()
+	fullyPopulatedKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+		KafkaVersion:   "2.7.0",
+	}
+	emptyKafkaUpdateRequest := adminprivate.KafkaUpdateRequest{}
+	updateRequestWithKafkaVersion := adminprivate.KafkaUpdateRequest{
+		KafkaVersion: "2.7.0",
+	}
+	updateRequestWithStrimziVersion := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.23.0-0",
+	}
+	unsupportedStrimziVersionUpdateRequest := adminprivate.KafkaUpdateRequest{
+		StrimziVersion: "strimzi-cluster-operator.v0.999.0-0",
+	}
+	type args struct {
+		ctx                func(h *coreTest.Helper) context.Context
+		kafkaID            string
+		kafkaUpdateRequest adminprivate.KafkaUpdateRequest
+	}
+	tests := []struct {
+		name           string
+		args           args
+		verifyResponse func(result adminprivate.Kafka, resp *http.Response, err error)
+	}{
+		{
+			name: "should fail authentication when there is no role defined in the request",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{})
+				},
+				kafkaID: sampleKafkaID,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: "should fail when the role defined in the request is not any of read, write or full",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{"notallowedrole"})
+				},
+				kafkaID: sampleKafkaID,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: fmt.Sprintf("should fail when the role defined in the request is %s", auth.KasFleetManagerAdminReadRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+				},
+				kafkaID: sampleKafkaID,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: fmt.Sprintf("should succeed when the role defined in the request is %s", auth.KasFleetManagerAdminWriteRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminWriteRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID))
+			},
+		},
+		{
+			name: fmt.Sprintf("should success when the role defined in the request is %s", auth.KasFleetManagerAdminFullRole),
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID))
+			},
+		},
+		{
+			name: "should succeed when updating kafka version only",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: updateRequestWithKafkaVersion,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID))
+			},
+		},
+		{
+			name: "should succeed when updating strimzi version only",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: updateRequestWithStrimziVersion,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Id).To(Equal(sampleKafkaID))
+			},
+		},
+		{
+			name: "should fail when setting unsupported strimzi version",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: unsupportedStrimziVersionUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when kafkaUpdateRequest is empty",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminFullRole})
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: emptyKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when the requested kafka does not exist",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					return NewAuthenticatedContextForAdminEndpoints(h, []string{auth.KasFleetManagerAdminReadRole})
+				},
+				kafkaID:            "nonexistentkafkaID",
+				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+		{
+			name: "should fail when the request does not contain a valid issuer",
+			args: args{
+				ctx: func(h *coreTest.Helper) context.Context {
+					account := h.NewAllowedServiceAccount()
+					claims := jwt.MapClaims{
+						"iss": "invalidiss",
+						"realm_access": map[string][]string{
+							"roles": {auth.KasFleetManagerAdminReadRole},
+						},
+					}
+					token := h.CreateJWTStringWithClaim(account, claims)
+					ctx := context.WithValue(context.Background(), adminprivate.ContextAccessToken, token)
+					return ctx
+				},
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: fullyPopulatedKafkaUpdateRequest,
+			},
+			verifyResponse: func(result adminprivate.Kafka, resp *http.Response, err error) {
+				Expect(err).To(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
+			},
+		},
+	}
+
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+	db := test.TestServices.DBFactory.New()
+	// create a dummy cluster and assign a kafka to it
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ClusterID:          api.NewID(),
+		MultiAZ:            true,
+		Region:             "baremetal",
+		CloudProvider:      "baremetal",
+		Status:             api.ClusterReady,
+		IdentityProviderID: "some-id",
+		ClusterDNS:         "some-cluster-dns",
+		ProviderType:       api.ClusterProviderStandalone,
+	}
+
+	err2 := cluster.SetAvailableStrimziVersions([]api.StrimziVersion{{
+		Version: updateRequestWithStrimziVersion.StrimziVersion,
+		Ready:   true,
+	}, {
+		Ready:   true,
+		Version: fullyPopulatedKafkaUpdateRequest.StrimziVersion,
+	}})
+
+	if err2 != nil {
+		t.Error("failed to set available strimzi versions")
+		return
+	}
+
+	if err := db.Create(cluster).Error; err != nil {
+		t.Error("failed to create dummy cluster")
+		return
+	}
+
+	// create a kafka that will be updated
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID,
+		},
+		MultiAZ:               false,
+		Owner:                 "test-user",
+		Region:                "test",
+		CloudProvider:         "test",
+		Name:                  "test-kafka",
+		OrganisationId:        "13640203",
+		Status:                constants.KafkaRequestStatusReady.String(),
+		ClusterID:             cluster.ClusterID,
+		ActualKafkaVersion:    "2.6.0",
+		DesiredKafkaVersion:   "2.6.0",
+		ActualStrimziVersion:  "v.23.0",
+		DesiredStrimziVersion: "v0.23.0",
+	}
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := tt.args.ctx(h)
+			client := test.NewAdminPrivateAPIClient(h)
+			result, resp, err := client.DefaultApi.UpdateKafkaById(ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
+			tt.verifyResponse(result, resp, err)
+		})
+	}
+}

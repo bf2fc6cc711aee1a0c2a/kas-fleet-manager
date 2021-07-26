@@ -407,7 +407,7 @@ UpdateKafkaById Update a Kafka instance by id
 */
 func (a *DefaultApiService) UpdateKafkaById(ctx _context.Context, id string, kafkaUpdateRequest KafkaUpdateRequest) (Kafka, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
