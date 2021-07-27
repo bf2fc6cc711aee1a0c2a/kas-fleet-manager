@@ -106,4 +106,9 @@ objects:
         - podSelector:
             matchLabels:
               app: kas-fleet-manager
+        - podSelector:
+            matchLabels:
               prometheus: kafka-prometheus
+          namespaceSelector:
+            matchLabels:
+              name: managed-application-services-observability
