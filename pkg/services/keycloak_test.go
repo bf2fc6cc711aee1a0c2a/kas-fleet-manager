@@ -348,12 +348,6 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 					AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
 						return nil
 					},
-					CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-						return &gocloak.Role{
-							ID:   &fakeRoleId,
-							Name: &roleName,
-						}, nil
-					},
 					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
 						return fakeClientId, nil
 					},
@@ -369,7 +363,9 @@ func TestKeycloakService_RegisterKasFleetshardOperatorServiceAccount(t *testing.
 						}, nil
 					},
 					GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-						return nil, nil
+						return &gocloak.Role{
+							ID: &fakeRoleId,
+						}, nil
 					},
 					UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
 						return nil
@@ -604,12 +600,6 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 					AddRealmRoleToUserFunc: func(accessToken string, userId string, role gocloak.Role) error {
 						return nil
 					},
-					CreateRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-						return &gocloak.Role{
-							ID:   &fakeRoleId,
-							Name: &roleName,
-						}, nil
-					},
 					CreateClientFunc: func(client gocloak.Client, accessToken string) (string, error) {
 						return fakeClientId, nil
 					},
@@ -625,7 +615,10 @@ func TestKeycloakService_RegisterConnectorFleetshardOperatorServiceAccount(t *te
 						}, nil
 					},
 					GetRealmRoleFunc: func(accessToken string, roleName string) (*gocloak.Role, error) {
-						return nil, nil
+						return &gocloak.Role{
+							ID:   &fakeRoleId,
+							Name: &roleName,
+						}, nil
 					},
 					UpdateServiceAccountUserFunc: func(accessToken string, serviceAccountUser gocloak.User) error {
 						return nil
