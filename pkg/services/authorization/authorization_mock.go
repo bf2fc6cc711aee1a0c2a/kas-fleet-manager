@@ -9,7 +9,7 @@ type mock struct{}
 
 var _ Authorization = &mock{}
 
-func NewMockAuthroization() Authorization {
+func NewMockAuthorization() Authorization {
 	return &mock{}
 }
 
