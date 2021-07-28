@@ -21,7 +21,7 @@ func ServiceProviders() di.Option {
 
 func NewAuthorization(OCM *ocm.OCMConfig, connection *sdkClient.Connection) Authorization {
 	if OCM.EnableMock {
-		return NewMockAuthroization()
+		return NewMockAuthorization()
 	} else {
 		return NewOCMAuthorization(connection)
 	}
