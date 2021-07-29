@@ -11,6 +11,7 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/pkg/errors"
 	pAPI "github.com/prometheus/client_golang/api"
 	pV1 "github.com/prometheus/client_golang/api/prometheus/v1"
@@ -25,6 +26,7 @@ type ClientConfiguration struct {
 	Debug      bool
 	EnableMock bool
 	Insecure   bool
+	AuthType   string
 }
 
 type Client struct {
@@ -72,6 +74,7 @@ func NewClient(config *Configuration) (*Client, error) {
 			Debug:      config.Debug,
 			EnableMock: false,
 			Insecure:   config.Insecure,
+			AuthType:   config.AuthType,
 		},
 	}
 
@@ -83,18 +86,13 @@ func NewClient(config *Configuration) (*Client, error) {
 		pAPI.DefaultRoundTripper.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
-	apiConfig := pAPI.Config{
+	apiClient, err := pAPI.NewClient(pAPI.Config{
 		Address: client.Config.BaseURL,
-	}
-
-	if config.AuthType == AuthTypeDex {
-		apiConfig.RoundTripper = authRoundTripper{
+		RoundTripper: observatoriumRoundTripper{
 			config:  *client.Config,
 			wrapped: pAPI.DefaultRoundTripper,
-		}
-	}
-
-	apiClient, err := pAPI.NewClient(apiConfig)
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -120,20 +118,40 @@ func NewClientMock(config *Configuration) (*Client, error) {
 	return client, nil
 }
 
-type authRoundTripper struct {
+type observatoriumRoundTripper struct {
 	config  ClientConfiguration
 	wrapped http.RoundTripper
 }
 
-func (p authRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	if p.config.AuthToken != "" {
-		request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.config.AuthToken))
-	} else if p.config.Cookie != "" {
-		request.Header.Add("Cookie", p.config.Cookie)
-	} else {
-		return nil, errors.Errorf("can't request metrics without auth")
+func (p observatoriumRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+	var statusCode int
+	path := strings.TrimPrefix(request.URL.String(), p.config.BaseURL)
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
 	}
-	return p.wrapped.RoundTrip(request)
+
+	if p.config.AuthType == AuthTypeDex {
+		if p.config.AuthToken != "" {
+			request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", p.config.AuthToken))
+		} else if p.config.Cookie != "" {
+			request.Header.Add("Cookie", p.config.Cookie)
+		} else {
+			metrics.IncreaseObservatoriumRequestCount(statusCode, path, request.Method)
+			return nil, errors.Errorf("can't request metrics without auth")
+		}
+	}
+
+	start := time.Now()
+	resp, err := p.wrapped.RoundTrip(request)
+	elapsedTime := time.Since(start)
+
+	if resp != nil {
+		statusCode = resp.StatusCode
+	}
+	metrics.IncreaseObservatoriumRequestCount(statusCode, path, request.Method)
+	metrics.UpdateObservatoriumRequestDurationMetric(statusCode, path, request.Method, elapsedTime)
+
+	return resp, err
 }
 
 // Send a POST request to server.
