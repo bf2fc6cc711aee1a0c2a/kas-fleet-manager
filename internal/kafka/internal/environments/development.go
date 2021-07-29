@@ -7,7 +7,8 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 	return environments.SimpleEnvLoader{
 		"v":                                               "10",
 		"ocm-debug":                                       "false",
-		"ocm-base-url":                                    "https://api.stage.openshift.com",
+		"ams-base-url":                                    "https://api.stage.openshift.com",
+		"ocm-base-url":                                    "https://api.openshift.com",
 		"enable-ocm-mock":                                 "false",
 		"enable-https":                                    "false",
 		"enable-metrics-https":                            "false",

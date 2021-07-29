@@ -14,7 +14,7 @@ import (
 type RequireTermsAcceptanceMiddleware interface {
 	// RequireTermsAcceptance will check that the user has accepted the required terms.
 	// The current implementation is backed by OCM and can be disabled with the "enabled" flag set to false.
-	RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
+	RequireTermsAcceptance(enabled bool, amsClient ocm.AMSClient, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler
 }
 
 type requireTermsAcceptanceMiddleware struct {
@@ -30,7 +30,7 @@ func NewRequireTermsAcceptanceMiddleware() RequireTermsAcceptanceMiddleware {
 	}
 }
 
-func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, ocmClient ocm.Client, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
+func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, amsClient ocm.AMSClient, code errors.ServiceErrorCode) func(handler http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			if enabled {
@@ -43,7 +43,7 @@ func (m *requireTermsAcceptanceMiddleware) RequireTermsAcceptance(enabled bool, 
 				username := GetUsernameFromClaims(claims)
 				termsRequired, cached := m.cache.Get(username)
 				if !cached {
-					termsRequired, _, err = ocmClient.GetRequiresTermsAcceptance(username)
+					termsRequired, _, err = amsClient.GetRequiresTermsAcceptance(username)
 					if err != nil {
 						shared.HandleError(request, writer, errors.NewWithCause(code, err, ""))
 						return
