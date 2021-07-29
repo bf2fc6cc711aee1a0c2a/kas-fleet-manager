@@ -78,6 +78,7 @@ type KafkaService interface {
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 	VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
+	ListComponentVersions() ([]KafkaComponentVersions, error)
 }
 
 var _ KafkaService = &kafkaService{}
@@ -714,6 +715,26 @@ func (k *kafkaService) CountByStatus(status []constants2.KafkaStatus) ([]KafkaSt
 		}
 	}
 
+	return results, nil
+}
+
+type KafkaComponentVersions struct {
+	ID                    string
+	ClusterID             string
+	DesiredStrimziVersion string
+	ActualStrimziVersion  string
+	StrimziUpgrading      bool
+	DesiredKafkaVersion   string
+	ActualKafkaVersion    string
+	KafkaUpgrading        bool
+}
+
+func (k *kafkaService) ListComponentVersions() ([]KafkaComponentVersions, error) {
+	dbConn := k.connectionFactory.New()
+	var results []KafkaComponentVersions
+	if err := dbConn.Model(&dbapi.KafkaRequest{}).Select("id", "cluster_id", "desired_strimzi_version", "actual_strimzi_version", "strimzi_upgrading", "desired_kafka_version", "actual_kafka_version", "kafka_upgrading").Scan(&results).Error; err != nil {
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to list component versions")
+	}
 	return results, nil
 }
 
