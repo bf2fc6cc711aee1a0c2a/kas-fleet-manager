@@ -3,9 +3,6 @@ package dbapi
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
 )
@@ -77,7 +74,6 @@ func (k *KafkaRequest) GetRoutes() ([]DataPlaneKafkaRoute, error) {
 }
 
 func (k *KafkaRequest) GetDefaultRoutes(clusterDNS string, numberOfBrokers int) []DataPlaneKafkaRoute {
-	clusterDNS = strings.Replace(clusterDNS, constants.DefaultIngressDnsNamePrefix, constants.ManagedKafkaIngressDnsNamePrefix, 1)
 	clusterIngress := fmt.Sprintf("elb.%s", clusterDNS)
 
 	routes := []DataPlaneKafkaRoute{

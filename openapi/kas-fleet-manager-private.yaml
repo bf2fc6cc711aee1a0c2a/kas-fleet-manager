@@ -622,7 +622,9 @@ components:
           items:
             type: object
             properties:
-              route:
+              name:
+                type: string
+              prefix:
                 type: string
               router:
                 type: string

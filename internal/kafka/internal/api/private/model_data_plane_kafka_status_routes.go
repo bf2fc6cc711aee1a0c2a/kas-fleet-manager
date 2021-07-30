@@ -11,6 +11,7 @@ package private
 
 // DataPlaneKafkaStatusRoutes struct for DataPlaneKafkaStatusRoutes
 type DataPlaneKafkaStatusRoutes struct {
-	Route  string `json:"route,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Prefix string `json:"prefix,omitempty"`
 	Router string `json:"router,omitempty"`
 }
