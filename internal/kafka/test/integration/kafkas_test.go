@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -1111,6 +1112,121 @@ func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
 
 	// delete test kafka to free up resources on an OSD cluster
 	deleteTestKafka(t, h, initCtx, client, foundKafka.Id)
+}
+
+func TestKafka_DeleteAdminNonOwner(t *testing.T) {
+	owner := "test-user"
+
+	sampleKafkaID := api.NewID()
+
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	otherUserAccount := h.NewAccountWithNameAndOrg("non-owner", "13640203")
+
+	adminAccount := h.NewAccountWithNameAndOrg("admin", "13640203")
+
+	otherUserCtx := h.NewAuthenticatedContext(otherUserAccount, nil)
+
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
+	adminCtx := h.NewAuthenticatedContext(adminAccount, claims)
+
+	type args struct {
+		ctx     context.Context
+		kafkaID string
+	}
+	tests := []struct {
+		name           string
+		args           args
+		verifyResponse func(resp *http.Response, err error)
+	}{
+		{
+			name: "should fail when deleting kafka by other user within the same org (not an owner)",
+			args: args{
+				ctx:     otherUserCtx,
+				kafkaID: sampleKafkaID,
+			},
+			verifyResponse: func(resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should not fail when deleting kafka by other user within the same org (not an owner but org admin)",
+			args: args{
+				ctx:     adminCtx,
+				kafkaID: sampleKafkaID,
+			},
+			verifyResponse: func(resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+			},
+		},
+	}
+
+	db := test.TestServices.DBFactory.New()
+	// create a dummy cluster and assign a kafka to it
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ClusterID:          api.NewID(),
+		MultiAZ:            true,
+		Region:             "baremetal",
+		CloudProvider:      "baremetal",
+		Status:             api.ClusterReady,
+		IdentityProviderID: "some-id",
+		ClusterDNS:         "some-cluster-dns",
+		ProviderType:       api.ClusterProviderStandalone,
+	}
+
+	if err := db.Create(cluster).Error; err != nil {
+		t.Error("failed to create dummy cluster")
+		return
+	}
+
+	// create a kafka that will be updated
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID,
+		},
+		MultiAZ:               false,
+		Owner:                 owner,
+		Region:                "test",
+		CloudProvider:         "test",
+		Name:                  "test-kafka",
+		OrganisationId:        "13640203",
+		Status:                constants.KafkaRequestStatusReady.String(),
+		ClusterID:             cluster.ClusterID,
+		ActualKafkaVersion:    "2.6.0",
+		DesiredKafkaVersion:   "2.6.0",
+		ActualStrimziVersion:  "v.23.0",
+		DesiredStrimziVersion: "v0.23.0",
+	}
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := test.NewApiClient(h)
+			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, true)
+			tt.verifyResponse(resp, err)
+		})
+	}
 }
 
 // TestKafkaList_Success tests getting kafka requests list
