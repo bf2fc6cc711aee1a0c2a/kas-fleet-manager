@@ -10,7 +10,7 @@ import (
 )
 
 type amsQuotaService struct {
-	ocmClient   ocm.AMSClient
+	ocmClient   ocm.Client
 	kafkaConfig *config.KafkaConfig
 }
 
