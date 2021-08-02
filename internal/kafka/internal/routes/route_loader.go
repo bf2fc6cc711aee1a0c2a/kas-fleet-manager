@@ -34,6 +34,7 @@ type options struct {
 	ProviderConfig *config.ProviderConfig
 
 	OCM                   ocm.Client
+	AMS                   ocm.AMSClient
 	Kafka                 services.KafkaService
 	CloudProviders        services.CloudProvidersService
 	Observatorium         services.ObservatoriumService
@@ -76,7 +77,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
 	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.OCMConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
-	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.OCM, errors.ErrorTermsNotAccepted)
+	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMS, errors.ErrorTermsNotAccepted)
 
 	// base path. Could be /api/kafkas_mgmt
 	apiRouter := mainRouter.PathPrefix(basePath).Subrouter()

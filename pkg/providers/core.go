@@ -57,8 +57,15 @@ func ServiceProviders() di.Option {
 		di.Provide(db.NewConnectionFactory),
 		di.Provide(observatorium.NewObservatoriumClient),
 
-		di.Provide(ocm.NewOCMConnection),
-		di.Provide(ocm.NewClient),
+		di.Provide(func(config *ocm.OCMConfig) ocm.Client {
+			conn, _, _ := ocm.NewOCMConnection(config, config.BaseURL)
+			return ocm.NewClient(conn)
+		}),
+
+		di.Provide(func(config *ocm.OCMConfig) ocm.AMSClient {
+			conn, _, _ := ocm.NewOCMConnection(config, config.AmsUrl)
+			return ocm.NewClient(conn)
+		}),
 
 		di.Provide(aws.NewDefaultClientFactory, di.As(new(aws.ClientFactory))),
 
