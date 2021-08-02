@@ -21,6 +21,7 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"v":                                 "0",
 		"logtostderr":                       "true",
 		"ocm-base-url":                      "https://api-integration.6943.hive-integration.openshiftapps.com",
+		"ams-base-url":                      "https://api.stage.openshift.com",
 		"enable-https":                      "false",
 		"enable-metrics-https":              "false",
 		"enable-terms-acceptance":           "false",
