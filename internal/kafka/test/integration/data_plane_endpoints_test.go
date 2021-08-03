@@ -3,8 +3,10 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -567,6 +569,15 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		}
 	}, nil)
 	defer testServer.TearDown()
+	db := test.TestServices.DBFactory.New()
+	var cluster api.Cluster
+	if err := db.Where("cluster_id = ?", testServer.ClusterID).First(&cluster).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	clusterDNS := strings.Replace(cluster.ClusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
+
 	bootstrapServerHost := "prefix.some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
@@ -583,8 +594,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			DesiredKafkaVersion: "2.6.0",
 		},
 	}
-
-	db := test.TestServices.DBFactory.New()
 
 	// create dummy kafkas
 	if err := db.Create(&testKafkas).Error; err != nil {
@@ -607,8 +616,14 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			}},
 			Routes: &[]private.DataPlaneKafkaStatusRoutes{
 				{
-					Route:  "admin-api",
-					Router: "router.external.example.com",
+					Name:   "admin-api",
+					Prefix: "admin-api",
+					Router: fmt.Sprintf("router.%s", clusterDNS),
+				},
+				{
+					Name:   "bootstrap",
+					Prefix: "",
+					Router: fmt.Sprintf("router.%s", clusterDNS),
 				},
 			},
 		}
@@ -632,12 +647,16 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 			if err != nil {
 				return false, err
 			}
-			if len(routes) != 1 {
+			if len(routes) != 2 {
 				return false, errors.Errorf("expected length of routes array to be 1")
 			}
-			wantDomain := "admin-api.some-bootstrap⁻host"
-			if routes[0].Domain != wantDomain {
-				return false, errors.Errorf("route domain value is %s but want %s", routes[0].Domain, wantDomain)
+			wantDomain1 := "admin-api-prefix.some-bootstrap⁻host"
+			if routes[0].Domain != wantDomain1 {
+				return false, errors.Errorf("route domain value is %s but want %s", routes[0].Domain, wantDomain1)
+			}
+			wantDomain2 := "prefix.some-bootstrap⁻host"
+			if routes[1].Domain != wantDomain2 {
+				return false, errors.Errorf("route domain value is %s but want %s", routes[1].Domain, wantDomain2)
 			}
 
 			// if one route is created, it is safe to assume all routes are created

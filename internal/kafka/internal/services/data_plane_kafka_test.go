@@ -19,6 +19,7 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 	testErrorCondMessage := "test failed message"
 	bootstrapServer := "test.kafka.example.com"
 	ingress := fmt.Sprintf("elb.%s", bootstrapServer)
+	invalidIngress := "elb.test1.kafka.example.com"
 	tests := []struct {
 		name           string
 		clusterService ClusterService
@@ -251,21 +252,23 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
 					return &api.Cluster{}, nil
 				},
+				GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
+					return bootstrapServer, nil
+				},
 			},
 			kafkaService: func(c map[string]int) KafkaService {
 				routesCreated := false
-				host := strings.SplitN(bootstrapServer, ".", 2)[1]
 				expectedRoutes := []dbapi.DataPlaneKafkaRoute{
 					{
 						Domain: bootstrapServer,
 						Router: ingress,
 					},
 					{
-						Domain: fmt.Sprintf("admin-api.%s", host),
+						Domain: fmt.Sprintf("admin-api-%s", bootstrapServer),
 						Router: ingress,
 					},
 					{
-						Domain: fmt.Sprintf("broker-0.%s", host),
+						Domain: fmt.Sprintf("broker-0-%s", bootstrapServer),
 						Router: ingress,
 					},
 				}
@@ -321,17 +324,20 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							Status: "True",
 						},
 					},
-					Routes: []dbapi.DataPlaneKafkaRoute{
+					Routes: []dbapi.DataPlaneKafkaRouteRequest{
 						{
-							Domain: "bootstrap",
+							Name:   "bootstrap",
+							Prefix: "",
 							Router: ingress,
 						},
 						{
-							Domain: "admin-api",
+							Name:   "admin-api",
+							Prefix: "admin-api",
 							Router: ingress,
 						},
 						{
-							Domain: "broker-0",
+							Name:   "broker-0",
+							Prefix: "broker-0",
 							Router: ingress,
 						},
 					},
@@ -344,17 +350,20 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							Status: "True",
 						},
 					},
-					Routes: []dbapi.DataPlaneKafkaRoute{
+					Routes: []dbapi.DataPlaneKafkaRouteRequest{
 						{
-							Domain: "bootstrap",
+							Name:   "bootstrap",
+							Prefix: "",
 							Router: ingress,
 						},
 						{
-							Domain: "admin-api",
+							Name:   "admin-api",
+							Prefix: "admin-api",
 							Router: ingress,
 						},
 						{
-							Domain: "broker-0",
+							Name:   "broker-0",
+							Prefix: "broker-0",
 							Router: ingress,
 						},
 					},
@@ -363,6 +372,83 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 			wantErr: false,
 			expectCounters: map[string]int{
 				"ready":    1,
+				"failed":   0,
+				"deleting": 0,
+				"rejected": 0,
+			},
+		},
+		{
+			name: "return error if router is not valid",
+			clusterService: &ClusterServiceMock{
+				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+					return &api.Cluster{}, nil
+				},
+				GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
+					return bootstrapServer, nil
+				},
+			},
+			kafkaService: func(c map[string]int) KafkaService {
+				return &KafkaServiceMock{
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							ClusterID:           "test-cluster-id",
+							Status:              constants2.KafkaRequestStatusProvisioning.String(),
+							BootstrapServerHost: bootstrapServer,
+							RoutesCreated:       false,
+						}, nil
+					},
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				}
+			},
+			clusterId: "test-cluster-id",
+			status: []*dbapi.DataPlaneKafkaStatus{
+				{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "False",
+							Reason: "Installing",
+						},
+					},
+				},
+				// This will set "RoutesCreated" to true
+				{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "True",
+						},
+					},
+					Routes: []dbapi.DataPlaneKafkaRouteRequest{
+						{
+							Name:   "bootstrap",
+							Prefix: "",
+							Router: invalidIngress,
+						},
+						{
+							Name:   "admin-api",
+							Prefix: "admin-api",
+							Router: invalidIngress,
+						},
+						{
+							Name:   "broker-0",
+							Prefix: "broker-0",
+							Router: invalidIngress,
+						},
+					},
+				},
+			},
+			wantErr: true,
+			expectCounters: map[string]int{
+				"ready":    0,
 				"failed":   0,
 				"deleting": 0,
 				"rejected": 0,
