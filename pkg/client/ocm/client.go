@@ -59,10 +59,6 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connecti
 		return nil, func() {}, nil
 	}
 
-	if BaseUrl == "" {
-		BaseUrl = ocmConfig.BaseURL
-	}
-
 	builder := sdkClient.NewConnectionBuilder().
 		URL(BaseUrl).
 		MetricsSubsystem("api_outbound")
