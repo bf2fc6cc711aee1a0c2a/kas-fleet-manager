@@ -12,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
 
 	"time"
@@ -74,6 +75,7 @@ type KafkaService interface {
 	CountByStatus(status []constants2.KafkaStatus) ([]KafkaStatusCount, error)
 	ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, *errors.ServiceError)
 	VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
+	VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
 }
 
 var _ KafkaService = &kafkaService{}
@@ -87,9 +89,10 @@ type kafkaService struct {
 	quotaServiceFactory QuotaServiceFactory
 	mu                  sync.Mutex
 	awsClientFactory    aws.ClientFactory
+	authService         authorization.Authorization
 }
 
-func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory) *kafkaService {
+func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService ClusterService, keycloakService services.KafkaKeycloakService, kafkaConfig *config.KafkaConfig, awsConfig *config.AWSConfig, quotaServiceFactory QuotaServiceFactory, awsClientFactory aws.ClientFactory, authorizationService authorization.Authorization) *kafkaService {
 	return &kafkaService{
 		connectionFactory:   connectionFactory,
 		clusterService:      clusterService,
@@ -98,6 +101,7 @@ func NewKafkaService(connectionFactory *db.ConnectionFactory, clusterService Clu
 		awsConfig:           awsConfig,
 		quotaServiceFactory: quotaServiceFactory,
 		awsClientFactory:    awsClientFactory,
+		authService:         authorizationService,
 	}
 }
 
@@ -524,6 +528,27 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 		return k.Update(kafkaRequest)
 	} else {
 		return errors.New(errors.ErrorUnauthenticated, "User not authenticated")
+	}
+}
+
+func (k *kafkaService) VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+	// filter kafka request by owner to only retrieve request of the current authenticated user
+	claims, err := auth.GetClaimsFromContext(ctx)
+	if err != nil {
+		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "User not authenticated")
+	}
+
+	orgId := auth.GetOrgIdFromClaims(claims)
+
+	if auth.GetIsOrgAdminFromClaims(claims) && orgId == kafkaRequest.OrganisationId {
+		usernameValid, err := k.authService.CheckUsernameValid(kafkaRequest.Owner)
+		if usernameValid {
+			return k.Update(kafkaRequest)
+		} else {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")
+		}
+	} else {
+		return errors.NewWithCause(errors.ErrorUnauthorized, err, "User not authorized to perform this action")
 	}
 }
 

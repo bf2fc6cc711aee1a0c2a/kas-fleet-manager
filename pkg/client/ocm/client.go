@@ -302,6 +302,7 @@ func (c *client) GetClusterDNS(clusterID string) (string, error) {
 }
 
 func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -317,6 +318,7 @@ func (c client) CreateSyncSet(clusterID string, syncset *clustersmgmtv1.Syncset)
 }
 
 func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clustersmgmtv1.Syncset) (*clustersmgmtv1.Syncset, error) {
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, syncsetErr := clustersResource.Cluster(clusterID).
 		ExternalConfiguration().
@@ -334,6 +336,7 @@ func (c client) UpdateSyncSet(clusterID string, syncSetID string, syncset *clust
 }
 
 func (c client) CreateIdentityProvider(clusterID string, identityProvider *clustersmgmtv1.IdentityProvider) (*clustersmgmtv1.IdentityProvider, error) {
+
 	clustersResource := c.connection.ClustersMgmt().V1().Clusters()
 	response, identityProviderErr := clustersResource.Cluster(clusterID).
 		IdentityProviders().
