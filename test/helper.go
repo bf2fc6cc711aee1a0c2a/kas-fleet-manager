@@ -26,7 +26,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	"github.com/segmentio/ksuid"
+	"github.com/rs/xid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -183,10 +183,10 @@ func buildTeardownHelperFn(funcs ...func()) func() {
 
 // NewID creates a new unique ID used internally to CS
 func (helper *Helper) NewID() string {
-	return ksuid.New().String()
+	return xid.New().String()
 }
 
-// NewUUID creates a new unique UUID, which has different formatting than ksuid
+// NewUUID creates a new unique UUID, which has different formatting than xid
 // UUID is used by telemeter and we validate the format.
 func (helper *Helper) NewUUID() string {
 	return uuid.New().String()

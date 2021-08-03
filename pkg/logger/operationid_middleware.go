@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/segmentio/ksuid"
+	"github.com/rs/xid"
 )
 
 type OperationIDKey string
@@ -38,7 +38,7 @@ func WithOpID(ctx context.Context) context.Context {
 	if ctx.Value(OpIDKey) != nil {
 		return ctx
 	}
-	opID := ksuid.New().String()
+	opID := xid.New().String()
 	return context.WithValue(ctx, OpIDKey, opID)
 }
 
