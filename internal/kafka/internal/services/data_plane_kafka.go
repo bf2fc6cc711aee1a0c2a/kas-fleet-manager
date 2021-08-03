@@ -283,16 +283,21 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 		return nil
 	}
 	logger.Logger.Infof("store routes information for kafka %s", kafka.ID)
-	routes := kafkaStatus.Routes
-	if len(routes) == 0 {
-		clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
-		if err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
-		}
+	clusterDNS, err := d.clusterService.GetClusterDNS(cluster.ClusterID)
+	if err != nil {
+		return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
+	}
+	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
+	routesInRequest := kafkaStatus.Routes
+	var routes []dbapi.DataPlaneKafkaRoute
+	if len(routesInRequest) == 0 {
 		// TODO: This is here for keep backward compatibility. Remove this once the kas-fleetshard added implementation for routes. We no longer need to produce default routes at all.
 		routes = kafka.GetDefaultRoutes(clusterDNS, d.kafkaConfig.NumOfBrokers)
 	} else {
-		routes = ensureValidDomainInRoutes(routes, kafka)
+		var routesErr error
+		if routes, routesErr = buildRoutes(routesInRequest, kafka, clusterDNS); routesErr != nil {
+			return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
+		}
 	}
 
 	if err := kafka.SetRoutes(routes); err != nil {
@@ -305,15 +310,23 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 	return nil
 }
 
-func ensureValidDomainInRoutes(routes []dbapi.DataPlaneKafkaRoute, kafka *dbapi.KafkaRequest) []dbapi.DataPlaneKafkaRoute {
+func buildRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbapi.KafkaRequest, clusterDNS string) ([]dbapi.DataPlaneKafkaRoute, error) {
+	var routes []dbapi.DataPlaneKafkaRoute
 	bootstrapServer := kafka.BootstrapServerHost
-	domain := strings.SplitN(bootstrapServer, ".", 2)[1]
-	for i, r := range routes {
-		if r.Domain == "bootstrap" {
-			routes[i].Domain = bootstrapServer
-		} else if !strings.HasSuffix(r.Domain, domain) {
-			routes[i].Domain = fmt.Sprintf("%s.%s", r.Domain, domain)
+	for _, r := range routesInRequest {
+		if strings.HasSuffix(r.Router, clusterDNS) {
+			router := dbapi.DataPlaneKafkaRoute{
+				Router: r.Router,
+			}
+			if r.Prefix != "" {
+				router.Domain = fmt.Sprintf("%s-%s", r.Prefix, bootstrapServer)
+			} else {
+				router.Domain = bootstrapServer
+			}
+			routes = append(routes, router)
+		} else {
+			return nil, errors.Errorf("router domain is not valid. router = %s, expected domain = %s", r.Router, clusterDNS)
 		}
 	}
-	return routes
+	return routes, nil
 }
