@@ -11,6 +11,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
@@ -58,12 +59,18 @@ func ServiceProviders() di.Option {
 		di.Provide(observatorium.NewObservatoriumClient),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.Client {
-			conn, _, _ := ocm.NewOCMConnection(config, config.BaseURL)
+			conn, _, err := ocm.NewOCMConnection(config, config.BaseURL)
+			if err != nil {
+				logger.Logger.Error(err)
+			}
 			return ocm.NewClient(conn)
 		}),
 
 		di.Provide(func(config *ocm.OCMConfig) ocm.AMSClient {
-			conn, _, _ := ocm.NewOCMConnection(config, config.AmsUrl)
+			conn, _, err := ocm.NewOCMConnection(config, config.AmsUrl)
+			if err != nil {
+				logger.Logger.Error(err)
+			}
 			return ocm.NewClient(conn)
 		}),
 

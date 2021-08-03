@@ -59,7 +59,7 @@ func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connecti
 		return nil, func() {}, nil
 	}
 
-	if BaseUrl != "" {
+	if BaseUrl == "" {
 		BaseUrl = ocmConfig.BaseURL
 	}
 
