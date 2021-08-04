@@ -135,7 +135,7 @@ func TestKafka_Update(t *testing.T) {
 	sampleKafkaID := api.NewID()
 	emptyOwnerKafkaUpdateReq := public.KafkaUpdateRequest{}
 	sameOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: owner}
-	newOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: "ppaszki"}
+	newOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: "test_kafka_service"}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)

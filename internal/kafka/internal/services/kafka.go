@@ -541,8 +541,8 @@ func (k *kafkaService) VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *d
 	orgId := auth.GetOrgIdFromClaims(claims)
 
 	if auth.GetIsOrgAdminFromClaims(claims) && orgId == kafkaRequest.OrganisationId {
-		usernameValid, err := k.authService.CheckUsernameValid(kafkaRequest.Owner)
-		if usernameValid {
+		userValid, err := k.authService.CheckUserValid(kafkaRequest.Owner, orgId)
+		if userValid {
 			return k.Update(kafkaRequest)
 		} else {
 			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")

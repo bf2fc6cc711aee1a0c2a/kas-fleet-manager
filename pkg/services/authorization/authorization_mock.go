@@ -21,6 +21,6 @@ func (a mock) AccessReview(ctx context.Context, username, action, resourceType, 
 	return true, nil
 }
 
-func (a mock) CheckUsernameValid(username string) (bool, error) {
+func (a mock) CheckUserValid(username string, orgId string) (bool, error) {
 	return true, nil
 }

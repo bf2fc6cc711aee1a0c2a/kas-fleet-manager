@@ -13,7 +13,7 @@ import (
 type Authorization interface {
 	SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 	AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
-	CheckUsernameValid(username string) (bool, error)
+	CheckUserValid(username string, orgId string) (bool, error)
 }
 
 type authorization struct {
@@ -88,12 +88,13 @@ func (a authorization) AccessReview(ctx context.Context, username, action, resou
 	return response.Allowed(), nil
 }
 
-func (a authorization) CheckUsernameValid(username string) (bool, error) {
+func (a authorization) CheckUserValid(username string, orgId string) (bool, error) {
 	resp, err := a.client.AccountsMgmt().V1().Accounts().List().
 		Parameter("page", 1).
 		Parameter("size", 1).
 		Parameter("search", fmt.Sprintf("username = '%s'", username)).
 		Send()
 
-	return resp.Status() == http.StatusOK && resp.Size() > 0 && !resp.Items().Get(0).Banned(), err
+	return resp.Status() == http.StatusOK && resp.Size() > 0 && !resp.Items().Get(0).Banned() &&
+		resp.Items().Get(0).Organization().ExternalID() == orgId, err
 }
