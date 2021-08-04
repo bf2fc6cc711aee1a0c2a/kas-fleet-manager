@@ -278,3 +278,4 @@ connector APIs that are in this repo's `internal/connector` package.
 ## Additional documentation:
 * [kas-fleet-manager Implementation](docs/implementation.md)
 * [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md)
+* [Explanation of JWT token claims used across the kas-fleet-manager](docs/jwt-claims.md)

@@ -1,0 +1,41 @@
+# JTW Claims used in the kas-fleet-manager
+
+Below is the list of the most significant jwt claims used in the kas-fleet-manager. Most of them are passed in via header: `Bearer <token>` with the short living ocm token
+
+* **account_id** - account id of the entity for which a token was issued. Assigned to kafka clusters (only displayed by presenter, when invoking private admin endpoint)
+
+* **email** - email address of the entity for which a token was issued
+
+* **exp** - expiry timestamp of token (for ocm short living tokens it is 15 minutes counted from the time of issuing of the token (`iat`))
+
+* **first_name** - first name of the entity for which the token was issued
+
+* **iat** - timestamp of issuing of the token
+
+* **is_org_admin** - if set to true, user with this claim in their token has elevated privileges, compared to users with this claim set to false, e.g. they can update and delete kafkas not owned by them within the same organisation (having the same org_id value)
+
+* **iss** - issuer of the token (e.g. `https://sso.redhat.com/auth/realms/redhat-external`)
+
+* **kas-fleetshard-operator-cluster-id** - used by authenticated context to call dataplane endpoints
+
+* **last_name** - last name of the entity for which the token was issued
+
+* **org_id** - organisation ID of the entity for which a token was issued. When kafka cluster is created, `organisation_id` field is populated with `org_id` from the short living ocm token. Kafka requests are filtered by organisation id (when org_id is present in the jwt claim). If a user is an organisation admin (`is_org_admin: true`) - kafka clusters within the same organisation can be deleted or updated by this user even if they are not an owner of these kafka clusters
+
+* **preferred_username** - preferred username of the entity for which the token was issued. Available in decoded ocm short living token
+
+* **realm_access**
+	* **roles** - list of realm access `roles` of an entity for which the token was issued (there might be different types of roles, e.g. ocm specific or elevated admin permissions), e.g.
+		- offline_access - specifies whether offline access to ocm
+		- admin:org:all - admin permissions within the ocm organisation
+		- kas-fleet-manager-admin-read - has permissions to list all kafka clusters across all ocm organisations
+		- kas-fleet-manager-admin-write -has permissions to list and update all kafka clusters across all ocm organisations
+		- kas-fleet-manager-admin-full -has permissions to list, update and delete all kafka clusters across all ocm organisations
+
+* **rh-org-id** - Red Hat organisation id for given service account
+
+* **rh-user-id** - user id in service account.
+
+* **typ** - type of token, e.g. `Bearer`
+
+* **username** - username of the entity for which the token was issued. Obtained from the short living ocm token used in the http request. Kafka request owner value is assigned from the username value.
