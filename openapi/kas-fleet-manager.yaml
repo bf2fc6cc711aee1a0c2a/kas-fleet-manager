@@ -173,7 +173,7 @@ paths:
         - Bearer: []
       operationId: updateKafkaById
       requestBody:
-        description: Kafka update data
+        description: Update owner of kafka
         content:
           application/json:
             schema:
@@ -1098,6 +1098,8 @@ components:
       required:
         - value
     KafkaUpdateRequest:
+      required:
+        - owner
       type: object
       properties:
         # for now owner is the only supported field for update

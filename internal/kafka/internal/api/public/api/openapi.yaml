@@ -200,7 +200,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/KafkaUpdateRequest'
-        description: Kafka update data
+        description: Update owner of kafka
         required: true
       responses:
         "200":
@@ -1515,6 +1515,8 @@ components:
       properties:
         owner:
           type: string
+      required:
+      - owner
       type: object
     Error_allOf:
       properties:

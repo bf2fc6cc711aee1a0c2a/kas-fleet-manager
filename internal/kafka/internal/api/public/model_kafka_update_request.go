@@ -11,5 +11,5 @@ package public
 
 // KafkaUpdateRequest struct for KafkaUpdateRequest
 type KafkaUpdateRequest struct {
-	Owner string `json:"owner,omitempty"`
+	Owner string `json:"owner"`
 }

@@ -532,7 +532,7 @@ func (k *kafkaService) VerifyAndUpdateKafkaAdmin(ctx context.Context, kafkaReque
 }
 
 func (k *kafkaService) VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
-	// filter kafka request by owner to only retrieve request of the current authenticated user
+
 	claims, err := auth.GetClaimsFromContext(ctx)
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorUnauthenticated, err, "User not authenticated")

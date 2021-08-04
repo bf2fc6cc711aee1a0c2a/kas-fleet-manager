@@ -1171,7 +1171,7 @@ func (a *DefaultApiService) GetVersionMetadata(ctx _context.Context) (VersionMet
 UpdateKafkaById Update a Kafka instance by id
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param kafkaUpdateRequest Kafka update data
+ * @param kafkaUpdateRequest Update owner of kafka
 @return KafkaRequest
 */
 func (a *DefaultApiService) UpdateKafkaById(ctx _context.Context, id string, kafkaUpdateRequest KafkaUpdateRequest) (KafkaRequest, *_nethttp.Response, error) {

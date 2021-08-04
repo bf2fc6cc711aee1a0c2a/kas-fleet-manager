@@ -132,7 +132,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleList(w, r, cfg)
 }
 
-// Delete is the handler for deleting a kafka request
+// Update is the handler for updating a kafka request
 func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var kafkaUpdateReq public.KafkaUpdateRequest
 	cfg := &handlers.HandlerConfig{
