@@ -62,13 +62,20 @@ type EndpointSpec struct {
 	Tls                 *TlsSpec `json:"tls,omitempty"`
 }
 
+type ServiceAccount struct {
+	Name      string `json:"name"`
+	Principal string `json:"principal"`
+	Password  string `json:"password"`
+}
+
 type ManagedKafkaSpec struct {
-	Capacity Capacity     `json:"capacity"`
-	OAuth    OAuthSpec    `json:"oauth"`
-	Endpoint EndpointSpec `json:"endpoint"`
-	Versions VersionsSpec `json:"versions"`
-	Deleted  bool         `json:"deleted"`
-	Owners   []string     `json:"owners"`
+	Capacity        Capacity         `json:"capacity"`
+	OAuth           OAuthSpec        `json:"oauth"`
+	Endpoint        EndpointSpec     `json:"endpoint"`
+	Versions        VersionsSpec     `json:"versions"`
+	Deleted         bool             `json:"deleted"`
+	Owners          []string         `json:"owners"`
+	ServiceAccounts []ServiceAccount `json:"service_accounts"`
 }
 
 type ManagedKafka struct {

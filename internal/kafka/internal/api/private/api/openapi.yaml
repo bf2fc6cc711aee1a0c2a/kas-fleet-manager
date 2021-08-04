@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager APIs that are used by internal services
     e.g kas-fleetshard operators.
   title: Kafka Service Fleet Manager
-  version: 1.1.0
+  version: 1.2.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -540,6 +540,18 @@ components:
           type: string
         annotations:
           $ref: '#/components/schemas/ManagedKafka_allOf_metadata_annotations'
+    ManagedKafka_allOf_spec_serviceAccounts:
+      properties:
+        name:
+          type: string
+        principal:
+          type: string
+        password:
+          type: string
+      required:
+      - name
+      - password
+      - principal
     ManagedKafka_allOf_spec_oauth:
       properties:
         clientId:
@@ -602,6 +614,10 @@ components:
           $ref: '#/components/schemas/ManagedKafka_allOf_spec_endpoint_tls'
     ManagedKafka_allOf_spec:
       properties:
+        serviceAccounts:
+          items:
+            $ref: '#/components/schemas/ManagedKafka_allOf_spec_serviceAccounts'
+          type: array
         capacity:
           $ref: '#/components/schemas/ManagedKafkaCapacity'
         oauth:
