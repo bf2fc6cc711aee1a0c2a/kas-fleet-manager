@@ -13,6 +13,10 @@ parameters:
 - name: OBSERVATORIUM_URL
   description: URL of the observatorium instance
 
+- name: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE
+  description: Observatorium token refresher image
+  value: quay.io/observatorium/token-refresher:master-2021-02-24-1e01b9c
+
 objects:
   - kind: Service
     apiVersion: v1
@@ -57,7 +61,7 @@ objects:
         spec:
           containers:
           - name: token-refresher
-            image: quay.io/observatorium/token-refresher:master-2021-02-24-1e01b9c
+            image: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE}
             ports:
             - containerPort: 8080
               name: http
