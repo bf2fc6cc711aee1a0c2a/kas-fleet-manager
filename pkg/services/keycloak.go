@@ -486,7 +486,7 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 	if tokenErr != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register agent service account")
 	}
-	role, err := kc.createRealmRoleIfNotExists(accessToken, roleName)
+	role, err := kc.getRealmRole(accessToken, roleName)
 	if err != nil {
 		return nil, err
 	}
@@ -536,20 +536,16 @@ func (kc *keycloakService) registerAgentServiceAccount(clusterId string, service
 	return account, nil
 }
 
-func (kc *keycloakService) createRealmRoleIfNotExists(token string, roleName string) (*gocloak.Role, *errors.ServiceError) {
-	glog.V(5).Infof("Creating realm role %s", roleName)
+func (kc *keycloakService) getRealmRole(token string, roleName string) (*gocloak.Role, *errors.ServiceError) {
+	glog.V(5).Infof("Fetching realm role %s", roleName)
 	role, err := kc.kcClient.GetRealmRole(token, roleName)
 	if err != nil {
 		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get realm role")
 	}
 	if role == nil {
-		glog.V(10).Infof("No existing realm role %s found, creating a new one", roleName)
-		role, err = kc.kcClient.CreateRealmRole(token, roleName)
-		if err != nil {
-			return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to create realm role")
-		}
+		glog.V(10).Infof("No existing realm role %s found", roleName)
 	}
-	glog.V(5).Infof("Realm role %s created. id = %s", roleName, *role.ID)
+	glog.V(5).Infof("Realm role %s found", roleName)
 	return role, nil
 }
 
