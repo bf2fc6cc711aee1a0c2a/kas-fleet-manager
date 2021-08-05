@@ -131,3 +131,31 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	handlers.HandleList(w, r, cfg)
 }
+
+// Update is the handler for updating a kafka request
+func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
+	var kafkaUpdateReq public.KafkaUpdateRequest
+	cfg := &handlers.HandlerConfig{
+		MarshalInto: &kafkaUpdateReq,
+		Validate: []handlers.Validate{
+			handlers.ValidateMinLength(&kafkaUpdateReq.Owner, "owner", 1),
+		},
+		Action: func() (i interface{}, serviceError *errors.ServiceError) {
+			id := mux.Vars(r)["id"]
+			ctx := r.Context()
+			kafkaRequest, err2 := h.service.Get(ctx, id)
+			if err2 != nil {
+				return nil, err2
+			}
+			if kafkaRequest.Owner != kafkaUpdateReq.Owner {
+				kafkaRequest.Owner = kafkaUpdateReq.Owner
+				err3 := h.service.VerifyAndUpdateKafka(ctx, kafkaRequest)
+				if err3 != nil {
+					return nil, err3
+				}
+			}
+			return presenters.PresentKafkaRequest(kafkaRequest), nil
+		},
+	}
+	handlers.Handle(w, r, cfg, http.StatusOK)
+}

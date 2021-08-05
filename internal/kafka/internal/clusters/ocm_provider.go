@@ -1,11 +1,12 @@
 package clusters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"reflect"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	svcErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -37,6 +38,7 @@ func (o *OCMProvider) Create(request *types.ClusterRequest) (*types.ClusterSpec,
 
 	// Send POST request to /api/clusters_mgmt/v1/clusters to create a new OSD cluster
 	createdCluster, err := o.ocmClient.CreateCluster(newCluster)
+
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create OCM cluster")
 	}

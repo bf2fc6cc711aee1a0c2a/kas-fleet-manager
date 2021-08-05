@@ -3,6 +3,8 @@ package authorization
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
 
 	azv1 "github.com/openshift-online/ocm-sdk-go/authorizations/v1"
@@ -11,6 +13,7 @@ import (
 type Authorization interface {
 	SelfAccessReview(ctx context.Context, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
 	AccessReview(ctx context.Context, username, action, resourceType, organizationID, subscriptionID, clusterID string) (allowed bool, err error)
+	CheckUserValid(username string, orgId string) (bool, error)
 }
 
 type authorization struct {
@@ -83,4 +86,15 @@ func (a authorization) AccessReview(ctx context.Context, username, action, resou
 	}
 
 	return response.Allowed(), nil
+}
+
+func (a authorization) CheckUserValid(username string, orgId string) (bool, error) {
+	resp, err := a.client.AccountsMgmt().V1().Accounts().List().
+		Parameter("page", 1).
+		Parameter("size", 1).
+		Parameter("search", fmt.Sprintf("username = '%s'", username)).
+		Send()
+
+	return resp.Status() == http.StatusOK && resp.Size() > 0 && !resp.Items().Get(0).Banned() &&
+		resp.Items().Get(0).Organization().ExternalID() == orgId, err
 }

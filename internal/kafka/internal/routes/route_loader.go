@@ -108,6 +108,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1KafkasRouter := apiV1Router.PathPrefix("/kafkas").Subrouter()
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Get).Methods(http.MethodGet)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
+	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Update).Methods(http.MethodPatch)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
 	apiV1KafkasRouter.Use(requireIssuer)
 	apiV1KafkasRouter.Use(requireOrgID)
