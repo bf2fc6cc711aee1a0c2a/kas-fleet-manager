@@ -121,6 +121,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 		workers.RepeatInterval = 1 * time.Second
 		fmt.Printf("Setting OCM base URL to %s\n", httpServer.URL)
 		ocmConfig.BaseURL = httpServer.URL
+		ocmConfig.AmsUrl = httpServer.URL
 	}
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()

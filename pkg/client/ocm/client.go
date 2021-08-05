@@ -2,9 +2,8 @@ package ocm
 
 import (
 	"fmt"
-	"net/http"
-
 	pkgerrors "github.com/pkg/errors"
+	"net/http"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
@@ -53,13 +52,15 @@ type client struct {
 	connection *sdkClient.Connection
 }
 
-func NewOCMConnection(ocmConfig *OCMConfig) (*sdkClient.Connection, func(), error) {
+type AMSClient Client
+
+func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
 	}
 
 	builder := sdkClient.NewConnectionBuilder().
-		URL(ocmConfig.BaseURL).
+		URL(BaseUrl).
 		MetricsSubsystem("api_outbound")
 
 	if !ocmConfig.EnableMock {
