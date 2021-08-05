@@ -542,10 +542,14 @@ func (k *kafkaService) VerifyAndUpdateKafka(ctx context.Context, kafkaRequest *d
 
 	if auth.GetIsOrgAdminFromClaims(claims) && orgId == kafkaRequest.OrganisationId {
 		userValid, err := k.authService.CheckUserValid(kafkaRequest.Owner, orgId)
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")
+		}
+
 		if userValid {
 			return k.Update(kafkaRequest)
 		} else {
-			return errors.NewWithCause(errors.ErrorGeneral, err, "Unable to update kafka request owner")
+			return errors.NewWithCause(errors.ErrorBadRequest, err, "User %s does not belong in your organization", kafkaRequest.Owner)
 		}
 	} else {
 		return errors.NewWithCause(errors.ErrorUnauthorized, err, "User not authorized to perform this action")
