@@ -20,12 +20,15 @@ Below is the list of jwt claims used in the kas-fleet-manager
 
 * **typ** - type of token, e.g. `Bearer`
 
-## Kafka admin endpoint roles
-
 * **realm_access**
 	* **roles** - list of realm access `roles` of an entity for which the token was issued (there might be different types of roles, e.g. ocm specific or elevated admin permissions), e.g.
 		- offline_access - specifies whether offline access to ocm
 		- admin:org:all - admin permissions within the ocm organisation
+
+## Kafka admin endpoint roles
+
+* **realm_access**
+	* **roles** 
 		- kas-fleet-manager-admin-read - has permissions to list all kafka clusters across all ocm organisations
 		- kas-fleet-manager-admin-write -has permissions to list and update all kafka clusters across all ocm organisations
 		- kas-fleet-manager-admin-full -has permissions to list, update and delete all kafka clusters across all ocm organisations
