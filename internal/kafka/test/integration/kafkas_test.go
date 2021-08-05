@@ -129,6 +129,161 @@ func TestKafkaCreate_Success(t *testing.T) {
 	deleteTestKafka(t, h, ctx, client, foundKafka.Id)
 }
 
+func TestKafka_Update(t *testing.T) {
+	owner := "test-user"
+
+	sampleKafkaID := api.NewID()
+	emptyOwnerKafkaUpdateReq := public.KafkaUpdateRequest{}
+	sameOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: owner}
+	newOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: "test_kafka_service"}
+
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
+	defer ocmServer.Close()
+
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
+
+	account := h.NewRandAccount()
+
+	ctx := h.NewAuthenticatedContext(account, nil)
+
+	otherUserCtx := h.NewAuthenticatedContext(account, nil)
+
+	claims := jwt.MapClaims{
+		"is_org_admin": true,
+	}
+
+	adminCtx := h.NewAuthenticatedContext(account, claims)
+
+	type args struct {
+		ctx                context.Context
+		kafkaID            string
+		kafkaUpdateRequest public.KafkaUpdateRequest
+	}
+	tests := []struct {
+		name           string
+		args           args
+		verifyResponse func(result public.KafkaRequest, resp *http.Response, err error)
+	}{
+		{
+			name: "should fail if owner is empty",
+			args: args{
+				ctx:                ctx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: emptyOwnerKafkaUpdateReq,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail if trying to update owner as not an owner/ org_admin",
+			args: args{
+				ctx:                otherUserCtx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: newOwnerKafkaUpdateReq,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should not fail if passed owner is the same",
+			args: args{
+				ctx:                ctx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: sameOwnerKafkaUpdateReq,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+			},
+		},
+		{
+			name: "should fail when trying to update non-existent kafka",
+			args: args{
+				ctx:                ctx,
+				kafkaID:            "non-existent-id",
+				kafkaUpdateRequest: sameOwnerKafkaUpdateReq,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should succeed when passing a valid new username as an owner",
+			args: args{
+				ctx:                adminCtx,
+				kafkaID:            sampleKafkaID,
+				kafkaUpdateRequest: newOwnerKafkaUpdateReq,
+			},
+			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusOK))
+				Expect(result.Owner).To(Equal(newOwnerKafkaUpdateReq.Owner))
+			},
+		},
+	}
+
+	db := test.TestServices.DBFactory.New()
+	// create a dummy cluster and assign a kafka to it
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ClusterID:          api.NewID(),
+		MultiAZ:            true,
+		Region:             "baremetal",
+		CloudProvider:      "baremetal",
+		Status:             api.ClusterReady,
+		IdentityProviderID: "some-id",
+		ClusterDNS:         "some-cluster-dns",
+		ProviderType:       api.ClusterProviderStandalone,
+	}
+
+	if err := db.Create(cluster).Error; err != nil {
+		t.Error("failed to create dummy cluster")
+		return
+	}
+
+	// create a kafka that will be updated
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID,
+		},
+		MultiAZ:               false,
+		Owner:                 owner,
+		Region:                "test",
+		CloudProvider:         "test",
+		Name:                  "test-kafka",
+		OrganisationId:        "13640203",
+		Status:                constants.KafkaRequestStatusReady.String(),
+		ClusterID:             cluster.ClusterID,
+		ActualKafkaVersion:    "2.6.0",
+		DesiredKafkaVersion:   "2.6.0",
+		ActualStrimziVersion:  "v.23.0",
+		DesiredStrimziVersion: "v0.23.0",
+	}
+
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := test.NewApiClient(h)
+			result, resp, err := client.DefaultApi.UpdateKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
+			tt.verifyResponse(result, resp, err)
+		})
+	}
+}
+
 func TestKafkaCreate_OverrideDesiredStrimziVersion(t *testing.T) {
 	// create a mock ocm api server, keep all endpoints as defaults
 	// see the mocks package for more information on the configurable mock server
