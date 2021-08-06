@@ -63,6 +63,22 @@ func (obs *ServiceObservatorium) GetMetrics(metrics *KafkaMetrics, namespace str
 				*metrics = append(*metrics, m)
 			},
 		},
+		//Check metrics for soft limit quota for cluster
+		"kafka_broker_quota_softlimitbytes": {
+			`kafka_broker_quota_softlimitbytes{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
+		//Check metrics for used space across the cluster
+		"kafka_broker_quota_totalstorageusedbytes": {
+			`kafka_broker_quota_totalstorageusedbytes{%s}`,
+			fmt.Sprintf(`strimzi_io_kind=~'Kafka', namespace=~'%s'`, namespace),
+			func(m Metric) {
+				*metrics = append(*metrics, m)
+			},
+		},
 		//Check metrics for messages in per topic
 		"kafka_server_brokertopicmetrics_messages_in_total": {
 			`kafka_server_brokertopicmetrics_messages_in_total{%s}`,
