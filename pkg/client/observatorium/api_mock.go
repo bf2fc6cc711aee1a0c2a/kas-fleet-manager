@@ -128,6 +128,12 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kafka_controller_kafkacontroller_global_partition_count": {
 		fakeMetricData("kafka_controller_kafkacontroller_global_partition_count", 0),
 	},
+	"kafka_broker_quota_softlimitbytes": {
+		fakeMetricData("kafka_broker_quota_softlimitbytes", 10000),
+	},
+	"kafka_broker_quota_totalstorageusedbytes": {
+		fakeMetricData("kafka_broker_quota_totalstorageusedbytes", 1237582),
+	},
 	"sum by (namespace, topic)(kafka_log_log_size": {
 		fakeMetricData("sum by (namespace, topic)(kafka_log_log_size", 220),
 	},
@@ -180,6 +186,30 @@ var queryData = map[string]pModel.Vector{
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     1016,
+		},
+	},
+	"kafka_broker_quota_softlimitbytes": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_broker_quota_softlimitbytes",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     30000,
+		},
+	},
+	"kafka_broker_quota_totalstorageusedbytes": pModel.Vector{
+		&pModel.Sample{
+			Metric: pModel.Metric{
+				"__name__":           "kafka_broker_quota_totalstorageusedbytes",
+				"pod":                "whatever",
+				"strimzi_io_cluster": "whatever",
+				"topic":              "whatever",
+			},
+			Timestamp: pModel.Time(1607506882175),
+			Value:     2207924332,
 		},
 	},
 	"kubelet_volume_stats_available_bytes": pModel.Vector{
