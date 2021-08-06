@@ -15,6 +15,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
@@ -91,6 +92,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
 	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
+	Expect(kafka.InstanceType).To(Equal(types.STANDARD.String()))
 
 	// wait until the kafka goes into a ready state
 	// the timeout here assumes a backing cluster has already been provisioned

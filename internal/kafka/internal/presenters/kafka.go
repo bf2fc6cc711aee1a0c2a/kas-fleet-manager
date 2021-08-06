@@ -36,6 +36,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 		UpdatedAt:           kafkaRequest.UpdatedAt,
 		FailedReason:        kafkaRequest.FailedReason,
 		Version:             kafkaRequest.ActualKafkaVersion,
+		InstanceType:        kafkaRequest.InstanceType,
 	}
 }
 
