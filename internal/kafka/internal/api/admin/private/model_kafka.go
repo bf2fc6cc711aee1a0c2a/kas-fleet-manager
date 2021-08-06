@@ -41,9 +41,9 @@ type Kafka struct {
 	SubscriptionId        string             `json:"subscription_id,omitempty"`
 	SsoClientId           string             `json:"sso_client_id,omitempty"`
 	OwnerAccountId        string             `json:"owner_account_id,omitempty"`
+	InstanceType          string             `json:"instance_type,omitempty"`
 	QuotaType             string             `json:"quota_type,omitempty"`
 	Routes                []KafkaAllOfRoutes `json:"routes,omitempty"`
 	RoutesCreated         bool               `json:"routes_created,omitempty"`
-	ProductType           string             `json:"product_type,omitempty"`
 	ClusterId             string             `json:"cluster_id,omitempty"`
 }

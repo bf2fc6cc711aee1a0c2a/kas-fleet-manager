@@ -14,6 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/converters"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/aws"
@@ -779,8 +780,11 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
 					},
 				},
 			},
@@ -805,8 +809,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
 					},
 				},
 			},
@@ -824,13 +828,48 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
+			name: "registering kafka too many eval",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService:    nil,
+				quotaService: &QuotaServiceMock{
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						// No RHOSAK quota assigned
+						return instanceType != types.STANDARD, nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE "kafka_requests"."deleted_at" IS NULL`).
+					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.
+					NewMock().
+					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE instance_type = $1 AND owner = $2 AND (organisation_id = $3)`).
+					WithReply([]map[string]interface{}{{"count": "1"}})
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorTooManyKafkaInstancesReached,
+				httpCode: http.StatusTooManyRequests,
+			},
+		},
+		{
 			name: "registering kafka job fails: postgres error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return nil
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
 					},
 				},
 			},
@@ -856,8 +895,8 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
-					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest) *errors.ServiceError {
-						return errors.InsufficientQuotaError("insufficient quota error")
+					CheckQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						return false, errors.InsufficientQuotaError("insufficient quota error")
 					},
 				},
 			},

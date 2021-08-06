@@ -77,6 +77,9 @@ var _ Client = &ClientMock{}
 // 			GetIdentityProviderListFunc: func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error) {
 // 				panic("mock out the GetIdentityProviderList method")
 // 			},
+// 			GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
+// 				panic("mock out the GetOrganisationIdFromExternalId method")
+// 			},
 // 			GetRegionsFunc: func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 // 				panic("mock out the GetRegions method")
 // 			},
@@ -85,6 +88,9 @@ var _ Client = &ClientMock{}
 // 			},
 // 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the GetSyncSet method")
+// 			},
+// 			HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+// 				panic("mock out the HasAssignedQuota method")
 // 			},
 // 			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
 // 				panic("mock out the ScaleDownComputeNodes method")
@@ -165,6 +171,9 @@ type ClientMock struct {
 	// GetIdentityProviderListFunc mocks the GetIdentityProviderList method.
 	GetIdentityProviderListFunc func(clusterID string) (*clustersmgmtv1.IdentityProviderList, error)
 
+	// GetOrganisationIdFromExternalIdFunc mocks the GetOrganisationIdFromExternalId method.
+	GetOrganisationIdFromExternalIdFunc func(externalId string) (string, error)
+
 	// GetRegionsFunc mocks the GetRegions method.
 	GetRegionsFunc func(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error)
 
@@ -173,6 +182,9 @@ type ClientMock struct {
 
 	// GetSyncSetFunc mocks the GetSyncSet method.
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
+
+	// HasAssignedQuotaFunc mocks the HasAssignedQuota method.
+	HasAssignedQuotaFunc func(organizationId string, filter string) (bool, error)
 
 	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
 	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
@@ -296,6 +308,11 @@ type ClientMock struct {
 			// ClusterID is the clusterID argument value.
 			ClusterID string
 		}
+		// GetOrganisationIdFromExternalId holds details about calls to the GetOrganisationIdFromExternalId method.
+		GetOrganisationIdFromExternalId []struct {
+			// ExternalId is the externalId argument value.
+			ExternalId string
+		}
 		// GetRegions holds details about calls to the GetRegions method.
 		GetRegions []struct {
 			// Provider is the provider argument value.
@@ -312,6 +329,13 @@ type ClientMock struct {
 			ClusterID string
 			// SyncSetID is the syncSetID argument value.
 			SyncSetID string
+		}
+		// HasAssignedQuota holds details about calls to the HasAssignedQuota method.
+		HasAssignedQuota []struct {
+			// OrganizationId is the organizationId argument value.
+			OrganizationId string
+			// Filter is the filter argument value.
+			Filter string
 		}
 		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
 		ScaleDownComputeNodes []struct {
@@ -353,33 +377,35 @@ type ClientMock struct {
 			Syncset *clustersmgmtv1.Syncset
 		}
 	}
-	lockClusterAuthorization       sync.RWMutex
-	lockConnection                 sync.RWMutex
-	lockCreateAddon                sync.RWMutex
-	lockCreateAddonWithParams      sync.RWMutex
-	lockCreateCluster              sync.RWMutex
-	lockCreateIdentityProvider     sync.RWMutex
-	lockCreateSyncSet              sync.RWMutex
-	lockDeleteCluster              sync.RWMutex
-	lockDeleteSubscription         sync.RWMutex
-	lockDeleteSyncSet              sync.RWMutex
-	lockFindSubscriptions          sync.RWMutex
-	lockGetAddon                   sync.RWMutex
-	lockGetCloudProviders          sync.RWMutex
-	lockGetCluster                 sync.RWMutex
-	lockGetClusterDNS              sync.RWMutex
-	lockGetClusterIngresses        sync.RWMutex
-	lockGetClusterStatus           sync.RWMutex
-	lockGetExistingClusterMetrics  sync.RWMutex
-	lockGetIdentityProviderList    sync.RWMutex
-	lockGetRegions                 sync.RWMutex
-	lockGetRequiresTermsAcceptance sync.RWMutex
-	lockGetSyncSet                 sync.RWMutex
-	lockScaleDownComputeNodes      sync.RWMutex
-	lockScaleUpComputeNodes        sync.RWMutex
-	lockSetComputeNodes            sync.RWMutex
-	lockUpdateAddonParameters      sync.RWMutex
-	lockUpdateSyncSet              sync.RWMutex
+	lockClusterAuthorization            sync.RWMutex
+	lockConnection                      sync.RWMutex
+	lockCreateAddon                     sync.RWMutex
+	lockCreateAddonWithParams           sync.RWMutex
+	lockCreateCluster                   sync.RWMutex
+	lockCreateIdentityProvider          sync.RWMutex
+	lockCreateSyncSet                   sync.RWMutex
+	lockDeleteCluster                   sync.RWMutex
+	lockDeleteSubscription              sync.RWMutex
+	lockDeleteSyncSet                   sync.RWMutex
+	lockFindSubscriptions               sync.RWMutex
+	lockGetAddon                        sync.RWMutex
+	lockGetCloudProviders               sync.RWMutex
+	lockGetCluster                      sync.RWMutex
+	lockGetClusterDNS                   sync.RWMutex
+	lockGetClusterIngresses             sync.RWMutex
+	lockGetClusterStatus                sync.RWMutex
+	lockGetExistingClusterMetrics       sync.RWMutex
+	lockGetIdentityProviderList         sync.RWMutex
+	lockGetOrganisationIdFromExternalId sync.RWMutex
+	lockGetRegions                      sync.RWMutex
+	lockGetRequiresTermsAcceptance      sync.RWMutex
+	lockGetSyncSet                      sync.RWMutex
+	lockHasAssignedQuota                sync.RWMutex
+	lockScaleDownComputeNodes           sync.RWMutex
+	lockScaleUpComputeNodes             sync.RWMutex
+	lockSetComputeNodes                 sync.RWMutex
+	lockUpdateAddonParameters           sync.RWMutex
+	lockUpdateSyncSet                   sync.RWMutex
 }
 
 // ClusterAuthorization calls ClusterAuthorizationFunc.
@@ -989,6 +1015,37 @@ func (mock *ClientMock) GetIdentityProviderListCalls() []struct {
 	return calls
 }
 
+// GetOrganisationIdFromExternalId calls GetOrganisationIdFromExternalIdFunc.
+func (mock *ClientMock) GetOrganisationIdFromExternalId(externalId string) (string, error) {
+	if mock.GetOrganisationIdFromExternalIdFunc == nil {
+		panic("ClientMock.GetOrganisationIdFromExternalIdFunc: method is nil but Client.GetOrganisationIdFromExternalId was just called")
+	}
+	callInfo := struct {
+		ExternalId string
+	}{
+		ExternalId: externalId,
+	}
+	mock.lockGetOrganisationIdFromExternalId.Lock()
+	mock.calls.GetOrganisationIdFromExternalId = append(mock.calls.GetOrganisationIdFromExternalId, callInfo)
+	mock.lockGetOrganisationIdFromExternalId.Unlock()
+	return mock.GetOrganisationIdFromExternalIdFunc(externalId)
+}
+
+// GetOrganisationIdFromExternalIdCalls gets all the calls that were made to GetOrganisationIdFromExternalId.
+// Check the length with:
+//     len(mockedClient.GetOrganisationIdFromExternalIdCalls())
+func (mock *ClientMock) GetOrganisationIdFromExternalIdCalls() []struct {
+	ExternalId string
+} {
+	var calls []struct {
+		ExternalId string
+	}
+	mock.lockGetOrganisationIdFromExternalId.RLock()
+	calls = mock.calls.GetOrganisationIdFromExternalId
+	mock.lockGetOrganisationIdFromExternalId.RUnlock()
+	return calls
+}
+
 // GetRegions calls GetRegionsFunc.
 func (mock *ClientMock) GetRegions(provider *clustersmgmtv1.CloudProvider) (*clustersmgmtv1.CloudRegionList, error) {
 	if mock.GetRegionsFunc == nil {
@@ -1083,6 +1140,41 @@ func (mock *ClientMock) GetSyncSetCalls() []struct {
 	mock.lockGetSyncSet.RLock()
 	calls = mock.calls.GetSyncSet
 	mock.lockGetSyncSet.RUnlock()
+	return calls
+}
+
+// HasAssignedQuota calls HasAssignedQuotaFunc.
+func (mock *ClientMock) HasAssignedQuota(organizationId string, filter string) (bool, error) {
+	if mock.HasAssignedQuotaFunc == nil {
+		panic("ClientMock.HasAssignedQuotaFunc: method is nil but Client.HasAssignedQuota was just called")
+	}
+	callInfo := struct {
+		OrganizationId string
+		Filter         string
+	}{
+		OrganizationId: organizationId,
+		Filter:         filter,
+	}
+	mock.lockHasAssignedQuota.Lock()
+	mock.calls.HasAssignedQuota = append(mock.calls.HasAssignedQuota, callInfo)
+	mock.lockHasAssignedQuota.Unlock()
+	return mock.HasAssignedQuotaFunc(organizationId, filter)
+}
+
+// HasAssignedQuotaCalls gets all the calls that were made to HasAssignedQuota.
+// Check the length with:
+//     len(mockedClient.HasAssignedQuotaCalls())
+func (mock *ClientMock) HasAssignedQuotaCalls() []struct {
+	OrganizationId string
+	Filter         string
+} {
+	var calls []struct {
+		OrganizationId string
+		Filter         string
+	}
+	mock.lockHasAssignedQuota.RLock()
+	calls = mock.calls.HasAssignedQuota
+	mock.lockHasAssignedQuota.RUnlock()
 	return calls
 }
 

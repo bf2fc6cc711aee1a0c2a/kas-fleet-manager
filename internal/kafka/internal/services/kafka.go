@@ -9,6 +9,7 @@ import (
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 
@@ -117,23 +118,74 @@ func (k *kafkaService) HasAvailableCapacity() (bool, *errors.ServiceError) {
 	return count < k.kafkaConfig.KafkaCapacity.MaxCapacity, nil
 }
 
+func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (types.KafkaInstanceType, *errors.ServiceError) {
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
+	}
+
+	hasRhosakQuota, err := quotaService.CheckQuota(kafkaRequest, types.STANDARD)
+	if err != nil {
+		return "", err
+	}
+	if hasRhosakQuota {
+		return types.STANDARD, nil
+	}
+
+	return types.EVAL, nil
+}
+
+// reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
+func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscriptionId string, err *errors.ServiceError) {
+	if kafkaRequest.InstanceType == types.EVAL.String() {
+		// Only one EVAL instance is admitted. Let's check if the user already owns one
+		dbConn := k.connectionFactory.New()
+		var count int64
+		if err := dbConn.Model(&dbapi.KafkaRequest{}).
+			Where("instance_type = ?", types.EVAL).
+			Where("owner = ?", kafkaRequest.Owner).
+			Where("organisation_id = ?", kafkaRequest.OrganisationId).
+			Count(&count).
+			Error; err != nil {
+			return "", errors.NewWithCause(errors.ErrorGeneral, err, "failed to count kafka eval instances")
+		}
+
+		if count > 0 {
+			return "", errors.TooManyKafkaInstancesReached("only one eval instance is allowed")
+		}
+	}
+
+	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
+	if factoryErr != nil {
+		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
+	}
+	subscriptionId, err = quotaService.ReserveQuota(kafkaRequest, types.KafkaInstanceType(kafkaRequest.InstanceType))
+	return subscriptionId, err
+}
+
 // RegisterKafkaJob registers a new job in the kafka table
 func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
 	k.mu.Lock()
 	defer k.mu.Unlock()
+	// we need to pre-populate the ID to be able to reserve the quota
+	kafkaRequest.ID = api.NewID()
+
 	if hasCapacity, err := k.HasAvailableCapacity(); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request")
 	} else if !hasCapacity {
 		logger.Logger.Warningf("Cluster capacity(%d) exhausted", k.kafkaConfig.KafkaCapacity.MaxCapacity)
 		return errors.TooManyKafkaInstancesReached("cluster capacity exhausted")
 	}
-	//cluster id can't be nil. generating random temporary id.
-	//reserve is false, checking whether a user can reserve a quota or not
-	quotaService, factoryErr := k.quotaServiceFactory.GetQuotaService(api.QuotaType(k.kafkaConfig.Quota.Type))
-	if factoryErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unabled to check quota")
+
+	instanceType, err := k.detectInstanceType(kafkaRequest)
+	if err != nil {
+		return err
 	}
-	err := quotaService.CheckQuota(kafkaRequest)
+
+	kafkaRequest.InstanceType = instanceType.String()
+
+	subscriptionId, err := k.reserveQuota(kafkaRequest)
+
 	if err != nil {
 		return err
 	}
@@ -141,13 +193,14 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 	dbConn := k.connectionFactory.New()
 	kafkaRequest.DesiredKafkaVersion = k.kafkaConfig.DefaultKafkaVersion
 	kafkaRequest.Status = constants2.KafkaRequestStatusAccepted.String()
+	kafkaRequest.SubscriptionId = subscriptionId
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
 	// the API is restarted this time changing the --quota-type flag to allow-list, when kafka A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
 	kafkaRequest.QuotaType = k.kafkaConfig.Quota.Type
-	if err := dbConn.Save(kafkaRequest).Error; err != nil {
+	if err := dbConn.Create(kafkaRequest).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to create kafka request") //hide the db error to http caller
 	}
 	metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusAccepted, kafkaRequest.ID, kafkaRequest.ClusterID, time.Since(kafkaRequest.CreatedAt))
