@@ -36,7 +36,7 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest) private.
 		Routes:                GetRoutesFromKafkaRequest(kafkaRequest),
 		RoutesCreated:         kafkaRequest.RoutesCreated,
 		ClusterId:             kafkaRequest.ClusterID,
-		// ProductType - TODO once this column is available in the database
+		InstanceType:          kafkaRequest.InstanceType,
 	}
 }
 

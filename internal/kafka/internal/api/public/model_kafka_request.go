@@ -32,4 +32,5 @@ type KafkaRequest struct {
 	UpdatedAt           time.Time `json:"updated_at,omitempty"`
 	FailedReason        string    `json:"failed_reason,omitempty"`
 	Version             string    `json:"version,omitempty"`
+	InstanceType        string    `json:"instance_type,omitempty"`
 }
