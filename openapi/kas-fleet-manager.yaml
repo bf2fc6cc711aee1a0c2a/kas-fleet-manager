@@ -194,31 +194,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/Error'
         "401":
           description: Auth token is invalid
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/Error'
         "403":
           description: User is not authorised to access the service
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/Error'
         "404":
           description: No Kafka found with the specified ID
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/Error'
         "500":
           description: Unexpected error occurred
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/Error'
     parameters:
       - $ref: "#/components/parameters/id"
   /api/kafkas_mgmt/v1/kafkas:
