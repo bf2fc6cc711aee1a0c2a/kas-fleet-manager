@@ -135,6 +135,28 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/openapi-generator 2> /dev/null))
 	}
 endif
 
+SPECTRAL ?= ${LOCAL_BIN_PATH}/spectral
+NPM ?= "$(shell which npm)"
+specinstall:
+ifeq (, $(shell which ${NPM} 2> /dev/null))
+	@echo "npm is not available please install it to be able to install spectral"
+	exit 1
+endif
+ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
+	@{ \
+	set -e ;\
+	mkdir -p ${LOCAL_BIN_PATH} ;\
+	mkdir -p ${LOCAL_BIN_PATH}/spectral-installation ;\
+	cd ${LOCAL_BIN_PATH} ;\
+	${NPM} install --prefix ${LOCAL_BIN_PATH}/spectral-installation @stoplight/spectral ;\
+	${NPM} i --prefix ${LOCAL_BIN_PATH}/spectral-installation @rhoas/spectral-ruleset ;\
+	ln -s spectral-installation/node_modules/.bin/spectral spectral ;\
+	}
+endif
+validateOpenapiSpec: specinstall
+	spectral lint openapi/kas-fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
+
+
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
         PGHOST:="127.0.0.1"
 else
