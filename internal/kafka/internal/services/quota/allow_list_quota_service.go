@@ -3,6 +3,7 @@ package quota
 import (
 	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -13,9 +14,9 @@ type allowListQuotaService struct {
 	accessControlList *acl.AccessControlListConfig
 }
 
-func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.ServiceError {
+func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	if !q.accessControlList.EnableInstanceLimitControl {
-		return nil
+		return true, nil
 	}
 
 	username := kafka.Owner
@@ -45,7 +46,7 @@ func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.Ser
 
 	var count int64
 	if err := dbConn.Count(&count).Error; err != nil {
-		return errors.GeneralError("count failed from database")
+		return false, errors.GeneralError("count failed from database")
 	}
 
 	total := int(count)
@@ -56,13 +57,13 @@ func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest) *errors.Ser
 	}
 
 	if maxInstanceReached {
-		return errors.MaximumAllowedInstanceReached(message)
+		return false, errors.MaximumAllowedInstanceReached(message)
 	}
 
-	return nil
+	return true, nil
 }
 
-func (q allowListQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest) (string, *errors.ServiceError) {
+func (q allowListQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
 	return "", nil // NOOP
 }
 

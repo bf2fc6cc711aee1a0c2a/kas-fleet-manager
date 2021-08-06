@@ -23,7 +23,7 @@ func NewDefaultQuotaServiceFactory(
 
 ) services.QuotaServiceFactory {
 	quoataServiceContainer := map[api.QuotaType]services.QuotaService{
-		api.AMSQuotaType:       &amsQuotaService{ocmClient: amsClient, kafkaConfig: kafkaConfig},
+		api.AMSQuotaType:       &amsQuotaService{amsClient: amsClient},
 		api.AllowListQuotaType: &allowListQuotaService{connectionFactory: connectionFactory, accessControlList: accessControlList},
 	}
 	return &DefaultQuotaServiceFactory{quoataServiceContainer: quoataServiceContainer}

@@ -246,6 +246,8 @@ components:
               type: string
             owner_account_id:
               type: string
+            instance_type:
+              type: string
             quota_type:
               type: string
             routes:
@@ -259,9 +261,6 @@ components:
                     type: string
             routes_created:
               type: boolean
-            # eval or standard product
-            product_type:
-              type: string
             cluster_id:
               type: string
     KafkaList:
