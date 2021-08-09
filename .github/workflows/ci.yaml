@@ -7,7 +7,7 @@ on:
       - main
     paths-ignore:
       - '*.md'
-      - 'build_deploy.sh'
+      - '*.sh'
       - '.github/*.md'
       - '.github/workflows/openapi_update.yaml'
       - '.github/CODEOWNERS'
@@ -23,7 +23,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - '*.md'
-      - 'build_deploy.sh'
+      - '*.sh'
       - '.github/*.md'
       - '.github/workflows/openapi_update.yaml'
       - '.github/CODEOWNERS'
