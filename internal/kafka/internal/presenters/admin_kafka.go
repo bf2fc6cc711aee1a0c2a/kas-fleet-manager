@@ -37,6 +37,7 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest) private.
 		RoutesCreated:         kafkaRequest.RoutesCreated,
 		ClusterId:             kafkaRequest.ClusterID,
 		InstanceType:          kafkaRequest.InstanceType,
+		Namespace:             kafkaRequest.Namespace,
 	}
 }
 
