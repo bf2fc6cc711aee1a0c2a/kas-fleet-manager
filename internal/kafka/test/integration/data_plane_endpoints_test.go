@@ -3,12 +3,13 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -451,17 +452,21 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	bootstrapServerHost := "some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
+	canaryServiceAccountClientId := "canary-servie-account-client-id"
+	canaryServiceAccountClientSecret := "canary-service-account-client-secret"
 
 	testKafka := &dbapi.KafkaRequest{
-		ClusterID:           testServer.ClusterID,
-		MultiAZ:             false,
-		Name:                mockKafkaName1,
-		Status:              constants2.KafkaRequestStatusReady.String(),
-		BootstrapServerHost: bootstrapServerHost,
-		SsoClientID:         ssoClientID,
-		SsoClientSecret:     ssoSecret,
-		PlacementId:         "some-placement-id",
-		DesiredKafkaVersion: "2.7.0",
+		ClusterID:                        testServer.ClusterID,
+		MultiAZ:                          false,
+		Name:                             mockKafkaName1,
+		Status:                           constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:              bootstrapServerHost,
+		SsoClientID:                      ssoClientID,
+		SsoClientSecret:                  ssoSecret,
+		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
+		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
+		PlacementId:                      "some-placement-id",
+		DesiredKafkaVersion:              "2.7.0",
 	}
 
 	db := test.TestServices.DBFactory.New()
@@ -493,6 +498,74 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 	}
 }
 
+func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *testing.T) {
+	startHook := func(keycloakConfig *keycloak.KeycloakConfig) {
+		keycloakConfig.EnableAuthenticationOnKafka = true
+	}
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, startHook)
+	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+	canaryServiceAccountClientId := "canary-servie-account-client-id"
+	canaryServiceAccountClientSecret := "canary-service-account-client-secret"
+
+	testKafka := &dbapi.KafkaRequest{
+		ClusterID:                        testServer.ClusterID,
+		MultiAZ:                          false,
+		Name:                             mockKafkaName1,
+		Status:                           constants2.KafkaRequestStatusReady.String(),
+		BootstrapServerHost:              bootstrapServerHost,
+		SsoClientID:                      ssoClientID,
+		SsoClientSecret:                  ssoSecret,
+		CanaryServiceAccountClientID:     canaryServiceAccountClientId,
+		CanaryServiceAccountClientSecret: canaryServiceAccountClientSecret,
+		PlacementId:                      "some-placement-id",
+		DesiredKafkaVersion:              "2.7.0",
+	}
+
+	db := test.TestServices.DBFactory.New()
+
+	// create dummy kafka
+	if err := db.Save(testKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+
+	find := func(slice []private.ManagedKafka, match func(kafka private.ManagedKafka) bool) *private.ManagedKafka {
+		for _, item := range slice {
+			if match(item) {
+				return &item
+			}
+		}
+		return nil
+	}
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+		// check canary service account
+		Expect(mk.Spec.ServiceAccounts).To(HaveLen(1))
+		canaryServiceAccount := mk.Spec.ServiceAccounts[0]
+		Expect(canaryServiceAccount.Name).To(Equal("canary"))
+		Expect(canaryServiceAccount.Principal).To(Equal(canaryServiceAccountClientId))
+		Expect(canaryServiceAccount.Password).To(Equal(canaryServiceAccountClientSecret))
+	} else {
+		t.Error("failed matching managedkafka id with kafkarequest id")
+	}
+}
 func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 	startHook := func(c *keycloak.KeycloakConfig) {
 		c.TLSTrustedCertificatesValue = ""

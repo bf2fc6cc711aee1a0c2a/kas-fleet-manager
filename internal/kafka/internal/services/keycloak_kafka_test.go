@@ -2,15 +2,17 @@ package services
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/Nerzal/gocloak/v8"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/dgrijalva/jwt-go"
-	"reflect"
-	"testing"
-	"time"
 )
 
 const (
@@ -110,6 +112,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					CreateProtocolMapperConfigFunc: func(name string) []gocloak.ProtocolMapperRepresentation {
 						return []gocloak.ProtocolMapperRepresentation{}
 					},
+					GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
+						return nil, nil
+					},
 				},
 			},
 			args: args{
@@ -176,6 +181,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					},
 					CreateProtocolMapperConfigFunc: func(name string) []gocloak.ProtocolMapperRepresentation {
 						return []gocloak.ProtocolMapperRepresentation{}
+					},
+					GetClientFunc: func(clientId, accessToken string) (*gocloak.Client, error) {
+						return nil, nil
 					},
 				},
 			},
@@ -263,7 +271,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -274,7 +282,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -308,7 +316,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -319,7 +327,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -353,7 +361,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -364,7 +372,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -398,7 +406,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return "", nil
 					},
 					ClientConfigFunc: func(client keycloak.ClientRepresentation) gocloak.Client {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return gocloak.Client{
 							ClientID:   &testID,
@@ -409,7 +417,7 @@ func TestKeycloakService_DeleteServiceAccount(t *testing.T) {
 						return nil
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ClientID:   &testID,
@@ -590,7 +598,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						return true
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -613,8 +621,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:           "12221",
-				ClientID:     "12221",
+				ID:           fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ClientID:     fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
 				ClientSecret: secret,
 				Name:         "",
 				Description:  "",
@@ -650,7 +658,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						return false
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -660,7 +668,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 					},
 					RegenerateClientSecretFunc: func(accessToken string, id string) (*gocloak.CredentialRepresentation, error) {
 						sec := "secret"
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						return &gocloak.CredentialRepresentation{
 							Value: &sec,
 							ID:    &testID,
@@ -673,8 +681,8 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:           "12221",
-				ClientID:     "12221",
+				ID:           fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ClientID:     fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
 				ClientSecret: secret,
 				Name:         "",
 				Description:  "",
@@ -710,7 +718,7 @@ func TestKeycloakService_ResetServiceAccountCredentials(t *testing.T) {
 						return false
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -806,7 +814,7 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 						return true
 					},
 					GetClientByIdFunc: func(id string, accessToken string) (*gocloak.Client, error) {
-						testID := "12221"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
 						att := map[string]string{}
 						return &gocloak.Client{
 							ID:         &testID,
@@ -820,8 +828,8 @@ func TestKeycloakService_GetServiceAccountById(t *testing.T) {
 				ctx: auth.SetTokenInContext(context.TODO(), jwt),
 			},
 			want: &api.ServiceAccount{
-				ID:          "12221",
-				ClientID:    "12221",
+				ID:          fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
+				ClientID:    fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221"),
 				Name:        "",
 				Description: "",
 				CreatedAt:   time.Time{},
