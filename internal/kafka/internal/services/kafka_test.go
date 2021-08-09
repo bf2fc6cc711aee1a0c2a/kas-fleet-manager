@@ -475,7 +475,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			wantErr:                 false,
-			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", truncateString(longKafkaName, truncatedNameLen), testID),
+			wantBootstrapServerHost: fmt.Sprintf("%s-%s.clusterDNS", TruncateString(longKafkaName, truncatedNameLen), testID),
 		},
 		{
 			name: "failed SSO client creation",
