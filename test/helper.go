@@ -5,13 +5,14 @@ import (
 	"crypto/rsa"
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 
@@ -217,7 +218,7 @@ func (helper *Helper) HealthCheckURL(path string) string {
 // NewRandAccount returns a random account that has the control plane team org id as its organisation id
 // The org id value is taken from config/allow-list-configuration.yaml
 func (helper *Helper) NewRandAccount() *amv1.Account {
-	// this value if taken from config/allow-list-configuration.yaml
+	// this value is taken from config/allow-list-configuration.yaml
 	orgId := "13640203"
 	return helper.NewAccountWithNameAndOrg(faker.Name(), orgId)
 }
@@ -233,7 +234,7 @@ func (helper *Helper) NewAccountWithNameAndOrg(name string, orgId string) *amv1.
 // NewAllowedServiceAccount returns a new account that has the testuser1@example.com
 // without an organization ID
 func (helper *Helper) NewAllowedServiceAccount() *amv1.Account {
-	// this value if taken from config/allow-list-configuration.yaml
+	// this value is taken from config/allow-list-configuration.yaml
 	allowedSA := "testuser1@example.com"
 	account, err := helper.AuthHelper.NewAccount(allowedSA, allowedSA, allowedSA, "")
 	if err != nil {

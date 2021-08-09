@@ -3,16 +3,18 @@ package acl_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/golang/glog"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
@@ -193,6 +195,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 	tests := []struct {
 		name string
 		arg  *acl.AccessControlListConfig
+		want *errors.ServiceError
 	}{
 		{
 			name: "returns 403 Forbidden response when user is not allowed to access service",

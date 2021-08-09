@@ -24,7 +24,8 @@ func Test_AllowListCheckQuota(t *testing.T) {
 	tests := []struct {
 		name    string
 		arg     args
-		want    *errors.ServiceError
+		wantErr *errors.ServiceError
+		want    bool
 		setupFn func()
 	}{
 		{
@@ -34,7 +35,8 @@ func Test_AllowListCheckQuota(t *testing.T) {
 					EnableInstanceLimitControl: false,
 				},
 			},
-			want: nil,
+			wantErr: nil,
+			want:    true,
 		},
 		{
 			name: "throw an error when the query db throws an error",
@@ -43,6 +45,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
+						AllowAnyRegisteredUsers: true,
 						ServiceAccounts: acl.AllowedAccounts{
 							acl.AllowedAccount{
 								Username:            "username",
@@ -54,17 +57,18 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			},
 			setupFn: func() {
 				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).WithQueryException()
+				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
-			want: errors.GeneralError("count failed from database"),
+			wantErr: errors.GeneralError("count failed from database"),
 		},
 		{
-			name: "throw an error when user cannot create any more instances after exceeding allowed organisation limits",
+			name: "throw an error when user in an organiation cannot create any more instances after exceeding allowed organisation limits plus their one Eval instance",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
+						AllowAnyRegisteredUsers: true,
 						Organisations: acl.OrganisationList{
 							acl.Organisation{
 								Id:                  "org-id",
@@ -78,23 +82,24 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE (organisation_id = $1)`).
+					WithQuery(`SELECT instance_type, count(1) as Count FROM "kafka_requests" WHERE (organisation_id = $1)`).
 					WithArgs("org-id").
-					WithReply([]map[string]interface{}{{"count": "4"}})
+					WithReply([]map[string]interface{}{{"instance_type": "standard", "count": "4"}, {"instance_type": "eval", "count": "1"}})
 			},
-			want: &errors.ServiceError{
+			wantErr: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
 				Reason:   "Organization 'org-id' has reached a maximum number of 4 allowed instances.",
 				Code:     5,
 			},
 		},
 		{
-			name: "throw an error when user cannot create any more instances after exceeding allowed limits",
+			name: "do not throw an error when user in the allow list can still create eval instace",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				AccessControlList: &acl.AccessControlListConfig{
 					EnableInstanceLimitControl: true,
 					AllowList: acl.AllowListConfiguration{
+						AllowAnyRegisteredUsers: true,
 						ServiceAccounts: acl.AllowedAccounts{
 							acl.AllowedAccount{
 								Username:            "username",
@@ -107,46 +112,15 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithQuery(`SELECT instance_type, count(1) as Count FROM "kafka_requests" WHERE owner = $1`).
 					WithArgs("username").
-					WithReply([]map[string]interface{}{{"count": "4"}})
+					WithReply([]map[string]interface{}{{"instance_type": "standard", "count": "5"}, {"instance_type": "eval", "count": "0"}})
 			},
-			want: &errors.ServiceError{
-				HttpCode: http.StatusForbidden,
-				Reason:   "User 'username' has reached a maximum number of 4 allowed instances.",
-				Code:     5,
-			},
+			wantErr: nil,
+			want:    false,
 		},
 		{
-			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance",
-			arg: args{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
-					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						ServiceAccounts: acl.AllowedAccounts{
-							acl.AllowedAccount{
-								Username: "username",
-							},
-						},
-					},
-				},
-			},
-			setupFn: func() {
-				mocket.Catcher.Reset()
-				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
-					WithArgs("username").
-					WithReply([]map[string]interface{}{{"count": "1"}})
-			},
-			want: &errors.ServiceError{
-				HttpCode: http.StatusForbidden,
-				Reason:   "User 'username' has reached a maximum number of 1 allowed instances.",
-				Code:     5,
-			},
-		},
-		{
-			name: "throw an error when user cannot create any more instances after exceeding default allowed limits of 1 instance and the user is not listed in the allow list",
+			name: "do not throw an error when user who's not in the allow list can eval instances",
 			arg: args{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				AccessControlList: &acl.AccessControlListConfig{
@@ -156,15 +130,12 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithQuery(`SELECT instance_type, count(1) as Count FROM "kafka_requests" WHERE owner = $1`).
 					WithArgs("username").
-					WithReply([]map[string]interface{}{{"count": "1"}})
+					WithReply([]map[string]interface{}{{"instance_type": "eval", "count": "0"}})
 			},
-			want: &errors.ServiceError{
-				HttpCode: http.StatusForbidden,
-				Reason:   "User 'username' has reached a maximum number of 1 allowed instances.",
-				Code:     5,
-			},
+			want:    false,
+			wantErr: nil,
 		},
 		{
 			name: "throw an error if user is not allowed in their org and they cannot create any more instances after exceeding default allowed user limits",
@@ -176,7 +147,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 						Organisations: acl.OrganisationList{
 							acl.Organisation{
 								Id:                  "org-id",
-								MaxAllowedInstances: 4,
+								MaxAllowedInstances: 2,
 								AllowAll:            false,
 							},
 						},
@@ -186,12 +157,12 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE owner = $1`).
+					WithQuery(`SELECT instance_type, count(1) as Count FROM "kafka_requests" WHERE owner = $1`).
 					WithArgs("username").
-					WithReply([]map[string]interface{}{{"count": "1"}})
+					WithReply([]map[string]interface{}{{"instance_type": "standard", "count": "1"}, {"instance_type": "eval", "count": "1"}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
-			want: &errors.ServiceError{
+			wantErr: &errors.ServiceError{
 				HttpCode: http.StatusForbidden,
 				Reason:   "User 'username' has reached a maximum number of 1 allowed instances.",
 				Code:     5,
@@ -217,12 +188,12 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			setupFn: func() {
 				mocket.Catcher.Reset()
 				mocket.Catcher.NewMock().
-					WithQuery(`SELECT count(1) FROM "kafka_requests" WHERE (organisation_id = $1)`).
+					WithQuery(`SELECT instance_type, count(1) as Count FROM "kafka_requests" WHERE (organisation_id = $1)`).
 					WithArgs("org-id").
-					WithReply([]map[string]interface{}{{"count": "1"}})
-				mocket.Catcher.NewMock().WithExecException().WithQueryException()
+					WithReply([]map[string]interface{}{{"instance_type": "standard", "count": "1"}, {"instance_type": "eval", "count": "0"}})
 			},
-			want: nil,
+			wantErr: nil,
+			want:    true,
 		},
 	}
 
@@ -238,8 +209,9 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
-			_, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.EVAL)
-			gomega.Expect(tt.want).To(gomega.Equal(err))
+			allowed, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.STANDARD)
+			gomega.Expect(tt.wantErr).To(gomega.Equal(err))
+			gomega.Expect(tt.want).To(gomega.Equal(allowed))
 		})
 	}
 }
