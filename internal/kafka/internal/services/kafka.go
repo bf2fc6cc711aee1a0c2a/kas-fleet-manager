@@ -220,9 +220,9 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		return errors.NewWithCause(errors.ErrorGeneral, err, "error retrieving cluster DNS")
 	}
 
+	kafkaRequest.Namespace = fmt.Sprintf("mk-%s", strings.ToLower(kafkaRequest.ID))
 	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
-
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
@@ -266,6 +266,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		CanaryServiceAccountClientSecret: kafkaRequest.CanaryServiceAccountClientSecret,
 		PlacementId:                      api.NewID(),
 		Status:                           constants2.KafkaRequestStatusProvisioning.String(),
+		Namespace:                        kafkaRequest.Namespace,
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka request")
@@ -564,8 +565,7 @@ func (k *kafkaService) GetManagedKafkaByClusterID(clusterID string) ([]managedka
 	var res []managedkafka.ManagedKafka
 	// convert kafka requests to managed kafka
 	for _, kafkaRequest := range kafkaRequestList {
-		ns, _ := BuildNamespaceName(kafkaRequest)
-		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig(), ns)
+		mk := BuildManagedKafkaCR(kafkaRequest, k.kafkaConfig, k.keycloakService.GetConfig())
 		res = append(res, *mk)
 	}
 
@@ -726,7 +726,7 @@ func (k *kafkaService) ListKafkasWithRoutesNotCreated() ([]*dbapi.KafkaRequest, 
 	return results, nil
 }
 
-func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *keycloak.KeycloakConfig, namespace string) *managedkafka.ManagedKafka {
+func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.KafkaConfig, keycloakConfig *keycloak.KeycloakConfig) *managedkafka.ManagedKafka {
 	managedKafkaCR := &managedkafka.ManagedKafka{
 		Id: kafkaRequest.ID,
 		TypeMeta: metav1.TypeMeta{
@@ -735,7 +735,7 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      kafkaRequest.Name,
-			Namespace: namespace,
+			Namespace: kafkaRequest.Namespace,
 			Annotations: map[string]string{
 				"bf2.org/id":          kafkaRequest.ID,
 				"bf2.org/placementId": kafkaRequest.PlacementId,

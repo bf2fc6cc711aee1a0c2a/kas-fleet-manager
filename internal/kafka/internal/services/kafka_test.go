@@ -558,6 +558,10 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 			if tt.wantBootstrapServerHost != "" && tt.args.kafkaRequest.BootstrapServerHost != tt.wantBootstrapServerHost {
 				t.Errorf("BootstrapServerHost error. Actual = %v, wantBootstrapServerHost = %v", tt.args.kafkaRequest.BootstrapServerHost, tt.wantBootstrapServerHost)
 			}
+
+			if !tt.wantErr && tt.args.kafkaRequest.Namespace == "" {
+				t.Errorf("PrepareKafkaRequest() kafkaRequest.Namespace = \"\", want = %v", fmt.Sprintf("mk-%s", tt.args.kafkaRequest.ID))
+			}
 		})
 	}
 }

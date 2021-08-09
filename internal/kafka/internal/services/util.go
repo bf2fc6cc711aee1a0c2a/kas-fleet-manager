@@ -89,6 +89,7 @@ func replaceHostSpecialChar(name string) (string, error) {
 	return replacedName, nil
 }
 
+// This is there to ensure backward compatibility of old namespace
 func BuildNamespaceName(kafka *dbapi.KafkaRequest) (string, error) {
 	namespaceName := buildKafkaNamespaceIdentifier(kafka)
 	namespaceName, err := replaceNamespaceSpecialChar(namespaceName)
