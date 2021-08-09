@@ -69,7 +69,7 @@ upload_results() {
         -H 'Authorization: Bearer '"$TOKEN" \
         -d @"$RESULTS_FILENAME")
 
-    if [[ ! "$status_code" == *"20"* ]]; then # 20X status code == success
+    if [[ ! "$status_code" == "20"* ]]; then
       echo "There was an issue with posting results to horreum!"
       exit 1
     fi
