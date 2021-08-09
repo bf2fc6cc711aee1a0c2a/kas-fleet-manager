@@ -9,7 +9,9 @@
 
 package private
 
-// DataplaneClusterAgentConfig Configuration for the data plane cluster agent
-type DataplaneClusterAgentConfig struct {
-	Spec DataplaneClusterAgentConfigSpec `json:"spec,omitempty"`
+// ManagedKafkaAllOfSpecServiceAccounts struct for ManagedKafkaAllOfSpecServiceAccounts
+type ManagedKafkaAllOfSpecServiceAccounts struct {
+	Name      string `json:"name"`
+	Principal string `json:"principal"`
+	Password  string `json:"password"`
 }

@@ -61,8 +61,9 @@ func PresentManagedKafka(from *v1.ManagedKafka) private.ManagedKafka {
 				Kafka:   from.Spec.Versions.Kafka,
 				Strimzi: from.Spec.Versions.Strimzi,
 			},
-			Deleted: from.Spec.Deleted,
-			Owners:  from.Spec.Owners,
+			Deleted:         from.Spec.Deleted,
+			Owners:          from.Spec.Owners,
+			ServiceAccounts: getServiceAccounts(from.Spec.ServiceAccounts),
 		},
 	}
 
@@ -86,4 +87,16 @@ func getOpenAPIManagedKafkaOAuthTLSTrustedCertificate(from *v1.OAuthSpec) *strin
 		res = from.TlsTrustedCertificate
 	}
 	return res
+}
+
+func getServiceAccounts(from []v1.ServiceAccount) []private.ManagedKafkaAllOfSpecServiceAccounts {
+	accounts := []private.ManagedKafkaAllOfSpecServiceAccounts{}
+	for _, managedServiceAccount := range from {
+		accounts = append(accounts, private.ManagedKafkaAllOfSpecServiceAccounts{
+			Name:      managedServiceAccount.Name,
+			Principal: managedServiceAccount.Principal,
+			Password:  managedServiceAccount.Password,
+		})
+	}
+	return accounts
 }

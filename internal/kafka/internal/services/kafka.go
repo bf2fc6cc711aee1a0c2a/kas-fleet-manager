@@ -40,6 +40,7 @@ type KafkaRoutesAction string
 
 const KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
 const KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
+const CanaryServiceAccountPrefix = "canary-"
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
@@ -233,6 +234,23 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		if err != nil {
 			return errors.FailedToCreateSSOClient("failed to create sso client %s:%v", kafkaRequest.SsoClientID, err)
 		}
+		serviceAccountRequest := services.CompleteServiceAccountRequest{
+			Owner:          kafkaRequest.Owner,
+			OwnerAccountId: kafkaRequest.OwnerAccountId,
+			ClientId:       fmt.Sprintf("%s-%s", CanaryServiceAccountPrefix, kafkaRequest.ID),
+			OrgId:          kafkaRequest.OrganisationId,
+			Name:           fmt.Sprintf("canary-service-account-for-kafka %s", kafkaRequest.ID),
+			Description:    fmt.Sprintf("canary service account for kafka %s", kafkaRequest.ID),
+		}
+
+		canaryServiceAccount, err := k.keycloakService.CreateServiceAccountInternal(serviceAccountRequest)
+
+		if err != nil {
+			return errors.FailedToCreateSSOClient("failed to  create canary service account %s:%v", kafkaRequest.ID, err)
+		}
+
+		kafkaRequest.CanaryServiceAccountClientID = canaryServiceAccount.ClientID
+		kafkaRequest.CanaryServiceAccountClientSecret = canaryServiceAccount.ClientSecret
 	}
 
 	// Update the Kafka Request record in the database
@@ -241,11 +259,13 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 		Meta: api.Meta{
 			ID: kafkaRequest.ID,
 		},
-		BootstrapServerHost: kafkaRequest.BootstrapServerHost,
-		SsoClientID:         kafkaRequest.SsoClientID,
-		SsoClientSecret:     kafkaRequest.SsoClientSecret,
-		PlacementId:         api.NewID(),
-		Status:              constants2.KafkaRequestStatusProvisioning.String(),
+		BootstrapServerHost:              kafkaRequest.BootstrapServerHost,
+		SsoClientID:                      kafkaRequest.SsoClientID,
+		SsoClientSecret:                  kafkaRequest.SsoClientSecret,
+		CanaryServiceAccountClientID:     kafkaRequest.CanaryServiceAccountClientID,
+		CanaryServiceAccountClientSecret: kafkaRequest.CanaryServiceAccountClientSecret,
+		PlacementId:                      api.NewID(),
+		Status:                           constants2.KafkaRequestStatusProvisioning.String(),
 	}
 	if err := k.Update(updatedKafkaRequest); err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "failed to update kafka request")
@@ -429,6 +449,10 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 			keycloakErr := k.keycloakService.DeRegisterClientInSSO(clientId)
 			if keycloakErr != nil {
 				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting sso client")
+			}
+			keycloakErr = k.keycloakService.DeleteServiceAccountInternal(kafkaRequest.CanaryServiceAccountClientID)
+			if keycloakErr != nil {
+				return errors.NewWithCause(errors.ErrorGeneral, keycloakErr, "error deleting canary service account")
 			}
 		}
 
@@ -755,6 +779,14 @@ func BuildManagedKafkaCR(kafkaRequest *dbapi.KafkaRequest, kafkaConfig *config.K
 		if keycloakConfig.TLSTrustedCertificatesValue != "" {
 			managedKafkaCR.Spec.OAuth.TlsTrustedCertificate = &keycloakConfig.TLSTrustedCertificatesValue
 		}
+
+		serviceAccounts := []managedkafka.ServiceAccount{}
+		serviceAccounts = append(serviceAccounts, managedkafka.ServiceAccount{
+			Name:      "canary",
+			Principal: kafkaRequest.CanaryServiceAccountClientID,
+			Password:  kafkaRequest.CanaryServiceAccountClientSecret,
+		})
+		managedKafkaCR.Spec.ServiceAccounts = serviceAccounts
 	}
 
 	if kafkaConfig.EnableKafkaExternalCertificate {

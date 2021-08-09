@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.1.0
+  version: 1.2.0
   description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
@@ -279,6 +279,21 @@ components:
             spec:
               type: object
               properties:
+                serviceAccounts:
+                  type: array
+                  items:
+                    type: object
+                    required: 
+                      - name
+                      - principal
+                      - password
+                    properties:
+                      name:
+                        type: string
+                      principal:
+                        type: string
+                      password: 
+                        type: string     
                 capacity:
                   $ref: "#/components/schemas/ManagedKafkaCapacity"
                 oauth:
