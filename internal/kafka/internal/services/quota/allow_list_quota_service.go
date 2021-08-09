@@ -2,6 +2,7 @@ package quota
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
@@ -12,6 +13,11 @@ import (
 type allowListQuotaService struct {
 	connectionFactory *db.ConnectionFactory
 	accessControlList *acl.AccessControlListConfig
+}
+
+type ResKafkaInstanceCount struct {
+	InstanceType string
+	Count        int
 }
 
 func (q allowListQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -37,30 +43,41 @@ func (q allowListQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi
 		}
 	}
 
-	dbConn := q.connectionFactory.New().Model(&dbapi.KafkaRequest{})
+	var res []ResKafkaInstanceCount
+	dbConn := q.connectionFactory.New().
+		Model(&dbapi.KafkaRequest{}).
+		Select("instance_type, count(1) as Count")
+
 	if filterByOrd {
 		dbConn = dbConn.Where("organisation_id = ?", orgId)
 	} else {
 		dbConn = dbConn.Where("owner = ?", username)
 	}
-
-	var count int64
-	if err := dbConn.Count(&count).Error; err != nil {
+	dbConn = dbConn.Group("instance_type").Scan(&res)
+	if err := dbConn.Error; err != nil {
 		return false, errors.GeneralError("count failed from database")
 	}
-
-	total := int(count)
-	maxInstanceReached := total >= acl.GetDefaultMaxAllowedInstances()
-	// check instance limit for internal users (users and orgs listed in allow list config)
-	if allowListItem != nil {
-		maxInstanceReached = !allowListItem.IsInstanceCountWithinLimit(total)
+	instanceTypeCountMap := map[string]int{
+		types.EVAL.String():     0,
+		types.STANDARD.String(): 0,
 	}
 
-	if maxInstanceReached {
+	for _, kafkaInstance := range res {
+		instanceTypeCountMap[kafkaInstance.InstanceType] = kafkaInstance.Count
+	}
+
+	if allowListItem != nil {
+		total := instanceTypeCountMap[types.STANDARD.String()]
+		if allowListItem.IsInstanceCountWithinLimit(total) {
+			return true, nil
+		} else if evalInstancesReached(instanceTypeCountMap) {
+			return false, errors.MaximumAllowedInstanceReached(message)
+		}
+	} else if evalInstancesReached(instanceTypeCountMap) { // user not in allow list can only create eval instances. TODO, they should be able to create standard instances too.
 		return false, errors.MaximumAllowedInstanceReached(message)
 	}
 
-	return true, nil
+	return false, nil
 }
 
 func (q allowListQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
@@ -69,4 +86,8 @@ func (q allowListQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceT
 
 func (q allowListQuotaService) DeleteQuota(SubscriptionId string) *errors.ServiceError {
 	return nil // NOOP
+}
+
+func evalInstancesReached(instanceTypeCountMap map[string]int) bool {
+	return instanceTypeCountMap[types.EVAL.String()] >= acl.GetDefaultMaxAllowedInstances()
 }
