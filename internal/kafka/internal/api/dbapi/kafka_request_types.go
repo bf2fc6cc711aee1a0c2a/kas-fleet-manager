@@ -43,6 +43,9 @@ type KafkaRequest struct {
 	Routes api.JSON `json:"routes"`
 	// RoutesCreated if the routes mapping have been created in the DNS provider like Route53. Use a separate field to make it easier to query.
 	RoutesCreated bool `json:"routes_created"`
+	// Namespace is the namespace of the provisioned kafka instance.
+	// We store this in the database to ensure that old kafkas whose namespace contained "owner-<kafka-id>" information will continue to work.
+	Namespace string `json:"namespace"`
 }
 
 type KafkaList []*KafkaRequest

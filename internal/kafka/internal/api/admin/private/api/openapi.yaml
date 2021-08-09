@@ -404,6 +404,8 @@ components:
           type: boolean
         cluster_id:
           type: string
+        namespace:
+          type: string
     KafkaList_allOf:
       properties:
         items:

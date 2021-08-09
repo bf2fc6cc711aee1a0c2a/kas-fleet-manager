@@ -120,6 +120,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(kafkaRequest.QuotaType).To(Equal(KafkaConfig(h).Quota.Type))
 	Expect(kafkaRequest.PlacementId).To(Not(BeEmpty()))
 	Expect(kafkaRequest.Owner).To(Not(BeEmpty()))
+	Expect(kafkaRequest.Namespace).To(Equal(fmt.Sprintf("mk-%s", strings.ToLower(kafkaRequest.ID))))
 	// this is set by the mockKasfFleetshardSync
 	Expect(kafkaRequest.DesiredStrimziVersion).To(Equal("strimzi-cluster-operator.v0.23.0-0"))
 

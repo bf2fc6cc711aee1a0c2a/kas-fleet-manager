@@ -88,6 +88,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Id).To(Equal(sampleKafkaID))
 				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
+				Expect(result.Namespace).ToNot(BeEmpty())
 			},
 		},
 		{
@@ -104,6 +105,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(result.Id).To(Equal(sampleKafkaID))
 				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
+				Expect(result.Namespace).ToNot(BeEmpty())
 			},
 		},
 		{
@@ -120,6 +122,7 @@ func TestAdminKafka_Get(t *testing.T) {
 				Expect(result.Id).To(Equal(sampleKafkaID))
 				Expect(result.DesiredStrimziVersion).To(Equal(desiredStrimziVersion))
 				Expect(result.ClusterId).ShouldNot(BeNil())
+				Expect(result.Namespace).ToNot(BeEmpty())
 			},
 		},
 		{
@@ -181,6 +184,7 @@ func TestAdminKafka_Get(t *testing.T) {
 		OrganisationId:        "13640203",
 		DesiredStrimziVersion: desiredStrimziVersion,
 		Status:                constants.KafkaRequestStatusReady.String(),
+		Namespace:             fmt.Sprintf("mk-%s", sampleKafkaID),
 	}
 	kafka.ID = sampleKafkaID
 

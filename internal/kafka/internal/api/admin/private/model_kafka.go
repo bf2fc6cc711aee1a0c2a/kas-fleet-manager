@@ -46,4 +46,5 @@ type Kafka struct {
 	Routes                []KafkaAllOfRoutes `json:"routes,omitempty"`
 	RoutesCreated         bool               `json:"routes_created,omitempty"`
 	ClusterId             string             `json:"cluster_id,omitempty"`
+	Namespace             string             `json:"namespace,omitempty"`
 }
