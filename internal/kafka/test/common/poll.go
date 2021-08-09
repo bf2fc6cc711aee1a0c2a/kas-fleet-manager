@@ -2,13 +2,14 @@ package common
 
 import (
 	"fmt"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/olekukonko/tablewriter"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"os"
-	"strings"
-	"time"
 )
 
 var defaultShouldLogFunction ShouldLogFunc = func(retry int, maxRetry int, maxRetryLogs int) bool {
@@ -24,7 +25,7 @@ var defaultLogFunction = func(pattern string, args ...interface{}) {
 }
 
 const (
-	defaultPollInterval     = 30 * time.Second
+	defaultPollInterval     = 1 * time.Second
 	defaultKafkaPollTimeout = 20 * time.Minute
 	// defaultMaxRetryLogs - Maximum number of retry log to show. The waiting period between each of the logs is
 	// calculated so that at maximum `defaultMaxRetryLogs` statements are logged if reaching the last attempt
