@@ -2,12 +2,13 @@ package services
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -266,47 +267,6 @@ func Test_buildTruncateKafkaIdentifier(t *testing.T) {
 			tt.args.kafkaRequest.ID = mockKafkaRequestID
 			if got := buildTruncateKafkaIdentifier(tt.args.kafkaRequest); got != tt.want {
 				t.Errorf("buildTruncateKafkaIdentifier() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func Test_buildSyncsetIdentifier(t *testing.T) {
-	mockShortKafkaName := "kafka"
-	mockLongKafkaName := "sample-kafka-name-long-test"
-
-	type args struct {
-		kafkaRequest *dbapi.KafkaRequest
-	}
-	tests := []struct {
-		name string
-		args args
-		want string
-	}{
-		{
-			name: "build syncset identifier with a short name successfully",
-			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{
-					Name: mockShortKafkaName,
-				},
-			},
-			want: fmt.Sprintf("ext-%s-%s", mockShortKafkaName, strings.ToLower(mockKafkaRequestID)),
-		},
-		{
-			name: "build syncset identifier with a long name successfully",
-			args: args{
-				kafkaRequest: &dbapi.KafkaRequest{
-					Name: mockLongKafkaName,
-				},
-			},
-			want: fmt.Sprintf("ext-%s-%s", mockLongKafkaName, strings.ToLower(mockKafkaRequestID))[0:truncatedSyncsetIdLen],
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.args.kafkaRequest.ID = mockKafkaRequestID
-			if got := buildSyncsetIdentifier(tt.args.kafkaRequest); got != tt.want {
-				t.Errorf("buildSyncsetIdentifier() = %v, want %v", got, tt.want)
 			}
 		})
 	}
