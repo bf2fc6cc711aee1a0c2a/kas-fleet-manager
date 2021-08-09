@@ -45,7 +45,7 @@ docker_login() {
 
 # run perf tests
 run_perf_test() {
-  # test started timestamp (used by horreum)
+   # test started timestamp (used by horreum)
   START=$(date '+%Y-%m-%dT%H:%M:%S.00Z')
 
   make test/performance
@@ -69,7 +69,7 @@ upload_results() {
         -H 'Authorization: Bearer '"$TOKEN" \
         -d @"$RESULTS_FILENAME")
 
-    if [[ ! "$status_code" == *"200"* ]]; then
+    if [[ ! "$status_code" == *"20"* ]]; then # 20X status code == success
       echo "There was an issue with posting results to horreum!"
       exit 1
     fi
