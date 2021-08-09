@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 )
@@ -35,13 +36,9 @@ func (obs observatoriumService) GetMetricsByKafkaId(ctx context.Context, kafkasM
 		return "", err
 	}
 
-	namespace, replaceErr := BuildNamespaceName(kafkaRequest)
-	if replaceErr != nil {
-		return kafkaRequest.ID, errors.NewWithCause(errors.ErrorGeneral, replaceErr, "failed to retrieve metrics")
-	}
-	replaceErr = obs.observatorium.Service.GetMetrics(kafkasMetrics, namespace, &query)
-	if replaceErr != nil {
-		return kafkaRequest.ID, errors.NewWithCause(errors.ErrorGeneral, replaceErr, "failed to retrieve metrics")
+	getErr := obs.observatorium.Service.GetMetrics(kafkasMetrics, kafkaRequest.Namespace, &query)
+	if getErr != nil {
+		return kafkaRequest.ID, errors.NewWithCause(errors.ErrorGeneral, getErr, "failed to retrieve metrics")
 	}
 
 	return kafkaRequest.ID, nil
