@@ -58,7 +58,7 @@ func ServiceProviders() di.Option {
 		di.Provide(db.NewConnectionFactory),
 		di.Provide(observatorium.NewObservatoriumClient),
 
-		di.Provide(func(config *ocm.OCMConfig) ocm.Client {
+		di.Provide(func(config *ocm.OCMConfig) ocm.ClusterManagementClient {
 			conn, _, err := ocm.NewOCMConnection(config, config.BaseURL)
 			if err != nil {
 				logger.Logger.Error(err)
