@@ -57,7 +57,7 @@ type DefaultProviderFactory struct {
 }
 
 func NewDefaultProviderFactory(
-	ocmClient ocm.Client,
+	ocmClient ocm.ClusterManagementClient,
 	connectionFactory *db.ConnectionFactory,
 	ocmConfig *ocm.OCMConfig,
 	awsConfig *config.AWSConfig,
