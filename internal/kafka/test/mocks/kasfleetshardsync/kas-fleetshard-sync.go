@@ -133,13 +133,11 @@ type mockKasFleetshardSyncBuilder struct {
 var _ MockKasFleetshardSyncBuilder = &mockKasFleetshardSyncBuilder{}
 
 func NewMockKasFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) MockKasFleetshardSyncBuilder {
-	var ocmClient ocm.ClusterManagementClient
-	helper.Env.MustResolveAll(&ocmClient)
 	return &mockKasFleetshardSyncBuilder{
 		kfsync: mockKasFleetshardSync{
 			helper:                       helper,
 			t:                            t,
-			ocmClient:                    ocmClient,
+			ocmClient:                    test.TestServices.OCMClient,
 			privateClient:                test.NewPrivateAPIClient(helper),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,
