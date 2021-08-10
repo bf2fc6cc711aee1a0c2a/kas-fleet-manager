@@ -2,11 +2,11 @@ package quota
 
 import (
 	"fmt"
-	"testing"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -143,9 +143,12 @@ func Test_AMSCheckQuota(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		kafkaConfig := &config.KafkaConfig{}
+
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			quotaService := amsQuotaService{amsClient: tt.fields.ocmClient}
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, kafkaConfig, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
@@ -221,10 +224,13 @@ func Test_AMSReserveQuota(t *testing.T) {
 		},
 	}
 
+	cfgService := &config.KafkaConfig{}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			quotaService := amsQuotaService{amsClient: tt.fields.ocmClient}
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
@@ -285,9 +291,12 @@ func Test_Delete_Quota(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
+	cfgService := &config.KafkaConfig{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			quotaService := amsQuotaService{amsClient: tt.fields.ocmClient}
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, cfgService, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteQuota() error = %v, wantErr %v", err, tt.wantErr)
