@@ -1,14 +1,13 @@
 package quota
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
@@ -18,7 +17,6 @@ import (
 func Test_AllowListCheckQuota(t *testing.T) {
 	type args struct {
 		connectionFactory *db.ConnectionFactory
-		KafkaConfig       *config.KafkaConfig
 		AccessControlList *acl.AccessControlListConfig
 	}
 
@@ -233,8 +231,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			factory := NewDefaultQuotaServiceFactory(nil, tt.arg.connectionFactory, tt.arg.KafkaConfig, tt.arg.AccessControlList)
-			quotaService, _ := factory.GetQuotaService(api.AllowListQuotaType)
+			quotaService := allowListQuotaService{
+				connectionFactory: tt.arg.connectionFactory,
+				accessControlList: tt.arg.AccessControlList,
+			}
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",

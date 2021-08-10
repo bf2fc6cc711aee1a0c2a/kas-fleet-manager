@@ -306,7 +306,7 @@ func (o *OCMProvider) GetCloudProviderRegions(providerInfo types.CloudProviderIn
 // ensure OCMProvider implements Provider interface
 var _ Provider = &OCMProvider{}
 
-func newOCMProvider(ocmClient ocm.ClusterManagementClient, clusterBuilder ClusterBuilder, ocmConfig *ocm.OCMConfig) *OCMProvider {
+func newOCMProvider(ocmClient ocm.Client, clusterBuilder ClusterBuilder, ocmConfig *ocm.OCMConfig) *OCMProvider {
 	return &OCMProvider{
 		ocmClient:      ocmClient,
 		clusterBuilder: clusterBuilder,
