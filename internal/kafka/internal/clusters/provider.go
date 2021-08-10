@@ -57,13 +57,12 @@ type DefaultProviderFactory struct {
 }
 
 func NewDefaultProviderFactory(
-	ocmClientFactory *ocm.OCMClientFactory,
+	ocmClient ocm.ClusterManagementClient,
 	connectionFactory *db.ConnectionFactory,
 	ocmConfig *ocm.OCMConfig,
 	awsConfig *config.AWSConfig,
 	dataplaneClusterConfig *config.DataplaneClusterConfig,
 ) *DefaultProviderFactory {
-	ocmClient := ocmClientFactory.GetClient(ocm.ClusterManagementClientType)
 	ocmProvider := newOCMProvider(ocmClient, NewClusterBuilder(awsConfig, dataplaneClusterConfig), ocmConfig)
 	standaloneProvider := newStandaloneProvider(connectionFactory, dataplaneClusterConfig)
 	return &DefaultProviderFactory{
