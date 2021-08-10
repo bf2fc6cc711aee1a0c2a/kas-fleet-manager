@@ -61,6 +61,7 @@ var migrations = []*gormigrate.Migration{
 	addKafkaCanaryServiceAccountColumns(),
 	addKafkaNamespaceColumn(),
 	migrateOldKafkaNamespace(),
+	migrateOldKafkaNamespaceCreatedDuringDeployment(),
 }
 
 func New(dbConfig *db.DatabaseConfig) (*db.Migration, func(), error) {
