@@ -2,16 +2,17 @@ package quota
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	"strings"
 )
 
 type amsQuotaService struct {
-	amsClient ocm.AMSClient
+	amsClient ocm.Client
 }
 
 func newQuotaResource() amsv1.ReservedResourceBuilder {

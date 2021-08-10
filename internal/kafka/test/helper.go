@@ -39,12 +39,13 @@ type Services struct {
 	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
-	OCMClient             ocm.ClusterManagementClient
 	OCMConfig             *ocm.OCMConfig
 	KafkaService          services.KafkaService
 	ObservatoriumClient   *observatorium.Client
 	ClusterManager        *workers.ClusterManager
 	ServerConfig          *server.ServerConfig
+	OCMClientFactory      *ocm.OCMClientFactory
+	OCMClient             ocm.Client `di:"skip"`
 }
 
 var TestServices Services
@@ -67,6 +68,8 @@ func NewKafkaHelperWithHooks(t *testing.T, server *httptest.Server, configuratio
 	if err := h.Env.ServiceContainer.Resolve(&TestServices); err != nil {
 		glog.Fatalf("Unable to initialize testing environment: %s", err.Error())
 	}
+	TestServices.OCMClient = TestServices.OCMClientFactory.GetClient(ocm.ClusterManagementClientType)
+
 	return h, NewApiClient(h), teardown
 }
 

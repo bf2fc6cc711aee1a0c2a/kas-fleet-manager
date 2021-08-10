@@ -1,7 +1,6 @@
 package quota
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -16,12 +15,12 @@ type DefaultQuotaServiceFactory struct {
 }
 
 func NewDefaultQuotaServiceFactory(
-	amsClient ocm.AMSClient,
+	ocmClientFactory *ocm.OCMClientFactory,
 	connectionFactory *db.ConnectionFactory,
-	kafkaConfig *config.KafkaConfig,
 	accessControlList *acl.AccessControlListConfig,
 
 ) services.QuotaServiceFactory {
+	amsClient := ocmClientFactory.GetClient(ocm.AMSClientType)
 	quoataServiceContainer := map[api.QuotaType]services.QuotaService{
 		api.AMSQuotaType:       &amsQuotaService{amsClient: amsClient},
 		api.AllowListQuotaType: &allowListQuotaService{connectionFactory: connectionFactory, accessControlList: accessControlList},
