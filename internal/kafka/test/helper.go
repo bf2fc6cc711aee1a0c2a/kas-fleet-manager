@@ -39,7 +39,7 @@ type Services struct {
 	BootupServices        []environments.BootService
 	CloudProvidersService services.CloudProvidersService
 	ClusterService        services.ClusterService
-	OCMClient             ocm.Client
+	OCMClient             ocm.ClusterManagementClient
 	OCMConfig             *ocm.OCMConfig
 	KafkaService          services.KafkaService
 	ObservatoriumClient   *observatorium.Client

@@ -2,8 +2,9 @@ package ocm
 
 import (
 	"fmt"
-	pkgerrors "github.com/pkg/errors"
 	"net/http"
+
+	pkgerrors "github.com/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	sdkClient "github.com/openshift-online/ocm-sdk-go"
@@ -55,6 +56,7 @@ type client struct {
 }
 
 type AMSClient Client
+type ClusterManagementClient Client
 
 func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {

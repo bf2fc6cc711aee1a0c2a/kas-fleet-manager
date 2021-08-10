@@ -33,7 +33,7 @@ type options struct {
 	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
 
-	OCM                   ocm.Client
+	OCM                   ocm.ClusterManagementClient
 	AMS                   ocm.AMSClient
 	Kafka                 services.KafkaService
 	CloudProviders        services.CloudProvidersService
