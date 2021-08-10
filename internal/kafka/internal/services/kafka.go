@@ -40,7 +40,7 @@ type KafkaRoutesAction string
 
 const KafkaRoutesActionCreate KafkaRoutesAction = "CREATE"
 const KafkaRoutesActionDelete KafkaRoutesAction = "DELETE"
-const CanaryServiceAccountPrefix = "canary-"
+const CanaryServiceAccountPrefix = "canary"
 
 //go:generate moq -out kafkaservice_moq.go . KafkaService
 type KafkaService interface {
