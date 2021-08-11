@@ -1,9 +1,10 @@
 package integration
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -12,7 +13,7 @@ import (
 
 const (
 	pollTimeout  = 5 * time.Minute
-	pollInterval = 10 * time.Second
+	pollInterval = 1 * time.Second
 )
 
 func TestLeaderElection_StartedAllWorkersAndDropThenUp(t *testing.T) {

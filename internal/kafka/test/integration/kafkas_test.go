@@ -952,122 +952,130 @@ func TestKafkaGet(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
 
-// TestKafkaDelete - tests Success kafka delete
-func TestKafkaDelete_Success(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
+func TestKafka_Delete(t *testing.T) {
+	owner := "test-user"
+
+	orgId := "13640203"
+
+	sampleKafkaID := api.NewID()
+
+	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
+	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
+
+	ocmServer := ocmServerBuilder.Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
+	h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+	defer tearDown()
 
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
+	userAccount := h.NewAccount(owner, "test-user", "test@gmail.com", orgId)
 
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
+	userCtx := h.NewAuthenticatedContext(userAccount, nil)
+
+	type args struct {
+		ctx     context.Context
+		kafkaID string
+		async   bool
 	}
-	if clusterID == "" {
-		panic("No cluster found")
+	tests := []struct {
+		name           string
+		args           args
+		verifyResponse func(resp *http.Response, err error)
+	}{
+		{
+			name: "should fail when deleting kafka without async set to true",
+			args: args{
+				ctx:     userCtx,
+				kafkaID: sampleKafkaID,
+				async:   false,
+			},
+			verifyResponse: func(resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should fail when deleting kafka with empty id",
+			args: args{
+				ctx:     userCtx,
+				kafkaID: "",
+				async:   true,
+			},
+			verifyResponse: func(resp *http.Response, err error) {
+				Expect(err).NotTo(BeNil())
+			},
+		},
+		{
+			name: "should succeed when deleting kafka with valid id and context",
+			args: args{
+				ctx:     userCtx,
+				kafkaID: sampleKafkaID,
+				async:   true,
+			},
+			verifyResponse: func(resp *http.Response, err error) {
+				Expect(err).To(BeNil())
+				Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
+			},
+		},
 	}
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
+
+	db := test.TestServices.DBFactory.New()
+	// create a dummy cluster and assign a kafka to it
+	cluster := &api.Cluster{
+		Meta: api.Meta{
+			ID: api.NewID(),
+		},
+		ClusterID:          api.NewID(),
+		MultiAZ:            true,
+		Region:             "baremetal",
+		CloudProvider:      "baremetal",
+		Status:             api.ClusterReady,
+		IdentityProviderID: "some-id",
+		ClusterDNS:         "some-cluster-dns",
+		ProviderType:       api.ClusterProviderStandalone,
 	}
 
-	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	if err := db.Create(cluster).Error; err != nil {
+		t.Error("failed to create dummy cluster")
+		return
+	}
 
-	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
+	// create a kafka that will be updated
+	kafka := &dbapi.KafkaRequest{
+		Meta: api.Meta{
+			ID: sampleKafkaID,
+		},
+		MultiAZ:               true,
+		Owner:                 owner,
+		Region:                "test",
+		CloudProvider:         "test",
+		Name:                  "test-kafka",
+		OrganisationId:        orgId,
+		Status:                constants.KafkaRequestStatusReady.String(),
+		ClusterID:             cluster.ClusterID,
+		ActualKafkaVersion:    "2.6.0",
+		DesiredKafkaVersion:   "2.6.0",
+		ActualStrimziVersion:  "v.23.0",
+		DesiredStrimziVersion: "v0.23.0",
+	}
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusReady)
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
-	Expect(foundKafka.Owner).To(Equal(account.Username()))
-	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
+	if err := db.Create(kafka).Error; err != nil {
+		t.Errorf("failed to create Kafka db record due to error: %v", err)
+	}
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
-	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
-
-	foundKafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafka.Id)
-	Expect(err).NotTo(HaveOccurred(), "It should be possible to retrieve kafka marked for deletion")
-	Expect(foundKafka.Status).To(Equal(constants2.KafkaRequestStatusDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount, constants2.KafkaOperationDeprovision.String()))
-	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDeprovision.String()))
-
-	// wait for kafka to be deleted
-	err = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := test.NewApiClient(h)
+			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.async)
+			tt.verifyResponse(resp, err)
+		})
+	}
 }
 
-// TestKafkaDelete - tests Fail kafka delete if calling as sync
-func TestKafkaDelete_FailSync(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
-
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
-
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
-	}
-
-	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
-
-	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-	Expect(kafka.Kind).To(Equal(presenters.KindKafka))
-	Expect(kafka.Href).To(Equal(fmt.Sprintf("/api/kafkas_mgmt/v1/kafkas/%s", kafka.Id)))
-
-	_, resp, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, false)
-	Expect(err).To(HaveOccurred(), "Failed to delete kafka request: %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusBadRequest), "Status code for delete kafka response with async 'false' should be %d. Got: %d", http.StatusBadRequest, resp.StatusCode)
-}
-
-// TestKafkaDelete_WithoutID - should result in 405 code being returned
-func TestKafkaDelete_WithoutID(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
-
-	account := h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
-
-	_, resp, err := client.DefaultApi.DeleteKafkaById(ctx, "", true)
-	Expect(err).To(HaveOccurred(), "Error should be thrown if no ID is provided: %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusMethodNotAllowed), "Status code for delete kafka response without kafka ID should be %d. Got: %d", http.StatusMethodNotAllowed, resp.StatusCode)
-	Expect(resp.Body).NotTo(Equal(""), "Body should be returned when trying to hit /kafkas delete without kafka ID")
-}
-
-// TestKafkaDelete - test deleting kafka instance during creation
+// TestKafkaDelete_DeleteDuringCreation - test deleting kafka instance during creation
 func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
@@ -1220,56 +1228,6 @@ func TestKafkaDelete_Fail(t *testing.T) {
 	// The id is invalid, so the metric is not expected to exist
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount), false)
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount), false)
-}
-
-// TestKafkaDelete_NonOwnerDelete
-// tests delete kafka by the user who hasn't created that kafka instance
-func TestKafkaDelete_NonOwnerDelete(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
-
-	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
-	mockKasfFleetshardSync := mockKasFleetshardSyncBuilder.Build()
-	mockKasfFleetshardSync.Start()
-	defer mockKasfFleetshardSync.Stop()
-
-	clusterID, getClusterErr := common.GetRunningOsdClusterID(h, t)
-	if getClusterErr != nil {
-		t.Fatalf("Failed to retrieve cluster details: %v", getClusterErr)
-	}
-	if clusterID == "" {
-		panic("No cluster found")
-	}
-
-	account := h.NewRandAccount()
-	initCtx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
-		Region:        mocks.MockCluster.Region().ID(),
-		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
-		Name:          mockKafkaName,
-		MultiAz:       testMultiAZ,
-	}
-
-	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(initCtx, test.TestServices.DBFactory, client, k)
-
-	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
-	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
-	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
-
-	foundKafka, err := common.WaitForKafkaToReachStatus(initCtx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusReady)
-	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
-
-	// attempt to delete kafka not created by the owner (should result in an error)
-	account = h.NewRandAccount()
-	ctx := h.NewAuthenticatedContext(account, nil)
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
-	Expect(err).To(HaveOccurred())
-
-	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(t, h, initCtx, client, foundKafka.Id)
 }
 
 func TestKafka_DeleteAdminNonOwner(t *testing.T) {
@@ -1437,9 +1395,6 @@ func TestKafkaList_Success(t *testing.T) {
 		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
 	}
 
-	foundKafka, err := common.WaitForKafkaToReachStatus(initCtx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
-	Expect(err).NotTo(HaveOccurred(), "Error occurred while waiting for kafka to be ready:  %v", err)
-
 	// get populated list of kafka requests
 	afterPostList, _, err := client.DefaultApi.GetKafkas(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
@@ -1462,7 +1417,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can list kafkas instances created by a member of their org
 	account = h.NewRandAccount()
@@ -1491,7 +1446,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.CloudProvider).To(Equal(clusterservicetest.MockClusterCloudProvider))
 	Expect(seedKafka.Name).To(Equal(listItem.Name))
 	Expect(listItem.Name).To(Equal(mockKafkaName))
-	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) kafka instances
 	// this value if taken from config/allow-list-configuration.yaml
@@ -1506,9 +1461,6 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(len(newUserList.Items)).To(Equal(0), "Expected kafka requests list length to be 0")
 	Expect(newUserList.Size).To(Equal(int32(0)), "Expected Size == 0")
 	Expect(newUserList.Total).To(Equal(int32(0)), "Expected Total == 0")
-
-	// delete test kafka to free up resources on an OSD cluster
-	deleteTestKafka(t, h, initCtx, client, foundKafka.Id)
 }
 
 // TestKafkaList_InvalidToken - tests listing kafkas with invalid token
