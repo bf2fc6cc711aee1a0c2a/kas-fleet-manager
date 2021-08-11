@@ -141,7 +141,7 @@ func NewMockKasFleetshardSyncBuilder(helper *coreTest.Helper, t *testing.T) Mock
 			privateClient:                test.NewPrivateAPIClient(helper),
 			updateDataplaneClusterStatus: defaultUpdateDataplaneClusterStatusFunc,
 			updateKafkaClusterStatus:     defaultUpdateKafkaStatusFunc,
-			interval:                     10 * time.Second,
+			interval:                     1 * time.Second,
 		},
 	}
 }
