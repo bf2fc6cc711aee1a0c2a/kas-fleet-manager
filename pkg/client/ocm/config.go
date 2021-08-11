@@ -54,7 +54,7 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ClientSecretFile, "ocm-client-secret-file", c.ClientSecretFile, "File containing OCM API privileged account client-secret")
 	fs.StringVar(&c.SelfTokenFile, "self-token-file", c.SelfTokenFile, "File containing OCM API privileged offline SSO token")
 	fs.StringVar(&c.BaseURL, "ocm-base-url", c.BaseURL, "The base URL of the OCM API, integration by default")
-	fs.StringVar(&c.BaseURL, "ams-base-url", c.AmsUrl, "The base URL of the AMS API, integration by default")
+	fs.StringVar(&c.AmsUrl, "ams-base-url", c.AmsUrl, "The base URL of the AMS API, integration by default")
 	fs.StringVar(&c.TokenURL, "ocm-token-url", c.TokenURL, "The base URL that OCM uses to request tokens, stage by default")
 	fs.StringVar(&c.TokenIssuerURL, "ocm-token-issuer-url", c.TokenIssuerURL, "The URL of the ocm token issuer")
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")

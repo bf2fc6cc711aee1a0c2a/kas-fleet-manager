@@ -15,12 +15,10 @@ type DefaultQuotaServiceFactory struct {
 }
 
 func NewDefaultQuotaServiceFactory(
-	ocmClientFactory *ocm.OCMClientFactory,
+	amsClient ocm.AMSClient,
 	connectionFactory *db.ConnectionFactory,
 	accessControlList *acl.AccessControlListConfig,
-
 ) services.QuotaServiceFactory {
-	amsClient := ocmClientFactory.GetClient(ocm.AMSClientType)
 	quoataServiceContainer := map[api.QuotaType]services.QuotaService{
 		api.AMSQuotaType:       &amsQuotaService{amsClient: amsClient},
 		api.AllowListQuotaType: &allowListQuotaService{connectionFactory: connectionFactory, accessControlList: accessControlList},

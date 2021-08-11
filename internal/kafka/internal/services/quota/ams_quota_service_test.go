@@ -145,7 +145,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			quotaService := amsQuotaService{amsClient: tt.fields.ocmClient}
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
@@ -224,7 +225,8 @@ func Test_AMSReserveQuota(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
-			quotaService := amsQuotaService{amsClient: tt.fields.ocmClient}
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Meta: api.Meta{
 					ID: tt.args.kafkaID,
@@ -285,9 +287,11 @@ func Test_Delete_Quota(t *testing.T) {
 			wantErr: true,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			quotaService := amsQuotaService{amsClient: tt.fields.ocmClient}
+			factory := NewDefaultQuotaServiceFactory(tt.fields.ocmClient, nil, nil)
+			quotaService, _ := factory.GetQuotaService(api.AMSQuotaType)
 			err := quotaService.DeleteQuota(tt.args.subscriptionId)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("DeleteQuota() error = %v, wantErr %v", err, tt.wantErr)
