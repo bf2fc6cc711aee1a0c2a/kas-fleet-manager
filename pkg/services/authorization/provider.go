@@ -3,6 +3,7 @@ package authorization
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/goava/di"
 )
 
@@ -18,11 +19,14 @@ func ServiceProviders() di.Option {
 	)
 }
 
-func NewAuthorization(ocmConfig *ocm.OCMConfig, ocmClientFactory *ocm.OCMClientFactory) Authorization {
+func NewAuthorization(ocmConfig *ocm.OCMConfig) Authorization {
 	if ocmConfig.EnableMock {
 		return NewMockAuthorization()
 	} else {
-		connection := ocmClientFactory.GetConnection(ocm.AMSClientType)
+		connection, _, err := ocm.NewOCMConnection(ocmConfig, ocmConfig.AmsUrl)
+		if err != nil {
+			logger.Logger.Error(err)
+		}
 		return NewOCMAuthorization(connection)
 	}
 }

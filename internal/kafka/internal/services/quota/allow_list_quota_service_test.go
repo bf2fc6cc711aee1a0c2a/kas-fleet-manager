@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/onsi/gomega"
@@ -231,10 +232,8 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			quotaService := allowListQuotaService{
-				connectionFactory: tt.arg.connectionFactory,
-				accessControlList: tt.arg.AccessControlList,
-			}
+			factory := NewDefaultQuotaServiceFactory(nil, tt.arg.connectionFactory, tt.arg.AccessControlList)
+			quotaService, _ := factory.GetQuotaService(api.AllowListQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",

@@ -55,6 +55,9 @@ type client struct {
 	connection *sdkClient.Connection
 }
 
+type AMSClient Client
+type ClusterManagementClient Client
+
 func NewOCMConnection(ocmConfig *OCMConfig, BaseUrl string) (*sdkClient.Connection, func(), error) {
 	if ocmConfig.EnableMock && ocmConfig.MockMode != MockModeEmulateServer {
 		return nil, func() {}, nil
