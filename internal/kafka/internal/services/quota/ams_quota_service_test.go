@@ -153,9 +153,9 @@ func Test_AMSCheckQuota(t *testing.T) {
 				},
 				Owner: tt.args.owner,
 			}
-			sq, err := quotaService.CheckQuota(kafka, types.STANDARD)
+			sq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.STANDARD)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
-			eq, err := quotaService.CheckQuota(kafka, types.EVAL)
+			eq, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.EVAL)
 			gomega.Expect(err).ToNot(gomega.HaveOccurred())
 			gomega.Expect(sq).To(gomega.Equal(tt.args.hasStandardQuota))
 			gomega.Expect(eq).To(gomega.Equal(tt.args.hasEvalQuota))

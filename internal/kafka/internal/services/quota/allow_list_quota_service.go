@@ -14,7 +14,7 @@ type allowListQuotaService struct {
 	accessControlList *acl.AccessControlListConfig
 }
 
-func (q allowListQuotaService) CheckQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+func (q allowListQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	if !q.accessControlList.EnableInstanceLimitControl {
 		return true, nil
 	}
