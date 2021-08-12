@@ -24,7 +24,7 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 	return rr
 }
 
-func (q amsQuotaService) CheckQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	quotaId := fmt.Sprintf("quota_id='cluster|rhinfra|%s|marketplace'", strings.ToLower(instanceType.ToProductType()))
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
 	if err != nil {
