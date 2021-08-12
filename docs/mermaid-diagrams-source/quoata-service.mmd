@@ -1,7 +1,7 @@
 classDiagram
   class QuotaService {
       <<Interface>>
-      + CheckQuota(kafka)
+      + CheckIfQuotaIsDefinedForInstanceType(kafka)
       + ReserveQuota(kafka)
       + DeleteQuota(subscriptionId)
   }
@@ -38,4 +38,3 @@ classDiagram
   QuotaServiceFactory --|> QuotaService: Return concrete impl based on QuotaService
   AcceptedKafkaManager ..> QuotaServiceFactory: Depends
   DeletingKafkaManager ..> QuotaServiceFactory: Depends
-  
