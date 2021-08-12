@@ -238,7 +238,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 				Owner:          "username",
 				OrganisationId: "org-id",
 			}
-			_, err := quotaService.CheckQuota(kafka, types.EVAL)
+			_, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafka, types.EVAL)
 			gomega.Expect(tt.want).To(gomega.Equal(err))
 		})
 	}

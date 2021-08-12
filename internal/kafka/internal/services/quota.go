@@ -8,8 +8,8 @@ import (
 
 //go:generate moq -out quotaservice_moq.go . QuotaService
 type QuotaService interface {
-	// CheckQuota checks if the user can reserve quota, return an error otherwise
-	CheckQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError)
+	// CheckIfQuotaIsDefinedForInstanceType checks if quota is defined for the given instance type
+	CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError)
 	// ReserveQuota reserves a quota for a user and return the reservation id or an error in case of failure
 	ReserveQuota(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError)
 	// DeleteQuota deletes a reserved quota

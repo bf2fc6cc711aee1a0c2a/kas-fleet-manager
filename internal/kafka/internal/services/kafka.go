@@ -125,7 +125,7 @@ func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (typ
 		return "", errors.NewWithCause(errors.ErrorGeneral, factoryErr, "unable to check quota")
 	}
 
-	hasRhosakQuota, err := quotaService.CheckQuota(kafkaRequest, types.STANDARD)
+	hasRhosakQuota, err := quotaService.CheckIfQuotaIsDefinedForInstanceType(kafkaRequest, types.STANDARD)
 	if err != nil {
 		return "", err
 	}
