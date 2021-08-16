@@ -1908,3 +1908,96 @@ func TestKafkaService_ChangeKafkaCNAMErecords(t *testing.T) {
 	}
 
 }
+
+func TestKafkaService_ListComponentVersions(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		wantErr   bool
+		want      []KafkaComponentVersions
+		setupFunc func()
+	}{
+		{
+			name:    "should return the component versions for Kafka",
+			fields:  fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			wantErr: false,
+			setupFunc: func() {
+				versions := []map[string]interface{}{
+					{
+						"id":                      "1",
+						"cluster_id":              "cluster1",
+						"desired_strimzi_version": "1.0.1",
+						"actual_strimzi_version":  "1.0.0",
+						"strimzi_upgrading":       true,
+						"desired_kafka_version":   "2.0.1",
+						"actual_kafka_version":    "2.0.0",
+						"kafka_upgrading":         false,
+					},
+					{
+						"id":                      "2",
+						"cluster_id":              "cluster2",
+						"desired_strimzi_version": "1.0.1",
+						"actual_strimzi_version":  "1.0.0",
+						"strimzi_upgrading":       false,
+						"desired_kafka_version":   "2.0.1",
+						"actual_kafka_version":    "2.0.0",
+						"kafka_upgrading":         false,
+					},
+				}
+				mocket.Catcher.Reset().
+					NewMock().
+					WithQuery(`SELECT "id","cluster_id","desired_strimzi_version","actual_strimzi_version","strimzi_upgrading","desired_kafka_version","actual_kafka_version","kafka_upgrading"`).
+					WithReply(versions)
+			},
+			want: []KafkaComponentVersions{{
+				ID:                    "1",
+				ClusterID:             "cluster1",
+				DesiredStrimziVersion: "1.0.1",
+				ActualStrimziVersion:  "1.0.0",
+				StrimziUpgrading:      true,
+				DesiredKafkaVersion:   "2.0.1",
+				ActualKafkaVersion:    "2.0.0",
+				KafkaUpgrading:        false,
+			}, {
+				ID:                    "2",
+				ClusterID:             "cluster2",
+				DesiredStrimziVersion: "1.0.1",
+				ActualStrimziVersion:  "1.0.0",
+				StrimziUpgrading:      false,
+				DesiredKafkaVersion:   "2.0.1",
+				ActualKafkaVersion:    "2.0.0",
+				KafkaUpgrading:        false,
+			}},
+		},
+		{
+			name:    "should return error",
+			fields:  fields{connectionFactory: db.NewMockConnectionFactory(nil)},
+			wantErr: true,
+			setupFunc: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT`).WithQueryException()
+			},
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setupFunc != nil {
+				tt.setupFunc()
+			}
+			k := &kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+			}
+			result, err := k.ListComponentVersions()
+			if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error for ListComponentVersions: %v", err)
+			}
+			if !reflect.DeepEqual(result, tt.want) {
+				t.Errorf("ListComponentVersions want = %v, got = %v", tt.want, result)
+			}
+		})
+	}
+}
