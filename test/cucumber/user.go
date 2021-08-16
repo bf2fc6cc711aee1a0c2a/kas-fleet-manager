@@ -11,6 +11,7 @@ package cucumber
 import (
 	"context"
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"github.com/cucumber/godog"
 )
@@ -25,7 +26,7 @@ func init() {
 }
 
 func (s *TestSuite) createUserNamed(name string) error {
-	// this value if taken from config/allow-list-configuration.yaml
+	// this value is taken from config/allow-list-configuration.yaml
 	s.Mu.Lock()
 	orgId := s.nextOrgId
 	s.nextOrgId += 1
