@@ -58,6 +58,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			ListByStatusFunc: func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the ListByStatus method")
 // 			},
+// 			ListComponentVersionsFunc: func() ([]KafkaComponentVersions, error) {
+// 				panic("mock out the ListComponentVersions method")
+// 			},
 // 			ListKafkasWithRoutesNotCreatedFunc: func() ([]*dbapi.KafkaRequest, *serviceError.ServiceError) {
 // 				panic("mock out the ListKafkasWithRoutesNotCreated method")
 // 			},
@@ -121,6 +124,9 @@ type KafkaServiceMock struct {
 
 	// ListByStatusFunc mocks the ListByStatus method.
 	ListByStatusFunc func(status ...constants2.KafkaStatus) ([]*dbapi.KafkaRequest, *serviceError.ServiceError)
+
+	// ListComponentVersionsFunc mocks the ListComponentVersions method.
+	ListComponentVersionsFunc func() ([]KafkaComponentVersions, error)
 
 	// ListKafkasWithRoutesNotCreatedFunc mocks the ListKafkasWithRoutesNotCreated method.
 	ListKafkasWithRoutesNotCreatedFunc func() ([]*dbapi.KafkaRequest, *serviceError.ServiceError)
@@ -207,6 +213,9 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status []constants2.KafkaStatus
 		}
+		// ListComponentVersions holds details about calls to the ListComponentVersions method.
+		ListComponentVersions []struct {
+		}
 		// ListKafkasWithRoutesNotCreated holds details about calls to the ListKafkasWithRoutesNotCreated method.
 		ListKafkasWithRoutesNotCreated []struct {
 		}
@@ -265,6 +274,7 @@ type KafkaServiceMock struct {
 	lockHasAvailableCapacity           sync.RWMutex
 	lockList                           sync.RWMutex
 	lockListByStatus                   sync.RWMutex
+	lockListComponentVersions          sync.RWMutex
 	lockListKafkasWithRoutesNotCreated sync.RWMutex
 	lockPrepareKafkaRequest            sync.RWMutex
 	lockRegisterKafkaDeprovisionJob    sync.RWMutex
@@ -620,6 +630,32 @@ func (mock *KafkaServiceMock) ListByStatusCalls() []struct {
 	mock.lockListByStatus.RLock()
 	calls = mock.calls.ListByStatus
 	mock.lockListByStatus.RUnlock()
+	return calls
+}
+
+// ListComponentVersions calls ListComponentVersionsFunc.
+func (mock *KafkaServiceMock) ListComponentVersions() ([]KafkaComponentVersions, error) {
+	if mock.ListComponentVersionsFunc == nil {
+		panic("KafkaServiceMock.ListComponentVersionsFunc: method is nil but KafkaService.ListComponentVersions was just called")
+	}
+	callInfo := struct {
+	}{}
+	mock.lockListComponentVersions.Lock()
+	mock.calls.ListComponentVersions = append(mock.calls.ListComponentVersions, callInfo)
+	mock.lockListComponentVersions.Unlock()
+	return mock.ListComponentVersionsFunc()
+}
+
+// ListComponentVersionsCalls gets all the calls that were made to ListComponentVersions.
+// Check the length with:
+//     len(mockedKafkaService.ListComponentVersionsCalls())
+func (mock *KafkaServiceMock) ListComponentVersionsCalls() []struct {
+} {
+	var calls []struct {
+	}
+	mock.lockListComponentVersions.RLock()
+	calls = mock.calls.ListComponentVersions
+	mock.lockListComponentVersions.RUnlock()
 	return calls
 }
 
