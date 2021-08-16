@@ -8,11 +8,11 @@ Get the ID of your cluster (e.g. `1h95qckof3s31h3622d35d5eoqh5vtuq`) using the C
         - Run `ocm list clusters`
         - The ID should be displayed under the ID column
 
->NOTE: By default the auto scaling feature is disabled in development mode. You can enable it by passing `--dataplane-cluster-scaling-type=auto` when starting a built binary. Or changing the default value in [default development environment flags file](cmd/kas-fleet-manager/environments/development.go) when using `make run` to start the API.
+>NOTE: By default the auto scaling feature is disabled in development mode. You can enable it by passing `--dataplane-cluster-scaling-type=auto` when starting a built binary. Or changing the default value in [default development environment flags file](../internal/kafka/internal/environments/development.go) when using `make run` to start the API.
 
 ## Using an existing OSD cluster with manual scaling enabled
 
-You can manually add the cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file. 
+You can manually add the cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) file. 
 
 A content of the file is:
 
@@ -32,7 +32,7 @@ true
 "us-east-1" # or any region
 ```
 
-From the above command, the resulting [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) file content will
+From the above command, the resulting [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) file content will
 ```yaml
 clusters:
   - name: cluster-name
@@ -45,7 +45,7 @@ clusters:
 ```
 ### Connecting to a standalone cluster
 
-kas-fleet-manager allows provisioning of kafkas in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](config/dataplane-cluster-configuration.yaml) giving the:
+kas-fleet-manager allows provisioning of kafkas in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) giving the:
  - `name` of the kubeconfig context to use. This option is required and it has to be an existing name of a context in kubeconfig
  - `provider_type` must be set to `standalone`. This is required to indicate that we are using a standalone
  - `cluster_dns` This will be used to build kafka bootstrap url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
@@ -60,12 +60,11 @@ kas-fleet-manager allows provisioning of kafkas in an already preexisting standa
 ## Configuring OSD Cluster Creation and AutoScaling
 
 To configure auto scaling, use the `--dataplane-cluster-scaling-type=auto`. 
-Once auto scaling is enabled this will activate the scaling up/down of compute nodes for exisiting clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md) 
+Once auto scaling is enabled this will activate the scaling up/down of compute nodes for existing clusters, dynamic creation and deletion of OSD dataplane clusters as explained in the [dynamic scaling architecture documentation](./architecture/data-plane-osd-cluster-dynamic-scaling.md) 
 
 ## Registering an existing cluster in the Database
 
->NOTE: This should only be done if auto scaling is enabled. If manual scaling is enabled, please follow the guide for [using an existing cluster with manual scaling](#using-an-existing-cluster-with-manual-scaling-enabled-via-dataplane-cluster-scaling-type-flag-set-to-manual) instead.
-
+>NOTE: This should only be done if auto scaling is enabled. If manual scaling is enabled, please follow the guide for [using an existing cluster with manual scaling](#using-an-existing-osd-cluster-with-manual-scaling-enabled) instead.
 
 1. Register the cluster to the service
     - Run the following command to generate an **INSERT** command:
