@@ -94,7 +94,7 @@ See the [adding-a-new-endpoint](./docs/adding-a-new-endpoint.md) documentation.
 See the [Adding Flags to KAS Fleet Manager](./docs/adding-new-flags.md) documentation for more information.
 
 ## Testing
-See the [automated tesing](./docs/automated-testing.md) documentation.
+See the [automated testing](./docs/automated-testing.md) documentation.
 
 ## Logging Standards & Best Practices
   * Log only actionable information, which will be read by a human or a machine for auditing or debugging purposes

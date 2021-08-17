@@ -1,7 +1,7 @@
 # Access Control 
 ## Allow List Configurations
 
-Access to the service is limited to certain organisations and users (given by their username) via the [allow list configuration](config/allow-list-configuration.yaml) by default. To disable this, set the property `allow_any_registered_users` to `true` to allow any registered users against redhat.com to access the service. 
+Access to the service is limited to certain organisations and users (given by their username) via the [allow list configuration](../config/allow-list-configuration.yaml) by default. To disable this, set the property `allow_any_registered_users` to `true` to allow any registered users against redhat.com to access the service. 
 
 ### Adding organisations and users to the allow list
 
@@ -22,7 +22,7 @@ Precedence of `max_allowed_instances` configuration: Org > User > Default.
 >NOTE: Instance limit control is disabled in the development environment.
 ### Deny List Configurations
 
-Users can be denied access to the service explicitly by adding their usernames in [the list of denied users](config/deny-list-configuration.yaml).
+Users can be denied access to the service explicitly by adding their usernames in [the list of denied users](../config/deny-list-configuration.yaml).
 
 The username is the account in question.
 
