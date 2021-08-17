@@ -1,13 +1,11 @@
 package quota
 
 import (
-	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
-	"strings"
 )
 
 type amsQuotaService struct {
@@ -25,13 +23,12 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 }
 
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-	quotaId := fmt.Sprintf("quota_id='cluster|rhinfra|%s|marketplace'", strings.ToLower(instanceType.ToProductType()))
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
 	}
 
-	hasQuota, err := q.amsClient.HasAssignedQuota(orgId, quotaId)
+	hasQuota, err := q.amsClient.HasAssignedQuota(orgId, instanceType.GetQuotaType())
 	if err != nil {
 		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
 	}
@@ -47,7 +44,7 @@ func (q amsQuotaService) ReserveQuota(kafka *dbapi.KafkaRequest, instanceType ty
 	cb, _ := amsv1.NewClusterAuthorizationRequest().
 		AccountUsername(kafka.Owner).
 		CloudProviderID(kafka.CloudProvider).
-		ProductID(instanceType.ToProductType()).
+		ProductID(instanceType.GetQuotaType().GetProduct()).
 		Managed(false).
 		ClusterID(kafkaId).
 		ExternalClusterID(kafkaId).

@@ -1705,7 +1705,7 @@ func Test_kafkaService_DeprovisionExpiredKafkas(t *testing.T) {
 			},
 			wantErr: false,
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE created_at  <=  $3 AND status NOT IN ($4,$5)`)
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests" SET "status"=$1,"updated_at"=$2 WHERE created_at  <=  $3 AND status NOT IN ($4,$5)`)
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 		},

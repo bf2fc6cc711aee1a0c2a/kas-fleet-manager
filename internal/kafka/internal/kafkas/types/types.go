@@ -1,5 +1,7 @@
 package types
 
+import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+
 type KafkaInstanceType string
 
 const (
@@ -11,10 +13,9 @@ func (t KafkaInstanceType) String() string {
 	return string(t)
 }
 
-func (t KafkaInstanceType) ToProductType() string {
+func (t KafkaInstanceType) GetQuotaType() ocm.KafkaQuotaType {
 	if t == STANDARD {
-		return "RHOSAK"
+		return ocm.StandardQuota
 	}
-
-	return "RHOSAKTrial"
+	return ocm.EvalQuota
 }
