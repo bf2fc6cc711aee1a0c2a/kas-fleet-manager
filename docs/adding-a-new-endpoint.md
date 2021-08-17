@@ -48,7 +48,7 @@ Validation functions are available in [validation.go](https://github.com/bf2fc6c
 ### Services
 Any backend functionality called from your handler should be specified in `services` or it's subdirectory.
 
-* [`pkg/services`](../pkg/services) - for generic services that can be resused by different services
+* [`pkg/services`](../pkg/services) - for generic services that can be reused by different services
 * [`internal/kafka/internal/services`](../internal/kafka/internal/services) - for kafka specific services
 * [`internal/connector/internal/services`](../internal/connector/internal/services) - for connector specific services
 
@@ -81,7 +81,7 @@ The CLI will only be used for local development and testing. If a new endpoint w
 The CLI is built using [Cobra](https://github.com/spf13/cobra).  All of the commands and sub commands are located at:
 
 * [`cmd`](../cmd) - main binary entry points
-* [`pkg/cmd`](../internal/kafka/internal/cmd) - common sub commands
+* [`pkg/cmd`](../pkg/cmd) - common sub commands
 * [`internal/kafka/internal/cmd`](../internal/kafka/internal/cmd) - kafka sub commands
 
 ```

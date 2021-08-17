@@ -12,7 +12,7 @@ When it is enabled, the following diagram describes the architecture for quota m
 
 ![Quota Service Interface](../images/quoata-service.png)
 
-The `QuotaService` is defined in the [services package](../../pkg/services/quota.go). 
+The `QuotaService` is defined in the [services package](../../internal/kafka/internal/services/quota.go). 
 
 The `QuotaServiceFactory` provides the concrete implementation of the `QuotaService` to be used. 
 The decision is based on the type provided - an enum, currently accepting `ams` and `allow-list`.
