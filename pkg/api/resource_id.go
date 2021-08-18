@@ -1,7 +1,7 @@
 package api
 
-import "github.com/segmentio/ksuid"
+import "github.com/rs/xid"
 
 func NewID() string {
-	return ksuid.New().String()
+	return xid.New().String()
 }

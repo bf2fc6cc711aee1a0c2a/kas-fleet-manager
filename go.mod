@@ -50,7 +50,6 @@ require (
 	github.com/prometheus/common v0.20.0
 	github.com/rs/xid v1.2.1
 	github.com/santhosh-tekuri/jsonschema/v3 v3.0.1
-	github.com/segmentio/ksuid v1.0.3
 	github.com/selvatico/go-mocket v1.0.7
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
