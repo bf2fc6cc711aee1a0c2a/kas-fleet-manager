@@ -60,7 +60,7 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 	for _, ks := range status {
 		kafka, getErr := d.kafkaService.GetById(ks.KafkaClusterId)
 		if getErr != nil {
-			log.Error(errors.Wrapf(getErr, "failed to get kafka cluster by id %s", ks.KafkaClusterId))
+			glog.Error(errors.Wrapf(getErr, "failed to get kafka cluster by id %s", ks.KafkaClusterId))
 			continue
 		}
 		if kafka.ClusterID != clusterId {
@@ -236,7 +236,7 @@ func (d *dataPlaneKafkaService) reassignKafkaCluster(kafka *dbapi.KafkaRequest) 
 		}
 		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusProvisioning, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
 	} else {
-		glog.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)
+		logger.Logger.Infof("kafka cluster %s is rejected and current status is %s", kafka.ID, kafka.Status)
 	}
 
 	return nil
