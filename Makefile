@@ -245,7 +245,7 @@ verify: check-gopath openapi/validate
 		./test/...
 .PHONY: verify
 
-# Runs linter against go files and .yaml files in the templates directory
+# Runs linter against go files and .y(a)ml files in the templates directory
 # Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
 # and spectral installed via npm
 lint: golangci-lint specinstall
@@ -255,7 +255,7 @@ lint: golangci-lint specinstall
 		./internal/... \
 		./test/...
 
-	spectral lint templates/*.yml --ignore-unknown-format --ruleset .validate-templates.yaml
+	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
 # Build binaries
