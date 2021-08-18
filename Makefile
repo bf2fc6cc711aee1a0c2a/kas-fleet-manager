@@ -153,7 +153,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	ln -s spectral-installation/node_modules/.bin/spectral spectral ;\
 	}
 endif
-validateOpenapiSpec: specinstall
+openapi/spec/validate: specinstall
 	spectral lint openapi/kas-fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
 
 
@@ -192,34 +192,34 @@ endif
 
 # Prints a list of useful targets.
 help:
-	@echo ""
 	@echo "Kafka Service Fleet Manager make targets"
 	@echo ""
-	@echo "make verify               	verify source code"
-	@echo "make lint                 	run golangci-lint"
-	@echo "make binary               	compile binaries"
-	@echo "make install              	compile binaries and install in GOPATH bin"
-	@echo "make run                  	run the application"
-	@echo "make run/docs             	run swagger and host the api spec"
-	@echo "make test                 	run unit tests"
-	@echo "make test/integration     	run integration tests"
-	@echo "make test/performance      run performance tests"
-	@echo "make code/fix             	format files"
-	@echo "make generate             	generate go and openapi modules"
-	@echo "make openapi/generate     	generate openapi modules"
-	@echo "make openapi/validate     	validate openapi schema"
-	@echo "make image                	build docker image"
-	@echo "make push                 	push docker image"
-	@echo "make project              	create and use the kas-fleet-manager project"
-	@echo "make clean                	delete temporary generated files"
-	@echo "make setup/git/hooks      	setup git hooks"
-	@echo "make keycloak/setup     	    setup mas sso clientId, clientSecret & crt"
-	@echo "make kafkacert/setup     	    setup the kafka certificate used for Kafka Brokers"
-	@echo "make observatorium/setup"       setup observatorium secret used by CI
-	@echo "make docker/login/internal	login to an openshift cluster image registry"
-	@echo "make image/build/push/internal  build and push image to an openshift cluster image registry."
-	@echo "make deploy               	deploy the service via templates to an openshift cluster"
-	@echo "make undeploy             	remove the service deployments from an openshift cluster"
+	@echo "make verify                      verify source code"
+	@echo "make lint                        lint go files and .yaml templates"
+	@echo "make binary                      compile binaries"
+	@echo "make install                     compile binaries and install in GOPATH bin"
+	@echo "make run                         run the application"
+	@echo "make run/docs                    run swagger and host the api spec"
+	@echo "make test                        run unit tests"
+	@echo "make test/integration            run integration tests"
+	@echo "make test/performance            run performance tests"
+	@echo "make code/fix                    format files"
+	@echo "make generate                    generate go and openapi modules"
+	@echo "make openapi/generate            generate openapi modules"
+	@echo "make openapi/validate            validate openapi schema"
+	@echo "make image                       build docker image"
+	@echo "make push                        push docker image"
+	@echo "make project                     create and use the kas-fleet-manager project"
+	@echo "make clean                       delete temporary generated files"
+	@echo "make setup/git/hooks             setup git hooks"
+	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
+	@echo "make kafkacert/setup             setup the kafka certificate used for Kafka Brokers"
+	@echo "make observatorium/setup         setup observatorium secret used by CI"
+	@echo "make docker/login/internal       login to an openshift cluster image registry"
+	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
+	@echo "make deploy                      deploy the service via templates to an openshift cluster"
+	@echo "make undeploy                    remove the service deployments from an openshift cluster"
+	@echo "openapi/spec/validate            validate OpenAPI spec using spectral"
 	@echo "$(fake)"
 .PHONY: help
 
@@ -245,14 +245,17 @@ verify: check-gopath openapi/validate
 		./test/...
 .PHONY: verify
 
-# Runs our linter to verify that everything is following best practices
+# Runs linter against go files and .y(a)ml files in the templates directory
 # Requires golangci-lint to be installed @ $(go env GOPATH)/bin/golangci-lint
-lint: golangci-lint
+# and spectral installed via npm
+lint: golangci-lint specinstall
 	$(GOLANGCI_LINT) run \
 		./cmd/... \
 		./pkg/... \
 		./internal/... \
 		./test/...
+
+	spectral lint templates/*.yml templates/*.yaml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
 # Build binaries
