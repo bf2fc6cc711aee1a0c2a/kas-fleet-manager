@@ -255,13 +255,7 @@ lint: golangci-lint specinstall
 		./internal/... \
 		./test/...
 
-	$(SPECTRAL) lint templates/db-template.yml \
-		templates/envoy-config-configmap.yml \
-		templates/observatorium-token-refresher.yml \
-		templates/route-template.yml \
-		templates/secrets-template.yml \
-		templates/service-template.yml \
-		--ignore-unknown-format --ruleset .validate-templates.yaml
+	spectral lint templates/*.yml --ignore-unknown-format --ruleset .validate-templates.yaml
 .PHONY: lint
 
 # Build binaries
