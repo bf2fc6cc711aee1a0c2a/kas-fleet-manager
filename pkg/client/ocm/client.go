@@ -45,7 +45,7 @@ type Client interface {
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
-	HasAssignedQuota(organizationId string, filter string) (bool, error)
+	HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error)
 	Connection() *sdkClient.Connection
 }
 
@@ -163,15 +163,31 @@ func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, err
 	return items.Get(0).ID(), nil
 }
 
-func (c *client) HasAssignedQuota(organizationId string, filter string) (bool, error) {
+func (c *client) HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error) {
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationId).QuotaCost()
-	quotaCostList, err := quotaCostClient.List().Search(filter).Send()
+
+	quotaCostList, err := quotaCostClient.List().Parameter("fetchRelatedResources", true).Send()
 	if err != nil {
 		return false, err
 	}
 
-	return quotaCostList.Size() > 0, nil
+	assigned := false
+
+	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
+		relatedResourcesList, hasRelatedResources := qc.GetRelatedResources()
+		if hasRelatedResources {
+			for _, relatedResource := range relatedResourcesList {
+				if relatedResource.ResourceName() == quotaType.GetResourceName() && relatedResource.Product() == quotaType.GetProduct() {
+					assigned = true
+					return false
+				}
+			}
+		}
+		return true
+	})
+
+	return assigned, nil
 }
 
 func (c *client) GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error) {

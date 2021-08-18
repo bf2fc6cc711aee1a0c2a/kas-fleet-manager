@@ -89,7 +89,7 @@ var _ Client = &ClientMock{}
 // 			GetSyncSetFunc: func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error) {
 // 				panic("mock out the GetSyncSet method")
 // 			},
-// 			HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+// 			HasAssignedQuotaFunc: func(organizationId string, quotaType KafkaQuotaType) (bool, error) {
 // 				panic("mock out the HasAssignedQuota method")
 // 			},
 // 			ScaleDownComputeNodesFunc: func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error) {
@@ -184,7 +184,7 @@ type ClientMock struct {
 	GetSyncSetFunc func(clusterID string, syncSetID string) (*clustersmgmtv1.Syncset, error)
 
 	// HasAssignedQuotaFunc mocks the HasAssignedQuota method.
-	HasAssignedQuotaFunc func(organizationId string, filter string) (bool, error)
+	HasAssignedQuotaFunc func(organizationId string, quotaType KafkaQuotaType) (bool, error)
 
 	// ScaleDownComputeNodesFunc mocks the ScaleDownComputeNodes method.
 	ScaleDownComputeNodesFunc func(clusterID string, decrement int) (*clustersmgmtv1.Cluster, error)
@@ -334,8 +334,8 @@ type ClientMock struct {
 		HasAssignedQuota []struct {
 			// OrganizationId is the organizationId argument value.
 			OrganizationId string
-			// Filter is the filter argument value.
-			Filter string
+			// QuotaType is the quotaType argument value.
+			QuotaType KafkaQuotaType
 		}
 		// ScaleDownComputeNodes holds details about calls to the ScaleDownComputeNodes method.
 		ScaleDownComputeNodes []struct {
@@ -1144,21 +1144,21 @@ func (mock *ClientMock) GetSyncSetCalls() []struct {
 }
 
 // HasAssignedQuota calls HasAssignedQuotaFunc.
-func (mock *ClientMock) HasAssignedQuota(organizationId string, filter string) (bool, error) {
+func (mock *ClientMock) HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error) {
 	if mock.HasAssignedQuotaFunc == nil {
 		panic("ClientMock.HasAssignedQuotaFunc: method is nil but Client.HasAssignedQuota was just called")
 	}
 	callInfo := struct {
 		OrganizationId string
-		Filter         string
+		QuotaType      KafkaQuotaType
 	}{
 		OrganizationId: organizationId,
-		Filter:         filter,
+		QuotaType:      quotaType,
 	}
 	mock.lockHasAssignedQuota.Lock()
 	mock.calls.HasAssignedQuota = append(mock.calls.HasAssignedQuota, callInfo)
 	mock.lockHasAssignedQuota.Unlock()
-	return mock.HasAssignedQuotaFunc(organizationId, filter)
+	return mock.HasAssignedQuotaFunc(organizationId, quotaType)
 }
 
 // HasAssignedQuotaCalls gets all the calls that were made to HasAssignedQuota.
@@ -1166,11 +1166,11 @@ func (mock *ClientMock) HasAssignedQuota(organizationId string, filter string) (
 //     len(mockedClient.HasAssignedQuotaCalls())
 func (mock *ClientMock) HasAssignedQuotaCalls() []struct {
 	OrganizationId string
-	Filter         string
+	QuotaType      KafkaQuotaType
 } {
 	var calls []struct {
 		OrganizationId string
-		Filter         string
+		QuotaType      KafkaQuotaType
 	}
 	mock.lockHasAssignedQuota.RLock()
 	calls = mock.calls.HasAssignedQuota
