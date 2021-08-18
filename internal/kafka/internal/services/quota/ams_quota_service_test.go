@@ -52,8 +52,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
-					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
-						return filter == "quota_id='cluster|rhinfra|rhosak|marketplace'", nil
+					HasAssignedQuotaFunc: func(organizationId string, quotaType ocm.KafkaQuotaType) (bool, error) {
+						return quotaType.Equals(ocm.StandardQuota), nil
 					},
 				},
 			},
@@ -82,8 +82,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
-					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
-						return filter == "quota_id='cluster|rhinfra|rhosak|marketplace'", nil
+					HasAssignedQuotaFunc: func(organizationId string, quotaType ocm.KafkaQuotaType) (bool, error) {
+						return quotaType.Equals(ocm.StandardQuota), nil
 					},
 				},
 			},
@@ -108,7 +108,7 @@ func Test_AMSCheckQuota(t *testing.T) {
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
-					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
+					HasAssignedQuotaFunc: func(organizationId string, quotaType ocm.KafkaQuotaType) (bool, error) {
 						return false, nil
 					},
 				},
@@ -133,8 +133,8 @@ func Test_AMSCheckQuota(t *testing.T) {
 					GetOrganisationIdFromExternalIdFunc: func(externalId string) (string, error) {
 						return fmt.Sprintf("fake-org-id-%s", externalId), nil
 					},
-					HasAssignedQuotaFunc: func(organizationId string, filter string) (bool, error) {
-						return filter == "quota_id='cluster|rhinfra|rhosak|marketplace'", nil
+					HasAssignedQuotaFunc: func(organizationId string, quotaType ocm.KafkaQuotaType) (bool, error) {
+						return quotaType.Equals(ocm.StandardQuota), nil
 					},
 				},
 			},
