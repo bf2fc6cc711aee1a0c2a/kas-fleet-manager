@@ -470,6 +470,11 @@ parameters:
   description: image pull polilcy
   value: "IfNotPresent"
 
+- name: TOKEN_ISSUER_URL  
+  displayName: A token issuer url 
+  description: A token issuer url used to validate if JWT token used are coming from the given issuer
+  value: "https://sso.redhat.com/auth/realms/redhat-external"
+
 objects:
   - kind: ConfigMap
     apiVersion: v1
@@ -807,6 +812,7 @@ objects:
             - --https-key-file=/secrets/tls/tls.key
             - --jwks-url=${JWKS_URL}
             - --jwks-file=/config/authentication/jwks.json
+            - --token-issuer-url=${TOKEN_ISSUER_URL}
             - --enable-jwt=${ENABLE_JWT}
             - --enable-https=${ENABLE_HTTPS}
             - --api-server-bindaddress=${API_SERVER_BINDADDRESS}

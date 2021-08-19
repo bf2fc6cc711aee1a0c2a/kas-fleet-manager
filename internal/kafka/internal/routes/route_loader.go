@@ -75,7 +75,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
 	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
-	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.OCMConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
+	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.ServerConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
 	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
 
 	// base path. Could be /api/kafkas_mgmt
@@ -95,7 +95,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// /status
 	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
-	apiV1Status.Use(requireIssuer)
+	if s.ServerConfig.EnableJWT {
+		apiV1Status.Use(requireIssuer)
+	}
 
 	v1Collections := []api.CollectionMetadata{}
 
@@ -109,9 +111,11 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Update).Methods(http.MethodPatch)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
-	apiV1KafkasRouter.Use(requireIssuer)
-	apiV1KafkasRouter.Use(requireOrgID)
-	apiV1KafkasRouter.Use(authorizeMiddleware)
+	if s.ServerConfig.EnableJWT {
+		apiV1KafkasRouter.Use(requireIssuer)
+		apiV1KafkasRouter.Use(requireOrgID)
+		apiV1KafkasRouter.Use(authorizeMiddleware)
+	}
 
 	apiV1KafkasCreateRouter := apiV1KafkasRouter.NewRoute().Subrouter()
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
@@ -128,9 +132,12 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
-	apiV1ServiceAccountsRouter.Use(requireIssuer)
-	apiV1ServiceAccountsRouter.Use(requireOrgID)
-	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
+
+	if s.ServerConfig.EnableJWT {
+		apiV1ServiceAccountsRouter.Use(requireIssuer)
+		apiV1ServiceAccountsRouter.Use(requireOrgID)
+		apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
+	}
 
 	//  /cloud_providers
 	v1Collections = append(v1Collections, api.CollectionMetadata{
