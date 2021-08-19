@@ -123,7 +123,7 @@ parameters:
 
 - name: ENABLE_OCM_MOCK
   displayName: Enable OCM Mock
-  description: Enable mock uhc client
+  description: Enable mock ocm client
   value: "false"
 
 - name: OCM_MOCK_MODE
