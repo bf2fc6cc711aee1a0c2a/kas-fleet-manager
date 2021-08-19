@@ -23,7 +23,6 @@ type OCMConfig struct {
 	SelfToken                     string `json:"self_token"`
 	SelfTokenFile                 string `json:"self_token_file"`
 	TokenURL                      string `json:"token_url"`
-	TokenIssuerURL                string `json:"token_issuer"`
 	Debug                         bool   `json:"debug"`
 	EnableMock                    bool   `json:"enable_mock"`
 	MockMode                      string `json:"mock_type"`
@@ -37,7 +36,6 @@ func NewOCMConfig() *OCMConfig {
 		BaseURL:                "https://api-integration.6943.hive-integration.openshiftapps.com",
 		AmsUrl:                 "https://api.stage.openshift.com",
 		TokenURL:               "https://sso.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
-		TokenIssuerURL:         "https://sso.redhat.com/auth/realms/redhat-external",
 		ClientIDFile:           "secrets/ocm-service.clientId",
 		ClientSecretFile:       "secrets/ocm-service.clientSecret",
 		SelfTokenFile:          "secrets/ocm-service.token",
@@ -56,7 +54,6 @@ func (c *OCMConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.BaseURL, "ocm-base-url", c.BaseURL, "The base URL of the OCM API, integration by default")
 	fs.StringVar(&c.AmsUrl, "ams-base-url", c.AmsUrl, "The base URL of the AMS API, integration by default")
 	fs.StringVar(&c.TokenURL, "ocm-token-url", c.TokenURL, "The base URL that OCM uses to request tokens, stage by default")
-	fs.StringVar(&c.TokenIssuerURL, "ocm-token-issuer-url", c.TokenIssuerURL, "The URL of the ocm token issuer")
 	fs.BoolVar(&c.Debug, "ocm-debug", c.Debug, "Debug flag for OCM API")
 	fs.BoolVar(&c.EnableMock, "enable-ocm-mock", c.EnableMock, "Enable mock ocm clients")
 	fs.StringVar(&c.MockMode, "ocm-mock-mode", c.MockMode, "Set mock type")

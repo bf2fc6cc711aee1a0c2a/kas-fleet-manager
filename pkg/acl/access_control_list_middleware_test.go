@@ -12,8 +12,8 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/golang/glog"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
@@ -30,7 +30,7 @@ const (
 )
 
 var env *environments.Env
-var ocmConfig *ocm.OCMConfig
+var serverConfig *server.ServerConfig
 
 func TestMain(m *testing.M) {
 	var err error
@@ -40,12 +40,12 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
 	}
-	env.MustResolveAll(&ocmConfig)
+	env.MustResolveAll(&serverConfig)
 	os.Exit(m.Run())
 }
 
 func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,7 +187,7 @@ func Test_AccessControlListMiddleware_AccessControlListsDisabled(t *testing.T) {
 }
 
 func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -337,7 +337,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 }
 
 func Test_AccessControlListMiddleware_UserHasAccessViaAllowList(t *testing.T) {
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatal(err)
 	}

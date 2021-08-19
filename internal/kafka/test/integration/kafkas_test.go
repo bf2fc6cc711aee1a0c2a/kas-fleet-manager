@@ -1525,7 +1525,7 @@ func TestKafkaList_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
 
-func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
+func TestKafkaList_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -1536,7 +1536,7 @@ func TestKafkaList_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      test.TestServices.OCMConfig.TokenIssuerURL,
+		"iss":      test.TestServices.ServerConfig.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}
