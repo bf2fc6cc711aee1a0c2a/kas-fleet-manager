@@ -13,7 +13,7 @@ export GORM_DEBUG="false"
 export LOGLEVEL="1"
 export TEST_SUMMARY_FORMAT="standard-verbose"
 
-# cd /uhc/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+# cd /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
 # ls -la 
 # go version
 
