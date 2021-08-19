@@ -149,7 +149,7 @@ func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
 
-func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
+func TestServiceAccounts_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
@@ -160,7 +160,7 @@ func TestServiceAccounts_CorrectOCMIssuer_AuthzSuccess(t *testing.T) {
 
 	account := h.NewRandAccount()
 	claims := jwt.MapClaims{
-		"iss":      test.TestServices.OCMConfig.TokenIssuerURL,
+		"iss":      test.TestServices.ServerConfig.TokenIssuerURL,
 		"org_id":   account.Organization().ExternalID(),
 		"username": account.Username(),
 	}

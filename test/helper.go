@@ -109,7 +109,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
 
 	// Create a new helper
-	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, ocmConfig.TokenIssuerURL)
+	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
 	if err != nil {
 		t.Fatalf("failed to create a new auth helper %s", err.Error())
 	}
