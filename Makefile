@@ -187,7 +187,11 @@ ifndef SERVER_URL
 endif
 
 ifndef TEST_TIMEOUT
-	TEST_TIMEOUT=5h
+	ifeq ($(OCM_ENV), integration)
+		TEST_TIMEOUT=15m
+	else
+		TEST_TIMEOUT=5h
+	endif
 endif
 
 # Prints a list of useful targets.
