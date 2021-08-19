@@ -113,6 +113,7 @@ jobs:
           export GOPATH=$(go env GOPATH)
           export PATH=${PATH}:$GOPATH/bin
           make verify lint binary test test/integration
+        timeout-minutes: 14
       - name: Build and publish image to quay.io
         if: github.event_name == 'push'
         env:
