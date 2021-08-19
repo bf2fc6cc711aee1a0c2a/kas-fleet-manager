@@ -1,12 +1,13 @@
 ---
-# A list of allowed users given by their usernames irrespective whether they are under an organisation or not.
-# For now, this only supports RH service account at the moment.
+# A list of registered users given by their usernames irrespective whether they are under an organisation or not.
+# If a user is not in this or in the `registered_users_per_organisation` list, only EVAL kafka instances will be allowed.
+# For now, this only supports RH service account.
 # In the future it may support service accounts outside RH.
-# The structure of allowed service accounts is:
+# The structure of registered service accounts is:
 #       - username: is the account of the user. The username must be unique
 #       - max_allowed_instances: is the maximum number of instances this user can create.
 #         Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
-allowed_service_accounts:
+registered_service_accounts:
   - username: testuser1@example.com
     max_allowed_instances: 1
   - username: testuser2@example.com
@@ -14,35 +15,36 @@ allowed_service_accounts:
   - username: testuser3@example.com
     max_allowed_instances: 1
 
-# A list of allowed users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
+# A list of registered users per organisation (see structure below). The list current contains known organisations - add yours if it is missing.
+# If a user is not in this or in the `registered_service_accounts` list, only EVAL kafka instances will be allowed.
 # - "id": is the organisation id
-# - "allow_all": Controls whether to allow all users to access the service for this organisation if "allowed_users" list is empty.
+# - "any_user": "any_user": Controls whether to allow all users to create standard kafka instances with this organisation if "registered_users" list is empty.
 # - max_allowed_instances: is the maximum number of instances this orgnisation. Defaults to the global value of `max-allowed-instances` which has different values for distinct environments.
-# - "allowed_users": A list of allowed users for this organisation. If empty, no one is allowed unless "allow_all" is set to true.
+# - "registered_users": A list of registered users for this organisation. If empty, no one is registered unless "any_user" is set to true.
 #      - username: is the account of the user. The username must be unique within the organisation and across organisations.
-allowed_users_per_organisation:
+registered_users_per_organisation:
     # The Control Plane team
   - id: 13640203
-    allow_all: true
+    any_user: true
     max_allowed_instances: 5
-    allowed_users: []
+    registered_users: []
     # The App SRE team
   - id: 12147054
-    allow_all: true
+    any_user: true
     max_allowed_instances: 1
-    allowed_users: []
+    registered_users: []
     # The Kafka Instances team
   - id: 13639843
-    allow_all: true
+    any_user: true
     max_allowed_instances: 1
-    allowed_users: []
+    registered_users: []
     # The MK Security team
   - id: 13785172
-    allow_all: true
+    any_user: true
     max_allowed_instances: 1
-    allowed_users: []
+    registered_users: []
     # The Running the Service team
   - id: 13645369
-    allow_all: true
+    any_user: true
     max_allowed_instances: 3
-    allowed_users: []
+    registered_users: []

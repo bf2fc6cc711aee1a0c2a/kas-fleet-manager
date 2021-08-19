@@ -556,7 +556,7 @@ deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy: ALLOW_EVALUATOR_INSTANCE ?= "true"
-deploy: QUOTA_TYPE ?= "allow-list"
+deploy: QUOTA_TYPE ?= "quota-management-list"
 deploy: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
 deploy: deploy/db

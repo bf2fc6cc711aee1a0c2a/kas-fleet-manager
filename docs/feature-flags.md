@@ -43,14 +43,17 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `kafka-tls-cert-file` [Required]: The path to the file containing the Kafka TLS certificate (default: `'secrets/kafka-tls.crt'`).
     - `kafka-tls-key-file` [Required]: The path to the file containing the Kafka TLS private key (default: `'secrets/kafka-tls.key'`).
 - **enable-evaluator-instance**: Enable the creation of one kafka evaluator instances per user    
-- **quota-type**: Sets the quota service to be used for access control when requesting Kafka instances (options: `ams` or `allow-list`, default: `allow-list`).
+- **quota-type**: Sets the quota service to be used for access control when requesting Kafka instances (options: `ams` or `quota-management-list`, default: `quota-management-list`).
     > For more information on the quota service implementation, see the [quota service architecture](./architecture/quota-service-implementation) architecture documentation.
-    - If this is set to `allow-list`, quotas will be managed via the allow list configuration. 
-        > See [access control](./access-control.md) documentation for more information about the allow list.
+    - If this is set to `quota-management-list`, quotas will be managed via the quota management list configuration. 
+        > See [quota control](./quota-management-list-configuration.md) documentation for more information about the quota management list.
         - `enable-instance-limit-control` [Required]: Enables enforcement of limits on how much Kafka instances a user can create (default: `false`). 
         
             If enabled, the maximum instances a user can create can be specified in one of the following ways:
-            - `allow-list-config-file` [Optional]: Allows setting of Kafka instance limit per organisation via _allowed_users_per_organisation_ or per service account via _allowed_service_accounts_ (default: `'config/allow-list-configuration.yaml'`, example: [allow-list-configuration.yaml](../config/allow-list-configuration.yaml)). 
+            - `quota-management-list-config-file` [Optional]: Allows setting of Kafka instance limit per organisation 
+              via _registered_users_per_organisation_ or per service account via _registered_service_accounts_ 
+              (default: `'config/quota-management-list-configuration.yaml'`, 
+              example: [quota-management-list-configuration.yaml](../config/quota-management-list-configuration.yaml)). 
             - `max-allowed-instances` [Optional]: The default maximum Kafka instance limit a user can create (default: `1`).
 
             > See the [max allowed instances](./access-control.md#max-allowed-instances) section for more information about setting Kafka instance limits for users.

@@ -1,13 +1,12 @@
 package quota
 
 import (
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"net/http"
 	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
@@ -15,10 +14,10 @@ import (
 	mocket "github.com/selvatico/go-mocket"
 )
 
-func Test_AllowListCheckQuota(t *testing.T) {
+func Test_QuotaManagementListCheckQuota(t *testing.T) {
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		AccessControlList *acl.AccessControlListConfig
+		connectionFactory   *db.ConnectionFactory
+		QuotaManagementList *quota_management.QuotaManagementListConfig
 	}
 
 	type args struct {
@@ -34,7 +33,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 		{
 			name: "do not throw an error when instance limit control is disabled when checking eval instances",
 			fields: fields{
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: false,
 				},
 			},
@@ -46,7 +45,7 @@ func Test_AllowListCheckQuota(t *testing.T) {
 		{
 			name: "do not throw an error when instance limit control is disabled when checking standard instances",
 			fields: fields{
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: false,
 				},
 			},
@@ -56,12 +55,12 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "return true when user is not part of the allow list and instance type is eval",
+			name: "return true when user is not part of the quota list and instance type is eval",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList:                  acl.AllowListConfiguration{},
+					QuotaList:                  quota_management.RegisteredUsersListConfiguration{},
 				},
 			},
 			args: args{
@@ -70,12 +69,12 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "return true when user is not part of the allow list and instance type is standard",
+			name: "return true when user is not part of the quota list and instance type is standard",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList:                  acl.AllowListConfiguration{},
+					QuotaList:                  quota_management.RegisteredUsersListConfiguration{},
 				},
 			},
 			args: args{
@@ -84,14 +83,14 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "return true when user is part of the allow list as a service account and instance type is standard",
+			name: "return true when user is part of the quota list as a service account and instance type is standard",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						ServiceAccounts: acl.AllowedAccounts{
-							acl.AllowedAccount{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
 								Username:            "username",
 								MaxAllowedInstances: 4,
 							},
@@ -105,17 +104,17 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "return true when user is part of the allow list under an organisation and instance type is standard",
+			name: "return true when user is part of the quota list under an organisation and instance type is standard",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						Organisations: acl.OrganisationList{
-							acl.Organisation{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
-								AllowAll:            true,
+								AnyUser:             true,
 							},
 						},
 					},
@@ -127,17 +126,17 @@ func Test_AllowListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "return false when user is part of the allow list under an organisation and instance type is eval",
+			name: "return false when user is part of the quota list under an organisation and instance type is eval",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						Organisations: acl.OrganisationList{
-							acl.Organisation{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
-								AllowAll:            true,
+								AnyUser:             true,
 							},
 						},
 					},
@@ -154,8 +153,8 @@ func Test_AllowListCheckQuota(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			gomega.RegisterTestingT(t)
 
-			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.AccessControlList)
-			quotaService, _ := factory.GetQuotaService(api.AllowListQuotaType)
+			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
+			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
@@ -166,10 +165,10 @@ func Test_AllowListCheckQuota(t *testing.T) {
 	}
 }
 
-func Test_AllowListReserveQuota(t *testing.T) {
+func Test_QuotaManagementListReserveQuota(t *testing.T) {
 	type fields struct {
-		connectionFactory *db.ConnectionFactory
-		AccessControlList *acl.AccessControlListConfig
+		connectionFactory   *db.ConnectionFactory
+		QuotaManagementList *quota_management.QuotaManagementListConfig
 	}
 
 	type args struct {
@@ -186,7 +185,7 @@ func Test_AllowListReserveQuota(t *testing.T) {
 		{
 			name: "do not return an error when instance limit control is disabled ",
 			fields: fields{
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: false,
 				},
 			},
@@ -199,11 +198,11 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			name: "return an error when the query db throws an error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						ServiceAccounts: acl.AllowedAccounts{
-							acl.AllowedAccount{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
 								Username:            "username",
 								MaxAllowedInstances: 4,
 							},
@@ -224,14 +223,14 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			name: "return an error when user in an organiation cannot create any more instances after exceeding allowed organisation limits",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						Organisations: acl.OrganisationList{
-							acl.Organisation{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
-								AllowAll:            true,
+								AnyUser:             true,
 							},
 						},
 					},
@@ -255,14 +254,14 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			},
 		},
 		{
-			name: "return an error when user in the allow list attempts to create an eval instance",
+			name: "return an error when user in the quota list attempts to create an eval instance",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						ServiceAccounts: acl.AllowedAccounts{
-							acl.AllowedAccount{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						ServiceAccounts: quota_management.AccountList{
+							quota_management.Account{
 								Username:            "username",
 								MaxAllowedInstances: 4,
 							},
@@ -287,14 +286,14 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			name: "return an error when user is not allowed in their org and they cannot create any more instances eval instances after exceeding default allowed user limits",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						Organisations: acl.OrganisationList{
-							acl.Organisation{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 2,
-								AllowAll:            false,
+								AnyUser:             false,
 							},
 						},
 					},
@@ -321,14 +320,14 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			name: "does not return an error if user is within limits for user creating a standard instance",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
-					AllowList: acl.AllowListConfiguration{
-						Organisations: acl.OrganisationList{
-							acl.Organisation{
+					QuotaList: quota_management.RegisteredUsersListConfiguration{
+						Organisations: quota_management.OrganisationList{
+							quota_management.Organisation{
 								Id:                  "org-id",
 								MaxAllowedInstances: 4,
-								AllowAll:            true,
+								AnyUser:             true,
 							},
 						},
 					},
@@ -348,10 +347,10 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			wantErr: nil,
 		},
 		{
-			name: "do not return an error when user who's not in the allow list can eval instances",
+			name: "do not return an error when user who's not in the quota list can eval instances",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
-				AccessControlList: &acl.AccessControlListConfig{
+				QuotaManagementList: &quota_management.QuotaManagementListConfig{
 					EnableInstanceLimitControl: true,
 				},
 			},
@@ -376,8 +375,8 @@ func Test_AllowListReserveQuota(t *testing.T) {
 			if tt.setupFn != nil {
 				tt.setupFn()
 			}
-			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.AccessControlList)
-			quotaService, _ := factory.GetQuotaService(api.AllowListQuotaType)
+			factory := NewDefaultQuotaServiceFactory(nil, tt.fields.connectionFactory, tt.fields.QuotaManagementList)
+			quotaService, _ := factory.GetQuotaService(api.QuotaManagementListQuotaType)
 			kafka := &dbapi.KafkaRequest{
 				Owner:          "username",
 				OrganisationId: "org-id",
