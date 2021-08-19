@@ -1,6 +1,7 @@
 package quota
 
 import (
+	"fmt"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/kafkas/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
@@ -25,12 +26,12 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 func (q amsQuotaService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 	orgId, err := q.amsClient.GetOrganisationIdFromExternalId(kafka.OrganisationId)
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get organization with external id %v", kafka.OrganisationId))
 	}
 
 	hasQuota, err := q.amsClient.HasAssignedQuota(orgId, instanceType.GetQuotaType())
 	if err != nil {
-		return false, errors.NewWithCause(errors.ErrorGeneral, err, "Error checking quota")
+		return false, errors.NewWithCause(errors.ErrorGeneral, err, fmt.Sprintf("Error checking quota: failed to get assigned quota of type %v for organization with id %v", instanceType.GetQuotaType(), orgId))
 	}
 
 	return hasQuota, nil
