@@ -34,9 +34,11 @@ again & you will be forced to reset the token to receive a new value should you 
 Kas-fleet-manager can be started without a dataplane OSD cluster, however, no Kafkas will be placed or provisioned. To setup a data plane OSD cluster, please follow the `Using an existing OSD cluster with manual scaling enabled` option in the [data-plane-osd-cluster-options.md](docs/data-plane-osd-cluster-options.md) guide.
 
 ### Populating Configuration
-1. Add your organization's `external_id` to the [Allow List Configurations](config/allow-list-configuration.yaml). Follow the guide in [Allow List Configurations](./docs/access-control.md).
-2. Retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token and save it to `secrets/ocm-service.token` 
-3. Setup AWS configuration
+1. Add your organization's `external_id` to the [Quota Management List Configurations](./docs/quota-management-list-configuration.md) 
+if you need to create STANDARD kafka instances. Follow the guide in [Quota Management List Configurations](./docs/access-control.md)
+2. Follow the guide in [Access Control Configurations](./docs/access-control.md) to configure access control as required.
+3. Retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token and save it to `secrets/ocm-service.token` 
+4. Setup AWS configuration
 ```
 make aws/setup
 ```

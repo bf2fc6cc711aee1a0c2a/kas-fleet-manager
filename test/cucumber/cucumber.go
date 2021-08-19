@@ -30,7 +30,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"net/http"
 	"os"
 	"reflect"
@@ -265,16 +265,16 @@ func TestMain(helper *test.Helper) int {
 		nextOrgId: 20000000,
 	}
 
-	var allow *acl.AccessControlListConfig
+	var allow *quota_management.QuotaManagementListConfig
 	helper.Env.MustResolveAll(&allow)
 
 	// Generate lots of org id's that scenarios can use to avoid
 	// conflicting with each other..
 	if allow != nil {
 		for i := 0; i < 1000; i++ {
-			allow.AllowList.Organisations = append(allow.AllowList.Organisations, acl.Organisation{
+			allow.QuotaList.Organisations = append(allow.QuotaList.Organisations, quota_management.Organisation{
 				Id:                  fmt.Sprintf("%d", 20000000+i),
-				AllowAll:            true,
+				AnyUser:             true,
 				MaxAllowedInstances: 1,
 			})
 		}

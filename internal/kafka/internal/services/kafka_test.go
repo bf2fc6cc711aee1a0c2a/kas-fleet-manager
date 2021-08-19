@@ -901,7 +901,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 						MaxCapacity: MaxClusterCapacity,
 					},
 					Quota: &config.KafkaQuotaConfig{
-						Type:                   api.AllowListQuotaType.String(),
+						Type:                   api.QuotaManagementListQuotaType.String(),
 						AllowEvaluatorInstance: false,
 					},
 				},

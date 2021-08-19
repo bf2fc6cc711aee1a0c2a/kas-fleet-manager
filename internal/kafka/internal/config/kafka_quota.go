@@ -9,7 +9,7 @@ type KafkaQuotaConfig struct {
 
 func NewKafkaQuotaConfig() *KafkaQuotaConfig {
 	return &KafkaQuotaConfig{
-		Type:                   api.AllowListQuotaType.String(),
+		Type:                   api.QuotaManagementListQuotaType.String(),
 		AllowEvaluatorInstance: true,
 	}
 }

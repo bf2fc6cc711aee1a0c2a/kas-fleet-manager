@@ -13,7 +13,7 @@ import (
 
 // TestApiStatus_Success verifies the object returned by api status endpoint:
 // - kafka maximum capacity is set to true if user is in deny list
-// - kafka maximum capacity is set to true if user is not in deny list and is not allowed to access the service via the allow list
+// - kafka maximum capacity is set to true if user is not in deny list
 // - or service maximum capacity has been reached i.e we've more than maxCapacity of kafkas created
 // - otherwise it is set to false.
 func TestServiceStatus(t *testing.T) {

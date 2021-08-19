@@ -14,7 +14,7 @@ classDiagram
   class AmsQuotaService {
       -OCMClient ocmClient
   }
-  class AllowListQuotaService {
+  class QuotaManagementListQuotaService {
       - KafkaService kafkaService
   }
 
@@ -33,7 +33,7 @@ classDiagram
   }
 
   QuotaService <|.. AmsQuotaService: Implements
-  QuotaService <|.. AllowListQuotaService: Implements
+  QuotaService <|.. QuotaManagementListQuotaService: Implements
   KafkaService ..> QuotaServiceFactory: Depends
   QuotaServiceFactory --|> QuotaService: Return concrete impl based on QuotaService
   AcceptedKafkaManager ..> QuotaServiceFactory: Depends

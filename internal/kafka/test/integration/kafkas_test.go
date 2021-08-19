@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"net/http"
 	"strings"
 	"testing"
@@ -21,7 +22,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm/clusterservicetest"
 
@@ -376,7 +376,7 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 
 	kafkaRegion := "dummy"
 	kafkaCloudProvider := "dummy"
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	orgId := "13640203"
 
 	// create dummy kafkas
@@ -522,7 +522,7 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 	account2 := h.NewRandAccount()
 	ctx2 := h.NewAuthenticatedContext(account2, nil)
 
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	anotherOrgID := "12147054"
 
 	// create a third account in a different organisation
@@ -646,7 +646,7 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	username1 := "denied-test-user1@example.com"
 	username2 := "denied-test-user2@example.com"
 
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
@@ -719,20 +719,20 @@ func TestKafkaDenyList_RemovingKafkaForDeniedOwners(t *testing.T) {
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for first kafka deletion: %v", kafkaDeletionErr)
 }
 
-// TestKafkaAllowList_MaxAllowedInstances tests the allow list max allowed instances creation validations is performed when enabled
-// The max allowed instances limit is set to "1" set for one organusation is not depassed.
+// TestKafkaQuotaManagementList_MaxAllowedInstances tests the quota management list max allowed instances creation validations is performed when enabled
+// The max allowed instances limit is set to "1" set for one organisation is not depassed.
 // At the same time, users of a different organisation should be able to create instances.
-func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
+func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *acl.AccessControlListConfig) {
+	h, client, teardown := test.NewKafkaHelperWithHooks(t, ocmServer, func(acl *quota_management.QuotaManagementListConfig) {
 		acl.EnableInstanceLimitControl = true
 	})
 	defer teardown()
 
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	orgIdWithLimitOfOne := "12147054"
 	internalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
 	internalUserCtx := h.NewAuthenticatedContext(internalUserAccount, nil)
@@ -790,7 +790,7 @@ func TestKafkaAllowList_MaxAllowedInstances(t *testing.T) {
 	// verify that the request was accepted
 	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
 
-	// verify that an external user not listed in the allow list can create the default maximum allowed kafka instances
+	// verify that an external user not listed in the quota list can create the default maximum allowed kafka instances
 	externalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserCtx := h.NewAuthenticatedContext(externalUserAccount, nil)
 
@@ -873,14 +873,14 @@ func TestKafkaGet(t *testing.T) {
 
 	// An account in a different organization than the one used to create the
 	// Kafka instance should get a 404 Not Found.
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	anotherOrgID := "12147054"
 	account = h.NewAccountWithNameAndOrg(faker.Name(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
 	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
-	// An allowed serviceaccount in config/allow-list-configuration.yaml
+	// An allowed serviceaccount in config/quota-management-list-configuration.yaml
 	// without an organization ID should get a 401 Unauthorized
 	account = h.NewAllowedServiceAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
@@ -1385,7 +1385,7 @@ func TestKafkaList_Success(t *testing.T) {
 	Expect(listItem.Status).To(Equal(constants2.KafkaRequestStatusAccepted.String()))
 
 	// new account setup to prove that users can only list their own (the one they created and the one created by a member of their org) kafka instances
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	anotherOrgID := "13639843"
 	account = h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
@@ -1508,7 +1508,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	// create an account with values from config/allow-list-configuration.yaml
+	// create an account with values from config/quota-management-list-configuration.yaml
 	testuser1 := "testuser1@example.com"
 	orgId := "13640203"
 
@@ -1598,7 +1598,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	// create an account with values from config/allow-list-configuration.yaml
+	// create an account with values from config/quota-management-list-configuration.yaml
 	testuser1 := "testuser1@example.com"
 	orgId := "13640203"
 

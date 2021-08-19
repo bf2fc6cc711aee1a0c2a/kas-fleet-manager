@@ -203,7 +203,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
-	// the API is restarted this time changing the --quota-type flag to allow-list, when kafka A is deleted at this point,
+	// the API is restarted this time changing the --quota-type flag to quota-management-list, when kafka A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
 	kafkaRequest.QuotaType = k.kafkaConfig.Quota.Type
 	if err := dbConn.Create(kafkaRequest).Error; err != nil {

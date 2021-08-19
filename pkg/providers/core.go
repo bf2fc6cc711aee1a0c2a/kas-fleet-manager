@@ -12,6 +12,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/authorization"
@@ -35,6 +36,7 @@ func CoreConfigProviders() di.Option {
 		di.Provide(ocm.NewOCMConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(keycloak.NewKeycloakConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(acl.NewAccessControlListConfig, di.As(new(environments.ConfigModule))),
+		di.Provide(quota_management.NewQuotaManagementListConfig, di.As(new(environments.ConfigModule))),
 		di.Provide(server.NewMetricsConfig, di.As(new(environments.ConfigModule))),
 
 		// Add common CLI sub commands

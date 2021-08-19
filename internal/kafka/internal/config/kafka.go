@@ -56,7 +56,7 @@ func (c *KafkaConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.IntVar(&c.KafkaLifespan.KafkaLifespanInHours, "kafka-lifespan", c.KafkaLifespan.KafkaLifespanInHours, "The desired lifespan of a Kafka instance")
 	fs.StringVar(&c.KafkaLifespan.LongLivedKafkaConfigFile, "long-lived-kafkas-config-file", c.KafkaLifespan.LongLivedKafkaConfigFile, "The file containing the long lived kafkas")
 	fs.StringVar(&c.KafkaDomainName, "kafka-domain-name", c.KafkaDomainName, "The domain name to use for Kafka instances")
-	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'allow-list' for allow list backed implementation (default).")
+	fs.StringVar(&c.Quota.Type, "quota-type", c.Quota.Type, "The type of the quota service to be used. The available options are: 'ams' for AMS backed implementation and 'quota-management-list' for quota list backed implementation (default).")
 	fs.BoolVar(&c.Quota.AllowEvaluatorInstance, "allow-evaluator-instance", c.Quota.AllowEvaluatorInstance, "Allow the creation of kafka evaluator instances")
 }
 
