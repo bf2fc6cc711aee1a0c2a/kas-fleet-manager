@@ -1,12 +1,13 @@
 package kafka_mgrs
 
 import (
+	"time"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
@@ -108,5 +109,5 @@ func (k *PreparingKafkaManager) handleKafkaRequestCreationError(kafkaRequest *db
 		return errors.Wrapf(err, "error creating kafka %s", kafkaRequest.ID)
 	}
 
-	return errors.Wrapf(err, "failed to create kafka %s on cluster %s", kafkaRequest.ID, kafkaRequest.ClusterID)
+	return errors.Wrapf(err, "failed to provision kafka %s on cluster %s", kafkaRequest.ID, kafkaRequest.ClusterID)
 }
