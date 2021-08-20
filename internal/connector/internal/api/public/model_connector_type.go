@@ -18,7 +18,7 @@ type ConnectorType struct {
 	Name string `json:"name"`
 	// Version of the connector type.
 	Version string `json:"version"`
-	// Version of the connector type.
+	// Channel names of the connector type.
 	Channels []string `json:"channels,omitempty"`
 	// A description of the connector.
 	Description string `json:"description,omitempty"`
