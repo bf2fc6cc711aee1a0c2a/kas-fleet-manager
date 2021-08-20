@@ -728,16 +728,16 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 	r := []interface{}{
 		c.buildIngressController(ingressDNS),
+		c.buildReadOnlyGroupResource(),
+		c.buildDedicatedReaderClusterRoleBindingResource(),
+		c.buildKafkaSREGroupResource(),
+		c.buildKafkaSreClusterRoleBindingResource(),
 		c.buildObservabilityNamespaceResource(),
 		c.buildObservatoriumDexSecretResource(),
 		c.buildObservatoriumSSOSecretResource(),
 		c.buildObservabilityCatalogSourceResource(),
 		c.buildObservabilityOperatorGroupResource(),
 		c.buildObservabilitySubscriptionResource(),
-		c.buildReadOnlyGroupResource(),
-		c.buildDedicatedReaderClusterRoleBindingResource(),
-		c.buildKafkaSREGroupResource(),
-		c.buildKafkaSreClusterRoleBindingResource(),
 	}
 	strimiNS := strimziAddonNamespace
 	if c.OCMConfig.StrimziOperatorAddonID == "managed-kafka-qe" {

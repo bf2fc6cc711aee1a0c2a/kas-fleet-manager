@@ -2,12 +2,13 @@ package workers
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
@@ -1171,6 +1172,66 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				},
 			},
 		},
+		&userv1.Group{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: userv1.SchemeGroupVersion.String(),
+				Kind:       "Group",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkReadOnlyGroupName,
+			},
+		},
+		&authv1.ClusterRoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "rbac.authorization.k8s.io/v1",
+				Kind:       "ClusterRoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkReadOnlyRoleBindingName,
+			},
+			Subjects: []k8sCoreV1.ObjectReference{
+				{
+					Kind:       "Group",
+					APIVersion: "rbac.authorization.k8s.io",
+					Name:       mkReadOnlyGroupName,
+				},
+			},
+			RoleRef: k8sCoreV1.ObjectReference{
+				Kind:       "ClusterRole",
+				Name:       dedicatedReadersRoleBindingName,
+				APIVersion: "rbac.authorization.k8s.io",
+			},
+		},
+		&userv1.Group{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: userv1.SchemeGroupVersion.String(),
+				Kind:       "Group",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkSREGroupName,
+			},
+		},
+		&authv1.ClusterRoleBinding{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "rbac.authorization.k8s.io/v1",
+				Kind:       "ClusterRoleBinding",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: mkSRERoleBindingName,
+			},
+			Subjects: []k8sCoreV1.ObjectReference{
+				{
+					Kind:       "Group",
+					APIVersion: "rbac.authorization.k8s.io",
+					Name:       mkSREGroupName,
+				},
+			},
+			RoleRef: k8sCoreV1.ObjectReference{
+				Kind:       "ClusterRole",
+				Name:       clusterAdminRoleName,
+				APIVersion: "rbac.authorization.k8s.io",
+			},
+		},
 		&projectv1.Project{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "project.openshift.io/v1",
@@ -1265,66 +1326,6 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				StartingCSV:            "observability-operator.v3.0.3",
 				InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 				Package:                observabilitySubscriptionName,
-			},
-		},
-		&userv1.Group{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: userv1.SchemeGroupVersion.String(),
-				Kind:       "Group",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkReadOnlyGroupName,
-			},
-		},
-		&authv1.ClusterRoleBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "rbac.authorization.k8s.io/v1",
-				Kind:       "ClusterRoleBinding",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkReadOnlyRoleBindingName,
-			},
-			Subjects: []k8sCoreV1.ObjectReference{
-				{
-					Kind:       "Group",
-					APIVersion: "rbac.authorization.k8s.io",
-					Name:       mkReadOnlyGroupName,
-				},
-			},
-			RoleRef: k8sCoreV1.ObjectReference{
-				Kind:       "ClusterRole",
-				Name:       dedicatedReadersRoleBindingName,
-				APIVersion: "rbac.authorization.k8s.io",
-			},
-		},
-		&userv1.Group{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: userv1.SchemeGroupVersion.String(),
-				Kind:       "Group",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkSREGroupName,
-			},
-		},
-		&authv1.ClusterRoleBinding{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "rbac.authorization.k8s.io/v1",
-				Kind:       "ClusterRoleBinding",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: mkSRERoleBindingName,
-			},
-			Subjects: []k8sCoreV1.ObjectReference{
-				{
-					Kind:       "Group",
-					APIVersion: "rbac.authorization.k8s.io",
-					Name:       mkSREGroupName,
-				},
-			},
-			RoleRef: k8sCoreV1.ObjectReference{
-				Kind:       "ClusterRole",
-				Name:       clusterAdminRoleName,
-				APIVersion: "rbac.authorization.k8s.io",
 			},
 		},
 	}
