@@ -16,10 +16,6 @@ type QuotaManagementListService struct {
 }
 
 func (q QuotaManagementListService) CheckIfQuotaIsDefinedForInstanceType(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
-	if !q.quotaManagementList.EnableInstanceLimitControl {
-		return true, nil
-	}
-
 	username := kafka.Owner
 	orgId := kafka.OrganisationId
 	org, orgFound := q.quotaManagementList.QuotaList.Organisations.GetById(orgId)

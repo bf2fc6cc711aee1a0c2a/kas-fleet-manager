@@ -17,7 +17,7 @@ The `QuotaService` is defined in the [services package](../../internal/kafka/int
 The `QuotaServiceFactory` provides the concrete implementation of the `QuotaService` to be used. 
 The decision is based on the type provided - an enum, currently accepting `ams` and `quota-management-list`.
 - The `ams` quota service is implemented using OCM. The implementation can be found in [ams_quota_service.go](../../internal/kafka/internal/services/quota/ams_quota_service.go)
-- The `quota-management-list` quota service is implemented using the quota list configuration. The implementation can be found in [ams_quota_service.go](../../internal/kafka/internal/services/quota/allow_list_quota_service.go). 
+- The `quota-management-list` quota service is implemented using the quota list configuration. The implementation can be found in [quota_management_list_service.go](../../internal/kafka/internal/services/quota/quota_management_list_service.go). 
    The quota list based quota service can be disabled by setting the flag `enable-instance-limit-control` to `false`.
 
 
