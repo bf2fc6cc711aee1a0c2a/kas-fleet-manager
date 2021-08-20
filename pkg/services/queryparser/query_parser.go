@@ -33,8 +33,9 @@ const MaximumComplexity = 10
 type checkUnbalancedBraces func() error
 
 type DBQuery struct {
-	Query  string
-	Values []interface{}
+	Query        string
+	Values       []interface{}
+	ValidColumns []string
 }
 
 type QueryParser interface {
@@ -134,7 +135,7 @@ func (p *queryParser) initStateMachine() (State, checkUnbalancedBraces) {
 		case ColumnTokenFamily:
 			// we want column names to be lowercase
 			columnName := strings.ToLower(token.value)
-			if !contains(validColumns, columnName) {
+			if !contains(p.dbqry.ValidColumns, columnName) {
 				return fmt.Errorf("invalid column name: '%s'", token.value)
 			}
 			p.dbqry.Query += columnName
@@ -211,6 +212,12 @@ func (p *queryParser) Parse(sql string) (*DBQuery, error) {
 	return &p.dbqry, nil
 }
 
-func NewQueryParser() QueryParser {
-	return &queryParser{dbqry: DBQuery{}}
+func NewQueryParser(columns ...string) QueryParser {
+	query := DBQuery{}
+	if len(columns) == 0 {
+		query.ValidColumns = validColumns
+	} else {
+		query.ValidColumns = columns
+	}
+	return &queryParser{dbqry: query}
 }

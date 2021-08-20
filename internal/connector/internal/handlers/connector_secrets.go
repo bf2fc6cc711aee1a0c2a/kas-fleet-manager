@@ -97,7 +97,7 @@ func getSecretRefs(resource *dbapi.Connector, ct *dbapi.ConnectorType) (result [
 
 	// find the existing secrets...
 	if len(resource.ConnectorSpec) != 0 {
-		_, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
+		_, err = secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() != ajson.Object {
 				return nil
 			}
