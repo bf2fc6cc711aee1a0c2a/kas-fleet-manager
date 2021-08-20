@@ -43,18 +43,6 @@ func Test_QuotaManagementListCheckQuota(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "do not throw an error when instance limit control is disabled when checking standard instances",
-			fields: fields{
-				QuotaManagementList: &quota_management.QuotaManagementListConfig{
-					EnableInstanceLimitControl: false,
-				},
-			},
-			args: args{
-				instanceType: types.STANDARD,
-			},
-			want: true,
-		},
-		{
 			name: "return true when user is not part of the quota list and instance type is eval",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
@@ -220,7 +208,7 @@ func Test_QuotaManagementListReserveQuota(t *testing.T) {
 			wantErr: errors.GeneralError("count failed from database"),
 		},
 		{
-			name: "return an error when user in an organiation cannot create any more instances after exceeding allowed organisation limits",
+			name: "return an error when user in an organisation cannot create any more instances after exceeding allowed organisation limits",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				QuotaManagementList: &quota_management.QuotaManagementListConfig{
