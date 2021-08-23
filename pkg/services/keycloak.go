@@ -656,9 +656,17 @@ func (kc *keycloakService) checkAllowedServiceAccountsLimits(accessToken string,
 	if err != nil {
 		return false, err
 	}
-	numOfClientsFound := len(clients) + 1
-	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the userId:%s", numOfClientsFound, maxAllowed, userId)
-	if numOfClientsFound > maxAllowed {
+
+	serviceAccountCount := 0
+	for _, client := range clients {
+		if !strings.HasPrefix(shared.SafeString(client.ClientID), UserServiceAccountPrefix) {
+			continue
+		}
+		serviceAccountCount++
+	}
+
+	glog.V(10).Infof("Existing number of clients found: %d & max allowed: %d, for the userId:%s", serviceAccountCount, maxAllowed, userId)
+	if serviceAccountCount >= maxAllowed {
 		return false, nil //http requester's error
 	} else {
 		return true, nil
