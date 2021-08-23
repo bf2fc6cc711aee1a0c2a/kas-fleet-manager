@@ -35,6 +35,8 @@ type KcClient interface {
 	CreateProtocolMapperConfig(string) []gocloak.ProtocolMapperRepresentation
 	GetClientServiceAccount(accessToken string, internalClient string) (*gocloak.User, error)
 	UpdateServiceAccountUser(accessToken string, serviceAccountUser gocloak.User) error
+	// GetClients returns keycloak clients using the given method parameters. If max is less than 0, then returns all the clients.
+	// If it is 0, then default to using the default max allowed service accounts configuration.
 	GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error)
 	IsSameOrg(client *gocloak.Client, orgId string) bool
 	IsOwner(client *gocloak.Client, userId string) bool
@@ -251,17 +253,19 @@ func (kc *kcClient) UpdateServiceAccountUser(accessToken string, serviceAccountU
 }
 
 func (kc *kcClient) GetClients(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
-	params := gocloak.GetClientsParams{}
+	params := gocloak.GetClientsParams{
+		First:                &first,
+		SearchableAttributes: &attribute,
+	}
+
 	if max == 0 {
 		max = kc.config.MaxLimitForGetClients
 	}
+
 	if max > 0 {
-		params = gocloak.GetClientsParams{
-			First:                &first,
-			Max:                  &max,
-			SearchableAttributes: &attribute,
-		}
+		params.Max = &max
 	}
+
 	clients, err := kc.kcClient.GetClients(kc.ctx, accessToken, kc.realmConfig.Realm, params)
 	if err != nil {
 		return nil, err
