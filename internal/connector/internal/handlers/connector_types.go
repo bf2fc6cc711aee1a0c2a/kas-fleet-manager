@@ -24,6 +24,7 @@ func NewConnectorTypesHandler(service services.ConnectorTypesService) *Connector
 		service: service,
 	}
 }
+
 func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlers.HandlerConfig{
@@ -35,7 +36,11 @@ func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				return nil, err
 			}
-			return presenters.PresentConnectorType(resource), nil
+			connectorType, err2 := presenters.PresentConnectorType(resource)
+			if err2 != nil {
+				return connectorType, errors.ToServiceError(err2)
+			}
+			return connectorType, nil
 		},
 	}
 	handlers.HandleGet(w, r, cfg)
@@ -60,8 +65,11 @@ func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
 			}
 
 			for _, resource := range resources {
-				converted := presenters.PresentConnectorType(resource)
-				resourceList.Items = append(resourceList.Items, converted)
+				converted, err1 := presenters.PresentConnectorType(resource)
+				if err1 != nil {
+					return nil, errors.ToServiceError(err1)
+				}
+				resourceList.Items = append(resourceList.Items, *converted)
 			}
 
 			return resourceList, nil
