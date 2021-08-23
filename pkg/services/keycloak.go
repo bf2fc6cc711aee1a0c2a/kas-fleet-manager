@@ -652,14 +652,14 @@ func (kc *keycloakService) createServiceAccountIfNotExists(token string, clientR
 func (kc *keycloakService) checkAllowedServiceAccountsLimits(accessToken string, maxAllowed int, userId string) (bool, error) {
 	glog.V(5).Infof("Check if user is allowed to create service accounts: userId = %s", userId)
 	searchAtt := fmt.Sprintf("rh-user-id:%s", userId)
-	clients, err := kc.kcClient.GetClients(accessToken, 0, maxAllowed, searchAtt)
+	clients, err := kc.kcClient.GetClients(accessToken, 0, -1, searchAtt) // return all service accounts attached to the user
 	if err != nil {
 		return false, err
 	}
 
 	serviceAccountCount := 0
 	for _, client := range clients {
-		if !strings.HasPrefix(shared.SafeString(client.ClientID), UserServiceAccountPrefix) {
+		if !strings.HasPrefix(shared.SafeString(client.ClientID), UserServiceAccountPrefix) { // filter out internal ones and care about user facing ones for comparison
 			continue
 		}
 		serviceAccountCount++
