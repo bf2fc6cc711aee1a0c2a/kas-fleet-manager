@@ -20,7 +20,6 @@ import (
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
 	authv1 "github.com/openshift/api/authorization/v1"
-	projectv1 "github.com/openshift/api/project/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
@@ -1232,10 +1231,10 @@ func buildResourceSet(observabilityConfig observatorium.ObservabilityConfigurati
 				APIVersion: "rbac.authorization.k8s.io",
 			},
 		},
-		&projectv1.Project{
+		&k8sCoreV1.Namespace{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "project.openshift.io/v1",
-				Kind:       "Project",
+				APIVersion: "v1",
+				Kind:       "Namespace",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: observabilityNamespace,
