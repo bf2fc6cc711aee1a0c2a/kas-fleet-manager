@@ -91,10 +91,20 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 					},
 					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
 						testID := "12221"
+						testID2 := fmt.Sprintf("internal-%s", "some-internal-id")
+						testID3 := fmt.Sprintf("internal-%s", "some-internal-id-2")
 						att := map[string]string{}
 						clients := []*gocloak.Client{
 							{
 								ClientID:   &testID,
+								Attributes: &att,
+							},
+							{
+								ClientID:   &testID2,
+								Attributes: &att,
+							},
+							{
+								ClientID:   &testID3,
 								Attributes: &att,
 							},
 						}
@@ -155,8 +165,9 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 						}
 					},
 					GetClientsFunc: func(accessToken string, first int, max int, attribute string) ([]*gocloak.Client, error) {
-						testID := "12221"
-						testID2 := "21222"
+						testID := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "12221")
+						testID2 := fmt.Sprintf("%s-%s", services.UserServiceAccountPrefix, "21222")
+						testID3 := fmt.Sprintf("internal-%s", "some-internal-id")
 						att := map[string]string{}
 						clients := []*gocloak.Client{
 							{
@@ -165,6 +176,10 @@ func TestKeycloakService_CreateServiceAccount(t *testing.T) {
 							},
 							{
 								ClientID:   &testID2,
+								Attributes: &att,
+							},
+							{
+								ClientID:   &testID3,
 								Attributes: &att,
 							},
 						}
