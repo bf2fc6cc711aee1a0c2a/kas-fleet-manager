@@ -189,6 +189,310 @@ Feature: create a a connector
       }
       """
 
+  Scenario: Greg searches for sink connector types
+    Given I am logged in as "Greg"
+    When I GET path "/v1/kafka_connector_types?search=label=sink"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "json_schema" : {
+              "type" : "object",
+              "properties" : {
+                "connector" : {
+                  "type" : "object",
+                  "title" : "Log",
+                  "required" : [ ],
+                  "properties" : {
+                    "multiLine" : {
+                      "title" : "Multi Line",
+                      "description" : "Multi Line",
+                      "type" : "boolean",
+                      "default" : false
+                    },
+                    "showAll" : {
+                      "title" : "Show All",
+                      "description" : "Show All",
+                      "type" : "boolean",
+                      "default" : false
+                    }
+                  }
+                },
+                "kafka" : {
+                  "type" : "object",
+                  "title" : "Managed Kafka Source",
+                  "required" : [ "topic" ],
+                  "properties" : {
+                    "topic" : {
+                      "title" : "Topic names",
+                      "description" : "Comma separated list of Kafka topic names",
+                      "type" : "string"
+                    }
+                  }
+                },
+                "steps" : {
+                  "type" : "array",
+                  "items" : {
+                    "oneOf" : [ {
+                      "type" : "object",
+                      "required" : [ "insert-field" ],
+                      "properties" : {
+                        "insert-field" : {
+                          "title" : "Insert Field Action",
+                          "description" : "Adds a custom field with a constant value to the message in transit",
+                          "required" : [ "field", "value" ],
+                          "properties" : {
+                            "field" : {
+                              "title" : "Field",
+                              "description" : "The name of the field to be added",
+                              "type" : "string"
+                            },
+                            "value" : {
+                              "title" : "Value",
+                              "description" : "The value of the field",
+                              "type" : "string"
+                            }
+                          },
+                          "type" : "object"
+                        }
+                      }
+                    }, {
+                      "type" : "object",
+                      "required" : [ "extract-field" ],
+                      "properties" : {
+                        "extract-field" : {
+                          "title" : "Extract Field Action",
+                          "description" : "Extract a field from the body",
+                          "required" : [ "field" ],
+                          "properties" : {
+                            "field" : {
+                              "title" : "Field",
+                              "description" : "The name of the field to be added",
+                              "type" : "string"
+                            }
+                          },
+                          "type" : "object"
+                        }
+                      }
+                    } ]
+                  }
+                }
+              }
+            },
+            "id" : "log_sink_0.1",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "kind" : "ConnectorType",
+            "icon_href" : "TODO",
+            "name" : "Log Sink",
+            "description" : "Log Sink",
+            "version" : "0.1",
+            "labels" : [ "sink" ],
+            "channels" : [ "stable" ]
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
+
+  Scenario: Greg searches for connector types on beta channel, ordered by version
+    Given I am logged in as "Greg"
+    When I GET path "/v1/kafka_connector_types?search=channel=beta&orderBy=version"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "description": "Receive data from AWS SQS",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/aws-sqs-source-v1alpha1",
+            "id": "aws-sqs-source-v1alpha1",
+            "channels": [
+              "stable",
+              "beta"
+            ],
+            "json_schema": {
+              "description": "Receive data from AWS SQS.",
+              "properties": {
+                "accessKey": {
+                  "description": "The access key obtained from AWS",
+                  "title": "Access Key",
+                  "type": "string"
+                },
+                "deleteAfterRead": {
+                  "default": true,
+                  "description": "Delete messages after consuming them",
+                  "title": "Auto-delete messages",
+                  "type": "boolean",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:checkbox"
+                  ]
+                },
+                "queueNameOrArn": {
+                  "description": "The SQS Queue name or ARN",
+                  "title": "Queue Name",
+                  "type": "string"
+                },
+                "region": {
+                  "description": "The AWS region to connect to",
+                  "example": "eu-west-1",
+                  "title": "AWS Region",
+                  "type": "string"
+                },
+                "secretKey": {
+                  "description": "The secret key obtained from AWS",
+                  "oneOf": [
+                    {
+                      "description": "the secret value",
+                      "format": "password",
+                      "type": "string"
+                    },
+                    {
+                      "description": "An opaque reference to the secret",
+                      "properties": {},
+                      "type": "object"
+                    }
+                  ],
+                  "title": "Secret Key",
+                  "x-descriptors": [
+                    "urn:alm:descriptor:com.tectonic.ui:password"
+                  ]
+                }
+              },
+              "required": [
+                "queueNameOrArn",
+                "accessKey",
+                "secretKey",
+                "region"
+              ],
+              "title": "AWS SQS Source"
+            },
+            "kind": "ConnectorType",
+            "name": "aws-sqs-source",
+            "version": "v1alpha1"
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 1,
+        "size": 1,
+        "total": 1
+      }
+      """
+
+  Scenario: Greg uses paging to list connector types
+    Given I am logged in as "Greg"
+    When I GET path "/v1/kafka_connector_types?orderBy=name%20asc&page=2&size=1"
+    Then the response code should be 200
+    And the response should match json:
+      """
+      {
+        "items": [
+          {
+            "json_schema" : {
+              "type" : "object",
+              "properties" : {
+                "connector" : {
+                  "type" : "object",
+                  "title" : "Log",
+                  "required" : [ ],
+                  "properties" : {
+                    "multiLine" : {
+                      "title" : "Multi Line",
+                      "description" : "Multi Line",
+                      "type" : "boolean",
+                      "default" : false
+                    },
+                    "showAll" : {
+                      "title" : "Show All",
+                      "description" : "Show All",
+                      "type" : "boolean",
+                      "default" : false
+                    }
+                  }
+                },
+                "kafka" : {
+                  "type" : "object",
+                  "title" : "Managed Kafka Source",
+                  "required" : [ "topic" ],
+                  "properties" : {
+                    "topic" : {
+                      "title" : "Topic names",
+                      "description" : "Comma separated list of Kafka topic names",
+                      "type" : "string"
+                    }
+                  }
+                },
+                "steps" : {
+                  "type" : "array",
+                  "items" : {
+                    "oneOf" : [ {
+                      "type" : "object",
+                      "required" : [ "insert-field" ],
+                      "properties" : {
+                        "insert-field" : {
+                          "title" : "Insert Field Action",
+                          "description" : "Adds a custom field with a constant value to the message in transit",
+                          "required" : [ "field", "value" ],
+                          "properties" : {
+                            "field" : {
+                              "title" : "Field",
+                              "description" : "The name of the field to be added",
+                              "type" : "string"
+                            },
+                            "value" : {
+                              "title" : "Value",
+                              "description" : "The value of the field",
+                              "type" : "string"
+                            }
+                          },
+                          "type" : "object"
+                        }
+                      }
+                    }, {
+                      "type" : "object",
+                      "required" : [ "extract-field" ],
+                      "properties" : {
+                        "extract-field" : {
+                          "title" : "Extract Field Action",
+                          "description" : "Extract a field from the body",
+                          "required" : [ "field" ],
+                          "properties" : {
+                            "field" : {
+                              "title" : "Field",
+                              "description" : "The name of the field to be added",
+                              "type" : "string"
+                            }
+                          },
+                          "type" : "object"
+                        }
+                      }
+                    } ]
+                  }
+                }
+              }
+            },
+            "id" : "log_sink_0.1",
+            "href": "/api/connector_mgmt/v1/kafka_connector_types/log_sink_0.1",
+            "kind" : "ConnectorType",
+            "icon_href" : "TODO",
+            "name" : "Log Sink",
+            "description" : "Log Sink",
+            "version" : "0.1",
+            "labels" : [ "sink" ],
+            "channels" : [ "stable" ]
+          }
+        ],
+        "kind": "ConnectorTypeList",
+        "page": 2,
+        "size": 1,
+        "total": 2
+      }
+      """
+
   Scenario: Greg tries to create a connector with an invalid configuration spec
     Given I am logged in as "Greg"
     When I POST path "/v1/kafka_connectors?async=true" with json body:

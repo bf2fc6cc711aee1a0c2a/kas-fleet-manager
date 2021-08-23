@@ -9,19 +9,15 @@ import (
 	"reflect"
 )
 
-func ModifySecrets(schemaDom map[string]interface{}, doc api.JSON, f func(node *ajson.Node) error) (api.JSON, error) {
-	schemaBytes, err := json.Marshal(schemaDom)
-	if err != nil {
-		return nil, err
-	}
-	secrets, err := modifySecrets(schemaBytes, []byte(doc), f)
+func ModifySecrets(schemaDom, doc api.JSON, f func(node *ajson.Node) error) (api.JSON, error) {
+	secrets, err := modifySecrets(schemaDom, doc, f)
 	if err != nil {
 		return nil, err
 	}
 	return secrets, nil
 }
 
-func modifySecrets(schemaBytes []byte, doc []byte, f func(node *ajson.Node) error) ([]byte, error) {
+func modifySecrets(schemaBytes, doc []byte, f func(node *ajson.Node) error) ([]byte, error) {
 	fields, err := getPathsToPasswordFields(schemaBytes)
 	if err != nil {
 		return nil, err

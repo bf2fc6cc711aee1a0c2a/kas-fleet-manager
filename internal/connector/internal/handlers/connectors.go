@@ -276,7 +276,7 @@ func validateConnectorPatch(bytes []byte, ct *dbapi.ConnectorType) *errors.Servi
 	}
 
 	if len(c.ConnectorSpec) > 0 {
-		_, err := secrets.ModifySecrets(ct.JsonSchema, c.ConnectorSpec, func(node *ajson.Node) error {
+		_, err = secrets.ModifySecrets(ct.JsonSchema, c.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
 				if len(node.Keys()) > 0 {
 					return fmt.Errorf("attempting to change opaque connector secret")
