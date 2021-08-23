@@ -12,7 +12,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	. "github.com/onsi/gomega"
-	projectv1 "github.com/openshift/api/project/v1"
 	"github.com/pkg/errors"
 	mocket "github.com/selvatico/go-mocket"
 )
@@ -364,7 +363,7 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   *projectv1.Project
+		want   *v1.Namespace
 	}{
 		{
 			name: "buids a namespace with a given name",
@@ -376,10 +375,10 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 					},
 				},
 			},
-			want: &projectv1.Project{
+			want: &v1.Namespace{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: projectv1.SchemeGroupVersion.String(),
-					Kind:       "Project",
+					APIVersion: v1.SchemeGroupVersion.String(),
+					Kind:       "Namespace",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "namespace-name",
@@ -396,10 +395,10 @@ func TestStandaloneProvider_buildStrimziOperatorNamespace(t *testing.T) {
 					},
 				},
 			},
-			want: &projectv1.Project{
+			want: &v1.Namespace{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: projectv1.SchemeGroupVersion.String(),
-					Kind:       "Project",
+					APIVersion: v1.SchemeGroupVersion.String(),
+					Kind:       "Namespace",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "another-namespace-name",
@@ -662,7 +661,7 @@ func TestStandaloneProvider_buildKasFleetshardOperatorNamespace(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   *projectv1.Project
+		want   *v1.Namespace
 	}{
 		{
 			name: "buids a namespace with a given name",
@@ -674,10 +673,10 @@ func TestStandaloneProvider_buildKasFleetshardOperatorNamespace(t *testing.T) {
 					},
 				},
 			},
-			want: &projectv1.Project{
+			want: &v1.Namespace{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: projectv1.SchemeGroupVersion.String(),
-					Kind:       "Project",
+					APIVersion: v1.SchemeGroupVersion.String(),
+					Kind:       "Namespace",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "namespace-name",
@@ -694,10 +693,10 @@ func TestStandaloneProvider_buildKasFleetshardOperatorNamespace(t *testing.T) {
 					},
 				},
 			},
-			want: &projectv1.Project{
+			want: &v1.Namespace{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: projectv1.SchemeGroupVersion.String(),
-					Kind:       "Project",
+					APIVersion: v1.SchemeGroupVersion.String(),
+					Kind:       "Namespace",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "another-namespace-name",

@@ -9,7 +9,6 @@ import (
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	projectv1 "github.com/openshift/api/project/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
@@ -85,12 +84,12 @@ func (s *StandaloneProvider) InstallStrimzi(clusterSpec *types.ClusterSpec) (boo
 	return true, err
 }
 
-func (s *StandaloneProvider) buildStrimziOperatorNamespace() *projectv1.Project {
+func (s *StandaloneProvider) buildStrimziOperatorNamespace() *v1.Namespace {
 	strimziOLMConfig := s.dataplaneClusterConfig.StrimziOperatorOLMConfig
-	return &projectv1.Project{
+	return &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: projectv1.SchemeGroupVersion.String(),
-			Kind:       "Project",
+			APIVersion: v1.SchemeGroupVersion.String(),
+			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: strimziOLMConfig.Namespace,
@@ -167,12 +166,12 @@ func (s *StandaloneProvider) InstallKasFleetshard(clusterSpec *types.ClusterSpec
 	return true, err
 }
 
-func (s *StandaloneProvider) buildKASFleetShardOperatorNamespace() *projectv1.Project {
+func (s *StandaloneProvider) buildKASFleetShardOperatorNamespace() *v1.Namespace {
 	kasFleetshardOLMConfig := s.dataplaneClusterConfig.KasFleetshardOperatorOLMConfig
-	return &projectv1.Project{
+	return &v1.Namespace{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: projectv1.SchemeGroupVersion.String(),
-			Kind:       "Project",
+			APIVersion: v1.SchemeGroupVersion.String(),
+			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: kasFleetshardOLMConfig.Namespace,

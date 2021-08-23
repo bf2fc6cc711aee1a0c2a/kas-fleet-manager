@@ -25,7 +25,6 @@ import (
 	"github.com/golang/glog"
 
 	authv1 "github.com/openshift/api/authorization/v1"
-	projectv1 "github.com/openshift/api/project/v1"
 	userv1 "github.com/openshift/api/user/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
@@ -760,11 +759,11 @@ func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
 	}
 }
 
-func (c *ClusterManager) buildObservabilityNamespaceResource() *projectv1.Project {
-	return &projectv1.Project{
+func (c *ClusterManager) buildObservabilityNamespaceResource() *k8sCoreV1.Namespace {
+	return &k8sCoreV1.Namespace{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: projectv1.SchemeGroupVersion.String(),
-			Kind:       "Project",
+			APIVersion: k8sCoreV1.SchemeGroupVersion.String(),
+			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: observabilityNamespace,

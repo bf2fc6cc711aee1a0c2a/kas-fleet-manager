@@ -1,21 +1,22 @@
 package clusters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	. "github.com/onsi/gomega"
 	v1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
-	projectv1 "github.com/openshift/api/project/v1"
 	"github.com/operator-framework/api/pkg/operators/v1alpha2"
 	"github.com/pkg/errors"
+	k8sCorev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -1321,11 +1322,11 @@ func TestOCMProvider_GetCloudProviderRegions(t *testing.T) {
 	}
 }
 
-func sampleProjectCR() *projectv1.Project {
-	return &projectv1.Project{
+func sampleProjectCR() *k8sCorev1.Namespace {
+	return &k8sCorev1.Namespace{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "project.openshift.io/v1",
-			Kind:       "Project",
+			APIVersion: k8sCorev1.SchemeGroupVersion.String(),
+			Kind:       "Namespace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-project",
