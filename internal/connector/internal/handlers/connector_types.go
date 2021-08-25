@@ -4,6 +4,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -13,19 +14,25 @@ import (
 
 type ConnectorTypesHandler struct {
 	service services.ConnectorTypesService
+	manager *workers.ConnectorManager
 }
 
 var (
 	maxConnectorTypeIdLength = 50
 )
 
-func NewConnectorTypesHandler(service services.ConnectorTypesService) *ConnectorTypesHandler {
+func NewConnectorTypesHandler(service services.ConnectorTypesService, manager *workers.ConnectorManager) *ConnectorTypesHandler {
 	return &ConnectorTypesHandler{
 		service: service,
+		manager: manager,
 	}
 }
 
 func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
+	// this API depends on the startup reconcile occurring so that all the connector types are
+	// indexed in the DB
+	h.manager.StartupReconcileWG.Wait()
+
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -47,6 +54,10 @@ func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
+	// this API depends on the startup reconcile occurring so that all the connector types are
+	// indexed in the DB
+	h.manager.StartupReconcileWG.Wait()
+
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
