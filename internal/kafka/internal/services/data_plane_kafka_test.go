@@ -618,3 +618,63 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 		})
 	}
 }
+
+func TestDataPlaneKafkaService_setKafkaClusterReady(t *testing.T) {
+	tests := []struct {
+		name           string
+		clusterService ClusterService
+		kafkaService   KafkaService
+		clusterId      string
+		wantErr        bool
+		want           dbapi.KafkaRequest
+	}{
+		{
+			name: "should return error if FailedReason is not empty",
+			clusterService: &ClusterServiceMock{
+				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+					return &api.Cluster{}, nil
+				},
+			},
+			kafkaService: &KafkaServiceMock{
+				GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+					return &dbapi.KafkaRequest{
+						ClusterID:     "my-test-cluster-id",
+						RoutesCreated: true,
+						FailedReason:  "test-failed-reason",
+					}, nil
+				},
+				PrepareKafkaRequestFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					return nil
+				},
+				UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					return nil
+				},
+				UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+					return true, nil
+				},
+			},
+			clusterId: "my-test-cluster-id",
+			wantErr:   false,
+			want: dbapi.KafkaRequest{
+				ClusterID:     "my-test-cluster-id",
+				RoutesCreated: true,
+				FailedReason:  "",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := NewDataPlaneKafkaService(tt.kafkaService, tt.clusterService, &config.KafkaConfig{
+				NumOfBrokers: 1,
+			})
+			kafkaRequest, _ := s.kafkaService.GetById(tt.clusterId)
+			err := s.setKafkaClusterReady(kafkaRequest)
+			if err != nil && !tt.wantErr {
+				t.Errorf("unexpected error %v", err)
+			}
+			if !reflect.DeepEqual(kafkaRequest.FailedReason, tt.want.FailedReason) {
+				t.Errorf("Kafka Requests dont match. want: %v got: %v", tt.want.FailedReason, kafkaRequest.FailedReason)
+			}
+		})
+	}
+}

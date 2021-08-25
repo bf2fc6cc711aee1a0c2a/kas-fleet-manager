@@ -128,6 +128,13 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationCreate)
 			metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
 		}
+		if kafka.FailedReason != "" {
+			kafka.FailedReason = ""
+			err = d.kafkaService.Update(kafka)
+			if err != nil {
+				return serviceError.NewWithCause(err.Code, err, "failed to reset fail reason for kafka cluster %s", kafka.ID)
+			}
+		}
 	}
 	return nil
 }
