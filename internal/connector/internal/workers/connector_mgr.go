@@ -8,6 +8,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
+	"sync"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
@@ -28,6 +29,7 @@ type ConnectorManager struct {
 	vaultService            vault.VaultService
 	lastVersion             int64
 	startupReconcileDone    bool
+	StartupReconcileWG      sync.WaitGroup
 	db                      *db.ConnectionFactory
 	ctx                     context.Context
 }
@@ -41,7 +43,7 @@ func NewConnectorManager(
 	bus signalbus.SignalBus,
 	db *db.ConnectionFactory,
 ) *ConnectorManager {
-	return &ConnectorManager{
+	result := &ConnectorManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
 			WorkerType: "connector",
@@ -56,6 +58,8 @@ func NewConnectorManager(
 		startupReconcileDone:    false,
 		db:                      db,
 	}
+	result.StartupReconcileWG.Add(1)
+	return result
 }
 
 // Start initializes the connector manager to reconcile connector requests
@@ -85,6 +89,7 @@ func (k *ConnectorManager) Reconcile() []error {
 		}
 
 		k.startupReconcileDone = true
+		k.StartupReconcileWG.Done()
 	}
 
 	if k.ctx == nil {
