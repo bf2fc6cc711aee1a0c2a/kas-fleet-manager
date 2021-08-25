@@ -20,6 +20,7 @@ func newQuotaResource() amsv1.ReservedResourceBuilder {
 	rr.ResourceName("rhosak")      //"rhosak"
 	rr.BillingModel("marketplace") // "marketplace" or "standard"
 	rr.AvailabilityZoneType("single")
+	rr.Count(1)
 	return rr
 }
 
