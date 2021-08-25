@@ -15,7 +15,11 @@ parameters:
 
 - name: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE
   description: Observatorium token refresher image
-  value: quay.io/observatorium/token-refresher:master-2021-02-24-1e01b9c
+  value: quay.io/rhoas/mk-token-refresher
+
+- name: OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG
+  description: Observatorium token refresher image tag
+  value: latest
 
 objects:
   - kind: Service
@@ -24,7 +28,7 @@ objects:
       labels:
         app.kubernetes.io/component: authentication-proxy
         app.kubernetes.io/name: token-refresher
-        app.kubernetes.io/version: master-2020-12-04-5504078
+        app.kubernetes.io/version: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
       name: token-refresher
     spec:
       ports:
@@ -44,7 +48,7 @@ objects:
       labels:
         app.kubernetes.io/component: authentication-proxy
         app.kubernetes.io/name: token-refresher
-        app.kubernetes.io/version: master-2020-12-04-5504078
+        app.kubernetes.io/version: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
       name: token-refresher
     spec:
       replicas: 1
@@ -61,7 +65,8 @@ objects:
         spec:
           containers:
           - name: token-refresher
-            image: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE}
+            image: ${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE}:${OBSERVATORIUM_TOKEN_REFRESHER_IMAGE_TAG}
+            imagePullPolicy: Always
             ports:
             - containerPort: 8080
               name: http
