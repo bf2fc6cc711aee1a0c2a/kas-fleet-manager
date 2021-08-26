@@ -296,7 +296,9 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 		routes = kafka.GetDefaultRoutes(oldMKIngressDNS, d.kafkaConfig.NumOfBrokers)
 	} else {
 		var routesErr error
-		baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix))
+		baseClusterDomain := strings.TrimPrefix(
+			strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix)),
+			fmt.Sprintf("%s.", constants2.ManagedKafkaIngressDnsNamePrefix))
 		if routes, routesErr = buildRoutes(routesInRequest, kafka, baseClusterDomain); routesErr != nil {
 			return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 		}
