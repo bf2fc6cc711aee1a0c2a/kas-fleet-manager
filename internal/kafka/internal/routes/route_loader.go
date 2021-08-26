@@ -95,9 +95,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	// /status
 	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
 	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
-	if s.ServerConfig.EnableJWT {
-		apiV1Status.Use(requireIssuer)
-	}
+	apiV1Status.Use(requireIssuer)
 
 	v1Collections := []api.CollectionMetadata{}
 
@@ -111,11 +109,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Delete).Methods(http.MethodDelete)
 	apiV1KafkasRouter.HandleFunc("/{id}", kafkaHandler.Update).Methods(http.MethodPatch)
 	apiV1KafkasRouter.HandleFunc("", kafkaHandler.List).Methods(http.MethodGet)
-	if s.ServerConfig.EnableJWT {
-		apiV1KafkasRouter.Use(requireIssuer)
-		apiV1KafkasRouter.Use(requireOrgID)
-		apiV1KafkasRouter.Use(authorizeMiddleware)
-	}
+	apiV1KafkasRouter.Use(requireIssuer)
+	apiV1KafkasRouter.Use(requireOrgID)
+	apiV1KafkasRouter.Use(authorizeMiddleware)
 
 	apiV1KafkasCreateRouter := apiV1KafkasRouter.NewRoute().Subrouter()
 	apiV1KafkasCreateRouter.HandleFunc("", kafkaHandler.Create).Methods(http.MethodPost)
@@ -133,11 +129,9 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
 	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
 
-	if s.ServerConfig.EnableJWT {
-		apiV1ServiceAccountsRouter.Use(requireIssuer)
-		apiV1ServiceAccountsRouter.Use(requireOrgID)
-		apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
-	}
+	apiV1ServiceAccountsRouter.Use(requireIssuer)
+	apiV1ServiceAccountsRouter.Use(requireOrgID)
+	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
 
 	//  /cloud_providers
 	v1Collections = append(v1Collections, api.CollectionMetadata{
