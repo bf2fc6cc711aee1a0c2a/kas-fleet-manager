@@ -76,11 +76,6 @@ parameters:
   description: Number of replicas of the service to run.
   value: "3"
 
-- name: ENABLE_JWT
-  displayName: Enable JWT
-  description: Enable JWT authentication validation
-  value: "true"
-
 - name: ENABLE_HTTPS
   displayName: Enable HTTPS
   description: Enable HTTPS rather than HTTP
@@ -812,7 +807,6 @@ objects:
             - --jwks-url=${JWKS_URL}
             - --jwks-file=/config/authentication/jwks.json
             - --token-issuer-url=${TOKEN_ISSUER_URL}
-            - --enable-jwt=${ENABLE_JWT}
             - --enable-https=${ENABLE_HTTPS}
             - --api-server-bindaddress=${API_SERVER_BINDADDRESS}
             - --metrics-server-bindaddress=${METRICS_SERVER_BINDADDRESS}
