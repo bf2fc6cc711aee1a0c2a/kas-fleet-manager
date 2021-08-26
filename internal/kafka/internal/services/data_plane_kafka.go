@@ -287,15 +287,17 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 	if err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to get DNS entry for cluster %s", cluster.ClusterID)
 	}
-	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
+
 	routesInRequest := kafkaStatus.Routes
 	var routes []dbapi.DataPlaneKafkaRoute
 	if len(routesInRequest) == 0 {
 		// TODO: This is here for keep backward compatibility. Remove this once the kas-fleetshard added implementation for routes. We no longer need to produce default routes at all.
-		routes = kafka.GetDefaultRoutes(clusterDNS, d.kafkaConfig.NumOfBrokers)
+		oldMKIngressDNS := strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
+		routes = kafka.GetDefaultRoutes(oldMKIngressDNS, d.kafkaConfig.NumOfBrokers)
 	} else {
 		var routesErr error
-		if routes, routesErr = buildRoutes(routesInRequest, kafka, clusterDNS); routesErr != nil {
+		baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix))
+		if routes, routesErr = buildRoutes(routesInRequest, kafka, baseClusterDomain); routesErr != nil {
 			return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 		}
 	}
