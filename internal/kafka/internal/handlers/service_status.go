@@ -43,19 +43,6 @@ func (h serviceStatusHandler) Get(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			if !accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
-				orgId := auth.GetOrgIdFromClaims(claims)
-				org, _ := h.accessControlList.AllowList.Organisations.GetById(orgId)
-				userIsAllowed := org.IsUserAllowed(username)
-				if !userIsAllowed {
-					_, userIsAllowed = h.accessControlList.AllowList.ServiceAccounts.GetByUsername(username)
-				}
-				if !userIsAllowed {
-					glog.V(5).Infof("User %s is not in allow list and cannot access the service. Setting kafka maximum capacity to 'true'", username)
-					return presenters.PresentServiceStatus(true, false), nil
-				}
-			}
-
 			hasAvailableKafkaCapacity, capacityErr := h.kafkaService.HasAvailableCapacity()
 			return presenters.PresentServiceStatus(false, !hasAvailableKafkaCapacity), capacityErr
 		},

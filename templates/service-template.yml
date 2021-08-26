@@ -256,20 +256,15 @@ parameters:
   description: The default value of maximum number of clients fetch from mas-sso.
   value: "100"
 
-- name: ALLOW_ANY_REGISTERED_USERS
-  displayName: Allow any registered users
-  description: Enable to allow any registered users to access the service.
-  value: "false"
-
-- name: ALLOWED_SERVICE_ACCOUNTS
-  displayName: A list of allowed service accounts
-  description: A list of allowed service accounts that are allowed to access the service without requiring an organisation to do so in a yaml format.
+- name: REGISTERED_SERVICE_ACCOUNTS
+  displayName: A list of service accounts
+  description: A list of service accounts that are allowed to create standard KAFKA instances without requiring an organisation to do so in a yaml format.
   value: "[]"
 
-- name: ALLOWED_USERS_PER_ORGANISATION
-  displayName: A list of allowed users per organisation
-  description: A list of allowed users that are allowed to access the service via their organisation in a yaml format.
-  value: "[{id: 13640203, max_allowed_instances: 5, allow_all: true, allowed_users: []}, {id: 12147054, max_allowed_instances: 1, allow_all: true, allowed_users: []}, {id: 13639843, max_allowed_instances: 1, allow_all: true, allowed_users: []}]"
+- name: REGISTERED_USERS_PER_ORGANISATION
+  displayName: A list of users per organisation
+  description: A list of users that are allowed to create standard KAFKA instances via their organisation in a yaml format.
+  value: "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users:[]}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
 
 - name: DENIED_USERS
   displayName: A list of denied users given by their usernames
@@ -319,10 +314,15 @@ parameters:
   description: The compute machine type of each node on a new created cluster.
   value: "m5.4xlarge"
 
+- name: ALLOW_EVALUATOR_INSTANCE
+  displayName: Allow Evaluator Instance
+  description: Allow the creation of one kafka evaluator instance per user
+  value: "true"
+
 - name: QUOTA_TYPE
   displayName: Quota type
-  description: Tye type of quota management service to be used. Available options are 'ams' and "allow-list"
-  value: "allow-list"
+  description: Tye type of quota management service to be used. Available options are 'ams' and "quota-management-list"
+  value: "quota-management-list"
 
 - name: KAS_FLEETSHARD_POLL_INTERVAL
   displayName: Kas-fleetshard-operator poll interval
@@ -470,8 +470,8 @@ parameters:
   description: image pull polilcy
   value: "IfNotPresent"
 
-- name: TOKEN_ISSUER_URL  
-  displayName: A token issuer url 
+- name: TOKEN_ISSUER_URL
+  displayName: A token issuer url
   description: A token issuer url used to validate if JWT token used are coming from the given issuer
   value: "https://sso.redhat.com/auth/realms/redhat-external"
 
@@ -492,10 +492,9 @@ objects:
       annotations:
         qontract.recycle: "true"
     data:
-      allow-list-configuration.yaml: |-
-        allow_any_registered_users: ${ALLOW_ANY_REGISTERED_USERS}
-        allowed_service_accounts: ${ALLOWED_SERVICE_ACCOUNTS}
-        allowed_users_per_organisation: ${ALLOWED_USERS_PER_ORGANISATION}
+      quota-management-list-configuration.yaml: |-
+        registered_service_accounts: ${REGISTERED_SERVICE_ACCOUNTS}
+        registered_users_per_organisation: ${REGISTERED_USERS_PER_ORGANISATION}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
@@ -720,8 +719,8 @@ objects:
               mountPath: /config/provider-configuration.yaml
               subPath: provider-configuration.yaml
             - name: ocm-managed-services-allowed-users-config
-              mountPath: /config/allow-list-configuration.yaml
-              subPath: allow-list-configuration.yaml
+              mountPath: /config/quota-management-list-configuration.yaml
+              subPath: quota-management-list-configuration.yaml
             - name: ocm-managed-services-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
@@ -752,7 +751,7 @@ objects:
             - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
             - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
             - --providers-config-file=/config/provider-configuration.yaml
-            - --allow-list-config-file=/config/allow-list-configuration.yaml
+            - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
             - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
@@ -842,6 +841,7 @@ objects:
             - --kubeconfig=/secrets/service/kubeconfig
             - --kas-fleetshard-poll-interval=${KAS_FLEETSHARD_POLL_INTERVAL}
             - --kas-fleetshard-resync-interval=${KAS_FLEETSHARD_RESYNC_INTERVAL}
+            - --allow-evaluator-instance=${ALLOW_EVALUATOR_INSTANCE}
             - --quota-type=${QUOTA_TYPE}
             - --observability-config-repo=${OBSERVABILITY_CONFIG_REPO}
             - --observability-config-channel=${OBSERVABILITY_CONFIG_CHANNEL}

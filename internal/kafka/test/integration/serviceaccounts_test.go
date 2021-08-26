@@ -85,47 +85,6 @@ func TestServiceAccounts_Success(t *testing.T) {
 	Expect(f).To(BeFalse())
 }
 
-func TestServiceAccounts_UserNotAllowed_Failure(t *testing.T) {
-	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
-	defer ocmServer.Close()
-
-	h, client, teardown := test.NewKafkaHelper(t, ocmServer)
-	defer teardown()
-
-	account := h.NewAccount(faker.Username(), faker.Name(), faker.Email(), faker.ID)
-	ctx := h.NewAuthenticatedContext(account, nil)
-
-	//verify list
-	_, resp, err := client.SecurityApi.GetServiceAccounts(ctx)
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-
-	//verify create
-	r := public.ServiceAccountRequest{
-		Name:        "managed-service-integration-test-account",
-		Description: "created by the managed service integration tests",
-	}
-	_, resp, err = client.SecurityApi.CreateServiceAccount(ctx, r)
-	Expect(err).Should(HaveOccurred())
-	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-
-	// verify get by id
-	id := faker.ID
-	_, resp, err = client.SecurityApi.GetServiceAccountById(ctx, id)
-	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-	Expect(err).Should(HaveOccurred())
-
-	//verify reset
-	_, _, err = client.SecurityApi.ResetServiceAccountCreds(ctx, id)
-	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-	Expect(err).Should(HaveOccurred())
-
-	//verify delete
-	_, _, err = client.SecurityApi.DeleteServiceAccountById(ctx, id)
-	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
-	Expect(err).Should(HaveOccurred())
-}
-
 func TestServiceAccounts_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()

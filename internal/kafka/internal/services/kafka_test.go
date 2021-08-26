@@ -29,8 +29,9 @@ import (
 )
 
 const (
-	JwtKeyFile = "test/support/jwt_private_key.pem"
-	JwtCAFile  = "test/support/jwt_ca.pem"
+	JwtKeyFile         = "test/support/jwt_private_key.pem"
+	JwtCAFile          = "test/support/jwt_ca.pem"
+	MaxClusterCapacity = 1000
 )
 
 var (
@@ -308,13 +309,13 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 			fields: fields{
 				kafkaConfig: &config.KafkaConfig{
 					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: 1000,
+						MaxCapacity: MaxClusterCapacity,
 					},
 				},
 				connectionFactory: db.NewMockConnectionFactory(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": "1000"}})
+				mocket.Catcher.Reset().NewMock().WithQuery(`SELECT count(1) FROM "kafka_requests"`).WithReply([]map[string]interface{}{{"a": fmt.Sprintf("%d", MaxClusterCapacity)}})
 			},
 			wantErr: false,
 		},
@@ -324,7 +325,7 @@ func Test_kafkaService_HasAvailableCapacity(t *testing.T) {
 			fields: fields{
 				kafkaConfig: &config.KafkaConfig{
 					KafkaCapacity: config.KafkaCapacityConfig{
-						MaxCapacity: 1000,
+						MaxCapacity: MaxClusterCapacity,
 					},
 				},
 				connectionFactory: db.NewMockConnectionFactory(nil),
@@ -828,10 +829,12 @@ func Test_kafkaService_Delete(t *testing.T) {
 }
 
 func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
+
 	type fields struct {
 		connectionFactory *db.ConnectionFactory
 		clusterService    ClusterService
 		quotaService      QuotaService
+		kafkaConfig       config.KafkaConfig
 	}
 
 	type errorCheck struct {
@@ -843,6 +846,14 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 	type args struct {
 		kafkaRequest *dbapi.KafkaRequest
 	}
+
+	defaultKafkaConf := config.KafkaConfig{
+		KafkaCapacity: config.KafkaCapacityConfig{
+			MaxCapacity: MaxClusterCapacity,
+		},
+		Quota: config.NewKafkaQuotaConfig(),
+	}
+
 	tests := []struct {
 		name    string
 		fields  fields
@@ -855,6 +866,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
 				clusterService:    nil,
+				kafkaConfig:       defaultKafkaConf,
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
 						return true, nil
@@ -880,9 +892,46 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			},
 		},
 		{
+			name: "registering kafka job eval disabled",
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+				clusterService:    nil,
+				kafkaConfig: config.KafkaConfig{
+					KafkaCapacity: config.KafkaCapacityConfig{
+						MaxCapacity: MaxClusterCapacity,
+					},
+					Quota: &config.KafkaQuotaConfig{
+						Type:                   api.QuotaManagementListQuotaType.String(),
+						AllowEvaluatorInstance: false,
+					},
+				},
+				quotaService: &QuotaServiceMock{
+					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
+						// No RHOSAK quota assigned
+						return instanceType != types.STANDARD, nil
+					},
+					ReserveQuotaFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (string, *errors.ServiceError) {
+						return "fake-subscription-id", nil
+					},
+				},
+			},
+			args: args{
+				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
+					// we need to empty to ID otherwise an UPDATE will be performed instead of an insert
+					kafkaRequest.ID = ""
+				}),
+			},
+			error: errorCheck{
+				wantErr:  true,
+				code:     errors.ErrorForbidden,
+				httpCode: http.StatusForbidden,
+			},
+		},
+		{
 			name: "registering kafka too many instances",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig:       defaultKafkaConf,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -894,7 +943,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				kafkaRequest: buildKafkaRequest(nil),
 			},
 			setupFn: func() {
-				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": "1000"}})
+				mocket.Catcher.Reset().NewMock().WithQuery("SELECT count").WithReply([]map[string]interface{}{{"count": fmt.Sprintf("%d", MaxClusterCapacity)}})
 				mocket.Catcher.NewMock().WithExecException().WithQueryException()
 			},
 			error: errorCheck{
@@ -907,6 +956,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka too many eval",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig:       defaultKafkaConf,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -939,6 +989,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job fails: postgres error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig:       defaultKafkaConf,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -969,6 +1020,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			name: "registering kafka job fails: quota error",
 			fields: fields{
 				connectionFactory: db.NewMockConnectionFactory(nil),
+				kafkaConfig:       defaultKafkaConf,
 				clusterService:    nil,
 				quotaService: &QuotaServiceMock{
 					CheckIfQuotaIsDefinedForInstanceTypeFunc: func(kafka *dbapi.KafkaRequest, instanceType types.KafkaInstanceType) (bool, *errors.ServiceError) {
@@ -991,13 +1043,6 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 		},
 	}
 
-	kafkaConf := config.KafkaConfig{
-		KafkaCapacity: config.KafkaCapacityConfig{
-			MaxCapacity: 1000,
-		},
-		Quota: config.NewKafkaQuotaConfig(),
-	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.setupFn != nil {
@@ -1007,7 +1052,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 			k := &kafkaService{
 				connectionFactory: tt.fields.connectionFactory,
 				clusterService:    tt.fields.clusterService,
-				kafkaConfig:       &kafkaConf,
+				kafkaConfig:       &tt.fields.kafkaConfig,
 				awsConfig:         config.NewAWSConfig(),
 				quotaServiceFactory: &QuotaServiceFactoryMock{
 					GetQuotaServiceFunc: func(quotaType api.QuotaType) (QuotaService, *errors.ServiceError) {
@@ -1022,7 +1067,7 @@ func Test_kafkaService_RegisterKafkaJob(t *testing.T) {
 				t.Errorf("RegisterKafkaJob() error = %v, wantErr = %v", err, tt.error.wantErr)
 			}
 
-			if tt.error.wantErr && err.Code != tt.error.code {
+			if tt.error.wantErr {
 				if err.Code != tt.error.code {
 					t.Errorf("RegisterKafkaJob() received error code %v, expected error %v", err.Code, tt.error.code)
 				}

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"reflect"
 	"testing"
 
@@ -341,22 +341,22 @@ func Test_configService_IsRegionSupportedForProvider(t *testing.T) {
 func Test_configService_GetOrganisationById(t *testing.T) {
 	type result struct {
 		found        bool
-		organisation acl.Organisation
+		organisation quota_management.Organisation
 	}
 
 	tests := []struct {
-		name              string
-		AccessControlList *acl.AccessControlListConfig
-		arg               string
-		want              result
+		name                string
+		QuotaManagementList *quota_management.QuotaManagementListConfig
+		arg                 string
+		want                result
 	}{
 		{
 			name: "return 'false' when organisation does not exist in the allowed list",
 			arg:  "some-id",
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
-						acl.Organisation{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
+						quota_management.Organisation{
 							Id: "different-id",
 						},
 					},
@@ -364,16 +364,16 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			},
 			want: result{
 				found:        false,
-				organisation: acl.Organisation{},
+				organisation: quota_management.Organisation{},
 			},
 		},
 		{
 			name: "return 'true' when organisation exists in the allowed list",
 			arg:  "some-id",
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
-						acl.Organisation{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
+						quota_management.Organisation{
 							Id: "some-id",
 						},
 					},
@@ -381,7 +381,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 			},
 			want: result{
 				found: true,
-				organisation: acl.Organisation{
+				organisation: quota_management.Organisation{
 					Id: "some-id",
 				},
 			},
@@ -390,7 +390,7 @@ func Test_configService_GetOrganisationById(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			org, found := tt.AccessControlList.AllowList.Organisations.GetById(tt.arg)
+			org, found := tt.QuotaManagementList.QuotaList.Organisations.GetById(tt.arg)
 			Expect(org).To(Equal(tt.want.organisation))
 			Expect(found).To(Equal(tt.want.found))
 		})
@@ -404,23 +404,23 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	}
 
 	type result struct {
-		AllowedAccount acl.AllowedAccount
+		AllowedAccount quota_management.Account
 		found          bool
 	}
 
-	organisation := acl.Organisation{
+	organisation := quota_management.Organisation{
 		Id: "some-id",
-		AllowedAccounts: acl.AllowedAccounts{
-			acl.AllowedAccount{Username: "username-0"},
-			acl.AllowedAccount{Username: "username-1"},
+		RegisteredUsers: quota_management.AccountList{
+			quota_management.Account{Username: "username-0"},
+			quota_management.Account{Username: "username-1"},
 		},
 	}
 
 	tests := []struct {
-		name              string
-		arg               args
-		want              result
-		AccessControlList *acl.AccessControlListConfig
+		name                string
+		arg                 args
+		want                result
+		QuotaManagementList *quota_management.QuotaManagementListConfig
 	}{
 		{
 			name: "return 'true' and the found user when organisation contains the user",
@@ -428,16 +428,16 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-1",
 				orgId:    organisation.Id,
 			},
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
 						organisation,
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: acl.AllowedAccount{Username: "username-1"},
+				AllowedAccount: quota_management.Account{Username: "username-1"},
 			},
 		},
 		{
@@ -446,21 +446,21 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-10",
 				orgId:    organisation.Id,
 			},
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: acl.AllowedAccounts{
-						acl.AllowedAccount{Username: "username-0"},
-						acl.AllowedAccount{Username: "username-10"},
-						acl.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: quota_management.AccountList{
+						quota_management.Account{Username: "username-0"},
+						quota_management.Account{Username: "username-10"},
+						quota_management.Account{Username: "username-3"},
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: acl.AllowedAccount{Username: "username-10"},
+				AllowedAccount: quota_management.Account{Username: "username-10"},
 			},
 		},
 		{
@@ -469,14 +469,14 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 				username: "username-10",
 				orgId:    "some-org-id",
 			},
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: acl.AllowedAccounts{
-						acl.AllowedAccount{Username: "username-0"},
-						acl.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: quota_management.AccountList{
+						quota_management.Account{Username: "username-0"},
+						quota_management.Account{Username: "username-3"},
 					},
 				},
 			},
@@ -489,7 +489,7 @@ func Test_configService_GetAllowedAccountByUsernameAndOrgId(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			user, ok := tt.AccessControlList.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
+			user, ok := tt.QuotaManagementList.GetAllowedAccountByUsernameAndOrgId(tt.arg.username, tt.arg.orgId)
 			Expect(user).To(Equal(tt.want.AllowedAccount))
 			Expect(ok).To(Equal(tt.want.found))
 		})
@@ -502,44 +502,44 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 	}
 
 	type result struct {
-		AllowedAccount acl.AllowedAccount
+		AllowedAccount quota_management.Account
 		found          bool
 	}
 
-	organisation := acl.Organisation{
+	organisation := quota_management.Organisation{
 		Id: "some-id",
-		AllowedAccounts: acl.AllowedAccounts{
-			acl.AllowedAccount{Username: "username-0"},
-			acl.AllowedAccount{Username: "username-1"},
+		RegisteredUsers: quota_management.AccountList{
+			quota_management.Account{Username: "username-0"},
+			quota_management.Account{Username: "username-1"},
 		},
 	}
 
 	tests := []struct {
-		name              string
-		arg               args
-		want              result
-		AccessControlList *acl.AccessControlListConfig
+		name                string
+		arg                 args
+		want                result
+		QuotaManagementList *quota_management.QuotaManagementListConfig
 	}{
 		{
 			name: "return 'true' and the user when user is contained in list of allowed service accounts",
 			arg: args{
 				username: "username-10",
 			},
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: acl.AllowedAccounts{
-						acl.AllowedAccount{Username: "username-0"},
-						acl.AllowedAccount{Username: "username-10"},
-						acl.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: quota_management.AccountList{
+						quota_management.Account{Username: "username-0"},
+						quota_management.Account{Username: "username-10"},
+						quota_management.Account{Username: "username-3"},
 					},
 				},
 			},
 			want: result{
 				found:          true,
-				AllowedAccount: acl.AllowedAccount{Username: "username-10"},
+				AllowedAccount: quota_management.Account{Username: "username-10"},
 			},
 		},
 		{
@@ -547,14 +547,14 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 			arg: args{
 				username: "username-10",
 			},
-			AccessControlList: &acl.AccessControlListConfig{
-				AllowList: acl.AllowListConfiguration{
-					Organisations: acl.OrganisationList{
+			QuotaManagementList: &quota_management.QuotaManagementListConfig{
+				QuotaList: quota_management.RegisteredUsersListConfiguration{
+					Organisations: quota_management.OrganisationList{
 						organisation,
 					},
-					ServiceAccounts: acl.AllowedAccounts{
-						acl.AllowedAccount{Username: "username-0"},
-						acl.AllowedAccount{Username: "username-3"},
+					ServiceAccounts: quota_management.AccountList{
+						quota_management.Account{Username: "username-0"},
+						quota_management.Account{Username: "username-3"},
 					},
 				},
 			},
@@ -567,7 +567,7 @@ func Test_configService_GetServiceAccountByUsername(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			user, ok := tt.AccessControlList.AllowList.ServiceAccounts.GetByUsername(tt.arg.username)
+			user, ok := tt.QuotaManagementList.QuotaList.ServiceAccounts.GetByUsername(tt.arg.username)
 			Expect(user).To(Equal(tt.want.AllowedAccount))
 			Expect(ok).To(Equal(tt.want.found))
 		})

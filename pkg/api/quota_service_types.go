@@ -1,9 +1,9 @@
 package api
 
 const (
-	AMSQuotaType       QuotaType = "ams"
-	AllowListQuotaType QuotaType = "allow-list"
-	UndefinedQuotaType QuotaType = ""
+	AMSQuotaType                 QuotaType = "ams"
+	QuotaManagementListQuotaType QuotaType = "quota-management-list"
+	UndefinedQuotaType           QuotaType = ""
 )
 
 type QuotaType string

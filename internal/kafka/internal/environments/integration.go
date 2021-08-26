@@ -38,7 +38,8 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"enable-kafka-external-certificate": "false",
 		"cluster-compute-machine-type":      "m5.xlarge",
 		"ingress-controller-replicas":       "3",
-		"quota-type":                        "allow-list",
+		"allow-evaluator-instance":          "true",
+		"quota-type":                        "quota-management-list",
 		"enable-deletion-of-expired-kafka":  "true",
 		"dataplane-cluster-scaling-type":    "auto", // need to set this to 'auto' for integration environment as some tests rely on this
 		"strimzi-operator-addon-id":         "managed-kafka-qe",

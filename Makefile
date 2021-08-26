@@ -559,7 +559,8 @@ deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy: MAS_SSO_REALM ?= "rhoas"
 deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
 deploy: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
-deploy: QUOTA_TYPE ?= "allow-list"
+deploy: ALLOW_EVALUATOR_INSTANCE ?= "true"
+deploy: QUOTA_TYPE ?= "quota-management-list"
 deploy: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
 deploy: deploy/db
@@ -603,7 +604,6 @@ deploy: deploy/db
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
-		-p ALLOW_ANY_REGISTERED_USERS="$(ALLOW_ANY_REGISTERED_USERS)" \
 		-p VAULT_KIND=$(VAULT_KIND) \
 		-p SERVICE_PUBLIC_HOST_URL="$(SERVICE_PUBLIC_HOST_URL)" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
@@ -613,6 +613,7 @@ deploy: deploy/db
 		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \
 		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
 		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="${OBSERVATORIUM_TOKEN_REFRESHER_URL}" \
+		-p ALLOW_EVALUATOR_INSTANCE="${ALLOW_EVALUATOR_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p KAS_FLEETSHARD_OLM_INDEX_IMAGE="${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \

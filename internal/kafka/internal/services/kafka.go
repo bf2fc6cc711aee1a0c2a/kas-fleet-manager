@@ -140,6 +140,10 @@ func (k *kafkaService) detectInstanceType(kafkaRequest *dbapi.KafkaRequest) (typ
 // reserveQuota - reserves quota for the given kafka request. If a RHOSAK quota has been assigned, it will try to reserve RHOSAK quota, otherwise it will try with RHOSAKTrial
 func (k *kafkaService) reserveQuota(kafkaRequest *dbapi.KafkaRequest) (subscriptionId string, err *errors.ServiceError) {
 	if kafkaRequest.InstanceType == types.EVAL.String() {
+		if !k.kafkaConfig.Quota.AllowEvaluatorInstance {
+			return "", errors.NewWithCause(errors.ErrorForbidden, err, "kafka eval instances are not allowed")
+		}
+
 		// Only one EVAL instance is admitted. Let's check if the user already owns one
 		dbConn := k.connectionFactory.New()
 		var count int64
@@ -199,7 +203,7 @@ func (k *kafkaService) RegisterKafkaJob(kafkaRequest *dbapi.KafkaRequest) *error
 
 	// Persist the QuotaTyoe to be able to dynamically pick the right Quota service implementation even on restarts.
 	// A typical usecase is when a kafka A is created, at the time of creation the quota-type was ams. At some point in the future
-	// the API is restarted this time changing the --quota-type flag to allow-list, when kafka A is deleted at this point,
+	// the API is restarted this time changing the --quota-type flag to quota-management-list, when kafka A is deleted at this point,
 	// we want to use the correct quota to perform the deletion.
 	kafkaRequest.QuotaType = k.kafkaConfig.Quota.Type
 	if err := dbConn.Create(kafkaRequest).Error; err != nil {
