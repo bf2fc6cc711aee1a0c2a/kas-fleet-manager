@@ -41,19 +41,6 @@ func (middleware *AccessControlListMiddleware) Authorize(next http.Handler) http
 
 		orgId := auth.GetOrgIdFromClaims(claims)
 
-		if !middleware.accessControlListConfig.AllowList.AllowAnyRegisteredUsers {
-			// check if user is in the allow list
-			org, _ := middleware.accessControlListConfig.AllowList.Organisations.GetById(orgId)
-			userIsAnAllowListOrgMember := org.IsUserAllowed(username)
-			_, userIsAnAllowListServiceAccount := middleware.accessControlListConfig.AllowList.ServiceAccounts.GetByUsername(username)
-
-			// If the user is not in the allow list as an org member or service account, they are not authorised
-			if !userIsAnAllowListServiceAccount && !userIsAnAllowListOrgMember {
-				shared.HandleError(r, w, errors.New(errors.ErrorForbidden, "User '%s' is not authorized to access the service.", username))
-				return
-			}
-		}
-
 		// If the users claim has an orgId, resources should be filtered by their organisation. Otherwise, filter them by owner.
 		context = auth.SetFilterByOrganisationContext(context, orgId != "")
 		*r = *r.WithContext(context)

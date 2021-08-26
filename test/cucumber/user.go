@@ -26,7 +26,7 @@ func init() {
 }
 
 func (s *TestSuite) createUserNamed(name string) error {
-	// this value is taken from config/allow-list-configuration.yaml
+	// this value is taken from config/quota-management-list-configuration.yaml
 	s.Mu.Lock()
 	orgId := s.nextOrgId
 	s.nextOrgId += 1
