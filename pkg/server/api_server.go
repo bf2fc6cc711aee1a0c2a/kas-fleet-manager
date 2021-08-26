@@ -3,11 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
@@ -81,14 +82,12 @@ func NewAPIServer(options ServerOptions) *ApiServer {
 
 	// referring to the router as type http.Handler allows us to add middleware via more handlers
 	var mainHandler http.Handler = mainRouter
-	if options.ServerConfig.EnableJWT {
-		var builder *authentication.HandlerBuilder
-		options.Env.MustResolve(&builder)
+	var builder *authentication.HandlerBuilder
+	options.Env.MustResolve(&builder)
 
-		var err error
-		mainHandler, err = builder.Next(mainHandler).Build()
-		check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
-	}
+	var err error
+	mainHandler, err = builder.Next(mainHandler).Build()
+	check(err, "Unable to create authentication handler", options.SentryConfig.Timeout)
 
 	mainHandler = gorillahandlers.CORS(
 		gorillahandlers.AllowedMethods([]string{
