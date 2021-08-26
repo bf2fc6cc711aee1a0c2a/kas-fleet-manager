@@ -264,7 +264,7 @@ parameters:
 - name: REGISTERED_USERS_PER_ORGANISATION
   displayName: A list of users per organisation
   description: A list of users that are allowed to create standard KAFKA instances via their organisation in a yaml format.
-  value: "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users:[]}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
+  value: "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users: []}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
 
 - name: DENIED_USERS
   displayName: A list of denied users given by their usernames
