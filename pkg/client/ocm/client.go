@@ -176,7 +176,8 @@ func (c *client) HasAssignedQuota(organizationId string, quotaType KafkaQuotaTyp
 
 	quotaCostList.Items().Each(func(qc *amsv1.QuotaCost) bool {
 		relatedResourcesList, hasRelatedResources := qc.GetRelatedResources()
-		if hasRelatedResources {
+		// No quota is assigned if no related resources are defined or there is 0 allowed instances
+		if hasRelatedResources && qc.Allowed() > 0 {
 			for _, relatedResource := range relatedResourcesList {
 				if relatedResource.ResourceName() == quotaType.GetResourceName() && relatedResource.Product() == quotaType.GetProduct() {
 					assigned = true
