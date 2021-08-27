@@ -589,19 +589,19 @@ deploy/secrets:
 .PHONY: deploy/secrets
 
 # deploy service via templates to an OpenShift cluster
-deploy: IMAGE_REGISTRY ?= $(internal_image_registry)
-deploy: IMAGE_REPOSITORY ?= $(image_repository)
-deploy: IMAGE_TAG ?= $(image_tag)
-deploy: OCM_URL ?= "https://api.stage.openshift.com"
-deploy: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
-deploy: MAS_SSO_REALM ?= "rhoas"
-deploy: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
-deploy: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
-deploy: ALLOW_EVALUATOR_INSTANCE ?= "true"
-deploy: QUOTA_TYPE ?= "quota-management-list"
-deploy: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
-deploy: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
-deploy: deploy/db deploy/secret
+deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
+deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
+deploy/service: IMAGE_TAG ?= $(image_tag)
+deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
+deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
+deploy/service: MAS_SSO_REALM ?= "rhoas"
+deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
+deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
+deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
+deploy/service: QUOTA_TYPE ?= "quota-management-list"
+deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
+deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+deploy/service:
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(OCM_ENV)" \
@@ -630,7 +630,7 @@ deploy: deploy/db deploy/secret
 		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
-.PHONY: deploy
+.PHONY: deploy/service
 
 # remove service deployments from an OpenShift cluster
 undeploy: IMAGE_REGISTRY ?= $(internal_image_registry)
