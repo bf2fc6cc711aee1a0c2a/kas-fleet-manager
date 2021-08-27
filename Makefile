@@ -592,44 +592,88 @@ deploy/secrets:
 deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
 deploy/service: IMAGE_TAG ?= $(image_tag)
+deploy/service: ENV ?= "development"
+deploy/service: REPLICAS ?= "1"
+deploy/service: ENABLE_KAFKA_EXTERNAL_CERTIFICATE ?= "false"
+deploy/service: ENABLE_KAFKA_LIFE_SPAN ?= "false"
+deploy/service: KAFKA_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
+deploy/service: MAS_SSO_ENABLE_AUTH ?= "true"
 deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: MAS_SSO_REALM ?= "rhoas"
+deploy/service: MAX_ALLOWED_SERVICE_ACCOUNTS ?= "2"
+deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
 deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
+deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
+deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
+deploy/service: ENABLE_DENY_LIST ?= "false"
 deploy/service: ALLOW_EVALUATOR_INSTANCE ?= "true"
 deploy/service: QUOTA_TYPE ?= "quota-management-list"
 deploy/service: STRIMZI_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/managed-kafka:production-82b42db"
 deploy/service: KAS_FLEETSHARD_OLM_INDEX_IMAGE ?= "quay.io/osd-addons/kas-fleetshard-operator:production-82b42db"
+deploy/service: DEX_USERNAME ?= "admin@example.com"
+deploy/service: DEX_URL ?= "http://dex-dex.apps.pbraun-observatorium.observability.rhmw.io"
+deploy/service: OBSERVATORIUM_GATEWAY ?= "https://observatorium-observatorium.apps.pbraun-observatorium.observability.rhmw.io"
+deploy/service: OBSERVATORIUM_TENANT ?= "test"
+deploy/service: OBSERVABILITY_CONFIG_REPO ?= "https://api.github.com/repos/bf2fc6cc711aee1a0c2a/observability-resources-mk/contents"
+deploy/service: OBSERVATORIUM_TENANT ?= "test"
+deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
+deploy/service: OBSERVABILITY_CONFIG_TAG ?= "v1.12.0-staging"
+deploy/service: DEFAULT_KAFKA_VERSION ?= "2.7.0"
+deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
+deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
+deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
+deploy/service: VAULT_KIND ?= "tmp"
 deploy/service:
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
+	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
-		-p ENVIRONMENT="$(OCM_ENV)" \
+		-p ENVIRONMENT="$(ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
+		-p REPLICAS="${REPLICAS}" \
+		-p ENABLE_KAFKA_EXTERNAL_CERTIFICATE="${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}" \
+		-p ENABLE_KAFKA_LIFE_SPAN="${ENABLE_KAFKA_LIFE_SPAN}" \
+		-p KAFKA_LIFE_SPAN="${KAFKA_LIFE_SPAN}" \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
+		-p AMS_URL="${AMS_URL}" \
 		-p JWKS_URL="$(JWKS_URL)" \
+		-p MAS_SSO_ENABLE_AUTH="${MAS_SSO_ENABLE_AUTH}" \
 		-p MAS_SSO_BASE_URL="$(MAS_SSO_BASE_URL)" \
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
+		-p MAX_ALLOWED_SERVICE_ACCOUNTS="${MAX_ALLOWED_SERVICE_ACCOUNTS}" \
+		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
+		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p VAULT_KIND=$(VAULT_KIND) \
-		-p SERVICE_PUBLIC_HOST_URL="$(SERVICE_PUBLIC_HOST_URL)" \
+		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/kas-fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
+		-p DEX_USERNAME="${DEX_USERNAME}" \
+		-p DEX_URL="${DEX_URL}" \
+		-p OBSERVATORIUM_GATEWAY="${OBSERVATORIUM_GATEWAY}" \
+		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_GATEWAY="${OBSERVATORIUM_RHSSO_GATEWAY}" \
 		-p OBSERVATORIUM_RHSSO_REALM="${OBSERVATORIUM_RHSSO_REALM}" \
 		-p OBSERVATORIUM_RHSSO_TENANT="${OBSERVATORIUM_RHSSO_TENANT}" \
 		-p OBSERVATORIUM_RHSSO_AUTH_SERVER_URL="${OBSERVATORIUM_RHSSO_AUTH_SERVER_URL}" \
-		-p OBSERVATORIUM_TENANT="${OBSERVATORIUM_TENANT}" \
-		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="${OBSERVATORIUM_TOKEN_REFRESHER_URL}" \
+		-p OBSERVATORIUM_TOKEN_REFRESHER_URL="http://token-refresher.$(NAMESPACE).svc.cluster.local" \
+		-p OBSERVABILITY_CONFIG_REPO="${OBSERVABILITY_CONFIG_REPO}" \
+		-p ENABLE_TERMS_ACCEPTANCE="${ENABLE_TERMS_ACCEPTANCE}" \
 		-p ALLOW_EVALUATOR_INSTANCE="${ALLOW_EVALUATOR_INSTANCE}" \
 		-p QUOTA_TYPE="${QUOTA_TYPE}" \
 		-p KAS_FLEETSHARD_OLM_INDEX_IMAGE="${KAS_FLEETSHARD_OLM_INDEX_IMAGE}" \
 		-p STRIMZI_OLM_INDEX_IMAGE="${STRIMZI_OLM_INDEX_IMAGE}" \
+		-p STRIMZI_OPERATOR_VERSION="${STRIMZI_OPERATOR_VERSION}" \
+		-p STRIMZI_OPERATOR_ADDON_ID="${STRIMZI_OPERATOR_ADDON_ID}" \
+		-p KAS_FLEETSHARD_ADDON_ID="${KAS_FLEETSHARD_ADDON_ID}" \
+		-p DEFAULT_KAFKA_VERSION="${DEFAULT_KAFKA_VERSION}" \
+		-p DATAPLANE_CLUSTER_SCALING_TYPE="${DATAPLANE_CLUSTER_SCALING_TYPE}" \
+		-p CLUSTER_LOGGING_OPERATOR_ADDON_ID="${CLUSTER_LOGGING_OPERATOR_ADDON_ID}" \
 		| oc apply -f - -n $(NAMESPACE)
-	@oc process -f ./templates/route-template.yml | oc apply -f - -n $(NAMESPACE)
 .PHONY: deploy/service
 
 # remove service deployments from an OpenShift cluster
