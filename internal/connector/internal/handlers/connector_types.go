@@ -29,10 +29,6 @@ func NewConnectorTypesHandler(service services.ConnectorTypesService, manager *w
 }
 
 func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
-	// this API depends on the startup reconcile occurring so that all the connector types are
-	// indexed in the DB
-	h.manager.StartupReconcileWG.Wait()
-
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
@@ -54,10 +50,6 @@ func (h ConnectorTypesHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h ConnectorTypesHandler) List(w http.ResponseWriter, r *http.Request) {
-	// this API depends on the startup reconcile occurring so that all the connector types are
-	// indexed in the DB
-	h.manager.StartupReconcileWG.Wait()
-
 	cfg := &handlers.HandlerConfig{
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
