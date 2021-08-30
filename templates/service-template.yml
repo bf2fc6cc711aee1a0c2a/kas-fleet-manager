@@ -974,7 +974,7 @@ objects:
         app: kas-fleet-manager
         port: metrics
       annotations:
-        description: Exposes and load balances the ocm example service pods metrics endpoint
+        description: Exposes and load balances the kas-fleet-manager pods metrics endpoint
         service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-metrics-tls
     spec:
       selector:
