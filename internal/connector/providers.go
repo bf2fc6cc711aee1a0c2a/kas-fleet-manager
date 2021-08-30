@@ -50,6 +50,7 @@ func serviceProviders() di.Option {
 		di.Provide(handlers.NewConnectorClusterHandler),
 		di.Provide(routes.NewRouteLoader),
 		di.Provide(workers.NewConnectorManager, di.As(new(coreWorkers.Worker))),
+		di.Provide(workers.NewApiServerReadyCondition),
 	)
 }
 
