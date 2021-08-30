@@ -622,6 +622,18 @@ objects:
           labels:
             app: kas-fleet-manager
         spec:
+          affinity:
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - kas-fleet-manager
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+                weight: 100
           serviceAccount: kas-fleet-manager
           serviceAccountName: kas-fleet-manager
           volumes:
@@ -927,6 +939,16 @@ objects:
               limits:
                 memory: 512Mi
                 cpu: 500m
+
+  - kind: PodDisruptionBudget                
+    apiVersion: policy/v1
+    metadata:
+      name: kas-fleet-manager-pdb
+    spec:
+      minAvailable: 3
+      selector:
+        matchLabels:
+          app: kas-fleet-manager
 
   - kind: Service
     apiVersion: v1
