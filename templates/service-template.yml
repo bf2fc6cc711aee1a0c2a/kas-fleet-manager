@@ -945,7 +945,7 @@ objects:
     metadata:
       name: kas-fleet-manager-pdb
     spec:
-      minAvailable: 3
+      maxUnavailabe: "50%"
       selector:
         matchLabels:
           app: kas-fleet-manager
