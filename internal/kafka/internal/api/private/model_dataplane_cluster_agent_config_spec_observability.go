@@ -11,10 +11,8 @@ package private
 
 // DataplaneClusterAgentConfigSpecObservability Observability configurations
 type DataplaneClusterAgentConfigSpecObservability struct {
-	// Deprecated
-	DeprecatedAccessToken *string `json:"accessToken,omitempty"`
-	AccessToken           *string `json:"access_token,omitempty"`
-	Channel               string  `json:"channel,omitempty"`
-	Repository            string  `json:"repository,omitempty"`
-	Tag                   string  `json:"tag,omitempty"`
+	AccessToken *string `json:"accessToken,omitempty"`
+	Channel     string  `json:"channel,omitempty"`
+	Repository  string  `json:"repository,omitempty"`
+	Tag         string  `json:"tag,omitempty"`
 }

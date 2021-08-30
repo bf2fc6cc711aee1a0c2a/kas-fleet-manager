@@ -11,28 +11,12 @@ package private
 
 // ManagedKafkaAllOfSpecOauth struct for ManagedKafkaAllOfSpecOauth
 type ManagedKafkaAllOfSpecOauth struct {
-	// Deprecated
-	DeprecatedClientId string `json:"clientId,omitempty"`
-	// Deprecated
-	DeprecatedClientSecret string `json:"clientSecret,omitempty"`
-	// Deprecated
-	DeprecatedTokenEndpointURI string `json:"tokenEndpointURI,omitempty"`
-	// Deprecated
-	DeprecatedJwksEndpointURI string `json:"jwksEndpointURI,omitempty"`
-	// Deprecated
-	DeprecatedValidIssuerEndpointURI string `json:"validIssuerEndpointURI,omitempty"`
-	// Deprecated
-	DeprecatedUserNameClaim string `json:"userNameClaim,omitempty"`
-	// Deprecated
-	DeprecatedTlsTrustedCertificate *string `json:"tlsTrustedCertificate,omitempty"`
-	// Deprecated
-	DeprecatedCustomClaimCheck string  `json:"customClaimCheck,omitempty"`
-	ClientId                   string  `json:"client_id,omitempty"`
-	ClientSecret               string  `json:"client_secret,omitempty"`
-	TokenEndpointUri           string  `json:"token_endpoint_uri,omitempty"`
-	JwksEndpointUri            string  `json:"jwks_endpoint_uri,omitempty"`
-	ValidIssuerEndpointUri     string  `json:"valid_issuer_endpoint_uri,omitempty"`
-	UserNameClaim              string  `json:"user_name_claim,omitempty"`
-	TlsTrustedCertificate      *string `json:"tls_trusted_certificate,omitempty"`
-	CustomClaimCheck           string  `json:"custom_claim_check,omitempty"`
+	ClientId               string  `json:"clientId,omitempty"`
+	ClientSecret           string  `json:"clientSecret,omitempty"`
+	TokenEndpointURI       string  `json:"tokenEndpointURI,omitempty"`
+	JwksEndpointURI        string  `json:"jwksEndpointURI,omitempty"`
+	ValidIssuerEndpointURI string  `json:"validIssuerEndpointURI,omitempty"`
+	UserNameClaim          string  `json:"userNameClaim,omitempty"`
+	TlsTrustedCertificate  *string `json:"tlsTrustedCertificate,omitempty"`
+	CustomClaimCheck       string  `json:"customClaimCheck,omitempty"`
 }

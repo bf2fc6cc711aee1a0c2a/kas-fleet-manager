@@ -58,9 +58,9 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 		"strimzi-cluster-operator.v.3.0.0-0",
 	}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.5.8.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.5.12.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.5.8.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.5.12.0-0", Ready: true},
 	}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -73,11 +73,6 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
-
-	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
-	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
-	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_BadRequestWhenNonexistingCluster(t *testing.T) {
@@ -182,7 +177,6 @@ func TestDataPlaneCluster_GetManagedKafkaAgentCRSuccess(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(config.Spec.Observability.Repository).ShouldNot(BeEmpty())
 	Expect(config.Spec.Observability.Channel).ShouldNot(BeEmpty())
-	Expect(config.Spec.Observability.DeprecatedAccessToken).ShouldNot(BeNil())
 	Expect(config.Spec.Observability.AccessToken).ShouldNot(BeNil())
 }
 
@@ -619,10 +613,6 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	Expect(err).ToNot(HaveOccurred())
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
 
-	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
-	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
-	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersionsIsEmptyItRemainsEmpty(t *testing.T) {
@@ -665,11 +655,6 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
-
-	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
-	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
-	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVersionsIsNotEmptyItRemainsUnchanged(t *testing.T) {
@@ -701,9 +686,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	clusterStatusUpdateRequest.Strimzi = nil
 	clusterStatusUpdateRequest.StrimziVersions = []string{}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
+		{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
 	}
 	db := test.TestServices.DBFactory.New()
 	initialAvailableStrimziVersionsStr := `[{"version": "strimzi-cluster-operator.v.8.0.0-0", "ready": true}, {"version": "strimzi-cluster-operator.v.9.0.0-0", "ready": false}, {"version": "strimzi-cluster-operator.v.10.0.0-0", "ready": true}]`
@@ -726,11 +711,6 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
-
-	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
-	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
-	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersionsIsNotEmptyItRemainsUnchanged(t *testing.T) {
@@ -762,9 +742,9 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	clusterStatusUpdateRequest.StrimziVersions = nil
 	clusterStatusUpdateRequest.Strimzi = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
+		{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
 	}
 	db := test.TestServices.DBFactory.New()
 	initialAvailableStrimziVersionsStr := `[{"version": "strimzi-cluster-operator.v.8.0.0-0", "ready": true}, {"version": "strimzi-cluster-operator.v.9.0.0-0", "ready": false}, {"version": "strimzi-cluster-operator.v.10.0.0-0", "ready": true}]`
@@ -787,11 +767,6 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
-
-	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
-	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
-	Expect(err).ToNot(HaveOccurred())
 }
 
 func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziVersionsIsUpdated(t *testing.T) {
@@ -826,22 +801,22 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
 	clusterStatusUpdateRequest.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
-		private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
-		private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
-		private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
+		{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
+		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
 	}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
+		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
+		{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
 	}
 	cluster, err := test.TestServices.ClusterService.FindClusterByID(testDataPlaneclusterID)
 	Expect(err).ToNot(HaveOccurred())
 	availableStrimziVersions, err := cluster.GetAvailableStrimziVersions()
 	Expect(availableStrimziVersions).To(Equal([]api.StrimziVersion{
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: true},
-		api.StrimziVersion{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: true},
+		{Version: "strimzi-cluster-operator.v.10.0.0-0", Ready: true},
 	}))
 	Expect(err).ToNot(HaveOccurred())
 
@@ -856,11 +831,6 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	availableStrimziVersions, err = cluster.GetAvailableStrimziVersions()
 	Expect(err).ToNot(HaveOccurred())
 	Expect(availableStrimziVersions).To(Equal(expectedAvailableStrimziVersions))
-
-	deprecatedClusterStatusUpdateRequest := sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity()
-	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *deprecatedClusterStatusUpdateRequest)
-	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
-	Expect(err).ToNot(HaveOccurred())
 }
 
 func KafkaConfig(h *coreTest.Helper) (c *config.KafkaConfig) {
@@ -911,7 +881,7 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *private.DataPlaneClusterUpd
 			DataRetentionSize:             &[]string{""}[0],
 			Partitions:                    &[]int32{0}[0],
 		},
-		NodeInfo: &private.DataPlaneClusterUpdateStatusRequestNodeInfo{
+		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{0}[0],
 			Floor:                  &[]int32{0}[0],
 			Current:                &[]int32{0}[0],
@@ -923,9 +893,9 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *private.DataPlaneClusterUpd
 			IngressEgressThroughputPerSec: &[]string{""}[0],
 			DataRetentionSize:             &[]string{""}[0],
 		},
-		ResizeInfo: &private.DataPlaneClusterUpdateStatusRequestResizeInfo{
+		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &private.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
+			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{0}[0],
 				Partitions:                    &[]int32{0}[0],
 				IngressEgressThroughputPerSec: &[]string{""}[0],
@@ -965,43 +935,4 @@ func mockedClusterWithClusterID(clusterID string) (*clustersmgmtv1.Cluster, erro
 	clusterBuilder := mocks.GetMockClusterBuilder(nil)
 	clusterBuilder.ID(clusterID)
 	return clusterBuilder.Build()
-}
-
-// Returns a sample data plane cluster status request with available capacity
-func sampleDeprecatedDataPlaneClusterStatusRequestWithAvailableCapacity() *private.DataPlaneClusterUpdateStatusRequest {
-	return &private.DataPlaneClusterUpdateStatusRequest{
-		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
-			{
-				Type:   "Ready",
-				Status: "True",
-			},
-		},
-		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			Connections:                   &[]int32{1000000}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-			Partitions:                    &[]int32{1000000}[0],
-		},
-		DeprecatedNodeInfo: &private.DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo{
-			Ceiling:                          &[]int32{20}[0],
-			Floor:                            &[]int32{3}[0],
-			Current:                          &[]int32{5}[0],
-			DeprecatedCurrentWorkLoadMinimum: &[]int32{3}[0],
-		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
-			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
-			Partitions:                    &[]int32{1000000}[0],
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-		},
-		DeprecatedResizeInfo: &private.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo{
-			DeprecatedNodeDelta: &[]int32{3}[0],
-			Delta: &private.DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfoDelta{
-				Connections:                             &[]int32{10000}[0],
-				Partitions:                              &[]int32{10000}[0],
-				DeprecatedIngressEgressThroughputPerSec: &[]string{"test"}[0],
-				DeprecatedDataRetentionSize:             &[]string{"test"}[0],
-			},
-		},
-	}
 }

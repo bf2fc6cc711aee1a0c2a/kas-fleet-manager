@@ -304,12 +304,10 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 
 	for _, k := range testKafkas {
 		if k.Status != constants2.KafkaRequestStatusPreparing.String() {
-			if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == k.ID }); mk != nil {
+			if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
-				Expect(mk.Metadata.Annotations.DeprecatedBf2OrgPlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotations.DeprecatedBf2OrgId).To(Equal(k.ID))
-				Expect(mk.Metadata.Annotations.PlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotations.Id).To(Equal(k.ID))
+				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
+				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.KafkaRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Kafka).To(Equal(k.DesiredKafkaVersion))
@@ -325,27 +323,27 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 	updates := map[string]private.DataPlaneKafkaStatus{}
 	for _, item := range list.Items {
 		if !item.Spec.Deleted {
-			updates[item.Metadata.Annotations.Id] = private.DataPlaneKafkaStatus{
+			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 					Reason: "UpdatingStrimzi",
 				}},
 				Versions: private.DataPlaneKafkaStatusVersions{
-					Kafka:   fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Id),
-					Strimzi: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Id),
+					Kafka:   fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					Strimzi: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
 				},
 			}
-			readyClusters = append(readyClusters, item.Metadata.Annotations.Id)
+			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
 		} else {
-			updates[item.Metadata.Annotations.Id] = private.DataPlaneKafkaStatus{
+			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "False",
 					Reason: "Deleted",
 				}},
 			}
-			deletedClusters = append(deletedClusters, item.Metadata.Annotations.Id)
+			deletedClusters = append(deletedClusters, item.Metadata.Annotations.Bf2OrgId)
 		}
 	}
 
@@ -468,7 +466,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithTlsCerts(t *testing.T) 
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
 		Expect(mk.Spec.Endpoint.Tls.Cert).To(Equal(cert))
 		Expect(mk.Spec.Endpoint.Tls.Key).To(Equal(key))
 	} else {
@@ -533,7 +531,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkasWithServiceAccounts(t *test
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
 		// check canary service account
 		Expect(mk.Spec.ServiceAccounts).To(HaveLen(1))
 		canaryServiceAccount := mk.Spec.ServiceAccounts[0]
@@ -599,9 +597,8 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithoutOAuthTLSCert(t *testing.T) {
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
-		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).To(BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
@@ -660,7 +657,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 	var readyClusters []string
 	updates := map[string]private.DataPlaneKafkaStatus{}
 	for _, item := range list.Items {
-		updates[item.Metadata.Annotations.Id] = private.DataPlaneKafkaStatus{
+		updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlaneKafkaStatus{
 			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 				Type:   "Ready",
 				Status: "True",
@@ -678,7 +675,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 				},
 			},
 		}
-		readyClusters = append(readyClusters, item.Metadata.Annotations.Id)
+		readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
 	}
 
 	// routes will be stored the first time status are updated
@@ -786,9 +783,8 @@ func TestDataPlaneEndpoints_GetManagedKafkasWithOAuthTLSCert(t *testing.T) {
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Id == testKafka.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedKafka) bool { return item.Metadata.Annotations.Bf2OrgId == testKafka.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
-		Expect(mk.Spec.Oauth.DeprecatedTlsTrustedCertificate).ToNot(BeNil())
 	} else {
 		t.Error("failed matching managedkafka id with kafkarequest id")
 	}
@@ -840,7 +836,7 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
-	kafkaReqID := list.Items[0].Metadata.Annotations.Id
+	kafkaReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
 
 	errMessage := "test-err-message"
 	updateReq := map[string]private.DataPlaneKafkaStatus{

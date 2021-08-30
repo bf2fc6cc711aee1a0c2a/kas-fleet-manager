@@ -9,10 +9,10 @@
 
 package private
 
-// DataPlaneClusterUpdateStatusRequestResizeInfoDelta struct for DataPlaneClusterUpdateStatusRequestResizeInfoDelta
-type DataPlaneClusterUpdateStatusRequestResizeInfoDelta struct {
-	IngressEgressThroughputPerSec *string `json:"ingress_egress_throughput_per_sec,omitempty"`
+// DatePlaneClusterUpdateStatusRequestResizeInfoDelta struct for DatePlaneClusterUpdateStatusRequestResizeInfoDelta
+type DatePlaneClusterUpdateStatusRequestResizeInfoDelta struct {
+	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
 	Connections                   *int32  `json:"connections,omitempty"`
-	DataRetentionSize             *string `json:"data_retention_size,omitempty"`
+	DataRetentionSize             *string `json:"dataRetentionSize,omitempty"`
 	Partitions                    *int32  `json:"partitions,omitempty"`
 }
