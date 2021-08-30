@@ -3,7 +3,7 @@ info:
   description: Kafka Service Fleet Manager APIs that are used by internal services
     e.g kas-fleetshard operators.
   title: Kafka Service Fleet Manager
-  version: 1.2.0
+  version: 1.3.0
 servers:
 - description: Main (production) server
   url: https://api.openshift.com
@@ -16,7 +16,7 @@ servers:
 tags:
 - name: Agent Clusters
 paths:
-  /api/kafkas_mgmt/v1/agent_clusters/{id}/status:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}/status:
     put:
       operationId: updateAgentClusterStatus
       parameters:
@@ -59,7 +59,7 @@ paths:
       summary: Update the status of an agent cluster
       tags:
       - Agent Clusters
-  /api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas/status:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas/status:
     put:
       operationId: updateKafkaClusterStatus
       parameters:
@@ -102,7 +102,7 @@ paths:
       summary: Update the status of Kafka clusters on an agent cluster
       tags:
       - Agent Clusters
-  /api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas:
     get:
       operationId: getKafkas
       parameters:
@@ -142,7 +142,7 @@ paths:
       summary: Get the list of ManagedaKafkas for the specified agent cluster
       tags:
       - Agent Clusters
-  /api/kafkas_mgmt/v1/agent_clusters/{id}:
+  /api/kafkas_mgmt/v1/agent-clusters/{id}:
     get:
       operationId: getKafkaAgent
       parameters:
