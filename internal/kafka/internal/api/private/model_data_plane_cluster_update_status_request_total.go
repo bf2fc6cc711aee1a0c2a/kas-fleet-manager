@@ -11,12 +11,8 @@ package private
 
 // DataPlaneClusterUpdateStatusRequestTotal struct for DataPlaneClusterUpdateStatusRequestTotal
 type DataPlaneClusterUpdateStatusRequestTotal struct {
-	// Deprecated
-	DeprecatedIngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
-	IngressEgressThroughputPerSec           *string `json:"ingress_egress_throughput_per_sec,omitempty"`
-	Connections                             *int32  `json:"connections,omitempty"`
-	// Deprecated
-	DeprecatedDataRetentionSize *string `json:"dataRetentionSize,omitempty"`
-	DataRetentionSize           *string `json:"data_retention_size,omitempty"`
-	Partitions                  *int32  `json:"partitions,omitempty"`
+	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
+	Connections                   *int32  `json:"connections,omitempty"`
+	DataRetentionSize             *string `json:"dataRetentionSize,omitempty"`
+	Partitions                    *int32  `json:"partitions,omitempty"`
 }

@@ -23,9 +23,9 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 				return request
 			},
 			want: []api.StrimziVersion{
-				api.StrimziVersion{Version: "v1.0.0-0", Ready: true},
-				api.StrimziVersion{Version: "v2.0.0-0", Ready: true},
-				api.StrimziVersion{Version: "v3.0.0-0", Ready: true},
+				{Version: "v1.0.0-0", Ready: true},
+				{Version: "v2.0.0-0", Ready: true},
+				{Version: "v3.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -37,9 +37,9 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 				return request
 			},
 			want: []api.StrimziVersion{
-				api.StrimziVersion{Version: "v3.0.0-0", Ready: true},
-				api.StrimziVersion{Version: "v5.8.0-0", Ready: true},
-				api.StrimziVersion{Version: "v5.12.0-0", Ready: true},
+				{Version: "v3.0.0-0", Ready: true},
+				{Version: "v5.8.0-0", Ready: true},
+				{Version: "v5.12.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -68,16 +68,16 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
 				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v1.0.0-0", Ready: true},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v2.0.0-0", Ready: false},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v3.0.0-0", Ready: true},
+					{Version: "v1.0.0-0", Ready: true},
+					{Version: "v2.0.0-0", Ready: false},
+					{Version: "v3.0.0-0", Ready: true},
 				}
 				return request
 			},
 			want: []api.StrimziVersion{
-				api.StrimziVersion{Version: "v1.0.0-0", Ready: true},
-				api.StrimziVersion{Version: "v2.0.0-0", Ready: false},
-				api.StrimziVersion{Version: "v3.0.0-0", Ready: true},
+				{Version: "v1.0.0-0", Ready: true},
+				{Version: "v2.0.0-0", Ready: false},
+				{Version: "v3.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -86,16 +86,16 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
 				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v5.0.0-0", Ready: true},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v2.0.0-0", Ready: false},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v3.0.0-0", Ready: true},
+					{Version: "v5.0.0-0", Ready: true},
+					{Version: "v2.0.0-0", Ready: false},
+					{Version: "v3.0.0-0", Ready: true},
 				}
 				return request
 			},
 			want: []api.StrimziVersion{
-				api.StrimziVersion{Version: "v2.0.0-0", Ready: false},
-				api.StrimziVersion{Version: "v3.0.0-0", Ready: true},
-				api.StrimziVersion{Version: "v5.0.0-0", Ready: true},
+				{Version: "v2.0.0-0", Ready: false},
+				{Version: "v3.0.0-0", Ready: true},
+				{Version: "v5.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -124,17 +124,17 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
 				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v5.0.0-0", Ready: true},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v2.0.0-0", Ready: false},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v3.0.0-0", Ready: true},
+					{Version: "v5.0.0-0", Ready: true},
+					{Version: "v2.0.0-0", Ready: false},
+					{Version: "v3.0.0-0", Ready: true},
 				}
 				request.StrimziVersions = []string{"v18.0.0-0", "v15.0.0-0", "v16.0.0-0"}
 				return request
 			},
 			want: []api.StrimziVersion{
-				api.StrimziVersion{Version: "v2.0.0-0", Ready: false},
-				api.StrimziVersion{Version: "v3.0.0-0", Ready: true},
-				api.StrimziVersion{Version: "v5.0.0-0", Ready: true},
+				{Version: "v2.0.0-0", Ready: false},
+				{Version: "v3.0.0-0", Ready: true},
+				{Version: "v5.0.0-0", Ready: true},
 			},
 			wantErr: false,
 		},
@@ -162,9 +162,9 @@ func TestConvertDataPlaneClusterStatus_AvailableStrimziVersions(t *testing.T) {
 			inputClusterUpdateStatusRequest: func() *private.DataPlaneClusterUpdateStatusRequest {
 				request := sampleValidDataPlaneClusterUpdateStatusRequest()
 				request.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v1.0.0-0", Ready: true},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v2.0.0", Ready: false},
-					private.DataPlaneClusterUpdateStatusRequestStrimzi{Version: "v3.0.0-0", Ready: true},
+					{Version: "v1.0.0-0", Ready: true},
+					{Version: "v2.0.0", Ready: false},
+					{Version: "v3.0.0-0", Ready: true},
 				}
 				return request
 			},
@@ -206,7 +206,7 @@ func sampleValidDataPlaneClusterUpdateStatusRequest() *private.DataPlaneClusterU
 			DataRetentionSize:             &[]string{"test"}[0],
 			Partitions:                    &[]int32{1000000}[0],
 		},
-		NodeInfo: &private.DataPlaneClusterUpdateStatusRequestNodeInfo{
+		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{20}[0],
 			Floor:                  &[]int32{3}[0],
 			Current:                &[]int32{5}[0],
@@ -218,9 +218,9 @@ func sampleValidDataPlaneClusterUpdateStatusRequest() *private.DataPlaneClusterU
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],
 			DataRetentionSize:             &[]string{"test"}[0],
 		},
-		ResizeInfo: &private.DataPlaneClusterUpdateStatusRequestResizeInfo{
+		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &private.DataPlaneClusterUpdateStatusRequestResizeInfoDelta{
+			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
 				Connections:                   &[]int32{10000}[0],
 				Partitions:                    &[]int32{10000}[0],
 				IngressEgressThroughputPerSec: &[]string{"test"}[0],

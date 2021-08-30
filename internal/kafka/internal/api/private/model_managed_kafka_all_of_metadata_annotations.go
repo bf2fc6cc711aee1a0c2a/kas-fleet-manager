@@ -11,10 +11,6 @@ package private
 
 // ManagedKafkaAllOfMetadataAnnotations struct for ManagedKafkaAllOfMetadataAnnotations
 type ManagedKafkaAllOfMetadataAnnotations struct {
-	// Deprecated
-	DeprecatedBf2OrgId string `json:"bf2.org/id"`
-	// Deprecated
-	DeprecatedBf2OrgPlacementId string `json:"bf2.org/placementId"`
-	Id                          string `json:"id"`
-	PlacementId                 string `json:"placement_id"`
+	Bf2OrgId          string `json:"bf2.org/id"`
+	Bf2OrgPlacementId string `json:"bf2.org/placementId"`
 }
