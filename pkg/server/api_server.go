@@ -27,28 +27,35 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 )
 
+type ApiServerReadyCondition interface {
+	Wait()
+}
+
 type ApiServer struct {
-	httpServer    *http.Server
-	serverConfig  *ServerConfig
-	sentryTimeout time.Duration
+	httpServer      *http.Server
+	serverConfig    *ServerConfig
+	sentryTimeout   time.Duration
+	readyConditions []ApiServerReadyCondition
 }
 
 var _ Server = &ApiServer{}
 
 type ServerOptions struct {
 	di.Inject
-	ServerConfig   *ServerConfig
-	KeycloakConfig *keycloak.KeycloakConfig
-	SentryConfig   *sentry.Config
-	RouteLoaders   []environments.RouteLoader
-	Env            *environments.Env
+	ServerConfig    *ServerConfig
+	KeycloakConfig  *keycloak.KeycloakConfig
+	SentryConfig    *sentry.Config
+	RouteLoaders    []environments.RouteLoader
+	Env             *environments.Env
+	ReadyConditions []ApiServerReadyCondition `di:"optional"`
 }
 
 func NewAPIServer(options ServerOptions) *ApiServer {
 	s := &ApiServer{
-		httpServer:    nil,
-		serverConfig:  options.ServerConfig,
-		sentryTimeout: options.SentryConfig.Timeout,
+		httpServer:      nil,
+		serverConfig:    options.ServerConfig,
+		sentryTimeout:   options.SentryConfig.Timeout,
+		readyConditions: options.ReadyConditions,
 	}
 
 	// mainRouter is top level "/"
@@ -156,6 +163,13 @@ func (s *ApiServer) Run() {
 	if err != nil {
 		glog.Fatalf("Unable to start API server: %s", err)
 	}
+
+	// Before we start processing requests, wait
+	// for the server to be ready to run.
+	for _, condition := range s.readyConditions {
+		condition.Wait()
+	}
+
 	s.Serve(listener)
 }
 

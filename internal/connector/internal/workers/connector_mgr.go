@@ -6,6 +6,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
 	"sync"
@@ -29,9 +30,15 @@ type ConnectorManager struct {
 	vaultService            vault.VaultService
 	lastVersion             int64
 	startupReconcileDone    bool
-	StartupReconcileWG      sync.WaitGroup
+	startupReconcileWG      sync.WaitGroup
 	db                      *db.ConnectionFactory
 	ctx                     context.Context
+}
+
+// NewApiServerReadyCondition is used to inject a server.ApiServerReadyCondition into the server.ApiServer
+// so that it waits for the ConnectorManager to have completed a startup reconcile before accepting http requests.
+func NewApiServerReadyCondition(cm *ConnectorManager) server.ApiServerReadyCondition {
+	return &cm.startupReconcileWG
 }
 
 // NewConnectorManager creates a new connector manager
@@ -58,7 +65,7 @@ func NewConnectorManager(
 		startupReconcileDone:    false,
 		db:                      db,
 	}
-	result.StartupReconcileWG.Add(1)
+	result.startupReconcileWG.Add(1)
 	return result
 }
 
@@ -89,7 +96,7 @@ func (k *ConnectorManager) Reconcile() []error {
 		}
 
 		k.startupReconcileDone = true
-		k.StartupReconcileWG.Done()
+		k.startupReconcileWG.Done()
 	}
 
 	if k.ctx == nil {
@@ -258,7 +265,6 @@ func (k *ConnectorManager) reconcileConnectorUpdate(ctx context.Context, connect
 }
 
 func (k *ConnectorManager) reconcileDeleted(ctx context.Context, connector *dbapi.Connector) error {
-
 	if err := k.connectorService.Delete(ctx, connector.ID); err != nil {
 		return errors.Wrapf(err, "failed to delete connector %s", connector.ID)
 	}
