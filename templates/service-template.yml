@@ -474,7 +474,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-providers-config
+      name: kas-fleet-manager-providers-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -483,7 +483,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-allowed-users-config
+      name: kas-fleet-manager-allowed-users-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -493,7 +493,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-denied-users-config
+      name: kas-fleet-manager-denied-users-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -502,7 +502,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-read-only-user-list
+      name: kas-fleet-manager-read-only-user-list
       annotations:
         qontract.recycle: "true"
     data:
@@ -511,7 +511,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-kafka-sre-user-list
+      name: kas-fleet-manager-kafka-sre-user-list
       annotations:
         qontract.recycle: "true"
     data:
@@ -520,7 +520,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-long-lived-kafkas
+      name: kas-fleet-manager-long-lived-kafkas
       annotations:
         qontract.recycle: "true"
     data:
@@ -529,7 +529,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-kafka-capacity-config
+      name: kas-fleet-manager-kafka-capacity-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -544,7 +544,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-authentication
+      name: kas-fleet-manager-authentication
       annotations:
         qontract.recycle: "true"
     data:
@@ -589,7 +589,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: ocm-managed-services-dataplane-cluster-scaling-config
+      name: kas-fleet-manager-dataplane-cluster-scaling-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -637,33 +637,33 @@ objects:
           - name: rds
             secret:
               secretName: kas-fleet-manager-rds
-          - name: ocm-managed-services-providers-config
+          - name: kas-fleet-manager-providers-config
             configMap:
-              name: ocm-managed-services-providers-config
-          - name: ocm-managed-services-allowed-users-config
+              name: kas-fleet-manager-providers-config
+          - name: kas-fleet-manager-allowed-users-config
             configMap:
-              name: ocm-managed-services-allowed-users-config
-          - name: ocm-managed-services-denied-users-config
+              name: kas-fleet-manager-allowed-users-config
+          - name: kas-fleet-manager-denied-users-config
             configMap:
-              name: ocm-managed-services-denied-users-config
-          - name: ocm-managed-services-read-only-user-list
+              name: kas-fleet-manager-denied-users-config
+          - name: kas-fleet-manager-read-only-user-list
             configMap:
-              name: ocm-managed-services-read-only-user-list
-          - name: ocm-managed-services-kafka-sre-user-list
+              name: kas-fleet-manager-read-only-user-list
+          - name: kas-fleet-manager-kafka-sre-user-list
             configMap:
-              name: ocm-managed-services-kafka-sre-user-list
-          - name: ocm-managed-services-kafka-capacity-config
+              name: kas-fleet-manager-kafka-sre-user-list
+          - name: kas-fleet-manager-kafka-capacity-config
             configMap:
-              name: ocm-managed-services-kafka-capacity-config
-          - name: ocm-managed-services-long-lived-kafkas
+              name: kas-fleet-manager-kafka-capacity-config
+          - name: kas-fleet-manager-long-lived-kafkas
             configMap:
-              name: ocm-managed-services-long-lived-kafkas
-          - name: ocm-managed-services-authentication
+              name: kas-fleet-manager-long-lived-kafkas
+          - name: kas-fleet-manager-authentication
             configMap:
-              name: ocm-managed-services-authentication
-          - name: ocm-managed-services-dataplane-cluster-scaling-config
+              name: kas-fleet-manager-authentication
+          - name: kas-fleet-manager-dataplane-cluster-scaling-config
             configMap:
-              name: ocm-managed-services-dataplane-cluster-scaling-config
+              name: kas-fleet-manager-dataplane-cluster-scaling-config
           - name: envoy-config
             configMap:
               name: kas-fleet-manager-envoy-config
@@ -710,30 +710,30 @@ objects:
               mountPath: /secrets/observatorium
             - name: rds
               mountPath: /secrets/rds
-            - name: ocm-managed-services-providers-config
+            - name: kas-fleet-manager-providers-config
               mountPath: /config/provider-configuration.yaml
               subPath: provider-configuration.yaml
-            - name: ocm-managed-services-allowed-users-config
+            - name: kas-fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
-            - name: ocm-managed-services-denied-users-config
+            - name: kas-fleet-manager-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
-            - name: ocm-managed-services-read-only-user-list
+            - name: kas-fleet-manager-read-only-user-list
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
-            - name: ocm-managed-services-kafka-sre-user-list
+            - name: kas-fleet-manager-kafka-sre-user-list
               mountPath: /config/kafka-sre-user-list.yaml
               subPath: kafka-sre-user-list.yaml
-            - name: ocm-managed-services-kafka-capacity-config
+            - name: kas-fleet-manager-kafka-capacity-config
               mountPath: /config/kafka-capacity-config.yaml
               subPath: kafka-capacity-config.yaml
-            - name: ocm-managed-services-long-lived-kafkas
+            - name: kas-fleet-manager-long-lived-kafkas
               mountPath: /config/long-lived-kafkas-configuration.yaml
               subPath: long-lived-kafkas-configuration.yaml
-            - name: ocm-managed-services-authentication
+            - name: kas-fleet-manager-authentication
               mountPath: /config/authentication
-            - name: ocm-managed-services-dataplane-cluster-scaling-config
+            - name: kas-fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml
             env:
@@ -974,7 +974,7 @@ objects:
         app: kas-fleet-manager
         port: metrics
       annotations:
-        description: Exposes and load balances the ocm example service pods metrics endpoint
+        description: Exposes and load balances the kas-fleet-manager pods metrics endpoint
         service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-metrics-tls
     spec:
       selector:
