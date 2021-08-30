@@ -100,7 +100,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
 		SetBody(body).
-		Put(testServer.Helper.RestURL("/agent_clusters/" + clusterId + "/kafkas/status"))
+		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/kafkas/status"))
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
@@ -110,35 +110,7 @@ func TestDataPlaneEndpoints_AuthzSuccess(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
 		SetBody(clusterStatusUpdateRequest).
-		Put(testServer.Helper.RestURL("/agent_clusters/" + clusterId + "/status"))
-
-	Expect(err).NotTo(HaveOccurred())
-	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
-}
-
-//TODO: this test is added here to verify the "/agent_clusters" endpoint is backward compatible with "/agent-clusters". It should be removed once the backward compatibility is removed.
-func TestDataPlaneEndpoints_AuthzSuccess_Old_Path(t *testing.T) {
-	clusterId := "test-cluster-id"
-	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
-		return jwt.MapClaims{
-			"iss": test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
-			"realm_access": map[string][]string{
-				"roles": {"kas_fleetshard_operator"},
-			},
-			"kas-fleetshard-operator-cluster-id": clusterId,
-		}
-	}, nil)
-
-	defer testServer.TearDown()
-
-	body := map[string]private.DataPlaneKafkaStatus{
-		testServer.ClusterID: {},
-	}
-	restyResp, err := resty.R().
-		SetHeader("Content-Type", "application/json").
-		SetAuthToken(testServer.Token).
-		SetBody(body).
-		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/kafkas/status"))
+		Put(testServer.Helper.RestURL("/agent-clusters/" + clusterId + "/status"))
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusBadRequest)) //the clusterId is not valid
@@ -161,7 +133,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
 		SetBody(body).
-		Put(testServer.Helper.RestURL("/agent_clusters/" + testServer.ClusterID + "/kafkas/status"))
+		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/kafkas/status"))
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
@@ -171,7 +143,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenNoRealmRole(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
 		SetBody(clusterStatusUpdateRequest).
-		Put(testServer.Helper.RestURL("/agent_clusters/" + testServer.ClusterID + "/status"))
+		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/status"))
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
@@ -196,7 +168,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
 		SetBody(body).
-		Put(testServer.Helper.RestURL("/agent_clusters/" + testServer.ClusterID + "/kafkas/status"))
+		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/kafkas/status"))
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
@@ -206,7 +178,7 @@ func TestDataPlaneEndpoints_AuthzFailWhenClusterIdNotMatch(t *testing.T) {
 		SetHeader("Content-Type", "application/json").
 		SetAuthToken(testServer.Token).
 		SetBody(clusterStatusUpdateRequest).
-		Put(testServer.Helper.RestURL("/agent_clusters/" + testServer.ClusterID + "/status"))
+		Put(testServer.Helper.RestURL("/agent-clusters/" + testServer.ClusterID + "/status"))
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(restyResp.StatusCode()).To(Equal(http.StatusNotFound))
