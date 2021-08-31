@@ -11,7 +11,7 @@ import (
 // ClusterNamePrefix a prefix used for new OCM cluster names
 const (
 	ClusterNamePrefix  = "mk-"
-	ComputeMachineType = "m5.4xlarge"
+	ComputeMachineType = "m5.2xlarge"
 )
 
 // NOTE: the current mock generation exports to a _test file, if in the future this should be made public, consider

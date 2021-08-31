@@ -970,7 +970,7 @@ func GetMockClusterAddonInstallationList(modifyFn func(*clustersmgmtv1.AddOnInst
 func GetMockClusterNodesBuilder(modifyFn func(*clustersmgmtv1.ClusterNodesBuilder)) *clustersmgmtv1.ClusterNodesBuilder {
 	builder := clustersmgmtv1.NewClusterNodes().
 		Compute(MockClusterComputeNodes).
-		ComputeMachineType(clustersmgmtv1.NewMachineType().ID("m5.4xlarge"))
+		ComputeMachineType(clustersmgmtv1.NewMachineType().ID("m5.2xlarge"))
 	if modifyFn != nil {
 		modifyFn(builder)
 	}

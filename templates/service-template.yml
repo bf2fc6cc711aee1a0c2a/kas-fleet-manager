@@ -307,7 +307,7 @@ parameters:
 - name: CLUSTER_COMPUTE_MACHINE_TYPE
   displayName: Compute machine type
   description: The compute machine type of each node on a new created cluster.
-  value: "m5.4xlarge"
+  value: "m5.2xlarge"
 
 - name: ALLOW_EVALUATOR_INSTANCE
   displayName: Allow Evaluator Instance
