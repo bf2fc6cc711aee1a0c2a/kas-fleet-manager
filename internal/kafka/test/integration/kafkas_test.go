@@ -3,11 +3,12 @@ package integration
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
@@ -1044,7 +1045,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 			}
 			kafkaStatusList := make(map[string]private.DataPlaneKafkaStatus)
 			for _, kafka := range kafkaList.Items {
-				id := kafka.Metadata.Annotations.Id
+				id := kafka.Metadata.Annotations.Bf2OrgId
 				if kafka.Spec.Deleted {
 					kafkaStatusList[id] = kasfleetshardsync.GetDeletedKafkaStatusResponse()
 				}

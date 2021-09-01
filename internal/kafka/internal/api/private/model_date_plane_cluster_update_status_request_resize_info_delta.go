@@ -9,8 +9,8 @@
 
 package private
 
-// DataPlaneClusterUpdateStatusRequestTotal struct for DataPlaneClusterUpdateStatusRequestTotal
-type DataPlaneClusterUpdateStatusRequestTotal struct {
+// DatePlaneClusterUpdateStatusRequestResizeInfoDelta struct for DatePlaneClusterUpdateStatusRequestResizeInfoDelta
+type DatePlaneClusterUpdateStatusRequestResizeInfoDelta struct {
 	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
 	Connections                   *int32  `json:"connections,omitempty"`
 	DataRetentionSize             *string `json:"dataRetentionSize,omitempty"`
