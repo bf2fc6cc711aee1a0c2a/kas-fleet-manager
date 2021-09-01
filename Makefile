@@ -591,7 +591,6 @@ deploy: deploy/db
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)
-	@oc apply -f ./templates/connector-catalog-configmap.yml -n $(NAMESPACE)
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(OCM_ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
