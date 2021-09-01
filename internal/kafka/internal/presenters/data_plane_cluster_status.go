@@ -42,13 +42,6 @@ func getNodeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataP
 			Current:                int(*status.NodeInfo.Current),
 			CurrentWorkLoadMinimum: int(*status.NodeInfo.CurrentWorkLoadMinimum),
 		}
-	} else if status.DeprecatedNodeInfo != nil {
-		nodeInfo = dbapi.DataPlaneClusterStatusNodeInfo{
-			Ceiling:                int(*status.DeprecatedNodeInfo.Ceiling),
-			Floor:                  int(*status.DeprecatedNodeInfo.Floor),
-			Current:                int(*status.DeprecatedNodeInfo.Current),
-			CurrentWorkLoadMinimum: int(*status.DeprecatedNodeInfo.DeprecatedCurrentWorkLoadMinimum),
-		}
 	}
 	return nodeInfo
 }
@@ -65,16 +58,6 @@ func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Dat
 				Partitions:                    int(*status.ResizeInfo.Delta.Partitions),
 			},
 		}
-	} else if status.DeprecatedResizeInfo != nil {
-		resizeInfo = dbapi.DataPlaneClusterStatusResizeInfo{
-			NodeDelta: int(*status.DeprecatedResizeInfo.DeprecatedNodeDelta),
-			Delta: dbapi.DataPlaneClusterStatusCapacity{
-				IngressEgressThroughputPerSec: *status.DeprecatedResizeInfo.Delta.DeprecatedIngressEgressThroughputPerSec,
-				Connections:                   int(*status.DeprecatedResizeInfo.Delta.Connections),
-				DataRetentionSize:             *status.DeprecatedResizeInfo.Delta.DeprecatedDataRetentionSize,
-				Partitions:                    int(*status.DeprecatedResizeInfo.Delta.Partitions),
-			},
-		}
 	}
 	return resizeInfo
 }
@@ -86,13 +69,9 @@ func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Data
 	}
 	if status.Remaining.IngressEgressThroughputPerSec != nil {
 		remaining.IngressEgressThroughputPerSec = *status.Remaining.IngressEgressThroughputPerSec
-	} else if status.Remaining.DeprecatedDataRetentionSize != nil {
-		remaining.IngressEgressThroughputPerSec = *status.Remaining.DeprecatedIngressEgressThroughputPerSec
 	}
 	if status.Remaining.DataRetentionSize != nil {
 		remaining.DataRetentionSize = *status.Remaining.DataRetentionSize
-	} else if status.Remaining.DeprecatedDataRetentionSize != nil {
-		remaining.DataRetentionSize = *status.Remaining.DeprecatedDataRetentionSize
 	}
 	return remaining
 }
@@ -146,11 +125,10 @@ func PresentDataPlaneClusterConfig(config *dbapi.DataPlaneClusterConfig) private
 	return private.DataplaneClusterAgentConfig{
 		Spec: private.DataplaneClusterAgentConfigSpec{
 			Observability: private.DataplaneClusterAgentConfigSpecObservability{
-				AccessToken:           &accessToken,
-				DeprecatedAccessToken: &accessToken,
-				Channel:               config.Observability.Channel,
-				Repository:            config.Observability.Repository,
-				Tag:                   config.Observability.Tag,
+				AccessToken: &accessToken,
+				Channel:     config.Observability.Channel,
+				Repository:  config.Observability.Repository,
+				Tag:         config.Observability.Tag,
 			},
 		},
 	}

@@ -5,7 +5,7 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
   title: Kafka Service Fleet Manager
-  version: 1.2.0
+  version: 1.3.0
   description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
@@ -22,7 +22,7 @@ tags:
 
 paths:
   # Endpoints for data plane communications
-  '/api/kafkas_mgmt/v1/agent_clusters/{id}/status':
+  '/api/kafkas_mgmt/v1/agent-clusters/{id}/status':
     put:
       tags:
         - Agent Clusters
@@ -62,7 +62,7 @@ paths:
       operationId: updateAgentClusterStatus
       summary: Update the status of an agent cluster
 
-  '/api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas/status':
+  '/api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas/status':
     put:
       tags:
         - Agent Clusters
@@ -102,7 +102,7 @@ paths:
       operationId: updateKafkaClusterStatus
       summary: Update the status of Kafka clusters on an agent cluster
 
-  '/api/kafkas_mgmt/v1/agent_clusters/{id}/kafkas':
+  '/api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas':
     get:
       tags:
         - Agent Clusters
@@ -139,7 +139,7 @@ paths:
       operationId: getKafkas
       summary: Get the list of ManagedaKafkas for the specified agent cluster
 
-  '/api/kafkas_mgmt/v1/agent_clusters/{id}':
+  '/api/kafkas_mgmt/v1/agent-clusters/{id}':
     get:
       tags:
         - Agent Clusters
@@ -201,38 +201,17 @@ components:
       properties:
         ingressEgressThroughputPerSec:
           type: string
-          deprecated: true
         totalMaxConnections:
           type: integer
           format: int
-          deprecated: true
         maxDataRetentionSize:
           type: string
-          deprecated: true
         maxPartitions:
           type: integer
           format: int
-          deprecated: true
         maxDataRetentionPeriod:
           type: string
-          deprecated: true
         maxConnectionAttemptsPerSec:
-          type: integer
-          format: int
-          deprecated: true
-        ingress_egress_throughput_per_sec:
-          type: string
-        total_max_connections:
-          type: integer
-          format: int
-        max_data_retention_size:
-          type: string
-        max_partitions:
-          type: integer
-          format: int
-        max_data_retention_period:
-          type: string
-        max_connection_attempts_per_sec:
           type: integer
           format: int
 
@@ -259,22 +238,13 @@ components:
                 annotations:
                   type: object
                   required:
-                    - id
-                    - placement_id
                     - bf2.org/placementId
                     - bf2.org/id
                   properties:
                     bf2.org/id:
                       type: string
-                      deprecated: true
                     bf2.org/placementId:
                       type: string
-                      deprecated: true
-                    id:
-                      type: string
-                    placement_id:
-                      type: string
-
 
             spec:
               type: object
@@ -301,46 +271,22 @@ components:
                   properties:
                     clientId:
                       type: string
-                      deprecated: true
                     clientSecret:
                       type: string
-                      deprecated: true
                     tokenEndpointURI:
                       type: string
-                      deprecated: true
                     jwksEndpointURI:
                       type: string
-                      deprecated: true
                     validIssuerEndpointURI:
                       type: string
-                      deprecated: true
                     userNameClaim:
                       type: string
-                      deprecated: true
                     tlsTrustedCertificate:
                       type: string
-                      deprecated: true
                       nullable: true
                     customClaimCheck:
                       type: string
-                      deprecated: true
-                    client_id:
-                      type: string
-                    client_secret:
-                      type: string
-                    token_endpoint_uri:
-                      type: string
-                    jwks_endpoint_uri:
-                      type: string
-                    valid_issuer_endpoint_uri:
-                      type: string
-                    user_name_claim:
-                      type: string
-                    tls_trusted_certificate:
-                      type: string
-                      nullable: true
-                    custom_claim_check:
-                      type: string
+
                 owners:
                   type: array
                   items:
@@ -349,9 +295,6 @@ components:
                   type: object
                   properties:
                     bootstrapServerHost:
-                      type: string
-                      deprecated: true
-                    bootstrap_server_host:
                       type: string
                     tls:
                       type: object
@@ -385,9 +328,8 @@ components:
                 allOf:
                   - $ref: "#/components/schemas/ManagedKafka"
 
-    DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo:
+    DatePlaneClusterUpdateStatusRequestNodeInfo:
       type: object
-      deprecated: true
       nullable: true
       properties:
         ceiling:
@@ -402,17 +344,14 @@ components:
         currentWorkLoadMinimum:
           type: integer
           nullable: true
-          deprecated: true
 
-    DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo:
+    DatePlaneClusterUpdateStatusRequestResizeInfo:
       type: object
-      deprecated: true
       nullable: true
       properties:
         nodeDelta:
           type: integer
           nullable: true
-          deprecated: true
         delta:
           type: object
           nullable: true
@@ -420,14 +359,12 @@ components:
             ingressEgressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
               nullable: true
-              deprecated: true
             connections:
               type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
               nullable: true
             dataRetentionSize:
               type: string
               nullable: true
-              deprecated: true
             partitions:
               type: integer
               nullable: true
@@ -458,18 +395,10 @@ components:
             ingressEgressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
               nullable: true
-              deprecated: true
-            ingress_egress_throughput_per_sec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
             connections:
               type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
               nullable: true
             dataRetentionSize:
-              type: string
-              nullable: true
-              deprecated: true
-            data_retention_size:
               type: string
               nullable: true
             partitions:
@@ -482,66 +411,19 @@ components:
             ingressEgressThroughputPerSec:
               type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
               nullable: true
-              deprecated: true
-            ingress_egress_throughput_per_sec:
-              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-              nullable: true
             connections:
               type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
               nullable: true
             dataRetentionSize:
               type: string
               nullable: true
-              deprecated: true
-            data_retention_size:
-              type: string
-              nullable: true
             partitions:
               type: integer
               nullable: true
         nodeInfo:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestDeprecatedNodeInfo'
-        node_info:
-          type: object
-          nullable: true
-          properties:
-            ceiling:
-              type: integer
-              nullable: true
-            floor:
-              type: integer
-              nullable: true
-            current:
-              type: integer
-              nullable: true
-            current_work_load_minimum:
-              type: integer
-              nullable: true
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestDeprecatedResizeInfo'
-        resize_info:
-          type: object
-          nullable: true
-          properties:
-            node_delta:
-              type: integer
-              nullable: true
-            delta:
-              type: object
-              nullable: true
-              properties:
-                ingress_egress_throughput_per_sec:
-                  type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
-                  nullable: true
-                connections:
-                  type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
-                  nullable: true
-                data_retention_size:
-                  type: string
-                  nullable: true
-                partitions:
-                  type: integer
-                  nullable: true
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
         strimziVersions:
           type: array
           items:
@@ -582,46 +464,23 @@ components:
           properties:
             ingressEgressThroughputPerSec:
               type: string #example: 4Mi
-              deprecated: true
               nullable: true
             totalMaxConnections:
               type: integer #example: 500
-              deprecated: true
               nullable: true
             maxDataRetentionSize:
               type: string #example: 100Gi
-              deprecated: true
               nullable: true
             maxPartitions:
               type: integer #example: 100
-              deprecated: true
               nullable: true
             maxDataRetentionPeriod:
               type: string #example: P14D
-              deprecated: true
               nullable: true
             maxConnectionAttemptsPerSec:
               type: integer #example: 100
-              deprecated: true
               nullable: true
-            ingress_egress_throughput_per_sec:
-              type: string #example: 4Mi
-              nullable: true
-            total_max_connections:
-              type: integer #example: 500
-              nullable: true
-            max_data_retention_size:
-              type: string #example: 100Gi
-              nullable: true
-            max_partitions:
-              type: integer #example: 100
-              nullable: true
-            max_data_retention_period:
-              type: string #example: P14D
-              nullable: true
-            max_connection_attempts_per_sec:
-              type: integer #example: 100
-              nullable: true
+
         versions:
           description: "Version information related to a Kafka cluster"
           type: object
@@ -666,10 +525,6 @@ components:
               properties:
                 accessToken:
                   type: string
-                  deprecated: true
-                  nullable: true
-                access_token:
-                  type: string
                   nullable: true
                 channel:
                   type: string
@@ -706,27 +561,27 @@ components:
           name: "example-kafka"
           namespace: "example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
           annotations:
-            id: "1rfpsqbvq1em2u9u0z54ymjcwac"
-            placement_id: ""
+            bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
+            bf2.org/placementId: ""
         spec:
           capacity:
-            ingress_egress_throughput_per_sec: 4Mi
-            total_max_connections: 500
-            max_data_retention_size: 100Gi
-            max_partitions: 100
-            max_data_retention_period: P14D
-            max_connection_attempts_per_sec: 100
+            ingressEgressThroughputPerSec: 4Mi
+            totalMaxConnections: 500
+            maxDataRetentionSize: 100Gi
+            maxPartitions: 100
+            maxDataRetentionPeriod: P14D
+            maxConnectionAttemptsPerSec: 100
           oauth:
-            client_id: "kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
-            client_secret: "example-client-secret"
-            token_endpoint_uri: "https://example-token-endpoint-uri.com/token"
-            jwks_endpoint_uri: "https://example-jwks-endpoint-uri.com/certs"
-            valid_issuer_endpoint_uri: "https://issuer-endpoint-uri.com"
-            user_name_claim: "username"
-            tls_trusted_certificate: ""
-            custom_claim_check: ""
+            clientId: "kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+            clientSecret: "example-client-secret"
+            tokenEndpointUri: "https://example-token-endpoint-uri.com/token"
+            jwksEndpointUri: "https://example-jwks-endpoint-uri.com/certs"
+            validIssuerEndpointUri: "https://issuer-endpoint-uri.com"
+            userNameClaim: "username"
+            tlsTrustedCertificate: ""
+            customClaimCheck: ""
           endpoint:
-            bootstrap_server_host: "example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org"
+            bootstrapServerHost: "example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org"
             tls:
               cert: ""
               key: ""
@@ -741,14 +596,14 @@ components:
             reason: KafkaInstanceReady
             message: installing
             status: "False"
-            last_transition_time: "2018-01-01T00:00:00Z"
+            lastTransitionTime: "2018-01-01T00:00:00Z"
         capacity:
-          ingress_egress_throughput_per_sec: 4Mi
-          total_maxConnections: 500
-          max_data_retention_size: 100Gi
-          max_partitions: 100
-          max_data_retention_period: P14D
-          max_connection_attempts_per_sec: 100
+          ingressEgressThroughputPerSec: 4Mi
+          totalMaxConnections: 500
+          maxDataRetentionSize: 100Gi
+          maxPartitions: 100
+          maxDataRetentionPeriod: P14D
+          maxConnectionAttemptsPerSec: 100
         versions:
           kafka: 2.4.1
           strimzi: 0.21.2

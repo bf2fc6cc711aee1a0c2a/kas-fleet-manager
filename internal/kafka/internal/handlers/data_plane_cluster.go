@@ -124,17 +124,6 @@ func (h *dataPlaneClusterHandler) validateNodeInfo(request *private.DataPlaneClu
 		if nodeInfo.Floor == nil {
 			return errors.FieldValidationError("nodeinfo floor attribute must be set")
 		}
-	} else if request.DeprecatedNodeInfo != nil {
-		nodeInfo := *request.DeprecatedNodeInfo
-		if nodeInfo.Ceiling == nil {
-			return errors.FieldValidationError("nodeinfo ceiling attribute must be set")
-		}
-		if nodeInfo.Current == nil {
-			return errors.FieldValidationError("nodeinfo current attribute must be set")
-		}
-		if nodeInfo.DeprecatedCurrentWorkLoadMinimum == nil {
-			return errors.FieldValidationError("nodeinfo currentWorkLoadMinimum attribute must be set")
-		}
 	}
 	return nil
 }
@@ -161,26 +150,6 @@ func (h *dataPlaneClusterHandler) validateResizeInfo(request *private.DataPlaneC
 		if resizeInfo.Delta.Partitions == nil {
 			return errors.FieldValidationError("resieInfo delta partitions must be set")
 		}
-	} else if request.DeprecatedResizeInfo != nil {
-		resizeInfo := *request.DeprecatedResizeInfo
-		if resizeInfo.DeprecatedNodeDelta == nil {
-			return errors.FieldValidationError("resizeInfo nodeDelta attribute must be set")
-		}
-		if resizeInfo.Delta == nil {
-			return errors.FieldValidationError("resizeInfo delta attribute must be set")
-		}
-		if resizeInfo.Delta.Connections == nil {
-			return errors.FieldValidationError("resizeInfo delta connections must be set")
-		}
-		if resizeInfo.Delta.DeprecatedDataRetentionSize == nil {
-			return errors.FieldValidationError("resizeInfo delta data retention size must be set")
-		}
-		if resizeInfo.Delta.DeprecatedIngressEgressThroughputPerSec == nil {
-			return errors.FieldValidationError("resizeInfo delta ingressegress throughput per second must be set")
-		}
-		if resizeInfo.Delta.Partitions == nil {
-			return errors.FieldValidationError("resieInfo delta partitions must be set")
-		}
 	}
 	return nil
 }
@@ -190,10 +159,10 @@ func (h *dataPlaneClusterHandler) validateTotal(request *private.DataPlaneCluste
 	if total.Connections == nil {
 		return errors.FieldValidationError("total connections must be set")
 	}
-	if total.DataRetentionSize == nil && total.DeprecatedDataRetentionSize == nil {
+	if total.DataRetentionSize == nil {
 		return errors.FieldValidationError("total data retention size must be set")
 	}
-	if total.IngressEgressThroughputPerSec == nil && total.DeprecatedIngressEgressThroughputPerSec == nil {
+	if total.IngressEgressThroughputPerSec == nil {
 		return errors.FieldValidationError("total ingressegress throughput per second must be set")
 	}
 	if total.Partitions == nil {
@@ -209,10 +178,10 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 	if remaining.Connections == nil {
 		return errors.FieldValidationError("remaining connections must be set")
 	}
-	if remaining.DataRetentionSize == nil && remaining.DeprecatedDataRetentionSize == nil {
+	if remaining.DataRetentionSize == nil {
 		return errors.FieldValidationError("remaining data retention size must be set")
 	}
-	if remaining.IngressEgressThroughputPerSec == nil && remaining.DeprecatedIngressEgressThroughputPerSec == nil {
+	if remaining.IngressEgressThroughputPerSec == nil {
 		return errors.FieldValidationError("remaining ingressegress throughput per second must be set")
 	}
 	if remaining.Partitions == nil {
