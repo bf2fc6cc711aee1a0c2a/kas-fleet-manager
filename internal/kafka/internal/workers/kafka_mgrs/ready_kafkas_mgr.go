@@ -2,12 +2,12 @@ package kafka_mgrs
 
 import (
 	"fmt"
-
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	"github.com/golang/glog"
@@ -21,10 +21,11 @@ type ReadyKafkaManager struct {
 	kafkaService    services.KafkaService
 	keycloakService coreServices.KeycloakService
 	keycloakConfig  *keycloak.KeycloakConfig
+	accountService  account.AccountService
 }
 
 // NewReadyKafkaManager creates a new kafka manager
-func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, keycloakConfig *keycloak.KeycloakConfig, bus signalbus.SignalBus) *ReadyKafkaManager {
+func NewReadyKafkaManager(accountService account.AccountService, kafkaService services.KafkaService, keycloakService coreServices.KafkaKeycloakService, keycloakConfig *keycloak.KeycloakConfig, bus signalbus.SignalBus) *ReadyKafkaManager {
 	return &ReadyKafkaManager{
 		BaseWorker: workers.BaseWorker{
 			Id:         uuid.New().String(),
@@ -36,6 +37,7 @@ func NewReadyKafkaManager(kafkaService services.KafkaService, keycloakService co
 		kafkaService:    kafkaService,
 		keycloakService: keycloakService,
 		keycloakConfig:  keycloakConfig,
+		accountService:  accountService,
 	}
 }
 
@@ -66,16 +68,36 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 
 	for _, kafka := range readyKafkas {
 		glog.V(10).Infof("ready kafka id = %s", kafka.ID)
-		if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to get ready kafkas sso client: %s", kafka.ID))
+
+		if err := k.reconcileAccountNumber(kafka); err != nil {
+			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to reconcile account number: %s", kafka.ID))
 		}
 
-		if err := k.reconcileCanaryServiceAccount(kafka); err != nil {
-			encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to create ready kafka canary service account: %s", kafka.ID))
+		if !k.keycloakConfig.EnableAuthenticationOnKafka {
+			if err := k.reconcileSsoClientIDAndSecret(kafka); err != nil {
+				encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to get ready kafkas sso client: %s", kafka.ID))
+			}
+
+			if err := k.reconcileCanaryServiceAccount(kafka); err != nil {
+				encounteredErrors = append(encounteredErrors, errors.Wrapf(err, "failed to create ready kafka canary service account: %s", kafka.ID))
+			}
 		}
 	}
 
 	return encounteredErrors
+}
+
+func (k *ReadyKafkaManager) reconcileAccountNumber(kafkaRequest *dbapi.KafkaRequest) error {
+	if kafkaRequest.AccountNumber == "" {
+		if organisation, err := k.accountService.GetOrganization(fmt.Sprintf("external_id='%s'", kafkaRequest.OrganisationId)); err != nil {
+			return err
+		} else {
+			kafkaRequest.AccountNumber = organisation.EbsAccountID()
+			return k.kafkaService.Update(kafkaRequest)
+		}
+	}
+
+	return nil
 }
 
 func (k *ReadyKafkaManager) reconcileSsoClientIDAndSecret(kafkaRequest *dbapi.KafkaRequest) error {

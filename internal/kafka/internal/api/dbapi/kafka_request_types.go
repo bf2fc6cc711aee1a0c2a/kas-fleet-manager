@@ -22,6 +22,7 @@ type KafkaRequest struct {
 	SubscriptionId                   string `json:"subscription_id"`
 	Owner                            string `json:"owner" gorm:"index"` // TODO: ocm owner?
 	OwnerAccountId                   string `json:"owner_account_id"`
+	AccountNumber                    string `json:"account_number"` // ebs_account_id
 	BootstrapServerHost              string `json:"bootstrap_server_host"`
 	OrganisationId                   string `json:"organisation_id" gorm:"index"`
 	FailedReason                     string `json:"failed_reason"`
