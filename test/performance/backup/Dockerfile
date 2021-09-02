@@ -1,4 +1,4 @@
-FROM quay.io/centos/centos
+FROM registry.access.redhat.com/ubi8/ubi:8.4
 
 RUN yum -y install unzip wget
 
