@@ -1486,14 +1486,13 @@ func TestKafkaList_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }
 
-// TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
-func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
+// TestKafka_RemovingExpiredKafkas_NoStandardInstances tests that all eval kafkas are removed after their allocated life span has expired.
+// No standard instances are present
+func TestKafka_RemovingExpiredKafkas_NoStandardInstances(t *testing.T) {
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
-		c.KafkaLifespan.LongLivedKafkas = []string{}
-	})
+	h, client, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1527,6 +1526,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			Name:           "dummy-kafka-to-remain",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.EVAL.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1543,6 +1543,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusProvisioning.String(),
+			InstanceType:        types.EVAL.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1559,6 +1560,7 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusReady.String(),
+			InstanceType:        types.EVAL.String(),
 		},
 	}
 
@@ -1575,15 +1577,14 @@ func TestKafka_RemovingExpiredKafkas_EmptyLongLivedKafkasList(t *testing.T) {
 	Expect(kafkaDeletionErr).NotTo(HaveOccurred(), "Error waiting for kafka deletion: %v", kafkaDeletionErr)
 }
 
-// TestKafka_RemovingExpiredKafkas_EmptyList tests that all kafkas are removed after their allocated life span has expired
-func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
+// TestKafka_RemovingExpiredKafkas_EmptyList tests that all eval kafkas are removed after their allocated life span has expired
+// while standard instances are left behind
+func TestKafka_RemovingExpiredKafkas_WithStandardInstances(t *testing.T) {
 
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 
-	h, client, tearDown := test.NewKafkaHelperWithHooks(t, ocmServer, func(c *config.KafkaConfig) {
-		c.KafkaLifespan.LongLivedKafkas = []string{}
-	})
+	h, client, tearDown := test.NewKafkaHelper(t, ocmServer)
 	defer tearDown()
 
 	mockKasFleetshardSyncBuilder := kasfleetshardsync.NewMockKasFleetshardSyncBuilder(h, t)
@@ -1599,17 +1600,14 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	// create an account with values from config/quota-management-list-configuration.yaml
-	testuser1 := "testuser1@example.com"
+	// create an account without values from config/allow-list-configuration.yaml
+	testuser1 := "testuser@noallowlist.com"
 	orgId := "13640203"
 
 	// create dummy kafkas and assign it to user, at the end we'll verify that the kafka has been deleted
 	db := test.TestServices.DBFactory.New()
 	kafkaRegion := "dummy"        // set to dummy as we do not want this cluster to be provisioned
 	kafkaCloudProvider := "dummy" // set to dummy as we do not want this cluster to be provisioned
-	// set the long lived kafka id list at the beginning of the tests to avoid potential timing issues when testing its case
-	longLivedKafkaId := "123456"
-	KafkaConfig(h).KafkaLifespan.LongLivedKafkas = []string{longLivedKafkaId}
 
 	kafkas := []*dbapi.KafkaRequest{
 		{
@@ -1620,6 +1618,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			Name:           "dummy-kafka-not-yet-expired",
 			OrganisationId: orgId,
 			Status:         constants2.KafkaRequestStatusAccepted.String(),
+			InstanceType:   types.EVAL.String(),
 		},
 		{
 			Meta: api.Meta{
@@ -1636,10 +1635,10 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusReady.String(),
+			InstanceType:        types.EVAL.String(),
 		},
 		{
 			Meta: api.Meta{
-				ID:        longLivedKafkaId,
 				CreatedAt: time.Now().Add(time.Duration(-48 * time.Hour)),
 			},
 			MultiAZ:             false,
@@ -1653,6 +1652,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 			SsoClientID:         "dummy-sso-client-id",
 			SsoClientSecret:     "dummy-sso-client-secret",
 			Status:              constants2.KafkaRequestStatusReady.String(),
+			InstanceType:        types.STANDARD.String(),
 		},
 	}
 
@@ -1663,6 +1663,7 @@ func TestKafka_RemovingExpiredKafkas_NonEmptyLongLivedKafkaList(t *testing.T) {
 
 	// also verify that any kafkas whose life has expired has been deleted.
 	account := h.NewRandAccount()
+	account.Organization().ID()
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	kafkaDeletionErr := common.WaitForNumberOfKafkaToBeGivenCount(ctx, test.TestServices.DBFactory, client, 2)

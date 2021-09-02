@@ -1,5 +1,0 @@
----
-# A list of kafkas, by kafka ID that are autherized to live past the configured lifespan, when the 'enable-lifespan' option is set
-
-# this first value is for tests, please do not delete
-- "123456"

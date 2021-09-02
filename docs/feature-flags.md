@@ -36,9 +36,8 @@ This lists the feature flags and their sub-configurations to enable/disable and 
     - `https-key-file` [Required]: The path to the file containing the TLS private key.
 
 ## Kafka
-- **enable-deletion-of-expired-kafka**: Enables deletion of Kafka instances when its life span has expired.
+- **enable-deletion-of-expired-kafka**: Enables deletion of eval Kafka instances when its life span has expired.
     - `kafka-lifespan` [Optional]: The desired lifespan of a Kafka instance in hour(s) (default: `48`).
-    - `long-lived-kafkas-config-file` [Optional]: The path to the file containing a list of Kafkas, specified by ID, that should not expire (default: `'config/long-lived-kafkas-configuration.yaml'`, example: [long-lived-kafkas-configuration.yaml](../config/long-lived-kafkas-configuration.yaml)).
 - **enable-kafka-external-certificate**: Enables custom Kafka TLS certificate.
     - `kafka-tls-cert-file` [Required]: The path to the file containing the Kafka TLS certificate (default: `'secrets/kafka-tls.crt'`).
     - `kafka-tls-key-file` [Required]: The path to the file containing the Kafka TLS private key (default: `'secrets/kafka-tls.key'`).
