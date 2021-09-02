@@ -23,7 +23,13 @@ func migrateOldKafkaNamespace() *gormigrate.Migration {
 		ID: "20210809140000",
 		Migrate: func(tx *gorm.DB) error {
 			var kafkas []dbapi.KafkaRequest
-			err := tx.Unscoped().Model(&dbapi.KafkaRequest{}).Where("namespace = ?", "").Scan(&kafkas).Error
+			err := tx.Unscoped().
+				Model(&dbapi.KafkaRequest{}).
+				Select("id", "namespace", "owner").
+				Where("namespace = ?", "").
+				Scan(&kafkas).
+				Error
+
 			if err != nil {
 				return err
 			}
