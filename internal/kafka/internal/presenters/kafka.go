@@ -30,6 +30,7 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
 		CloudProvider:       kafkaRequest.CloudProvider,
 		MultiAz:             kafkaRequest.MultiAZ,
 		Owner:               kafkaRequest.Owner,
+		AccountNumber:       kafkaRequest.AccountNumber,
 		BootstrapServerHost: setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
 		Status:              kafkaRequest.Status,
 		CreatedAt:           kafkaRequest.CreatedAt,

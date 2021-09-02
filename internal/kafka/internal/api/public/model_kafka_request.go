@@ -26,6 +26,7 @@ type KafkaRequest struct {
 	// Values will be regions of specific cloud provider. For example: us-east-1 for AWS
 	Region              string    `json:"region,omitempty"`
 	Owner               string    `json:"owner,omitempty"`
+	AccountNumber       string    `json:"account_number,omitempty"`
 	Name                string    `json:"name,omitempty"`
 	BootstrapServerHost string    `json:"bootstrap_server_host,omitempty"`
 	CreatedAt           time.Time `json:"created_at,omitempty"`

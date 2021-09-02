@@ -32,6 +32,7 @@ func PresentKafkaRequestAdminEndpoint(kafkaRequest *dbapi.KafkaRequest) private.
 		SubscriptionId:        kafkaRequest.SubscriptionId,
 		SsoClientId:           kafkaRequest.SsoClientID,
 		OwnerAccountId:        kafkaRequest.OwnerAccountId,
+		AccountNumber:         kafkaRequest.AccountNumber,
 		QuotaType:             kafkaRequest.QuotaType,
 		Routes:                GetRoutesFromKafkaRequest(kafkaRequest),
 		RoutesCreated:         kafkaRequest.RoutesCreated,
