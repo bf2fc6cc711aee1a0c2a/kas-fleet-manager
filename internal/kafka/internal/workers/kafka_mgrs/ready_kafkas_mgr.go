@@ -53,10 +53,6 @@ func (k *ReadyKafkaManager) Stop() {
 
 func (k *ReadyKafkaManager) Reconcile() []error {
 	glog.Infoln("reconciling ready kafkas")
-	if !k.keycloakConfig.EnableAuthenticationOnKafka {
-		return nil
-	}
-
 	var encounteredErrors []error
 
 	readyKafkas, serviceErr := k.kafkaService.ListByStatus(constants2.KafkaRequestStatusReady)
@@ -90,10 +86,12 @@ func (k *ReadyKafkaManager) Reconcile() []error {
 func (k *ReadyKafkaManager) reconcileAccountNumber(kafkaRequest *dbapi.KafkaRequest) error {
 	if kafkaRequest.AccountNumber == "" {
 		if organisation, err := k.accountService.GetOrganization(fmt.Sprintf("external_id='%s'", kafkaRequest.OrganisationId)); err != nil {
-			return err
+			return errors.Wrapf(err, "failed retrieving the account number for organization with external_id '%s'", kafkaRequest.OrganisationId)
 		} else {
 			kafkaRequest.AccountNumber = organisation.EbsAccountID()
-			return k.kafkaService.Update(kafkaRequest)
+			if err := k.kafkaService.Update(kafkaRequest); err != nil {
+				return errors.Wrapf(err, "failed to update kafka request '%s'", kafkaRequest.ID)
+			}
 		}
 	}
 

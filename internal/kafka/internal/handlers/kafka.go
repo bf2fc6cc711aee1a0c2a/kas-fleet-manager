@@ -51,6 +51,7 @@ func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
 			convKafka.Owner = auth.GetUsernameFromClaims(claims)
 			convKafka.OrganisationId = auth.GetOrgIdFromClaims(claims)
 			convKafka.OwnerAccountId = auth.GetAccountIdFromClaims(claims)
+			convKafka.AccountNumber = auth.GetEbsAccountNumberFromClaims(claims)
 
 			svcErr := h.service.RegisterKafkaJob(convKafka)
 			if svcErr != nil {
