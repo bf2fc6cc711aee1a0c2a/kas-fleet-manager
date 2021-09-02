@@ -561,7 +561,7 @@ func Test_kafkaService_PrepareKafkaRequest(t *testing.T) {
 			}
 
 			if !tt.wantErr && tt.args.kafkaRequest.Namespace == "" {
-				t.Errorf("PrepareKafkaRequest() kafkaRequest.Namespace = \"\", want = %v", fmt.Sprintf("mk-%s", tt.args.kafkaRequest.ID))
+				t.Errorf("PrepareKafkaRequest() kafkaRequest.Namespace = \"\", want = %v", fmt.Sprintf("kafka-%s", tt.args.kafkaRequest.ID))
 			}
 		})
 	}
