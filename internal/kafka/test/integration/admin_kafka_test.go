@@ -184,7 +184,7 @@ func TestAdminKafka_Get(t *testing.T) {
 		OrganisationId:        "13640203",
 		DesiredStrimziVersion: desiredStrimziVersion,
 		Status:                constants.KafkaRequestStatusReady.String(),
-		Namespace:             fmt.Sprintf("mk-%s", sampleKafkaID),
+		Namespace:             fmt.Sprintf("kafka-%s", sampleKafkaID),
 	}
 	kafka.ID = sampleKafkaID
 
