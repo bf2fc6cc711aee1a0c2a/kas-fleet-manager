@@ -170,10 +170,12 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 		if strimziUpdatingReasonIsSet && !prevStrimziUpgrading {
 			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
 			kafka.StrimziUpgrading = true
+			needsUpdate = true
 		}
 		if !strimziUpdatingReasonIsSet && prevStrimziUpgrading {
 			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
 			kafka.StrimziUpgrading = false
+			needsUpdate = true
 		}
 	}
 

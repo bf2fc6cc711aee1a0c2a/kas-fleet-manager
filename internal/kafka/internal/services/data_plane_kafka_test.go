@@ -477,3 +477,144 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 		})
 	}
 }
+
+func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
+	type versions struct {
+		actualKafkaVersion   string
+		actualStrimziVersion string
+		strimziUpgrading     bool
+	}
+
+	tests := []struct {
+		name             string
+		clusterService   ClusterService
+		kafkaService     func(v *versions) KafkaService
+		clusterId        string
+		status           []*dbapi.DataPlaneKafkaStatus
+		wantErr          bool
+		expectedVersions versions
+	}{
+		{
+			name: "should update versions",
+			clusterService: &ClusterServiceMock{
+				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+					return &api.Cluster{}, nil
+				},
+			},
+			kafkaService: func(v *versions) KafkaService {
+				return &KafkaServiceMock{
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							ClusterID:     "test-cluster-id",
+							Status:        constants2.KafkaRequestStatusProvisioning.String(),
+							Routes:        []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+							RoutesCreated: true,
+						}, nil
+					},
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
+						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
+						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				}
+			},
+			clusterId: "test-cluster-id",
+			status: []*dbapi.DataPlaneKafkaStatus{
+				{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "True",
+							Reason: "StrimziUpdating",
+						},
+					},
+					KafkaVersion:   "kafka-1",
+					StrimziVersion: "strimzi-1",
+				},
+			},
+			wantErr: false,
+			expectedVersions: versions{
+				actualKafkaVersion:   "kafka-1",
+				actualStrimziVersion: "strimzi-1",
+				strimziUpgrading:     true,
+			},
+		},
+		{
+			name: "should set strimzi_upgrading to false",
+			clusterService: &ClusterServiceMock{
+				FindClusterByIDFunc: func(clusterID string) (*api.Cluster, *errors.ServiceError) {
+					return &api.Cluster{}, nil
+				},
+			},
+			kafkaService: func(v *versions) KafkaService {
+				return &KafkaServiceMock{
+					GetByIdFunc: func(id string) (*dbapi.KafkaRequest, *errors.ServiceError) {
+						return &dbapi.KafkaRequest{
+							ClusterID:            "test-cluster-id",
+							Status:               constants2.KafkaRequestStatusProvisioning.String(),
+							Routes:               []byte("[{'domain':'test.example.com', 'router':'test.example.com'}]"),
+							RoutesCreated:        true,
+							ActualKafkaVersion:   "kafka-1",
+							ActualStrimziVersion: "strimzi-1",
+							StrimziUpgrading:     true,
+						}, nil
+					},
+					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
+						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
+						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
+						return nil
+					},
+					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
+						return true, nil
+					},
+					DeleteFunc: func(in1 *dbapi.KafkaRequest) *errors.ServiceError {
+						return nil
+					},
+				}
+			},
+			clusterId: "test-cluster-id",
+			status: []*dbapi.DataPlaneKafkaStatus{
+				{
+					Conditions: []dbapi.DataPlaneKafkaStatusCondition{
+						{
+							Type:   "Ready",
+							Status: "True",
+						},
+					},
+					KafkaVersion:   "kafka-1",
+					StrimziVersion: "strimzi-1",
+				},
+			},
+			wantErr: false,
+			expectedVersions: versions{
+				actualKafkaVersion:   "kafka-1",
+				actualStrimziVersion: "strimzi-1",
+				strimziUpgrading:     false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := versions{}
+			s := NewDataPlaneKafkaService(tt.kafkaService(&v), tt.clusterService, &config.KafkaConfig{
+				NumOfBrokers: 1,
+			})
+			err := s.UpdateDataPlaneKafkaService(context.TODO(), tt.clusterId, tt.status)
+			if err != nil && !tt.wantErr {
+				t.Errorf("unexpected error %v", err)
+			}
+			if !reflect.DeepEqual(v, tt.expectedVersions) {
+				t.Errorf("versions dont match. want: %v got: %v", tt.expectedVersions, v)
+			}
+		})
+	}
+}
