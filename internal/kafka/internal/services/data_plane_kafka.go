@@ -118,9 +118,7 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 		return err
 	}
 
-	kafka.FailedReason = ""
-	kafka.Status = constants2.KafkaRequestStatusReady.String()
-	err = d.kafkaService.Update(kafka)
+	err = d.kafkaService.Updates(kafka, map[string]interface{}{"failed_reason": "", "status": constants2.KafkaRequestStatusReady.String()})
 	if err != nil {
 		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants2.KafkaRequestStatusReady, kafka.ID)
 	}

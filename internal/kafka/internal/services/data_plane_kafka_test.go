@@ -81,6 +81,14 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						}
 						return nil
 					},
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+						v, ok := values["status"]
+						if ok {
+							statusValue := v.(string)
+							c[statusValue]++
+						}
+						return nil
+					},
 					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
 						if status == constants2.KafkaRequestStatusReady {
 							c["ready"]++
@@ -203,6 +211,14 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 						}
 						return nil
 					},
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+						v, ok := values["status"]
+						if ok {
+							statusValue := v.(string)
+							c[statusValue]++
+						}
+						return nil
+					},
 					UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError) {
 						if status == constants2.KafkaRequestStatusReady {
 							c["ready"]++
@@ -304,6 +320,14 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							c["deleting"]++
 						} else if kafkaRequest.Status == string(constants2.KafkaRequestStatusFailed) {
 							c["failed"]++
+						}
+						return nil
+					},
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+						v, ok := values["status"]
+						if ok {
+							statusValue := v.(string)
+							c[statusValue]++
 						}
 						return nil
 					},
@@ -501,6 +525,14 @@ func TestDataPlaneKafkaService_UpdateDataPlaneKafkaService(t *testing.T) {
 							c["deleting"]++
 						} else {
 							c["rejected"]++
+						}
+						return nil
+					},
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError {
+						v, ok := values["status"]
+						if ok {
+							statusValue := v.(string)
+							c[statusValue]++
 						}
 						return nil
 					},
