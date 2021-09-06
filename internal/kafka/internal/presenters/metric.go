@@ -65,7 +65,7 @@ func convertSamplePair(from *pmod.SamplePair) public.Values {
 	}
 }
 func PresentMetricsByRangeQuery(metrics *observatorium.KafkaMetrics) ([]public.RangeQuery, *errors.ServiceError) {
-	var out []public.RangeQuery
+	out := []public.RangeQuery{}
 	for _, m := range *metrics {
 		if m.Err != nil {
 			return nil, errors.GeneralError("error in metric %s: %v", m.Matrix, m.Err)
@@ -77,7 +77,7 @@ func PresentMetricsByRangeQuery(metrics *observatorium.KafkaMetrics) ([]public.R
 }
 
 func PresentMetricsByInstantQuery(metrics *observatorium.KafkaMetrics) ([]public.InstantQuery, *errors.ServiceError) {
-	var out []public.InstantQuery
+	out := []public.InstantQuery{}
 	for _, m := range *metrics {
 		if m.Err != nil {
 			return nil, errors.GeneralError("error in metric %s: %v", m.Matrix, m.Err)
