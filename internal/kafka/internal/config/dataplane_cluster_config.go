@@ -18,7 +18,6 @@ import (
 )
 
 type DataplaneClusterConfig struct {
-	IngressControllerReplicas    int    `json:"ingress_controller_replicas"`
 	OpenshiftVersion             string `json:"cluster_openshift_version"`
 	ComputeMachineType           string `json:"cluster_compute_machine_type"`
 	StrimziOperatorVersion       string `json:"strimzi_operator_version"`
@@ -74,7 +73,6 @@ func NewDataplaneClusterConfig() *DataplaneClusterConfig {
 		StrimziOperatorVersion:                "",
 		ImagePullDockerConfigContent:          "",
 		ImagePullDockerConfigFile:             "secrets/image-pull.dockerconfigjson",
-		IngressControllerReplicas:             9,
 		DataPlaneClusterConfigFile:            "config/dataplane-cluster-configuration.yaml",
 		ReadOnlyUserListFile:                  "config/read-only-user-list.yaml",
 		KafkaSREUsersFile:                     "config/kafka-sre-user-list.yaml",
@@ -217,7 +215,6 @@ func (c *DataplaneClusterConfig) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&c.ComputeMachineType, "cluster-compute-machine-type", c.ComputeMachineType, "The compute machine type")
 	fs.StringVar(&c.StrimziOperatorVersion, "strimzi-operator-version", c.StrimziOperatorVersion, "The version of the Strimzi operator to install. If set, DesiredStrimziVersion in kafka_request will updated with this value. Otherwise value reported from kas-fleetshard operator will be used")
 	fs.StringVar(&c.ImagePullDockerConfigFile, "image-pull-docker-config-file", c.ImagePullDockerConfigFile, "The file that contains the docker config content for pulling MK operator images on clusters")
-	fs.IntVar(&c.IngressControllerReplicas, "ingress-controller-replicas", c.IngressControllerReplicas, "The number of replicas for the IngressController")
 	fs.StringVar(&c.DataPlaneClusterConfigFile, "dataplane-cluster-config-file", c.DataPlaneClusterConfigFile, "File contains properties for manually configuring OSD cluster.")
 	fs.StringVar(&c.DataPlaneClusterScalingType, "dataplane-cluster-scaling-type", c.DataPlaneClusterScalingType, "Set to use cluster configuration to configure clusters. Its value should be either 'none' for no scaling, 'manual' or 'auto'.")
 	fs.StringVar(&c.ReadOnlyUserListFile, "read-only-user-list-file", c.ReadOnlyUserListFile, "File contains a list of users with read-only permissions to data plane clusters")

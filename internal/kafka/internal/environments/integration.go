@@ -1,11 +1,12 @@
 package environments
 
 import (
+	"os"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"os"
 )
 
 type IntegrationEnvLoader struct{}
@@ -37,7 +38,6 @@ func (b IntegrationEnvLoader) Defaults() map[string]string {
 		"osd-idp-mas-sso-realm":             "rhoas-kafka-sre",
 		"enable-kafka-external-certificate": "false",
 		"cluster-compute-machine-type":      "m5.xlarge",
-		"ingress-controller-replicas":       "3",
 		"allow-evaluator-instance":          "true",
 		"quota-type":                        "quota-management-list",
 		"enable-deletion-of-expired-kafka":  "true",

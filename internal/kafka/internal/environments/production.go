@@ -14,6 +14,5 @@ func NewProductionEnvLoader() environments.EnvLoader {
 		"mas-sso-base-url":                  "https://identity.api.openshift.com",
 		"enable-kafka-external-certificate": "true",
 		"cluster-compute-machine-type":      "m5.4xlarge",
-		"ingress-controller-replicas":       "9",
 	}
 }
