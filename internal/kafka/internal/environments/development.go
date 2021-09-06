@@ -22,7 +22,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"osd-idp-mas-sso-realm":                           "rhoas-kafka-sre",
 		"enable-kafka-external-certificate":               "false",
 		"cluster-compute-machine-type":                    "m5.4xlarge",
-		"ingress-controller-replicas":                     "3",
 		"allow-evaluator-instance":                        "true",
 		"quota-type":                                      "quota-management-list",
 		"enable-deletion-of-expired-kafka":                "true",

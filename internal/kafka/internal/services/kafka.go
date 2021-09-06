@@ -232,6 +232,7 @@ func (k *kafkaService) PrepareKafkaRequest(kafkaRequest *dbapi.KafkaRequest) *er
 	kafkaRequest.Namespace = fmt.Sprintf("kafka-%s", strings.ToLower(kafkaRequest.ID))
 	clusterDNS = strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
 	kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, clusterDNS)
+
 	if k.kafkaConfig.EnableKafkaExternalCertificate {
 		// If we enable KafkaTLS, the bootstrapServerHost should use the external domain name rather than the cluster domain
 		kafkaRequest.BootstrapServerHost = fmt.Sprintf("%s.%s", truncatedKafkaIdentifier, k.kafkaConfig.KafkaDomainName)
@@ -678,14 +679,9 @@ func (k *kafkaService) UpdateStatus(id string, status constants2.KafkaStatus) (b
 func (k *kafkaService) ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError) {
 	routes, err := kafkaRequest.GetRoutes()
 	if routes == nil || err != nil {
-		glog.Infof("failed to parse routes data for kafka %s, routes := %v", kafkaRequest.ID, kafkaRequest.Routes)
-		if clusterDNS, err := k.clusterService.GetClusterDNS(kafkaRequest.ClusterID); err != nil {
-			return nil, err
-		} else {
-			routes = kafkaRequest.GetDefaultRoutes(clusterDNS, k.kafkaConfig.NumOfBrokers)
-			glog.Infof("built default routes %v for kafka %s", kafkaRequest.ID, routes)
-		}
+		return nil, errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
 	}
+
 	domainRecordBatch := buildKafkaClusterCNAMESRecordBatch(routes, string(action))
 
 	// Create AWS client with the region of this Kafka Cluster

@@ -71,10 +71,8 @@ func (d *dataPlaneKafkaService) UpdateDataPlaneKafkaService(ctx context.Context,
 		var e *serviceError.ServiceError
 		switch s := getStatus(ks); s {
 		case statusReady:
-			// for now, only store the routes (and create them) when the Kafkas are ready, as by the time they are ready,
-			// the routes should definitely be there if they are set by kas-fleetshard.
-			// If they are not there then we can set the default ones because it means fleetshard won't set them.
-			// Once the changes are made on the fleetshard side, we can move this outside the ready state
+			// Only store the routes (and create them) when the Kafkas are ready, as by the time they are ready,
+			// the routes should definitely be there.
 			e = d.persistKafkaRoutes(kafka, ks, cluster)
 			if e == nil {
 				e = d.setKafkaClusterReady(kafka)
@@ -298,16 +296,11 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 
 	routesInRequest := kafkaStatus.Routes
 	var routes []dbapi.DataPlaneKafkaRoute
-	if len(routesInRequest) == 0 {
-		// TODO: This is here for keep backward compatibility. Remove this once the kas-fleetshard added implementation for routes. We no longer need to produce default routes at all.
-		oldMKIngressDNS := strings.Replace(clusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
-		routes = kafka.GetDefaultRoutes(oldMKIngressDNS, d.kafkaConfig.NumOfBrokers)
-	} else {
-		var routesErr error
-		baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix))
-		if routes, routesErr = buildRoutes(routesInRequest, kafka, baseClusterDomain); routesErr != nil {
-			return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
-		}
+
+	var routesErr error
+	baseClusterDomain := strings.TrimPrefix(clusterDNS, fmt.Sprintf("%s.", constants2.DefaultIngressDnsNamePrefix))
+	if routes, routesErr = buildRoutes(routesInRequest, kafka, baseClusterDomain); routesErr != nil {
+		return serviceError.NewWithCause(serviceError.ErrorBadRequest, routesErr, "routes are not valid")
 	}
 
 	if err := kafka.SetRoutes(routes); err != nil {
@@ -321,7 +314,7 @@ func (d *dataPlaneKafkaService) persistKafkaRoutes(kafka *dbapi.KafkaRequest, ka
 }
 
 func buildRoutes(routesInRequest []dbapi.DataPlaneKafkaRouteRequest, kafka *dbapi.KafkaRequest, clusterDNS string) ([]dbapi.DataPlaneKafkaRoute, error) {
-	var routes []dbapi.DataPlaneKafkaRoute
+	routes := []dbapi.DataPlaneKafkaRoute{}
 	bootstrapServer := kafka.BootstrapServerHost
 	for _, r := range routesInRequest {
 		if strings.HasSuffix(r.Router, clusterDNS) {

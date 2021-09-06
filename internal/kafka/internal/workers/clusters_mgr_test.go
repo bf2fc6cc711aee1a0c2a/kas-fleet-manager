@@ -13,7 +13,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/services"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
@@ -484,7 +483,6 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 	observabilityConfig := buildObservabilityConfig()
 	clusterCreateConfig := config.DataplaneClusterConfig{
 		ImagePullDockerConfigContent: "image-pull-secret-test",
-		IngressControllerReplicas:    12,
 	}
 	type fields struct {
 		clusterService services.ClusterService
@@ -498,9 +496,6 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			name: "test should pass and resourceset should be created",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return ingressDNS, nil
-					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						want, _ := buildResourceSet(observabilityConfig, clusterCreateConfig, ingressDNS)
 						Expect(resources).To(Equal(want))
@@ -510,23 +505,9 @@ func TestClusterManager_reconcileClusterResourceSet(t *testing.T) {
 			},
 		},
 		{
-			name: "should receive error when GetClusterDNSFunc returns error",
-			fields: fields{
-				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "", apiErrors.GeneralError("failed")
-					},
-				},
-			},
-			wantErr: true,
-		},
-		{
 			name: "should receive error when ApplyResources returns error",
 			fields: fields{
 				clusterService: &services.ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *apiErrors.ServiceError) {
-						return "test.com", nil
-					},
 					ApplyResourcesFunc: func(cluster *api.Cluster, resources types.ResourceSet) *apiErrors.ServiceError {
 						return apiErrors.GeneralError("failed to apply resources")
 					},
@@ -1131,46 +1112,7 @@ func buildObservabilityConfig() observatorium.ObservabilityConfiguration {
 }
 
 func buildResourceSet(observabilityConfig observatorium.ObservabilityConfiguration, clusterCreateConfig config.DataplaneClusterConfig, ingressDNS string) (types.ResourceSet, error) {
-	r := int32(clusterCreateConfig.IngressControllerReplicas)
 	resources := []interface{}{
-		&ingressoperatorv1.IngressController{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "operator.openshift.io/v1",
-				Kind:       "IngressController",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sharded-nlb",
-				Namespace: openshiftIngressNamespace,
-			},
-			Spec: ingressoperatorv1.IngressControllerSpec{
-				Domain: ingressDNS,
-				RouteSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						IngressLabelName: IngressLabelValue,
-					},
-				},
-				EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
-					LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
-						ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
-							AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
-								Type: ingressoperatorv1.AWSNetworkLoadBalancer,
-							},
-							Type: ingressoperatorv1.AWSLoadBalancerProvider,
-						},
-						Scope: ingressoperatorv1.ExternalLoadBalancer,
-					},
-					Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
-				},
-				Replicas: &r,
-				NodePlacement: &ingressoperatorv1.NodePlacement{
-					NodeSelector: &metav1.LabelSelector{
-						MatchLabels: map[string]string{
-							"node-role.kubernetes.io/worker": "",
-						},
-					},
-				},
-			},
-		},
 		&userv1.Group{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: userv1.SchemeGroupVersion.String(),

@@ -19,7 +19,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/golang/glog"
@@ -36,7 +35,6 @@ import (
 
 const (
 	observabilityNamespace          = "managed-application-services-observability"
-	openshiftIngressNamespace       = "openshift-ingress-operator"
 	observabilityCatalogSourceImage = "quay.io/rhoas/observability-operator-index:v3.0.4"
 	observabilityOperatorGroupName  = "observability-operator-group-name"
 	observabilityCatalogSourceName  = "observability-operator-manifests"
@@ -512,12 +510,7 @@ func (c *ClusterManager) reconcileClusterDNS(cluster api.Cluster) error {
 }
 
 func (c *ClusterManager) reconcileClusterResources(cluster api.Cluster) error {
-	clusterDNS, dnsErr := c.ClusterService.GetClusterDNS(cluster.ClusterID)
-	if dnsErr != nil {
-		return errors.Wrapf(dnsErr, "failed to reconcile cluster %s: %s", cluster.ClusterID, dnsErr.Error())
-	}
-	clusterDNS = strings.Replace(clusterDNS, kafkaConstants.DefaultIngressDnsNamePrefix, kafkaConstants.ManagedKafkaIngressDnsNamePrefix, 1)
-	resourceSet := c.buildResourceSet(clusterDNS)
+	resourceSet := c.buildResourceSet()
 	if err := c.ClusterService.ApplyResources(&cluster, resourceSet); err != nil {
 		return errors.Wrapf(err, "failed to apply resources for cluster %s", cluster.ClusterID)
 	}
@@ -724,9 +717,8 @@ func (c *ClusterManager) reconcileClustersForRegions() []error {
 	return errs
 }
 
-func (c *ClusterManager) buildResourceSet(ingressDNS string) types.ResourceSet {
+func (c *ClusterManager) buildResourceSet() types.ResourceSet {
 	r := []interface{}{
-		c.buildIngressController(ingressDNS),
 		c.buildReadOnlyGroupResource(),
 		c.buildDedicatedReaderClusterRoleBindingResource(),
 		c.buildKafkaSREGroupResource(),
@@ -872,48 +864,6 @@ func (c *ClusterManager) buildObservabilitySubscriptionResource() *v1alpha1.Subs
 			StartingCSV:            "observability-operator.v3.0.4",
 			InstallPlanApproval:    v1alpha1.ApprovalAutomatic,
 			Package:                observabilitySubscriptionName,
-		},
-	}
-}
-
-func (c *ClusterManager) buildIngressController(ingressDNS string) *ingressoperatorv1.IngressController {
-	r := int32(c.DataplaneClusterConfig.IngressControllerReplicas)
-	return &ingressoperatorv1.IngressController{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "operator.openshift.io/v1",
-			Kind:       "IngressController",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "sharded-nlb",
-			Namespace: openshiftIngressNamespace,
-		},
-		Spec: ingressoperatorv1.IngressControllerSpec{
-			Domain: ingressDNS,
-			RouteSelector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					IngressLabelName: IngressLabelValue,
-				},
-			},
-			EndpointPublishingStrategy: &ingressoperatorv1.EndpointPublishingStrategy{
-				LoadBalancer: &ingressoperatorv1.LoadBalancerStrategy{
-					ProviderParameters: &ingressoperatorv1.ProviderLoadBalancerParameters{
-						AWS: &ingressoperatorv1.AWSLoadBalancerParameters{
-							Type: ingressoperatorv1.AWSNetworkLoadBalancer,
-						},
-						Type: ingressoperatorv1.AWSLoadBalancerProvider,
-					},
-					Scope: ingressoperatorv1.ExternalLoadBalancer,
-				},
-				Type: ingressoperatorv1.LoadBalancerServiceStrategyType,
-			},
-			Replicas: &r,
-			NodePlacement: &ingressoperatorv1.NodePlacement{
-				NodeSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"node-role.kubernetes.io/worker": "",
-					},
-				},
-			},
 		},
 	}
 }

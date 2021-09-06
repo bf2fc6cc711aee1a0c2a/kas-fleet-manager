@@ -13,6 +13,5 @@ func NewStageEnvLoader() environments.EnvLoader {
 		"mas-sso-realm":                     "rhoas",
 		"enable-kafka-external-certificate": "true",
 		"cluster-compute-machine-type":      "m5.4xlarge",
-		"ingress-controller-replicas":       "9",
 	}
 }
