@@ -327,7 +327,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
-					Reason: "UpdatingStrimzi",
+					Reason: "StrimziUpdating",
 				}},
 				Versions: private.DataPlaneKafkaStatusVersions{
 					Kafka:   fmt.Sprintf("kafka-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
@@ -384,12 +384,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 		Expect(c.ActualKafkaVersion).To(Equal(sentUpdate.Versions.Kafka))
 		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
-		readyCond := findManagedKafkaStatusReadyCondition(sentUpdate.Conditions)
-		if readyCond != nil && readyCond.Reason == "StrimziUpdating" {
-			Expect(c.StrimziUpgrading).To(Equal(true))
-		} else {
-			Expect(c.StrimziUpgrading).To(Equal(false))
-		}
+		Expect(c.StrimziUpgrading).To(BeTrue()) // should always be true since Condition.Reason is set to StrimziUpgrading
 
 		// TODO test when kafka is being upgraded when kas fleet shard operator side
 		// appropriately reports it
@@ -402,6 +397,33 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedKafkas(t *testing.T) {
 			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
 		}
 		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusDeleting.String()))
+	}
+
+	for _, cid := range readyClusters {
+		// update the status to ready again and remove reason field to simulate the end of upgrade process as reported by kas-fleet-shard
+		_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, map[string]private.DataPlaneKafkaStatus{
+			cid: {
+				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
+					Type:   "Ready",
+					Status: "True",
+				}},
+				Versions: private.DataPlaneKafkaStatusVersions{
+					Kafka:   fmt.Sprintf("kafka-new-version-%s", cid),
+					Strimzi: fmt.Sprintf("strimzi-new-version-%s", cid),
+				},
+			},
+		})
+
+		Expect(err).NotTo(HaveOccurred())
+
+		c := &dbapi.KafkaRequest{}
+		if err := db.First(c, "id = ?", cid).Error; err != nil {
+			t.Errorf("failed to find kafka cluster with id %s due to error: %v", cid, err)
+		}
+
+		// Make sure that the kafka stays in ready state and status of strimzi upgrade is false.
+		Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+		Expect(c.StrimziUpgrading).To(BeFalse())
 	}
 }
 
@@ -851,13 +873,4 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	}
 	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
 	Expect(c.FailedReason).To(ContainSubstring(errMessage))
-}
-
-func findManagedKafkaStatusReadyCondition(conditions []private.DataPlaneClusterUpdateStatusRequestConditions) *private.DataPlaneClusterUpdateStatusRequestConditions {
-	for _, cond := range conditions {
-		if cond.Type == "Ready" {
-			return &cond
-		}
-	}
-	return nil
 }
