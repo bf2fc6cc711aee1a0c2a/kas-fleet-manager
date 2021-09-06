@@ -1665,6 +1665,69 @@ func Test_kafkaService_Update(t *testing.T) {
 	}
 }
 
+func Test_kafkaService_Updates(t *testing.T) {
+	type fields struct {
+		connectionFactory *db.ConnectionFactory
+		clusterService    ClusterService
+	}
+	type args struct {
+		kafkaRequest *dbapi.KafkaRequest
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+		setupFn func()
+	}{
+		{
+			name: "fail when database returns an error",
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			wantErr: true,
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery("UPDATE").WithExecException()
+			},
+		},
+		{
+			name: "success",
+			args: args{
+				kafkaRequest: buildKafkaRequest(nil),
+			},
+			fields: fields{
+				connectionFactory: db.NewMockConnectionFactory(nil),
+			},
+			setupFn: func() {
+				mocket.Catcher.Reset().NewMock().WithQuery(`UPDATE "kafka_requests"`)
+				mocket.Catcher.NewMock().WithQueryException().WithExecException()
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupFn()
+			k := kafkaService{
+				connectionFactory: tt.fields.connectionFactory,
+				clusterService:    tt.fields.clusterService,
+				kafkaConfig:       config.NewKafkaConfig(),
+				awsConfig:         config.NewAWSConfig(),
+			}
+			err := k.Updates(tt.args.kafkaRequest, map[string]interface{}{
+				"id":    "idsds",
+				"owner": "",
+			})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("kafkaService.Update() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+		})
+	}
+}
+
 func Test_kafkaService_DeprovisionKafkaForUsers(t *testing.T) {
 	type fields struct {
 		connectionFactory *db.ConnectionFactory

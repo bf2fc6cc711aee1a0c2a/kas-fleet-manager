@@ -69,6 +69,10 @@ type KafkaService interface {
 	// why no attempt has been done
 	UpdateStatus(id string, status constants2.KafkaStatus) (bool, *errors.ServiceError)
 	Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError
+	// Updates() updates the given fields of a kafka. This takes in a map so that even zero-fields can be updated.
+	// Use this only when you want to update the multiple columns that may contain zero-fields, otherwise use the `KafkaService.Update()` method.
+	// See https://gorm.io/docs/update.html#Updates-multiple-columns for more info
+	Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *errors.ServiceError
 	ChangeKafkaCNAMErecords(kafkaRequest *dbapi.KafkaRequest, action KafkaRoutesAction) (*route53.ChangeResourceRecordSetsOutput, *errors.ServiceError)
 	RegisterKafkaDeprovisionJob(ctx context.Context, id string) *errors.ServiceError
 	// DeprovisionKafkaForUsers registers all kafkas for deprovisioning given the list of owners
@@ -580,6 +584,18 @@ func (k *kafkaService) Update(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
 
 	if err := dbConn.Updates(kafkaRequest).Error; err != nil {
+		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka")
+	}
+
+	return nil
+}
+
+func (k *kafkaService) Updates(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
+	dbConn := k.connectionFactory.New().
+		Model(kafkaRequest).
+		Where("status not IN (?)", kafkaDeletionStatuses) // ignore updates of kafka under deletion
+
+	if err := dbConn.Updates(fields).Error; err != nil {
 		return errors.NewWithCause(errors.ErrorGeneral, err, "Failed to update kafka")
 	}
 

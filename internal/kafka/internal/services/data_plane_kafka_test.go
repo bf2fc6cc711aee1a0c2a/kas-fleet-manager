@@ -511,7 +511,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 							RoutesCreated: true,
 						}, nil
 					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
 						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
 						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
 						v.strimziUpgrading = kafkaRequest.StrimziUpgrading
@@ -566,7 +566,7 @@ func TestDataPlaneKafkaService_UpdateVersions(t *testing.T) {
 							StrimziUpgrading:     true,
 						}, nil
 					},
-					UpdateFunc: func(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceError {
+					UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, fields map[string]interface{}) *errors.ServiceError {
 						v.actualKafkaVersion = kafkaRequest.ActualKafkaVersion
 						v.actualStrimziVersion = kafkaRequest.ActualStrimziVersion
 						v.strimziUpgrading = kafkaRequest.StrimziUpgrading

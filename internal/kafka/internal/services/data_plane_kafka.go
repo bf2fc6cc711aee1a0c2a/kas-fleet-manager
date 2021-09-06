@@ -27,6 +27,7 @@ const (
 	statusRejected   kafkaStatus = "rejected"
 	statusDeleted    kafkaStatus = "deleted"
 	statusUnknown    kafkaStatus = "unknown"
+	strimziUpdating  string      = "StrimziUpdating"
 )
 
 type DataPlaneKafkaService interface {
@@ -166,7 +167,7 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 	if found {
 		// TODO is this really correct? What happens if there is a StrimziUpdating reason
 		// but the 'status' is false? What does that mean and how should we behave?
-		strimziUpdatingReasonIsSet := readyCondition.Reason == "StrimziUpdating"
+		strimziUpdatingReasonIsSet := readyCondition.Reason == strimziUpdating
 		if strimziUpdatingReasonIsSet && !prevStrimziUpgrading {
 			logger.Logger.Infof("Strimzi version for Kafka ID '%s' upgrade state changed from %t to %t", kafka.ID, prevStrimziUpgrading, strimziUpdatingReasonIsSet)
 			kafka.StrimziUpgrading = true
@@ -180,7 +181,13 @@ func (d *dataPlaneKafkaService) setKafkaRequestVersionFields(kafka *dbapi.KafkaR
 	}
 
 	if needsUpdate {
-		if err := d.kafkaService.Update(kafka); err != nil {
+		versionFields := map[string]interface{}{
+			"actual_kafka_version":   kafka.ActualKafkaVersion,
+			"actual_strimzi_version": kafka.ActualStrimziVersion,
+			"strimzi_upgrading":      kafka.StrimziUpgrading,
+		}
+
+		if err := d.kafkaService.Updates(kafka, versionFields); err != nil {
 			return serviceError.NewWithCause(err.Code, err, "failed to update actual version fields for kafka cluster %s", kafka.ID)
 		}
 	}
