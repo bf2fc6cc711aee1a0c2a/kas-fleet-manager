@@ -79,6 +79,9 @@ var _ KafkaService = &KafkaServiceMock{}
 // 			UpdateStatusFunc: func(id string, status constants2.KafkaStatus) (bool, *serviceError.ServiceError) {
 // 				panic("mock out the UpdateStatus method")
 // 			},
+// 			UpdatesFunc: func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError {
+// 				panic("mock out the Updates method")
+// 			},
 // 			VerifyAndUpdateKafkaFunc: func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError {
 // 				panic("mock out the VerifyAndUpdateKafka method")
 // 			},
@@ -145,6 +148,9 @@ type KafkaServiceMock struct {
 
 	// UpdateStatusFunc mocks the UpdateStatus method.
 	UpdateStatusFunc func(id string, status constants2.KafkaStatus) (bool, *serviceError.ServiceError)
+
+	// UpdatesFunc mocks the Updates method.
+	UpdatesFunc func(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError
 
 	// VerifyAndUpdateKafkaFunc mocks the VerifyAndUpdateKafka method.
 	VerifyAndUpdateKafkaFunc func(ctx context.Context, kafkaRequest *dbapi.KafkaRequest) *serviceError.ServiceError
@@ -248,6 +254,13 @@ type KafkaServiceMock struct {
 			// Status is the status argument value.
 			Status constants2.KafkaStatus
 		}
+		// Updates holds details about calls to the Updates method.
+		Updates []struct {
+			// KafkaRequest is the kafkaRequest argument value.
+			KafkaRequest *dbapi.KafkaRequest
+			// Values is the values argument value.
+			Values map[string]interface{}
+		}
 		// VerifyAndUpdateKafka holds details about calls to the VerifyAndUpdateKafka method.
 		VerifyAndUpdateKafka []struct {
 			// Ctx is the ctx argument value.
@@ -281,6 +294,7 @@ type KafkaServiceMock struct {
 	lockRegisterKafkaJob               sync.RWMutex
 	lockUpdate                         sync.RWMutex
 	lockUpdateStatus                   sync.RWMutex
+	lockUpdates                        sync.RWMutex
 	lockVerifyAndUpdateKafka           sync.RWMutex
 	lockVerifyAndUpdateKafkaAdmin      sync.RWMutex
 }
@@ -845,6 +859,41 @@ func (mock *KafkaServiceMock) UpdateStatusCalls() []struct {
 	mock.lockUpdateStatus.RLock()
 	calls = mock.calls.UpdateStatus
 	mock.lockUpdateStatus.RUnlock()
+	return calls
+}
+
+// Updates calls UpdatesFunc.
+func (mock *KafkaServiceMock) Updates(kafkaRequest *dbapi.KafkaRequest, values map[string]interface{}) *serviceError.ServiceError {
+	if mock.UpdatesFunc == nil {
+		panic("KafkaServiceMock.UpdatesFunc: method is nil but KafkaService.Updates was just called")
+	}
+	callInfo := struct {
+		KafkaRequest *dbapi.KafkaRequest
+		Values       map[string]interface{}
+	}{
+		KafkaRequest: kafkaRequest,
+		Values:       values,
+	}
+	mock.lockUpdates.Lock()
+	mock.calls.Updates = append(mock.calls.Updates, callInfo)
+	mock.lockUpdates.Unlock()
+	return mock.UpdatesFunc(kafkaRequest, values)
+}
+
+// UpdatesCalls gets all the calls that were made to Updates.
+// Check the length with:
+//     len(mockedKafkaService.UpdatesCalls())
+func (mock *KafkaServiceMock) UpdatesCalls() []struct {
+	KafkaRequest *dbapi.KafkaRequest
+	Values       map[string]interface{}
+} {
+	var calls []struct {
+		KafkaRequest *dbapi.KafkaRequest
+		Values       map[string]interface{}
+	}
+	mock.lockUpdates.RLock()
+	calls = mock.calls.Updates
+	mock.lockUpdates.RUnlock()
 	return calls
 }
 
