@@ -476,122 +476,6 @@ paths:
       security:
       - Bearer: []
       summary: Creates a Dinosaur request
-  /api/dinosaurs_mgmt/v1/cloud_providers:
-    get:
-      operationId: getCloudProviders
-      parameters:
-      - description: Page index
-        examples:
-          page:
-            value: "1"
-        explode: true
-        in: query
-        name: page
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Number of items in each page
-        examples:
-          size:
-            value: "100"
-        explode: true
-        in: query
-        name: size
-        required: false
-        schema:
-          type: string
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CloudProviderList'
-          description: Returned list of supported cloud providers
-        "401":
-          content:
-            application/json:
-              examples:
-                "401Example":
-                  $ref: '#/components/examples/401Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Returns the list of supported cloud providers
-  /api/dinosaurs_mgmt/v1/cloud_providers/{id}/regions:
-    get:
-      operationId: getCloudProviderRegions
-      parameters:
-      - description: The ID of record
-        explode: false
-        in: path
-        name: id
-        required: true
-        schema:
-          type: string
-        style: simple
-      - description: Page index
-        examples:
-          page:
-            value: "1"
-        explode: true
-        in: query
-        name: page
-        required: false
-        schema:
-          type: string
-        style: form
-      - description: Number of items in each page
-        examples:
-          size:
-            value: "100"
-        explode: true
-        in: query
-        name: size
-        required: false
-        schema:
-          type: string
-        style: form
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CloudRegionList'
-          description: Returned list of supported cloud provider regions
-        "401":
-          content:
-            application/json:
-              examples:
-                "401Example":
-                  $ref: '#/components/examples/401Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Auth token is invalid
-        "500":
-          content:
-            application/json:
-              examples:
-                "500Example":
-                  $ref: '#/components/examples/500Example'
-              schema:
-                $ref: '#/components/schemas/Error'
-          description: Unexpected error occurred
-      security:
-      - Bearer: []
-      summary: Returns the list of supported regions of the supported cloud provider
   /api/dinosaurs_mgmt/v1/service_accounts:
     get:
       operationId: getServiceAccounts
@@ -1393,55 +1277,6 @@ components:
       required:
       - name
       type: object
-    CloudProviderList:
-      allOf:
-      - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/CloudProviderList_allOf'
-    CloudRegionList:
-      allOf:
-      - $ref: '#/components/schemas/List'
-      - $ref: '#/components/schemas/CloudRegionList_allOf'
-    CloudProvider:
-      description: Cloud provider.
-      properties:
-        kind:
-          description: Indicates the type of this object. Will be 'CloudProvider'
-            link.
-          type: string
-        id:
-          description: Unique identifier of the object.
-          type: string
-        display_name:
-          description: Name of the cloud provider for display purposes.
-          type: string
-        name:
-          description: Human friendly identifier of the cloud provider, for example
-            `aws`.
-          type: string
-        enabled:
-          description: Whether the cloud provider is enabled for deploying an OSD
-            cluster.
-          type: boolean
-      required:
-      - enabled
-    CloudRegion:
-      description: Description of a region of a cloud provider.
-      properties:
-        kind:
-          description: Indicates the type of this object. Will be 'CloudRegion'.
-          type: string
-        id:
-          description: Unique identifier of the object.
-          type: string
-        display_name:
-          description: Name of the region for display purposes, for example `N. Virginia`.
-          type: string
-        enabled:
-          default: false
-          description: Whether the region is enabled for deploying an OSD cluster.
-          type: boolean
-      required:
-      - enabled
     ServiceAccount:
       allOf:
       - $ref: '#/components/schemas/ObjectReference'
@@ -1555,8 +1390,6 @@ components:
           type: string
         name:
           type: string
-        bootstrap_server_host:
-          type: string
         created_at:
           format: date-time
           type: string
@@ -1593,22 +1426,6 @@ components:
           type: boolean
       required:
       - max_capacity_reached
-    CloudProviderList_allOf:
-      example: '{"kind":"CloudProviderList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudProviderExample"}}'
-      properties:
-        items:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/CloudProvider'
-          type: array
-    CloudRegionList_allOf:
-      example: '{"kind":"CloudRegionList","page":"1","size":"1","total":"1","item":{"$ref":"#/components/examples/CloudRegionExample"}}'
-      properties:
-        items:
-          items:
-            allOf:
-            - $ref: '#/components/schemas/CloudRegion'
-          type: array
     ServiceAccount_allOf:
       example: '{"$ref":"#/components/examples/ServiceAccountExample"}'
       properties:

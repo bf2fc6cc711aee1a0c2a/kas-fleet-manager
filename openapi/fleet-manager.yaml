@@ -367,75 +367,6 @@ paths:
         - $ref: '#/components/parameters/size'
         - $ref: '#/components/parameters/orderBy'
         - $ref: '#/components/parameters/search'
-  /api/dinosaurs_mgmt/v1/cloud_providers:
-    get:
-      summary: Returns the list of supported cloud providers
-      operationId: getCloudProviders
-      security:
-        - Bearer: []
-      responses:
-        '200':
-          description: Returned list of supported cloud providers
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CloudProviderList'
-        '401':
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                401Example:
-                  $ref: '#/components/examples/401Example'
-        '500':
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                500Example:
-                  $ref: '#/components/examples/500Example'
-      parameters:
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/size'
-  /api/dinosaurs_mgmt/v1/cloud_providers/{id}/regions:
-    get:
-      summary: Returns the list of supported regions of the supported cloud provider
-      operationId: getCloudProviderRegions
-      security:
-        - Bearer: []
-      responses:
-        '200':
-          description: Returned list of supported cloud provider regions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CloudRegionList'
-        '401':
-          description: Auth token is invalid
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                401Example:
-                  $ref: '#/components/examples/401Example'
-        '500':
-          description: Unexpected error occurred
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                500Example:
-                  $ref: '#/components/examples/500Example'
-      parameters:
-        - $ref: "#/components/parameters/id"
-        - $ref: '#/components/parameters/page'
-        - $ref: '#/components/parameters/size'
   /api/dinosaurs_mgmt/v1/service_accounts:
     get:
       responses:
@@ -785,8 +716,6 @@ components:
               type: string
             name:
               type: string
-            bootstrap_server_host:
-              type: string
             created_at:
               format: date-time
               type: string
@@ -870,78 +799,6 @@ components:
         region:
           description: The region where the Dinosaur cluster will be created in
           type: string
-    CloudProviderList:
-      allOf:
-        - $ref: "#/components/schemas/List"
-        - type: object
-          example:
-            kind: "CloudProviderList"
-            page: "1"
-            size: "1"
-            total: "1"
-            item:
-              $ref: '#/components/examples/CloudProviderExample'
-          properties:
-            items:
-              type: array
-              items:
-                allOf:
-                  - $ref: "#/components/schemas/CloudProvider"
-    CloudRegionList:
-      allOf:
-        - $ref: "#/components/schemas/List"
-        - type: object
-          example:
-            kind: "CloudRegionList"
-            page: "1"
-            size: "1"
-            total: "1"
-            item:
-              $ref: '#/components/examples/CloudRegionExample'
-          properties:
-            items:
-              type: array
-              items:
-                allOf:
-                  - $ref: "#/components/schemas/CloudRegion"
-    CloudProvider:
-      description: 'Cloud provider.'
-      properties:
-        kind:
-          description: 'Indicates the type of this object. Will be ''CloudProvider'' link.'
-          type: string
-        id:
-          description: 'Unique identifier of the object.'
-          type: string
-        display_name:
-          description: 'Name of the cloud provider for display purposes.'
-          type: string
-        name:
-          description: 'Human friendly identifier of the cloud provider, for example `aws`.'
-          type: string
-        enabled:
-          description: 'Whether the cloud provider is enabled for deploying an OSD cluster.'
-          type: boolean
-      required:
-        - enabled
-    CloudRegion:
-      description: 'Description of a region of a cloud provider.'
-      properties:
-        kind:
-          description: 'Indicates the type of this object. Will be ''CloudRegion''.'
-          type: string
-        id:
-          description: 'Unique identifier of the object.'
-          type: string
-        display_name:
-          description: 'Name of the region for display purposes, for example `N. Virginia`.'
-          type: string
-        enabled:
-          description: 'Whether the region is enabled for deploying an OSD cluster.'
-          type: boolean
-          default: false
-      required:
-        - enabled
     ServiceAccount:
       description: 'Service Account created in MAS-SSO for the Dinosaur Cluster for authentication'
       allOf:

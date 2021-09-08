@@ -22,21 +22,20 @@ func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.DinosaurReques
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
 	return public.DinosaurRequest{
-		Id:                  reference.Id,
-		Kind:                reference.Kind,
-		Href:                reference.Href,
-		Region:              kafkaRequest.Region,
-		Name:                kafkaRequest.Name,
-		CloudProvider:       kafkaRequest.CloudProvider,
-		MultiAz:             kafkaRequest.MultiAZ,
-		Owner:               kafkaRequest.Owner,
-		BootstrapServerHost: setBootstrapServerHost(kafkaRequest.BootstrapServerHost),
-		Status:              kafkaRequest.Status,
-		CreatedAt:           kafkaRequest.CreatedAt,
-		UpdatedAt:           kafkaRequest.UpdatedAt,
-		FailedReason:        kafkaRequest.FailedReason,
-		Version:             kafkaRequest.ActualKafkaVersion,
-		InstanceType:        kafkaRequest.InstanceType,
+		Id:            reference.Id,
+		Kind:          reference.Kind,
+		Href:          reference.Href,
+		Region:        kafkaRequest.Region,
+		Name:          kafkaRequest.Name,
+		CloudProvider: kafkaRequest.CloudProvider,
+		MultiAz:       kafkaRequest.MultiAZ,
+		Owner:         kafkaRequest.Owner,
+		Status:        kafkaRequest.Status,
+		CreatedAt:     kafkaRequest.CreatedAt,
+		UpdatedAt:     kafkaRequest.UpdatedAt,
+		FailedReason:  kafkaRequest.FailedReason,
+		Version:       kafkaRequest.ActualKafkaVersion,
+		InstanceType:  kafkaRequest.InstanceType,
 	}
 }
 

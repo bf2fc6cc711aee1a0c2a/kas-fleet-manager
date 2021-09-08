@@ -67,7 +67,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	}
 
 	kafkaHandler := handlers.NewKafkaHandler(s.Kafka, s.ProviderConfig)
-	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
 	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
@@ -132,15 +131,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1ServiceAccountsRouter.Use(requireIssuer)
 	apiV1ServiceAccountsRouter.Use(requireOrgID)
 	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
-
-	//  /cloud_providers
-	v1Collections = append(v1Collections, api.CollectionMetadata{
-		ID:   "cloud_providers",
-		Kind: "CloudProviderList",
-	})
-	apiV1CloudProvidersRouter := apiV1Router.PathPrefix("/cloud_providers").Subrouter()
-	apiV1CloudProvidersRouter.HandleFunc("", cloudProvidersHandler.ListCloudProviders).Methods(http.MethodGet)
-	apiV1CloudProvidersRouter.HandleFunc("/{id}/regions", cloudProvidersHandler.ListCloudProviderRegions).Methods(http.MethodGet)
 
 	//  /kafkas/{id}/metrics
 	apiV1MetricsRouter := apiV1KafkasRouter.PathPrefix("/{id}/metrics").Subrouter()

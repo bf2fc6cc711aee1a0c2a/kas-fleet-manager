@@ -101,13 +101,11 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to become ready: %v", err)
 	// check the owner is set correctly
 	Expect(foundKafka.Owner).To(Equal(account.Username()))
-	Expect(foundKafka.BootstrapServerHost).To(Not(BeEmpty()))
 	Expect(foundKafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 	Expect(foundKafka.Owner).To(Equal(kafka.Owner))
 	// checking kafka_request bootstrap server port number being present
 	kafka, _, err = client.DefaultApi.GetDinosaurById(ctx, foundKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
-	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
 	Expect(kafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 
 	db := test.TestServices.DBFactory.New()

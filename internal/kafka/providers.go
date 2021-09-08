@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/clusters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/cloudprovider"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/cluster"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/cmd/kafka"
@@ -51,7 +50,6 @@ func ConfigProviders() di.Option {
 		// Additional CLI subcommands
 		di.Provide(cluster.NewClusterCommand),
 		di.Provide(kafka.NewKafkaCommand),
-		di.Provide(cloudprovider.NewCloudProviderCommand),
 		di.Provide(observatorium.NewRunObservatoriumCommand),
 		di.Provide(serviceaccounts.NewServiceAccountCommand),
 		di.Provide(errors.NewErrorsCommand),
