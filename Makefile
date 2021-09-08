@@ -7,14 +7,14 @@ include $(PROJECT_PATH)/test/performance/Makefile.mk
 SHELL = bash
 
 # The details of the application:
-binary:=kas-fleet-manager
+binary:=fleet-manager
 
 # The version needs to be different for each deployment because otherwise the
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
 
 # Default namespace for local deployments
-NAMESPACE ?= kas-fleet-manager-${USER}
+NAMESPACE ?= fleet-manager-${USER}
 
 # The name of the image repository needs to start with the name of an existing
 # namespace because when the image is pushed to the internal registry of a
@@ -22,7 +22,7 @@ NAMESPACE ?= kas-fleet-manager-${USER}
 # corresponding image stream inside that namespace. If the namespace doesn't
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/kas-fleet-manager
+image_repository:=$(NAMESPACE)/fleet-manager
 
 # Tag for the image:
 image_tag:=$(version)
@@ -36,7 +36,7 @@ external_image_registry:=default-route-openshift-image-registry.apps-crc.testing
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 # Test image name that will be used for PR checks
-test_image:=test/kas-fleet-manager
+test_image:=test/fleet-manager
 
 DOCKER_CONFIG="${PWD}/.docker"
 
@@ -154,7 +154,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	}
 endif
 openapi/spec/validate: specinstall
-	spectral lint openapi/kas-fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
+	spectral lint openapi/fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
 
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -213,7 +213,7 @@ help:
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image                       build docker image"
 	@echo "make push                        push docker image"
-	@echo "make project                     create and use the kas-fleet-manager project"
+	@echo "make project                     create and use the fleet-manager project"
 	@echo "make clean                       delete temporary generated files"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
@@ -265,12 +265,12 @@ lint: golangci-lint specinstall
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 binary:
-	$(GO) build ./cmd/kas-fleet-manager
+	$(GO) build ./cmd/fleet-manager
 .PHONY: binary
 
 # Install
 install: verify lint
-	$(GO) install ./cmd/kas-fleet-manager
+	$(GO) install ./cmd/fleet-manager
 .PHONY: install
 
 # Runs the unit tests.
@@ -328,7 +328,7 @@ generate: moq openapi/generate
 
 # validate the openapi schema
 openapi/validate: openapi-generator
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
@@ -340,12 +340,12 @@ openapi/generate: openapi/generate/kas-public openapi/generate/kas-private opena
 
 openapi/generate/kas-public: go-bindata openapi-generator
 	rm -rf internal/kafka/internal/api/public
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/kafka/internal/api/public
 
 	mkdir -p .generate/openapi
-	cp ./openapi/kas-fleet-manager.yaml .generate/openapi
+	cp ./openapi/fleet-manager.yaml .generate/openapi
 	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
 	$(GOFMT) -w internal/kafka/internal/generated
 	rm -rf .generate/openapi
@@ -392,15 +392,15 @@ code/fix:
 .PHONY: code/fix
 
 run: install
-	kas-fleet-manager migrate
-	kas-fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
+	fleet-manager migrate
+	fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
 .PHONY: run
 
 # Run Swagger and host the api docs
 run/docs:
 	@echo "Please open http://localhost/"
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
-		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
+		{ url: \"./openapi/fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
 		{ url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
 		{ url: \"./openapi/kas-fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
@@ -429,7 +429,7 @@ db/setup:
 .PHONY: db/setup
 
 db/migrate:
-	OCM_ENV=integration $(GO) run ./cmd/kas-fleet-manager migrate
+	OCM_ENV=integration $(GO) run ./cmd/fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:
@@ -437,7 +437,7 @@ db/teardown:
 .PHONY: db/teardown
 
 db/login:
-	docker exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+	docker exec -u $(shell id -u) -it fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
 .PHONY: db/login
 
 db/generate/insert/cluster:
@@ -547,7 +547,7 @@ deploy/project:
 # deploy the postgres database required by the service to an OpenShift cluster
 deploy/db:
 	oc process -f ./templates/db-template.yml | oc apply -f - -n $(NAMESPACE)
-	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
+	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 .PHONY: deploy/db
 
 # deploy service via templates to an OpenShift cluster
@@ -587,7 +587,7 @@ deploy: deploy/db
 		-p OBSERVABILITY_RHSSO_LOGS_SECRET="${OBSERVABILITY_RHSSO_LOGS_SECRET}" \
 		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}" \
 		-p OBSERVABILITY_RHSSO_METRICS_SECRET="${OBSERVABILITY_RHSSO_GRAFANA_SECRET}" \
-		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
+		-p DATABASE_HOST="$(shell oc get service/fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
 		| oc apply -f - -n $(NAMESPACE)
 	@oc apply -f ./templates/envoy-config-configmap.yml -n $(NAMESPACE)

@@ -35,35 +35,35 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "401":
           description: Auth token is invalid
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "403":
           description: User is not authorised to access the service
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "500":
           description: Unexpected error occurred
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
       parameters:
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/size'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/orderBy'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/search'
+        - $ref: 'fleet-manager.yaml#/components/parameters/page'
+        - $ref: 'fleet-manager.yaml#/components/parameters/size'
+        - $ref: 'fleet-manager.yaml#/components/parameters/orderBy'
+        - $ref: 'fleet-manager.yaml#/components/parameters/search'
   '/api/kafkas_mgmt/v1/admin/kafkas/{id}':
     get:
       summary: Return the details of Kafka instance by id
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
       operationId: getKafkaById
@@ -79,29 +79,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "403":
           description: User is not authorised to access the service
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
           description: No Kafka found with the specified ID
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "500":
           description: Unexpected error occurred
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
     patch:
       summary: Update a Kafka instance by id
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
       operationId: updateKafkaById
@@ -124,35 +124,35 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "401":
           description: Auth token is invalid
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "403":
           description: User is not authorised to access the service
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
           description: No Kafka found with the specified ID
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "500":
           description: Unexpected error occurred
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
     delete:
       summary: Delete a Kafka by ID
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
         - in: query
           name: async
           description: Perform the action in an asynchronous manner
@@ -174,31 +174,31 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "403":
           description: User is not authorised to access the service
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
           description: No Kafka found with the specified ID
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "500":
           description: Unexpected error occurred
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
 
 components:
   schemas:
     Kafka:
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
+        - $ref: 'fleet-manager.yaml#/components/schemas/ObjectReference'
         - type: object
           properties:
             status:
@@ -267,7 +267,7 @@ components:
               type: string  
     KafkaList:
       allOf:
-        - $ref: "kas-fleet-manager.yaml#/components/schemas/List"
+        - $ref: "fleet-manager.yaml#/components/schemas/List"
         - type: object
           properties:
             items:

@@ -27,7 +27,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
         description: Cluster status update data
         content:
@@ -42,7 +42,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 400InvalidIdExample:
                   $ref: '#/components/examples/400InvalidIdExample'
@@ -51,10 +51,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
       security:
@@ -67,7 +67,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
         description: Kafka clusters status update data
         content:
@@ -82,7 +82,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 400InvalidIdExample:
                   $ref: '#/components/examples/400InvalidIdExample'
@@ -91,10 +91,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
       security:
@@ -107,7 +107,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         '200':
           description: The list of the ManagedKafkas for the specified agent cluster
@@ -119,7 +119,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 400InvalidIdExample:
                   $ref: '#/components/examples/400InvalidIdExample'
@@ -128,10 +128,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
       security:
@@ -144,7 +144,7 @@ paths:
       tags:
         - Agent Clusters
       parameters:
-        - $ref: "kas-fleet-manager.yaml#/components/parameters/id"
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         '200':
           description: The ManagedKafkaAgent CR Spec
@@ -156,7 +156,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 400InvalidIdExample:
                   $ref: '#/components/examples/400InvalidIdExample'
@@ -165,10 +165,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
       security:
@@ -542,7 +542,7 @@ components:
           type: string
         error:
           nullable: true
-          $ref: "kas-fleet-manager.yaml#/components/schemas/Error"
+          $ref: "fleet-manager.yaml#/components/schemas/Error"
         object:
           type: object
           nullable: true

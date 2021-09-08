@@ -52,7 +52,7 @@ func NewRouteLoader(s options) environments.RouteLoader {
 
 func (s *options) AddRoutes(mainRouter *mux.Router) error {
 	basePath := fmt.Sprintf("%s/%s", routes.ApiEndpoint, routes.KafkasFleetManagementApiPrefix)
-	err := s.buildApiBaseRouter(mainRouter, basePath, "kas-fleet-manager.yaml")
+	err := s.buildApiBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
 	if err != nil {
 		return err
 	}
