@@ -1,12 +1,12 @@
 # default performance test flags
 REGISTRY=quay.io/rhoas
-IMAGE_LOCUST=kas-fleet-manager-locust
+IMAGE_LOCUST=fleet-manager-locust
 TAG_LOCUST=latest
-IMAGE_TOKEN_REFRESH=kas-fleet-manager-token-refresh
+IMAGE_TOKEN_REFRESH=fleet-manager-token-refresh
 TAG_TOKEN_REFRESH=latest
-IMAGE_RESULTS=kas-fleet-manager-perf-results
+IMAGE_RESULTS=fleet-manager-perf-results
 TAG_RESULTS=latest
-IMAGE_BACKUP=kas-fleet-manager-perf-test-backup
+IMAGE_BACKUP=fleet-manager-perf-test-backup
 TAG_BACKUP=latest
 
 PERF_TEST_USERS ?= 150 # number of locust test users - more users - more load can be sent

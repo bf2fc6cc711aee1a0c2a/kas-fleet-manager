@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 	"github.com/onsi/gomega"
 )
 

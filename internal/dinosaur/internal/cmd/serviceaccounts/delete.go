@@ -1,10 +1,10 @@
 package serviceaccounts
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"

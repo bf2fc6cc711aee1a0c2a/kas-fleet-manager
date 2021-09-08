@@ -1,14 +1,14 @@
 package dinosaur_mgrs
 
 import (
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	serviceErr "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
+	serviceErr "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"

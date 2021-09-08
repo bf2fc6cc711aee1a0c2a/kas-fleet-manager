@@ -3,10 +3,10 @@ package dinosaur
 import (
 	"context"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/flags"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/flags"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"

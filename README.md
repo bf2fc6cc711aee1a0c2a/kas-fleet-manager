@@ -1,6 +1,6 @@
 Dinosaur Service Fleet Manager
 ---
-![build status badge](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/actions/workflows/ci.yaml/badge.svg)
+![build status badge](https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/actions/workflows/ci.yaml/badge.svg)
 
 A service for provisioning and managing fleets of Dinosaur instances.
 
@@ -11,7 +11,7 @@ For more information on how the service works, see [the implementation documenta
 * [Docker](https://docs.docker.com/get-docker/) - to create database
 * [ocm cli](https://github.com/openshift-online/ocm-cli/releases) - ocm command line tool
 
-There are a number of prerequisites required for running kas-fleet-manager due to its interaction with external services. All of the below are required to run kas-fleet-manager locally.
+There are a number of prerequisites required for running fleet-manager due to its interaction with external services. All of the below are required to run fleet-manager locally.
 ### User Account & Organization Setup
 1. Request additional permissions for your user account in OCM stage. [Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
     - Ensure your user has the role `ManagedDinosaurService`. This allows your user to create Syncsets.
@@ -95,7 +95,7 @@ make binary
 
 3. Start the service
     ```
-    ./kas-fleet-manager serve
+    ./fleet-manager serve
     ```
     >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features of the service. Please see the [feature flag](./docs/feature-flags.md) documentation for more information.
 4. Verify the local service is working
@@ -131,7 +131,7 @@ GOARCH=amd64 GOOS=linux CGO_ENABLED=0 make image/build/push/internal
 - `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
 
 ### Deploy the Service using Templates
-This will deploy a postgres database and the kas-fleet-manager to a namespace in an OpenShift cluster.
+This will deploy a postgres database and the fleet-manager to a namespace in an OpenShift cluster.
 
 ```
 # Deploy the service
@@ -140,7 +140,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 **Optional parameters**:
 - `NAMESPACE`: The namespace where the service will be deployed to. Defaults to managed-services-$USER.
 - `IMAGE_REGISTRY`: Registry used by the image. Defaults to the OpenShift internal registry.
-- `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/kas-fleet-manager'.
+- `IMAGE_REPOSITORY`: Image repository. Defaults to '\<namespace\>/fleet-manager'.
 - `IMAGE_TAG`: Tag for the image. Defaults to a timestamp captured when the command is run (i.e. 1603447837).
 - `OCM_SERVICE_CLIENT_ID`: Client id used to interact with other UHC services.
 - `OCM_SERVICE_CLIENT_SECRET`: Client secret used to interact with other UHC services.
@@ -164,7 +164,7 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 
 The service can be accessed by via the host of the route created by the service deployment.
 ```
-oc get route kas-fleet-manager
+oc get route fleet-manager
 ```
 
 ### Removing the Service Deployment from the OpenShift
@@ -208,9 +208,9 @@ make run/docs/teardown
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
 with the service (i.e. cluster creation/scaling, Dinosaur creation, Errors list, etc.) without having to use a REST API client.
 
-To use these commands, run `make binary` to create the `./kas-fleet-manager` CLI.
+To use these commands, run `make binary` to create the `./fleet-manager` CLI.
 
-Run `./kas-fleet-manager -h` for information on the additional commands.
+Run `./fleet-manager -h` for information on the additional commands.
 ## Environments
 
 The service can be run in a number of different environments. Environments are essentially bespoke
@@ -273,11 +273,11 @@ See this [README](./test/performance/README.md) for more info about performance 
 ### Connector Service
 
 The https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager is used to build the `cos-fleet-manager` 
-binary which is a fleet manager for connectors similar to how `kas-fleet-manager` is fleet manager for Dinosaur 
-instances.  The `cos-fleet-manager` just imports most of the code from the `kas-fleet-manager` enabling only
+binary which is a fleet manager for connectors similar to how `fleet-manager` is fleet manager for Dinosaur 
+instances.  The `cos-fleet-manager` just imports most of the code from the `fleet-manager` enabling only
 connector APIs that are in this repo's `internal/connector` package.
 
 ## Additional documentation:
-* [kas-fleet-manager Implementation](docs/implementation.md)
+* [fleet-manager Implementation](docs/implementation.md)
 * [Data Plane Cluster dynamic scaling architecture](docs/architecture/data-plane-osd-cluster-dynamic-scaling.md)
-* [Explanation of JWT token claims used across the kas-fleet-manager](docs/jwt-claims.md)
+* [Explanation of JWT token claims used across the fleet-manager](docs/jwt-claims.md)

@@ -80,7 +80,7 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 - **observatorium-debug**: Enables Observatorium debug logging.
 - **observatorium-ignore-ssl**: Disables Observatorium TLS verification.
 - **observatorium-auth-type**[Optional]: This allows for the choice of either Red Hat SSO (`redhat`) or Dex
-(`dex`) as the authentication medium for interaction between kas-fleet-manager and Observatorium (default: `dex`, options: `redhat` or `dex`).
+(`dex`) as the authentication medium for interaction between fleet-manager and Observatorium (default: `dex`, options: `redhat` or `dex`).
 
 ### Dex Authentication
 - The '[Required]' in the following denotes that these flags are required to use Dex Authentication with the service.

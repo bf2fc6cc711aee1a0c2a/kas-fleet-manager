@@ -1,12 +1,13 @@
 package vault_test
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	. "github.com/onsi/gomega"
 	"io/ioutil"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	. "github.com/onsi/gomega"
 )
 
 func TestNewVaultService(t *testing.T) {

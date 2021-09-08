@@ -73,7 +73,7 @@ It was proven that calling dinosaurs DELETE endpoint with high frequency caused 
 
 ### Running the cleanup example
 ```
-API_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=dinosaurs.txt RESOURCE=dinosaurs python3 cleanup.py
+API_HOST=https://fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=dinosaurs.txt RESOURCE=dinosaurs python3 cleanup.py
 ```
 
 ## Convert csv results to JSON format accepted by horreum
@@ -109,7 +109,7 @@ Make sure login quay.io using a robot account. The credentials are saved under r
 ```
 
 ## Horreum db perf test results backup
-There is a backup [CronJob](backup/cronjob.yaml) scheduled to run after each of the [automated performance test runs](https://ci.int.devshift.net/view/kas-fleet-manager/job/kas-fleet-manager-perf-test-stage), which dumps current state of the db and pushes it to s3 bucket in `dinosaur_service_1` AWS account. Image built from [CronJob](backup/Dockerfile) is used to perform the backups.
+There is a backup [CronJob](backup/cronjob.yaml) scheduled to run after each of the [automated performance test runs](https://ci.int.devshift.net/view/fleet-manager/job/fleet-manager-perf-test-stage), which dumps current state of the db and pushes it to s3 bucket in `dinosaur_service_1` AWS account. Image built from [CronJob](backup/Dockerfile) is used to perform the backups.
 
 ## Troubleshooting
 Very rarely, after stopping the tests manually and starting them again error similar to one below may appear:

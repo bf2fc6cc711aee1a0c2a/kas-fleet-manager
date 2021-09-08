@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/observatorium"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/ingressoperator/v1"
-	apiErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	ingressoperatorv1 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/ingressoperator/v1"
+	apiErrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 
 	"github.com/onsi/gomega"
 	. "github.com/onsi/gomega"
@@ -28,7 +28,7 @@ import (
 	k8sCoreV1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
 )
 
 var (

@@ -8,8 +8,8 @@ package migrations
 import (
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
 )
@@ -102,7 +102,7 @@ func addConnectorTables(migrationId string) *gormigrate.Migration {
 
 	return db.CreateMigrationFromActions(migrationId,
 		db.FuncAction(func(tx *gorm.DB) error {
-			// We don't want to delete the leader lease table on rollback because it's shared with the kas-fleet-manager
+			// We don't want to delete the leader lease table on rollback because it's shared with the fleet-manager
 			// so we just create it here if it does not exist yet.. but we don't drop it on rollback.
 			err := tx.Migrator().AutoMigrate(&LeaderLease{})
 			if err != nil {

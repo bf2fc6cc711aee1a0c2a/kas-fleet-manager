@@ -1,9 +1,10 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"gorm.io/gorm"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"gorm.io/gorm"
 )
 
 // Field names suspected to contain personally identifiable information

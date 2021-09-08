@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/antihax/optional"
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
 )

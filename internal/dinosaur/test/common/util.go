@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
 
 	. "github.com/onsi/gomega"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 )
 
 const (

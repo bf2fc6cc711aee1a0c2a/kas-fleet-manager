@@ -10,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 
 	"github.com/dgrijalva/jwt-go"
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"

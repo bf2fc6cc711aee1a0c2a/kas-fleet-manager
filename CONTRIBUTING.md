@@ -17,7 +17,7 @@
 
 
 ## Project Source
-Fork kas-fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/fork
+Fork fleet-manager to your own Github repository: https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/fork
 
 Project source is to be found under `$GOPATH/src` by a distinct directory path.
 ```plain
@@ -26,9 +26,9 @@ $GOPATH
   /pkg
   /src
     /github.com/bf2fc6cc711aee1a0c2a/
-      /kas-fleet-manager -- our git root
+      /fleet-manager -- our git root
         /cmd
-          /kas-fleet-manager  -- Main CLI entrypoint
+          /fleet-manager  -- Main CLI entrypoint
         /pkg
           /api      -- type definitions and models (Note. openapi folder is generated - see below)
           /config   -- configuration handling
@@ -63,7 +63,7 @@ Set the following configuration in your **Launch.json** file.
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/kas-fleet-manager/main.go",
+            "program": "${workspaceFolder}/cmd/fleet-manager/main.go",
             "env": {
                 "OCM_ENV": "development"
             },

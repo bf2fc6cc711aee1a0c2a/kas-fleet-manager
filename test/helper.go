@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
 	"github.com/goava/di"
 	"github.com/golang/glog"
 	gm "github.com/onsi/gomega"
@@ -28,11 +28,11 @@ import (
 	amv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	"github.com/rs/xid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 )
 
 const (

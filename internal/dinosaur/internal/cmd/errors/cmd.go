@@ -2,7 +2,7 @@
 package errors
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/spf13/cobra"
 )
 

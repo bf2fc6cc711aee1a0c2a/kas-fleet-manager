@@ -27,7 +27,7 @@ Handlers are defined in the one of the `handlers` directory.
 * [`internal/connector/internal/handlers`](../internal/connector/internal/handlers) - for connector service handlers
 
 ### Format
-All handlers should follow a specific format as defined in this [framework](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
+All handlers should follow a specific format as defined in this [framework](https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/blob/main/pkg/handlers/framework.go). See existing handlers as an example.
 
 ### Request Validation
 Any request validation should be specified in the handler config's `Validate` field as seen below.
@@ -43,7 +43,7 @@ cfg := &handlerConfig{
 }
 ```
 
-Validation functions are available in [validation.go](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
+Validation functions are available in [validation.go](https://github.com/bf2fc6cc711aee1a0c2a/fleet-manager/blob/master/pkg/handlers/validation.go). Please add any new validations in this file if required.
 
 ### Services
 Any backend functionality called from your handler should be specified in `services` or it's subdirectory.

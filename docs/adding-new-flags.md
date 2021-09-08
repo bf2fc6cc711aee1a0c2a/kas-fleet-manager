@@ -59,7 +59,7 @@ To verify that a new flag has been successfully added, run the following command
 
 ```bash
     make binary
-    ./kas-fleet-manager serve -h
+    ./fleet-manager serve -h
 ```
 
 This will list all of the available flags that can be specified with the **serve** command. Any new flags should be listed here.

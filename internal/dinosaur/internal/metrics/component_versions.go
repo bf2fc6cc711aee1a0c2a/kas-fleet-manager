@@ -3,8 +3,8 @@ package metrics
 import (
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -29,7 +29,7 @@ func newVersionMetrics(dinosaurService services.DinosaurService) *versionsMetric
 			Name: "strimzi_version",
 			Help: `Reports the version of Strimzi in terms of seconds since the epoch. 
 The type 'actual' is the Strimzi version that is reported by kas-fleetshard.
-The type 'desired' is the desired Strimzi version that is set in the kas-fleet-manager. 
+The type 'desired' is the desired Strimzi version that is set in the fleet-manager. 
 If the type is 'upgrade' it means the Strimzi is being upgraded.
 `,
 		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),
@@ -37,7 +37,7 @@ If the type is 'upgrade' it means the Strimzi is being upgraded.
 			Name: "dinosaur_version",
 			Help: `Reports the version of Dinosaur in terms of seconds since the epoch. 
 The type 'actual' is the Dinosaur version that is reported by kas-fleetshard.
-The type 'desired' is the desired Dinosaur version that is set in the kas-fleet-manager. 
+The type 'desired' is the desired Dinosaur version that is set in the fleet-manager. 
 If the type is 'upgrade' it means the Dinosaur is being upgraded.
 `,
 		}, []string{"cluster_id", "dinosaur_id", "type", "version"}),

@@ -3,15 +3,16 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/golang/glog"
-	"github.com/spf13/pflag"
 	"io/ioutil"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/golang/glog"
+	"github.com/spf13/pflag"
 )
 
 type ConnectorsConfig struct {

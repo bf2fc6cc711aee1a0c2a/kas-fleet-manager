@@ -4,14 +4,14 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test/common"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/common"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
 
-	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 )

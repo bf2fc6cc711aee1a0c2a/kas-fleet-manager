@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
 	"github.com/olekukonko/tablewriter"
 	"gorm.io/gorm"
 	"k8s.io/apimachinery/pkg/util/wait"

@@ -1,6 +1,6 @@
-# JWT Claims used in the kas-fleet-manager
+# JWT Claims used in the fleet-manager
 
-Below is the list of jwt claims used in the kas-fleet-manager
+Below is the list of jwt claims used in the fleet-manager
 
 ## Default
 
@@ -29,9 +29,9 @@ Below is the list of jwt claims used in the kas-fleet-manager
 
 * **realm_access**
 	* **roles** 
-		- kas-fleet-manager-admin-read - has permissions to list all dinosaur clusters across all ocm organisations
-		- kas-fleet-manager-admin-write -has permissions to list and update all dinosaur clusters across all ocm organisations
-		- kas-fleet-manager-admin-full -has permissions to list, update and delete all dinosaur clusters across all ocm organisations
+		- fleet-manager-admin-read - has permissions to list all dinosaur clusters across all ocm organisations
+		- fleet-manager-admin-write -has permissions to list and update all dinosaur clusters across all ocm organisations
+		- fleet-manager-admin-full -has permissions to list, update and delete all dinosaur clusters across all ocm organisations
 
 ## SSO
 

@@ -8,7 +8,7 @@ The system is comprised of three main components:
 - Dinosaur Worker
 - Cluster Worker
 
-![Component Architecture Diagram](images/kas-fleet-manager-component-architecture.png)
+![Component Architecture Diagram](images/fleet-manager-component-architecture.png)
 
 ## REST API
 

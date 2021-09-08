@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	dinosaur "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	dinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 )

@@ -48,20 +48,20 @@ COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
 RUN curl -O -J https://dl.google.com/go/go1.15.8.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.15.8.linux-amd64.tar.gz
 
-ENV PATH="/kas-fleet-manager/bin:/usr/local/go/bin:${PATH}"
-ENV GOPATH="/kas-fleet-manager"
+ENV PATH="/fleet-manager/bin:/usr/local/go/bin:${PATH}"
+ENV GOPATH="/fleet-manager"
 ENV CGO_ENABLED=0
 
 # install NPM and java for openapi-generator
 RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash -
 RUN apt install -y nodejs build-essential default-jre
 
-# copy over the kas-fleet-manager workdir
-RUN mkdir -p /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
-COPY . /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+# copy over the fleet-manager workdir
+RUN mkdir -p /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+COPY . /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 
 # create credential files
-WORKDIR /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 RUN make aws/setup
 RUN make ocm/setup
 RUN make keycloak/setup
@@ -69,8 +69,8 @@ RUN make dinosaurcert/setup
 RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
-RUN chown -R postgres:postgres /kas-fleet-manager /usr/local/go
-WORKDIR /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+RUN chown -R postgres:postgres /fleet-manager /usr/local/go
+WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 

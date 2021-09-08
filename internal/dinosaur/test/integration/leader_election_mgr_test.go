@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/util/wait"
 )

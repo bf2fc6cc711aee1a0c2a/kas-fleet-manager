@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 
-	dinosaur "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	dinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -31,8 +31,8 @@ func main() {
 	defer env.Cleanup()
 
 	rootCmd := &cobra.Command{
-		Use:  "kas-fleet-manager",
-		Long: "kas-fleet-manager serves as an example service template for new microservices",
+		Use:  "fleet-manager",
+		Long: "fleet-manager serves as an example service template for new microservices",
 	}
 
 	err = env.AddFlags(rootCmd.PersistentFlags())

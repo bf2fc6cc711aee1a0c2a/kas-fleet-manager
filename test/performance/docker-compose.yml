@@ -2,7 +2,7 @@ version: '3'
 
 services:
   api:
-    image: "quay.io/rhoas/kas-fleet-manager-token-refresh:latest"
+    image: "quay.io/rhoas/fleet-manager-token-refresh:latest"
     environment:
       - OCM_OFFLINE_TOKEN=${OCM_OFFLINE_TOKEN}
       - PERF_TEST_RUN_TIME=${PERF_TEST_RUN_TIME}
@@ -14,7 +14,7 @@ services:
     command: go run /mnt/api/main.go
 
   primary:
-    image: "quay.io/rhoas/kas-fleet-manager-locust:latest"
+    image: "quay.io/rhoas/fleet-manager-locust:latest"
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
@@ -41,7 +41,7 @@ services:
     command: -f /locustfile.py --master -H http://primary:8089
 
   secondary:
-    image: "quay.io/rhoas/kas-fleet-manager-locust:latest"
+    image: "quay.io/rhoas/fleet-manager-locust:latest"
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PERF_TEST_PREPOPULATE_DB=${PERF_TEST_PREPOPULATE_DB}
@@ -67,7 +67,7 @@ services:
       - api
 
   results:
-    image: "quay.io/rhoas/kas-fleet-manager-perf-results:latest"
+    image: "quay.io/rhoas/fleet-manager-perf-results:latest"
     user: "${UID}:${GID}"
     environment:
       - PYTHONDONTWRITEBYTECODE=1

@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
 
-	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	coreTest "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
 )
 

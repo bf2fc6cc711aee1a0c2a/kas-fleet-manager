@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kas-fleet-manager-envoy-config
+  name: fleet-manager-envoy-config
   annotations:
     qontract.recycle: "true"
 data:
@@ -150,7 +150,7 @@ data:
                   - "*"
                   routes:
 
-                  # Route kas-fleet-manager's agent-cluster related endpoints
+                  # Route fleet-manager's agent-cluster related endpoints
                   # directly to the service without rate limiting
                   - name: kas-fleet-shard-operator-agent-cluster-routes
                     match:
@@ -158,8 +158,8 @@ data:
                     route:
                       cluster: backend
 
-                  # Apply rate limit to all other kas-fleet-manager endpoints
-                  - name: kas-fleet-manager-v1-routes
+                  # Apply rate limit to all other fleet-manager endpoints
+                  - name: fleet-manager-v1-routes
                     match:
                       prefix: /api/dinosaurs_mgmt/v1
                     route:

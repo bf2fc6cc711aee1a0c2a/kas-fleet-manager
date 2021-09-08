@@ -3,16 +3,17 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/sentry"
-	"github.com/golang/glog"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/sentry"
+	"github.com/golang/glog"
+
 	"github.com/gorilla/mux"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
 )
 
 func NewMetricsServer(metricsConfig *MetricsConfig, serverConfig *ServerConfig, sentryConfig *sentry.Config) *MetricsServer {

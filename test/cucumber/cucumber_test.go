@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/cucumber"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 	"github.com/cucumber/godog"
 )
 

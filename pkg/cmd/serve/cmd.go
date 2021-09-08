@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
 )
@@ -14,7 +14,7 @@ import (
 func NewServeCommand(env *environments.Env) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "serve",
-		Short: "Serve the kas-fleet-manager",
+		Short: "Serve the fleet-manager",
 		Long:  "Serve the Dinosaur Service Fleet Manager.",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			err := env.CreateServices()

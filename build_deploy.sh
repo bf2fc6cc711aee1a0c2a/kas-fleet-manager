@@ -42,7 +42,7 @@ DOCKER_CONFIG="${PWD}/.docker"
 # Set the Go path:
 export GOPATH="${PWD}/.gopath"
 export PATH="${PATH}:${GOPATH}/bin"
-LINK="${GOPATH}/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager"
+LINK="${GOPATH}/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager"
 
 # print go version
 go version  
@@ -86,7 +86,7 @@ make \
   version="${VERSION}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/kas-fleet-manager" \
+  image_repository="$QUAY_ORG/fleet-manager" \
   docker/login \
   image/push
 
@@ -97,6 +97,6 @@ make \
   version="${BRANCH}" \
   external_image_registry="quay.io" \
   internal_image_registry="quay.io" \
-  image_repository="$QUAY_ORG/kas-fleet-manager" \
+  image_repository="$QUAY_ORG/fleet-manager" \
   docker/login \
   image/push

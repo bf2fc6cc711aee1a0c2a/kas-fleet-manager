@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"sort"
 
-	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	kasfleetmanagererrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/blang/semver"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"

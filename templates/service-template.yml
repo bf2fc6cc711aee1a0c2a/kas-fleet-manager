@@ -2,7 +2,7 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: kas-fleet-manager-service
+  name: fleet-manager-service
   annotations:
     openshift.io/display-name: Kas Fleet Manager API
     description: Dinosaur Services Fleet Manager API to managed Dinosaur
@@ -11,7 +11,7 @@ metadata:
     template.openshift.io/provider-display-name: Red Hat, Inc.
     template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
 labels:
-  template: kas-fleet-manager
+  template: fleet-manager
 parameters:
 
 - name: ENVIRONMENT
@@ -469,7 +469,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-providers-config
+      name: fleet-manager-providers-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -478,7 +478,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-allowed-users-config
+      name: fleet-manager-allowed-users-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -488,7 +488,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-denied-users-config
+      name: fleet-manager-denied-users-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -497,7 +497,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-read-only-user-list
+      name: fleet-manager-read-only-user-list
       annotations:
         qontract.recycle: "true"
     data:
@@ -506,7 +506,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-dinosaur-sre-user-list
+      name: fleet-manager-dinosaur-sre-user-list
       annotations:
         qontract.recycle: "true"
     data:
@@ -515,7 +515,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-dinosaur-capacity-config
+      name: fleet-manager-dinosaur-capacity-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -530,7 +530,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-authentication
+      name: fleet-manager-authentication
       annotations:
         qontract.recycle: "true"
     data:
@@ -575,7 +575,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-dataplane-cluster-scaling-config
+      name: fleet-manager-dataplane-cluster-scaling-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -584,19 +584,19 @@ objects:
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager
+      name: fleet-manager
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: kas-fleet-manager
+      name: fleet-manager
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
     spec:
       selector:
         matchLabels:
-          app: kas-fleet-manager
+          app: fleet-manager
       replicas: ${{REPLICAS}}
       strategy:
         rollingUpdate:
@@ -606,7 +606,7 @@ objects:
       template:
         metadata:
           labels:
-            app: kas-fleet-manager
+            app: fleet-manager
         spec:
           affinity:
             podAntiAffinity:
@@ -617,60 +617,60 @@ objects:
                     - key: app
                       operator: In
                       values:
-                      - kas-fleet-manager
+                      - fleet-manager
                   topologyKey: failure-domain.beta.kubernetes.io/zone
                 weight: 100
-          serviceAccount: kas-fleet-manager
-          serviceAccountName: kas-fleet-manager
+          serviceAccount: fleet-manager
+          serviceAccountName: fleet-manager
           volumes:
           - name: tls
             secret:
-              secretName: kas-fleet-manager-tls
+              secretName: fleet-manager-tls
           - name: service
             secret:
-              secretName: kas-fleet-manager
+              secretName: fleet-manager
           - name: dataplane-certificate
             secret:
-              secretName: kas-fleet-manager-dataplane-certificate
+              secretName: fleet-manager-dataplane-certificate
           - name: rds
             secret:
-              secretName: kas-fleet-manager-rds
-          - name: kas-fleet-manager-providers-config
+              secretName: fleet-manager-rds
+          - name: fleet-manager-providers-config
             configMap:
-              name: kas-fleet-manager-providers-config
-          - name: kas-fleet-manager-allowed-users-config
+              name: fleet-manager-providers-config
+          - name: fleet-manager-allowed-users-config
             configMap:
-              name: kas-fleet-manager-allowed-users-config
-          - name: kas-fleet-manager-denied-users-config
+              name: fleet-manager-allowed-users-config
+          - name: fleet-manager-denied-users-config
             configMap:
-              name: kas-fleet-manager-denied-users-config
-          - name: kas-fleet-manager-read-only-user-list
+              name: fleet-manager-denied-users-config
+          - name: fleet-manager-read-only-user-list
             configMap:
-              name: kas-fleet-manager-read-only-user-list
-          - name: kas-fleet-manager-dinosaur-sre-user-list
+              name: fleet-manager-read-only-user-list
+          - name: fleet-manager-dinosaur-sre-user-list
             configMap:
-              name: kas-fleet-manager-dinosaur-sre-user-list
-          - name: kas-fleet-manager-dinosaur-capacity-config
+              name: fleet-manager-dinosaur-sre-user-list
+          - name: fleet-manager-dinosaur-capacity-config
             configMap:
-              name: kas-fleet-manager-dinosaur-capacity-config
-          - name: kas-fleet-manager-authentication
+              name: fleet-manager-dinosaur-capacity-config
+          - name: fleet-manager-authentication
             configMap:
-              name: kas-fleet-manager-authentication
-          - name: kas-fleet-manager-dataplane-cluster-scaling-config
+              name: fleet-manager-authentication
+          - name: fleet-manager-dataplane-cluster-scaling-config
             configMap:
-              name: kas-fleet-manager-dataplane-cluster-scaling-config
+              name: fleet-manager-dataplane-cluster-scaling-config
           - name: envoy-config
             configMap:
-              name: kas-fleet-manager-envoy-config
+              name: fleet-manager-envoy-config
           - name: envoy-tls
             secret:
-              secretName: kas-fleet-manager-envoy-tls
+              secretName: fleet-manager-envoy-tls
           - name: envoy-unix-sockets
             emptyDir:
               medium: Memory
-          - name: kas-fleet-manager-observatorium-configuration-red-hat-sso
+          - name: fleet-manager-observatorium-configuration-red-hat-sso
             secret:
-              secretName: kas-fleet-manager-observatorium-configuration-red-hat-sso
+              secretName: fleet-manager-observatorium-configuration-red-hat-sso
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
@@ -681,7 +681,7 @@ objects:
             - name: rds
               mountPath: /secrets/rds
             command:
-            - /usr/local/bin/kas-fleet-manager
+            - /usr/local/bin/fleet-manager
             - migrate
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
@@ -701,38 +701,38 @@ objects:
               mountPath: /secrets/service
             - name: dataplane-certificate
               mountPath: /secrets/dataplane-certificate
-            - name: kas-fleet-manager-observatorium-configuration-red-hat-sso
+            - name: fleet-manager-observatorium-configuration-red-hat-sso
               mountPath: /secrets/observatorium
             - name: rds
               mountPath: /secrets/rds
-            - name: kas-fleet-manager-providers-config
+            - name: fleet-manager-providers-config
               mountPath: /config/provider-configuration.yaml
               subPath: provider-configuration.yaml
-            - name: kas-fleet-manager-allowed-users-config
+            - name: fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
-            - name: kas-fleet-manager-denied-users-config
+            - name: fleet-manager-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
-            - name: kas-fleet-manager-read-only-user-list
+            - name: fleet-manager-read-only-user-list
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
-            - name: kas-fleet-manager-dinosaur-sre-user-list
+            - name: fleet-manager-dinosaur-sre-user-list
               mountPath: /config/dinosaur-sre-user-list.yaml
               subPath: dinosaur-sre-user-list.yaml
-            - name: kas-fleet-manager-dinosaur-capacity-config
+            - name: fleet-manager-dinosaur-capacity-config
               mountPath: /config/dinosaur-capacity-config.yaml
               subPath: dinosaur-capacity-config.yaml
-            - name: kas-fleet-manager-authentication
+            - name: fleet-manager-authentication
               mountPath: /config/authentication
-            - name: kas-fleet-manager-dataplane-cluster-scaling-config
+            - name: fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
             command:
-            - /usr/local/bin/kas-fleet-manager
+            - /usr/local/bin/fleet-manager
             - serve
             - --dinosaur-tls-cert-file=/secrets/dataplane-certificate/tls.crt
             - --dinosaur-tls-key-file=/secrets/dataplane-certificate/tls.key
@@ -922,26 +922,26 @@ objects:
   - kind: PodDisruptionBudget                
     apiVersion: policy/v1
     metadata:
-      name: kas-fleet-manager-pdb
+      name: fleet-manager-pdb
     spec:
       maxUnavailabe: "50%"
       selector:
         matchLabels:
-          app: kas-fleet-manager
+          app: fleet-manager
 
   - kind: Service
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager
+      name: fleet-manager
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: api
       annotations:
-        description: Exposes and load balances the kas-fleet-manager pods
-        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-tls
+        description: Exposes and load balances the fleet-manager pods
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-tls
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
         - port: 8000
           targetPort: 8000
@@ -950,16 +950,16 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: kas-fleet-manager-envoy
+      name: fleet-manager-envoy
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: api-envoy
       annotations:
-        description: Exposes and load balances the kas-fleet-manager pods going through envoy beforehand
-        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-envoy-tls
+        description: Exposes and load balances the fleet-manager pods going through envoy beforehand
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-envoy-tls
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
       - port: 9001
         targetPort: 9001
@@ -970,16 +970,16 @@ objects:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-metrics
+      name: fleet-manager-metrics
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: metrics
       annotations:
-        description: Exposes and load balances the kas-fleet-manager pods metrics endpoint
-        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-metrics-tls
+        description: Exposes and load balances the fleet-manager pods metrics endpoint
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-metrics-tls
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
         - port: 8080
           targetPort: 8080
@@ -988,13 +988,13 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: kas-fleet-manager-healthcheck
+      name: fleet-manager-healthcheck
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: healthcheck
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
         - port: 8083
           targetPort: 8083
@@ -1002,13 +1002,13 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: kas-fleet-manager-envoy-metrics
+      name: fleet-manager-envoy-metrics
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: metrics-envoy
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
       - port: 9000
         targetPort: 9000

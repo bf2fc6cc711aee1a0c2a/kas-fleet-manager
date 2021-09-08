@@ -45,7 +45,7 @@ clusters:
 ```
 ### Connecting to a standalone cluster
 
-kas-fleet-manager allows provisioning of dinosaurs in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) giving the:
+fleet-manager allows provisioning of dinosaurs in an already preexisting standalone dataplane cluster. To do so, add the standalone cluster in the [dataplane-cluster-configuration.yaml](../config/dataplane-cluster-configuration.yaml) giving the:
  - `name` of the kubeconfig context to use. This option is required and it has to be an existing name of a context in kubeconfig
  - `provider_type` must be set to `standalone`. This is required to indicate that we are using a standalone
  - `cluster_dns` This will be used to build dinosaur bootstrap url and to communicate with clusters e.g `apps.example.dns.com`. This option is required.
@@ -73,10 +73,10 @@ Once auto scaling is enabled this will activate the scaling up/down of compute n
       ```
     - Run the command generated above in your local database:
         - Login to the local database using `make db/login`
-        - Execute SQL command from previous steps (kas-fleet-manager will populate any blank values when it reconciles)
+        - Execute SQL command from previous steps (fleet-manager will populate any blank values when it reconciles)
         - Ensure that the **clusters** table is available.
             - Create the binary by running `make binary`
-            - Run `./kas-fleet-manager migrate`
+            - Run `./fleet-manager migrate`
         - Once the table is available, the generated **INSERT** command can now be run.
 
 2. Ensure the cluster is ready to be used for incoming Dinosaur requests.

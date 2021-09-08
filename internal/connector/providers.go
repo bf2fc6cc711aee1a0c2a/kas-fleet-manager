@@ -1,16 +1,16 @@
 package connector
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/migrations"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/routes"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/workers"
-	environments2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers"
-	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/migrations"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/routes"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/workers"
+	environments2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/providers"
+	coreWorkers "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 
 	"github.com/goava/di"
 )
@@ -23,7 +23,7 @@ func ConfigProviders(dinosaurEnabled bool) di.Option {
 		di.Provide(migrations.New),
 	)
 
-	// If we are not running in the kas-fleet-manager.. we need to inject more types into the DI container
+	// If we are not running in the fleet-manager.. we need to inject more types into the DI container
 	if !dinosaurEnabled {
 		result = di.Options(
 			di.Provide(environments.NewDevelopmentEnvLoader, di.Tags{"env": environments2.DevelopmentEnv}),

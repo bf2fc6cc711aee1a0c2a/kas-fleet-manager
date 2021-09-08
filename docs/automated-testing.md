@@ -1,4 +1,4 @@
-# Testing kas-fleet-manager
+# Testing fleet-manager
 
 ## Mocking
 
@@ -120,7 +120,7 @@ import (
     "testing"
     "time"
 
-    utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test/common"
+    utils "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/common"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -156,9 +156,9 @@ import (
     "testing"
     "time"
 
-    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test"
-    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test/mocks"
-    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
+    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks"
+    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -188,7 +188,7 @@ These default behaviours can be changed by setting the update status implementat
 import(
     //...
 
-    privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+    privateopenapi "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/private/openapi"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -226,4 +226,4 @@ client := test.NewAdminPrivateAPIClient(h)
 ```
 
 ### Testing privileged permissions
-Some endpoints will act differently depending on privileges of the entity calling them, e.g. `org_admin` can have CRUD access to resources within an organisation not owned by them, while regular users can usually only access their own resources. To find out more about various claims used by the kas-fleet-manager endpoints, go to [this document](../docs/jwt-claims.md)
+Some endpoints will act differently depending on privileges of the entity calling them, e.g. `org_admin` can have CRUD access to resources within an organisation not owned by them, while regular users can usually only access their own resources. To find out more about various claims used by the fleet-manager endpoints, go to [this document](../docs/jwt-claims.md)

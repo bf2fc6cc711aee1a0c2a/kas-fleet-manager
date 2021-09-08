@@ -3,13 +3,13 @@ package dinosaur_mgrs
 import (
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/constants"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
 	"github.com/google/uuid"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/metrics"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/workers"
 	"github.com/pkg/errors"
 
 	"github.com/golang/glog"

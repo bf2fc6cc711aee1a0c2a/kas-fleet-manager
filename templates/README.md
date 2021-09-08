@@ -8,13 +8,13 @@ When deploying to production, the only template necessary is the service templat
 
 `templates/service-template.yml`
 
-This is the main service template that deploys two objects, the `kas-fleet-manager` deployment and the related service.
+This is the main service template that deploys two objects, the `fleet-manager` deployment and the related service.
 
 ## Route template
 
 `templates/route-template.yml`
 
-This template just deploys a route with the select `app:kas-fleet-manager` to map to the service deployed by the service template.
+This template just deploys a route with the select `app:fleet-manager` to map to the service deployed by the service template.
 
 TLS is used by default for the route. No port is specified, all ports are allowed.
 
@@ -28,11 +28,11 @@ This template deploys a simple postgresl-9.4 database deployment with a TLS-enab
 
 `templates/secrets-template.yml`
 
-This template deploys the `kas-fleet-manager` secret with all of the necessary secret key/value pairs.
+This template deploys the `fleet-manager` secret with all of the necessary secret key/value pairs.
 
 ## Envoy Config template
 
 `templates/envoy-config-template.yml`
 
-This template deploys the `kas-fleet-manager-envoy-config` ConfigMap that contains the Envoy
-configuration for the `envoy-sidecar` container of the `kas-fleet-manager` Deployment.
+This template deploys the `fleet-manager-envoy-config` ConfigMap that contains the Envoy
+configuration for the `envoy-sidecar` container of the `fleet-manager` Deployment.

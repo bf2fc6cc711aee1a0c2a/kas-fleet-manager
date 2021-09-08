@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"reflect"
 	"testing"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/quota_management"
 
 	. "github.com/onsi/gomega"
 )

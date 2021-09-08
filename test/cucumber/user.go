@@ -12,7 +12,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
 	"github.com/cucumber/godog"
 )
 

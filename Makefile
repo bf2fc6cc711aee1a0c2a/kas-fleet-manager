@@ -154,7 +154,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	}
 endif
 openapi/spec/validate: specinstall
-	spectral lint openapi/fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
+	spectral lint openapi/fleet-manager.yaml openapi/fleet-manager-private-admin.yaml
 
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -329,8 +329,8 @@ generate: moq openapi/generate
 # validate the openapi schema
 openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 .PHONY: openapi/validate
 
@@ -353,15 +353,15 @@ openapi/generate/public: go-bindata openapi-generator
 
 openapi/generate/kas-private: go-bindata openapi-generator
 	rm -rf internal/dinosaur/internal/api/private
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/dinosaur/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/dinosaur/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/internal/api/private
 .PHONY: openapi/generate/kas-private
 
 openapi/generate/kas-admin: go-bindata openapi-generator
 	rm -rf internal/dinosaur/internal/api/admin/private
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/dinosaur/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
 	$(GOFMT) -w internal/dinosaur/internal/api/admin/private
 .PHONY: openapi/generate/kas-admin
 
@@ -402,8 +402,8 @@ run/docs:
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
 		{ url: \"./openapi/fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
-		{ url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
-		{ url: \"./openapi/kas-fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
+		{ url: \"./openapi/fleet-manager-private.yaml\", name: \"Private API\"},\
+		{ url: \"./openapi/fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 .PHONY: run/docs
 

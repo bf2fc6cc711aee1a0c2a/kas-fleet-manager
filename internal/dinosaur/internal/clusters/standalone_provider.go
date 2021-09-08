@@ -4,11 +4,11 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/clusters/types"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/clusters/types"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
 	"github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha1 "github.com/operator-framework/api/pkg/operators/v1alpha1"
 	operatorsv1alpha2 "github.com/operator-framework/api/pkg/operators/v1alpha2"
@@ -34,12 +34,12 @@ const (
 	kasFleetShardOperatorParametersSecretName = "addon-kas-fleetshard-operator-parameters"
 )
 
-// fieldManager indicates that the kas-fleet-manager will be used as a field manager for conflict resolution
-const fieldManager = "kas-fleet-manager"
+// fieldManager indicates that the fleet-manager will be used as a field manager for conflict resolution
+const fieldManager = "fleet-manager"
 
 // lastAppliedConfigurationAnnotation is an annotation applied in a resources which tracks the last applied configuration of a resource.
 // this is used to decide whether a new apply request should be taken into account or not
-const lastAppliedConfigurationAnnotation = "kas-fleet-manager/last-applied-resource-configuration"
+const lastAppliedConfigurationAnnotation = "fleet-manager/last-applied-resource-configuration"
 
 // dinosaurSREOpenIDPSecretName is the secret name holding the clientSecret content
 const dinosaurSREOpenIDPSecretName = "dinosaur-sre-idp-secret"

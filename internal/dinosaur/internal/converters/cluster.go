@@ -2,7 +2,8 @@ package converters
 
 import (
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 )
 
 // ConvertCluster from *api.Cluster to []map[string]interface{}

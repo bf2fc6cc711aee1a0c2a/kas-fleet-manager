@@ -1,12 +1,13 @@
 package services
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
-	"github.com/pkg/errors"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/pkg/errors"
 )
 
 var accepted_orderby_fields = []string{"name", "created_at", "updated_at", "region", "cluster_id", "cloud_provider", "owner", "organisation_id", "version"}

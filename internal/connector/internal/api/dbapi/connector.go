@@ -1,19 +1,19 @@
 package dbapi
 
-import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+import "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 
 type ConnectorStatusPhase = string
 
 const (
-	ConnectorStatusPhaseAssigning      ConnectorStatusPhase = "assigning"      // set by kas-fleet-manager - user request
-	ConnectorStatusPhaseAssigned       ConnectorStatusPhase = "assigned"       // set by kas-fleet-manager - worker
-	ConnectorStatusPhaseUpdating       ConnectorStatusPhase = "updating"       // set by kas-fleet-manager - user request
-	ConnectorStatusPhaseStopped        ConnectorStatusPhase = "stopped"        // set by kas-fleet-manager - user request
+	ConnectorStatusPhaseAssigning      ConnectorStatusPhase = "assigning"      // set by fleet-manager - user request
+	ConnectorStatusPhaseAssigned       ConnectorStatusPhase = "assigned"       // set by fleet-manager - worker
+	ConnectorStatusPhaseUpdating       ConnectorStatusPhase = "updating"       // set by fleet-manager - user request
+	ConnectorStatusPhaseStopped        ConnectorStatusPhase = "stopped"        // set by fleet-manager - user request
 	ConnectorStatusPhaseProvisioning   ConnectorStatusPhase = "provisioning"   // set by kas-agent
 	ConnectorStatusPhaseReady          ConnectorStatusPhase = "ready"          // set by the agent
 	ConnectorStatusPhaseFailed         ConnectorStatusPhase = "failed"         // set by the agent
 	ConnectorStatusPhaseDeprovisioning ConnectorStatusPhase = "deprovisioning" // set by kas-agent
-	ConnectorStatusPhaseDeleting       ConnectorStatusPhase = "deleting"       // set by the kas-fleet-manager - user request
+	ConnectorStatusPhaseDeleting       ConnectorStatusPhase = "deleting"       // set by the fleet-manager - user request
 	ConnectorStatusPhaseDeleted        ConnectorStatusPhase = "deleted"        // set by the agent
 )
 
