@@ -118,16 +118,15 @@ func (d *dataPlaneKafkaService) setKafkaClusterReady(kafka *dbapi.KafkaRequest) 
 		return err
 	}
 
-	if ok, err := d.kafkaService.UpdateStatus(kafka.ID, constants2.KafkaRequestStatusReady); ok {
-		if err != nil {
-			return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants2.KafkaRequestStatusReady, kafka.ID)
-		}
-		if shouldSendMetric {
-			metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
-			metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
-			metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationCreate)
-			metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
-		}
+	err = d.kafkaService.Updates(kafka, map[string]interface{}{"failed_reason": "", "status": constants2.KafkaRequestStatusReady.String()})
+	if err != nil {
+		return serviceError.NewWithCause(err.Code, err, "failed to update status %s for kafka cluster %s", constants2.KafkaRequestStatusReady, kafka.ID)
+	}
+	if shouldSendMetric {
+		metrics.UpdateKafkaRequestsStatusSinceCreatedMetric(constants2.KafkaRequestStatusReady, kafka.ID, kafka.ClusterID, time.Since(kafka.CreatedAt))
+		metrics.UpdateKafkaCreationDurationMetric(metrics.JobTypeKafkaCreate, time.Since(kafka.CreatedAt))
+		metrics.IncreaseKafkaSuccessOperationsCountMetric(constants2.KafkaOperationCreate)
+		metrics.IncreaseKafkaTotalOperationsCountMetric(constants2.KafkaOperationCreate)
 	}
 	return nil
 }
