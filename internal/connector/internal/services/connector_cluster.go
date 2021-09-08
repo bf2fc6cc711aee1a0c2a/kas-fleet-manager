@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	goerrors "errors"
 	"fmt"
+	"reflect"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
@@ -19,7 +21,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 	"gorm.io/gorm"
-	"reflect"
 )
 
 type ConnectorClusterService interface {
@@ -109,7 +110,7 @@ func (k *connectorClusterService) Create(ctx context.Context, resource *dbapi.Co
 		return errors.GeneralError("failed to create connector: %v", err)
 	}
 	// TODO: increment connector cluster metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+	// metrics.IncreaseStatusCountMetric(constants.DinosaurRequestStatusAccepted.String())
 	return nil
 }
 
@@ -365,12 +366,12 @@ func (k *connectorClusterService) SaveDeployment(ctx context.Context, resource *
 
 	if resource.ClusterID != "" {
 		_ = db.AddPostCommitAction(ctx, func() {
-			k.bus.Notify(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", resource.ClusterID))
+			k.bus.Notify(fmt.Sprintf("/dinosaur-connector-clusters/%s/deployments", resource.ClusterID))
 		})
 	}
 
 	// TODO: increment connector deployment metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+	// metrics.IncreaseStatusCountMetric(constants.DinosaurRequestStatusAccepted.String())
 	return nil
 }
 
@@ -518,13 +519,13 @@ func getSecretsFromVaultAsBase64(resource *dbapi.Connector, cts ConnectorTypesSe
 	}
 	// move secrets to a vault.
 
-	if resource.Kafka.ClientSecretRef != "" {
-		v, err := vault.GetSecretString(resource.Kafka.ClientSecretRef)
+	if resource.Dinosaur.ClientSecretRef != "" {
+		v, err := vault.GetSecretString(resource.Dinosaur.ClientSecretRef)
 		if err != nil {
-			return errors.GeneralError("could not get kafka client secrets from the vault")
+			return errors.GeneralError("could not get dinosaur client secrets from the vault")
 		}
 		encoded := base64.StdEncoding.EncodeToString([]byte(v))
-		resource.Kafka.ClientSecret = encoded
+		resource.Dinosaur.ClientSecret = encoded
 	}
 
 	if len(resource.ConnectorSpec) != 0 {

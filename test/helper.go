@@ -14,7 +14,7 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/metrics"
 	"github.com/goava/di"
@@ -106,7 +106,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	env.MustResolveAll(&ocmConfig, &serverConfig, &keycloakConfig)
 
-	db.KafkaAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set kafkas lease as expired so that a new leader is elected for each of the leases
+	db.DinosaurAdditionalLeasesExpireTime = time.Now().Add(-time.Minute) // set dinosaurs lease as expired so that a new leader is elected for each of the leases
 
 	// Create a new helper
 	authHelper, err := auth.NewAuthHelper(jwtKeyFile, jwtCAFile, serverConfig.TokenIssuerURL)
@@ -127,7 +127,7 @@ func NewHelperWithHooks(t *testing.T, httpServer *httptest.Server, configuration
 
 	jwkURL, stopJWKMockServer := h.StartJWKCertServerMock()
 	serverConfig.JwksURL = jwkURL
-	keycloakConfig.EnableAuthenticationOnKafka = false
+	keycloakConfig.EnableAuthenticationOnDinosaur = false
 
 	// the configuration hook might set config options that influence which config files are loaded,
 	// by env.LoadConfig()
@@ -200,7 +200,7 @@ func (helper *Helper) RestURL(path string) string {
 	if serverConfig.EnableHTTPS {
 		protocol = "https"
 	}
-	return fmt.Sprintf("%s://%s/api/kafkas_mgmt/v1%s", protocol, serverConfig.BindAddress, path)
+	return fmt.Sprintf("%s://%s/api/dinosaurs_mgmt/v1%s", protocol, serverConfig.BindAddress, path)
 }
 
 func (helper *Helper) MetricsURL(path string) string {

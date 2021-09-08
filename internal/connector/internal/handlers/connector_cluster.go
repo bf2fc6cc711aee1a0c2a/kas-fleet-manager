@@ -5,9 +5,10 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"net/http"
 	"net/url"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
@@ -32,7 +33,7 @@ type ConnectorClusterHandler struct {
 	di.Inject
 	Bus            signalbus.SignalBus
 	Service        services.ConnectorClusterService
-	Keycloak       coreservices.KafkaKeycloakService
+	Keycloak       coreservices.DinosaurKeycloakService
 	ConnectorTypes services.ConnectorTypesService
 	Vault          vault.VaultService
 	KeycloakConfig *keycloak.KeycloakConfig
@@ -214,7 +215,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 		},
 		{
 			Id:    "mas-sso-realm",
-			Value: o.KeycloakConfig.KafkaRealm.Realm,
+			Value: o.KeycloakConfig.DinosaurRealm.Realm,
 		},
 		{
 			Id:    "client-id",
@@ -229,7 +230,7 @@ func (o *ConnectorClusterHandler) buildAddonParams(serviceAccount *api.ServiceAc
 }
 
 func (o *ConnectorClusterHandler) buildTokenURL(serviceAccount *api.ServiceAccount) (string, error) {
-	u, err := url.Parse(o.KeycloakConfig.KafkaRealm.TokenEndpointURI)
+	u, err := url.Parse(o.KeycloakConfig.DinosaurRealm.TokenEndpointURI)
 	if err != nil {
 		return "", err
 	}

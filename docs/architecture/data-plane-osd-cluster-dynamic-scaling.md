@@ -34,9 +34,9 @@ need to happen:
 ## OSD Cluster Capacity Calculation
 
 To calculate whether the cluster being evaluated has available capacity
-Kas Fleet Manager will check whether the number of remaining Kafka Connections
-or remaining Kafka Partitions (provided in `.status.remaining`) is less than
-what a single Kafka Cluster of Model T consumes correspondingly.
+Kas Fleet Manager will check whether the number of remaining Dinosaur Connections
+or remaining Dinosaur Partitions (provided in `.status.remaining`) is less than
+what a single Dinosaur Cluster of Model T consumes correspondingly.
 
 If there's available capacity then the cluster will be marked as `ready` if it
 wasn't already.
@@ -63,7 +63,7 @@ Shard Operator, BEFORE performing the scaling actions.
 KAS Fleet Manager will scale up compute nodes of a data plane cluster if
 all the following conditions are true:
 
-* **At least one** of the reported Kafka attribute values has crossed its
+* **At least one** of the reported Dinosaur attribute values has crossed its
   corresponding Scale-Up threshold
 * The current number of nodes is smaller than the restricted
   ceiling value (see below for a definition of restricted ceiling)
@@ -77,8 +77,8 @@ requirements (3) ONLY in case the cluster is multi-az. In case
 cluster isn't multi-az then restricted ceiling is the same as reported ceiling
 
 Scale-Up thresholds:
-  * Kafka Connections: The number of connections required by a single Kafka Cluster of Model T
-  * Kafka Partitions: The number of partitions required by a single Kafka Cluster of Model T
+  * Dinosaur Connections: The number of connections required by a single Dinosaur Cluster of Model T
+  * Dinosaur Partitions: The number of partitions required by a single Dinosaur Cluster of Model T
 
 ### Compute nodes Scale-Up value calculation
 
@@ -100,7 +100,7 @@ it will scale in a more controlled way.
 KAS Fleet Manager will scale down compute nodes of a data plane cluster if all
 the following conditions are true:
 
-* **All** (notice the difference with scale-up criteria) of the reported Kafka
+* **All** (notice the difference with scale-up criteria) of the reported Dinosaur
   attribute values have crossed their corresponding Scale-Down threshold
 * The current number of nodes is strictly higher than
   the `.status.nodeInfo.currentWorkLoadMinimum` value
@@ -117,11 +117,11 @@ requirements (3) ONLY in case the cluster is multi-az. In case
 cluster isn't multi-az then restricted floor is the same as reported floor
 
 Scale-Down thresholds:
-  * Kafka Connections: The connections specified in `resizeInfo.delta.connections`.
+  * Dinosaur Connections: The connections specified in `resizeInfo.delta.connections`.
     Due to it is currently being assumed `resizeInfo.nodeDelta` will always be
     3 this means that it is a value equivalent to 3 full OSD Compute nodes worth
     of connections
-  * Kafka Partitions: The partitions specified in `resizseInfo.delta.partitions`.
+  * Dinosaur Partitions: The partitions specified in `resizseInfo.delta.partitions`.
     Due to it is currently being assumed `resizeInfo.nodeDelta` will always be 3
     this means that it is a value equivalent to 3 full OSD Compute nodes worth
     of partitions
@@ -147,7 +147,7 @@ controlled way
 The system will delete an OSD cluster, let's call it `clusterA`, from the pool of 
 available clusters when the following conditions are met:
 
-  * `clusterA` is empty i.e there are no longer any Kafka instances on `clusterA`
+  * `clusterA` is empty i.e there are no longer any Dinosaur instances on `clusterA`
   * `clusterA` is in a ready state
   * `clusterA` has at least one sibling cluster that satisfies these conditions:
     * Has the same Cloud Provider as `clusterA`

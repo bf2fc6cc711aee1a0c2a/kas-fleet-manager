@@ -1,20 +1,21 @@
 package main
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+	"testing"
+
+	dinosaur "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/workers"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 func TestInjections(t *testing.T) {
 	RegisterTestingT(t)
 
 	env, err := environments.New(environments.DevelopmentEnv,
-		kafka.ConfigProviders(),
+		dinosaur.ConfigProviders(),
 	)
 	Expect(err).To(BeNil())
 	err = env.CreateServices()

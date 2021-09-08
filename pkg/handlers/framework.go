@@ -3,8 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"

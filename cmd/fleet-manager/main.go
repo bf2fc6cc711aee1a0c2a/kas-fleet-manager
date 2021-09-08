@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+
+	dinosaur "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ func main() {
 	}
 
 	env, err := environments.New(environments.GetEnvironmentStrFromEnv(),
-		kafka.ConfigProviders(),
+		dinosaur.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)

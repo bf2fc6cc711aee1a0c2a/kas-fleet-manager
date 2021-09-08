@@ -15,7 +15,7 @@ import (
 
 // ConnectorAllOfMetadata struct for ConnectorAllOfMetadata
 type ConnectorAllOfMetadata struct {
-	KafkaId         string    `json:"kafka_id,omitempty"`
+	DinosaurId      string    `json:"dinosaur_id,omitempty"`
 	Owner           string    `json:"owner,omitempty"`
 	Name            string    `json:"name,omitempty"`
 	CreatedAt       time.Time `json:"created_at,omitempty"`

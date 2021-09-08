@@ -85,7 +85,7 @@ const (
 	ClusterProvisioned ClusterStatus = "cluster_provisioned"
 	// ClusterFailed the cluster failed to become ready
 	ClusterFailed ClusterStatus = "failed"
-	// ClusterReady the cluster is terraformed and ready for kafka instances
+	// ClusterReady the cluster is terraformed and ready for dinosaur instances
 	ClusterReady ClusterStatus = "ready"
 	// ClusterDeprovisioning the cluster is empty and can be deprovisioned
 	ClusterDeprovisioning ClusterStatus = "deprovisioning"
@@ -93,7 +93,7 @@ const (
 	ClusterCleanup ClusterStatus = "cleanup"
 	// ClusterWaitingForKasFleetShardOperator the cluster is waiting for the KAS fleetshard operator to be ready
 	ClusterWaitingForKasFleetShardOperator ClusterStatus = "waiting_for_kas_fleetshard_operator"
-	// ClusterFull the cluster is full and cannot accept more Kafka clusters
+	// ClusterFull the cluster is full and cannot accept more Dinosaur clusters
 	ClusterFull ClusterStatus = "full"
 	// ClusterComputeNodeScalingUp the cluster is in the process of scaling up a compute node
 	ClusterComputeNodeScalingUp ClusterStatus = "compute_node_scaling_up"

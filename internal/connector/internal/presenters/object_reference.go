@@ -2,8 +2,9 @@ package presenters
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 )
@@ -45,15 +46,15 @@ func objectKind(i interface{}) string {
 func objectPath(id string, obj interface{}) string {
 	switch obj := obj.(type) {
 	case dbapi.Connector, *dbapi.Connector:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connectors/%s", id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/dinosaur_connectors/%s", id)
 	case dbapi.ConnectorType, *dbapi.ConnectorType:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_types/%s", id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/dinosaur_connector_types/%s", id)
 	case dbapi.ConnectorCluster, *dbapi.ConnectorCluster:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s", id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/dinosaur_connector_clusters/%s", id)
 	case dbapi.ConnectorDeployment:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/dinosaur_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
 	case *dbapi.ConnectorDeployment:
-		return fmt.Sprintf("/api/connector_mgmt/v1/kafka_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
+		return fmt.Sprintf("/api/connector_mgmt/v1/dinosaur_connector_clusters/%s/deployments/%s", obj.ClusterID, id)
 	default:
 		return ""
 	}

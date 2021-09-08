@@ -6,10 +6,10 @@ COPY \
 
 EXPOSE 8000
 
-ENTRYPOINT ["/usr/local/bin/kas-fleet-manager", "serve"]
+ENTRYPOINT ["/usr/local/bin/fleet-manager", "serve"]
 
-LABEL name="kas-fleet-manager" \
+LABEL name="fleet-manager" \
       vendor="Red Hat" \
       version="0.0.1" \
       summary="KasFleetManager" \
-      description="Kafka Service Fleet Manager"
+      description="Dinosaur Service Fleet Manager"

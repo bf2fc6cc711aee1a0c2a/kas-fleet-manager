@@ -1,8 +1,8 @@
-Kafka Service Fleet Manager
+Dinosaur Service Fleet Manager
 ---
 ![build status badge](https://github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/actions/workflows/ci.yaml/badge.svg)
 
-A service for provisioning and managing fleets of Kafka instances.
+A service for provisioning and managing fleets of Dinosaur instances.
 
 For more information on how the service works, see [the implementation documentation](docs/implementation.md).
 
@@ -14,8 +14,8 @@ For more information on how the service works, see [the implementation documenta
 There are a number of prerequisites required for running kas-fleet-manager due to its interaction with external services. All of the below are required to run kas-fleet-manager locally.
 ### User Account & Organization Setup
 1. Request additional permissions for your user account in OCM stage. [Example MR](https://gitlab.cee.redhat.com/service/ocm-resources/-/merge_requests/812).
-    - Ensure your user has the role `ManagedKafkaService`. This allows your user to create Syncsets.
-3. Ensure the organization your account or service account belongs to has quota for installing the Managed Kafka Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
+    - Ensure your user has the role `ManagedDinosaurService`. This allows your user to create Syncsets.
+3. Ensure the organization your account or service account belongs to has quota for installing the Managed Dinosaur Add-on, see this [example](https://gitlab.cee.redhat.com/service/ocm-resources/-/blob/master/data/uhc-stage/orgs/13640203.yaml).
     - Find your organization by its `external_id` beneath [ocm-resources/uhc-stage/orgs](https://gitlab.cee.redhat.com/service/ocm-resources/-/tree/master/data/uhc-stage/orgs).
 
 ### Configuring Observability
@@ -31,11 +31,11 @@ again & you will be forced to reset the token to receive a new value should you 
 3. Paste the token value in the `secrets/observability-config-access.token` file.
 
 ### Data Plane OSD cluster setup
-Kas-fleet-manager can be started without a dataplane OSD cluster, however, no Kafkas will be placed or provisioned. To setup a data plane OSD cluster, please follow the `Using an existing OSD cluster with manual scaling enabled` option in the [data-plane-osd-cluster-options.md](docs/data-plane-osd-cluster-options.md) guide.
+Kas-fleet-manager can be started without a dataplane OSD cluster, however, no Dinosaurs will be placed or provisioned. To setup a data plane OSD cluster, please follow the `Using an existing OSD cluster with manual scaling enabled` option in the [data-plane-osd-cluster-options.md](docs/data-plane-osd-cluster-options.md) guide.
 
 ### Populating Configuration
 1. Add your organization's `external_id` to the [Quota Management List Configurations](./docs/quota-management-list-configuration.md) 
-if you need to create STANDARD kafka instances. Follow the guide in [Quota Management List Configurations](./docs/access-control.md)
+if you need to create STANDARD dinosaur instances. Follow the guide in [Quota Management List Configurations](./docs/access-control.md)
 2. Follow the guide in [Access Control Configurations](./docs/access-control.md) to configure access control as required.
 3. Retrieve your ocm-offline-token from https://qaprodauth.cloud.redhat.com/openshift/token and save it to `secrets/ocm-service.token` 
 4. Setup AWS configuration
@@ -52,9 +52,9 @@ make aws/setup
     make keycloak/setup MAS_SSO_CLIENT_ID=<mas_sso_client_id> MAS_SSO_CLIENT_SECRET=<mas_sso_client_secret> OSD_IDP_MAS_SSO_CLIENT_ID=<osd_idp_mas_sso_client_id> OSD_IDP_MAS_SSO_CLIENT_SECRET=<osd_idp_mas_sso_client_secret>
     ```
     > Values can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services-ci/show/managed-service-api/integration-tests).
-5. Setup Kafka TLS cert
+5. Setup Dinosaur TLS cert
 ```
-make kafkacert/setup
+make dinosaurcert/setup
 ```
 6. Setup the image pull secret
     - Image pull secret for RHOAS can be found in [Vault](https://vault.devshift.net/ui/vault/secrets/managed-services/show/quay-org-accounts/rhoas/robots/rhoas-pull), copy the content for the `config.json` key and paste it to `secrets/image-pull.dockerconfigjson` file.
@@ -88,7 +88,7 @@ make binary
     public | clusters           | table | kas_fleet_manager
     public | connector_clusters | table | kas_fleet_manager
     public | connectors         | table | kas_fleet_manager
-    public | kafka_requests     | table | kas_fleet_manager
+    public | dinosaur_requests     | table | kas_fleet_manager
     public | leader_leases      | table | kas_fleet_manager
     public | migrations         | table | kas_fleet_manager
     ```
@@ -100,8 +100,8 @@ make binary
     >**NOTE**: The service has numerous feature flags which can be used to enable/disable certain features of the service. Please see the [feature flag](./docs/feature-flags.md) documentation for more information.
 4. Verify the local service is working
     ```
-    curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas
-   {"kind":"KafkaRequestList","page":1,"size":0,"total":0,"items":[]}
+    curl -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/dinosaurs_mgmt/v1/dinosaurs
+   {"kind":"DinosaurRequestList","page":1,"size":0,"total":0,"items":[]}
     ```
 
 ## Running the Service on an OpenShift cluster
@@ -153,12 +153,12 @@ make deploy OCM_SERVICE_TOKEN=<offline-token> IMAGE_TAG=<image-tag>
 - `JWKS_URL`: JWK Token Certificate URL. Defaults to https://api.openshift.com/.well-known/jwks.json.
 - `ROUTE53_ACCESS_KEY`: AWS route 53 access key for creating CNAME records
 - `ROUTE53_SECRET_ACCESS_KEY`: AWS route 53 secret access key for creating CNAME records
-- `KAFKA_TLS_CERT`: Kafka TLS external certificate.
-- `KAFKA_TLS_KEY`: Kafka TLS external certificate private key.
+- `DINOSAUR_TLS_CRT`: Dinosaur TLS external certificate.
+- `DINOSAUR_TLS_KEY`: Dinosaur TLS external certificate private key.
 - `OBSERVATORIUM_SERVICE_TOKEN`: Token for observatorium service.
 - `MAS_SSO_BASE_URL`: MAS SSO base url.
 - `MAS_SSO_REALM`: MAS SSO realm url.
-- `ALLOW_EVALUATOR_INSTANCE`: Whether evaluator KAFKA instances are allowed or not. Defaults to `true`.
+- `ALLOW_EVALUATOR_INSTANCE`: Whether evaluator DINOSAUR instances are allowed or not. Defaults to `true`.
 - `STRIMZI_OPERATOR_ADDON_ID`: The id of the Strimzi operator addon.
 - `KAS_FLEETSHARD_ADDON_ID`: The id of the kas-fleetshard operator addon.
 
@@ -177,20 +177,20 @@ make undeploy
 - `NAMESPACE`: The namespace where the service deployment will be removed from. Defaults to managed-services-$USER.
 
 ## Using the Service
-### Kafkas
-#### Creating a Kafka Cluster
+### Dinosaurs
+#### Creating a Dinosaur Cluster
 ```
-# Submit a new Kafka cluster creation request
-curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
+# Submit a new Dinosaur cluster creation request
+curl -v -XPOST -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/dinosaurs_mgmt/v1/dinosaurs?async=true -d '{ "region": "us-east-1", "cloud_provider": "aws",  "name": "serviceapi", "multi_az":true}'
 
-# List a kafka request
-curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id> | jq
+# List a dinosaur request
+curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/dinosaurs_mgmt/v1/dinosaurs/<dinosaur_request_id> | jq
 
-# List all kafka request
-curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas | jq
+# List all dinosaur request
+curl -v -XGET -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/dinosaurs_mgmt/v1/dinosaurs | jq
 
-# Delete a kafka request
-curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/kafkas_mgmt/v1/kafkas/<kafka_request_id>
+# Delete a dinosaur request
+curl -v -X DELETE -H "Authorization: Bearer $(ocm token)" http://localhost:8000/api/dinosaurs_mgmt/v1/dinosaurs/<dinosaur_request_id>
 ```
 
 ### View the API docs
@@ -206,7 +206,7 @@ make run/docs/teardown
 ## Additional CLI commands
 
 In addition to the REST API exposed via `make run`, there are additional commands to interact directly
-with the service (i.e. cluster creation/scaling, Kafka creation, Errors list, etc.) without having to use a REST API client.
+with the service (i.e. cluster creation/scaling, Dinosaur creation, Errors list, etc.) without having to use a REST API client.
 
 To use these commands, run `make binary` to create the `./kas-fleet-manager` CLI.
 
@@ -273,7 +273,7 @@ See this [README](./test/performance/README.md) for more info about performance 
 ### Connector Service
 
 The https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager is used to build the `cos-fleet-manager` 
-binary which is a fleet manager for connectors similar to how `kas-fleet-manager` is fleet manager for Kafka 
+binary which is a fleet manager for connectors similar to how `kas-fleet-manager` is fleet manager for Dinosaur 
 instances.  The `cos-fleet-manager` just imports most of the code from the `kas-fleet-manager` enabling only
 connector APIs that are in this repo's `internal/connector` package.
 

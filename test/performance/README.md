@@ -1,4 +1,4 @@
-# Performance tests for Managed Service API for Kafka
+# Performance tests for Managed Service API for Dinosaur
 
 Performance tests utilize [locust](https://docs.locust.io/en/stable/api.html) and all the relevant code is available in `./test/performance` folder. Additionally, short living tokens are obtained with help of a small http server running from `test/performance/token_api/main.go`
 
@@ -14,17 +14,17 @@ Optional parameters (if not provided, they will default to sensible and tested v
 |-------------------------------------------|---------|-----------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | PERF_TEST_GET_ONLY                        | Boolean | PERF_TEST_GET_ONLY=TRUE                             | If set to TRUE (by default), only GET endpoints will be attached                                                                                                                                                                                                                           |
 | PERF_TEST_USERS                           | Integer | PERF_TEST_USERS=100                                 | Number of locust users per locust worker (more workers means more load can be sent)                                                                                                                                                                                                        |
-| PERF_TEST_PREPOPULATE_DB                  | Boolean | PERF_TEST_PREPOPULATE_DB=FALSE                      | When set to "TRUE", will pre-seed the database through the API (specified in PERF_TEST_ROUTE_HOST) by creating and then deleting kafka clusters.  **This param should be left out (by default set to "FALSE") when running against staging OSD cluster**. Must be either `TRUE` or `FALSE` |
-| PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER | Integer | PERF_TEST_PREPOPULATE_DB_KAFKA_PER_WORKER=500       | Number of kafkas to be injected into kafka_requests table per worker  **This param should be left out (by default set to "FALSE") when running against staging OSD cluster**                                                                                                               |
+| PERF_TEST_PREPOPULATE_DB                  | Boolean | PERF_TEST_PREPOPULATE_DB=FALSE                      | When set to "TRUE", will pre-seed the database through the API (specified in PERF_TEST_ROUTE_HOST) by creating and then deleting dinosaur clusters.  **This param should be left out (by default set to "FALSE") when running against staging OSD cluster**. Must be either `TRUE` or `FALSE` |
+| PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER | Integer | PERF_TEST_PREPOPULATE_DB_DINOSAUR_PER_WORKER=500       | Number of dinosaurs to be injected into dinosaur_requests table per worker  **This param should be left out (by default set to "FALSE") when running against staging OSD cluster**                                                                                                               |
 | PERF_TEST_WORKERS_NUMBER                  | Integer | PERF_TEST_WORKERS_NUMBER=125                        | Number of locust workers (e.g. docker containers) created during the test (more workers means more load can be sent)                                                                                                                                                                       |
-| PERF_TEST_KAFKA_POST_WAIT_TIME            | Integer | PERF_TEST_KAFKA_POST_WAIT_TIME=1                    | Wait time (in seconds) between creating kafkas by individual locust worker                                                                                                                                                                                                                 |
-| PERF_TEST_KAFKAS_PER_WORKER               | Integer | PERF_TEST_KAFKAS_PER_WORKER=5                       | Number of kafkas created as a part of the performance test execution (per worker). These kafkas will be running for the most of the duration of the test and will be removed one minute before the test completion                                                                         |
+| PERF_TEST_DINOSAUR_POST_WAIT_TIME            | Integer | PERF_TEST_DINOSAUR_POST_WAIT_TIME=1                    | Wait time (in seconds) between creating dinosaurs by individual locust worker                                                                                                                                                                                                                 |
+| PERF_TEST_DINOSAURS_PER_WORKER               | Integer | PERF_TEST_DINOSAURS_PER_WORKER=5                       | Number of dinosaurs created as a part of the performance test execution (per worker). These dinosaurs will be running for the most of the duration of the test and will be removed one minute before the test completion                                                                         |
 | PERF_TEST_RUN_TIME                        | String  | PERF_TEST_RUN_TIME=120m                             | Runtime of the performance test. Must be in minutes                                                                                                                                                                                                                                        |
 | PERF_TEST_USER_SPAWN_RATE                 | Integer | PERF_TEST_USER_SPAWN_RATE=1                         | The rate per second in which locust users are spawned                                                                                                                                                                                                                                      |
-| PERF_TEST_BASE_API_URL                    | String  | PERF_TEST_BASE_API_URL=/api/kafkas_mgmt/v1 | Base API url (excluding 'PERF_TEST_ROUTE_HOST' param and route suffix representing the resource part of the URL (e.g. 'kafkas'))                                                                                                                                                           |
-| PERF_TEST_HIT_ENDPOINTS_HOLD_OFF          | Integer | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=30                 | Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating kafkas). Counted from the start of the test run                                                                                                                                            |
-| PERF_TEST_CLEANUP                         | Boolean | PERF_TEST_CLEANUP=TRUE                              | Determines if a cleanup (of kafka clusters and service accounts) will be performed during last 90 seconds of the test execution                                                                                                                                                            |
-| PERF_TEST_SINGLE_WORKER_KAFKA_CREATE      | Boolean | PERF_TEST_SINGLE_WORKER_KAFKA_CREATE=FALSE          | If set to true - only one perf test tool worker will be used to create kafka clusters                                                                                                                                                                                                      |
+| PERF_TEST_BASE_API_URL                    | String  | PERF_TEST_BASE_API_URL=/api/dinosaurs_mgmt/v1 | Base API url (excluding 'PERF_TEST_ROUTE_HOST' param and route suffix representing the resource part of the URL (e.g. 'dinosaurs'))                                                                                                                                                           |
+| PERF_TEST_HIT_ENDPOINTS_HOLD_OFF          | Integer | PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=30                 | Wait time (in minutes) before hitting endpoints (doesn't apply to prepopulating DB and creating dinosaurs). Counted from the start of the test run                                                                                                                                            |
+| PERF_TEST_CLEANUP                         | Boolean | PERF_TEST_CLEANUP=TRUE                              | Determines if a cleanup (of dinosaur clusters and service accounts) will be performed during last 90 seconds of the test execution                                                                                                                                                            |
+| PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE      | Boolean | PERF_TEST_SINGLE_WORKER_DINOSAUR_CREATE=FALSE          | If set to true - only one perf test tool worker will be used to create dinosaur clusters                                                                                                                                                                                                      |
 | ADDITIONAL_LOCUST_OPTS                    | String  | ADDITIONAL_LOCUST_OPTS=--only-summary               | Additional flags supported by locust                                                                                                                                                                                                                                                       |
 
 ## Run the performance tests
@@ -45,35 +45,35 @@ OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_ap
 
 ### Sample parameters combinations and expected results
 
-- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). For the first 20 minutes (PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20) - create 50 kafka clusters (PERF_TEST_WORKERS_NUMBER=10 workers * PERF_TEST_KAFKAS_PER_WORKER=5) and periodically (every ~30 seconds per kafka cluster) check kafkas/[id] GET (to check if kafka cluster is ready) and hit random endpoint. After 20 minutes all endpoints (PERF_TEST_GET_ONLY set to **FALSE**) will be attacked at rate of approx 45-50 requests per second
+- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). For the first 20 minutes (PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20) - create 50 dinosaur clusters (PERF_TEST_WORKERS_NUMBER=10 workers * PERF_TEST_DINOSAURS_PER_WORKER=5) and periodically (every ~30 seconds per dinosaur cluster) check dinosaurs/[id] GET (to check if dinosaur cluster is ready) and hit random endpoint. After 20 minutes all endpoints (PERF_TEST_GET_ONLY set to **FALSE**) will be attacked at rate of approx 45-50 requests per second
 
 ```
-PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=23 PERF_TEST_KAFKA_POST_WAIT_TIME=1 PERF_TEST_KAFKAS_PER_WORKER=5 PERF_TEST_GET_ONLY=FALSE PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20 make test/performance
+PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=23 PERF_TEST_DINOSAUR_POST_WAIT_TIME=1 PERF_TEST_DINOSAURS_PER_WORKER=5 PERF_TEST_GET_ONLY=FALSE PERF_TEST_HIT_ENDPOINTS_HOLD_OFF=20 make test/performance
 ```
 
-- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). Don't create any kafka requests (by default PERF_TEST_KAFKAS_PER_WORKER is set to **0**) and hit GET only endpoints (by default PERF_TEST_GET_ONLY is set to **TRUE**). All GET endpoints will be attacked at rate of approx 180-200 requests per second
+- Run the test for 30 minutes (PERF_TEST_RUN_TIME=30m). Don't create any dinosaur requests (by default PERF_TEST_DINOSAURS_PER_WORKER is set to **0**) and hit GET only endpoints (by default PERF_TEST_GET_ONLY is set to **TRUE**). All GET endpoints will be attacked at rate of approx 180-200 requests per second
 
 ```
 PERF_TEST_RUN_TIME=30m PERF_TEST_WORKERS_NUMBER=10 OCM_OFFLINE_TOKEN=<your_ocm_offline_token> PERF_TEST_ROUTE_HOST=https://<your_api_route> PERF_TEST_USERS=100 make test/performance
 ```
 
-## Generating kafka bootstrap URL and service account credentials config file
-If PERF_TEST_KAFKAS_PER_WORKER is set to a value greater than 0, for each of kafka clusters created, its config will be persisted to `test/performance/token_api/config.txt`, so that it can be consumed by Running the Service team for kafka load test.
+## Generating dinosaur bootstrap URL and service account credentials config file
+If PERF_TEST_DINOSAURS_PER_WORKER is set to a value greater than 0, for each of dinosaur clusters created, its config will be persisted to `test/performance/token_api/config.txt`, so that it can be consumed by Running the Service team for dinosaur load test.
 
-## Cleaning up created kafka clusters/ service accounts
-If any kafka clusters were created during the test run, `test/performance/token_api/kafkas.txt` will be populated with the IDs of those kafka clusters. Assuming that any of those kafka clusters become ready during test execution, `test/performance/token_api/serviceaccounts.txt` file will contain IDs of created service accounts. Those two files can be used to cleanup the resources using `test/performance/scripts/cleanup.py`. The script requires three mandatory parameters:
+## Cleaning up created dinosaur clusters/ service accounts
+If any dinosaur clusters were created during the test run, `test/performance/token_api/dinosaurs.txt` will be populated with the IDs of those dinosaur clusters. Assuming that any of those dinosaur clusters become ready during test execution, `test/performance/token_api/serviceaccounts.txt` file will contain IDs of created service accounts. Those two files can be used to cleanup the resources using `test/performance/scripts/cleanup.py`. The script requires three mandatory parameters:
 
 * `API_HOST` - e.g. `https://api.openshift.com` for production API
-* `FILE_PATH` - absolute or relative path to the file with the resources IDs, e.g. `kafkas.txt`
-* `RESOURCE` - `kafkas` or `serviceaccounts` (must be the resource name used in the api url)
+* `FILE_PATH` - absolute or relative path to the file with the resources IDs, e.g. `dinosaurs.txt`
+* `RESOURCE` - `dinosaurs` or `serviceaccounts` (must be the resource name used in the api url)
 
-It was proven that calling kafkas DELETE endpoint with high frequency caused App SRE alerts to fire due to too many simultaneous volume delete attempts. Hence there is a default delay of 2 seconds between each http call. To override it, provide timeout value with the following parameter:
+It was proven that calling dinosaurs DELETE endpoint with high frequency caused App SRE alerts to fire due to too many simultaneous volume delete attempts. Hence there is a default delay of 2 seconds between each http call. To override it, provide timeout value with the following parameter:
 
 * `DELETE_DELAY`, e.g. DELETE_DELAY="2.0"
 
 ### Running the cleanup example
 ```
-API_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=kafkas.txt RESOURCE=kafkas python3 cleanup.py
+API_HOST=https://kas-fleet-manager-managed-services-pawelpaszki.apps.ppaszki.qvfs.s1.devshift.org FILE_PATH=dinosaurs.txt RESOURCE=dinosaurs python3 cleanup.py
 ```
 
 ## Convert csv results to JSON format accepted by horreum
@@ -109,7 +109,7 @@ Make sure login quay.io using a robot account. The credentials are saved under r
 ```
 
 ## Horreum db perf test results backup
-There is a backup [CronJob](backup/cronjob.yaml) scheduled to run after each of the [automated performance test runs](https://ci.int.devshift.net/view/kas-fleet-manager/job/kas-fleet-manager-perf-test-stage), which dumps current state of the db and pushes it to s3 bucket in `kafka_service_1` AWS account. Image built from [CronJob](backup/Dockerfile) is used to perform the backups.
+There is a backup [CronJob](backup/cronjob.yaml) scheduled to run after each of the [automated performance test runs](https://ci.int.devshift.net/view/kas-fleet-manager/job/kas-fleet-manager-perf-test-stage), which dumps current state of the db and pushes it to s3 bucket in `dinosaur_service_1` AWS account. Image built from [CronJob](backup/Dockerfile) is used to perform the backups.
 
 ## Troubleshooting
 Very rarely, after stopping the tests manually and starting them again error similar to one below may appear:

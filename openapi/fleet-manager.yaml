@@ -1122,7 +1122,6 @@ components:
         region: "us-east-1"
         owner:  "api_dinosaur_service"
         name: "serviceapi"
-        bootstrap_server_host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.apps.mk-bttg0jn170hp.x5u8.s1.devshift.org"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         version: "2.6.0"
@@ -1138,24 +1137,10 @@ components:
         region: "us-east-1"
         owner:  "api_dinosaur_service"
         name: "serviceapi"
-        bootstrap_server_host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.apps.mk-bttg0jn170hp.x5u8.s1.devshift.org"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         failed_reason: "a reason the Dinosaur request creation failed"
         instance_type: standard
-    CloudProviderExample:
-      value:
-        kind: "CloudProvider"
-        id: "aws"
-        name: "aws"
-        display_name: "Amazon Web Services"
-        enabled: true
-    CloudRegionExample:
-      value:
-        kind: "CloudRegion"
-        id: "us-east-1"
-        display_name: "US East, N. Virginia"
-        enabled: true
     ServiceAccountRequestExample:
       value:
         name: "my-app-sa"

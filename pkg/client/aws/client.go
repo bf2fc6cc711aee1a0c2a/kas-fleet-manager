@@ -121,7 +121,7 @@ func (client *awsClient) ChangeResourceRecordSets(dnsName string, recordChangeBa
 			// Record set not created in the first place
 			recordSetNotFound := strings.Contains(errorMessage, "but it was not found")
 
-			// Kafka cluster failed to create on the cluster, we have an entry in the database.
+			// Dinosaur cluster failed to create on the cluster, we have an entry in the database.
 			recordSetDomainNameEmpty := strings.Contains(errorMessage, "Domain name is empty")
 
 			// Record set has already been created

@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"net/http"
 	"sort"
 	"strconv"
+
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"

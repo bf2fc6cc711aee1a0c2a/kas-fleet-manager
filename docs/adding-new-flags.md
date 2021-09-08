@@ -48,9 +48,9 @@ func (c *Config) AddFlags(fs *pflag.FlagSet) {
 ### Adding a New Config File
 If the new configuration flag doesn't fit in any of the existing config file, a new one should be created.
 
-1. Create a new config file with a filename format of `<feature>.go` under the *internal/<resource>/config/* directory (e.g. `internal/kafka/internal/config/`).  (See [kafka.go](../internal/kafka/internal/config/kafka.go) as an example) 
+1. Create a new config file with a filename format of `<feature>.go` under the *internal/<resource>/config/* directory (e.g. `internal/dinosaur/internal/config/`).  (See [dinosaur.go](../internal/dinosaur/internal/config/dinosaur.go) as an example) 
 2. Define any new flags in the `AddFlags()` function.
-3. New config file has to implement `ConfigModule` interface and to be added into the `CoreConfigProviders()` function inside the [core providers file](../pkg/providers/core.go) or any more appropriate internal folder, e.g. [kafka providers](../internal/kafka/providers.go) (see `ConfigProviders()` function)
+3. New config file has to implement `ConfigModule` interface and to be added into the `CoreConfigProviders()` function inside the [core providers file](../pkg/providers/core.go) or any more appropriate internal folder, e.g. [dinosaur providers](../internal/dinosaur/providers.go) (see `ConfigProviders()` function)
 
 ### Verify Addition of New Flags
 Flags defined in configuration files in *pkg/config/* are added to the KAS Fleet Manager **serve** command. 

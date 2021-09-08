@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
@@ -24,9 +25,9 @@ func NewAuthenticationBuilder(ServerConfig *server.ServerConfig, KeycloakConfig 
 
 	return authentication.NewHandler().
 			Logger(authnLogger).
-			KeysURL(ServerConfig.JwksURL).                      //ocm JWK JSON web token signing certificates URL
-			KeysFile(ServerConfig.JwksFile).                    //ocm JWK backup JSON web token signing certificates
-			KeysURL(KeycloakConfig.KafkaRealm.JwksEndpointURI). // mas-sso JWK Cert URL
+			KeysURL(ServerConfig.JwksURL).                         //ocm JWK JSON web token signing certificates URL
+			KeysFile(ServerConfig.JwksFile).                       //ocm JWK backup JSON web token signing certificates
+			KeysURL(KeycloakConfig.DinosaurRealm.JwksEndpointURI). // mas-sso JWK Cert URL
 			Error(fmt.Sprint(errors.ErrorUnauthenticated)).
 			Service(errors.CONNECTOR_MGMT_ERROR_CODE_PREFIX).
 			Public("^/api/connector_mgmt/?$").

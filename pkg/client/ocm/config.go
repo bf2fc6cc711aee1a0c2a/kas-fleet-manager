@@ -8,7 +8,7 @@ import (
 const (
 	MockModeStubServer            = "stub-server"
 	MockModeEmulateServer         = "emulate-server"
-	strimziOperatorAddonID        = "managed-kafka"
+	strimziOperatorAddonID        = "managed-dinosaur"
 	kasFleetshardAddonID          = "kas-fleetshard-operator"
 	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )

@@ -56,14 +56,14 @@ type Connector struct {
 	Name           string
 	Owner          string
 	OrganisationId string
-	KafkaID        string
+	DinosaurID     string
 	Version        int64 `gorm:"type:bigserial;index:"`
 
 	ConnectorTypeId string
 	ConnectorSpec   api.JSON `gorm:"type:jsonb"`
 	DesiredState    string
 	Channel         string
-	Kafka           KafkaConnectionSettings `gorm:"embedded;embeddedPrefix:kafka_"`
+	Dinosaur        DinosaurConnectionSettings `gorm:"embedded;embeddedPrefix:dinosaur_"`
 
 	Status ConnectorStatus `gorm:"foreignKey:ID"`
 }
@@ -107,7 +107,7 @@ type ConnectorDeploymentSpecStatusExtractors struct {
 	ConditionType string
 }
 
-type KafkaConnectionSettings struct {
+type DinosaurConnectionSettings struct {
 	BootstrapServer string
 	ClientId        string
 	ClientSecret    string `gorm:"-"`

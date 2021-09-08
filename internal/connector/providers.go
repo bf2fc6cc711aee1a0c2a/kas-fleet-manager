@@ -15,7 +15,7 @@ import (
 	"github.com/goava/di"
 )
 
-func ConfigProviders(kafkaEnabled bool) di.Option {
+func ConfigProviders(dinosaurEnabled bool) di.Option {
 
 	result := di.Options(
 		di.Provide(config.NewConnectorsConfig, di.As(new(environments2.ConfigModule))),
@@ -24,7 +24,7 @@ func ConfigProviders(kafkaEnabled bool) di.Option {
 	)
 
 	// If we are not running in the kas-fleet-manager.. we need to inject more types into the DI container
-	if !kafkaEnabled {
+	if !dinosaurEnabled {
 		result = di.Options(
 			di.Provide(environments.NewDevelopmentEnvLoader, di.Tags{"env": environments2.DevelopmentEnv}),
 			di.Provide(environments.NewProductionEnvLoader, di.Tags{"env": environments2.ProductionEnv}),
@@ -33,7 +33,7 @@ func ConfigProviders(kafkaEnabled bool) di.Option {
 			di.Provide(environments.NewTestingEnvLoader, di.Tags{"env": environments2.TestingEnv}),
 			providers.CoreConfigProviders(),
 			result,
-			di.Provide(environments2.Func(serviceProvidersNoKafka)),
+			di.Provide(environments2.Func(serviceProvidersNoDinosaur)),
 		)
 	}
 
@@ -54,7 +54,7 @@ func serviceProviders() di.Option {
 	)
 }
 
-func serviceProvidersNoKafka() di.Option {
+func serviceProvidersNoDinosaur() di.Option {
 	return di.Options(
 		di.Provide(handlers.NewAuthenticationBuilder),
 	)

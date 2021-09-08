@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -17,10 +17,10 @@ type stackTracer interface {
 }
 
 const (
-	ERROR_CODE_PREFIX = "KAFKAS-MGMT"
+	ERROR_CODE_PREFIX = "DINOSAURS-MGMT"
 
 	// HREF for API errors
-	ERROR_HREF = "/api/kafkas_mgmt/v1/errors/"
+	ERROR_HREF = "/api/dinosaurs_mgmt/v1/errors/"
 
 	// To support connector errors too..
 	CONNECTOR_MGMT_ERROR_CODE_PREFIX = "CONNECTOR-MGMT"
@@ -78,9 +78,9 @@ const (
 	ErrorFailedToParseSearch       ServiceErrorCode = 23
 	ErrorFailedToParseSearchReason string           = "Failed to parse search query"
 
-	// TooManyRequests occurs when a the kafka instances capacity gets filled up
-	ErrorTooManyKafkaInstancesReached       ServiceErrorCode = 24
-	ErrorTooManyKafkaInstancesReachedReason string           = "The maximum number of allowed kafka instances has been reached"
+	// TooManyRequests occurs when a the dinosaur instances capacity gets filled up
+	ErrorTooManyDinosaurInstancesReached       ServiceErrorCode = 24
+	ErrorTooManyDinosaurInstancesReachedReason string           = "The maximum number of allowed dinosaur instances has been reached"
 
 	// Gone occurs when a record is accessed that has been deleted
 	ErrorGone       ServiceErrorCode = 25
@@ -92,19 +92,19 @@ const (
 
 	// Failed to create sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToCreateSSOClient       ServiceErrorCode = 106
-	ErrorFailedToCreateSSOClientReason string           = "Failed to create kafka client in the mas sso"
+	ErrorFailedToCreateSSOClientReason string           = "Failed to create dinosaur client in the mas sso"
 
 	// Failed to get sso client secret  - an internal error incurred when calling keycloak server
 	ErrorFailedToGetSSOClientSecret       ServiceErrorCode = 107
-	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get kafka client secret from the mas sso"
+	ErrorFailedToGetSSOClientSecretReason string           = "Failed to get dinosaur client secret from the mas sso"
 
 	// Failed to get sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToGetSSOClient       ServiceErrorCode = 108
-	ErrorFailedToGetSSOClientReason string           = "Failed to get kafka client from the mas sso"
+	ErrorFailedToGetSSOClientReason string           = "Failed to get dinosaur client from the mas sso"
 
 	// Failed to delete sso client - an internal error incurred when calling keycloak server
 	ErrorFailedToDeleteSSOClient       ServiceErrorCode = 109
-	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete kafka client from the mas sso"
+	ErrorFailedToDeleteSSOClientReason string           = "Failed to delete dinosaur client from the mas sso"
 
 	// Failed to create service account, after validating user's request, but failed at the server end
 	// it is an internal server error
@@ -137,9 +137,9 @@ const (
 	ErrorRegionNotSupported       ServiceErrorCode = 31
 	ErrorRegionNotSupportedReason string           = "Region not supported"
 
-	// Invalid kafka cluster name
-	ErrorMalformedKafkaClusterName       ServiceErrorCode = 32
-	ErrorMalformedKafkaClusterNameReason string           = "Kafka cluster name is invalid"
+	// Invalid dinosaur cluster name
+	ErrorMalformedDinosaurClusterName       ServiceErrorCode = 32
+	ErrorMalformedDinosaurClusterNameReason string           = "Dinosaur cluster name is invalid"
 
 	// Minimum field length validation
 	ErrorMinimumFieldLength       ServiceErrorCode = 33
@@ -151,11 +151,11 @@ const (
 
 	// Only MultiAZ is supported
 	ErrorOnlyMultiAZSupported       ServiceErrorCode = 35
-	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Kafkas are supported, use multi_az=true"
+	ErrorOnlyMultiAZSupportedReason string           = "Only multiAZ Dinosaurs are supported, use multi_az=true"
 
-	// Kafka cluster name must be unique
-	ErrorDuplicateKafkaClusterName       ServiceErrorCode = 36
-	ErrorDuplicateKafkaClusterNameReason string           = "Kafka cluster name is already used"
+	// Dinosaur cluster name must be unique
+	ErrorDuplicateDinosaurClusterName       ServiceErrorCode = 36
+	ErrorDuplicateDinosaurClusterNameReason string           = "Dinosaur cluster name is already used"
 
 	// A generic field validation error when validating API requests input
 	ErrorFieldValidationError       ServiceErrorCode = 37
@@ -211,7 +211,7 @@ func Errors() ServiceErrors {
 	return ServiceErrors{
 		ServiceError{ErrorForbidden, ErrorForbiddenReason, http.StatusForbidden, nil},
 		ServiceError{ErrorMaxAllowedInstanceReached, ErrorMaxAllowedInstanceReachedReason, http.StatusForbidden, nil},
-		ServiceError{ErrorTooManyKafkaInstancesReached, ErrorTooManyKafkaInstancesReachedReason, http.StatusTooManyRequests, nil},
+		ServiceError{ErrorTooManyDinosaurInstancesReached, ErrorTooManyDinosaurInstancesReachedReason, http.StatusTooManyRequests, nil},
 		ServiceError{ErrorTooManyRequests, ErrorTooManyRequestsReason, http.StatusTooManyRequests, nil},
 		ServiceError{ErrorConflict, ErrorConflictReason, http.StatusConflict, nil},
 		ServiceError{ErrorNotFound, ErrorNotFoundReason, http.StatusNotFound, nil},
@@ -236,11 +236,11 @@ func Errors() ServiceErrors {
 		ServiceError{ErrorFailedToDeleteServiceAccount, ErrorFailedToDeleteServiceAccountReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorProviderNotSupported, ErrorProviderNotSupportedReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorRegionNotSupported, ErrorRegionNotSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorMalformedKafkaClusterName, ErrorMalformedKafkaClusterNameReason, http.StatusBadRequest, nil},
+		ServiceError{ErrorMalformedDinosaurClusterName, ErrorMalformedDinosaurClusterNameReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMinimumFieldLength, ErrorMinimumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorMaximumFieldLength, ErrorMaximumFieldLengthReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorOnlyMultiAZSupported, ErrorOnlyMultiAZSupportedReason, http.StatusBadRequest, nil},
-		ServiceError{ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason, http.StatusConflict, nil},
+		ServiceError{ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason, http.StatusConflict, nil},
 		ServiceError{ErrorUnableToSendErrorResponse, ErrorUnableToSendErrorResponseReason, http.StatusInternalServerError, nil},
 		ServiceError{ErrorFieldValidationError, ErrorFieldValidationErrorReason, http.StatusBadRequest, nil},
 		ServiceError{ErrorInsufficientQuota, ErrorInsufficientQuotaReason, http.StatusForbidden, nil},
@@ -484,8 +484,8 @@ func MaximumAllowedInstanceReached(reason string, values ...interface{}) *Servic
 	return New(ErrorMaxAllowedInstanceReached, reason, values...)
 }
 
-func TooManyKafkaInstancesReached(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorTooManyKafkaInstancesReached, reason, values...)
+func TooManyDinosaurInstancesReached(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorTooManyDinosaurInstancesReached, reason, values...)
 }
 
 func NotImplemented(reason string, values ...interface{}) *ServiceError {
@@ -561,8 +561,8 @@ func ProviderNotSupported(reason string, values ...interface{}) *ServiceError {
 	return New(ErrorProviderNotSupported, reason, values...)
 }
 
-func MalformedKafkaClusterName(reason string, values ...interface{}) *ServiceError {
-	return New(ErrorMalformedKafkaClusterName, reason, values...)
+func MalformedDinosaurClusterName(reason string, values ...interface{}) *ServiceError {
+	return New(ErrorMalformedDinosaurClusterName, reason, values...)
 }
 
 func MalformedServiceAccountName(reason string, values ...interface{}) *ServiceError {
@@ -577,8 +577,8 @@ func MalformedServiceAccountId(reason string, values ...interface{}) *ServiceErr
 	return New(ErrorMalformedServiceAccountId, reason, values...)
 }
 
-func DuplicateKafkaClusterName() *ServiceError {
-	return New(ErrorDuplicateKafkaClusterName, ErrorDuplicateKafkaClusterNameReason)
+func DuplicateDinosaurClusterName() *ServiceError {
+	return New(ErrorDuplicateDinosaurClusterName, ErrorDuplicateDinosaurClusterNameReason)
 }
 
 func MinimumFieldLengthNotReached(reason string, values ...interface{}) *ServiceError {

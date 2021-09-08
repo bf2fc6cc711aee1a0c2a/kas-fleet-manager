@@ -6,11 +6,12 @@ package migrations
 // is done here, even though the same type is defined in pkg/api
 
 import (
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/gorm"
-	"time"
 )
 
 func addConnectorTables(migrationId string) *gormigrate.Migration {
@@ -20,7 +21,7 @@ func addConnectorTables(migrationId string) *gormigrate.Migration {
 		Phase     string
 	}
 
-	type KafkaConnectionSettings struct {
+	type DinosaurConnectionSettings struct {
 		BootstrapServer string
 		ClientId        string
 		ClientSecret    string
@@ -39,14 +40,14 @@ func addConnectorTables(migrationId string) *gormigrate.Migration {
 		Name           string
 		Owner          string
 		OrganisationId string
-		KafkaID        string
+		DinosaurID     string
 		Version        int64 `gorm:"type:bigserial;index:"`
 
 		ConnectorTypeId string
 		ConnectorSpec   string `gorm:"type:jsonb"`
 		DesiredState    string
 		Channel         string
-		Kafka           KafkaConnectionSettings `gorm:"embedded;embeddedPrefix:kafka_"`
+		Dinosaur        DinosaurConnectionSettings `gorm:"embedded;embeddedPrefix:dinosaur_"`
 
 		Status ConnectorStatus `gorm:"foreignKey:ID"`
 	}
@@ -113,7 +114,7 @@ func addConnectorTables(migrationId string) *gormigrate.Migration {
 				LeaseType: "connector",
 			}).Error
 		}, func(tx *gorm.DB) error {
-			// The leader lease table may have already been dropped, by the kafka migration rollback, ignore error
+			// The leader lease table may have already been dropped, by the dinosaur migration rollback, ignore error
 			_ = tx.Where("lease_type = ?", "connector").Delete(&api.LeaderLease{})
 			return nil
 		}),

@@ -196,7 +196,7 @@ endif
 
 # Prints a list of useful targets.
 help:
-	@echo "Kafka Service Fleet Manager make targets"
+	@echo "Dinosaur Service Fleet Manager make targets"
 	@echo ""
 	@echo "make verify                      verify source code"
 	@echo "make lint                        lint go files and .yaml templates"
@@ -217,7 +217,7 @@ help:
 	@echo "make clean                       delete temporary generated files"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
-	@echo "make kafkacert/setup             setup the kafka certificate used for Kafka Brokers"
+	@echo "make dinosaurcert/setup          setup the dinosaur certificate used for Dinosaur Brokers"
 	@echo "make observatorium/setup         setup observatorium secret used by CI"
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
 	@echo "make image/build/push/internal   build and push image to an openshift cluster image registry."
@@ -287,7 +287,7 @@ test: gotestsum
 
 # Precompile everything required for development/test.
 test/prepare:
-	$(GO) test -i ./internal/kafka/test/integration/... -i ./internal/connector/test/integration/...
+	$(GO) test -i ./internal/dinosaur/test/integration/... -i ./internal/connector/test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -300,17 +300,17 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/kafka: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile reports/integraton-tests-kafka.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/kafka/test/integration/...
-.PHONY: test/integration/kafka
+test/integration/dinosaur: test/prepare gotestsum
+	$(GOTESTSUM) --junitfile reports/integraton-tests-dinosaur.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+				./internal/dinosaur/test/integration/...
+.PHONY: test/integration/dinosaur
 
 test/integration/connector: test/prepare gotestsum
 	$(GOTESTSUM) --junitfile reports/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
 				./internal/connector/test/integration/...
 .PHONY: test/integration/connector
 
-test/integration: test/integration/kafka test/integration/connector
+test/integration: test/integration/dinosaur test/integration/connector
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
@@ -335,34 +335,34 @@ openapi/validate: openapi-generator
 .PHONY: openapi/validate
 
 # generate the openapi schema and generated package
-openapi/generate: openapi/generate/kas-public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private
+openapi/generate: openapi/generate/public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private
 .PHONY: openapi/generate
 
-openapi/generate/kas-public: go-bindata openapi-generator
-	rm -rf internal/kafka/internal/api/public
+openapi/generate/public: go-bindata openapi-generator
+	rm -rf internal/dinosaur/internal/api/public
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/kafka/internal/api/public
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/dinosaur/internal/api/public
 
 	mkdir -p .generate/openapi
 	cp ./openapi/fleet-manager.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/kafka/internal/generated
+	$(GOBINDATA) -o ./internal/dinosaur/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
+	$(GOFMT) -w internal/dinosaur/internal/generated
 	rm -rf .generate/openapi
-.PHONY: openapi/generate/kas-public
+.PHONY: openapi/generate/public
 
 openapi/generate/kas-private: go-bindata openapi-generator
-	rm -rf internal/kafka/internal/api/private
+	rm -rf internal/dinosaur/internal/api/private
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/kafka/internal/api/private
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/dinosaur/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/dinosaur/internal/api/private
 .PHONY: openapi/generate/kas-private
 
 openapi/generate/kas-admin: go-bindata openapi-generator
-	rm -rf internal/kafka/internal/api/admin/private
+	rm -rf internal/dinosaur/internal/api/admin/private
 	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/kafka/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/kafka/internal/api/admin/private
+	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/dinosaur/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/dinosaur/internal/api/admin/private
 .PHONY: openapi/generate/kas-admin
 
 openapi/generate/connector-public: go-bindata openapi-generator
@@ -511,11 +511,11 @@ keycloak/setup:
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
 
-# Setup for the kafka broker certificate
-kafkacert/setup:
-	@echo -n "$(KAFKA_TLS_CERT)" > secrets/kafka-tls.crt
-	@echo -n "$(KAFKA_TLS_KEY)" > secrets/kafka-tls.key
-.PHONY:kafkacert/setup
+# Setup for the dinosaur broker certificate
+dinosaurcert/setup:
+	@echo -n "$(DINOSAUR_TLS_CRT)" > secrets/dinosaur-tls.crt
+	@echo -n "$(DINOSAUR_TLS_KEY)" > secrets/dinosaur-tls.key
+.PHONY:dinosaurcert/setup
 
 observatorium/setup:
 	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
@@ -581,8 +581,8 @@ deploy: deploy/db
 		-p ROUTE53_SECRET_ACCESS_KEY="$(ROUTE53_SECRET_ACCESS_KEY)" \
 		-p VAULT_ACCESS_KEY="$(VAULT_ACCESS_KEY)" \
 		-p VAULT_SECRET_ACCESS_KEY="$(VAULT_SECRET_ACCESS_KEY)" \
-		-p KAFKA_TLS_CERT="$(KAFKA_TLS_CERT)" \
-		-p KAFKA_TLS_KEY="$(KAFKA_TLS_KEY)" \
+		-p DINOSAUR_TLS_CRT="$(DINOSAUR_TLS_CRT)" \
+		-p DINOSAUR_TLS_KEY="$(DINOSAUR_TLS_KEY)" \
 		-p OBSERVABILITY_RHSSO_LOGS_CLIENT_ID="${OBSERVABILITY_RHSSO_LOGS_CLIENT_ID}" \
 		-p OBSERVABILITY_RHSSO_LOGS_SECRET="${OBSERVABILITY_RHSSO_LOGS_SECRET}" \
 		-p OBSERVABILITY_RHSSO_METRICS_CLIENT_ID="${OBSERVABILITY_RHSSO_METRICS_CLIENT_ID}" \

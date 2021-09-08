@@ -5,14 +5,14 @@ type Parameter struct {
 	Value string
 }
 
-type KafkaQuotaType string
+type DinosaurQuotaType string
 
 const (
-	EvalQuota     KafkaQuotaType = "eval"
-	StandardQuota KafkaQuotaType = "standard"
+	EvalQuota     DinosaurQuotaType = "eval"
+	StandardQuota DinosaurQuotaType = "standard"
 )
 
-func (t KafkaQuotaType) GetProduct() string {
+func (t DinosaurQuotaType) GetProduct() string {
 	if t == StandardQuota {
 		return "RHOSAK"
 	}
@@ -20,10 +20,10 @@ func (t KafkaQuotaType) GetProduct() string {
 	return "RHOSAKTrial"
 }
 
-func (t KafkaQuotaType) GetResourceName() string {
+func (t DinosaurQuotaType) GetResourceName() string {
 	return "rhosak"
 }
 
-func (t KafkaQuotaType) Equals(t1 KafkaQuotaType) bool {
+func (t DinosaurQuotaType) Equals(t1 DinosaurQuotaType) bool {
 	return t1.GetProduct() == t.GetProduct() && t1.GetResourceName() == t.GetResourceName()
 }

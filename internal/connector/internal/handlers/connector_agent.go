@@ -3,15 +3,16 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"time"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/private"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"io"
-	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
 	"github.com/getsentry/sentry-go"
@@ -92,7 +93,7 @@ func (h *ConnectorClusterHandler) ListDeployments(w http.ResponseWriter, r *http
 				list, err := getList()
 				bookmarkSent := false
 
-				sub := h.Bus.Subscribe(fmt.Sprintf("/kafka-connector-clusters/%s/deployments", connectorClusterId))
+				sub := h.Bus.Subscribe(fmt.Sprintf("/dinosaur-connector-clusters/%s/deployments", connectorClusterId))
 				return handlers.EventStream{
 					ContentType: "application/json;stream=watch",
 					Close:       sub.Close,
@@ -191,11 +192,11 @@ func (h *ConnectorClusterHandler) presentDeployment(r *http.Request, resource db
 	converted.Spec.ConnectorSpec = pc.ConnectorSpec
 	converted.Spec.DesiredState = pc.DesiredState
 	converted.Spec.ConnectorId = pc.Id
-	converted.Spec.KafkaId = pc.Metadata.KafkaId
-	converted.Spec.Kafka = private.KafkaConnectionSettings{
-		BootstrapServer: pc.Kafka.BootstrapServer,
-		ClientId:        pc.Kafka.ClientId,
-		ClientSecret:    pc.Kafka.ClientSecret,
+	converted.Spec.DinosaurId = pc.Metadata.DinosaurId
+	converted.Spec.Dinosaur = private.DinosaurConnectionSettings{
+		BootstrapServer: pc.Dinosaur.BootstrapServer,
+		ClientId:        pc.Dinosaur.ClientId,
+		ClientSecret:    pc.Dinosaur.ClientSecret,
 	}
 	converted.Spec.ConnectorTypeId = pc.ConnectorTypeId
 	return converted, nil

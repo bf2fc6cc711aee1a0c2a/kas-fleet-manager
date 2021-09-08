@@ -31,12 +31,12 @@ const (
 
 //go:generate moq -out keycloakservice_moq.go . KeycloakService
 type KeycloakService interface {
-	RegisterKafkaClientInSSO(kafkaNamespace string, orgId string) (string, *errors.ServiceError)
+	RegisterDinosaurClientInSSO(dinosaurNamespace string, orgId string) (string, *errors.ServiceError)
 	RegisterOSDClusterClientInSSO(clusterId string, clusterOathCallbackURI string) (string, *errors.ServiceError)
-	DeRegisterClientInSSO(kafkaNamespace string) *errors.ServiceError
+	DeRegisterClientInSSO(dinosaurNamespace string) *errors.ServiceError
 	GetConfig() *keycloak.KeycloakConfig
 	GetRealmConfig() *keycloak.KeycloakRealmConfig
-	IsKafkaClientExist(clientId string) *errors.ServiceError
+	IsDinosaurClientExist(clientId string) *errors.ServiceError
 	CreateServiceAccount(serviceAccountRequest *api.ServiceAccountRequest, ctx context.Context) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccount(ctx context.Context, clientId string) *errors.ServiceError
 	ResetServiceAccountCredentials(ctx context.Context, clientId string) (*api.ServiceAccount, *errors.ServiceError)
@@ -45,12 +45,12 @@ type KeycloakService interface {
 	DeRegisterKasFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
 	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
-	GetKafkaClientSecret(clientId string) (string, *errors.ServiceError)
+	GetDinosaurClientSecret(clientId string) (string, *errors.ServiceError)
 	CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
 }
 
-type KafkaKeycloakService KeycloakService
+type DinosaurKeycloakService KeycloakService
 type OsdKeycloakService KeycloakService
 
 type keycloakService struct {
@@ -81,18 +81,18 @@ func NewKeycloakService(config *keycloak.KeycloakConfig, realmConfig *keycloak.K
 	}
 }
 
-func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, orgId string) (string, *errors.ServiceError) {
+func (kc *keycloakService) RegisterDinosaurClientInSSO(dinosaurClusterName string, orgId string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register Kafka Client in SSO")
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to register Dinosaur Client in SSO")
 	}
-	internalClientId, err := kc.kcClient.IsClientExist(kafkaClusterName, accessToken)
+	internalClientId, err := kc.kcClient.IsClientExist(dinosaurClusterName, accessToken)
 	if err != nil {
-		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", kafkaClusterName)
+		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClient, err, "failed to get sso client with id: %s", dinosaurClusterName)
 
 	}
 	if internalClientId != "" {
-		glog.V(5).Infof("Existing Kafka Client %s found", kafkaClusterName)
+		glog.V(5).Infof("Existing Dinosaur Client %s found", dinosaurClusterName)
 		secretValue, secretErr := kc.kcClient.GetClientSecret(internalClientId, accessToken)
 		if secretErr != nil {
 			return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, secretErr, "failed to get sso client secret")
@@ -103,8 +103,8 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 		"owner-rh-org-id": orgId,
 	}
 	c := keycloak.ClientRepresentation{
-		ClientID:                     kafkaClusterName,
-		Name:                         kafkaClusterName,
+		ClientID:                     dinosaurClusterName,
+		Name:                         dinosaurClusterName,
 		ServiceAccountsEnabled:       true,
 		AuthorizationServicesEnabled: false,
 		StandardFlowEnabled:          false,
@@ -119,7 +119,7 @@ func (kc *keycloakService) RegisterKafkaClientInSSO(kafkaClusterName string, org
 	if err != nil {
 		return "", errors.NewWithCause(errors.ErrorFailedToGetSSOClientSecret, err, "failed to get sso client secret")
 	}
-	glog.V(5).Infof("Kafka Client %s created successfully", kafkaClusterName)
+	glog.V(5).Infof("Dinosaur Client %s created successfully", dinosaurClusterName)
 	return secretValue, nil
 }
 
@@ -167,7 +167,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to deregister OSD cluster client in SSO")
 	}
 	internalClientID, _ := kc.kcClient.IsClientExist(clientId, accessToken)
-	glog.V(5).Infof("Existing Kafka Client %s found", clientId)
+	glog.V(5).Infof("Existing Dinosaur Client %s found", clientId)
 	if internalClientID == "" {
 		return nil
 	}
@@ -175,7 +175,7 @@ func (kc *keycloakService) DeRegisterClientInSSO(clientId string) *errors.Servic
 	if err != nil {
 		return errors.NewWithCause(errors.ErrorFailedToDeleteSSOClient, err, "failed to delete the sso client")
 	}
-	glog.V(5).Infof("Kafka Client %s deleted successfully", clientId)
+	glog.V(5).Infof("Dinosaur Client %s deleted successfully", clientId)
 	return nil
 }
 
@@ -187,10 +187,10 @@ func (kc *keycloakService) GetRealmConfig() *keycloak.KeycloakRealmConfig {
 	return kc.kcClient.GetRealmConfig()
 }
 
-func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceError {
+func (kc keycloakService) IsDinosaurClientExist(clientId string) *errors.ServiceError {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to check Kafka client existence")
+		return errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to check Dinosaur client existence")
 	}
 	_, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {
@@ -199,10 +199,10 @@ func (kc keycloakService) IsKafkaClientExist(clientId string) *errors.ServiceErr
 	return nil
 }
 
-func (kc keycloakService) GetKafkaClientSecret(clientId string) (string, *errors.ServiceError) {
+func (kc keycloakService) GetDinosaurClientSecret(clientId string) (string, *errors.ServiceError) {
 	accessToken, tokenErr := kc.kcClient.GetToken()
 	if tokenErr != nil {
-		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get Kafka client secret")
+		return "", errors.NewWithCause(errors.ErrorGeneral, tokenErr, "failed to get Dinosaur client secret")
 	}
 	internalClientID, err := kc.kcClient.IsClientExist(clientId, accessToken)
 	if err != nil {

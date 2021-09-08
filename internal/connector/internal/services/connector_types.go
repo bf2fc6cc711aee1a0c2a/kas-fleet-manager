@@ -8,6 +8,8 @@ package services
 
 import (
 	"context"
+	"strings"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
@@ -16,7 +18,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
 	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/queryparser"
-	"strings"
 )
 
 type ConnectorTypesService interface {
@@ -93,7 +94,7 @@ func (cts *connectorTypesService) Create(resource *dbapi.ConnectorType) *errors.
 		})
 	*/
 	// TODO: increment connector type metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+	// metrics.IncreaseStatusCountMetric(constants.DinosaurRequestStatusAccepted.String())
 	return nil
 }
 

@@ -5,6 +5,6 @@ import (
 	"github.com/goava/di"
 )
 
-func ConfigProviders(kafkaEnabled bool) di.Option {
-	return connector.ConfigProviders(kafkaEnabled)
+func ConfigProviders(dinosaurEnabled bool) di.Option {
+	return connector.ConfigProviders(dinosaurEnabled)
 }

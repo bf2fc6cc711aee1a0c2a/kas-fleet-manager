@@ -17,11 +17,11 @@ type ConnectorDeploymentSpec struct {
 	// Deprecated
 	DeprecatedAllowUpgrade bool `json:"allow_upgrade,omitempty"`
 	// an optional operator id that the connector should be run under.
-	OperatorId               string                  `json:"operator_id,omitempty"`
-	ConnectorResourceVersion int64                   `json:"connector_resource_version,omitempty"`
-	KafkaId                  string                  `json:"kafka_id,omitempty"`
-	Kafka                    KafkaConnectionSettings `json:"kafka,omitempty"`
-	ConnectorTypeId          string                  `json:"connector_type_id,omitempty"`
-	ConnectorSpec            map[string]interface{}  `json:"connector_spec,omitempty"`
-	DesiredState             string                  `json:"desired_state,omitempty"`
+	OperatorId               string                     `json:"operator_id,omitempty"`
+	ConnectorResourceVersion int64                      `json:"connector_resource_version,omitempty"`
+	DinosaurId               string                     `json:"dinosaur_id,omitempty"`
+	Dinosaur                 DinosaurConnectionSettings `json:"dinosaur,omitempty"`
+	ConnectorTypeId          string                     `json:"connector_type_id,omitempty"`
+	ConnectorSpec            map[string]interface{}     `json:"connector_spec,omitempty"`
+	DesiredState             string                     `json:"desired_state,omitempty"`
 }

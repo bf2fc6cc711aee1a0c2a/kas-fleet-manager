@@ -80,8 +80,8 @@ func ServiceProviders() di.Option {
 
 		di.Provide(acl.NewAccessControlListMiddleware),
 		di.Provide(handlers.NewErrorsHandler),
-		di.Provide(func(c *keycloak.KeycloakConfig) services.KafkaKeycloakService {
-			return services.NewKeycloakService(c, c.KafkaRealm)
+		di.Provide(func(c *keycloak.KeycloakConfig) services.DinosaurKeycloakService {
+			return services.NewKeycloakService(c, c.DinosaurRealm)
 		}),
 		di.Provide(func(c *keycloak.KeycloakConfig) services.OsdKeycloakService {
 			return services.NewKeycloakService(c, c.OSDClusterIDPRealm)

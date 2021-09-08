@@ -17,14 +17,14 @@ import (
 )
 
 var (
-	shortLivingToken       = ""
-	kafkaCreateContainerId = ""
+	shortLivingToken          = ""
+	dinosaurCreateContainerId = ""
 )
 
 const (
-	configFilename    = "/mnt/api/config.txt"
-	kafkaIdsFilemane  = "/mnt/api/kafkas.txt"
-	svcAccIdsFilemane = "/mnt/api/service_accounts.txt"
+	configFilename      = "/mnt/api/config.txt"
+	dinosaurIdsFilemane = "/mnt/api/dinosaurs.txt"
+	svcAccIdsFilemane   = "/mnt/api/service_accounts.txt"
 )
 
 type configStruct struct {
@@ -33,8 +33,8 @@ type configStruct struct {
 	Password     string
 }
 
-type kafkaIdStruct struct {
-	KafkaId string
+type dinosaurIdStruct struct {
+	DinosaurId string
 }
 
 type svcAccIdStruct struct {
@@ -85,19 +85,19 @@ func isTokenValid(tokenOutput string) bool {
 	return expTimestamp > currentTime
 }
 
-func checkKafkaCreateContainerId(w http.ResponseWriter, r *http.Request) {
+func checkDinosaurCreateContainerId(w http.ResponseWriter, r *http.Request) {
 	checkHttpMethod(w, r, "POST")
 
 	var c containerIdStruct
 
 	unmarshalBody(w, r, &c)
 
-	// assign kafkaCreateContainerId, if empty
-	if kafkaCreateContainerId == "" && c.ContainerId != "" {
-		kafkaCreateContainerId = c.ContainerId
+	// assign dinosaurCreateContainerId, if empty
+	if dinosaurCreateContainerId == "" && c.ContainerId != "" {
+		dinosaurCreateContainerId = c.ContainerId
 	}
 	// return containerID
-	fmt.Fprint(w, kafkaCreateContainerId)
+	fmt.Fprint(w, dinosaurCreateContainerId)
 }
 
 // run the server
@@ -105,10 +105,10 @@ func runServer() {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	http.HandleFunc("/ocm_token", getToken)
-	http.HandleFunc("/write_kafka_config", writeKafkaConfig)
-	http.HandleFunc("/write_kafka_id", writeKafkaId)
+	http.HandleFunc("/write_dinosaur_config", writeDinosaurConfig)
+	http.HandleFunc("/write_dinosaur_id", writeDinosaurId)
 	http.HandleFunc("/write_svc_acc_id", writeSvcAccId)
-	http.HandleFunc("/kafka_create_container_id", checkKafkaCreateContainerId)
+	http.HandleFunc("/dinosaur_create_container_id", checkDinosaurCreateContainerId)
 
 	srv := &http.Server{Addr: ":8099"}
 	go func() {
@@ -190,19 +190,19 @@ func writeSvcAccId(w http.ResponseWriter, r *http.Request) {
 	writeToFile(w, svcAccIdsFilemane, c.ServiceAccountId, configString)
 }
 
-func writeKafkaId(w http.ResponseWriter, r *http.Request) {
+func writeDinosaurId(w http.ResponseWriter, r *http.Request) {
 	checkHttpMethod(w, r, "POST")
 
-	var c kafkaIdStruct
+	var c dinosaurIdStruct
 
 	unmarshalBody(w, r, &c)
 
-	configString := fmt.Sprintf("%s\n", c.KafkaId)
+	configString := fmt.Sprintf("%s\n", c.DinosaurId)
 
-	writeToFile(w, kafkaIdsFilemane, c.KafkaId, configString)
+	writeToFile(w, dinosaurIdsFilemane, c.DinosaurId, configString)
 }
 
-func writeKafkaConfig(w http.ResponseWriter, r *http.Request) {
+func writeDinosaurConfig(w http.ResponseWriter, r *http.Request) {
 	checkHttpMethod(w, r, "POST")
 
 	var c configStruct

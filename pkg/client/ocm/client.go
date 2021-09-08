@@ -45,7 +45,7 @@ type Client interface {
 	GetRequiresTermsAcceptance(username string) (termsRequired bool, redirectUrl string, err error)
 	GetExistingClusterMetrics(clusterID string) (*amsv1.SubscriptionMetrics, error)
 	GetOrganisationIdFromExternalId(externalId string) (string, error)
-	HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error)
+	HasAssignedQuota(organizationId string, quotaType DinosaurQuotaType) (bool, error)
 	Connection() *sdkClient.Connection
 }
 
@@ -163,7 +163,7 @@ func (c *client) GetOrganisationIdFromExternalId(externalId string) (string, err
 	return items.Get(0).ID(), nil
 }
 
-func (c *client) HasAssignedQuota(organizationId string, quotaType KafkaQuotaType) (bool, error) {
+func (c *client) HasAssignedQuota(organizationId string, quotaType DinosaurQuotaType) (bool, error) {
 	organizationClient := c.connection.AccountsMgmt().V1().Organizations()
 	quotaCostClient := organizationClient.Organization(organizationId).QuotaCost()
 

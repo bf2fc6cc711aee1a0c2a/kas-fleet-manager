@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Kafka Service Fleet Manager Admin APIs
-  description: The admin APIs for the fleet manager of Kafka service
+  title: Dinosaur Service Fleet Manager Admin APIs
+  description: The admin APIs for the fleet manager of Dinosaur service
   version: 0.0.1
 servers:
   - url: https://api.openshift.com
@@ -17,19 +17,19 @@ tags:
     description: ""
 
 paths:
-  '/api/kafkas_mgmt/v1/admin/kafkas':
+  '/api/dinosaurs_mgmt/v1/admin/dinosaurs':
     get:
-      summary: Returns a list of Kafkas
-      operationId: getKafkas
+      summary: Returns a list of Dinosaurs
+      operationId: getDinosaurs
       security:
         - Bearer: []
       responses:
         "200":
-          description: Return a list of Kafka instances. This endpoint will return all Kafka instances that are stored in the database and the are not filtered based on user ids or org ids.
+          description: Return a list of Dinosaur instances. This endpoint will return all Dinosaur instances that are stored in the database and the are not filtered based on user ids or org ids.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KafkaList'
+                $ref: '#/components/schemas/DinosaurList'
         "400":
           description: Bad request
           content:
@@ -59,21 +59,21 @@ paths:
         - $ref: 'fleet-manager.yaml#/components/parameters/size'
         - $ref: 'fleet-manager.yaml#/components/parameters/orderBy'
         - $ref: 'fleet-manager.yaml#/components/parameters/search'
-  '/api/kafkas_mgmt/v1/admin/kafkas/{id}':
+  '/api/dinosaurs_mgmt/v1/admin/dinosaurs/{id}':
     get:
-      summary: Return the details of Kafka instance by id
+      summary: Return the details of Dinosaur instance by id
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
-      operationId: getKafkaById
+      operationId: getDinosaurById
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Kafka'
-          description: Kafka found by ID
+                $ref: '#/components/schemas/Dinosaur'
+          description: Dinosaur found by ID
         "401":
           description: Auth token is invalid
           content:
@@ -87,7 +87,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
-          description: No Kafka found with the specified ID
+          description: No Dinosaur found with the specified ID
           content:
             application/json:
               schema:
@@ -99,26 +99,26 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     patch:
-      summary: Update a Kafka instance by id
+      summary: Update a Dinosaur instance by id
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       security:
         - Bearer: []
-      operationId: updateKafkaById
+      operationId: updateDinosaurById
       requestBody:
-        description: Kafka update data
+        description: Dinosaur update data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/KafkaUpdateRequest'
+              $ref: '#/components/schemas/DinosaurUpdateRequest'
         required: true
       responses:
         "200":
-          description: Kafka updated by ID
+          description: Dinosaur updated by ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Kafka'
+                $ref: '#/components/schemas/Dinosaur'
         "400":
           description: Bad request
           content:
@@ -138,7 +138,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
-          description: No Kafka found with the specified ID
+          description: No Dinosaur found with the specified ID
           content:
             application/json:
               schema:
@@ -150,7 +150,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
     delete:
-      summary: Delete a Kafka by ID
+      summary: Delete a Dinosaur by ID
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
         - in: query
@@ -161,14 +161,14 @@ paths:
           required: true
       security:
         - Bearer: [ ]
-      operationId: deleteKafkaById
+      operationId: deleteDinosaurById
       responses:
         "200":
-          description: Kafka updated by ID
+          description: Dinosaur updated by ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Kafka'
+                $ref: '#/components/schemas/Dinosaur'
         "401":
           description: Auth token is invalid
           content:
@@ -182,7 +182,7 @@ paths:
               schema:
                 $ref: 'fleet-manager.yaml#/components/schemas/Error'
         "404":
-          description: No Kafka found with the specified ID
+          description: No Dinosaur found with the specified ID
           content:
             application/json:
               schema:
@@ -196,7 +196,7 @@ paths:
 
 components:
   schemas:
-    Kafka:
+    Dinosaur:
       allOf:
         - $ref: 'fleet-manager.yaml#/components/schemas/ObjectReference'
         - type: object
@@ -226,15 +226,15 @@ components:
               type: string
             failed_reason:
               type: string
-            actual_kafka_version:
+            actual_dinosaur_version:
               type: string
             actual_strimzi_version:
               type: string
-            desired_kafka_version:
+            desired_dinosaur_version:
               type: string
             desired_strimzi_version:
               type: string
-            kafka_upgrading:
+            dinosaur_upgrading:
               type: boolean
             strimzi_upgrading:
               type: boolean
@@ -265,7 +265,7 @@ components:
               type: string
             namespace:
               type: string  
-    KafkaList:
+    DinosaurList:
       allOf:
         - $ref: "fleet-manager.yaml#/components/schemas/List"
         - type: object
@@ -274,15 +274,15 @@ components:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/Kafka"
+                  - $ref: "#/components/schemas/Dinosaur"
 
-    KafkaUpdateRequest:
+    DinosaurUpdateRequest:
       type: object
       properties:
         # for now only support updating the following fields. May add more when use cases arise.
         strimzi_version:
           type: string
-        kafka_version:
+        dinosaur_version:
           type: string
 
   securitySchemes:

@@ -18,6 +18,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"enable-instance-limit-control": "false",
 		"mas-sso-base-url":              "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                 "rhoas",
-		"osd-idp-mas-sso-realm":         "rhoas-kafka-sre",
+		"osd-idp-mas-sso-realm":         "rhoas-dinosaur-sre",
 	}
 }

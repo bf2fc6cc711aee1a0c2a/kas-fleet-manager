@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/compat"
+	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur/compat"
 )
 
 func PresentReferenceWith(id, obj interface{}, ObjectKind func(i interface{}) string, ObjectPath func(id string, obj interface{}) string) compat.ObjectReference {

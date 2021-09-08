@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	goerrors "errors"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
@@ -49,9 +50,9 @@ func NewConnectorsService(connectionFactory *db.ConnectionFactory, bus signalbus
 
 // Create creates a connector in the database
 func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connector) *errors.ServiceError {
-	//kid := resource.KafkaID
+	//kid := resource.DinosaurID
 	//if kid == "" {
-	//	return errors.Validation("kafka id is undefined")
+	//	return errors.Validation("dinosaur id is undefined")
 	//}
 
 	dbConn := k.connectionFactory.New()
@@ -76,7 +77,7 @@ func (k *connectorsService) Create(ctx context.Context, resource *dbapi.Connecto
 	})
 
 	// TODO: increment connector metrics
-	// metrics.IncreaseStatusCountMetric(constants.KafkaRequestStatusAccepted.String())
+	// metrics.IncreaseStatusCountMetric(constants.DinosaurRequestStatusAccepted.String())
 	return nil
 }
 
@@ -152,10 +153,10 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 	_ = db.AddPostCommitAction(ctx, func() {
 		// delete related distributed resources...
 
-		if resource.Kafka.ClientSecretRef != "" {
-			err := k.vaultService.DeleteSecretString(resource.Kafka.ClientSecretRef)
+		if resource.Dinosaur.ClientSecretRef != "" {
+			err := k.vaultService.DeleteSecretString(resource.Dinosaur.ClientSecretRef)
 			if err != nil {
-				logger.Logger.Errorf("failed to delete vault secret key '%s': %v", resource.Kafka.ClientSecretRef, err)
+				logger.Logger.Errorf("failed to delete vault secret key '%s': %v", resource.Dinosaur.ClientSecretRef, err)
 			}
 		}
 
@@ -187,7 +188,7 @@ func (k *connectorsService) Delete(ctx context.Context, id string) *errors.Servi
 }
 
 // List returns all connectors visible to the user within the requested paging window.
-func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
+func (k *connectorsService) List(ctx context.Context, dinosaur_id string, listArgs *services.ListArguments, tid string) (dbapi.ConnectorList, *api.PagingMeta, *errors.ServiceError) {
 	var resourceList dbapi.ConnectorList
 	dbConn := k.connectionFactory.New()
 	dbConn = dbConn.Preload("Status")
@@ -196,8 +197,8 @@ func (k *connectorsService) List(ctx context.Context, kafka_id string, listArgs 
 		Size: listArgs.Size,
 	}
 
-	if kafka_id != "" {
-		dbConn = dbConn.Where("kafka_id = ?", kafka_id)
+	if dinosaur_id != "" {
+		dbConn = dbConn.Where("dinosaur_id = ?", dinosaur_id)
 	}
 
 	var err *errors.ServiceError

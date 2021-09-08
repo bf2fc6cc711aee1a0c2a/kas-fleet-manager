@@ -4,9 +4,9 @@ openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an o
 # Only add endpoints here when it is an explicit requirement, or if you know what you are doing.
 # There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
 info:
-  title: Kafka Service Fleet Manager
+  title: Dinosaur Service Fleet Manager
   version: 1.3.0
-  description: Kafka Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
+  description: Dinosaur Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -22,7 +22,7 @@ tags:
 
 paths:
   # Endpoints for data plane communications
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}/status':
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status':
     put:
       tags:
         - Agent Clusters
@@ -62,22 +62,22 @@ paths:
       operationId: updateAgentClusterStatus
       summary: Update the status of an agent cluster
 
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas/status':
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status':
     put:
       tags:
         - Agent Clusters
       parameters:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       requestBody:
-        description: Kafka clusters status update data
+        description: Dinosaur clusters status update data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DataPlaneKafkaStatusUpdateRequest'
+              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
         required: true
       responses:
         '200':
-          description: Status is updated for Kafka clusters
+          description: Status is updated for Dinosaur clusters
         '400':
           content:
             application/json:
@@ -99,10 +99,10 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: updateKafkaClusterStatus
-      summary: Update the status of Kafka clusters on an agent cluster
+      operationId: updateDinosaurClusterStatus
+      summary: Update the status of Dinosaur clusters on an agent cluster
 
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}/kafkas':
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs':
     get:
       tags:
         - Agent Clusters
@@ -110,11 +110,11 @@ paths:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         '200':
-          description: The list of the ManagedKafkas for the specified agent cluster
+          description: The list of the ManagedDinosaurs for the specified agent cluster
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ManagedKafkaList'
+                $ref: '#/components/schemas/ManagedDinosaurList'
         '400':
           content:
             application/json:
@@ -136,10 +136,10 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: getKafkas
-      summary: Get the list of ManagedaKafkas for the specified agent cluster
+      operationId: getDinosaurs
+      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
 
-  '/api/kafkas_mgmt/v1/agent-clusters/{id}':
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}':
     get:
       tags:
         - Agent Clusters
@@ -147,7 +147,7 @@ paths:
         - $ref: "fleet-manager.yaml#/components/parameters/id"
       responses:
         '200':
-          description: The ManagedKafkaAgent CR Spec
+          description: The ManagedDinosaurAgent CR Spec
           content:
             application/json:
               schema:
@@ -173,8 +173,8 @@ paths:
           description: Auth token is not valid.
       security:
         - Bearer: [ ]
-      operationId: getKafkaAgent
-      summary: Get the spec of the ManagedKafkaAgent CR spec
+      operationId: getDinosaurAgent
+      summary: Get the spec of the ManagedDinosaurAgent CR spec
 
 components:
   schemas:
@@ -196,7 +196,7 @@ components:
         kind:
           type: string
 
-    ManagedKafkaCapacity:
+    ManagedDinosaurCapacity:
       type: object
       properties:
         ingressEgressThroughputPerSec:
@@ -215,15 +215,15 @@ components:
           type: integer
           format: int
 
-    ManagedKafkaVersions:
+    ManagedDinosaurVersions:
       type: object
       properties:
-        kafka:
+        dinosaur:
           type: string
         strimzi:
           type: string
 
-    ManagedKafka:
+    ManagedDinosaur:
       allOf:
         - $ref: "#/components/schemas/PrivateObjectReference"
         - type: object
@@ -265,7 +265,7 @@ components:
                       password: 
                         type: string     
                 capacity:
-                  $ref: "#/components/schemas/ManagedKafkaCapacity"
+                  $ref: "#/components/schemas/ManagedDinosaurCapacity"
                 oauth:
                   type: object
                   properties:
@@ -305,28 +305,28 @@ components:
                         key:
                           type: string
                 versions:
-                  $ref: "#/components/schemas/ManagedKafkaVersions"
+                  $ref: "#/components/schemas/ManagedDinosaurVersions"
                 deleted:
                   type: boolean
               required:
                 - deleted
 
-    ManagedKafkaList:
+    ManagedDinosaurList:
       description: >-
-        A list of ManagedKafka
+        A list of ManagedDinosaur
       allOf:
         - $ref: "#/components/schemas/ListReference"
         - type: object
           example:
-            kind: "ManagedKafkaList"
+            kind: "ManagedDinosaurList"
             items:
-              $ref: '#/components/examples/ManagedKafkaExample'
+              $ref: '#/components/examples/ManagedDinosaurExample'
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/ManagedKafka"
+                  - $ref: "#/components/schemas/ManagedDinosaur"
 
     DatePlaneClusterUpdateStatusRequestNodeInfo:
       type: object
@@ -440,12 +440,12 @@ components:
             required:
             - ready
             - version
-    DataPlaneKafkaStatus:
-      description: "Schema of the status object for a Kafka cluster"
+    DataPlaneDinosaurStatus:
+      description: "Schema of the status object for a Dinosaur cluster"
       type: object
       properties:
         conditions:
-          description: "The status conditions of a Kafka cluster"
+          description: "The status conditions of a Dinosaur cluster"
           type: array
           items:
             type: object
@@ -482,15 +482,15 @@ components:
               nullable: true
 
         versions:
-          description: "Version information related to a Kafka cluster"
+          description: "Version information related to a Dinosaur cluster"
           type: object
           properties:
-            kafka:
+            dinosaur:
               type: string
             strimzi:
               type: string
         routes:
-          description: "Routes created for a Kafka cluster"
+          description: "Routes created for a Dinosaur cluster"
           type: array
           nullable: true
           items:
@@ -503,13 +503,13 @@ components:
               router:
                 type: string
       example:
-        $ref: '#/components/examples/DataPlaneKafkaStatusRequestExample'
+        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
 
-    DataPlaneKafkaStatusUpdateRequest:
-      description: "Schema for the request to update the statuses of Kafka clusters from data plane"
+    DataPlaneDinosaurStatusUpdateRequest:
+      description: "Schema for the request to update the statuses of Dinosaur clusters from data plane"
       type: object
       additionalProperties:
-        $ref: '#/components/schemas/DataPlaneKafkaStatus'
+        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
 
     DataplaneClusterAgentConfig:
       description: "Configuration for the data plane cluster agent"
@@ -554,12 +554,12 @@ components:
       type: http
 
   examples:
-    ManagedKafkaExample:
+    ManagedDinosaurExample:
       value:
-        kind: "ManagedKafka"
+        kind: "ManagedDinosaur"
         metadata:
-          name: "example-kafka"
-          namespace: "example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+          name: "example-dinosaur"
+          namespace: "example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
           annotations:
             bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             bf2.org/placementId: ""
@@ -572,7 +572,7 @@ components:
             maxDataRetentionPeriod: P14D
             maxConnectionAttemptsPerSec: 100
           oauth:
-            clientId: "kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+            clientId: "dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
             clientSecret: "example-client-secret"
             tokenEndpointUri: "https://example-token-endpoint-uri.com/token"
             jwksEndpointUri: "https://example-jwks-endpoint-uri.com/certs"
@@ -581,19 +581,19 @@ components:
             tlsTrustedCertificate: ""
             customClaimCheck: ""
           endpoint:
-            bootstrapServerHost: "example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org"
+            bootstrapServerHost: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org"
             tls:
               cert: ""
               key: ""
           versions:
-            kafka: 2.7.0
+            dinosaur: 2.7.0
             strimzi: 0.21.2
           deleted: false
-    DataPlaneKafkaStatusRequestExample:
+    DataPlaneDinosaurStatusRequestExample:
       value:
         conditions:
           - type: Ready
-            reason: KafkaInstanceReady
+            reason: DinosaurInstanceReady
             message: installing
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
@@ -605,13 +605,13 @@ components:
           maxDataRetentionPeriod: P14D
           maxConnectionAttemptsPerSec: 100
         versions:
-          kafka: 2.4.1
+          dinosaur: 2.4.1
           strimzi: 0.21.2
     400InvalidIdExample:
       value:
         id: "203"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/21"
-        code: "KAFKAS-MGMT-21"
+        href: "/api/dinosaurs_mgmt/v1/errors/21"
+        code: "DINOSAURS-MGMT-21"
         reason: "Bad request"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"

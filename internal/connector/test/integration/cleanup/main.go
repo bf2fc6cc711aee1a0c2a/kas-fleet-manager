@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
+
+	dinosaur "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/dinosaur"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
 	"github.com/golang/glog"
@@ -11,7 +12,7 @@ import (
 
 func main() {
 	env, err := environments.New(environments.GetEnvironmentStrFromEnv(),
-		kafka.ConfigProviders(),
+		dinosaur.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
@@ -29,7 +30,7 @@ func main() {
 
 	var keycloakConfig *keycloak.KeycloakConfig
 	env.MustResolve(&keycloakConfig)
-	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.DinosaurRealm)
 	accessToken, _ := kcClient.GetToken()
 
 	last := 0
