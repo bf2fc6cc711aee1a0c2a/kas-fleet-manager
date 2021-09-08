@@ -29,7 +29,7 @@ func NewKafkaHandler(service services.KafkaService, providerConfig *config.Provi
 }
 
 func (h kafkaHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var kafkaRequest public.KafkaRequestPayload
+	var kafkaRequest public.DinosaurRequestPayload
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaRequest,
 		Validate: []handlers.Validate{
@@ -112,12 +112,12 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 				return nil, err
 			}
 
-			kafkaRequestList := public.KafkaRequestList{
+			kafkaRequestList := public.DinosaurRequestList{
 				Kind:  "KafkaRequestList",
 				Page:  int32(paging.Page),
 				Size:  int32(paging.Size),
 				Total: int32(paging.Total),
-				Items: []public.KafkaRequest{},
+				Items: []public.DinosaurRequest{},
 			}
 
 			for _, kafkaRequest := range kafkaRequests {
@@ -134,7 +134,7 @@ func (h kafkaHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // Update is the handler for updating a kafka request
 func (h kafkaHandler) Update(w http.ResponseWriter, r *http.Request) {
-	var kafkaUpdateReq public.KafkaUpdateRequest
+	var kafkaUpdateReq public.DinosaurUpdateRequest
 	cfg := &handlers.HandlerConfig{
 		MarshalInto: &kafkaUpdateReq,
 		Validate: []handlers.Validate{

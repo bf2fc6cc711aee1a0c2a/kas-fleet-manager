@@ -3,6 +3,8 @@ package integration
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/antihax/optional"
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
@@ -12,7 +14,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	"github.com/bxcodec/faker/v3"
 	. "github.com/onsi/gomega"
-	"testing"
 )
 
 const (
@@ -111,18 +112,18 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		searchOpts     *public.GetKafkasOpts
+		searchOpts     *public.GetDinosaursOpts
 		wantErr        bool
 		expectedErr    string
 		expectedSize   int32
 		expectedTotal  int32
 		expectedOrder  []string
 		notContains    []string
-		validateResult func(list *public.KafkaRequestList) error
+		validateResult func(list *public.DinosaurRequestList) error
 	}{
 		{
 			name:          "Order By Name Asc",
-			searchOpts:    &public.GetKafkasOpts{OrderBy: optional.NewString("name asc")},
+			searchOpts:    &public.GetDinosaursOpts{OrderBy: optional.NewString("name asc")},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -130,7 +131,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Order By Name Desc",
-			searchOpts:    &public.GetKafkasOpts{OrderBy: optional.NewString("name desc")},
+			searchOpts:    &public.GetDinosaursOpts{OrderBy: optional.NewString("name desc")},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -138,7 +139,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Name",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", mockKafkaName1))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name = %s", mockKafkaName1))},
 			wantErr:       false,
 			expectedSize:  1,
 			expectedTotal: 1,
@@ -146,14 +147,14 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Name Not In",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name = %s", nonExistentKafkaName))},
 			wantErr:       false,
 			expectedSize:  0,
 			expectedTotal: 0,
 		},
 		{
 			name:          "Filter By Name Not Equal",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", mockKafkaName1))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", mockKafkaName1))},
 			wantErr:       false,
 			expectedSize:  2,
 			expectedTotal: 2,
@@ -161,7 +162,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Name Not Equal Non Existent Name",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", nonExistentKafkaName))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s", nonExistentKafkaName))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
@@ -169,12 +170,12 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Owner With Special Characters",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("owner = %s", usernameWithSpecialChars))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("owner = %s", usernameWithSpecialChars))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 			notContains:   []string{nonExistentKafkaName},
-			validateResult: func(list *public.KafkaRequestList) error {
+			validateResult: func(list *public.DinosaurRequestList) error {
 				if list.Items[0].Owner != usernameWithSpecialChars {
 					return fmt.Errorf("expecting owner to be '%s' but found '%s'", usernameWithSpecialChars, list.Items[0].Owner)
 				}
@@ -183,48 +184,48 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:       "Filter By Invalid Column Name",
-			searchOpts: &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("%s <> %s", nonExistentColumnName, mockKafkaName1))},
+			searchOpts: &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("%s <> %s", nonExistentColumnName, mockKafkaName1))},
 			wantErr:    true,
 		},
 		{
 			name:       "Filter By Incomplete Query",
-			searchOpts: &public.GetKafkasOpts{Search: optional.NewString("name <>")},
+			searchOpts: &public.GetDinosaursOpts{Search: optional.NewString("name <>")},
 			wantErr:    true,
 		},
 		{
 			name:       "Filter By Incomplete Composed Query",
-			searchOpts: &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and %s", mockKafkaName1, sqlDeleteQuery))},
+			searchOpts: &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and %s", mockKafkaName1, sqlDeleteQuery))},
 			wantErr:    true,
 		},
 		{
 			name:       "Filter By Invalid Join",
-			searchOpts: &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or_maybe name = %s", nonExistentKafkaName, mockKafkaName1))},
+			searchOpts: &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or_maybe name = %s", nonExistentKafkaName, mockKafkaName1))},
 			wantErr:    true,
 		},
 		{
 			name:          "Filter By Or Join",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name = %s", nonExistentKafkaName, mockKafkaName1))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s or name = %s", nonExistentKafkaName, mockKafkaName1))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name:          "Filter By And Join",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID()))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID()))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name:          "Filter By Two Joins",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s and region = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID(), mocks.MockCluster.Region().ID()))},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString(fmt.Sprintf("name <> %s and cloud_provider = %s and region = %s", nonExistentKafkaName, mocks.MockCluster.CloudProvider().ID(), mocks.MockCluster.Region().ID()))},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name: "Filter By Too Many Joins",
-			searchOpts: &public.GetKafkasOpts{Search: optional.NewString(
+			searchOpts: &public.GetDinosaursOpts{Search: optional.NewString(
 				fmt.Sprintf(
 					"name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s or name <> %s and name = %s and name = %s and name = %s and name = %s and name = %s",
 					nonExistentKafkaName,
@@ -243,14 +244,14 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 		},
 		{
 			name:          "Filter By Like (%xxx%)",
-			searchOpts:    &public.GetKafkasOpts{Search: optional.NewString("name LIKE %kafka1")},
+			searchOpts:    &public.GetDinosaursOpts{Search: optional.NewString("name LIKE %kafka1")},
 			wantErr:       false,
 			expectedSize:  3,
 			expectedTotal: 3,
 		},
 		{
 			name:        "MGDSTRM-2956 - Order By Invalid Fields",
-			searchOpts:  &public.GetKafkasOpts{Search: optional.NewString("( SELECT generate_series(1,4);)--")},
+			searchOpts:  &public.GetDinosaursOpts{Search: optional.NewString("( SELECT generate_series(1,4);)--")},
 			wantErr:     true,
 			expectedErr: "400 Bad Request",
 		},
@@ -259,7 +260,7 @@ func Test_KafkaListSearchAndOrderBy(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			list, _, err := env.client.DefaultApi.GetKafkas(env.ctx, tc.searchOpts)
+			list, _, err := env.client.DefaultApi.GetDinosaurs(env.ctx, tc.searchOpts)
 			if tc.wantErr {
 				Expect(err).To(HaveOccurred(), "Error wantErr: %v : %v", tc.wantErr, err)
 

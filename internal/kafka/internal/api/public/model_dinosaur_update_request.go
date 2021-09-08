@@ -9,9 +9,7 @@
 
 package public
 
-// InstantQuery struct for InstantQuery
-type InstantQuery struct {
-	Metric    map[string]string `json:"metric,omitempty"`
-	Timestamp int64             `json:"timestamp,omitempty"`
-	Value     float64           `json:"value"`
+// DinosaurUpdateRequest struct for DinosaurUpdateRequest
+type DinosaurUpdateRequest struct {
+	Owner string `json:"owner"`
 }

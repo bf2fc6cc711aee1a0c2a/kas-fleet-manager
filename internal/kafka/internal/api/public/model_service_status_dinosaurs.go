@@ -9,9 +9,8 @@
 
 package public
 
-// InstantQuery struct for InstantQuery
-type InstantQuery struct {
-	Metric    map[string]string `json:"metric,omitempty"`
-	Timestamp int64             `json:"timestamp,omitempty"`
-	Value     float64           `json:"value"`
+// ServiceStatusDinosaurs The Dinosaur resource api status
+type ServiceStatusDinosaurs struct {
+	// Indicates whether we have reached Dinosaur maximum capacity
+	MaxCapacityReached bool `json:"max_capacity_reached"`
 }

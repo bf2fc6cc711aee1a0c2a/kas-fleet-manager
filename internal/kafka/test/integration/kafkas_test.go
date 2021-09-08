@@ -78,14 +78,14 @@ func TestKafkaCreate_Success(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// POST responses per openapi spec: 201, 409, 500
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	kafka, resp, err := common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
 
 	// kafka successfully registered with database
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
@@ -105,7 +105,7 @@ func TestKafkaCreate_Success(t *testing.T) {
 	Expect(foundKafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
 	Expect(foundKafka.Owner).To(Equal(kafka.Owner))
 	// checking kafka_request bootstrap server port number being present
-	kafka, _, err = client.DefaultApi.GetKafkaById(ctx, foundKafka.Id)
+	kafka, _, err = client.DefaultApi.GetDinosaurById(ctx, foundKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error getting created kafka_request:  %v", err)
 	Expect(strings.HasSuffix(kafka.BootstrapServerHost, ":443")).To(Equal(true))
 	Expect(kafka.Version).To(Equal(kasfleetshardsync.GetDefaultReportedKafkaVersion()))
@@ -137,9 +137,9 @@ func TestKafka_Update(t *testing.T) {
 	owner := "test-user"
 
 	sampleKafkaID := api.NewID()
-	emptyOwnerKafkaUpdateReq := public.KafkaUpdateRequest{}
-	sameOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: owner}
-	newOwnerKafkaUpdateReq := public.KafkaUpdateRequest{Owner: "test_kafka_service"}
+	emptyOwnerKafkaUpdateReq := public.DinosaurUpdateRequest{}
+	sameOwnerKafkaUpdateReq := public.DinosaurUpdateRequest{Owner: owner}
+	newOwnerKafkaUpdateReq := public.DinosaurUpdateRequest{Owner: "test_kafka_service"}
 
 	ocmServerBuilder := mocks.NewMockConfigurableServerBuilder()
 	mockedGetClusterResponse, err := mockedClusterWithMetricsInfo(mocks.MockClusterComputeNodes)
@@ -169,12 +169,12 @@ func TestKafka_Update(t *testing.T) {
 	type args struct {
 		ctx                context.Context
 		kafkaID            string
-		kafkaUpdateRequest public.KafkaUpdateRequest
+		kafkaUpdateRequest public.DinosaurUpdateRequest
 	}
 	tests := []struct {
 		name           string
 		args           args
-		verifyResponse func(result public.KafkaRequest, resp *http.Response, err error)
+		verifyResponse func(result public.DinosaurRequest, resp *http.Response, err error)
 	}{
 		{
 			name: "should fail if owner is empty",
@@ -183,7 +183,7 @@ func TestKafka_Update(t *testing.T) {
 				kafkaID:            sampleKafkaID,
 				kafkaUpdateRequest: emptyOwnerKafkaUpdateReq,
 			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+			verifyResponse: func(result public.DinosaurRequest, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
@@ -194,7 +194,7 @@ func TestKafka_Update(t *testing.T) {
 				kafkaID:            sampleKafkaID,
 				kafkaUpdateRequest: newOwnerKafkaUpdateReq,
 			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+			verifyResponse: func(result public.DinosaurRequest, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
@@ -205,7 +205,7 @@ func TestKafka_Update(t *testing.T) {
 				kafkaID:            sampleKafkaID,
 				kafkaUpdateRequest: sameOwnerKafkaUpdateReq,
 			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+			verifyResponse: func(result public.DinosaurRequest, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 			},
 		},
@@ -216,7 +216,7 @@ func TestKafka_Update(t *testing.T) {
 				kafkaID:            "non-existent-id",
 				kafkaUpdateRequest: sameOwnerKafkaUpdateReq,
 			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+			verifyResponse: func(result public.DinosaurRequest, resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
 			},
 		},
@@ -227,7 +227,7 @@ func TestKafka_Update(t *testing.T) {
 				kafkaID:            sampleKafkaID,
 				kafkaUpdateRequest: newOwnerKafkaUpdateReq,
 			},
-			verifyResponse: func(result public.KafkaRequest, resp *http.Response, err error) {
+			verifyResponse: func(result public.DinosaurRequest, resp *http.Response, err error) {
 				Expect(err).To(BeNil())
 				Expect(resp.StatusCode).To(Equal(http.StatusOK))
 				Expect(result.Owner).To(Equal(newOwnerKafkaUpdateReq.Owner))
@@ -282,7 +282,7 @@ func TestKafka_Update(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
-			result, resp, err := client.DefaultApi.UpdateKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
+			result, resp, err := client.DefaultApi.UpdateDinosaurById(tt.args.ctx, tt.args.kafkaID, tt.args.kafkaUpdateRequest)
 			tt.verifyResponse(result, resp, err)
 		})
 	}
@@ -320,14 +320,14 @@ func TestKafkaCreate_OverrideDesiredStrimziVersion(t *testing.T) {
 	ctx := h.NewAuthenticatedContext(account, nil)
 
 	// POST responses per openapi spec: 201, 409, 500
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka, _, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	kafka, _, err := common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
 	// kafka successfully registered with database
 	Expect(err).NotTo(HaveOccurred(), "Error posting object:  %v", err)
 
@@ -408,14 +408,14 @@ func TestKafkaCreate_TooManyKafkas(t *testing.T) {
 		return
 	}
 
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	_, resp, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
 
 	Expect(err).To(HaveOccurred(), "Error posting object:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusTooManyRequests))
@@ -436,12 +436,12 @@ func TestKafkaPost_Validations(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		body     public.KafkaRequestPayload
+		body     public.DinosaurRequestPayload
 		wantCode int
 	}{
 		{
 			name: "HTTP 400 when region not supported",
-			body: public.KafkaRequestPayload{
+			body: public.DinosaurRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        "us-east-3",
@@ -451,7 +451,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when provider not supported",
-			body: public.KafkaRequestPayload{
+			body: public.DinosaurRequestPayload{
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				CloudProvider: "azure",
 				Region:        mocks.MockCluster.Region().ID(),
@@ -461,7 +461,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when MultiAZ false provided",
-			body: public.KafkaRequestPayload{
+			body: public.DinosaurRequestPayload{
 				MultiAz:       false,
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -471,7 +471,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when name not provided",
-			body: public.KafkaRequestPayload{
+			body: public.DinosaurRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -480,7 +480,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when name is not valid",
-			body: public.KafkaRequestPayload{
+			body: public.DinosaurRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -490,7 +490,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 		},
 		{
 			name: "HTTP 400 when name is too long",
-			body: public.KafkaRequestPayload{
+			body: public.DinosaurRequestPayload{
 				CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 				MultiAz:       mocks.MockCluster.MultiAZ(),
 				Region:        mocks.MockCluster.Region().ID(),
@@ -502,7 +502,7 @@ func TestKafkaPost_Validations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
-			_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, tt.body)
+			_, resp, _ := client.DefaultApi.CreateDinosaur(ctx, true, tt.body)
 			Expect(resp.StatusCode).To(Equal(tt.wantCode))
 		})
 	}
@@ -530,7 +530,7 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 	accountFromAnotherOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), anotherOrgID)
 	ctx3 := h.NewAuthenticatedContext(accountFromAnotherOrg, nil)
 
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -538,13 +538,13 @@ func TestKafkaPost_NameUniquenessValidations(t *testing.T) {
 	}
 
 	// create the first kafka
-	_, resp1, _ := client.DefaultApi.CreateKafka(ctx1, true, k)
+	_, resp1, _ := client.DefaultApi.CreateDinosaur(ctx1, true, k)
 
 	// attempt to create the second kafka with same name
-	_, resp2, _ := client.DefaultApi.CreateKafka(ctx2, true, k)
+	_, resp2, _ := client.DefaultApi.CreateDinosaur(ctx2, true, k)
 
 	// create another kafka with same name for different org
-	_, resp3, _ := client.DefaultApi.CreateKafka(ctx3, true, k)
+	_, resp3, _ := client.DefaultApi.CreateDinosaur(ctx3, true, k)
 
 	// verify that the first and third requests were accepted
 	Expect(resp1.StatusCode).To(Equal(http.StatusAccepted))
@@ -576,35 +576,35 @@ func TestKafkaDenyList_UnauthorizedValidation(t *testing.T) {
 		{
 			name: "HTTP 403 when listing kafkas",
 			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+				_, resp, _ := client.DefaultApi.GetDinosaurs(ctx, &public.GetDinosaursOpts{})
 				return resp
 			},
 		},
 		{
 			name: "HTTP 403 when creating a new kafka request",
 			operation: func() *http.Response {
-				body := public.KafkaRequestPayload{
+				body := public.DinosaurRequestPayload{
 					CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 					MultiAz:       mocks.MockCluster.MultiAZ(),
 					Region:        "us-east-3",
 					Name:          mockKafkaName,
 				}
 
-				_, resp, _ := client.DefaultApi.CreateKafka(ctx, true, body)
+				_, resp, _ := client.DefaultApi.CreateDinosaur(ctx, true, body)
 				return resp
 			},
 		},
 		{
 			name: "HTTP 403 when deleting new kafka request",
 			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.DeleteKafkaById(ctx, "kafka-id", true)
+				_, resp, _ := client.DefaultApi.DeleteDinosaurById(ctx, "kafka-id", true)
 				return resp
 			},
 		},
 		{
 			name: "HTTP 403 when getting a new kafka request",
 			operation: func() *http.Response {
-				_, resp, _ := client.DefaultApi.GetKafkaById(ctx, "kafka-id")
+				_, resp, _ := client.DefaultApi.GetDinosaurById(ctx, "kafka-id")
 				return resp
 			},
 		},
@@ -738,21 +738,21 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	internalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
 	internalUserCtx := h.NewAuthenticatedContext(internalUserAccount, nil)
 
-	kafka1 := public.KafkaRequestPayload{
+	kafka1 := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka2 := public.KafkaRequestPayload{
+	kafka2 := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          "test-kafka-2",
 		MultiAz:       testMultiAZ,
 	}
 
-	kafka3 := public.KafkaRequestPayload{
+	kafka3 := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          "test-kafka-3",
@@ -760,10 +760,10 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	}
 
 	// create the first kafka
-	resp1Body, resp1, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
+	resp1Body, resp1, _ := client.DefaultApi.CreateDinosaur(internalUserCtx, true, kafka1)
 
 	// create the second kafka
-	_, resp2, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka2)
+	_, resp2, _ := client.DefaultApi.CreateDinosaur(internalUserCtx, true, kafka2)
 
 	// verify that the request errored with 403 forbidden for the account in same organisation
 	Expect(resp2.StatusCode).To(Equal(http.StatusForbidden))
@@ -777,7 +777,7 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	accountInSameOrg := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), orgIdWithLimitOfOne)
 	internalUserCtx = h.NewAuthenticatedContext(accountInSameOrg, nil)
 
-	_, sameOrgUserResp, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka2)
+	_, sameOrgUserResp, _ := client.DefaultApi.CreateDinosaur(internalUserCtx, true, kafka2)
 	Expect(sameOrgUserResp.StatusCode).To(Equal(http.StatusForbidden))
 	Expect(sameOrgUserResp.Header.Get("Content-Type")).To(Equal("application/json"))
 
@@ -786,7 +786,7 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	internalUserCtx = h.NewAuthenticatedContext(accountInDifferentOrg, nil)
 
 	// attempt to create kafka for this user account
-	_, resp4, _ := client.DefaultApi.CreateKafka(internalUserCtx, true, kafka1)
+	_, resp4, _ := client.DefaultApi.CreateDinosaur(internalUserCtx, true, kafka1)
 
 	// verify that the request was accepted
 	Expect(resp4.StatusCode).To(Equal(http.StatusAccepted))
@@ -795,8 +795,8 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	externalUserAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserCtx := h.NewAuthenticatedContext(externalUserAccount, nil)
 
-	resp5Body, resp5, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka1)
-	_, resp6, _ := client.DefaultApi.CreateKafka(externalUserCtx, true, kafka2)
+	resp5Body, resp5, _ := client.DefaultApi.CreateDinosaur(externalUserCtx, true, kafka1)
+	_, resp6, _ := client.DefaultApi.CreateDinosaur(externalUserCtx, true, kafka2)
 
 	// verify that the first request was accepted for an eval type
 	Expect(resp5.StatusCode).To(Equal(http.StatusAccepted))
@@ -810,8 +810,8 @@ func TestKafkaQuotaManagementList_MaxAllowedInstances(t *testing.T) {
 	externalUserSameOrgAccount := h.NewAccount(h.NewID(), faker.Name(), faker.Email(), "ext-org-id")
 	externalUserSameOrgCtx := h.NewAuthenticatedContext(externalUserSameOrgAccount, nil)
 
-	_, resp7, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka3)
-	_, resp8, _ := client.DefaultApi.CreateKafka(externalUserSameOrgCtx, true, kafka2)
+	_, resp7, _ := client.DefaultApi.CreateDinosaur(externalUserSameOrgCtx, true, kafka3)
+	_, resp8, _ := client.DefaultApi.CreateDinosaur(externalUserSameOrgCtx, true, kafka2)
 
 	// verify that the first request was accepted
 	Expect(resp7.StatusCode).To(Equal(http.StatusAccepted))
@@ -831,20 +831,20 @@ func TestKafkaGet(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, _, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
 
 	// 200 OK
-	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	kafka, resp, err := client.DefaultApi.GetDinosaurById(ctx, seedKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -861,7 +861,7 @@ func TestKafkaGet(t *testing.T) {
 	Expect(kafka.Version).To(Equal(""))
 
 	// 404 Not Found
-	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	kafka, resp, _ = client.DefaultApi.GetDinosaurById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// A different account than the one used to create the Kafka instance, within
@@ -869,7 +869,7 @@ func TestKafkaGet(t *testing.T) {
 	// should be able to read the Kafka cluster
 	account = h.NewRandAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	kafka, _, _ = client.DefaultApi.GetDinosaurById(ctx, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 
 	// An account in a different organization than the one used to create the
@@ -878,14 +878,14 @@ func TestKafkaGet(t *testing.T) {
 	anotherOrgID := "12147054"
 	account = h.NewAccountWithNameAndOrg(faker.Name(), anotherOrgID)
 	ctx = h.NewAuthenticatedContext(account, nil)
-	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	_, resp, _ = client.DefaultApi.GetDinosaurById(ctx, seedKafka.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// An allowed serviceaccount in config/quota-management-list-configuration.yaml
 	// without an organization ID should get a 401 Unauthorized
 	account = h.NewAllowedServiceAccount()
 	ctx = h.NewAuthenticatedContext(account, nil)
-	_, resp, _ = client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	_, resp, _ = client.DefaultApi.GetDinosaurById(ctx, seedKafka.Id)
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
 
@@ -1006,7 +1006,7 @@ func TestKafka_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
-			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, tt.args.async)
+			_, resp, err := client.DefaultApi.DeleteDinosaurById(tt.args.ctx, tt.args.kafkaID, tt.args.async)
 			tt.verifyResponse(resp, err)
 		})
 	}
@@ -1071,7 +1071,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -1079,16 +1079,16 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	}
 
 	// Test deletion of a kafka in an 'accepted' state
-	kafka, resp, err := common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	kafka, resp, err := common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, _, err = client.DefaultApi.DeleteDinosaurById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	_ = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	kafkaList, _, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	kafkaList, _, err := client.DefaultApi.GetDinosaurs(ctx, &public.GetDinosaursOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
@@ -1098,7 +1098,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 1", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDelete.String()))
 
 	// Test deletion of a kafka in a 'preparing' state
-	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	kafka, resp, err = common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
@@ -1106,11 +1106,11 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusPreparing)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be preparing: %v", err)
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, _, err = client.DefaultApi.DeleteDinosaurById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	_ = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	kafkaList, _, err = client.DefaultApi.GetDinosaurs(ctx, &public.GetDinosaursOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
@@ -1120,7 +1120,7 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	common.CheckMetricExposed(h, t, fmt.Sprintf("%s_%s{operation=\"%s\"} 2", metrics.KasFleetManager, metrics.KafkaOperationsTotalCount, constants2.KafkaOperationDelete.String()))
 
 	// Test deletion of a kafka in a 'provisioning' state
-	kafka, resp, err = common.WaitForKafkaCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
+	kafka, resp, err = common.WaitForDinosaurCreateToBeAccepted(ctx, test.TestServices.DBFactory, client, k)
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for accepted kafka:  %v", err)
@@ -1128,11 +1128,11 @@ func TestKafkaDelete_DeleteDuringCreation(t *testing.T) {
 	kafka, err = common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, kafka.Id, constants2.KafkaRequestStatusProvisioning)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka request to be provisioning: %v", err)
 
-	_, _, err = client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, _, err = client.DefaultApi.DeleteDinosaurById(ctx, kafka.Id, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	_ = common.WaitForKafkaToBeDeleted(ctx, test.TestServices.DBFactory, client, kafka.Id)
-	kafkaList, _, err = client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	kafkaList, _, err = client.DefaultApi.GetDinosaurs(ctx, &public.GetDinosaursOpts{})
 	Expect(err).NotTo(HaveOccurred(), "Failed to list kafka request: %v", err)
 	Expect(kafkaList.Total).Should(BeZero(), " Kafka list response should be empty")
 
@@ -1152,7 +1152,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	kafka := public.KafkaRequest{
+	kafka := public.DinosaurRequest{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -1160,7 +1160,7 @@ func TestKafkaDelete_Fail(t *testing.T) {
 		Id:            "invalid-8a41f783-b5e4-4692-a7cd-c0b9c8eeede9",
 	}
 
-	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafka.Id, true)
+	_, _, err := client.DefaultApi.DeleteDinosaurById(ctx, kafka.Id, true)
 	Expect(err).To(HaveOccurred())
 	// The id is invalid, so the metric is not expected to exist
 	common.CheckMetric(h, t, fmt.Sprintf("%s_%s", metrics.KasFleetManager, metrics.KafkaOperationsSuccessCount), false)
@@ -1276,7 +1276,7 @@ func TestKafka_DeleteAdminNonOwner(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client := test.NewApiClient(h)
-			_, resp, err := client.DefaultApi.DeleteKafkaById(tt.args.ctx, tt.args.kafkaID, true)
+			_, resp, err := client.DefaultApi.DeleteDinosaurById(tt.args.ctx, tt.args.kafkaID, true)
 			tt.verifyResponse(resp, err)
 		})
 	}
@@ -1304,7 +1304,7 @@ func TestKafkaList_Success(t *testing.T) {
 	initCtx := h.NewAuthenticatedContext(account, nil)
 
 	// get initial list (should be empty)
-	initList, resp, err := client.DefaultApi.GetKafkas(initCtx, nil)
+	initList, resp, err := client.DefaultApi.GetDinosaurs(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(initList.Items).To(BeEmpty(), "Expected empty kafka requests list")
@@ -1319,7 +1319,7 @@ func TestKafkaList_Success(t *testing.T) {
 		panic("No cluster found")
 	}
 
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
@@ -1327,13 +1327,13 @@ func TestKafkaList_Success(t *testing.T) {
 	}
 
 	// POST kafka request to populate the list
-	seedKafka, _, err := client.DefaultApi.CreateKafka(initCtx, true, k)
+	seedKafka, _, err := client.DefaultApi.CreateDinosaur(initCtx, true, k)
 	if err != nil {
-		t.Fatalf("failed to create seeded KafkaRequest: %s", err.Error())
+		t.Fatalf("failed to create seeded DinosaurRequest: %s", err.Error())
 	}
 
 	// get populated list of kafka requests
-	afterPostList, _, err := client.DefaultApi.GetKafkas(initCtx, nil)
+	afterPostList, _, err := client.DefaultApi.GetDinosaurs(initCtx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -1362,7 +1362,7 @@ func TestKafkaList_Success(t *testing.T) {
 
 	// get populated list of kafka requests
 
-	afterPostList, _, err = client.DefaultApi.GetKafkas(ctx, nil)
+	afterPostList, _, err = client.DefaultApi.GetDinosaurs(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(afterPostList.Items)).To(Equal(1), "Expected kafka requests list length to be 1")
@@ -1392,7 +1392,7 @@ func TestKafkaList_Success(t *testing.T) {
 	ctx = h.NewAuthenticatedContext(account, nil)
 
 	// expecting empty list for user that hasn't created any kafkas yet
-	newUserList, _, err := client.DefaultApi.GetKafkas(ctx, nil)
+	newUserList, _, err := client.DefaultApi.GetDinosaurs(ctx, nil)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to list kafka requests:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(newUserList.Items)).To(Equal(0), "Expected kafka requests list length to be 0")
@@ -1412,7 +1412,7 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 	// create empty context
 	ctx := context.Background()
 
-	kafkaRequests, resp, err := client.DefaultApi.GetKafkas(ctx, nil)
+	kafkaRequests, resp, err := client.DefaultApi.GetDinosaurs(ctx, nil)
 	Expect(err).To(HaveOccurred()) // expecting an error here due unauthenticated user
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	Expect(kafkaRequests.Items).To(BeNil())
@@ -1421,7 +1421,7 @@ func TestKafkaList_UnauthUser(t *testing.T) {
 }
 
 func deleteTestKafka(t *testing.T, h *coreTest.Helper, ctx context.Context, client *public.APIClient, kafkaID string) {
-	_, _, err := client.DefaultApi.DeleteKafkaById(ctx, kafkaID, true)
+	_, _, err := client.DefaultApi.DeleteDinosaurById(ctx, kafkaID, true)
 	Expect(err).NotTo(HaveOccurred(), "Failed to delete kafka request: %v", err)
 
 	// wait for kafka to be deleted
@@ -1458,7 +1458,7 @@ func TestKafkaList_IncorrectOCMIssuer_AuthzFailure(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	_, resp, err := client.DefaultApi.GetDinosaurs(ctx, &public.GetDinosaursOpts{})
 	Expect(err).Should(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 }
@@ -1481,7 +1481,7 @@ func TestKafkaList_CorrectTokenIssuer_AuthzSuccess(t *testing.T) {
 
 	ctx := h.NewAuthenticatedContext(account, claims)
 
-	_, resp, err := client.DefaultApi.GetKafkas(ctx, &public.GetKafkasOpts{})
+	_, resp, err := client.DefaultApi.GetDinosaurs(ctx, &public.GetDinosaursOpts{})
 	Expect(err).ShouldNot(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 }

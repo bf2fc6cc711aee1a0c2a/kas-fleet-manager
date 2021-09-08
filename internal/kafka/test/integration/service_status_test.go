@@ -1,11 +1,12 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/dbapi"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-	"net/http"
-	"testing"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
 	. "github.com/onsi/gomega"
@@ -33,7 +34,7 @@ func TestServiceStatus(t *testing.T) {
 	serviceStatus, serviceStatusResp, err := client.DefaultApi.GetServiceStatus(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(false))
+	Expect(serviceStatus.Dinosaurs.MaxCapacityReached).To(Equal(false))
 
 	// now modify the maximum capacity of kafkas and set it to 2 so that when we insert two kafkas in the database, we'll reach maximum capacity
 	KafkaConfig(h).KafkaCapacity.MaxCapacity = 2
@@ -67,5 +68,5 @@ func TestServiceStatus(t *testing.T) {
 	serviceStatus, serviceStatusResp, err = client.DefaultApi.GetServiceStatus(ctx)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(serviceStatusResp.StatusCode).To(Equal(http.StatusOK))
-	Expect(serviceStatus.Kafkas.MaxCapacityReached).To(Equal(true))
+	Expect(serviceStatus.Dinosaurs.MaxCapacityReached).To(Equal(true))
 }

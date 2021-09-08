@@ -8,7 +8,7 @@ import (
 )
 
 // ConvertKafkaRequest from payload to KafkaRequest
-func ConvertKafkaRequest(kafkaRequest public.KafkaRequestPayload) *dbapi.KafkaRequest {
+func ConvertKafkaRequest(kafkaRequest public.DinosaurRequestPayload) *dbapi.KafkaRequest {
 	return &dbapi.KafkaRequest{
 		Region:        kafkaRequest.Region,
 		Name:          kafkaRequest.Name,
@@ -17,11 +17,11 @@ func ConvertKafkaRequest(kafkaRequest public.KafkaRequestPayload) *dbapi.KafkaRe
 	}
 }
 
-// PresentKafkaRequest - create KafkaRequest in an appropriate format ready to be returned by the API
-func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.KafkaRequest {
+// PresentDinosaurRequest - create DinosaurRequest in an appropriate format ready to be returned by the API
+func PresentKafkaRequest(kafkaRequest *dbapi.KafkaRequest) public.DinosaurRequest {
 	reference := PresentReference(kafkaRequest.ID, kafkaRequest)
 
-	return public.KafkaRequest{
+	return public.DinosaurRequest{
 		Id:                  reference.Id,
 		Kind:                reference.Kind,
 		Href:                reference.Href,

@@ -1,12 +1,13 @@
 package integration
 
 import (
+	"net/http"
+	"testing"
+
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/internal/api/public"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/ocm"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
-	"net/http"
-	"testing"
 
 	coreTest "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
@@ -56,14 +57,14 @@ func TestTermsRequired_CreateKafkaTermsRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp, err := env.client.DefaultApi.CreateDinosaur(ctx, true, k)
 
 	Expect(err).To(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusForbidden))
@@ -81,14 +82,14 @@ func TestTermsRequired_CreateKafka_TermsNotRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	_, resp, err := env.client.DefaultApi.CreateKafka(ctx, true, k)
+	_, resp, err := env.client.DefaultApi.CreateDinosaur(ctx, true, k)
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -102,7 +103,7 @@ func TestTermsRequired_ListKafkaTermsRequired(t *testing.T) {
 	account := env.helper.NewRandAccount()
 	ctx := env.helper.NewAuthenticatedContext(account, nil)
 
-	_, resp, err := env.client.DefaultApi.GetKafkas(ctx, nil)
+	_, resp, err := env.client.DefaultApi.GetDinosaurs(ctx, nil)
 
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))

@@ -136,14 +136,14 @@ func Test_Validations_validateKafkaClusterNames(t *testing.T) {
 
 func Test_Validation_validateCloudProvider(t *testing.T) {
 	type args struct {
-		kafkaRequest   public.KafkaRequestPayload
+		kafkaRequest   public.DinosaurRequestPayload
 		ProviderConfig *config.ProviderConfig
 	}
 
 	type result struct {
 		wantErr      bool
 		reason       string
-		kafkaRequest public.KafkaRequest
+		kafkaRequest public.DinosaurRequest
 	}
 
 	tests := []struct {
@@ -154,7 +154,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when default provider and region are picked",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{},
+				kafkaRequest: public.DinosaurRequestPayload{},
 				ProviderConfig: &config.ProviderConfig{
 					ProvidersConfig: config.ProviderConfiguration{
 						SupportedProviders: config.ProviderList{
@@ -174,7 +174,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
-				kafkaRequest: public.KafkaRequest{
+				kafkaRequest: public.DinosaurRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -183,7 +183,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "do not throw an error when cloud provider and region matches",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
+				kafkaRequest: public.DinosaurRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -212,7 +212,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 			},
 			want: result{
 				wantErr: false,
-				kafkaRequest: public.KafkaRequest{
+				kafkaRequest: public.DinosaurRequest{
 					CloudProvider: "aws",
 					Region:        "us-east-1",
 				},
@@ -221,7 +221,7 @@ func Test_Validation_validateCloudProvider(t *testing.T) {
 		{
 			name: "throws an error when cloud provider and region do not match",
 			arg: args{
-				kafkaRequest: public.KafkaRequestPayload{
+				kafkaRequest: public.DinosaurRequestPayload{
 					CloudProvider: "aws",
 					Region:        "us-east",
 				},

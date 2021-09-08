@@ -56,14 +56,14 @@ func TestObservatorium_GetMetrics(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, _, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
@@ -109,14 +109,14 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, _, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
@@ -124,7 +124,7 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	foundKafka, _ := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
 
 	// 200 OK
-	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	kafka, resp, err := client.DefaultApi.GetDinosaurById(ctx, seedKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -136,13 +136,13 @@ func TestObservatorium_GetMetricsByQueryRange(t *testing.T) {
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
-	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	kafka, resp, _ = client.DefaultApi.GetDinosaurById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
 	context := h.NewAuthenticatedContext(acc, nil)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
+	kafka, _, _ = client.DefaultApi.GetDinosaurById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when loading clients: %v", err)
 	filters := public.GetMetricsByRangeQueryOpts{}
@@ -179,14 +179,14 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 
 	account := h.NewRandAccount()
 	ctx := h.NewAuthenticatedContext(account, nil)
-	k := public.KafkaRequestPayload{
+	k := public.DinosaurRequestPayload{
 		Region:        mocks.MockCluster.Region().ID(),
 		CloudProvider: mocks.MockCluster.CloudProvider().ID(),
 		Name:          mockKafkaName,
 		MultiAz:       testMultiAZ,
 	}
 
-	seedKafka, _, err := client.DefaultApi.CreateKafka(ctx, true, k)
+	seedKafka, _, err := client.DefaultApi.CreateDinosaur(ctx, true, k)
 	if err != nil {
 		t.Fatalf("failed to create seeded kafka request: %s", err.Error())
 	}
@@ -194,7 +194,7 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	foundKafka, err := common.WaitForKafkaToReachStatus(ctx, test.TestServices.DBFactory, client, seedKafka.Id, constants2.KafkaRequestStatusReady)
 	Expect(err).NotTo(HaveOccurred(), "Error waiting for kafka to be ready")
 	// 200 OK
-	kafka, resp, err := client.DefaultApi.GetKafkaById(ctx, seedKafka.Id)
+	kafka, resp, err := client.DefaultApi.GetDinosaurById(ctx, seedKafka.Id)
 	Expect(err).NotTo(HaveOccurred(), "Error occurred when attempting to get kafka request:  %v", err)
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(kafka.Id).NotTo(BeEmpty(), "Expected ID assigned on creation")
@@ -206,13 +206,13 @@ func TestObservatorium_GetMetricsByQueryInstant(t *testing.T) {
 	Expect(kafka.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
 
 	// 404 Not Found
-	kafka, resp, _ = client.DefaultApi.GetKafkaById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
+	kafka, resp, _ = client.DefaultApi.GetDinosaurById(ctx, fmt.Sprintf("not-%s", seedKafka.Id))
 	Expect(resp.StatusCode).To(Equal(http.StatusNotFound))
 
 	// different account but same org, should be able to read the Kafka cluster
 	acc := h.NewRandAccount()
 	context := h.NewAuthenticatedContext(acc, nil)
-	kafka, _, _ = client.DefaultApi.GetKafkaById(context, seedKafka.Id)
+	kafka, _, _ = client.DefaultApi.GetDinosaurById(context, seedKafka.Id)
 	Expect(kafka.Id).NotTo(BeEmpty())
 
 	filters := public.GetMetricsByInstantQueryOpts{}

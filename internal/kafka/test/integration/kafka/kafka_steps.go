@@ -29,7 +29,7 @@ func (s *extender) iHaveCreatedAKafkaClusterAs(id string) error {
 	defer session.TestUser.Mu.Unlock()
 
 	apiClient := test.NewApiClient(s.Suite.Helper)
-	kafkas, _, err := apiClient.DefaultApi.GetKafkas(session.TestUser.Ctx, &public.GetKafkasOpts{})
+	kafkas, _, err := apiClient.DefaultApi.GetDinosaurs(session.TestUser.Ctx, &public.GetDinosaursOpts{})
 	if err != nil {
 		return err
 	}
@@ -38,7 +38,7 @@ func (s *extender) iHaveCreatedAKafkaClusterAs(id string) error {
 	if len(kafkas.Items) != 0 {
 		kafkaId = kafkas.Items[0].Id
 	} else {
-		kafka, _, err := apiClient.DefaultApi.CreateKafka(session.TestUser.Ctx, true, public.KafkaRequestPayload{
+		kafka, _, err := apiClient.DefaultApi.CreateDinosaur(session.TestUser.Ctx, true, public.DinosaurRequestPayload{
 			Name:          "mykafka",
 			CloudProvider: "aws",
 			Region:        "us-east-1",

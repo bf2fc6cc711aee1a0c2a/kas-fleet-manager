@@ -249,8 +249,8 @@ components:
       value:
         id: "404"
         kind: Error
-        href: /api/kafkas_mgmt/v1/errors/7
-        code: KAFKAS-MGMT-7
+        href: /api/dinosaurs_mgmt/v1/errors/7
+        code: DINOSAURS-MGMT-7
         reason: The requested resource doesn't exist
   schemas:
     ListReference:

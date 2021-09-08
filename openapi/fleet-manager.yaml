@@ -1,9 +1,9 @@
 openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
 # All endpoints defined here will be discoverable by all users. If there is a need to keep some endpoints "private", add them to the "managed-services-api-private.yaml" file
 info:
-  title: Kafka Service Fleet Manager
+  title: Dinosaur Service Fleet Manager
   version: 1.1.2
-  description: Kafka Service Fleet Manager is a Rest API to manage Kafka instances.
+  description: Dinosaur Service Fleet Manager is a Rest API to manage Dinosaur instances.
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -14,7 +14,7 @@ servers:
   - url: /
     description: current domain
 paths:
-  /api/kafkas_mgmt/v1:
+  /api/dinosaurs_mgmt/v1:
     get:
       operationId: getVersionMetadata
       responses:
@@ -25,7 +25,7 @@ paths:
                 $ref: '#/components/schemas/VersionMetadata'
           description: Version metadata
       summary: Returns the version metadata
-  /api/kafkas_mgmt/v1/status:
+  /api/dinosaurs_mgmt/v1/status:
     get:
       operationId: getServiceStatus
       responses:
@@ -47,21 +47,21 @@ paths:
       summary: Returns the status of resources, such as whether maximum service capacity has been reached
       security:
         - Bearer: []
-  /api/kafkas_mgmt/v1/kafkas/{id}:
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}:
     get:
-      operationId: getKafkaById
+      operationId: getDinosaurById
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KafkaRequest'
+                $ref: '#/components/schemas/DinosaurRequest'
               examples:
-                KafkaRequestGetResponseExample:
-                  $ref: '#/components/examples/KafkaRequestExample'
-                KafkaRequestGetResponseWithFailedCreationStatusExample:
-                  $ref: '#/components/examples/KafkaRequestFailedCreationStatusExample'
-          description: Kafka request found by ID
+                DinosaurRequestGetResponseExample:
+                  $ref: '#/components/examples/DinosaurRequestExample'
+                DinosaurRequestGetResponseWithFailedCreationStatusExample:
+                  $ref: '#/components/examples/DinosaurRequestFailedCreationStatusExample'
+          description: Dinosaur request found by ID
         "401":
           content:
             application/json:
@@ -88,7 +88,7 @@ paths:
               examples:
                 404Example:
                   $ref: '#/components/examples/404Example'
-          description: No Kafka request with specified ID exists
+          description: No Dinosaur request with specified ID exists
         "500":
           content:
             application/json:
@@ -100,9 +100,9 @@ paths:
           description: Unexpected error occurred
       security:
         - Bearer: []
-      summary: Returns a Kafka request by ID
+      summary: Returns a Dinosaur request by ID
     delete:
-      operationId: deleteKafkaById
+      operationId: deleteDinosaurById
       parameters:
         - in: query
           name: async
@@ -154,7 +154,7 @@ paths:
               examples:
                 404DeleteExample:
                   $ref: '#/components/examples/404DeleteExample'
-          description: No Kafka request with specified ID exists
+          description: No Dinosaur request with specified ID exists
         "500":
           content:
             application/json:
@@ -164,31 +164,31 @@ paths:
                 500DeleteExample:
                   $ref: '#/components/examples/500DeleteExample'
           description: Unexpected error occurred
-      summary: Deletes a Kafka request by ID
+      summary: Deletes a Dinosaur request by ID
       security:
         - Bearer: []
     patch:
-      summary: Update a Kafka instance by id
+      summary: Update a Dinosaur instance by id
       security:
         - Bearer: []
-      operationId: updateKafkaById
+      operationId: updateDinosaurById
       requestBody:
-        description: Update owner of kafka
+        description: Update owner of dinosaur
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/KafkaUpdateRequest'
+              $ref: '#/components/schemas/DinosaurUpdateRequest'
         required: true
       responses:
         "200":
-          description: Kafka updated by ID
+          description: Dinosaur updated by ID
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KafkaRequest'
+                $ref: '#/components/schemas/DinosaurRequest'
               examples:
-                KafkaRequestPostResponseExample:
-                  $ref: '#/components/examples/KafkaRequestExample'
+                DinosaurRequestPostResponseExample:
+                  $ref: '#/components/examples/DinosaurRequestExample'
         "400":
           description: Bad request
           content:
@@ -208,7 +208,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         "404":
-          description: No Kafka found with the specified ID
+          description: No Dinosaur found with the specified ID
           content:
             application/json:
               schema:
@@ -221,9 +221,9 @@ paths:
                 $ref: '#/components/schemas/Error'
     parameters:
       - $ref: "#/components/parameters/id"
-  /api/kafkas_mgmt/v1/kafkas:
+  /api/dinosaurs_mgmt/v1/dinosaurs:
     post:
-      operationId: createKafka
+      operationId: createDinosaur
       parameters:
         - in: query
           name: async
@@ -232,11 +232,11 @@ paths:
             type: boolean
           required: true
       requestBody:
-        description: Kafka data
+        description: Dinosaur data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/KafkaRequestPayload'
+              $ref: '#/components/schemas/DinosaurRequestPayload'
             examples:
               USRegion:
                 $ref: '#/components/examples/USRegionExample'
@@ -248,10 +248,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KafkaRequest'
+                $ref: '#/components/schemas/DinosaurRequest'
               examples:
-                KafkaRequestPostResponseExample:
-                  $ref: '#/components/examples/KafkaRequestExample'
+                DinosaurRequestPostResponseExample:
+                  $ref: '#/components/examples/DinosaurRequestExample'
           description: Accepted
         "400":
           content:
@@ -310,22 +310,22 @@ paths:
               examples:
                 500Example:
                   $ref: '#/components/examples/500Example'
-          description: An unexpected error occurred while creating the Kafka request
+          description: An unexpected error occurred while creating the Dinosaur request
       security:
         - Bearer: []
-      summary: Creates a Kafka request
+      summary: Creates a Dinosaur request
     get:
-      summary: Returns a list of Kafka requests
-      operationId: getKafkas
+      summary: Returns a list of Dinosaur requests
+      operationId: getDinosaurs
       security:
         - Bearer: []
       responses:
         "200":
-          description: A list of Kafka requests
+          description: A list of Dinosaur requests
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/KafkaRequestList'
+                $ref: '#/components/schemas/DinosaurRequestList'
         "400":
           description: Bad request
           content:
@@ -367,7 +367,7 @@ paths:
         - $ref: '#/components/parameters/size'
         - $ref: '#/components/parameters/orderBy'
         - $ref: '#/components/parameters/search'
-  /api/kafkas_mgmt/v1/cloud_providers:
+  /api/dinosaurs_mgmt/v1/cloud_providers:
     get:
       summary: Returns the list of supported cloud providers
       operationId: getCloudProviders
@@ -401,7 +401,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
-  /api/kafkas_mgmt/v1/cloud_providers/{id}/regions:
+  /api/dinosaurs_mgmt/v1/cloud_providers/{id}/regions:
     get:
       summary: Returns the list of supported regions of the supported cloud provider
       operationId: getCloudProviderRegions
@@ -436,7 +436,7 @@ paths:
         - $ref: "#/components/parameters/id"
         - $ref: '#/components/parameters/page'
         - $ref: '#/components/parameters/size'
-  /api/kafkas_mgmt/v1/service_accounts:
+  /api/dinosaurs_mgmt/v1/service_accounts:
     get:
       responses:
         '200':
@@ -532,7 +532,7 @@ paths:
       tags:
         - security
       summary: Creates a service account
-  '/api/kafkas_mgmt/v1/service_accounts/{id}':
+  '/api/dinosaurs_mgmt/v1/service_accounts/{id}':
     get:
       parameters:
         - $ref: "#/components/parameters/id"
@@ -596,7 +596,7 @@ paths:
       tags:
         - security
       summary: Deletes a service account by ID
-  '/api/kafkas_mgmt/v1/service_accounts/{id}/reset_credentials':
+  '/api/dinosaurs_mgmt/v1/service_accounts/{id}/reset_credentials':
     post:
       parameters:
         - $ref: "#/components/parameters/id"
@@ -645,9 +645,9 @@ paths:
   #
   # These are the user-facing related endpoints
   #
-  /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query_range:
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/query_range:
     get:
-      summary: Returns metrics with timeseries range query by Kafka ID
+      summary: Returns metrics with timeseries range query by Dinosaur ID
       operationId: getMetricsByRangeQuery
       security:
         - Bearer: []
@@ -681,9 +681,9 @@ paths:
         - $ref: "#/components/parameters/duration"
         - $ref: "#/components/parameters/interval"
         - $ref: "#/components/parameters/filters"
-  /api/kafkas_mgmt/v1/kafkas/{id}/metrics/query:
+  /api/dinosaurs_mgmt/v1/dinosaurs/{id}/metrics/query:
     get:
-      summary: Returns metrics with instant query by Kafka ID
+      summary: Returns metrics with instant query by Dinosaur ID
       operationId: getMetricsByInstantQuery
       security:
         - Bearer: []
@@ -765,7 +765,7 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/Error"
-    KafkaRequest:
+    DinosaurRequest:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
@@ -800,24 +800,24 @@ components:
             instance_type:
               type: string
           example:
-            $ref: "#/components/examples/KafkaRequestExample"
-    KafkaRequestList:
+            $ref: "#/components/examples/DinosaurRequestExample"
+    DinosaurRequestList:
       allOf:
         - $ref: "#/components/schemas/List"
         - type: object
           example:
-            kind: "KafkaRequestList"
+            kind: "DinosaurRequestList"
             page: "1"
             size: "1"
             total: "1"
             item:
-              $ref: '#/components/examples/KafkaRequestExample'
+              $ref: '#/components/examples/DinosaurRequestExample'
           properties:
             items:
               type: array
               items:
                 allOf:
-                  - $ref: "#/components/schemas/KafkaRequest"
+                  - $ref: "#/components/schemas/DinosaurRequest"
     VersionMetadata:
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
@@ -825,11 +825,11 @@ components:
           example:
             kind: "APIVersion"
             id: "v1"
-            href: "/api/kafkas_mgmt/v1"
+            href: "/api/dinosaurs_mgmt/v1"
             collections:
-              - id: "kafkas"
-                href: "/api/kafkas_mgmt/v1/kafkas"
-                kind: "KafkaList"
+              - id: "dinosaurs"
+                href: "/api/dinosaurs_mgmt/v1/dinosaurs"
+                kind: "DinosaurList"
           properties:
             collections:
               type: array
@@ -839,36 +839,36 @@ components:
     ServiceStatus:
       description: Schema for the service status response body
       example:
-        kafkas:
+        dinosaurs:
           max_capacity_reached: true
       type: object
       properties:
-        kafkas:
-          description: The Kafka resource api status
+        dinosaurs:
+          description: The Dinosaur resource api status
           type: object
           required:
             - max_capacity_reached
           properties:
             max_capacity_reached:
-              description: Indicates whether we have reached Kafka maximum capacity
+              description: Indicates whether we have reached Dinosaur maximum capacity
               type: boolean
-    KafkaRequestPayload:
-      description: Schema for the request body sent to /kafkas POST
+    DinosaurRequestPayload:
+      description: Schema for the request body sent to /dinosaurs POST
       required:
         - name
       type: object
       properties:
         cloud_provider:
-          description: The cloud provider where the Kafka cluster will be created in
+          description: The cloud provider where the Dinosaur cluster will be created in
           type: string
         multi_az:
-          description: Set this to true to configure the Kafka cluster to be multiAZ
+          description: Set this to true to configure the Dinosaur cluster to be multiAZ
           type: boolean
         name:
-          description: 'The name of the Kafka cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
+          description: 'The name of the Dinosaur cluster. It must consist of lower-case alphanumeric characters or ''-'', start with an alphabetic character, and end with an alphanumeric character, and can not be longer than 32 characters.'
           type: string
         region:
-          description: The region where the Kafka cluster will be created in
+          description: The region where the Dinosaur cluster will be created in
           type: string
     CloudProviderList:
       allOf:
@@ -943,7 +943,7 @@ components:
       required:
         - enabled
     ServiceAccount:
-      description: 'Service Account created in MAS-SSO for the Kafka Cluster for authentication'
+      description: 'Service Account created in MAS-SSO for the Dinosaur Cluster for authentication'
       allOf:
         - $ref: "#/components/schemas/ObjectReference"
         - type: object
@@ -1099,7 +1099,7 @@ components:
           format: double
       required:
         - value
-    KafkaUpdateRequest:
+    DinosaurUpdateRequest:
       required:
         - owner
       type: object
@@ -1147,7 +1147,7 @@ components:
     filters:
       name: filters
       in: query
-      description: List of metrics to fetch. Fetch all metrics when empty. List entries are Kafka internal metric names.
+      description: List of metrics to fetch. Fetch all metrics when empty. List entries are Dinosaur internal metric names.
       schema:
         type: array
         items:
@@ -1177,14 +1177,14 @@ components:
       description: |-
         Specifies the order by criteria. The syntax of this parameter is
         similar to the syntax of the `order by` clause of an SQL statement.
-        Each query can be ordered by any of the `kafkaRequests` fields.
-        For example, to return all Kafka instances ordered by their name, use the following syntax:
+        Each query can be ordered by any of the `dinosaurRequests` fields.
+        For example, to return all Dinosaur instances ordered by their name, use the following syntax:
 
         ```sql
         name asc
         ```
 
-        To return all Kafka instances ordered by their name _and_ created date, use the following syntax:
+        To return all Dinosaur instances ordered by their name _and_ created date, use the following syntax:
 
         ```sql
         name asc, created_at asc
@@ -1212,19 +1212,19 @@ components:
 
         Examples:
 
-        To return a Kafka instance with the name `my-kafka` and the region `aws`, use the following syntax:
+        To return a Dinosaur instance with the name `my-dinosaur` and the region `aws`, use the following syntax:
 
         ```
-        name = my-kafka and cloud_provider = aws
+        name = my-dinosaur and cloud_provider = aws
         ```[p-]
 
-        To return a Kafka instance with a name that starts with `my`, use the following syntax:
+        To return a Dinosaur instance with a name that starts with `my`, use the following syntax:
 
         ```
         name like my%25
         ```
 
-        If the parameter isn't provided, or if the value is empty, then all the Kafka instances
+        If the parameter isn't provided, or if the value is empty, then all the Dinosaur instances
         that the user has permission to see are returned.
 
         Note. If the query is invalid, an error is returned.
@@ -1234,7 +1234,7 @@ components:
       required: false
       examples:
         search:
-          value: "name = my-kafka and cloud_provider = aws"
+          value: "name = my-dinosaur and cloud_provider = aws"
       schema:
         type: string
       style: form
@@ -1254,37 +1254,37 @@ components:
         region: "eu-west-1"
         cloud_provider: "aws"
         name: "serviceapitest"
-    KafkaRequestExample:
+    DinosaurRequestExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
-        kind: "kafka"
-        href: "/api/kafkas_mgmt/v1/kafkas/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        kind: "dinosaur"
+        href: "/api/dinosaurs_mgmt/v1/dinosaurs/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
         status: "ready"
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner:  "api_kafka_service"
+        owner:  "api_dinosaur_service"
         name: "serviceapi"
         bootstrap_server_host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.apps.mk-bttg0jn170hp.x5u8.s1.devshift.org"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
         version: "2.6.0"
         instance_type: standard
-    KafkaRequestFailedCreationStatusExample:
+    DinosaurRequestFailedCreationStatusExample:
       value:
         id: "1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
-        kind: "kafka"
-        href: "/api/kafkas_mgmt/v1/kafkas/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
+        kind: "dinosaur"
+        href: "/api/dinosaurs_mgmt/v1/dinosaurs/1iSY6RQ3JKI8Q0OTmjQFd3ocFRg"
         status: "failed"
         cloud_provider: "aws"
         multi_az: true
         region: "us-east-1"
-        owner:  "api_kafka_service"
+        owner:  "api_dinosaur_service"
         name: "serviceapi"
         bootstrap_server_host: "serviceapi-1isy6rq3jki8q0otmjqfd3ocfrg.apps.mk-bttg0jn170hp.x5u8.s1.devshift.org"
         created_at: "2020-10-05T12:51:24.053142Z"
         updated_at: "2020-10-05T12:56:36.362208Z"
-        failed_reason: "a reason the Kafka request creation failed"
+        failed_reason: "a reason the Dinosaur request creation failed"
         instance_type: standard
     CloudProviderExample:
       value:
@@ -1307,7 +1307,7 @@ components:
       value:
         id: "1"
         kind: "ServiceAccount"
-        href: "/api/kafkas_mgmt/v1/serviceaccounts/1"
+        href: "/api/dinosaurs_mgmt/v1/serviceaccounts/1"
         name: "my-app-sa"
         description: "service account for my app"
         client_id: "SA-121212"
@@ -1318,7 +1318,7 @@ components:
       value:
         id: "1"
         kind: "ServiceAccount"
-        href: "/api/kafkas_mgmt/v1/serviceaccounts/1"
+        href: "/api/dinosaurs_mgmt/v1/serviceaccounts/1"
         name: "my-app-sa"
         description: "service account for my app"
         client_id: "SA-121212"
@@ -1328,7 +1328,7 @@ components:
       value:
         id: "1"
         kind: "ServiceAccountListItem"
-        href: "/api/kafkas_mgmt/v1/serviceaccounts/1"
+        href: "/api/dinosaurs_mgmt/v1/serviceaccounts/1"
         name: "my-app-sa"
         description: "service account for my app"
         client_id: "SA-121212"
@@ -1337,8 +1337,8 @@ components:
     MetricsRangeQueryExample:
       value:
         metric:
-          __name__: kafka_server_brokertopicmetrics_bytes_in_total
-          strimzi_io_cluster: kafka-service
+          __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
+          strimzi_io_cluster: dinosaur-service
           topic: __consumer_offsets
         values:
           - timestamp: 1611670230000
@@ -1350,8 +1350,8 @@ components:
     MetricsInstantQueryExample:
       value:
         metric:
-          __name__: kafka_server_brokertopicmetrics_bytes_in_total
-          strimzi_io_cluster: kafka-service
+          __name__: dinosaur_server_brokertopicmetrics_bytes_in_total
+          strimzi_io_cluster: dinosaur-service
           topic: __consumer_offsets
         timestamp: 1611670230000
         value: 84154
@@ -1359,95 +1359,95 @@ components:
       value:
         id: "103"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/103"
-        code: "KAFKAS-MGMT-103"
+        href: "/api/dinosaurs_mgmt/v1/errors/103"
+        code: "DINOSAURS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400CreationExample:
       value:
         id: "103"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/103"
-        code: "KAFKAS-MGMT-103"
+        href: "/api/dinosaurs_mgmt/v1/errors/103"
+        code: "DINOSAURS-MGMT-103"
         reason: "Synchronous action is not supported, use async=true parameter"
         operation_id: "1iWIimqGcrDuL61aUxIZqBTqNRa"
     400InvalidQueryExample:
       value:
         id: "203"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/23"
-        code: "KAFKAS-MGMT-23"
-        reason: "Failed to parse search query: Unable to list Kafka requests for api_kafka_service: KAFKAS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
+        href: "/api/dinosaurs_mgmt/v1/errors/23"
+        code: "DINOSAURS-MGMT-23"
+        reason: "Failed to parse search query: Unable to list Dinosaur requests for api_dinosaur_service: DINOSAURS-MGMT-23: Failed to parse search query: Unsupported column name for search: 'id'. Supported column names are: region, name, cloud_provider, name, status. Query invalid: id = 123"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"
     404Example:
       value:
         id: "404"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/7"
-        code: "KAFKAS-MGMT-7"
+        href: "/api/dinosaurs_mgmt/v1/errors/7"
+        code: "DINOSAURS-MGMT-7"
         reason: "The requested resource doesn't exist"
     404DeleteExample:
       value:
         id: "7"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/7"
-        code: "KAFKAS-MGMT-7"
-        reason: "KafkaResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
+        href: "/api/dinosaurs_mgmt/v1/errors/7"
+        code: "DINOSAURS-MGMT-7"
+        reason: "DinosaurResource with id='1iK3duVYIvv5YvLlyz1mGR3JyqN' not found"
         operation_id: "1iYO7g2g6HTdUKUa2ksH82kQD3y"
     401Example:
       value:
         id: "11"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/11"
-        code: "KAFKAS-MGMT-11"
+        href: "/api/dinosaurs_mgmt/v1/errors/11"
+        code: "DINOSAURS-MGMT-11"
         reason: "Unable to verify JWT token: Required authorization token not found"
         operation_id: "1iY3UhEhwmXBpWPfI2lNekpd4ZD"
     403Example:
       value:
         id: "4"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/4"
-        code: "KAFKAS-MGMT-4"
+        href: "/api/dinosaurs_mgmt/v1/errors/4"
+        code: "DINOSAURS-MGMT-4"
         reason: "User 'foo-bar' is not authorized to access the service."
         operation_id: "1lY3UiEhznXBpWPfI2lNejpd4YC"
     403MaxAllowedInstanceReachedExample:
       value:
         id: "5"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/5"
-        code: "KAFKAS-MGMT-5"
+        href: "/api/dinosaurs_mgmt/v1/errors/5"
+        code: "DINOSAURS-MGMT-5"
         reason: "User 'foo-bar' has reached a maximum number of 6 allowed instances."
         operation_id: "1lY3UiEkxnXBpVPeI2oNejd3XB"
     403TermsNotAcceptedExample:
       value:
         id: "12"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/12"
-        code: "KAFKAS-MGMT-12"
+        href: "/api/dinosaurs_mgmt/v1/errors/12"
+        code: "DINOSAURS-MGMT-12"
         reason: "Required terms have not been accepted"
         operation_id: "kXCzWPeI2oXBpVPeI2LvF9jMQY"
     409NameConflictExample:
       value:
         id: "36"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/36"
-        code: "KAFKAS-MGMT-36"
-        reason: "Kafka cluster name is already used"
+        href: "/api/dinosaurs_mgmt/v1/errors/36"
+        code: "DINOSAURS-MGMT-36"
+        reason: "Dinosaur cluster name is already used"
         operation_id: "6kY0UiEkzkXCzWPeI2oYehd3ED"
     500Example:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/9"
-        code: "KAFKAS-MGMT-9"
+        href: "/api/dinosaurs_mgmt/v1/errors/9"
+        code: "DINOSAURS-MGMT-9"
         reason: "Unspecified error"
         operation_id: "1ieELvF9jMQY6YghfM9gGRsHvEW"
     500DeleteExample:
       value:
         id: "9"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/9"
-        code: "KAFKAS-MGMT-9"
+        href: "/api/dinosaurs_mgmt/v1/errors/9"
+        code: "DINOSAURS-MGMT-9"
         reason: "error deleting syncset: OCM-EX-9: failed to delete syncset: ext-serviceapi-1ix03lndlmq0qfc7sita5sljv8e
           for cluster id: 1g5d88q0lrcdv4g7alb7slfgnj3dhbsj%!(EXTRA *errors.Error=identifier
           is '404', code is 'CLUSTERS-MGMT-404' and operation identifier is '1g5or50viu07oealuehrkc26dgftj1ac':

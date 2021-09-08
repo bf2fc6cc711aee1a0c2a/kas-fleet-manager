@@ -67,12 +67,12 @@ func runList(env *environments.Env, cmd *cobra.Command, _ []string) {
 	}
 
 	// format output
-	kafkaRequestList := public.KafkaRequestList{
+	kafkaRequestList := public.DinosaurRequestList{
 		Kind:  "KafkaRequestList",
 		Page:  int32(paging.Page),
 		Size:  int32(paging.Size),
 		Total: int32(paging.Total),
-		Items: []public.KafkaRequest{},
+		Items: []public.DinosaurRequest{},
 	}
 
 	for _, kafkaRequest := range kafkaList {

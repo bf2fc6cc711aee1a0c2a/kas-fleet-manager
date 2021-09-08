@@ -33,7 +33,7 @@ func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFa
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if list, _, err := client.DefaultApi.GetKafkas(ctx, nil); err != nil {
+			if list, _, err := client.DefaultApi.GetDinosaurs(ctx, nil); err != nil {
 				return false, err
 			} else {
 				currentCount = list.Size
@@ -43,8 +43,8 @@ func WaitForNumberOfKafkaToBeGivenCount(ctx context.Context, db *db.ConnectionFa
 		Build().Poll()
 }
 
-// WaitForKafkaCreateToBeAccepted - Creates a kafka and awaits for the request to be accepted
-func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, k public.KafkaRequestPayload) (kafka public.KafkaRequest, resp *http.Response, err error) {
+// WaitForDinosaurCreateToBeAccepted - Creates a kafka and awaits for the request to be accepted
+func WaitForDinosaurCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, k public.DinosaurRequestPayload) (kafka public.DinosaurRequest, resp *http.Response, err error) {
 	currentStatus := ""
 
 	err = NewPollerBuilder(db).
@@ -57,7 +57,7 @@ func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactor
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			kafka, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+			kafka, resp, err = client.DefaultApi.CreateDinosaur(ctx, true, k)
 			if err != nil {
 				return true, err
 			}
@@ -67,8 +67,8 @@ func WaitForKafkaCreateToBeAccepted(ctx context.Context, db *db.ConnectionFactor
 	return kafka, resp, err
 }
 
-// WaitForKafkaToReachStatus - Awaits for a kafka to reach a specified status
-func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string, status constants2.KafkaStatus) (kafka public.KafkaRequest, err error) {
+// WaitForDinosaurToReachStatus - Awaits for a kafka to reach a specified status
+func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, client *public.APIClient, kafkaId string, status constants2.KafkaStatus) (kafka public.DinosaurRequest, err error) {
 	currentStatus := ""
 
 	glog.Infof("status: " + status.String())
@@ -83,7 +83,7 @@ func WaitForKafkaToReachStatus(ctx context.Context, db *db.ConnectionFactory, cl
 			}
 		}).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			kafka, _, err = client.DefaultApi.GetKafkaById(ctx, kafkaId)
+			kafka, _, err = client.DefaultApi.GetDinosaurById(ctx, kafkaId)
 			if err != nil {
 				return true, err
 			}
@@ -110,7 +110,7 @@ func WaitForKafkaToBeDeleted(ctx context.Context, db *db.ConnectionFactory, clie
 		IntervalAndTimeout(defaultPollInterval, defaultKafkaReadyTimeout).
 		RetryLogMessagef("Waiting for kafka '%s' to be deleted", kafkaId).
 		OnRetry(func(attempt int, maxRetries int) (done bool, err error) {
-			if _, _, err := client.DefaultApi.GetKafkaById(ctx, kafkaId); err != nil {
+			if _, _, err := client.DefaultApi.GetDinosaurById(ctx, kafkaId); err != nil {
 				if err.Error() == "404 Not Found" {
 					return true, nil
 				}

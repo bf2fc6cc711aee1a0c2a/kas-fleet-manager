@@ -45,7 +45,7 @@ func ValidateKafkaClusterNameIsUnique(name *string, kafkaService services.KafkaS
 
 // ValidateCloudProvider returns a validator that sets default cloud provider details if needed and validates provided
 // provider and region
-func ValidateCloudProvider(kafkaRequest *public.KafkaRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
+func ValidateCloudProvider(kafkaRequest *public.DinosaurRequestPayload, providerConfig *config.ProviderConfig, action string) handlers.Validate {
 	return func() *errors.ServiceError {
 		// Set Cloud Provider default if not received in the request
 		supportedProviders := providerConfig.ProvidersConfig.SupportedProviders

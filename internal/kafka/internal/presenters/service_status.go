@@ -6,7 +6,7 @@ import (
 
 func PresentServiceStatus(userInDenyList bool, kafkaMaximumCapacityReached bool) *public.ServiceStatus {
 	return &public.ServiceStatus{
-		Kafkas: public.ServiceStatusKafkas{
+		Dinosaurs: public.ServiceStatusDinosaurs{
 			MaxCapacityReached: userInDenyList || kafkaMaximumCapacityReached,
 		},
 	}
