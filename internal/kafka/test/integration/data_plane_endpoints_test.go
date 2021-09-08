@@ -874,3 +874,61 @@ func TestDataPlaneEndpoints_UpdateManagedKafkaWithErrorStatus(t *testing.T) {
 	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusFailed.String()))
 	Expect(c.FailedReason).To(ContainSubstring(errMessage))
 }
+
+func TestDataPlaneEndpoints_UpdateManagedKafka_RemoveFailedReason(t *testing.T) {
+	testServer := setup(t, func(account *v1.Account, cid string, h *coreTest.Helper) jwt.MapClaims {
+		username, _ := account.GetUsername()
+		return jwt.MapClaims{
+			"username": username,
+			"iss":      test.TestServices.KeycloakConfig.KafkaRealm.ValidIssuerURI,
+			"realm_access": map[string][]string{
+				"roles": {"kas_fleetshard_operator"},
+			},
+			"kas-fleetshard-operator-cluster-id": cid,
+		}
+	}, nil)
+	defer testServer.TearDown()
+	bootstrapServerHost := "some-bootstrap⁻host"
+	ssoClientID := "some-sso-client-id"
+	ssoSecret := "some-sso-secret"
+
+	db := test.TestServices.DBFactory.New()
+
+	testKafka := dbapi.KafkaRequest{
+		ClusterID:           testServer.ClusterID,
+		MultiAZ:             false,
+		Name:                mockKafkaName1,
+		Status:              constants2.KafkaRequestStatusFailed.String(),
+		BootstrapServerHost: bootstrapServerHost,
+		SsoClientID:         ssoClientID,
+		SsoClientSecret:     ssoSecret,
+		DesiredKafkaVersion: "2.7.0",
+		FailedReason:        "test failed reason",
+		RoutesCreated:       true,
+	}
+
+	// create dummy kafkas
+	if err := db.Create(&testKafka).Error; err != nil {
+		Expect(err).NotTo(HaveOccurred())
+		return
+	}
+
+	list, resp, err := testServer.PrivateClient.AgentClustersApi.GetKafkas(testServer.Ctx, testServer.ClusterID)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(resp.StatusCode).To(Equal(http.StatusOK))
+	Expect(len(list.Items)).To(Equal(1)) // we should have one managed kafka cr
+	kafkaReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
+
+	updateReq := map[string]private.DataPlaneKafkaStatus{
+		kafkaReqID: kasfleetshardsync.GetReadyKafkaStatusResponse(),
+	}
+	_, err = testServer.PrivateClient.AgentClustersApi.UpdateKafkaClusterStatus(testServer.Ctx, testServer.ClusterID, updateReq)
+	Expect(err).NotTo(HaveOccurred())
+
+	c := &dbapi.KafkaRequest{}
+	if err := db.First(c, "id = ?", kafkaReqID).Error; err != nil {
+		t.Errorf("failed to find kafka cluster with id %s due to error: %v", kafkaReqID, err)
+	}
+	Expect(c.Status).To(Equal(constants2.KafkaRequestStatusReady.String()))
+	Expect(c.FailedReason).To(BeEmpty())
+}
