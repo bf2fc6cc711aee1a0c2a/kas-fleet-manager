@@ -37,9 +37,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/quota_management"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/itchyny/gojq"
@@ -111,8 +111,6 @@ func (s *TestScenario) JsonMustMatch(actual, expected string, expand bool) error
 			return err
 		}
 	}
-
-
 
 	if err := json.Unmarshal([]byte(expanded), &expectedParsed); err != nil {
 		return fmt.Errorf("error parsing expected json: %v\njson was:\n%s\n", err, expanded)

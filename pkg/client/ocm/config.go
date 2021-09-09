@@ -1,14 +1,14 @@
 package ocm
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 )
 
 const (
 	MockModeStubServer            = "stub-server"
 	MockModeEmulateServer         = "emulate-server"
-	strimziOperatorAddonID        = "managed-kafka"
+	strimziOperatorAddonID        = "managed-dinosaur"
 	kasFleetshardAddonID          = "kas-fleetshard-operator"
 	ClusterLoggingOperatorAddonID = "cluster-logging-operator"
 )

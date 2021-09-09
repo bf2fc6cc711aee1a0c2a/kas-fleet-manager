@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	constants2 "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/constants"
+	constants2 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/constants"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -17,8 +17,8 @@ const (
 
 	// ClusterCreateRequestDuration - name of cluster creation duration metric
 	ClusterCreateRequestDuration = "worker_cluster_duration"
-	// KafkaCreateRequestDuration - name of kafka creation duration metric
-	KafkaCreateRequestDuration = "worker_kafka_duration"
+	// DinosaurCreateRequestDuration - name of dinosaur creation duration metric
+	DinosaurCreateRequestDuration = "worker_dinosaur_duration"
 
 	labelJobType           = "jobType"
 	LabelID                = "id"
@@ -26,14 +26,14 @@ const (
 	LabelClusterID         = "cluster_id"
 	LabelClusterExternalID = "external_id"
 
-	// KafkaOperationsSuccessCount - name of the metric for Kafka-related successful operations
-	KafkaOperationsSuccessCount = "kafka_operations_success_count"
-	// KafkaOperationsTotalCount - name of the metric for all Kafka-related operations
-	KafkaOperationsTotalCount = "kafka_operations_total_count"
+	// DinosaurOperationsSuccessCount - name of the metric for Dinosaur-related successful operations
+	DinosaurOperationsSuccessCount = "dinosaur_operations_success_count"
+	// DinosaurOperationsTotalCount - name of the metric for all Dinosaur-related operations
+	DinosaurOperationsTotalCount = "dinosaur_operations_total_count"
 
-	// KafkaRequestsStatus - kafka requests status metric
-	KafkaRequestsStatusSinceCreated = "kafka_requests_status_since_created_in_seconds"
-	KafkaRequestsStatusCount        = "kafka_requests_status_count"
+	// DinosaurRequestsStatus - dinosaur requests status metric
+	DinosaurRequestsStatusSinceCreated = "dinosaur_requests_status_since_created_in_seconds"
+	DinosaurRequestsStatusCount        = "dinosaur_requests_status_count"
 
 	// ClusterOperationsSuccessCount - name of the metric for cluster-related successful operations
 	ClusterOperationsSuccessCount = "cluster_operations_success_count"
@@ -50,7 +50,7 @@ const (
 	ClusterStatusSinceCreated = "cluster_status_since_created_in_seconds"
 	ClusterStatusCount        = "cluster_status_count"
 
-	KafkaPerClusterCount = "kafka_per_cluster_count"
+	DinosaurPerClusterCount = "dinosaur_per_cluster_count"
 
 	LeaderWorker = "leader_worker"
 
@@ -86,8 +86,8 @@ type JobType string
 var (
 	// JobTypeClusterCreate - cluster_create job type
 	JobTypeClusterCreate JobType = "cluster_create"
-	// JobTypeKafkaCreate - kafka_create job type
-	JobTypeKafkaCreate JobType = "kafka_create"
+	// JobTypeDinosaurCreate - dinosaur_create job type
+	JobTypeDinosaurCreate JobType = "dinosaur_create"
 )
 
 // JobsMetricsLabels is the slice of labels to add to job metrics
@@ -95,29 +95,29 @@ var JobsMetricsLabels = []string{
 	labelJobType,
 }
 
-// kafkaStatusSinceCreatedMetricLabels  is the slice of labels to add to
-var kafkaStatusSinceCreatedMetricLabels = []string{
+// dinosaurStatusSinceCreatedMetricLabels  is the slice of labels to add to
+var dinosaurStatusSinceCreatedMetricLabels = []string{
 	LabelStatus,
 	LabelID,
 	LabelClusterID,
 }
 
-// kafkaStatusCountMetricLabels  is the slice of labels to add to
-var kafkaStatusCountMetricLabels = []string{
+// dinosaurStatusCountMetricLabels  is the slice of labels to add to
+var dinosaurStatusCountMetricLabels = []string{
 	LabelStatus,
 }
 
-// KafkaOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
-var KafkaOperationsCountMetricsLabels = []string{
+// DinosaurOperationsCountMetricsLabels - is the slice of labels to add to Dinosaur operations count metrics
+var DinosaurOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
 
-var KafkaPerClusterCountMetricsLabels = []string{
+var DinosaurPerClusterCountMetricsLabels = []string{
 	LabelClusterID,
 	LabelClusterExternalID,
 }
 
-// ClusterOperationsCountMetricsLabels - is the slice of labels to add to Kafka operations count metrics
+// ClusterOperationsCountMetricsLabels - is the slice of labels to add to Dinosaur operations count metrics
 var ClusterOperationsCountMetricsLabels = []string{
 	labelOperation,
 }
@@ -291,31 +291,31 @@ func UpdateClusterStatusCountMetric(status api.ClusterStatus, count int) {
 	clusterStatusCountMetric.With(labels).Set(float64(count))
 }
 
-var kafkaPerClusterCountMetric = prometheus.NewGaugeVec(
+var dinosaurPerClusterCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaPerClusterCount,
-		Help:      "the number of Kafka instances per data plane cluster",
+		Name:      DinosaurPerClusterCount,
+		Help:      "the number of Dinosaur instances per data plane cluster",
 	},
-	KafkaPerClusterCountMetricsLabels)
+	DinosaurPerClusterCountMetricsLabels)
 
-func UpdateKafkaPerClusterCountMetric(clusterId string, clusterExternalID string, count int) {
+func UpdateDinosaurPerClusterCountMetric(clusterId string, clusterExternalID string, count int) {
 	labels := prometheus.Labels{
 		LabelClusterID:         clusterId,
 		LabelClusterExternalID: clusterExternalID,
 	}
-	kafkaPerClusterCountMetric.With(labels).Set(float64(count))
+	dinosaurPerClusterCountMetric.With(labels).Set(float64(count))
 }
 
 // #### Metrics for Dataplane clusters - End ####
 
-// #### Metrics for Kafkas - Start ####
-// create a new histogramVec for kafka creation duration
-var requestKafkaCreationDurationMetric = prometheus.NewHistogramVec(
+// #### Metrics for Dinosaurs - Start ####
+// create a new histogramVec for dinosaur creation duration
+var requestDinosaurCreationDurationMetric = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaCreateRequestDuration,
-		Help:      "Kafka creation duration in seconds.",
+		Name:      DinosaurCreateRequestDuration,
+		Help:      "Dinosaur creation duration in seconds.",
 		Buckets: []float64{
 			1.0,
 			30.0,
@@ -349,89 +349,89 @@ var requestKafkaCreationDurationMetric = prometheus.NewHistogramVec(
 	JobsMetricsLabels,
 )
 
-// UpdateKafkaCreationDurationMetric records the duration of a job type
-func UpdateKafkaCreationDurationMetric(jobType JobType, elapsed time.Duration) {
+// UpdateDinosaurCreationDurationMetric records the duration of a job type
+func UpdateDinosaurCreationDurationMetric(jobType JobType, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		labelJobType: string(jobType),
 	}
-	requestKafkaCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
+	requestDinosaurCreationDurationMetric.With(labels).Observe(elapsed.Seconds())
 }
 
-// create a new counterVec for Kafka operations counts
-var kafkaOperationsSuccessCountMetric = prometheus.NewCounterVec(
+// create a new counterVec for Dinosaur operations counts
+var dinosaurOperationsSuccessCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaOperationsSuccessCount,
-		Help:      "number of successful kafka operations",
+		Name:      DinosaurOperationsSuccessCount,
+		Help:      "number of successful dinosaur operations",
 	},
-	KafkaOperationsCountMetricsLabels,
+	DinosaurOperationsCountMetricsLabels,
 )
 
-//UpdateKafkaRequestsStatusSinceCreatedMetric
-func UpdateKafkaRequestsStatusSinceCreatedMetric(status constants2.KafkaStatus, kafkaId string, clusterId string, elapsed time.Duration) {
+//UpdateDinosaurRequestsStatusSinceCreatedMetric
+func UpdateDinosaurRequestsStatusSinceCreatedMetric(status constants2.DinosaurStatus, dinosaurId string, clusterId string, elapsed time.Duration) {
 	labels := prometheus.Labels{
 		LabelStatus:    string(status),
-		LabelID:        kafkaId,
+		LabelID:        dinosaurId,
 		LabelClusterID: clusterId,
 	}
-	kafkaStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
+	dinosaurStatusSinceCreatedMetric.With(labels).Set(elapsed.Seconds())
 }
 
-//UpdateKafkaRequestsStatusCountMetric
-func UpdateKafkaRequestsStatusCountMetric(status constants2.KafkaStatus, count int) {
+//UpdateDinosaurRequestsStatusCountMetric
+func UpdateDinosaurRequestsStatusCountMetric(status constants2.DinosaurStatus, count int) {
 	labels := prometheus.Labels{
 		LabelStatus: string(status),
 	}
-	KafkaStatusCountMetric.With(labels).Set(float64(count))
+	DinosaurStatusCountMetric.With(labels).Set(float64(count))
 }
 
 // create a new GaugeVec for status counts
-var KafkaStatusCountMetric = prometheus.NewGaugeVec(
+var DinosaurStatusCountMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaRequestsStatusCount,
-		Help:      "number of total Kafka instances in each status",
+		Name:      DinosaurRequestsStatusCount,
+		Help:      "number of total Dinosaur instances in each status",
 	},
-	kafkaStatusCountMetricLabels,
+	dinosaurStatusCountMetricLabels,
 )
 
-// create a new GaugeVec for kafkas status duration
-var kafkaStatusSinceCreatedMetric = prometheus.NewGaugeVec(
+// create a new GaugeVec for dinosaurs status duration
+var dinosaurStatusSinceCreatedMetric = prometheus.NewGaugeVec(
 	prometheus.GaugeOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaRequestsStatusSinceCreated,
-		Help:      "metrics to track the status of a Kafka instance and how long since it's been created",
+		Name:      DinosaurRequestsStatusSinceCreated,
+		Help:      "metrics to track the status of a Dinosaur instance and how long since it's been created",
 	},
-	kafkaStatusSinceCreatedMetricLabels,
+	dinosaurStatusSinceCreatedMetricLabels,
 )
 
-// IncreaseKafkaSuccessOperationsCountMetric - increase counter for the kafkaOperationsSuccessCountMetric
-func IncreaseKafkaSuccessOperationsCountMetric(operation constants2.KafkaOperation) {
+// IncreaseDinosaurSuccessOperationsCountMetric - increase counter for the dinosaurOperationsSuccessCountMetric
+func IncreaseDinosaurSuccessOperationsCountMetric(operation constants2.DinosaurOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
-	kafkaOperationsSuccessCountMetric.With(labels).Inc()
+	dinosaurOperationsSuccessCountMetric.With(labels).Inc()
 }
 
-// create a new counterVec for total Kafka operations counts
-var kafkaOperationsTotalCountMetric = prometheus.NewCounterVec(
+// create a new counterVec for total Dinosaur operations counts
+var dinosaurOperationsTotalCountMetric = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Subsystem: KasFleetManager,
-		Name:      KafkaOperationsTotalCount,
-		Help:      "number of total kafka operations",
+		Name:      DinosaurOperationsTotalCount,
+		Help:      "number of total dinosaur operations",
 	},
-	KafkaOperationsCountMetricsLabels,
+	DinosaurOperationsCountMetricsLabels,
 )
 
-// IncreaseKafkaTotalOperationsCountMetric - increase counter for the kafkaOperationsTotalCountMetric
-func IncreaseKafkaTotalOperationsCountMetric(operation constants2.KafkaOperation) {
+// IncreaseDinosaurTotalOperationsCountMetric - increase counter for the dinosaurOperationsTotalCountMetric
+func IncreaseDinosaurTotalOperationsCountMetric(operation constants2.DinosaurOperation) {
 	labels := prometheus.Labels{
 		labelOperation: operation.String(),
 	}
-	kafkaOperationsTotalCountMetric.With(labels).Inc()
+	dinosaurOperationsTotalCountMetric.With(labels).Inc()
 }
 
-// #### Metrics for Kafkas - End ####
+// #### Metrics for Dinosaurs - End ####
 
 // #### Metrics for Reconcilers - Start ####
 // create a new gaugeVec for reconciler duration
@@ -656,16 +656,16 @@ func init() {
 	prometheus.MustRegister(clusterOperationsTotalCountMetric)
 	prometheus.MustRegister(clusterStatusSinceCreatedMetric)
 	prometheus.MustRegister(clusterStatusCountMetric)
-	prometheus.MustRegister(kafkaPerClusterCountMetric)
+	prometheus.MustRegister(dinosaurPerClusterCountMetric)
 	prometheus.MustRegister(clusterStatusCapacityMaxMetric)
 	prometheus.MustRegister(clusterStatusCapacityUsedMetric)
 
-	// metrics for Kafkas
-	prometheus.MustRegister(requestKafkaCreationDurationMetric)
-	prometheus.MustRegister(kafkaOperationsSuccessCountMetric)
-	prometheus.MustRegister(kafkaOperationsTotalCountMetric)
-	prometheus.MustRegister(kafkaStatusSinceCreatedMetric)
-	prometheus.MustRegister(KafkaStatusCountMetric)
+	// metrics for Dinosaurs
+	prometheus.MustRegister(requestDinosaurCreationDurationMetric)
+	prometheus.MustRegister(dinosaurOperationsSuccessCountMetric)
+	prometheus.MustRegister(dinosaurOperationsTotalCountMetric)
+	prometheus.MustRegister(dinosaurStatusSinceCreatedMetric)
+	prometheus.MustRegister(DinosaurStatusCountMetric)
 
 	// metrics for reconcilers
 	prometheus.MustRegister(reconcilerDurationMetric)
@@ -683,11 +683,11 @@ func init() {
 	prometheus.MustRegister(databaseQueryDurationMetric)
 }
 
-// ResetMetricsForKafkaManagers will reset the metrics for the KafkaManager background reconciler
+// ResetMetricsForDinosaurManagers will reset the metrics for the DinosaurManager background reconciler
 // This is needed because if current process is not the leader anymore, the metrics need to be reset otherwise staled data will be scraped
-func ResetMetricsForKafkaManagers() {
-	kafkaStatusSinceCreatedMetric.Reset()
-	KafkaStatusCountMetric.Reset()
+func ResetMetricsForDinosaurManagers() {
+	dinosaurStatusSinceCreatedMetric.Reset()
+	DinosaurStatusCountMetric.Reset()
 }
 
 // ResetMetricsForClusterManagers will reset the metrics for the ClusterManager background reconciler
@@ -695,7 +695,7 @@ func ResetMetricsForKafkaManagers() {
 func ResetMetricsForClusterManagers() {
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
-	kafkaPerClusterCountMetric.Reset()
+	dinosaurPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 }
@@ -723,15 +723,15 @@ func Reset() {
 	clusterOperationsTotalCountMetric.Reset()
 	clusterStatusSinceCreatedMetric.Reset()
 	clusterStatusCountMetric.Reset()
-	kafkaPerClusterCountMetric.Reset()
+	dinosaurPerClusterCountMetric.Reset()
 	clusterStatusCapacityMaxMetric.Reset()
 	clusterStatusCapacityUsedMetric.Reset()
 
-	requestKafkaCreationDurationMetric.Reset()
-	kafkaOperationsSuccessCountMetric.Reset()
-	kafkaOperationsTotalCountMetric.Reset()
-	kafkaStatusSinceCreatedMetric.Reset()
-	KafkaStatusCountMetric.Reset()
+	requestDinosaurCreationDurationMetric.Reset()
+	dinosaurOperationsSuccessCountMetric.Reset()
+	dinosaurOperationsTotalCountMetric.Reset()
+	dinosaurStatusSinceCreatedMetric.Reset()
+	DinosaurStatusCountMetric.Reset()
 
 	reconcilerDurationMetric.Reset()
 	reconcilerSuccessCountMetric.Reset()

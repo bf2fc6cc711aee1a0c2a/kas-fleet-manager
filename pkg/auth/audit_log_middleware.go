@@ -2,11 +2,12 @@ package auth
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server/logging"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
 	"io"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server/logging"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 )
 
 type AuditLogMiddleware interface {

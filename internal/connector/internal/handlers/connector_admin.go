@@ -1,22 +1,23 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/admin/private"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/admin/private"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/signalbus"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/goava/di"
 	"net/http"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreservices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/signalbus"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/vault"
+	"github.com/goava/di"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	coreservices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
 	"github.com/gorilla/mux"
 )
 
@@ -24,7 +25,7 @@ type ConnectorAdminHandler struct {
 	di.Inject
 	Bus            signalbus.SignalBus
 	Service        services.ConnectorClusterService
-	Keycloak       coreservices.KafkaKeycloakService
+	Keycloak       coreservices.DinosaurKeycloakService
 	ConnectorTypes services.ConnectorTypesService
 	Vault          vault.VaultService
 	KeycloakConfig *keycloak.KeycloakConfig
@@ -85,8 +86,8 @@ func (h *ConnectorAdminHandler) GetConnectorUpgradesByType(writer http.ResponseW
 				return nil, serviceError
 			}
 			result := make([]private.ConnectorAvailableTypeUpgrade, len(upgrades))
-			for i, upgrade := range upgrades {
-				result[i] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrade)
+			for _, upgrade := range upgrades {
+				result[i.(int)] = *presenters.PresentConnectorAvailableTypeUpgrade(&upgrade)
 			}
 
 			i = private.ConnectorAvailableTypeUpgradeList{

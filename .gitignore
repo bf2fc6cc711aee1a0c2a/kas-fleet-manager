@@ -30,8 +30,8 @@
 /coverage
 
 # Ignore built binaries
-/kas-fleet-manager
-cmd/kas-fleet-manager/kas-fleet-manager
+/fleet-manager
+cmd/fleet-manager/fleet-manager
 
 # Ignore generated templates
 /templates/*-template.json
@@ -47,7 +47,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/aws.*
 /secrets/vault.*
 /secrets/ocm-service.*
-/secrets/kafka-tls.*
+/secrets/dinosaur-tls.*
 /secrets/keycloak-service.*
 /secrets/dx.*
 /secrets/observatorium.*
@@ -58,7 +58,7 @@ cmd/kas-fleet-manager/kas-fleet-manager
 /secrets/rhsso-metrics.*
 
 # cluster details (used for testing)
-/internal/kafka/test/integration/test_cluster.json
+/internal/dinosaur/test/integration/test_cluster.json
 
 # integration test's results
 /data/results/*

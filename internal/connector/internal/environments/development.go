@@ -1,6 +1,6 @@
 package environments
 
-import "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+import "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 
 // The development environment is intended for use while developing features, requiring manual verification
 func NewDevelopmentEnvLoader() environments.EnvLoader {
@@ -18,6 +18,6 @@ func NewDevelopmentEnvLoader() environments.EnvLoader {
 		"enable-instance-limit-control": "false",
 		"mas-sso-base-url":              "https://identity.api.stage.openshift.com",
 		"mas-sso-realm":                 "rhoas",
-		"osd-idp-mas-sso-realm":         "rhoas-kafka-sre",
+		"osd-idp-mas-sso-realm":         "rhoas-dinosaur-sre",
 	}
 }

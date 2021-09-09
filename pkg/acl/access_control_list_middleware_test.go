@@ -9,14 +9,14 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/acl"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/server"
+	dinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
 	"github.com/golang/glog"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 
 	. "github.com/onsi/gomega"
 )
@@ -32,7 +32,7 @@ var serverConfig *server.ServerConfig
 func TestMain(m *testing.M) {
 	var err error
 	env, err = environments.New(environments.GetEnvironmentStrFromEnv(),
-		kafka.ConfigProviders(),
+		dinosaur.ConfigProviders(),
 	)
 	if err != nil {
 		glog.Fatalf("error initializing: %v", err)
@@ -65,7 +65,7 @@ func Test_AccessControlListMiddleware_UserHasNoAccess(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			RegisterTestingT(t)
 
-			req, err := http.NewRequest("GET", "/api/kafkas_mgmt/kafkas", nil)
+			req, err := http.NewRequest("GET", "/api/dinosaurs_mgmt/dinosaurs", nil)
 			if err != nil {
 				t.Fatal(err)
 			}

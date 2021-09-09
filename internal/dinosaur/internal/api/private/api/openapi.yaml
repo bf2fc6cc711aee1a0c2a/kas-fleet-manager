@@ -1,0 +1,744 @@
+openapi: 3.0.0
+info:
+  description: Dinosaur Service Fleet Manager APIs that are used by internal services
+    e.g kas-fleetshard operators.
+  title: Dinosaur Service Fleet Manager
+  version: 1.4.0
+servers:
+- description: Main (production) server
+  url: https://api.openshift.com
+- description: Staging server
+  url: https://api.stage.openshift.com
+- description: localhost
+  url: http://localhost:8000
+- description: current domain
+  url: /
+tags:
+- name: Agent Clusters
+paths:
+  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/status:
+    put:
+      operationId: updateAgentClusterStatus
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest'
+        description: Cluster status update data
+        required: true
+      responses:
+        "200":
+          description: Cluster status is updated
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Update the status of an agent cluster
+      tags:
+      - Agent Clusters
+  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status:
+    put:
+      operationId: updateDinosaurClusterStatus
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
+        description: Dinosaur clusters status update data
+        required: true
+      responses:
+        "200":
+          description: Status is updated for Dinosaur clusters
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Update the status of Dinosaur clusters on an agent cluster
+      tags:
+      - Agent Clusters
+  /api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs:
+    get:
+      operationId: getDinosaurs
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedDinosaurList'
+          description: The list of the ManagedDinosaurs for the specified agent cluster
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+      tags:
+      - Agent Clusters
+  /api/dinosaurs_mgmt/v1/agent-clusters/{id}:
+    get:
+      operationId: getDinosaurAgent
+      parameters:
+      - description: The ID of record
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataplaneClusterAgentConfig'
+          description: The ManagedDinosaurAgent CR Spec
+        "400":
+          content:
+            application/json:
+              examples:
+                "400InvalidIdExample":
+                  $ref: '#/components/examples/400InvalidIdExample'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: id value is not valid
+        "404":
+          content:
+            application/json:
+              examples:
+                "404Example":
+                  $ref: '#/components/examples/404Example'
+              schema:
+                $ref: '#/components/schemas/Error'
+          description: Auth token is not valid.
+      security:
+      - Bearer: []
+      summary: Get the spec of the ManagedDinosaurAgent CR spec
+      tags:
+      - Agent Clusters
+components:
+  examples:
+    ManagedDinosaurExample:
+      value:
+        kind: ManagedDinosaur
+        metadata:
+          name: example-dinosaur
+          namespace: example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac
+          annotations:
+            bf2.org/id: 1rfpsqbvq1em2u9u0z54ymjcwac
+            bf2.org/placementId: ""
+        spec:
+          capacity:
+            ingressEgressThroughputPerSec: 4Mi
+            totalMaxConnections: 500
+            maxDataRetentionSize: 100Gi
+            maxPartitions: 100
+            maxDataRetentionPeriod: P14D
+            maxConnectionAttemptsPerSec: 100
+          oauth:
+            clientId: dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac
+            clientSecret: example-client-secret
+            tokenEndpointUri: https://example-token-endpoint-uri.com/token
+            jwksEndpointUri: https://example-jwks-endpoint-uri.com/certs
+            validIssuerEndpointUri: https://issuer-endpoint-uri.com
+            userNameClaim: clientId
+            fallbackUserNameClaim: preferred_username
+            tlsTrustedCertificate: ""
+            customClaimCheck: ""
+            maximumSessionLifetime: 1898
+          endpoint:
+            bootstrapServerHost: example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org
+            tls:
+              cert: ""
+              key: ""
+          versions:
+            dinosaur: 2.7.0
+            strimzi: 0.21.2
+            dinosaurIbp: "2.7"
+          deleted: false
+    DataPlaneDinosaurStatusRequestExample:
+      value:
+        conditions:
+        - type: Ready
+          reason: DinosaurInstanceReady
+          message: installing
+          status: "False"
+          lastTransitionTime: 2018-01-01T00:00:00Z
+        capacity:
+          ingressEgressThroughputPerSec: 4Mi
+          totalMaxConnections: 500
+          maxDataRetentionSize: 100Gi
+          maxPartitions: 100
+          maxDataRetentionPeriod: P14D
+          maxConnectionAttemptsPerSec: 100
+        versions:
+          dinosaur: 2.4.1
+          strimzi: 0.21.2
+          dinosaurIbp: "2.4"
+    "400InvalidIdExample":
+      value:
+        id: "21"
+        kind: Error
+        href: /api/dinosaurs_mgmt/v1/errors/21
+        code: DINOSAURS-MGMT-21
+        reason: Bad request
+        operation_id: 1lWDGuybIrEnxrAem724gqkkiDv
+    "404Example":
+      value:
+        id: "7"
+        kind: Error
+        href: /api/dinosaurs_mgmt/v1/errors/7
+        code: DINOSAURS-MGMT-7
+        reason: The requested resource doesn't exist
+  schemas:
+    ListReference:
+      properties:
+        kind:
+          type: string
+      required:
+      - items
+      - kind
+      type: object
+    PrivateObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+      type: object
+    ManagedDinosaurCapacity:
+      properties:
+        ingressEgressThroughputPerSec:
+          type: string
+        totalMaxConnections:
+          format: int
+          type: integer
+        maxDataRetentionSize:
+          type: string
+        maxPartitions:
+          format: int
+          type: integer
+        maxDataRetentionPeriod:
+          type: string
+        maxConnectionAttemptsPerSec:
+          format: int
+          type: integer
+      type: object
+    ManagedDinosaurVersions:
+      properties:
+        dinosaur:
+          type: string
+        dinosaurIbp:
+          type: string
+        strimzi:
+          type: string
+      type: object
+    ManagedDinosaur:
+      allOf:
+      - $ref: '#/components/schemas/PrivateObjectReference'
+      - $ref: '#/components/schemas/ManagedDinosaur_allOf'
+    ManagedDinosaurList:
+      allOf:
+      - $ref: '#/components/schemas/ListReference'
+      - $ref: '#/components/schemas/ManagedDinosaurList_allOf'
+      description: A list of ManagedDinosaur
+    DatePlaneClusterUpdateStatusRequestNodeInfo:
+      example:
+        ceiling: 1
+        current: 5
+        currentWorkLoadMinimum: 2
+        floor: 5
+      nullable: true
+      properties:
+        ceiling:
+          nullable: true
+          type: integer
+        floor:
+          nullable: true
+          type: integer
+        current:
+          nullable: true
+          type: integer
+        currentWorkLoadMinimum:
+          nullable: true
+          type: integer
+      type: object
+    DatePlaneClusterUpdateStatusRequestResizeInfo:
+      example:
+        nodeDelta: 7
+        delta:
+          partitions: 3
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 9
+          dataRetentionSize: dataRetentionSize
+      nullable: true
+      properties:
+        nodeDelta:
+          nullable: true
+          type: integer
+        delta:
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo_delta'
+      type: object
+    DataPlaneClusterUpdateStatusRequest:
+      description: Schema for the request to update a data plane cluster's status
+      example:
+        total:
+          partitions: 6
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 0
+          dataRetentionSize: dataRetentionSize
+        strimzi:
+        - dinosaurVersions:
+          - dinosaurVersions
+          - dinosaurVersions
+          dinosaurIbpVersions:
+          - dinosaurIbpVersions
+          - dinosaurIbpVersions
+          ready: true
+          version: version
+        - dinosaurVersions:
+          - dinosaurVersions
+          - dinosaurVersions
+          dinosaurIbpVersions:
+          - dinosaurIbpVersions
+          - dinosaurIbpVersions
+          ready: true
+          version: version
+        resizeInfo:
+          nodeDelta: 7
+          delta:
+            partitions: 3
+            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+            connections: 9
+            dataRetentionSize: dataRetentionSize
+        nodeInfo:
+          ceiling: 1
+          current: 5
+          currentWorkLoadMinimum: 2
+          floor: 5
+        conditions:
+        - reason: reason
+          type: type
+          message: message
+          status: status
+        - reason: reason
+          type: type
+          message: message
+          status: status
+        remaining:
+          partitions: 6
+          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+          connections: 0
+          dataRetentionSize: dataRetentionSize
+      properties:
+        conditions:
+          description: The cluster data plane conditions
+          items:
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
+          type: array
+        total:
+          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
+        remaining:
+          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
+        nodeInfo:
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
+        resizeInfo:
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
+        strimzi:
+          items:
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'
+          type: array
+      type: object
+    DataPlaneDinosaurStatus:
+      description: Schema of the status object for a Dinosaur cluster
+      example:
+        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+      properties:
+        conditions:
+          description: The status conditions of a Dinosaur cluster
+          items:
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
+          type: array
+        capacity:
+          $ref: '#/components/schemas/DataPlaneDinosaurStatus_capacity'
+        versions:
+          $ref: '#/components/schemas/DataPlaneDinosaurStatus_versions'
+        routes:
+          description: Routes created for a Dinosaur cluster
+          items:
+            $ref: '#/components/schemas/DataPlaneDinosaurStatus_routes'
+          nullable: true
+          type: array
+      type: object
+    DataPlaneDinosaurStatusUpdateRequest:
+      additionalProperties:
+        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
+      description: Schema for the request to update the statuses of Dinosaur clusters
+        from data plane
+      type: object
+    DataplaneClusterAgentConfig:
+      description: Configuration for the data plane cluster agent
+      example:
+        spec:
+          observability:
+            channel: channel
+            tag: tag
+            accessToken: accessToken
+            repository: repository
+      properties:
+        spec:
+          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec'
+      type: object
+    WatchEvent:
+      properties:
+        type:
+          type: string
+        error:
+          $ref: '#/components/schemas/Error'
+        object:
+          nullable: true
+          type: object
+      required:
+      - type
+      type: object
+    Error:
+      allOf:
+      - $ref: '#/components/schemas/ObjectReference'
+      - $ref: '#/components/schemas/Error_allOf'
+    ObjectReference:
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        href:
+          type: string
+      type: object
+    ManagedDinosaur_allOf_metadata_annotations:
+      properties:
+        bf2.org/id:
+          type: string
+        bf2.org/placementId:
+          type: string
+      required:
+      - bf2.org/id
+      - bf2.org/placementId
+    ManagedDinosaur_allOf_metadata:
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+        annotations:
+          $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata_annotations'
+    ManagedDinosaur_allOf_spec_serviceAccounts:
+      properties:
+        name:
+          type: string
+        principal:
+          type: string
+        password:
+          type: string
+      required:
+      - name
+      - password
+      - principal
+    ManagedDinosaur_allOf_spec_oauth:
+      properties:
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        tokenEndpointURI:
+          type: string
+        jwksEndpointURI:
+          type: string
+        validIssuerEndpointURI:
+          type: string
+        userNameClaim:
+          type: string
+        fallbackUserNameClaim:
+          type: string
+        tlsTrustedCertificate:
+          nullable: true
+          type: string
+        customClaimCheck:
+          type: string
+        maximumSessionLifetime:
+          type: long
+      required:
+      - maximumSessionLifetime
+    ManagedDinosaur_allOf_spec_endpoint_tls:
+      nullable: true
+      properties:
+        cert:
+          type: string
+        key:
+          type: string
+    ManagedDinosaur_allOf_spec_endpoint:
+      properties:
+        bootstrapServerHost:
+          type: string
+        tls:
+          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint_tls'
+    ManagedDinosaur_allOf_spec:
+      properties:
+        serviceAccounts:
+          items:
+            $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_serviceAccounts'
+          type: array
+        capacity:
+          $ref: '#/components/schemas/ManagedDinosaurCapacity'
+        oauth:
+          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_oauth'
+        owners:
+          items:
+            type: string
+          type: array
+        endpoint:
+          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec_endpoint'
+        versions:
+          $ref: '#/components/schemas/ManagedDinosaurVersions'
+        deleted:
+          type: boolean
+      required:
+      - deleted
+    ManagedDinosaur_allOf:
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ManagedDinosaur_allOf_metadata'
+        spec:
+          $ref: '#/components/schemas/ManagedDinosaur_allOf_spec'
+    ManagedDinosaurList_allOf:
+      example: '{"kind":"ManagedDinosaurList","items":{"$ref":"#/components/examples/ManagedDinosaurExample"}}'
+      properties:
+        items:
+          items:
+            allOf:
+            - $ref: '#/components/schemas/ManagedDinosaur'
+          type: array
+    DatePlaneClusterUpdateStatusRequestResizeInfo_delta:
+      example:
+        partitions: 3
+        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        connections: 9
+        dataRetentionSize: dataRetentionSize
+      nullable: true
+      properties:
+        ingressEgressThroughputPerSec:
+          nullable: true
+          type: string
+        connections:
+          nullable: true
+          type: integer
+        dataRetentionSize:
+          nullable: true
+          type: string
+        partitions:
+          nullable: true
+          type: integer
+    DataPlaneClusterUpdateStatusRequest_conditions:
+      example:
+        reason: reason
+        type: type
+        message: message
+        status: status
+      properties:
+        type:
+          type: string
+        reason:
+          type: string
+        message:
+          type: string
+        status:
+          type: string
+    DataPlaneClusterUpdateStatusRequest_total:
+      example:
+        partitions: 6
+        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
+        connections: 0
+        dataRetentionSize: dataRetentionSize
+      properties:
+        ingressEgressThroughputPerSec:
+          nullable: true
+          type: string
+        connections:
+          nullable: true
+          type: integer
+        dataRetentionSize:
+          nullable: true
+          type: string
+        partitions:
+          nullable: true
+          type: integer
+    DataPlaneClusterUpdateStatusRequest_strimzi:
+      example:
+        dinosaurVersions:
+        - dinosaurVersions
+        - dinosaurVersions
+        dinosaurIbpVersions:
+        - dinosaurIbpVersions
+        - dinosaurIbpVersions
+        ready: true
+        version: version
+      properties:
+        ready:
+          type: boolean
+        version:
+          type: string
+        dinosaurVersions:
+          items:
+            type: string
+          type: array
+        dinosaurIbpVersions:
+          items:
+            type: string
+          type: array
+      required:
+      - ready
+      - version
+    DataPlaneDinosaurStatus_capacity:
+      description: Capacity information of the data plane cluster
+      properties:
+        ingressEgressThroughputPerSec:
+          nullable: true
+          type: string
+        totalMaxConnections:
+          nullable: true
+          type: integer
+        maxDataRetentionSize:
+          nullable: true
+          type: string
+        maxPartitions:
+          nullable: true
+          type: integer
+        maxDataRetentionPeriod:
+          nullable: true
+          type: string
+        maxConnectionAttemptsPerSec:
+          nullable: true
+          type: integer
+    DataPlaneDinosaurStatus_versions:
+      description: Version information related to a Dinosaur cluster
+      properties:
+        dinosaur:
+          type: string
+        strimzi:
+          type: string
+        dinosaurIbp:
+          type: string
+    DataPlaneDinosaurStatus_routes:
+      properties:
+        name:
+          type: string
+        prefix:
+          type: string
+        router:
+          type: string
+    DataplaneClusterAgentConfig_spec_observability:
+      description: Observability configurations
+      example:
+        channel: channel
+        tag: tag
+        accessToken: accessToken
+        repository: repository
+      properties:
+        accessToken:
+          nullable: true
+          type: string
+        channel:
+          type: string
+        repository:
+          type: string
+        tag:
+          type: string
+    DataplaneClusterAgentConfig_spec:
+      description: Data plane cluster agent spec
+      example:
+        observability:
+          channel: channel
+          tag: tag
+          accessToken: accessToken
+          repository: repository
+      properties:
+        observability:
+          $ref: '#/components/schemas/DataplaneClusterAgentConfig_spec_observability'
+    Error_allOf:
+      properties:
+        code:
+          type: string
+        reason:
+          type: string
+        operation_id:
+          type: string
+  securitySchemes:
+    Bearer:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http

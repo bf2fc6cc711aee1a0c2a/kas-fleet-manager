@@ -56,9 +56,9 @@ env:
   AWS_SECRET_ACCESS_KEY: aws_secretaccesskey
   ROUTE53_ACCESS_KEY: aws_route53_access_key
   ROUTE53_SECRET_ACCESS_KEY: aws_route53_secret_access_key
-  # Dummy Kafka TLS env variables
-  KAFKA_TLS_CERT: kafka_tls_cert
-  KAFKA_TLS_KEY: kafka_tls_key
+  # Dummy Dinosaur TLS env variables
+  DINOSAUR_TLS_CRT: DINOSAUR_TLS_CRT
+  DINOSAUR_TLS_KEY: DINOSAUR_TLS_KEY
   # So that OCM secrets are initialised
   DOCKER_PR_CHECK: true
   TEST_TIMEOUT: 30m
@@ -105,7 +105,7 @@ jobs:
         run: make db/migrate
       - name: Setup tests secrets
         run: |
-          make ocm/setup aws/setup keycloak/setup kafkacert/setup observatorium/setup
+          make ocm/setup aws/setup keycloak/setup dinosaurcert/setup observatorium/setup
       - name: Lint & Test
         run: |
           export GOPATH=$(go env GOPATH)

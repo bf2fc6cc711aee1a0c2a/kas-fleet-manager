@@ -3,13 +3,15 @@ package main
 import (
 	"bufio"
 	"fmt"
+
 	"os"
 	"strings"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/providers/connector"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/golang/glog"
 	"github.com/spf13/pflag"
 )
@@ -34,7 +36,7 @@ func main() {
 
 	var keycloakConfig *keycloak.KeycloakConfig
 	env.MustResolve(&keycloakConfig)
-	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.KafkaRealm)
+	kcClient := keycloak.NewClient(keycloakConfig, keycloakConfig.DinosaurRealm)
 	accessToken, _ := kcClient.GetToken()
 
 	if len(os.Args) > 1 {

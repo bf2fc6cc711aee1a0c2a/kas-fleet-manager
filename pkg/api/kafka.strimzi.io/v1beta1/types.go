@@ -22,12 +22,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Rack definition for configuring rack awareness for Kafka brokers.
+// Rack definition for configuring rack awareness for Dinosaur brokers.
 type Rack struct {
 	TopologyKey string `json:"topologyKey"`
 }
 
-// Pod template for the Zookeeper or Kafka pods.
+// Pod template for the Zookeeper or Dinosaur pods.
 type PodTemplate struct {
 	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
@@ -120,68 +120,68 @@ type Storage struct {
 	JbodStorage
 }
 
-// KafkaAuthorizationType type of possible authorization mechanisms.
-type KafkaAuthorizationType string
+// DinosaurAuthorizationType type of possible authorization mechanisms.
+type DinosaurAuthorizationType string
 
-// KafkaAuthorizationType constants.
+// DinosaurAuthorizationType constants.
 const (
-	Simple   KafkaAuthorizationType = "simple"
-	OPA      KafkaAuthorizationType = "opa"
-	Keycloak KafkaAuthorizationType = "keycloak"
+	Simple   DinosaurAuthorizationType = "simple"
+	OPA      DinosaurAuthorizationType = "opa"
+	Keycloak DinosaurAuthorizationType = "keycloak"
 )
 
-// KafkaAuthorization authorization configuration for Kafka brokers.
+// DinosaurAuthorization authorization configuration for Dinosaur brokers.
 // The type depends on the value of the Type property within the given object, which must be one of [simple, opa, keycloak].
-type KafkaAuthorization struct {
-	Type KafkaAuthorizationType `json:"type"`
-	KafkaAuthorizationSimple
-	KafkaAuthorizationOPA
-	KafkaAuthorizationKeycloak
+type DinosaurAuthorization struct {
+	Type DinosaurAuthorizationType `json:"type"`
+	DinosaurAuthorizationSimple
+	DinosaurAuthorizationOPA
+	DinosaurAuthorizationKeycloak
 }
 
-// KafkaAuthorizationSimple authorization configuration for Simple
-type KafkaAuthorizationSimple struct{}
+// DinosaurAuthorizationSimple authorization configuration for Simple
+type DinosaurAuthorizationSimple struct{}
 
-// KafkaAuthorizationOPA authorization configuration for OPA
-type KafkaAuthorizationOPA struct{}
+// DinosaurAuthorizationOPA authorization configuration for OPA
+type DinosaurAuthorizationOPA struct{}
 
-// KafkaAuthorizationKeycloak authorization configuration for Keycloak
-type KafkaAuthorizationKeycloak struct {
+// DinosaurAuthorizationKeycloak authorization configuration for Keycloak
+type DinosaurAuthorizationKeycloak struct {
 	ClientID                       string             `json:"clientId,omitempty"`
 	TokenEndpointURI               string             `json:"tokenEndpointUri,omitempty"`
 	TLSTrustedCertificates         []CertSecretSource `json:"tlsTrustedCertificates,omitempty"`
 	DisableTLSHostnameVerification bool               `json:"disableTlsHostnameVerification,omitempty"`
-	DelegateToKafkaAcls            bool               `json:"delegateToKafkaAcls,omitempty"`
+	DelegateToDinosaurAcls         bool               `json:"delegateToDinosaurAcls,omitempty"`
 	SuperUsers                     []string           `json:"superUsers,omitempty"`
 }
 
-// KafkaListenerAuthenticationType type of possible authentication mechanisms.
-type KafkaListenerAuthenticationType string
+// DinosaurListenerAuthenticationType type of possible authentication mechanisms.
+type DinosaurListenerAuthenticationType string
 
-// KafkaListenerAuthenticationType constants.
+// DinosaurListenerAuthenticationType constants.
 const (
-	TLS         KafkaListenerAuthenticationType = "tls"
-	ScramSha512 KafkaListenerAuthenticationType = "scram-sha-512"
-	OAuth       KafkaListenerAuthenticationType = "oauth"
+	TLS         DinosaurListenerAuthenticationType = "tls"
+	ScramSha512 DinosaurListenerAuthenticationType = "scram-sha-512"
+	OAuth       DinosaurListenerAuthenticationType = "oauth"
 )
 
-// KafkaListenerAuthentication authentication configuration for Kafka brokers.
+// DinosaurListenerAuthentication authentication configuration for Dinosaur brokers.
 // The type depends on the value of the Type property within the given object, which must be one of [tls, scram-sha-512, oauth].
-type KafkaListenerAuthentication struct {
-	Type KafkaListenerAuthenticationType `json:"type"`
-	KafkaListenerAuthenticationTLS
-	KafkaListenerAuthenticationScramSha512
-	KafkaListenerAuthenticationOAuth
+type DinosaurListenerAuthentication struct {
+	Type DinosaurListenerAuthenticationType `json:"type"`
+	DinosaurListenerAuthenticationTLS
+	DinosaurListenerAuthenticationScramSha512
+	DinosaurListenerAuthenticationOAuth
 }
 
-// KafkaListenerAuthenticationTLS authentication configuration for TLS
-type KafkaListenerAuthenticationTLS struct{}
+// DinosaurListenerAuthenticationTLS authentication configuration for TLS
+type DinosaurListenerAuthenticationTLS struct{}
 
-// KafkaListenerAuthenticationScramSha512 authentication configuration for SCRAM-SHA-512
-type KafkaListenerAuthenticationScramSha512 struct{}
+// DinosaurListenerAuthenticationScramSha512 authentication configuration for SCRAM-SHA-512
+type DinosaurListenerAuthenticationScramSha512 struct{}
 
-// KafkaListenerAuthenticationOAuth authentication configuration for OAuth
-type KafkaListenerAuthenticationOAuth struct {
+// DinosaurListenerAuthenticationOAuth authentication configuration for OAuth
+type DinosaurListenerAuthenticationOAuth struct {
 	AccessTokenIsJwt               bool                `json:"accessTokenIsJwt,omitempty"`
 	CheckAccessTokenType           bool                `json:"checkAccessTokenType,omitempty"`
 	CheckIssuer                    bool                `json:"checkIssuer,omitempty"`
@@ -205,19 +205,19 @@ type KafkaListenerAuthenticationOAuth struct {
 	TokenEndpointURI               string              `json:"tokenEndpointUri,omitempty"`
 }
 
-// KafkaListenerExternalType type of possible external listeners.
-type KafkaListenerExternalType string
+// DinosaurListenerExternalType type of possible external listeners.
+type DinosaurListenerExternalType string
 
-// KafkaListenerType type of possible listeners.
-type KafkaListenerType string
+// DinosaurListenerType type of possible listeners.
+type DinosaurListenerType string
 
-// KafkaListenerType constants.
+// DinosaurListenerType constants.
 const (
-	Internal     KafkaListenerType = "internal"
-	Route        KafkaListenerType = "route"
-	LoadBalancer KafkaListenerType = "loadbalancer"
-	NodePort     KafkaListenerType = "nodeport"
-	Ingress      KafkaListenerType = "ingress"
+	Internal     DinosaurListenerType = "internal"
+	Route        DinosaurListenerType = "route"
+	LoadBalancer DinosaurListenerType = "loadbalancer"
+	NodePort     DinosaurListenerType = "nodeport"
+	Ingress      DinosaurListenerType = "ingress"
 )
 
 // ExternalTrafficPolicy specifies whether the service routes external traffic to node-local or cluster-wide endpoints.
@@ -228,8 +228,8 @@ type ZookeeperTemplate struct {
 	Pod *PodTemplate `json:"pod,omitempty"`
 }
 
-// KafkaTemplate definition for the template of Kafka cluster resources.
-type KafkaTemplate struct {
+// DinosaurTemplate definition for the template of Dinosaur cluster resources.
+type DinosaurTemplate struct {
 	Pod *PodTemplate `json:"pod,omitempty"`
 }
 
@@ -239,8 +239,8 @@ const (
 	Cluster ExternalTrafficPolicy = "cluster"
 )
 
-// GenericKafkaListenerConfigurationBootstrap defines bootstrap configuration for Kafka listeners.
-type GenericKafkaListenerConfigurationBootstrap struct {
+// GenericDinosaurListenerConfigurationBootstrap defines bootstrap configuration for Dinosaur listeners.
+type GenericDinosaurListenerConfigurationBootstrap struct {
 	AlternativeNames []string          `json:"alternativeNames,omitempty"`
 	Host             string            `json:"host,omitempty"`
 	NodePort         int               `json:"nodePort,omitempty"`
@@ -248,8 +248,8 @@ type GenericKafkaListenerConfigurationBootstrap struct {
 	Annotations      map[string]string `json:"annotations,omitempty"`
 }
 
-// GenericKafkaListenerConfigurationBroker defines per-broker configuration for Kafka listeners.
-type GenericKafkaListenerConfigurationBroker struct {
+// GenericDinosaurListenerConfigurationBroker defines per-broker configuration for Dinosaur listeners.
+type GenericDinosaurListenerConfigurationBroker struct {
 	Broker         int               `json:"broker"`
 	AdvertisedHost string            `json:"advertisedHost,omitempty"`
 	AdvertisedPort int               `json:"advertisedPort,omitempty"`
@@ -271,41 +271,41 @@ const (
 	Hostname    NodeAddressType = "Hostname"
 )
 
-// GenericKafkaListenerConfiguration defines some generic configuration for Kafka listeners
-type GenericKafkaListenerConfiguration struct {
-	BrokerCertChainAndKey        *CertAndKeySecretSource                     `json:"brokerCertChainAndKey,omitempty"`
-	ExternalTrafficPolicy        ExternalTrafficPolicy                       `json:"externalTrafficPolicy,omitempty"`
-	LoadBalancerSourceRanges     []string                                    `json:"loadBalancerSourceRanges,omitempty"`
-	Bootstrap                    *GenericKafkaListenerConfigurationBootstrap `json:"bootstrap,omitempty"`
-	Brokers                      []GenericKafkaListenerConfigurationBroker   `json:"brokers,omitempty"`
-	Class                        string                                      `json:"class,omitempty"`
-	PreferredNodePortAddressType NodeAddressType                             `json:"preferredNodePortAddressType,omitempty"`
-	UseServiceDNSDomain          bool                                        `json:"useServiceDnsDomain,omitempty"`
+// GenericDinosaurListenerConfiguration defines some generic configuration for Dinosaur listeners
+type GenericDinosaurListenerConfiguration struct {
+	BrokerCertChainAndKey        *CertAndKeySecretSource                        `json:"brokerCertChainAndKey,omitempty"`
+	ExternalTrafficPolicy        ExternalTrafficPolicy                          `json:"externalTrafficPolicy,omitempty"`
+	LoadBalancerSourceRanges     []string                                       `json:"loadBalancerSourceRanges,omitempty"`
+	Bootstrap                    *GenericDinosaurListenerConfigurationBootstrap `json:"bootstrap,omitempty"`
+	Brokers                      []GenericDinosaurListenerConfigurationBroker   `json:"brokers,omitempty"`
+	Class                        string                                         `json:"class,omitempty"`
+	PreferredNodePortAddressType NodeAddressType                                `json:"preferredNodePortAddressType,omitempty"`
+	UseServiceDNSDomain          bool                                           `json:"useServiceDnsDomain,omitempty"`
 }
 
-// GenericKafkaListener configures a generic listener of Kafka brokers.
-type GenericKafkaListener struct {
-	Name               string                             `json:"name"`
-	Port               int                                `json:"port"`
-	Type               KafkaListenerType                  `json:"type"`
-	TLS                bool                               `json:"tls"`
-	Authentication     *KafkaListenerAuthentication       `json:"authentication,omitempty"`
-	Configuration      *GenericKafkaListenerConfiguration `json:"configuration,omitempty"`
-	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer   `json:"networkPolicyPeers,omitempty"`
+// GenericDinosaurListener configures a generic listener of Dinosaur brokers.
+type GenericDinosaurListener struct {
+	Name               string                                `json:"name"`
+	Port               int                                   `json:"port"`
+	Type               DinosaurListenerType                  `json:"type"`
+	TLS                bool                                  `json:"tls"`
+	Authentication     *DinosaurListenerAuthentication       `json:"authentication,omitempty"`
+	Configuration      *GenericDinosaurListenerConfiguration `json:"configuration,omitempty"`
+	NetworkPolicyPeers []networkingv1.NetworkPolicyPeer      `json:"networkPolicyPeers,omitempty"`
 }
 
-// KafkaClusterSpec configuration of the Kafka cluster.
-type KafkaClusterSpec struct {
+// DinosaurClusterSpec configuration of the Dinosaur cluster.
+type DinosaurClusterSpec struct {
 	Replicas      int                          `json:"replicas"`
 	Version       string                       `json:"version,omitempty"`
 	Config        map[string]string            `json:"config,omitempty"`
 	Storage       Storage                      `json:"storage"`
-	Listeners     []GenericKafkaListener       `json:"listeners"`
-	Authorization *KafkaAuthorization          `json:"authorization,omitempty"`
+	Listeners     []GenericDinosaurListener    `json:"listeners"`
+	Authorization *DinosaurAuthorization       `json:"authorization,omitempty"`
 	Metrics       *Metrics                     `json:"metrics,omitempty"`
 	Image         *string                      `json:"image,omitempty"`
 	Resources     *corev1.ResourceRequirements `json:"resources,omitempty"`
-	Template      *KafkaTemplate               `json:"template,omitempty"`
+	Template      *DinosaurTemplate            `json:"template,omitempty"`
 	JvmOptions    *JvmOptionsSpec              `json:"jvmOptions,omitempty"`
 	Rack          *Rack                        `json:"rack,omitempty"`
 }
@@ -340,8 +340,8 @@ type EntityOperatorSpec struct {
 	UserOperator  EntityUserOperatorSpec  `json:"userOperator,omitempty"`
 }
 
-// KafkaExporterSpec configuration of the Kafka Exporter
-type KafkaExporterSpec struct {
+// DinosaurExporterSpec configuration of the Dinosaur Exporter
+type DinosaurExporterSpec struct {
 	TopicRegex string `json:"topicRegex,omitempty"`
 	GroupRegex string `json:"groupRegex,omitempty"`
 }
@@ -349,19 +349,19 @@ type KafkaExporterSpec struct {
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// KafkaSpec defines the desired state of Kafka
-type KafkaSpec struct {
+// DinosaurSpec defines the desired state of Dinosaur
+type DinosaurSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Kafka          KafkaClusterSpec     `json:"kafka"`
-	Zookeeper      ZookeeperClusterSpec `json:"zookeeper"`
-	EntityOperator *EntityOperatorSpec  `json:"entityOperator,omitempty"`
-	KafkaExporter  *KafkaExporterSpec   `json:"kafkaExporter,omitempty"`
+	Dinosaur         DinosaurClusterSpec   `json:"dinosaur"`
+	Zookeeper        ZookeeperClusterSpec  `json:"zookeeper"`
+	EntityOperator   *EntityOperatorSpec   `json:"entityOperator,omitempty"`
+	DinosaurExporter *DinosaurExporterSpec `json:"dinosaurExporter,omitempty"`
 }
 
-// KafkaStatus defines the observed state of Kafka
-type KafkaStatus struct {
+// DinosaurStatus defines the observed state of Dinosaur
+type DinosaurStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -369,20 +369,20 @@ type KafkaStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// Kafka is the Schema for the kafkas API
-type Kafka struct {
+// Dinosaur is the Schema for the dinosaurs API
+type Dinosaur struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KafkaSpec   `json:"spec,omitempty"`
-	Status KafkaStatus `json:"status,omitempty"`
+	Spec   DinosaurSpec   `json:"spec,omitempty"`
+	Status DinosaurStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// KafkaList contains a list of Kafka
-type KafkaList struct {
+// DinosaurList contains a list of Dinosaur
+type DinosaurList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Kafka `json:"items"`
+	Items           []Dinosaur `json:"items"`
 }

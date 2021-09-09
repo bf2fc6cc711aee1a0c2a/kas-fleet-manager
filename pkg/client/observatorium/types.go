@@ -17,11 +17,11 @@ const (
 	Query               ResultType = "query"
 )
 
-type KafkaState struct {
+type DinosaurState struct {
 	State State `json:",omitempty"`
 }
 
-type KafkaMetrics []Metric
+type DinosaurMetrics []Metric
 
 // Metric holds the Prometheus Matrix or Vector model, which contains instant vector or range vector with time series (depending on result type)
 type Metric struct {

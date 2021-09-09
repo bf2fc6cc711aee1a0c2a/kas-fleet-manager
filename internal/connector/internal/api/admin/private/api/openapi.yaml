@@ -81,7 +81,7 @@ paths:
           name = aws-sqs-source and channel = stable
           ```[p-]
 
-          To return a Kafka instance with a name that starts with `aws`, use the following syntax:
+          To return a Dinosaur instance with a name that starts with `aws`, use the following syntax:
 
           ```
           name like aws%25

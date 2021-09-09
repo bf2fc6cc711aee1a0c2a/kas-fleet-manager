@@ -6,14 +6,14 @@ DOCS_DIR := $(PROJECT_PATH)/docs
 SHELL = bash
 
 # The details of the application:
-binary:=kas-fleet-manager
+binary:=fleet-manager
 
 # The version needs to be different for each deployment because otherwise the
 # cluster will not pull the new image from the internal registry:
 version:=$(shell date +%s)
 
 # Default namespace for local deployments
-NAMESPACE ?= kas-fleet-manager-${USER}
+NAMESPACE ?= fleet-manager-${USER}
 
 # The name of the image repository needs to start with the name of an existing
 # namespace because when the image is pushed to the internal registry of a
@@ -21,7 +21,7 @@ NAMESPACE ?= kas-fleet-manager-${USER}
 # corresponding image stream inside that namespace. If the namespace doesn't
 # exist the push fails. This doesn't apply when the image is pushed to a public
 # repository, like `docker.io` or `quay.io`.
-image_repository:=$(NAMESPACE)/kas-fleet-manager
+image_repository:=$(NAMESPACE)/fleet-manager
 
 # Tag for the image:
 image_tag:=$(version)
@@ -35,7 +35,7 @@ external_image_registry:=default-route-openshift-image-registry.apps-crc.testing
 internal_image_registry:=image-registry.openshift-image-registry.svc:5000
 
 # Test image name that will be used for PR checks
-test_image:=test/kas-fleet-manager
+test_image:=test/fleet-manager
 
 DOCKER_CONFIG="${PWD}/.docker"
 
@@ -153,7 +153,7 @@ ifeq (, $(shell which ${LOCAL_BIN_PATH}/spectral 2> /dev/null))
 	}
 endif
 openapi/spec/validate: specinstall
-	spectral lint openapi/kas-fleet-manager.yaml openapi/kas-fleet-manager-private-admin.yaml
+	spectral lint openapi/fleet-manager.yaml openapi/fleet-manager-private-admin.yaml
 
 
 ifeq ($(shell uname -s | tr A-Z a-z), darwin)
@@ -195,7 +195,7 @@ endif
 
 # Prints a list of useful targets.
 help:
-	@echo "Kafka Service Fleet Manager make targets"
+	@echo "Dinosaur Service Fleet Manager make targets"
 	@echo ""
 	@echo "make verify                      verify source code"
 	@echo "make lint                        lint go files and .yaml templates"
@@ -211,11 +211,11 @@ help:
 	@echo "make openapi/validate            validate openapi schema"
 	@echo "make image                       build docker image"
 	@echo "make push                        push docker image"
-	@echo "make project                     create and use the kas-fleet-manager project"
+	@echo "make project                     create and use the fleet-manager project"
 	@echo "make clean                       delete temporary generated files"
 	@echo "make setup/git/hooks             setup git hooks"
 	@echo "make keycloak/setup              setup mas sso clientId, clientSecret & crt"
-	@echo "make kafkacert/setup             setup the kafka certificate used for Kafka Brokers"
+	@echo "make dinosaurcert/setup          setup the dinosaur certificate used for Dinosaur Brokers"
 	@echo "make observatorium/setup         setup observatorium secrets used by CI"
 	@echo "make observatorium/token-refresher/setup" setup a local observatorium token refresher
 	@echo "make docker/login/internal       login to an openshift cluster image registry"
@@ -264,12 +264,12 @@ lint: golangci-lint specinstall
 # Build binaries
 # NOTE it may be necessary to use CGO_ENABLED=0 for backwards compatibility with centos7 if not using centos7
 binary:
-	$(GO) build ./cmd/kas-fleet-manager
+	$(GO) build ./cmd/fleet-manager
 .PHONY: binary
 
 # Install
 install: verify lint
-	$(GO) install ./cmd/kas-fleet-manager
+	$(GO) install ./cmd/fleet-manager
 .PHONY: install
 
 # Runs the unit tests.
@@ -286,7 +286,7 @@ test: gotestsum
 
 # Precompile everything required for development/test.
 test/prepare:
-	$(GO) test -i ./internal/kafka/test/integration/... -i ./internal/connector/test/integration/...
+	$(GO) test -i ./internal/dinosaur/test/integration/... -i ./internal/connector/test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -299,10 +299,10 @@ test/prepare:
 #   make test/integration TESTFLAGS="-run TestAccounts"     acts as TestAccounts* and run TestAccountsGet, TestAccountsPost, etc.
 #   make test/integration TESTFLAGS="-run TestAccountsGet"  runs TestAccountsGet
 #   make test/integration TESTFLAGS="-short"                skips long-run tests
-test/integration/kafka: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile data/results/kas-fleet-manager-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/kafka/test/integration/...
-.PHONY: test/integration/kafka
+test/integration/dinosaur: test/prepare gotestsum
+	$(GOTESTSUM) --junitfile data/results/fleet-manager-dinosaur-integration-tests.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
+				./internal/dinosaur/test/integration/...
+.PHONY: test/integration/dinosaur
 
 test/integration/connector: test/prepare gotestsum
 	$(GOTESTSUM) --junitfile data/results/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
@@ -314,7 +314,7 @@ test/integration/connector/cleanup:
 	$(GO) run ./internal/connector/test/integration/cleanup/main.go
 .PHONY: test/integration/connector/cleanup
 
-test/integration: test/integration/kafka test/integration/connector
+test/integration: test/integration/dinosaur test/integration/connector
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
@@ -332,43 +332,43 @@ generate: moq openapi/generate
 
 # validate the openapi schema
 openapi/validate: openapi-generator
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private-admin.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and generated package
-openapi/generate: openapi/generate/kas-public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private openapi/generate/connector-private-admin
+openapi/generate: openapi/generate/public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private openapi/generate/connector-private-admin
 .PHONY: openapi/generate
 
-openapi/generate/kas-public: go-bindata openapi-generator
-	rm -rf internal/kafka/internal/api/public
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager.yaml -g go -o internal/kafka/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/kafka/internal/api/public
+openapi/generate/public: go-bindata openapi-generator
+	rm -rf internal/dinosaur/internal/api/public
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager.yaml -g go -o internal/dinosaur/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/dinosaur/internal/api/public
 
 	mkdir -p .generate/openapi
-	cp ./openapi/kas-fleet-manager.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/kafka/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/kafka/internal/generated
+	cp ./openapi/fleet-manager.yaml .generate/openapi
+	$(GOBINDATA) -o ./internal/dinosaur/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
+	$(GOFMT) -w internal/dinosaur/internal/generated
 	rm -rf .generate/openapi
-.PHONY: openapi/generate/kas-public
+.PHONY: openapi/generate/public
 
 openapi/generate/kas-private: go-bindata openapi-generator
-	rm -rf internal/kafka/internal/api/private
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private.yaml -g go -o internal/kafka/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/kafka/internal/api/private
+	rm -rf internal/dinosaur/internal/api/private
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private.yaml -g go -o internal/dinosaur/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/dinosaur/internal/api/private
 .PHONY: openapi/generate/kas-private
 
 openapi/generate/kas-admin: go-bindata openapi-generator
-	rm -rf internal/kafka/internal/api/admin/private
-	$(OPENAPI_GENERATOR) validate -i openapi/kas-fleet-manager-private-admin.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/kas-fleet-manager-private-admin.yaml -g go -o internal/kafka/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/kafka/internal/api/admin/private
+	rm -rf internal/dinosaur/internal/api/admin/private
+	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
+	$(OPENAPI_GENERATOR) generate -i openapi/fleet-manager-private-admin.yaml -g go -o internal/dinosaur/internal/api/admin/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
+	$(GOFMT) -w internal/dinosaur/internal/api/admin/private
 .PHONY: openapi/generate/kas-admin
 
 openapi/generate/connector-public: go-bindata openapi-generator
@@ -405,19 +405,19 @@ code/fix:
 .PHONY: code/fix
 
 run: install
-	kas-fleet-manager migrate
-	kas-fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
+	fleet-manager migrate
+	fleet-manager serve --public-host-url=${PUBLIC_HOST_URL}
 .PHONY: run
 
 # Run Swagger and host the api docs
 run/docs:
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
-		{ url: \"./openapi/kas-fleet-manager.yaml\", name: \"Public API\" },\
+		{ url: \"./openapi/fleet-manager.yaml\", name: \"Public API\" },\
 		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
 		{ url: \"./openapi/connector_mgmt-private.yaml\", name: \"Connector Management Private API\"},\
 		{ url: \"./openapi/connector_mgmt-private-admin.yaml\", name: \"Private Connector Management Admin API\"},\
-		{ url: \"./openapi/kas-fleet-manager-private.yaml\", name: \"Private API\"},\
-		{ url: \"./openapi/kas-fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
+		{ url: \"./openapi/fleet-manager-private.yaml\", name: \"Private API\"},\
+		{ url: \"./openapi/fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
 	@echo "Please open http://localhost/"
 .PHONY: run/docs
@@ -444,7 +444,7 @@ db/setup:
 .PHONY: db/setup
 
 db/migrate:
-	OCM_ENV=integration $(GO) run ./cmd/kas-fleet-manager migrate
+	OCM_ENV=integration $(GO) run ./cmd/fleet-manager migrate
 .PHONY: db/migrate
 
 db/teardown:
@@ -452,7 +452,7 @@ db/teardown:
 .PHONY: db/teardown
 
 db/login:
-	docker exec -u $(shell id -u) -it kas-fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
+	docker exec -u $(shell id -u) -it fleet-manager-db /bin/bash -c "PGPASSWORD=$(shell cat secrets/db.password) psql -d $(shell cat secrets/db.name) -U $(shell cat secrets/db.user)"
 .PHONY: db/login
 
 db/generate/insert/cluster:
@@ -526,11 +526,11 @@ keycloak/setup:
 	@echo -n "$(OSD_IDP_MAS_SSO_CLIENT_SECRET)" > secrets/osd-idp-keycloak-service.clientSecret
 .PHONY:keycloak/setup
 
-# Setup for the kafka broker certificate
-kafkacert/setup:
-	@echo -n "$(KAFKA_TLS_CERT)" > secrets/kafka-tls.crt
-	@echo -n "$(KAFKA_TLS_KEY)" > secrets/kafka-tls.key
-.PHONY:kafkacert/setup
+# Setup for the dinosaur broker certificate
+dinosaurcert/setup:
+	@echo -n "$(DINOSAUR_TLS_CRT)" > secrets/dinosaur-tls.crt
+	@echo -n "$(DINOSAUR_TLS_KEY)" > secrets/dinosaur-tls.key
+.PHONY:dinosaurcert/setup
 
 observatorium/setup:
 	@echo -n "$(OBSERVATORIUM_CONFIG_ACCESS_TOKEN)" > secrets/observability-config-access.token;
@@ -543,7 +543,7 @@ observatorium/setup:
 observatorium/token-refresher/setup: PORT ?= 8085
 observatorium/token-refresher/setup: IMAGE_TAG ?= latest
 observatorium/token-refresher/setup: ISSUER_URL ?= https://sso.redhat.com/auth/realms/redhat-external
-observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/managedkafka
+observatorium/token-refresher/setup: OBSERVATORIUM_URL ?= https://observatorium-mst.api.stage.openshift.com/api/metrics/v1/manageddinosaur
 observatorium/token-refresher/setup:
 	@docker run -d -p ${PORT}:${PORT} \
 		--restart always \
@@ -583,14 +583,14 @@ deploy/project:
 # deploy the postgres database required by the service to an OpenShift cluster
 deploy/db:
 	oc process -f ./templates/db-template.yml | oc apply -f - -n $(NAMESPACE)
-	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep kas-fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
+	@time timeout --foreground 3m bash -c "until oc get pods -n $(NAMESPACE) | grep fleet-manager-db | grep -v deploy | grep -q Running; do echo 'database is not ready yet'; sleep 10; done"
 .PHONY: deploy/db
 
 # deploys the secrets required by the service to an OpenShift cluster
 deploy/secrets:
-	@oc get service/kas-fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
+	@oc get service/fleet-manager-db -n $(NAMESPACE) || (echo "Database is not deployed, please run 'make deploy/db'"; exit 1)
 	@oc process -f ./templates/secrets-template.yml \
-		-p DATABASE_HOST="$(shell oc get service/kas-fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
+		-p DATABASE_HOST="$(shell oc get service/fleet-manager-db -o jsonpath="{.spec.clusterIP}")" \
 		-p OCM_SERVICE_CLIENT_ID="$(shell ([ -s './secrets/ocm-service.clientId' ] && [ -z '${OCM_SERVICE_CLIENT_ID}' ]) && cat ./secrets/ocm-service.clientId || echo '${OCM_SERVICE_CLIENT_ID}')" \
 		-p OCM_SERVICE_CLIENT_SECRET="$(shell ([ -s './secrets/ocm-service.clientSecret' ] && [ -z '${OCM_SERVICE_CLIENT_SECRET}' ]) && cat ./secrets/ocm-service.clientSecret || echo '${OCM_SERVICE_CLIENT_SECRET}')" \
 		-p OCM_SERVICE_TOKEN="$(shell ([ -s './secrets/ocm-service.token' ] && [ -z '${OCM_SERVICE_TOKEN}' ]) && cat ./secrets/ocm-service.token || echo '${OCM_SERVICE_TOKEN}')" \
@@ -610,8 +610,8 @@ deploy/secrets:
 		-p OSD_IDP_MAS_SSO_CLIENT_ID="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientId' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_ID}' ]) && cat ./secrets/osd-idp-keycloak-service.clientId || echo '${OSD_IDP_MAS_SSO_CLIENT_ID}')" \
 		-p OSD_IDP_MAS_SSO_CLIENT_SECRET="$(shell ([ -s './secrets/osd-idp-keycloak-service.clientSecret' ] && [ -z '${OSD_IDP_MAS_SSO_CLIENT_SECRET}' ]) && cat ./secrets/osd-idp-keycloak-service.clientSecret || echo '${OSD_IDP_MAS_SSO_CLIENT_SECRET}')" \
 		-p MAS_SSO_CRT="$(shell ([ -s './secrets/keycloak-service.crt' ] && [ -z '${MAS_SSO_CRT}' ]) && cat ./secrets/keycloak-service.crt || echo '${MAS_SSO_CRT}')" \
-		-p KAFKA_TLS_CERT="$(shell ([ -s './secrets/kafka-tls.crt' ] && [ -z '${KAFKA_TLS_CERT}' ]) && cat ./secrets/kafka-tls.crt || echo '${KAFKA_TLS_CERT}')" \
-		-p KAFKA_TLS_KEY="$(shell ([ -s './secrets/kafka-tls.key' ] && [ -z '${KAFKA_TLS_KEY}' ]) && cat ./secrets/kafka-tls.key || echo '${KAFKA_TLS_KEY}')" \
+		-p DINOSAUR_TLS_CERT="$(shell ([ -s './secrets/dinosaur-tls.crt' ] && [ -z '${DINOSAUR_TLS_CERT}' ]) && cat ./secrets/dinosaur-tls.crt || echo '${DINOSAUR_TLS_CERT}')" \
+		-p DINOSAUR_TLS_KEY="$(shell ([ -s './secrets/dinosaur-tls.key' ] && [ -z '${DINOSAUR_TLS_KEY}' ]) && cat ./secrets/dinosaur-tls.key || echo '${DINOSAUR_TLS_KEY}')" \
 		-p OBSERVABILITY_CONFIG_ACCESS_TOKEN="$(shell ([ -s './secrets/observability-config-access.token' ] && [ -z '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}' ]) && cat ./secrets/observability-config-access.token || echo '${OBSERVABILITY_CONFIG_ACCESS_TOKEN}')" \
 		-p IMAGE_PULL_DOCKER_CONFIG="$(shell ([ -s './secrets/image-pull.dockerconfigjson' ] && [ -z '${IMAGE_PULL_DOCKER_CONFIG}' ]) && cat ./secrets/image-pull.dockerconfigjson || echo '${IMAGE_PULL_DOCKER_CONFIG}')" \
 		-p KUBE_CONFIG="${KUBE_CONFIG}" \
@@ -637,9 +637,9 @@ deploy/service: IMAGE_REGISTRY ?= $(internal_image_registry)
 deploy/service: IMAGE_REPOSITORY ?= $(image_repository)
 deploy/service: ENV ?= "development"
 deploy/service: REPLICAS ?= "1"
-deploy/service: ENABLE_KAFKA_EXTERNAL_CERTIFICATE ?= "false"
-deploy/service: ENABLE_KAFKA_LIFE_SPAN ?= "false"
-deploy/service: KAFKA_LIFE_SPAN ?= "48"
+deploy/service: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE ?= "false"
+deploy/service: ENABLE_DINOSAUR_LIFE_SPAN ?= "false"
+deploy/service: DINOSAUR_LIFE_SPAN ?= "48"
 deploy/service: OCM_URL ?= "https://api.stage.openshift.com"
 deploy/service: MAS_SSO_ENABLE_AUTH ?= "true"
 deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
@@ -648,7 +648,7 @@ deploy/service: USER_NAME_CLAIM ?= "clientId"
 deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
 deploy/service: MAX_ALLOWED_SERVICE_ACCOUNTS ?= "2"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
-deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-kafka-sre"
+deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-dinosaur-sre"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
 deploy/service: SERVICE_PUBLIC_HOST_URL ?= "https://api.openshift.com"
 deploy/service: ENABLE_TERMS_ACCEPTANCE ?= "false"
@@ -666,21 +666,21 @@ deploy/service: OBSERVATORIUM_TENANT ?= "test"
 deploy/service: OBSERVABILITY_CONFIG_CHANNEL ?= "resources"
 deploy/service: OBSERVABILITY_CONFIG_TAG ?= "main"
 deploy/service: DATAPLANE_CLUSTER_SCALING_TYPE ?= "manual"
-deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-kafka-qe"
+deploy/service: STRIMZI_OPERATOR_ADDON_ID ?= "managed-dinosaur-qe"
 deploy/service: KAS_FLEETSHARD_ADDON_ID ?= "kas-fleetshard-operator-qe"
 deploy/service: VAULT_KIND ?= "tmp"
 deploy/service: deploy/envoy deploy/route
 	@if test -z "$(IMAGE_TAG)"; then echo "IMAGE_TAG was not specified"; exit 1; fi
-	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q kas-fleet-manager; do echo 'waiting for kas-fleet-manager route to be created'; sleep 1; done"
+	@time timeout --foreground 3m bash -c "until oc get routes -n $(NAMESPACE) | grep -q fleet-manager; do echo 'waiting for fleet-manager route to be created'; sleep 1; done"
 	@oc process -f ./templates/service-template.yml \
 		-p ENVIRONMENT="$(ENV)" \
 		-p IMAGE_REGISTRY=$(IMAGE_REGISTRY) \
 		-p IMAGE_REPOSITORY=$(IMAGE_REPOSITORY) \
 		-p IMAGE_TAG=$(IMAGE_TAG) \
 		-p REPLICAS="${REPLICAS}" \
-		-p ENABLE_KAFKA_EXTERNAL_CERTIFICATE="${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}" \
-		-p ENABLE_KAFKA_LIFE_SPAN="${ENABLE_KAFKA_LIFE_SPAN}" \
-		-p KAFKA_LIFE_SPAN="${KAFKA_LIFE_SPAN}" \
+		-p ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE="${ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE}" \
+		-p ENABLE_DINOSAUR_LIFE_SPAN="${ENABLE_DINOSAUR_LIFE_SPAN}" \
+		-p DINOSAUR_LIFE_SPAN="${DINOSAUR_LIFE_SPAN}" \
 		-p ENABLE_OCM_MOCK=$(ENABLE_OCM_MOCK) \
 		-p OCM_MOCK_MODE=$(OCM_MOCK_MODE) \
 		-p OCM_URL="$(OCM_URL)" \
@@ -696,7 +696,7 @@ deploy/service: deploy/envoy deploy/route
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
 		-p VAULT_KIND=$(VAULT_KIND) \
-		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/kas-fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
+		-p SERVICE_PUBLIC_HOST_URL="https://$(shell oc get routes/fleet-manager -o jsonpath="{.spec.host}" -n $(NAMESPACE))" \
 		-p OBSERVATORIUM_AUTH_TYPE="${OBSERVATORIUM_AUTH_TYPE}" \
 		-p DEX_USERNAME="${DEX_USERNAME}" \
 		-p DEX_URL="${DEX_URL}" \

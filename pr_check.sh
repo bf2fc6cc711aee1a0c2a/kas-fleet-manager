@@ -34,7 +34,7 @@ mkdir -p "${XDG_RUNTIME_DIR}"
 export GOBIN="${PWD}/.gobin"
 export PATH="${GOBIN}:${PATH}"
 
-export IMAGE_NAME="test/kas-fleet-manager"
+export IMAGE_NAME="test/fleet-manager"
 
 # copy dockerfile depending on targetted environment and set env vars in the dockerfile
 if [[ -z "${OCM_ENV}" ]] || [[ "${OCM_ENV}" == "${INTEGRATION_ENV}" ]];

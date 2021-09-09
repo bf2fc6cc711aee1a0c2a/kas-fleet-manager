@@ -1,0 +1,635 @@
+openapi: 3.0.0 # need this as first line to allow some IDEs to know this is an openapi document.
+# Warning: This file should only be used if the endpoints are not yet ready to be public, or not suitable for public consumption (like the data plane endpoints).
+# In most cases, you shouldn't need to add the endpoints here.
+# Only add endpoints here when it is an explicit requirement, or if you know what you are doing.
+# There should be no duplicated endpoints or schemas in these 2 files. They should only defined in one of them.
+info:
+  title: Dinosaur Service Fleet Manager
+  version: 1.4.0
+  description: Dinosaur Service Fleet Manager APIs that are used by internal services e.g kas-fleetshard operators.
+servers:
+  - url: https://api.openshift.com
+    description: Main (production) server
+  - url: https://api.stage.openshift.com
+    description: Staging server
+  - url: http://localhost:8000
+    description: localhost
+  - url: /
+    description: current domain
+tags:
+  - name: Agent Clusters
+    description: ""
+
+paths:
+  # Endpoints for data plane communications
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/status':
+    put:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      requestBody:
+        description: Cluster status update data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest'
+        required: true
+      responses:
+        '200':
+          description: Cluster status is updated
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: updateAgentClusterStatus
+      summary: Update the status of an agent cluster
+
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs/status':
+    put:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      requestBody:
+        description: Dinosaur clusters status update data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataPlaneDinosaurStatusUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: Status is updated for Dinosaur clusters
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: updateDinosaurClusterStatus
+      summary: Update the status of Dinosaur clusters on an agent cluster
+
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}/dinosaurs':
+    get:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        '200':
+          description: The list of the ManagedDinosaurs for the specified agent cluster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagedDinosaurList'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: getDinosaurs
+      summary: Get the list of ManagedaDinosaurs for the specified agent cluster
+
+  '/api/dinosaurs_mgmt/v1/agent-clusters/{id}':
+    get:
+      tags:
+        - Agent Clusters
+      parameters:
+        - $ref: "fleet-manager.yaml#/components/parameters/id"
+      responses:
+        '200':
+          description: The ManagedDinosaurAgent CR Spec
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataplaneClusterAgentConfig'
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                400InvalidIdExample:
+                  $ref: '#/components/examples/400InvalidIdExample'
+          description: id value is not valid
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
+              examples:
+                404Example:
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
+          # This is deliberate to hide the endpoints for unauthorised users
+          description: Auth token is not valid.
+      security:
+        - Bearer: [ ]
+      operationId: getDinosaurAgent
+      summary: Get the spec of the ManagedDinosaurAgent CR spec
+
+components:
+  schemas:
+
+    ListReference:
+      required:
+        - kind
+        - items
+      type: object
+      properties:
+        kind:
+          type: string
+
+    PrivateObjectReference:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+
+    ManagedDinosaurCapacity:
+      type: object
+      properties:
+        ingressEgressThroughputPerSec:
+          type: string
+        totalMaxConnections:
+          type: integer
+          format: int
+        maxDataRetentionSize:
+          type: string
+        maxPartitions:
+          type: integer
+          format: int
+        maxDataRetentionPeriod:
+          type: string
+        maxConnectionAttemptsPerSec:
+          type: integer
+          format: int
+
+    ManagedDinosaurVersions:
+      type: object
+      properties:
+        dinosaur:
+          type: string
+        dinosaurIbp:
+          type: string
+        strimzi:
+          type: string
+
+    ManagedDinosaur:
+      allOf:
+        - $ref: "#/components/schemas/PrivateObjectReference"
+        - type: object
+          properties:
+            metadata:
+              type: object
+              properties:
+                name:
+                  type: string
+                namespace:
+                  type: string
+                annotations:
+                  type: object
+                  required:
+                    - bf2.org/placementId
+                    - bf2.org/id
+                  properties:
+                    bf2.org/id:
+                      type: string
+                    bf2.org/placementId:
+                      type: string
+
+            spec:
+              type: object
+              properties:
+                serviceAccounts:
+                  type: array
+                  items:
+                    type: object
+                    required: 
+                      - name
+                      - principal
+                      - password
+                    properties:
+                      name:
+                        type: string
+                      principal:
+                        type: string
+                      password: 
+                        type: string     
+                capacity:
+                  $ref: "#/components/schemas/ManagedDinosaurCapacity"
+                oauth:
+                  type: object
+                  required:
+                    - maximumSessionLifetime
+                  properties:
+                    clientId:
+                      type: string
+                    clientSecret:
+                      type: string
+                    tokenEndpointURI:
+                      type: string
+                    jwksEndpointURI:
+                      type: string
+                    validIssuerEndpointURI:
+                      type: string
+                    userNameClaim:
+                      type: string
+                    fallbackUserNameClaim:
+                      type: string
+                    tlsTrustedCertificate:
+                      type: string
+                      nullable: true
+                    customClaimCheck:
+                      type: string
+                    maximumSessionLifetime:
+                      type: long
+
+                owners:
+                  type: array
+                  items:
+                    type: string
+                endpoint:
+                  type: object
+                  properties:
+                    bootstrapServerHost:
+                      type: string
+                    tls:
+                      type: object
+                      nullable: true
+                      properties:
+                        cert:
+                          type: string
+                        key:
+                          type: string
+                versions:
+                  $ref: "#/components/schemas/ManagedDinosaurVersions"
+                deleted:
+                  type: boolean
+              required:
+                - deleted
+
+    ManagedDinosaurList:
+      description: >-
+        A list of ManagedDinosaur
+      allOf:
+        - $ref: "#/components/schemas/ListReference"
+        - type: object
+          example:
+            kind: "ManagedDinosaurList"
+            items:
+              $ref: '#/components/examples/ManagedDinosaurExample'
+          properties:
+            items:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/ManagedDinosaur"
+
+    DatePlaneClusterUpdateStatusRequestNodeInfo:
+      type: object
+      nullable: true
+      properties:
+        ceiling:
+          type: integer
+          nullable: true
+        floor:
+          type: integer
+          nullable: true
+        current:
+          type: integer
+          nullable: true
+        currentWorkLoadMinimum:
+          type: integer
+          nullable: true
+
+    DatePlaneClusterUpdateStatusRequestResizeInfo:
+      type: object
+      nullable: true
+      properties:
+        nodeDelta:
+          type: integer
+          nullable: true
+        delta:
+          type: object
+          nullable: true
+          properties:
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
+            connections:
+              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              nullable: true
+            dataRetentionSize:
+              type: string
+              nullable: true
+            partitions:
+              type: integer
+              nullable: true
+
+    DataPlaneClusterUpdateStatusRequest:
+      # TODO are there any fields that should be required?
+      # TODO are there any fields that should be nullable? (this is, a pointer in the resulting generated Go code)
+      description: "Schema for the request to update a data plane cluster's status"
+      type: object
+      properties:
+        conditions:
+          description: "The cluster data plane conditions"
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+        total:
+          type: object
+          properties:
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
+            connections:
+              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              nullable: true
+            dataRetentionSize:
+              type: string
+              nullable: true
+            partitions:
+              type: integer
+              nullable: true
+        remaining:
+          type: object
+          properties:
+            # TODO 'total', 'remaining' attributes share the same properties so should we refactor it to a common schema?
+            ingressEgressThroughputPerSec:
+              type: string #an example is "40Gi", a k8s quantity. Should we have some special format at openapi level?" this example also happens on other fields
+              nullable: true
+            connections:
+              type: integer # an example is 10000. Should we have some special format at openapi level? this example also happens on other fields
+              nullable: true
+            dataRetentionSize:
+              type: string
+              nullable: true
+            partitions:
+              type: integer
+              nullable: true
+        nodeInfo:
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
+        resizeInfo:
+          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
+        strimzi:
+          type: array
+          items:
+            type: object
+            properties:
+              ready:
+                type: boolean
+              version:
+                type: string
+              dinosaurVersions:
+                type: array
+                items:
+                  type: string
+              dinosaurIbpVersions:
+                type: array
+                items:
+                  type: string
+            required:
+            - ready
+            - version
+    DataPlaneDinosaurStatus:
+      description: "Schema of the status object for a Dinosaur cluster"
+      type: object
+      properties:
+        conditions:
+          description: "The status conditions of a Dinosaur cluster"
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              reason:
+                type: string
+              message:
+                type: string
+              status:
+                type: string
+        capacity:
+          description: "Capacity information of the data plane cluster"
+          type: object
+          properties:
+            ingressEgressThroughputPerSec:
+              type: string #example: 4Mi
+              nullable: true
+            totalMaxConnections:
+              type: integer #example: 500
+              nullable: true
+            maxDataRetentionSize:
+              type: string #example: 100Gi
+              nullable: true
+            maxPartitions:
+              type: integer #example: 100
+              nullable: true
+            maxDataRetentionPeriod:
+              type: string #example: P14D
+              nullable: true
+            maxConnectionAttemptsPerSec:
+              type: integer #example: 100
+              nullable: true
+
+        versions:
+          description: "Version information related to a Dinosaur cluster"
+          type: object
+          properties:
+            dinosaur:
+              type: string
+            strimzi:
+              type: string
+            dinosaurIbp:
+              type: string
+        routes:
+          description: "Routes created for a Dinosaur cluster"
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              prefix:
+                type: string
+              router:
+                type: string
+      example:
+        $ref: '#/components/examples/DataPlaneDinosaurStatusRequestExample'
+
+    DataPlaneDinosaurStatusUpdateRequest:
+      description: "Schema for the request to update the statuses of Dinosaur clusters from data plane"
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/DataPlaneDinosaurStatus'
+
+    DataplaneClusterAgentConfig:
+      description: "Configuration for the data plane cluster agent"
+      type: object
+      properties:
+        spec:
+          description: "Data plane cluster agent spec"
+          type: object
+          properties:
+            observability:
+              description: "Observability configurations"
+              type: object
+              properties:
+                accessToken:
+                  type: string
+                  nullable: true
+                channel:
+                  type: string
+                repository:
+                  type: string
+                tag:
+                  type: string
+
+    WatchEvent:
+      required:
+        - type
+      type: object
+      properties:
+        type:
+          type: string
+        error:
+          nullable: true
+          $ref: "fleet-manager.yaml#/components/schemas/Error"
+        object:
+          type: object
+          nullable: true
+
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      bearerFormat: JWT
+      type: http
+
+  examples:
+    ManagedDinosaurExample:
+      value:
+        kind: "ManagedDinosaur"
+        metadata:
+          name: "example-dinosaur"
+          namespace: "example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
+          annotations:
+            bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
+            bf2.org/placementId: ""
+        spec:
+          capacity:
+            ingressEgressThroughputPerSec: 4Mi
+            totalMaxConnections: 500
+            maxDataRetentionSize: 100Gi
+            maxPartitions: 100
+            maxDataRetentionPeriod: P14D
+            maxConnectionAttemptsPerSec: 100
+          oauth:
+            clientId: "dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
+            clientSecret: "example-client-secret"
+            tokenEndpointUri: "https://example-token-endpoint-uri.com/token"
+            jwksEndpointUri: "https://example-jwks-endpoint-uri.com/certs"
+            validIssuerEndpointUri: "https://issuer-endpoint-uri.com"
+            userNameClaim: "clientId"
+            fallbackUserNameClaim: "preferred_username"
+            tlsTrustedCertificate: ""
+            customClaimCheck: ""
+            maximumSessionLifetime: 1898
+          endpoint:
+            bootstrapServerHost: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org"
+            tls:
+              cert: ""
+              key: ""
+          versions:
+            dinosaur: 2.7.0
+            strimzi: 0.21.2
+            dinosaurIbp: "2.7"
+          deleted: false
+    DataPlaneDinosaurStatusRequestExample:
+      value:
+        conditions:
+          - type: Ready
+            reason: DinosaurInstanceReady
+            message: installing
+            status: "False"
+            lastTransitionTime: "2018-01-01T00:00:00Z"
+        capacity:
+          ingressEgressThroughputPerSec: 4Mi
+          totalMaxConnections: 500
+          maxDataRetentionSize: 100Gi
+          maxPartitions: 100
+          maxDataRetentionPeriod: P14D
+          maxConnectionAttemptsPerSec: 100
+        versions:
+          dinosaur: 2.4.1
+          strimzi: 0.21.2
+          dinosaurIbp: "2.4"
+    400InvalidIdExample:
+      value:
+        id: "21"
+        kind: "Error"
+        href: "/api/dinosaurs_mgmt/v1/errors/21"
+        code: "DINOSAURS-MGMT-21"
+        reason: "Bad request"
+        operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"

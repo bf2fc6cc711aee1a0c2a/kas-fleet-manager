@@ -4,12 +4,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/config"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/client/keycloak"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/providers/connector"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/cucumber"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test/mocks"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/config"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/keycloak"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/providers/connector"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/cucumber"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test/mocks"
 )
 
 func TestMain(m *testing.M) {

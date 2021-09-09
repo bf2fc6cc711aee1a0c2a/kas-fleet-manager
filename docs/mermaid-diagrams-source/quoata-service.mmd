@@ -1,8 +1,8 @@
 classDiagram
   class QuotaService {
       <<Interface>>
-      + CheckIfQuotaIsDefinedForInstanceType(kafka)
-      + ReserveQuota(kafka)
+      + CheckIfQuotaIsDefinedForInstanceType(dinosaur)
+      + ReserveQuota(dinosaur)
       + DeleteQuota(subscriptionId)
   }
 
@@ -15,26 +15,26 @@ classDiagram
       -OCMClient ocmClient
   }
   class QuotaManagementListQuotaService {
-      - KafkaService kafkaService
+      - DinosaurService dinosaurService
   }
 
-  class KafkaService {
+  class DinosaurService {
       <<Service>>
-      + RegisterKafkaJob()
+      + RegisterDinosaurJob()
       + OtherMethods...
   }
 
-  class AcceptedKafkaManager {
+  class AcceptedDinosaurManager {
       + Reconcile()
   }
 
-  class DeletingKafkaManager {
+  class DeletingDinosaurManager {
       + Reconcile()
   }
 
   QuotaService <|.. AmsQuotaService: Implements
   QuotaService <|.. QuotaManagementListQuotaService: Implements
-  KafkaService ..> QuotaServiceFactory: Depends
+  DinosaurService ..> QuotaServiceFactory: Depends
   QuotaServiceFactory --|> QuotaService: Return concrete impl based on QuotaService
-  AcceptedKafkaManager ..> QuotaServiceFactory: Depends
-  DeletingKafkaManager ..> QuotaServiceFactory: Depends
+  AcceptedDinosaurManager ..> QuotaServiceFactory: Depends
+  DeletingDinosaurManager ..> QuotaServiceFactory: Depends
