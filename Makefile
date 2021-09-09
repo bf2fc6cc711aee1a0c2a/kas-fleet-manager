@@ -287,7 +287,7 @@ test: gotestsum
 
 # Precompile everything required for development/test.
 test/prepare:
-	$(GO) test -i ./internal/dinosaur/test/integration/... -i ./internal/connector/test/integration/...
+	$(GO) test -i ./internal/dinosaur/test/integration/...
 .PHONY: test/prepare
 
 # Runs the integration tests.
@@ -305,12 +305,7 @@ test/integration/dinosaur: test/prepare gotestsum
 				./internal/dinosaur/test/integration/...
 .PHONY: test/integration/dinosaur
 
-test/integration/connector: test/prepare gotestsum
-	$(GOTESTSUM) --junitfile reports/integraton-tests-connector.xml --format $(TEST_SUMMARY_FORMAT) -- -p 1 -ldflags -s -v -timeout $(TEST_TIMEOUT) -count=1 $(TESTFLAGS) \
-				./internal/connector/test/integration/...
-.PHONY: test/integration/connector
-
-test/integration: test/integration/dinosaur test/integration/connector
+test/integration: test/integration/dinosaur
 .PHONY: test/integration
 
 # remove OSD cluster after running tests against real OCM
@@ -331,11 +326,10 @@ openapi/validate: openapi-generator
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private.yaml
 	$(OPENAPI_GENERATOR) validate -i openapi/fleet-manager-private-admin.yaml
-	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
 .PHONY: openapi/validate
 
 # generate the openapi schema and generated package
-openapi/generate: openapi/generate/public openapi/generate/kas-private openapi/generate/kas-admin openapi/generate/connector-public openapi/generate/connector-private
+openapi/generate: openapi/generate/public openapi/generate/kas-private openapi/generate/kas-admin
 .PHONY: openapi/generate
 
 openapi/generate/public: go-bindata openapi-generator
@@ -365,26 +359,6 @@ openapi/generate/kas-admin: go-bindata openapi-generator
 	$(GOFMT) -w internal/dinosaur/internal/api/admin/private
 .PHONY: openapi/generate/kas-admin
 
-openapi/generate/connector-public: go-bindata openapi-generator
-	rm -rf internal/connector/internal/api/public
-	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt.yaml -g go -o internal/connector/internal/api/public --package-name public -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/connector/internal/api/public
-
-	mkdir -p .generate/openapi
-	cp ./openapi/connector_mgmt.yaml .generate/openapi
-	$(GOBINDATA) -o ./internal/connector/internal/generated/bindata.go -pkg generated -mode 420 -modtime 1 -prefix .generate/openapi/ .generate/openapi
-	$(GOFMT) -w internal/connector/internal/generated
-	rm -rf .generate/openapi
-.PHONY: openapi/generate/connector-public
-
-openapi/generate/connector-private: go-bindata openapi-generator
-	rm -rf internal/connector/internal/api/private
-	$(OPENAPI_GENERATOR) validate -i openapi/connector_mgmt-private.yaml
-	$(OPENAPI_GENERATOR) generate -i openapi/connector_mgmt-private.yaml -g go -o internal/connector/internal/api/private --package-name private -t openapi/templates --ignore-file-override ./.openapi-generator-ignore
-	$(GOFMT) -w internal/connector/internal/api/private
-.PHONY: openapi/generate/connector-private
-
 # clean up code and dependencies
 code/fix:
 	@$(GO) mod tidy
@@ -401,7 +375,6 @@ run/docs:
 	@echo "Please open http://localhost/"
 	docker run -u $(shell id -u) --rm --name swagger_ui_docs -d -p 80:8080 -e URLS="[ \
 		{ url: \"./openapi/fleet-manager.yaml\", name: \"Public API\" },\
-		{ url: \"./openapi/connector_mgmt.yaml\", name: \"Connector Management API\"},\
 		{ url: \"./openapi/fleet-manager-private.yaml\", name: \"Private API\"},\
 		{ url: \"./openapi/fleet-manager-private-admin.yaml\", name: \"Private Admin API\"}]"\
 		  -v $(PWD)/openapi/:/usr/share/nginx/html/openapi:Z swaggerapi/swagger-ui
@@ -412,17 +385,6 @@ run/docs/teardown:
 	docker container stop swagger_ui_docs
 	docker container rm swagger_ui_docs
 .PHONY: run/docs/teardown
-
-cos-fleet-catalog-camel/setup:
-	docker run --name cos-fleet-catalog-camel --rm -d -p 9091:8080 quay.io/lburgazzoli/ccs:latest
-	mkdir -p config/connector-types
-	echo -n "http://localhost:9091" > config/connector-types/cos-fleet-catalog-camel
-.PHONY: cos-fleet-catalog-camel/setup
-
-cos-fleet-catalog-camel/teardown:
-	docker stop cos-fleet-catalog-camel
-	rm config/connector-types/cos-fleet-catalog-camel
-.PHONY: cos-fleet-catalog-camel/teardown
 
 db/setup:
 	./scripts/local_db_setup.sh

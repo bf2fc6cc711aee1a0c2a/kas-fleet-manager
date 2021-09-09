@@ -163,7 +163,7 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/dinosaurs/status", dataPlaneDinosaurHandler.UpdateDinosaurStatuses).Methods(http.MethodPut)
 	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/dinosaurs", dataPlaneDinosaurHandler.GetAll).Methods(http.MethodGet)
 	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
-	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
+	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
 
 	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.ProviderConfig)
 	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()

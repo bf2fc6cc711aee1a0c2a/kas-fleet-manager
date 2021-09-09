@@ -12,33 +12,20 @@ type Actor string
 
 const (
 	Kas       Actor = "kas"
-	Connector Actor = "connector"
 )
 
-func UseOperatorAuthorisationMiddleware(router *mux.Router, actor Actor, jwkValidIssuerURI string, clusterIdVar string) {
-	var requiredRole string
-
-	if actor == Kas {
-		requiredRole = "kas_fleetshard_operator"
-	} else {
-		requiredRole = "connector_fleetshard_operator"
-	}
+func UseOperatorAuthorisationMiddleware(router *mux.Router, jwkValidIssuerURI string, clusterIdVar string) {
+	var requiredRole = "kas_fleetshard_operator"
 
 	router.Use(
 		NewRolesAuhzMiddleware().RequireRealmRole(requiredRole, errors.ErrorNotFound),
-		checkClusterId(actor, clusterIdVar),
+		checkClusterId(clusterIdVar),
 		NewRequireIssuerMiddleware().RequireIssuer(jwkValidIssuerURI, errors.ErrorNotFound),
 	)
 }
 
-func checkClusterId(actor Actor, clusterIdVar string) mux.MiddlewareFunc {
-	var clusterIdClaimKey string
-
-	if actor == Kas {
-		clusterIdClaimKey = "kas-fleetshard-operator-cluster-id"
-	} else {
-		clusterIdClaimKey = "connector-fleetshard-operator-cluster-id"
-	}
+func checkClusterId(clusterIdVar string) mux.MiddlewareFunc {
+	var clusterIdClaimKey = "kas-fleetshard-operator-cluster-id"
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {

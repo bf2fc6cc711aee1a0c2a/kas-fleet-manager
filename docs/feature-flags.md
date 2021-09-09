@@ -1,9 +1,8 @@
 # Feature Flags
 This lists the feature flags and their sub-configurations to enable/disable and configure features of the KAS Fleet Manager. This set of features can be seen below.
 
-   - [Feature Flags](#feature-flags)
+  - [Feature Flags](#feature-flags)
   - [Access Control](#access-control)
-  - [Connectors](#connectors)
   - [Database](#database)
   - [Health Check Server](#health-check-server)
   - [Dinosaur](#dinosaur)
@@ -20,12 +19,6 @@ This lists the feature flags and their sub-configurations to enable/disable and 
 
 - **enable-deny-list**: Enables access control for denied users.
     - `deny-list-config-file` [Required]: The path to the file containing the list of users that should be denied access to the service. (default: `'config/deny-list-configuration.yaml'`, example: [deny-list-configuration.yaml](../config/deny-list-configuration.yaml)).
-
-## Connectors
-- **enable-connectors**: Enables Dinosaur Connectors.
-    - `mas-sso-base-url` [Required]: The base URL of the Keycloak instance to be used for authentication.
-    - `mas-sso-realm` [Required]: The Keycloak realm to be used for authentication.
-    - `connector-types` [Optional]: Directory containing connector type service URLs (default: `'config/connector-types'`).
 
 ## Database
 - **enable-db-debug**: Enables Postgres debug logging.
