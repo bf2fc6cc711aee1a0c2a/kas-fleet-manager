@@ -1,4 +1,4 @@
-# Testing kas-fleet-manager
+# Testing fleet-manager
 
 ## Mocking
 
@@ -43,7 +43,7 @@ This means that test cases for a function are defined as a set of structs and ex
 loop one by one. For an example of writing a table driven test, see:
 
 - [The table driven test documentation](https://github.com/golang/go/wiki/TableDrivenTests) which has examples
-- [The Test_kafkaService_Get test in this repository](../internal/kafka/internal/services/kafka_test.go)
+- [The Test_dinosaurService_Get test in this repository](../internal/dinosaur/internal/services/dinosaur_test.go)
 
 
 ## Integration Tests
@@ -58,7 +58,7 @@ helper, httpClient, teardown := test.RegisterIntegration(t, mockOCMServer)
 defer teardown()
 ```
 
-See [TestKafkaPost integration test](../internal/kafka/test/integration/kafkas_test.go) as an example of this.
+See [TestDinosaurPost integration test](../internal/dinosaur/test/integration/dinosaurs_test.go) as an example of this.
 
 Integration tests in this service can take advantage of running in an "emulated OCM API". This
 essentially means a configurable mock OCM API server can be used in place of a "real" OCM API for
@@ -84,12 +84,12 @@ In the integration test itself you can then test the expected HTTP response/erro
 service based on the OCM failure e.g.
 
 ```go
-_, resp, err = client.DefaultApi.CreateKafka(ctx, true, k)
+_, resp, err = client.DefaultApi.CreateDinosaur(ctx, true, k)
 Expect(resp.StatusCode).To(Equal(http.StatusInternalServerError))
 ```
 
 When adding new integration tests, use the following files as guidelines:
-- [TestKafkaPost integration test](../internal/kafka/test/integration/kafkas_test.go)
+- [TestDinosaurPost integration test](../internal/dinosaur/test/integration/dinosaurs_test.go)
 - [Mock OCM API server](../test/mocks/api_server.go)
 
 When adding new features to the service that interact with OCM endpoints that have not currently
@@ -112,7 +112,7 @@ adding the new endpoint. Using the OCM `GET /api/clusters_mgmt/v1/clusters` endp
 
 ### Polling
 When you need to poll to wait for an event to happen (for example, when you have to wait for a cluster to be ready), a
-poller object is provided [here](../internal/kafka/test/common/util.go).
+poller object is provided [here](../internal/dinosaur/test/common/util.go).
 The simplest way to use it would be:
 ```go
 package mytest
@@ -120,7 +120,7 @@ import (
     "testing"
     "time"
 
-    utils "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/common"
+    utils "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/common"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -144,10 +144,10 @@ func MyTestFunction(t *testing.T) {
 > `TEST_SUMMARY_FORMAT` environment variable to `default-verbose`
 
 ### Mock KAS Fleetshard Sync
-The mock [KAS Fleetshard Sync](../internal/kafka/test/mocks/kasfleetshardsync/kas-fleetshard-sync.go) is used to reconcile data plane and Kafka cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the KAS Fleetshard Sync in the data plane cluster cannot
+The mock [KAS Fleetshard Sync](../internal/dinosaur/test/mocks/kasfleetshardsync/kas-fleetshard-sync.go) is used to reconcile data plane and Dinosaur cluster status during integration tests. This also needs to be used even when running integration tests against a real OCM environment as the KAS Fleetshard Sync in the data plane cluster cannot
 communicate to the KAS Fleet Manager during integration test runs. 
 
-The mock KAS Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Kafka cluster status. 
+The mock KAS Fleetshard Sync needs to be started at the start of a test that requires updates to a data plane or Dinosaur cluster status. 
 
 **Example Usage:**
 ```go
@@ -156,9 +156,9 @@ import (
     "testing"
     "time"
 
-    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test"
-    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks"
-    "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/kafka/test/mocks/kasfleetshardsync"
+    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test"
+    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks"
+    "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/test/mocks/kasfleetshardsync"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -177,9 +177,9 @@ func MyTestFunction(t *testing.T) {
 }
 ```
 
-The default behaviour of how the status of a data plane and a Kafka cluster are updated are as follows:
+The default behaviour of how the status of a data plane and a Dinosaur cluster are updated are as follows:
 - **Data plane cluster update**: Retrieves all clusters in the database in a `waiting_for_kas_fleetshard_operator` state and updates it to `ready` once all of the addons are installed.
-- **Kafka cluster update**: Retrieves all Kafkas that can be processed by the KAS Fleetshard Operator (i.e. Kafkas not in an `accepted` or `preparing` state). Any Kafkas marked for deletion are updated to `deleting`. Kafkas with any other status are updated to `ready`.
+- **Dinosaur cluster update**: Retrieves all Dinosaurs that can be processed by the KAS Fleetshard Operator (i.e. Dinosaurs not in an `accepted` or `preparing` state). Any Dinosaurs marked for deletion are updated to `deleting`. Dinosaurs with any other status are updated to `ready`.
 
 These default behaviours can be changed by setting the update status implementation. For example, the implementation for updating a data plane cluster status can be changed by calling the `SetUpdateDataplaneClusterStatusFunc` of the Mock KAS Fleetshard Sync builder:
 
@@ -188,7 +188,7 @@ These default behaviours can be changed by setting the update status implementat
 import(
     //...
 
-    privateopenapi "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api/private/openapi"
+    privateopenapi "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/private/openapi"
 )
 
 func MyTestFunction(t *testing.T) {
@@ -205,7 +205,7 @@ func MyTestFunction(t *testing.T) {
 ```
 
 ### Utilizing API clients in the integration tests
-When testing specific API endpoints (e.g. public, private or admin-private API), it is required to create an appropriate client. To do so, use a client creation function from the [helper](../internal/kafka/test/helper.go):
+When testing specific API endpoints (e.g. public, private or admin-private API), it is required to create an appropriate client. To do so, use a client creation function from the [helper](../internal/dinosaur/test/helper.go):
 
 ```go
 // create private admin API client
@@ -219,11 +219,11 @@ ocmServerBuilder.SetClusterGetResponse(mockedGetClusterResponse, nil)
 ocmServer := ocmServerBuilder.Build()
 defer ocmServer.Close()
 
-h, _, tearDown := test.NewKafkaHelper(t, ocmServer)
+h, _, tearDown := test.NewDinosaurHelper(t, ocmServer)
 defer tearDown()
 ctx := tt.args.ctx(h)
 client := test.NewAdminPrivateAPIClient(h)
 ```
 
 ### Testing privileged permissions
-Some endpoints will act differently depending on privileges of the entity calling them, e.g. `org_admin` can have CRUD access to resources within an organisation not owned by them, while regular users can usually only access their own resources. To find out more about various claims used by the kas-fleet-manager endpoints, go to [this document](../docs/jwt-claims.md)
+Some endpoints will act differently depending on privileges of the entity calling them, e.g. `org_admin` can have CRUD access to resources within an organisation not owned by them, while regular users can usually only access their own resources. To find out more about various claims used by the fleet-manager endpoints, go to [this document](../docs/jwt-claims.md)

@@ -2,21 +2,21 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
-  name: kas-fleet-manager-service
+  name: fleet-manager-service
   annotations:
     openshift.io/display-name: Kas Fleet Manager API
-    description: Kafka Services Fleet Manager API to managed Kafka
+    description: Dinosaur Services Fleet Manager API to managed Dinosaur
     tags: golang
     iconClass: icon-shadowman
     template.openshift.io/provider-display-name: Red Hat, Inc.
     template.openshift.io/documentation-url: https://gitlab.cee.redhat.com/service/
 labels:
-  template: kas-fleet-manager
+  template: fleet-manager
 parameters:
 
 - name: ENVIRONMENT
   displayName: Environment
-  description: Which Kafka Service Fleet Manager environment to use for this deployment
+  description: Which Dinosaur Service Fleet Manager environment to use for this deployment
   value: production
 
 - name: IMAGE_REGISTRY
@@ -153,9 +153,9 @@ parameters:
   description: A list of supported cloud providers in a yaml format.
   value: "[{name: aws, default: true, regions: [{name: us-east-1, default: true}]}]"
 
-- name: ENABLE_KAFKA_EXTERNAL_CERTIFICATE
-  displayName: Enable Kafka TLS
-  description: Enable the Kafka TLS certificate
+- name: ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE
+  displayName: Enable Dinosaur TLS
+  description: Enable the Dinosaur TLS certificate
   value: "false"
 
 - name: DEX_URL
@@ -223,7 +223,7 @@ parameters:
 
 - name: ENABLE_TERMS_ACCEPTANCE
   displayName: Enable terms acceptance
-  description: If enabled, kafkas can't be created unless required terms are accepted
+  description: If enabled, dinosaurs can't be created unless required terms are accepted
   value: "false"
 
 - name: ENABLE_DENY_LIST
@@ -253,12 +253,12 @@ parameters:
 
 - name: REGISTERED_SERVICE_ACCOUNTS
   displayName: A list of service accounts
-  description: A list of service accounts that are allowed to create standard KAFKA instances without requiring an organisation to do so in a yaml format.
+  description: A list of service accounts that are allowed to create standard DINOSAUR instances without requiring an organisation to do so in a yaml format.
   value: "[]"
 
 - name: REGISTERED_USERS_PER_ORGANISATION
   displayName: A list of users per organisation
-  description: A list of users that are allowed to create standard KAFKA instances via their organisation in a yaml format.
+  description: A list of users that are allowed to create standard DINOSAUR instances via their organisation in a yaml format.
   value: "[{id: 13640203, max_allowed_instances: 5, any_user: true, registered_users: []}, {id: 12147054, max_allowed_instances: 1, any_user: true, registered_users: []}, {id: 13639843, max_allowed_instances: 1, any_user: true, registered_users: []}]"
 
 - name: DENIED_USERS
@@ -271,9 +271,9 @@ parameters:
   description: A list of read only users. A user is identified by its username.
   value: "[]"
 
-- name: KAFKA_SRE_USERS
-  displayName: A list of kafka-sre admin users given by their usernames
-  description: A list of kafka-sre admin users. A user is identified by its username.
+- name: DINOSAUR_SRE_USERS
+  displayName: A list of dinosaur-sre admin users given by their usernames
+  description: A list of dinosaur-sre admin users. A user is identified by its username.
   value: "[]"
 
 - name: MAS_SSO_DEBUG
@@ -291,8 +291,8 @@ parameters:
   description: MAS SSO Host url
 
 - name: MAS_SSO_REALM
-  displayName: MAS SSO REALM for Kafka SSO Clients and Service Accounts
-  description: MAS SSO realm for Kafka SSO Clients and Service Accounts
+  displayName: MAS SSO REALM for Dinosaur SSO Clients and Service Accounts
+  description: MAS SSO realm for Dinosaur SSO Clients and Service Accounts
 
 - name: OSD_IDP_MAS_SSO_REALM
   displayName: MAS SSO REALM for OSD Cluster Identity Provider Clients
@@ -311,7 +311,7 @@ parameters:
 
 - name: ALLOW_EVALUATOR_INSTANCE
   displayName: Allow Evaluator Instance
-  description: Allow the creation of one kafka evaluator instance per user
+  description: Allow the creation of one dinosaur evaluator instance per user
   value: "true"
 
 - name: QUOTA_TYPE
@@ -351,57 +351,57 @@ parameters:
 
 - name: STRIMZI_OPERATOR_VERSION
   displayName: Strimzi operator version
-  description: The version of the Strimzi operator to install. If set, DesiredStrimziVersion in kafka_request will updated with this value. Otherwise value reported from kas-fleetshard operator will be used
+  description: The version of the Strimzi operator to install. If set, DesiredStrimziVersion in dinosaur_request will updated with this value. Otherwise value reported from kas-fleetshard operator will be used
   value: ""
 
-- name: KAFKA_CAPACITY_MAX_CAPACITY
+- name: DINOSAUR_CAPACITY_MAX_CAPACITY
   displayName: Maximum number of clusters
-  description: Maximum number of allowed kafka clusters
+  description: Maximum number of allowed dinosaur clusters
   value: "1000"
 
-- name: KAFKA_CAPACITY_INGRESS_THROUGHPUT
-  displayName: Kafka ingress throughput
-  description: Ingress throughput configuration for the default Kafka instance type
+- name: DINOSAUR_CAPACITY_INGRESS_THROUGHPUT
+  displayName: Dinosaur ingress throughput
+  description: Ingress throughput configuration for the default Dinosaur instance type
   value: "2Mi"
 
-- name: KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS
-  displayName: Kafka total max connections
-  description: Total max connections configuration for the default Kafka instance type
+- name: DINOSAUR_CAPACITY_TOTAL_MAX_CONNECTIONS
+  displayName: Dinosaur total max connections
+  description: Total max connections configuration for the default Dinosaur instance type
   value: "100"
 
-- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE
-  displayName: Kafka max data retention size
-  description: Data retention size configuration for the default Kafka instance type
+- name: DINOSAUR_CAPACITY_MAX_DATA_RETENTION_SIZE
+  displayName: Dinosaur max data retention size
+  description: Data retention size configuration for the default Dinosaur instance type
   value: "60Gi"
 
-- name: KAFKA_CAPACITY_MAX_PARTITIONS
-  displayName: Kafka max partitions
-  description: Max partitions configuration for the default Kafka instance type
+- name: DINOSAUR_CAPACITY_MAX_PARTITIONS
+  displayName: Dinosaur max partitions
+  description: Max partitions configuration for the default Dinosaur instance type
   value: "100"
 
-- name: KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD
-  displayName: Kafka max data retention period
-  description: Data retention period configuration for the default Kafka instance type
+- name: DINOSAUR_CAPACITY_MAX_DATA_RETENTION_PERIOD
+  displayName: Dinosaur max data retention period
+  description: Data retention period configuration for the default Dinosaur instance type
   value: "P14D"
 
-- name: KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
-  displayName: Kafka max connection attempts per second
-  description: Max connection attempts per second configuration for the default Kafka instance type
+- name: DINOSAUR_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC
+  displayName: Dinosaur max connection attempts per second
+  description: Max connection attempts per second configuration for the default Dinosaur instance type
   value: "100"
 
-- name: DEFAULT_KAFKA_VERSION
-  displayName: Default Kafka version
-  description: The default version of Kafka when creating Kafka instances.
+- name: DEFAULT_DINOSAUR_VERSION
+  displayName: Default Dinosaur version
+  description: The default version of Dinosaur when creating Dinosaur instances.
   value: "2.7.0"
 
-- name: KAFKA_LIFE_SPAN
-  displayName: Kafka life span expiration in hours
-  description: Time period in hours after which kafka instances are deleted. This value must be a positive value
+- name: DINOSAUR_LIFE_SPAN
+  displayName: Dinosaur life span expiration in hours
+  description: Time period in hours after which dinosaur instances are deleted. This value must be a positive value
   value: "48"
 
-- name: ENABLE_KAFKA_LIFE_SPAN
-  displayName: Enables Kafka life span for expiration in hours
-  description: Enables the ability to set a Kafka life span for expiration in hours
+- name: ENABLE_DINOSAUR_LIFE_SPAN
+  displayName: Enables Dinosaur life span for expiration in hours
+  description: Enables the ability to set a Dinosaur life span for expiration in hours
   value: "false"
 
 - name: DATAPLANE_CLUSTER_SCALING_TYPE
@@ -418,14 +418,14 @@ parameters:
   description: Envoy image
   value: envoyproxy/envoy:v1.16.1
 
-- name: KAFKA_DOMAIN_NAME
-  description: The domain name to use for Kafka instances
-  value: bf2.kafka-stage.rhcloud.com
+- name: DINOSAUR_DOMAIN_NAME
+  description: The domain name to use for Dinosaur instances
+  value: bf2.dinosaur-stage.rhcloud.com
 
 - name: STRIMZI_OPERATOR_ADDON_ID
   displayName: Strimzi operator addon ID
   description: ID of the Strimzi operator addon
-  value: "managed-kafka-qe"
+  value: "managed-dinosaur-qe"
 
 - name: KAS_FLEETSHARD_ADDON_ID
   displayName: kas-fleetshard addon ID
@@ -448,7 +448,7 @@ parameters:
 - name: STRIMZI_OLM_INDEX_IMAGE
   displayName: Strimzi operator OLM index image
   description: Strimzi operator OLM index image
-  value: "quay.io/osd-addons/managed-kafka:production-82b42db"
+  value: "quay.io/osd-addons/managed-dinosaur:production-82b42db"
 
 - name: KAS_FLEETSHARD_OLM_INDEX_IMAGE
   displayName: kas-fleetshard operator OLM index image
@@ -469,7 +469,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-providers-config
+      name: fleet-manager-providers-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -478,7 +478,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-allowed-users-config
+      name: fleet-manager-allowed-users-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -488,7 +488,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-denied-users-config
+      name: fleet-manager-denied-users-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -497,7 +497,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-read-only-user-list
+      name: fleet-manager-read-only-user-list
       annotations:
         qontract.recycle: "true"
     data:
@@ -506,31 +506,31 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-kafka-sre-user-list
+      name: fleet-manager-dinosaur-sre-user-list
       annotations:
         qontract.recycle: "true"
     data:
-      kafka-sre-user-list.yaml: |-
-        ${KAFKA_SRE_USERS}
+      dinosaur-sre-user-list.yaml: |-
+        ${DINOSAUR_SRE_USERS}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-kafka-capacity-config
+      name: fleet-manager-dinosaur-capacity-config
       annotations:
         qontract.recycle: "true"
     data:
-      kafka-capacity-config.yaml: |-
-        maxCapacity: ${KAFKA_CAPACITY_MAX_CAPACITY}
-        ingressEgressThroughputPerSec: ${KAFKA_CAPACITY_INGRESS_THROUGHPUT}
-        totalMaxConnections: ${KAFKA_CAPACITY_TOTAL_MAX_CONNECTIONS}
-        maxDataRetentionSize: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_SIZE}
-        maxPartitions: ${KAFKA_CAPACITY_MAX_PARTITIONS}
-        maxDataRetentionPeriod: ${KAFKA_CAPACITY_MAX_DATA_RETENTION_PERIOD}
-        maxConnectionAttemptsPerSec: ${KAFKA_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
+      dinosaur-capacity-config.yaml: |-
+        maxCapacity: ${DINOSAUR_CAPACITY_MAX_CAPACITY}
+        ingressEgressThroughputPerSec: ${DINOSAUR_CAPACITY_INGRESS_THROUGHPUT}
+        totalMaxConnections: ${DINOSAUR_CAPACITY_TOTAL_MAX_CONNECTIONS}
+        maxDataRetentionSize: ${DINOSAUR_CAPACITY_MAX_DATA_RETENTION_SIZE}
+        maxPartitions: ${DINOSAUR_CAPACITY_MAX_PARTITIONS}
+        maxDataRetentionPeriod: ${DINOSAUR_CAPACITY_MAX_DATA_RETENTION_PERIOD}
+        maxConnectionAttemptsPerSec: ${DINOSAUR_CAPACITY_MAX_CONNECTION_ATTEMPTS_PER_SEC}
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-authentication
+      name: fleet-manager-authentication
       annotations:
         qontract.recycle: "true"
     data:
@@ -575,7 +575,7 @@ objects:
   - kind: ConfigMap
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-dataplane-cluster-scaling-config
+      name: fleet-manager-dataplane-cluster-scaling-config
       annotations:
         qontract.recycle: "true"
     data:
@@ -584,19 +584,19 @@ objects:
   - kind: ServiceAccount
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager
+      name: fleet-manager
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: kas-fleet-manager
+      name: fleet-manager
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
     spec:
       selector:
         matchLabels:
-          app: kas-fleet-manager
+          app: fleet-manager
       replicas: ${{REPLICAS}}
       strategy:
         rollingUpdate:
@@ -606,7 +606,7 @@ objects:
       template:
         metadata:
           labels:
-            app: kas-fleet-manager
+            app: fleet-manager
         spec:
           affinity:
             podAntiAffinity:
@@ -617,60 +617,60 @@ objects:
                     - key: app
                       operator: In
                       values:
-                      - kas-fleet-manager
+                      - fleet-manager
                   topologyKey: failure-domain.beta.kubernetes.io/zone
                 weight: 100
-          serviceAccount: kas-fleet-manager
-          serviceAccountName: kas-fleet-manager
+          serviceAccount: fleet-manager
+          serviceAccountName: fleet-manager
           volumes:
           - name: tls
             secret:
-              secretName: kas-fleet-manager-tls
+              secretName: fleet-manager-tls
           - name: service
             secret:
-              secretName: kas-fleet-manager
+              secretName: fleet-manager
           - name: dataplane-certificate
             secret:
-              secretName: kas-fleet-manager-dataplane-certificate
+              secretName: fleet-manager-dataplane-certificate
           - name: rds
             secret:
-              secretName: kas-fleet-manager-rds
-          - name: kas-fleet-manager-providers-config
+              secretName: fleet-manager-rds
+          - name: fleet-manager-providers-config
             configMap:
-              name: kas-fleet-manager-providers-config
-          - name: kas-fleet-manager-allowed-users-config
+              name: fleet-manager-providers-config
+          - name: fleet-manager-allowed-users-config
             configMap:
-              name: kas-fleet-manager-allowed-users-config
-          - name: kas-fleet-manager-denied-users-config
+              name: fleet-manager-allowed-users-config
+          - name: fleet-manager-denied-users-config
             configMap:
-              name: kas-fleet-manager-denied-users-config
-          - name: kas-fleet-manager-read-only-user-list
+              name: fleet-manager-denied-users-config
+          - name: fleet-manager-read-only-user-list
             configMap:
-              name: kas-fleet-manager-read-only-user-list
-          - name: kas-fleet-manager-kafka-sre-user-list
+              name: fleet-manager-read-only-user-list
+          - name: fleet-manager-dinosaur-sre-user-list
             configMap:
-              name: kas-fleet-manager-kafka-sre-user-list
-          - name: kas-fleet-manager-kafka-capacity-config
+              name: fleet-manager-dinosaur-sre-user-list
+          - name: fleet-manager-dinosaur-capacity-config
             configMap:
-              name: kas-fleet-manager-kafka-capacity-config
-          - name: kas-fleet-manager-authentication
+              name: fleet-manager-dinosaur-capacity-config
+          - name: fleet-manager-authentication
             configMap:
-              name: kas-fleet-manager-authentication
-          - name: kas-fleet-manager-dataplane-cluster-scaling-config
+              name: fleet-manager-authentication
+          - name: fleet-manager-dataplane-cluster-scaling-config
             configMap:
-              name: kas-fleet-manager-dataplane-cluster-scaling-config
+              name: fleet-manager-dataplane-cluster-scaling-config
           - name: envoy-config
             configMap:
-              name: kas-fleet-manager-envoy-config
+              name: fleet-manager-envoy-config
           - name: envoy-tls
             secret:
-              secretName: kas-fleet-manager-envoy-tls
+              secretName: fleet-manager-envoy-tls
           - name: envoy-unix-sockets
             emptyDir:
               medium: Memory
-          - name: kas-fleet-manager-observatorium-configuration-red-hat-sso
+          - name: fleet-manager-observatorium-configuration-red-hat-sso
             secret:
-              secretName: kas-fleet-manager-observatorium-configuration-red-hat-sso
+              secretName: fleet-manager-observatorium-configuration-red-hat-sso
           initContainers:
           - name: migration
             image: ${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}
@@ -681,7 +681,7 @@ objects:
             - name: rds
               mountPath: /secrets/rds
             command:
-            - /usr/local/bin/kas-fleet-manager
+            - /usr/local/bin/fleet-manager
             - migrate
             - --db-host-file=/secrets/rds/db.host
             - --db-port-file=/secrets/rds/db.port
@@ -701,50 +701,50 @@ objects:
               mountPath: /secrets/service
             - name: dataplane-certificate
               mountPath: /secrets/dataplane-certificate
-            - name: kas-fleet-manager-observatorium-configuration-red-hat-sso
+            - name: fleet-manager-observatorium-configuration-red-hat-sso
               mountPath: /secrets/observatorium
             - name: rds
               mountPath: /secrets/rds
-            - name: kas-fleet-manager-providers-config
+            - name: fleet-manager-providers-config
               mountPath: /config/provider-configuration.yaml
               subPath: provider-configuration.yaml
-            - name: kas-fleet-manager-allowed-users-config
+            - name: fleet-manager-allowed-users-config
               mountPath: /config/quota-management-list-configuration.yaml
               subPath: quota-management-list-configuration.yaml
-            - name: kas-fleet-manager-denied-users-config
+            - name: fleet-manager-denied-users-config
               mountPath: /config/deny-list-configuration.yaml
               subPath: deny-list-configuration.yaml
-            - name: kas-fleet-manager-read-only-user-list
+            - name: fleet-manager-read-only-user-list
               mountPath: /config/read-only-user-list.yaml
               subPath: read-only-user-list.yaml
-            - name: kas-fleet-manager-kafka-sre-user-list
-              mountPath: /config/kafka-sre-user-list.yaml
-              subPath: kafka-sre-user-list.yaml
-            - name: kas-fleet-manager-kafka-capacity-config
-              mountPath: /config/kafka-capacity-config.yaml
-              subPath: kafka-capacity-config.yaml
-            - name: kas-fleet-manager-authentication
+            - name: fleet-manager-dinosaur-sre-user-list
+              mountPath: /config/dinosaur-sre-user-list.yaml
+              subPath: dinosaur-sre-user-list.yaml
+            - name: fleet-manager-dinosaur-capacity-config
+              mountPath: /config/dinosaur-capacity-config.yaml
+              subPath: dinosaur-capacity-config.yaml
+            - name: fleet-manager-authentication
               mountPath: /config/authentication
-            - name: kas-fleet-manager-dataplane-cluster-scaling-config
+            - name: fleet-manager-dataplane-cluster-scaling-config
               mountPath: /config/dataplane-cluster-configuration.yaml
               subPath: dataplane-cluster-configuration.yaml
             env:
               - name: "OCM_ENV"
                 value: "${ENVIRONMENT}"
             command:
-            - /usr/local/bin/kas-fleet-manager
+            - /usr/local/bin/fleet-manager
             - serve
-            - --kafka-tls-cert-file=/secrets/dataplane-certificate/tls.crt
-            - --kafka-tls-key-file=/secrets/dataplane-certificate/tls.key
-            - --enable-kafka-external-certificate=${ENABLE_KAFKA_EXTERNAL_CERTIFICATE}
+            - --dinosaur-tls-cert-file=/secrets/dataplane-certificate/tls.crt
+            - --dinosaur-tls-key-file=/secrets/dataplane-certificate/tls.key
+            - --enable-dinosaur-external-certificate=${ENABLE_DINOSAUR_EXTERNAL_CERTIFICATE}
             - --providers-config-file=/config/provider-configuration.yaml
             - --quota-management-list-config-file=/config/quota-management-list-configuration.yaml
             - --deny-list-config-file=/config/deny-list-configuration.yaml
             - --read-only-user-list-file=/config/read-only-user-list.yaml
-            - --kafka-sre-user-list-file=/config/kafka-sre-user-list.yaml
-            - --kafka-capacity-config-file=/config/kafka-capacity-config.yaml
-            - --kafka-lifespan=${KAFKA_LIFE_SPAN}
-            - --enable-deletion-of-expired-kafka=${ENABLE_KAFKA_LIFE_SPAN}
+            - --dinosaur-sre-user-list-file=/config/dinosaur-sre-user-list.yaml
+            - --dinosaur-capacity-config-file=/config/dinosaur-capacity-config.yaml
+            - --dinosaur-lifespan=${DINOSAUR_LIFE_SPAN}
+            - --enable-deletion-of-expired-dinosaur=${ENABLE_DINOSAUR_LIFE_SPAN}
             - --aws-access-key-file=/secrets/service/aws.accesskey
             - --aws-account-id-file=/secrets/service/aws.accountid
             - --aws-secret-access-key-file=/secrets/service/aws.secretaccesskey
@@ -837,9 +837,9 @@ objects:
             - --strimzi-operator-version=${STRIMZI_OPERATOR_VERSION}
             - --strimzi-operator-index-image=${STRIMZI_OLM_INDEX_IMAGE}
             - --kas-fleetshard-operator-index-image=${KAS_FLEETSHARD_OLM_INDEX_IMAGE}
-            - --default-kafka-version=${DEFAULT_KAFKA_VERSION}
+            - --default-dinosaur-version=${DEFAULT_DINOSAUR_VERSION}
             - --dataplane-cluster-scaling-type=${DATAPLANE_CLUSTER_SCALING_TYPE}
-            - --kafka-domain-name=${KAFKA_DOMAIN_NAME}
+            - --dinosaur-domain-name=${DINOSAUR_DOMAIN_NAME}
             - --strimzi-operator-addon-id=${STRIMZI_OPERATOR_ADDON_ID}
             - --kas-fleetshard-addon-id=${KAS_FLEETSHARD_ADDON_ID}
             - --cluster-logging-operator-addon-id=${CLUSTER_LOGGING_OPERATOR_ADDON_ID}
@@ -857,7 +857,7 @@ objects:
                 memory: ${MEMORY_LIMIT}
             livenessProbe:
               httpGet:
-                path: /api/kafkas_mgmt
+                path: /api/dinosaurs_mgmt
                 port: 8000
                 scheme: HTTPS
               initialDelaySeconds: 15
@@ -922,26 +922,26 @@ objects:
   - kind: PodDisruptionBudget                
     apiVersion: policy/v1
     metadata:
-      name: kas-fleet-manager-pdb
+      name: fleet-manager-pdb
     spec:
       maxUnavailabe: "50%"
       selector:
         matchLabels:
-          app: kas-fleet-manager
+          app: fleet-manager
 
   - kind: Service
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager
+      name: fleet-manager
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: api
       annotations:
-        description: Exposes and load balances the kas-fleet-manager pods
-        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-tls
+        description: Exposes and load balances the fleet-manager pods
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-tls
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
         - port: 8000
           targetPort: 8000
@@ -950,16 +950,16 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: kas-fleet-manager-envoy
+      name: fleet-manager-envoy
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: api-envoy
       annotations:
-        description: Exposes and load balances the kas-fleet-manager pods going through envoy beforehand
-        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-envoy-tls
+        description: Exposes and load balances the fleet-manager pods going through envoy beforehand
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-envoy-tls
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
       - port: 9001
         targetPort: 9001
@@ -970,16 +970,16 @@ objects:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: kas-fleet-manager-metrics
+      name: fleet-manager-metrics
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: metrics
       annotations:
-        description: Exposes and load balances the kas-fleet-manager pods metrics endpoint
-        service.alpha.openshift.io/serving-cert-secret-name: kas-fleet-manager-metrics-tls
+        description: Exposes and load balances the fleet-manager pods metrics endpoint
+        service.alpha.openshift.io/serving-cert-secret-name: fleet-manager-metrics-tls
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
         - port: 8080
           targetPort: 8080
@@ -988,13 +988,13 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: kas-fleet-manager-healthcheck
+      name: fleet-manager-healthcheck
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: healthcheck
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
         - port: 8083
           targetPort: 8083
@@ -1002,13 +1002,13 @@ objects:
   - apiVersion: v1
     kind: Service
     metadata:
-      name: kas-fleet-manager-envoy-metrics
+      name: fleet-manager-envoy-metrics
       labels:
-        app: kas-fleet-manager
+        app: fleet-manager
         port: metrics-envoy
     spec:
       selector:
-        app: kas-fleet-manager
+        app: fleet-manager
       ports:
       - port: 9000
         targetPort: 9000

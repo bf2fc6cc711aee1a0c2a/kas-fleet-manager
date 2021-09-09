@@ -1,14 +1,15 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/generated"
+	"log"
+	"net/http"
+	"os"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/generated"
 	"github.com/chirino/graphql"
 	"github.com/chirino/graphql-4-apis/pkg/apis"
 	"github.com/chirino/graphql/graphiql"
 	"github.com/chirino/graphql/httpgql"
-	"log"
-	"net/http"
-	"os"
 )
 
 type GraphqlHandler struct {

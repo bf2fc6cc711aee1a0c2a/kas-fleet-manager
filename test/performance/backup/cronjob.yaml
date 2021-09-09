@@ -14,7 +14,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: perf-test-db-backup
-            image: quay.io/rhoas/kas-fleet-manager-perf-test-backup
+            image: quay.io/rhoas/fleet-manager-perf-test-backup
             command: ["bash", "backup.sh"]
             env:
               - name: SERVER_URL

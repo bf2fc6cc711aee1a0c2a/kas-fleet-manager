@@ -19,8 +19,8 @@ ENV OSD_IDP_MAS_SSO_CLIENT_ID <osd_idp_mas_sso_client_id>
 ENV OSD_IDP_MAS_SSO_CLIENT_SECRET <osd_idp_mas_sso_client_secret>
 ENV ROUTE53_ACCESS_KEY <aws_route53_access_key>
 ENV ROUTE53_SECRET_ACCESS_KEY <aws_route53_secret_access_key>
-ENV KAFKA_TLS_CERT <kafka_tls_cert>
-ENV KAFKA_TLS_KEY <kafka_tls_key>
+ENV DINOSAUR_TLS_CRT <DINOSAUR_TLS_CRT>
+ENV DINOSAUR_TLS_KEY <DINOSAUR_TLS_KEY>
 ENV OBSERVATORIUM_CONFIG_ACCESS_TOKEN <observatorium_config_access_token>
 ENV DOCKER_PR_CHECK true
 ENV DEBIAN_FRONTEND=noninteractive
@@ -48,29 +48,29 @@ COPY pr_check_docker.sh /docker-entrypoint-initdb.d/
 RUN curl -O -J https://dl.google.com/go/go1.15.8.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf go1.15.8.linux-amd64.tar.gz
 
-ENV PATH="/kas-fleet-manager/bin:/usr/local/go/bin:${PATH}"
-ENV GOPATH="/kas-fleet-manager"
+ENV PATH="/fleet-manager/bin:/usr/local/go/bin:${PATH}"
+ENV GOPATH="/fleet-manager"
 ENV CGO_ENABLED=0
 
 # install NPM and java for openapi-generator
 RUN wget -qO- https://deb.nodesource.com/setup_14.x | bash -
 RUN apt install -y nodejs build-essential default-jre
 
-# copy over the kas-fleet-manager workdir
-RUN mkdir -p /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
-COPY . /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+# copy over the fleet-manager workdir
+RUN mkdir -p /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
+COPY . /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 
 # create credential files
-WORKDIR /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 RUN make aws/setup
 RUN make ocm/setup
 RUN make keycloak/setup
-RUN make kafkacert/setup
+RUN make dinosaurcert/setup
 RUN make observatorium/setup
 
 # Docker built / owned  as 'root' but the 'postgres' user runs the image
-RUN chown -R postgres:postgres /kas-fleet-manager /usr/local/go
-WORKDIR /kas-fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager
+RUN chown -R postgres:postgres /fleet-manager /usr/local/go
+WORKDIR /fleet-manager/src/github.com/bf2fc6cc711aee1a0c2a/fleet-manager
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 

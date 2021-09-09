@@ -44,7 +44,7 @@ func (a *ConnectorClustersApiService) CreateConnectorCluster(ctx _context.Contex
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connector_clusters"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connector_clusters"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -161,7 +161,7 @@ func (a *ConnectorClustersApiService) DeleteConnectorCluster(ctx _context.Contex
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -267,7 +267,7 @@ func (a *ConnectorClustersApiService) GetConnectorCluster(ctx _context.Context, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -373,7 +373,7 @@ func (a *ConnectorClustersApiService) GetConnectorClusterAddonParameters(ctx _co
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/addon_parameters"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}/addon_parameters"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -487,7 +487,7 @@ func (a *ConnectorClustersApiService) ListConnectorClusters(ctx _context.Context
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connector_clusters"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connector_clusters"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -586,7 +586,7 @@ func (a *ConnectorClustersApiService) UpdateConnectorClusterById(ctx _context.Co
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"connector_cluster_id"+"}", _neturl.QueryEscape(parameterToString(connectorClusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)

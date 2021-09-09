@@ -41,7 +41,7 @@ def handle_delete_by_id(self, url, name):
         if 'reason' in response_output:
           reason = response_output['reason']
           # due to concurrency sometimes resources have already been deleted
-          if '404' in reason or 'failed to delete service account' in reason or 'Unable to find KafkaResource' in reason or 'not found' in reason:
+          if '404' in reason or 'failed to delete service account' in reason or 'Unable to find DinosaurResource' in reason or 'not found' in reason:
             response.success()
             return 202
       except ValueError: # no json response

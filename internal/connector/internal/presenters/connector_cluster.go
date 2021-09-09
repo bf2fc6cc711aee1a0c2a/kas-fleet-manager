@@ -1,9 +1,9 @@
 package presenters
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
 )
 
 func ConvertConnectorCluster(from public.ConnectorCluster) dbapi.ConnectorCluster {

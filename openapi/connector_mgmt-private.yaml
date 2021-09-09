@@ -21,7 +21,7 @@ tags:
     description: "only accessible by connector fleet shard agents"
 
 paths:
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/status':
+  '/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}/status':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -34,7 +34,7 @@ paths:
         - Connector Clusters Agent
       security:
         - Bearer: [ ]
-      operationId: updateKafkaConnectorClusterStatus
+      operationId: updateDinosaurConnectorClusterStatus
       summary: Update the status of a connector cluster
       requestBody:
         description: Cluster status update data
@@ -50,7 +50,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 400InvalidIdExample:
                   $ref: '#/components/examples/400InvalidIdExample'
@@ -59,14 +59,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
 
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments':
+  '/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}/deployments':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -82,8 +82,8 @@ paths:
       operationId: getClusterAsignedConnectorDeployments
       summary: Returns a list of connector deployments assigned to the cluster.
       parameters:
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/page'
-        - $ref: 'kas-fleet-manager.yaml#/components/parameters/size'
+        - $ref: 'fleet-manager.yaml#/components/parameters/page'
+        - $ref: 'fleet-manager.yaml#/components/parameters/size'
         - in: query
           name: gt_version
           description: filters the connectors to those with a version greater than the given value
@@ -110,22 +110,22 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/401Example'
           description: Auth token is invalid
         '500':
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/500Example'
           description: Unexpected error occurred
 
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}':
+  '/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -157,28 +157,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 401Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/401Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/401Example'
           description: Auth token is invalid
         '410':
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
           description: deployment has been deleted
         '500':
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 500Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/500Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/500Example'
           description: Unexpected error occurred
 
-  '/api/connector_mgmt/v1/kafka_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status':
+  '/api/connector_mgmt/v1/dinosaur_connector_clusters/{connector_cluster_id}/deployments/{deployment_id}/status':
     parameters:
       - name: connector_cluster_id
         description: The id of the connector cluster
@@ -212,7 +212,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 400InvalidIdExample:
                   $ref: '#/components/examples/400InvalidIdExample'
@@ -221,10 +221,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
               examples:
                 404Example:
-                  $ref: 'kas-fleet-manager.yaml#/components/examples/404Example'
+                  $ref: 'fleet-manager.yaml#/components/examples/404Example'
           # This is deliberate to hide the endpoints for unauthorised users
           description: Auth token is not valid.
         '410':
@@ -232,7 +232,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kas-fleet-manager.yaml#/components/schemas/Error'
+                $ref: 'fleet-manager.yaml#/components/schemas/Error'
 
 components:
   schemas:
@@ -264,7 +264,7 @@ components:
           type: string
         error:
           nullable: true
-          $ref: "kas-fleet-manager.yaml#/components/schemas/Error"
+          $ref: "fleet-manager.yaml#/components/schemas/Error"
         object:
           type: object
           nullable: true
@@ -272,7 +272,7 @@ components:
     ConnectorDeployment:
       description: Holds the deployment configuration of a connector
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
+        - $ref: 'fleet-manager.yaml#/components/schemas/ObjectReference'
         - type: object
           properties:
             metadata:
@@ -310,10 +310,10 @@ components:
         connector_resource_version:
           type: integer
           format: int64
-        kafka_id:
+        dinosaur_id:
           type: string
-        kafka:
-          $ref: 'connector_mgmt.yaml#/components/schemas/KafkaConnectionSettings'
+        dinosaur:
+          $ref: 'connector_mgmt.yaml#/components/schemas/DinosaurConnectionSettings'
         connector_type_id:
           type: string
         connector_spec:
@@ -347,7 +347,7 @@ components:
 
     ConnectorDeploymentList:
       allOf:
-        - $ref: 'kas-fleet-manager.yaml#/components/schemas/List'
+        - $ref: 'fleet-manager.yaml#/components/schemas/List'
         - type: object
           properties:
             items:
@@ -411,12 +411,12 @@ components:
       type: http
 
   examples:
-    ManagedKafkaExample:
+    ManagedDinosaurExample:
       value:
-        kind: "ManagedKafka"
+        kind: "ManagedDinosaur"
         metadata:
-          name: "example-kafka"
-          namespace: "example-kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+          name: "example-dinosaur"
+          namespace: "example-dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
           annotations:
             id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             placement_id: ""
@@ -429,7 +429,7 @@ components:
             max_data_retention_period: P14D
             max_connection_attempts_per_sec: 100
           oauth:
-            client_id: "kafka-1rfpsqbvq1em2u9u0z54ymjcwac"
+            client_id: "dinosaur-1rfpsqbvq1em2u9u0z54ymjcwac"
             client_secret: "example-client-secret"
             token_endpoint_uri: "https://example-token-endpoint-uri.com/token"
             jwks_endpoint_uri: "https://example-jwks-endpoint-uri.com/certs"
@@ -438,19 +438,19 @@ components:
             tls_trusted_certificate: ""
             custom_claim_check: ""
           endpoint:
-            bootstrap_server_host: "example-kafka--rfpsqbvq-em-u-u-z--ymjcwac.kafka.devshift.org"
+            bootstrap_server_host: "example-dinosaur--rfpsqbvq-em-u-u-z--ymjcwac.dinosaur.devshift.org"
             tls:
               cert: ""
               key: ""
           versions:
-            kafka: 2.7.0
+            dinosaur: 2.7.0
             strimzi: 0.21.2
           deleted: false
-    DataPlaneKafkaStatusRequestExample:
+    DataPlaneDinosaurStatusRequestExample:
       value:
         conditions:
           - type: Ready
-            reason: KafkaInstanceReady
+            reason: DinosaurInstanceReady
             message: installing
             status: "False"
             last_transition_time: "2018-01-01T00:00:00Z"
@@ -462,13 +462,13 @@ components:
           max_data_retention_period: P14D
           max_connection_attempts_per_sec: 100
         versions:
-          kafka: 2.4.1
+          dinosaur: 2.4.1
           strimzi: 0.21.2
     400InvalidIdExample:
       value:
         id: "203"
         kind: "Error"
-        href: "/api/kafkas_mgmt/v1/errors/21"
-        code: "KAFKAS-MGMT-21"
+        href: "/api/dinosaurs_mgmt/v1/errors/21"
+        code: "DINOSAURS-MGMT-21"
         reason: "Bad request"
         operation_id: "1lWDGuybIrEnxrAem724gqkkiDv"

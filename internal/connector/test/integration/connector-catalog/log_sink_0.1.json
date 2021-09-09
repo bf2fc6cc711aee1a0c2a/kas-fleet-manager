@@ -22,14 +22,14 @@
             }
           }
         },
-        "kafka" : {
+        "dinosaur" : {
           "type" : "object",
-          "title" : "Managed Kafka Source",
+          "title" : "Managed Dinosaur Source",
           "required" : [ "topic" ],
           "properties" : {
             "topic" : {
               "title" : "Topic names",
-              "description" : "Comma separated list of Kafka topic names",
+              "description" : "Comma separated list of Dinosaur topic names",
               "type" : "string"
             }
           }
@@ -104,7 +104,7 @@
         } ],
         "kamelets" : {
           "connector" : "log-sink",
-          "kafka" : "managed-kafka-source",
+          "dinosaur" : "managed-dinosaur-source",
           "insert-field" : "insert-field-action",
           "extract-field" : "extract-field-action"
         }

@@ -1,18 +1,18 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared/secrets"
 	"github.com/spyzhov/ajson"
 )
 
 func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *errors.ServiceError {
 	// clear out secrets..
-	resource.Kafka.ClientSecret = ""
-	resource.Kafka.ClientSecretRef = ""
+	resource.Dinosaur.ClientSecret = ""
+	resource.Dinosaur.ClientSecretRef = ""
 	if len(resource.ConnectorSpec) != 0 {
 		updated, err := secrets.ModifySecrets(ct.JsonSchema, resource.ConnectorSpec, func(node *ajson.Node) error {
 			if node.Type() == ajson.Object {
@@ -41,13 +41,13 @@ func stripSecretReferences(resource *dbapi.Connector, ct *dbapi.ConnectorType) *
 func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vault vault.VaultService, errorOnObject bool) *errors.ServiceError {
 
 	// move secrets to a vault.
-	if resource.Kafka.ClientSecret != "" {
+	if resource.Dinosaur.ClientSecret != "" {
 		keyId := api.NewID()
-		if err := vault.SetSecretString(keyId, resource.Kafka.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
-			return errors.GeneralError("could not store kafka client secret in the vault")
+		if err := vault.SetSecretString(keyId, resource.Dinosaur.ClientSecret, "/v1/connector/"+resource.ID); err != nil {
+			return errors.GeneralError("could not store dinosaur client secret in the vault")
 		}
-		resource.Kafka.ClientSecret = ""
-		resource.Kafka.ClientSecretRef = keyId
+		resource.Dinosaur.ClientSecret = ""
+		resource.Dinosaur.ClientSecretRef = keyId
 	}
 
 	if len(resource.ConnectorSpec) != 0 {
@@ -91,8 +91,8 @@ func moveSecretsToVault(resource *dbapi.Connector, ct *dbapi.ConnectorType, vaul
 
 func getSecretRefs(resource *dbapi.Connector, ct *dbapi.ConnectorType) (result []string, err error) {
 
-	if resource.Kafka.ClientSecretRef != "" {
-		result = append(result, resource.Kafka.ClientSecretRef)
+	if resource.Dinosaur.ClientSecretRef != "" {
+		result = append(result, resource.Dinosaur.ClientSecretRef)
 	}
 
 	// find the existing secrets...

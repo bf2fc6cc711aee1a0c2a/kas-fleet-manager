@@ -30,7 +30,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/quota_management"
 	"net/http"
 	"os"
 	"reflect"
@@ -38,7 +37,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/test"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/quota_management"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/test"
 	"github.com/cucumber/godog"
 	"github.com/cucumber/godog/colors"
 	"github.com/itchyny/gojq"

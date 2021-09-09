@@ -19,7 +19,7 @@ import (
 
 	"time"
 
-	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	ocmErrors "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 	"github.com/gorilla/mux"
 
 	clustersmgmtv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
@@ -101,7 +101,7 @@ const (
 	// MockIngressListening default mock ingress listening used in the mock ocm server
 	MockIngressListening = clustersmgmtv1.ListeningMethodExternal
 	// MockClusterAddonID default mock cluster addon ID
-	MockClusterAddonID = "managed-kafka-qe"
+	MockClusterAddonID = "managed-dinosaur-qe"
 	// MockKasFleetshardAddonID default mock ID for the KAS Fleetshard Operator
 	MockKasFleetshardAddonID = "kas-fleetshard-operator-qe"
 	// MockClusterLoggingOperatorAddonID default mock ID for the Cluster Logging Operator
@@ -130,7 +130,7 @@ const (
 var (
 	EndpointClusterGet                                   = Endpoint{EndpointPathCluster, http.MethodGet}
 	EndpointClusterPatch                                 = Endpoint{EndpointPathCluster, http.MethodPatch}
-	EndpointKafkaDelete                                  = Endpoint{EndpointPathSyncset, http.MethodDelete}
+	EndpointDinosaurDelete                               = Endpoint{EndpointPathSyncset, http.MethodDelete}
 	EndpointClustersGet                                  = Endpoint{EndpointPathClusters, http.MethodGet}
 	EndpointClustersPost                                 = Endpoint{EndpointPathClusters, http.MethodPost}
 	EndpointClusterDelete                                = Endpoint{EndpointPathCluster, http.MethodDelete}
@@ -243,9 +243,9 @@ func (b *MockConfigurableServerBuilder) SetClusterGetResponse(cluster *clustersm
 	b.handlerRegister[EndpointClusterGet] = buildMockRequestHandler(cluster, err)
 }
 
-// SetKafkaDeleteResponse set a mock response cluster or error for the DELETE /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID} endpoint
-func (b *MockConfigurableServerBuilder) SetKafkaDeleteResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
-	b.handlerRegister[EndpointKafkaDelete] = buildMockRequestHandler(syncset, err)
+// SetDinosaurDeleteResponse set a mock response cluster or error for the DELETE /api/clusters_mgmt/v1/clusters/{id}/external_configuration/syncsets/{syncsetID} endpoint
+func (b *MockConfigurableServerBuilder) SetDinosaurDeleteResponse(syncset *clustersmgmtv1.Syncset, err *ocmErrors.ServiceError) {
+	b.handlerRegister[EndpointDinosaurDelete] = buildMockRequestHandler(syncset, err)
 }
 
 // SetClusterPatchResponse set a mock response cluster or error for the PATCH /api/clusters_mgmt/v1/clusters/{id} endpoint
@@ -466,7 +466,7 @@ func getDefaultHandlerRegister() (HandlerRegister, error) {
 	return HandlerRegister{
 		EndpointClusterGet:                                   buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterPatch:                                 buildMockRequestHandler(MockCluster, nil),
-		EndpointKafkaDelete:                                  buildMockRequestHandler(MockSyncset, nil),
+		EndpointDinosaurDelete:                               buildMockRequestHandler(MockSyncset, nil),
 		EndpointClustersGet:                                  buildMockRequestHandler(MockCluster, nil),
 		EndpointClustersPost:                                 buildMockRequestHandler(MockCluster, nil),
 		EndpointClusterDelete:                                buildMockRequestHandler(MockCluster, ocmErrors.NotFound("setting this to not found to mimick a successul deletion")),

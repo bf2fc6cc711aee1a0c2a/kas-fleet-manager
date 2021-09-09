@@ -2,10 +2,11 @@ package sentry
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/environments"
+	"os"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
 	"github.com/getsentry/sentry-go"
 	"github.com/golang/glog"
-	"os"
 )
 
 func Initialize(envName environments.EnvName, c *Config) error {

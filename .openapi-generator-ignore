@@ -22,21 +22,21 @@
 # Then explicitly reverse the ignore rule for a single file:
 #!docs/README.md
 
-internal/kafka/internal/api/public/README.md
-internal/kafka/internal/api/public/docs/**.md
-internal/kafka/internal/api/public/**all_of.go
-internal/kafka/internal/api/public/go.mod
-internal/kafka/internal/api/public/go.sum
-internal/kafka/internal/api/private/README.md
-internal/kafka/internal/api/private/docs/**.md
-internal/kafka/internal/api/private/**all_of.go
-internal/kafka/internal/api/private/go.mod
-internal/kafka/internal/api/private/go.sum
-internal/kafka/internal/api/admin/private/README.md
-internal/kafka/internal/api/admin/private/docs/**.md
-internal/kafka/internal/api/admin/private/**all_of.go
-internal/kafka/internal/api/admin/private/go.mod
-internal/kafka/internal/api/admin/private/go.sum
+internal/dinosaur/internal/api/public/README.md
+internal/dinosaur/internal/api/public/docs/**.md
+internal/dinosaur/internal/api/public/**all_of.go
+internal/dinosaur/internal/api/public/go.mod
+internal/dinosaur/internal/api/public/go.sum
+internal/dinosaur/internal/api/private/README.md
+internal/dinosaur/internal/api/private/docs/**.md
+internal/dinosaur/internal/api/private/**all_of.go
+internal/dinosaur/internal/api/private/go.mod
+internal/dinosaur/internal/api/private/go.sum
+internal/dinosaur/internal/api/admin/private/README.md
+internal/dinosaur/internal/api/admin/private/docs/**.md
+internal/dinosaur/internal/api/admin/private/**all_of.go
+internal/dinosaur/internal/api/admin/private/go.mod
+internal/dinosaur/internal/api/admin/private/go.sum
 
 internal/connector/internal/api/public/README.md
 internal/connector/internal/api/public/docs/**.md

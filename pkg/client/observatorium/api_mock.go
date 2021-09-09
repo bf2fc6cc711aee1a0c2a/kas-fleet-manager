@@ -17,13 +17,13 @@ func (c *Client) MockAPI() pV1.API {
 type httpAPIMock struct {
 }
 
-// performs a query for the kafka metrics.
+// performs a query for the dinosaur metrics.
 func (t *httpAPIMock) Query(ctx context.Context, query string, ts time.Time) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryData(query)
 	return values, []string{}, nil
 }
 
-//QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the kafka metrics
+//QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) Performs a query range for the dinosaur metrics
 func (*httpAPIMock) QueryRange(ctx context.Context, query string, r pV1.Range) (pModel.Value, pV1.Warnings, error) {
 	values := getMockQueryRangeData(query)
 	return values, []string{}, nil
@@ -113,29 +113,29 @@ var rangeQuerydata = map[string]pModel.Matrix{
 	"kubelet_volume_stats_available_bytes": {
 		fakeMetricData("kubelet_volume_stats_available_bytes", 220792516608),
 	},
-	"kafka_server_brokertopicmetrics_messages_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_messages_in_total", 3040),
+	"dinosaur_server_brokertopicmetrics_messages_in_total": {
+		fakeMetricData("dinosaur_server_brokertopicmetrics_messages_in_total", 3040),
 	},
-	"kafka_server_brokertopicmetrics_bytes_in_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_in_total", 293617),
+	"dinosaur_server_brokertopicmetrics_bytes_in_total": {
+		fakeMetricData("dinosaur_server_brokertopicmetrics_bytes_in_total", 293617),
 	},
-	"kafka_server_brokertopicmetrics_bytes_out_total": {
-		fakeMetricData("kafka_server_brokertopicmetrics_bytes_out_total", 152751),
+	"dinosaur_server_brokertopicmetrics_bytes_out_total": {
+		fakeMetricData("dinosaur_server_brokertopicmetrics_bytes_out_total", 152751),
 	},
-	"kafka_controller_kafkacontroller_offline_partitions_count": {
-		fakeMetricData("kafka_controller_kafkacontroller_offline_partitions_count", 0),
+	"dinosaur_controller_dinosaurcontroller_offline_partitions_count": {
+		fakeMetricData("dinosaur_controller_dinosaurcontroller_offline_partitions_count", 0),
 	},
-	"kafka_controller_kafkacontroller_global_partition_count": {
-		fakeMetricData("kafka_controller_kafkacontroller_global_partition_count", 0),
+	"dinosaur_controller_dinosaurcontroller_global_partition_count": {
+		fakeMetricData("dinosaur_controller_dinosaurcontroller_global_partition_count", 0),
 	},
-	"kafka_broker_quota_softlimitbytes": {
-		fakeMetricData("kafka_broker_quota_softlimitbytes", 10000),
+	"dinosaur_broker_quota_softlimitbytes": {
+		fakeMetricData("dinosaur_broker_quota_softlimitbytes", 10000),
 	},
-	"kafka_broker_quota_totalstorageusedbytes": {
-		fakeMetricData("kafka_broker_quota_totalstorageusedbytes", 1237582),
+	"dinosaur_broker_quota_totalstorageusedbytes": {
+		fakeMetricData("dinosaur_broker_quota_totalstorageusedbytes", 1237582),
 	},
-	"sum by (namespace, topic)(kafka_log_log_size": {
-		fakeMetricData("sum by (namespace, topic)(kafka_log_log_size", 220),
+	"sum by (namespace, topic)(dinosaur_log_log_size": {
+		fakeMetricData("sum by (namespace, topic)(dinosaur_log_log_size", 220),
 	},
 }
 
@@ -155,19 +155,19 @@ var queryData = map[string]pModel.Vector{
 	"strimzi_resource_state": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"strimzi_io_kind": "Kafka",
-				"strimzi_io_name": "test-kafka",
-				"namespace":       "my-kafka-namespace",
+				"strimzi_io_kind": "Dinosaur",
+				"strimzi_io_name": "test-dinosaur",
+				"namespace":       "my-dinosaur-namespace",
 			},
 			Timestamp: pModel.Time(1607506882175),
 			Value:     1,
 		},
 	},
 
-	"kafka_server_brokertopicmetrics_bytes_in_total": pModel.Vector{
+	"dinosaur_server_brokertopicmetrics_bytes_in_total": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "kafka_server_brokertopicmetrics_bytes_in_total",
+				"__name__":           "dinosaur_server_brokertopicmetrics_bytes_in_total",
 				"pod":                "whatever",
 				"strimzi_io_cluster": "whatever",
 				"topic":              "whatever",
@@ -176,10 +176,10 @@ var queryData = map[string]pModel.Vector{
 			Value:     293617,
 		},
 	},
-	"kafka_server_brokertopicmetrics_messages_in_total": pModel.Vector{
+	"dinosaur_server_brokertopicmetrics_messages_in_total": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "kafka_server_brokertopicmetrics_messages_in_total",
+				"__name__":           "dinosaur_server_brokertopicmetrics_messages_in_total",
 				"pod":                "whatever",
 				"strimzi_io_cluster": "whatever",
 				"topic":              "whatever",
@@ -188,10 +188,10 @@ var queryData = map[string]pModel.Vector{
 			Value:     1016,
 		},
 	},
-	"kafka_broker_quota_softlimitbytes": pModel.Vector{
+	"dinosaur_broker_quota_softlimitbytes": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "kafka_broker_quota_softlimitbytes",
+				"__name__":           "dinosaur_broker_quota_softlimitbytes",
 				"pod":                "whatever",
 				"strimzi_io_cluster": "whatever",
 				"topic":              "whatever",
@@ -200,10 +200,10 @@ var queryData = map[string]pModel.Vector{
 			Value:     30000,
 		},
 	},
-	"kafka_broker_quota_totalstorageusedbytes": pModel.Vector{
+	"dinosaur_broker_quota_totalstorageusedbytes": pModel.Vector{
 		&pModel.Sample{
 			Metric: pModel.Metric{
-				"__name__":           "kafka_broker_quota_totalstorageusedbytes",
+				"__name__":           "dinosaur_broker_quota_totalstorageusedbytes",
 				"pod":                "whatever",
 				"strimzi_io_cluster": "whatever",
 				"topic":              "whatever",

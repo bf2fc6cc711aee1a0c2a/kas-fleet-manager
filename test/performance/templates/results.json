@@ -2,7 +2,7 @@
   "$schema": "http://kfmperf.com/schema#",
   "endpoints": [
     {
-      "/kafkas/[id]": {
+      "/dinosaurs/[id]": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",
@@ -50,7 +50,7 @@
       }
     },
     {
-      "/kafkas": {
+      "/dinosaurs": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",
@@ -98,7 +98,7 @@
       }
     },
     {
-      "/kafkas?search": {
+      "/dinosaurs?search": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",
@@ -324,7 +324,7 @@
       }
     },
     {
-      "/kafkas/[id]/metrics/query_range": {
+      "/dinosaurs/[id]/metrics/query_range": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",
@@ -350,7 +350,7 @@
       }
     },
     {
-      "/kafkas/[id]/metrics/query": {
+      "/dinosaurs/[id]/metrics/query": {
         "get": {
           "request count": "undefined",
           "failure count": "undefined",

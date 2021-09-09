@@ -44,7 +44,7 @@ func (a *ConnectorsApiService) CreateConnector(ctx _context.Context, async bool,
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connectors"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -146,7 +146,7 @@ func (a *ConnectorsApiService) CreateConnector(ctx _context.Context, async bool,
 
 // DeleteConnectorOpts Optional parameters for the method 'DeleteConnector'
 type DeleteConnectorOpts struct {
-	KafkaId optional.String
+	DinosaurId optional.String
 }
 
 /*
@@ -154,7 +154,7 @@ DeleteConnector Delete a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
  * @param optional nil or *DeleteConnectorOpts - Optional Parameters:
- * @param "KafkaId" (optional.String) -  The kafka cluster id
+ * @param "DinosaurId" (optional.String) -  The dinosaur cluster id
 @return Error
 */
 func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, localVarOptionals *DeleteConnectorOpts) (Error, *_nethttp.Response, error) {
@@ -168,15 +168,15 @@ func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, 
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connectors/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.DinosaurId.IsSet() {
+		localVarQueryParams.Add("dinosaur_id", parameterToString(localVarOptionals.DinosaurId.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -262,7 +262,7 @@ func (a *ConnectorsApiService) DeleteConnector(ctx _context.Context, id string, 
 
 // GetConnectorOpts Optional parameters for the method 'GetConnector'
 type GetConnectorOpts struct {
-	KafkaId optional.String
+	DinosaurId optional.String
 }
 
 /*
@@ -270,7 +270,7 @@ GetConnector Get a connector
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
  * @param optional nil or *GetConnectorOpts - Optional Parameters:
- * @param "KafkaId" (optional.String) -  The kafka cluster id
+ * @param "DinosaurId" (optional.String) -  The dinosaur cluster id
 @return Connector
 */
 func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, localVarOptionals *GetConnectorOpts) (Connector, *_nethttp.Response, error) {
@@ -284,15 +284,15 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, loc
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connectors/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.DinosaurId.IsSet() {
+		localVarQueryParams.Add("dinosaur_id", parameterToString(localVarOptionals.DinosaurId.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -378,9 +378,9 @@ func (a *ConnectorsApiService) GetConnector(ctx _context.Context, id string, loc
 
 // ListConnectorsOpts Optional parameters for the method 'ListConnectors'
 type ListConnectorsOpts struct {
-	Page    optional.String
-	Size    optional.String
-	KafkaId optional.String
+	Page       optional.String
+	Size       optional.String
+	DinosaurId optional.String
 }
 
 /*
@@ -389,7 +389,7 @@ ListConnectors Returns a list of connector types
  * @param optional nil or *ListConnectorsOpts - Optional Parameters:
  * @param "Page" (optional.String) -  Page index
  * @param "Size" (optional.String) -  Number of items in each page
- * @param "KafkaId" (optional.String) -  The kafka cluster id
+ * @param "DinosaurId" (optional.String) -  The dinosaur cluster id
 @return ConnectorList
 */
 func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOptionals *ListConnectorsOpts) (ConnectorList, *_nethttp.Response, error) {
@@ -403,7 +403,7 @@ func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOpti
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connectors"
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
@@ -414,8 +414,8 @@ func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOpti
 	if localVarOptionals != nil && localVarOptionals.Size.IsSet() {
 		localVarQueryParams.Add("size", parameterToString(localVarOptionals.Size.Value(), ""))
 	}
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.DinosaurId.IsSet() {
+		localVarQueryParams.Add("dinosaur_id", parameterToString(localVarOptionals.DinosaurId.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -491,7 +491,7 @@ func (a *ConnectorsApiService) ListConnectors(ctx _context.Context, localVarOpti
 
 // PatchConnectorOpts Optional parameters for the method 'PatchConnector'
 type PatchConnectorOpts struct {
-	KafkaId optional.String
+	DinosaurId optional.String
 }
 
 /*
@@ -500,7 +500,7 @@ PatchConnector patch a connector
  * @param id The ID of record
  * @param connector Data to patch the connector with
  * @param optional nil or *PatchConnectorOpts - Optional Parameters:
- * @param "KafkaId" (optional.String) -  The kafka cluster id
+ * @param "DinosaurId" (optional.String) -  The dinosaur cluster id
 @return Connector
 */
 func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, connector Connector, localVarOptionals *PatchConnectorOpts) (Connector, *_nethttp.Response, error) {
@@ -514,15 +514,15 @@ func (a *ConnectorsApiService) PatchConnector(ctx _context.Context, id string, c
 	)
 
 	// create path and map variables
-	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/kafka_connectors/{id}"
+	localVarPath := a.client.cfg.BasePath + "/api/connector_mgmt/v1/dinosaur_connectors/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.QueryEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if localVarOptionals != nil && localVarOptionals.KafkaId.IsSet() {
-		localVarQueryParams.Add("kafka_id", parameterToString(localVarOptionals.KafkaId.Value(), ""))
+	if localVarOptionals != nil && localVarOptionals.DinosaurId.IsSet() {
+		localVarQueryParams.Add("dinosaur_id", parameterToString(localVarOptionals.DinosaurId.Value(), ""))
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json", "application/merge-patch+json", "application/json-patch+json"}

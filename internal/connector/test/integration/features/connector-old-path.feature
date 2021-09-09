@@ -8,25 +8,25 @@ Feature: the old connectors path are still valid
 
   Scenario: Bob lists all connector types
     Given I am logged in as "Bob"
-    When I GET path "/v1/kafka-connector-types"
+    When I GET path "/v1/dinosaur-connector-types"
     Then the response code should be 200
 
   Scenario: Bob tries to create a connector with an invalid configuration spec
     Given I am logged in as "Bob"
-    When I POST path "/v1/kafka-connectors?async=true" with json body:
+    When I POST path "/v1/dinosaur-connectors?async=true" with json body:
       """
       {
         "kind": "Connector",
         "metadata": {
           "name": "example 1",
-          "kafka_id":"mykafka"
+          "dinosaur_id":"mydinosaur"
         },
         "deployment_location": {
           "kind": "addon",
           "cluster_id": "default"
         },
-        "kafka": {
-          "bootstrap_server": "kafka.hostname",
+        "dinosaur": {
+          "bootstrap_server": "dinosaur.hostname",
           "client_id": "myclient",
           "client_secret": "test"
         },
@@ -40,20 +40,20 @@ Feature: the old connectors path are still valid
       """
     Then the response code should be 400
 
-    When I GET path "/v1/kafka-connector-clusters"
+    When I GET path "/v1/dinosaur-connector-clusters"
     Then the response code should be 200
 
   Scenario: Agent user should be to list deployments
     Given I am logged in as "Bob"
 
-    When I POST path "/v1/kafka-connector-clusters" with json body:
+    When I POST path "/v1/dinosaur-connector-clusters" with json body:
       """
       {}
       """
     Then the response code should be 202
     Given I store the ".id" selection from the response as ${connector_cluster_id}
 
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/addon_parameters"
+    When I GET path "/v1/dinosaur-connector-clusters/${connector_cluster_id}/addon_parameters"
     Then the response code should be 200
     And get and store access token using the addon parameter response as ${agent_token}
 
@@ -61,5 +61,5 @@ Feature: the old connectors path are still valid
     Given I set the "Authorization" header to "Bearer ${agent_token}"
 
     # There should be no deployments assigned yet, since the cluster status is unconnected
-    When I GET path "/v1/kafka-connector-clusters/${connector_cluster_id}/deployments"
+    When I GET path "/v1/dinosaur-connector-clusters/${connector_cluster_id}/deployments"
     Then the response code should be 200

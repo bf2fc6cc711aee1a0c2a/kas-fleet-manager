@@ -1,0 +1,184 @@
+package routes
+
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/generated"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/routes"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/acl"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/client/ocm"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/environments"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	coreHandlers "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/server"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
+	"github.com/goava/di"
+	gorillaHandlers "github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	pkgerrors "github.com/pkg/errors"
+)
+
+type options struct {
+	di.Inject
+	ServerConfig   *server.ServerConfig
+	OCMConfig      *ocm.OCMConfig
+	ProviderConfig *config.ProviderConfig
+
+	AMSClient                ocm.AMSClient
+	Dinosaur                 services.DinosaurService
+	CloudProviders           services.CloudProvidersService
+	Observatorium            services.ObservatoriumService
+	Keycloak                 coreServices.DinosaurKeycloakService
+	DataPlaneCluster         services.DataPlaneClusterService
+	DataPlaneDinosaurService services.DataPlaneDinosaurService
+	DB                       *db.ConnectionFactory
+
+	AccessControlListMiddleware *acl.AccessControlListMiddleware
+	AccessControlListConfig     *acl.AccessControlListConfig
+}
+
+func NewRouteLoader(s options) environments.RouteLoader {
+	return &s
+}
+
+func (s *options) AddRoutes(mainRouter *mux.Router) error {
+	basePath := fmt.Sprintf("%s/%s", routes.ApiEndpoint, routes.DinosaursFleetManagementApiPrefix)
+	err := s.buildApiBaseRouter(mainRouter, basePath, "fleet-manager.yaml")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, openApiFilePath string) error {
+	openAPIDefinitions, err := shared.LoadOpenAPISpec(generated.Asset, openApiFilePath)
+	if err != nil {
+		return pkgerrors.Wrapf(err, "can't load OpenAPI specification")
+	}
+
+	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig)
+	errorsHandler := coreHandlers.NewErrorsHandler()
+	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
+	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
+	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
+
+	authorizeMiddleware := s.AccessControlListMiddleware.Authorize
+	requireOrgID := auth.NewRequireOrgIDMiddleware().RequireOrgID(errors.ErrorUnauthenticated)
+	requireIssuer := auth.NewRequireIssuerMiddleware().RequireIssuer(s.ServerConfig.TokenIssuerURL, errors.ErrorUnauthenticated)
+	requireTermsAcceptance := auth.NewRequireTermsAcceptanceMiddleware().RequireTermsAcceptance(s.ServerConfig.EnableTermsAcceptance, s.AMSClient, errors.ErrorTermsNotAccepted)
+
+	// base path. Could be /api/dinosaurs_mgmt
+	apiRouter := mainRouter.PathPrefix(basePath).Subrouter()
+
+	// /v1
+	apiV1Router := apiRouter.PathPrefix("/v1").Subrouter()
+
+	//  /openapi
+	apiV1Router.HandleFunc("/openapi", coreHandlers.NewOpenAPIHandler(openAPIDefinitions).Get).Methods(http.MethodGet)
+
+	//  /errors
+	apiV1ErrorsRouter := apiV1Router.PathPrefix("/errors").Subrouter()
+	apiV1ErrorsRouter.HandleFunc("", errorsHandler.List).Methods(http.MethodGet)
+	apiV1ErrorsRouter.HandleFunc("/{id}", errorsHandler.Get).Methods(http.MethodGet)
+
+	// /status
+	apiV1Status := apiV1Router.PathPrefix("/status").Subrouter()
+	apiV1Status.HandleFunc("", serviceStatusHandler.Get).Methods(http.MethodGet)
+	apiV1Status.Use(requireIssuer)
+
+	v1Collections := []api.CollectionMetadata{}
+
+	//  /dinosaurs
+	v1Collections = append(v1Collections, api.CollectionMetadata{
+		ID:   "dinosaurs",
+		Kind: "DinosaurList",
+	})
+	apiV1DinosaursRouter := apiV1Router.PathPrefix("/dinosaurs").Subrouter()
+	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Get).Methods(http.MethodGet)
+	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Delete).Methods(http.MethodDelete)
+	apiV1DinosaursRouter.HandleFunc("/{id}", dinosaurHandler.Update).Methods(http.MethodPatch)
+	apiV1DinosaursRouter.HandleFunc("", dinosaurHandler.List).Methods(http.MethodGet)
+	apiV1DinosaursRouter.Use(requireIssuer)
+	apiV1DinosaursRouter.Use(requireOrgID)
+	apiV1DinosaursRouter.Use(authorizeMiddleware)
+
+	apiV1DinosaursCreateRouter := apiV1DinosaursRouter.NewRoute().Subrouter()
+	apiV1DinosaursCreateRouter.HandleFunc("", dinosaurHandler.Create).Methods(http.MethodPost)
+	apiV1DinosaursCreateRouter.Use(requireTermsAcceptance)
+
+	//  /service_accounts
+	v1Collections = append(v1Collections, api.CollectionMetadata{
+		ID:   "service_accounts",
+		Kind: "ServiceAccountList",
+	})
+	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/service_accounts").Subrouter()
+	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
+	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
+	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
+
+	apiV1ServiceAccountsRouter.Use(requireIssuer)
+	apiV1ServiceAccountsRouter.Use(requireOrgID)
+	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
+
+	//  /dinosaurs/{id}/metrics
+	apiV1MetricsRouter := apiV1DinosaursRouter.PathPrefix("/{id}/metrics").Subrouter()
+	apiV1MetricsRouter.HandleFunc("/query_range", metricsHandler.GetMetricsByRangeQuery).Methods(http.MethodGet)
+	apiV1MetricsRouter.HandleFunc("/query", metricsHandler.GetMetricsByInstantQuery).Methods(http.MethodGet)
+
+	v1Metadata := api.VersionMetadata{
+		ID:          "v1",
+		Collections: v1Collections,
+	}
+	apiMetadata := api.Metadata{
+		ID: "dinosaurs_mgmt",
+		Versions: []api.VersionMetadata{
+			v1Metadata,
+		},
+	}
+	apiRouter.HandleFunc("", apiMetadata.ServeHTTP).Methods(http.MethodGet)
+	apiRouter.Use(coreHandlers.MetricsMiddleware)
+	apiRouter.Use(db.TransactionMiddleware(s.DB))
+	apiRouter.Use(gorillaHandlers.CompressHandler)
+
+	apiV1Router.HandleFunc("", v1Metadata.ServeHTTP).Methods(http.MethodGet)
+
+	// /agent-clusters/{id}
+	dataPlaneClusterHandler := handlers.NewDataPlaneClusterHandler(s.DataPlaneCluster)
+	dataPlaneDinosaurHandler := handlers.NewDataPlaneDinosaurHandler(s.DataPlaneDinosaurService, s.Dinosaur)
+	apiV1DataPlaneRequestsRouter := apiV1Router.PathPrefix("/agent-clusters").Subrouter()
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}", dataPlaneClusterHandler.GetDataPlaneClusterConfig).Methods(http.MethodGet)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/status", dataPlaneClusterHandler.UpdateDataPlaneClusterStatus).Methods(http.MethodPut)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/dinosaurs/status", dataPlaneDinosaurHandler.UpdateDinosaurStatuses).Methods(http.MethodPut)
+	apiV1DataPlaneRequestsRouter.HandleFunc("/{id}/dinosaurs", dataPlaneDinosaurHandler.GetAll).Methods(http.MethodGet)
+	// deliberately returns 404 here if the request doesn't have the required role, so that it will appear as if the endpoint doesn't exist
+	auth.UseOperatorAuthorisationMiddleware(apiV1DataPlaneRequestsRouter, auth.Kas, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI, "id")
+
+	adminDinosaurHandler := handlers.NewAdminDinosaurHandler(s.Dinosaur, s.ProviderConfig)
+	adminRouter := apiV1Router.PathPrefix("/admin").Subrouter()
+	rolesMapping := map[string][]string{
+		http.MethodGet:    {auth.KasFleetManagerAdminReadRole, auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
+		http.MethodPatch:  {auth.KasFleetManagerAdminWriteRole, auth.KasFleetManagerAdminFullRole},
+		http.MethodDelete: {auth.KasFleetManagerAdminFullRole},
+	}
+	adminRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer(s.Keycloak.GetConfig().OSDClusterIDPRealm.ValidIssuerURI, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewRolesAuhzMiddleware().RequireRolesForMethods(rolesMapping, errors.ErrorNotFound))
+	adminRouter.Use(auth.NewAuditLogMiddleware().AuditLog(errors.ErrorNotFound))
+	adminRouter.HandleFunc("/dinosaurs", adminDinosaurHandler.List).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/dinosaurs/{id}", adminDinosaurHandler.Get).Methods(http.MethodGet)
+	adminRouter.HandleFunc("/dinosaurs/{id}", adminDinosaurHandler.Delete).Methods(http.MethodDelete)
+	adminRouter.HandleFunc("/dinosaurs/{id}", adminDinosaurHandler.Update).Methods(http.MethodPatch)
+
+	return nil
+}

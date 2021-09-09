@@ -1,11 +1,12 @@
 package quota_management
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared"
+	"os"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared"
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v2"
-	"os"
 )
 
 type QuotaManagementListConfig struct {
@@ -29,7 +30,7 @@ func (c *QuotaManagementListConfig) AddFlags(fs *pflag.FlagSet) {
 
 func (c *QuotaManagementListConfig) ReadFiles() error {
 	// TODO: we should avoid reading the file if quota-type is not quota-management-list
-	// ATM, since the quota-type is inside KafkaConfig and KafkaConfig is not accessible from here, I will leave this for a
+	// ATM, since the quota-type is inside DinosaurConfig and DinosaurConfig is not accessible from here, I will leave this for a
 	// future implementation
 	err := readQuotaManagementListConfigFile(c.QuotaListConfigFile, &c.QuotaList)
 

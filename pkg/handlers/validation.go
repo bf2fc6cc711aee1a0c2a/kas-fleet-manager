@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 )
 
 var (
-	// Kafka cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
+	// Dinosaur cluster names must consist of lower-case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character. For example, 'my-name', or 'abc-123'.
 
 	ValidUuidRegexp               = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
 	ValidServiceAccountNameRegexp = regexp.MustCompile(`^[a-z]([-a-z0-9]*[a-z0-9])?$`)
@@ -136,10 +136,10 @@ func ValidatQueryParam(queryParams url.Values, field string) Validate {
 
 }
 
-func ValidateKafkaUpdateFields(strimziVersion *string, kafkaVersion *string) Validate {
+func ValidateDinosaurUpdateFields(strimziVersion *string, dinosaurVersion *string) Validate {
 	return func() *errors.ServiceError {
-		if (strimziVersion == nil || len(*strimziVersion) < 1) && (kafkaVersion == nil || len(*kafkaVersion) < 1) {
-			return errors.FieldValidationError("Failed to update Kafka Request. Expecting at least one of the following fields: strimzi_version or kafka_version to be provided")
+		if (strimziVersion == nil || len(*strimziVersion) < 1) && (dinosaurVersion == nil || len(*dinosaurVersion) < 1) {
+			return errors.FieldValidationError("Failed to update Dinosaur Request. Expecting at least one of the following fields: strimzi_version or dinosaur_version to be provided")
 		}
 		return nil
 	}

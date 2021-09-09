@@ -3,32 +3,33 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/presenters"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/services"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/db"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/handlers"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/logger"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services/vault"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/shared/secrets"
-	"github.com/spyzhov/ajson"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/auth"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
-	coreServices "github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/presenters"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/services"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/db"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/handlers"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/vault"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/shared/secrets"
+	"github.com/spyzhov/ajson"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/auth"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
+	coreServices "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services"
 	jsonpatch "github.com/evanphx/json-patch"
 	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 )
 
 var (
-	maxKafkaNameLength   = 32
-	maxConnectorIdLength = 32
+	maxDinosaurNameLength = 32
+	maxConnectorIdLength  = 32
 )
 
 type ConnectorsHandler struct {
@@ -56,10 +57,10 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 			handlers.Validation("channel", &resource.Channel, handlers.WithDefault("stable"), handlers.MaxLen(40)),
 			handlers.Validation("metadata.name", &resource.Metadata.Name,
 				handlers.WithDefault("New Connector"), handlers.MinLen(1), handlers.MaxLen(100)),
-			handlers.Validation("metadata.kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
-			handlers.Validation("kafka.bootstrap_server", &resource.Kafka.BootstrapServer, handlers.MinLen(1)),
-			handlers.Validation("kafka.client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
-			handlers.Validation("kafka.client_secret", &resource.Kafka.ClientSecret, handlers.MinLen(1)),
+			handlers.Validation("metadata.dinosaur_id", &resource.Metadata.DinosaurId, handlers.MinLen(1), handlers.MaxLen(maxDinosaurNameLength)),
+			handlers.Validation("dinosaur.bootstrap_server", &resource.Dinosaur.BootstrapServer, handlers.MinLen(1)),
+			handlers.Validation("dinosaur.client_id", &resource.Dinosaur.ClientId, handlers.MinLen(1)),
+			handlers.Validation("dinosaur.client_secret", &resource.Dinosaur.ClientSecret, handlers.MinLen(1)),
 			handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxConnectorTypeIdLength)),
 			handlers.Validation("desired_state", &resource.DesiredState, handlers.WithDefault("ready"), handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 			handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
@@ -68,8 +69,8 @@ func (h ConnectorsHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 		Action: func() (interface{}, *errors.ServiceError) {
 
-			//// Get the Kafka to assert the user can access that kafka instance.
-			//_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
+			//// Get the Dinosaur to assert the user can access that dinosaur instance.
+			//_, err := h.dinosaurService.Get(r.Context(), resource.Metadata.DinosaurId)
 			//if err != nil {
 			//	return nil, err
 			//}
@@ -173,11 +174,11 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			// But we don't want to allow the user to update ALL fields.. so copy
 			// over the fields that they are allowed to modify..
 			resource.Metadata.Name = patch.Metadata.Name
-			resource.Metadata.KafkaId = patch.Metadata.KafkaId
+			resource.Metadata.DinosaurId = patch.Metadata.DinosaurId
 			resource.ConnectorSpec = patch.ConnectorSpec
 			resource.DesiredState = patch.DesiredState
 			resource.Metadata.ResourceVersion = patch.Metadata.ResourceVersion
-			resource.Kafka = patch.Kafka
+			resource.Dinosaur = patch.Dinosaur
 			resource.DeploymentLocation = patch.DeploymentLocation
 
 			// If we didn't change anything, then just skip the update...
@@ -189,9 +190,9 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 			// revalidate
 			validates := []handlers.Validate{
 				handlers.Validation("name", &resource.Metadata.Name, handlers.MinLen(1), handlers.MaxLen(100)),
-				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
-				// handlers.Validation("kafka_id", &resource.Metadata.KafkaId, handlers.MinLen(1), handlers.MaxLen(maxKafkaNameLength)),
-				handlers.Validation("Kafka client_id", &resource.Kafka.ClientId, handlers.MinLen(1)),
+				handlers.Validation("connector_type_id", &resource.ConnectorTypeId, handlers.MinLen(1), handlers.MaxLen(maxDinosaurNameLength)),
+				// handlers.Validation("dinosaur_id", &resource.Metadata.DinosaurId, handlers.MinLen(1), handlers.MaxLen(maxDinosaurNameLength)),
+				handlers.Validation("Dinosaur client_id", &resource.Dinosaur.ClientId, handlers.MinLen(1)),
 				handlers.Validation("deployment_location.kind", &resource.DeploymentLocation.Kind, handlers.IsOneOf("addon")),
 				handlers.Validation("desired_state", &resource.DesiredState, handlers.IsOneOf(dbapi.ValidDesiredStates...)),
 				validateConnectorSpec(h.connectorTypesService, &resource, connectorTypeId),
@@ -204,9 +205,9 @@ func (h ConnectorsHandler) Patch(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			// did the kafka instance change? verify we can use it...
-			//if resource.Metadata.KafkaId != originalResource.Metadata.KafkaId {
-			//	_, err := h.kafkaService.Get(r.Context(), resource.Metadata.KafkaId)
+			// did the dinosaur instance change? verify we can use it...
+			//if resource.Metadata.DinosaurId != originalResource.Metadata.DinosaurId {
+			//	_, err := h.dinosaurService.Get(r.Context(), resource.Metadata.DinosaurId)
 			//	if err != nil {
 			//		return nil, err
 			//	}
@@ -374,7 +375,7 @@ func (h ConnectorsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	handlers.HandleGet(w, r, cfg)
 }
 
-// Delete is the handler for deleting a kafka request
+// Delete is the handler for deleting a dinosaur request
 func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	connectorId := mux.Vars(r)["connector_id"]
 	cfg := &handlers.HandlerConfig{
@@ -413,17 +414,17 @@ func (h ConnectorsHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h ConnectorsHandler) List(w http.ResponseWriter, r *http.Request) {
-	kafkaId := r.URL.Query().Get("kafka_id")
+	dinosaurId := r.URL.Query().Get("dinosaur_id")
 	connectorTypeId := mux.Vars(r)["connector_type_id"]
 	cfg := &handlers.HandlerConfig{
 		Validate: []handlers.Validate{
-			handlers.Validation("kafka_id", &kafkaId, handlers.MaxLen(maxKafkaNameLength)),
+			handlers.Validation("dinosaur_id", &dinosaurId, handlers.MaxLen(maxDinosaurNameLength)),
 			handlers.Validation("connector_type_id", &connectorTypeId, handlers.MaxLen(maxConnectorTypeIdLength)),
 		},
 		Action: func() (interface{}, *errors.ServiceError) {
 			ctx := r.Context()
 			listArgs := coreServices.NewListArguments(r.URL.Query())
-			resources, paging, err := h.connectorsService.List(ctx, kafkaId, listArgs, connectorTypeId)
+			resources, paging, err := h.connectorsService.List(ctx, dinosaurId, listArgs, connectorTypeId)
 			if err != nil {
 				return nil, err
 			}

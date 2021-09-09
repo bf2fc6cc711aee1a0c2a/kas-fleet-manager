@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
 	"strings"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 )
 
 type ValidateOption func(field string, value *string) *errors.ServiceError

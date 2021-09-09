@@ -2,10 +2,11 @@ package presenters
 
 import (
 	"encoding/json"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/dbapi"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/internal/connector/internal/api/public"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
-	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/errors"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/dbapi"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/connector/internal/api/public"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/errors"
 )
 
 func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceError) {
@@ -26,16 +27,16 @@ func ConvertConnector(from public.Connector) (*dbapi.Connector, *errors.ServiceE
 		MultiAZ:         from.DeploymentLocation.MultiAz,
 		Name:            from.Metadata.Name,
 		Owner:           from.Metadata.Owner,
-		KafkaID:         from.Metadata.KafkaId,
+		DinosaurID:      from.Metadata.DinosaurId,
 		Version:         from.Metadata.ResourceVersion,
 		ConnectorTypeId: from.ConnectorTypeId,
 		ConnectorSpec:   spec,
 		DesiredState:    from.DesiredState,
 		Channel:         from.Channel,
-		Kafka: dbapi.KafkaConnectionSettings{
-			BootstrapServer: from.Kafka.BootstrapServer,
-			ClientId:        from.Kafka.ClientId,
-			ClientSecret:    from.Kafka.ClientSecret,
+		Dinosaur: dbapi.DinosaurConnectionSettings{
+			BootstrapServer: from.Dinosaur.BootstrapServer,
+			ClientId:        from.Dinosaur.ClientId,
+			ClientSecret:    from.Dinosaur.ClientSecret,
 		},
 		Status: dbapi.ConnectorStatus{
 			Phase: from.Status,
@@ -57,7 +58,7 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		Href: reference.Href,
 		Metadata: public.ConnectorAllOfMetadata{
 			Owner:           from.Owner,
-			KafkaId:         from.KafkaID,
+			DinosaurId:      from.DinosaurID,
 			Name:            from.Name,
 			CreatedAt:       from.CreatedAt,
 			UpdatedAt:       from.UpdatedAt,
@@ -75,10 +76,10 @@ func PresentConnector(from *dbapi.Connector) (public.Connector, *errors.ServiceE
 		Status:          from.Status.Phase,
 		DesiredState:    from.DesiredState,
 		Channel:         from.Channel,
-		Kafka: public.KafkaConnectionSettings{
-			BootstrapServer: from.Kafka.BootstrapServer,
-			ClientId:        from.Kafka.ClientId,
-			ClientSecret:    from.Kafka.ClientSecret,
+		Dinosaur: public.DinosaurConnectionSettings{
+			BootstrapServer: from.Dinosaur.BootstrapServer,
+			ClientId:        from.Dinosaur.ClientId,
+			ClientSecret:    from.Dinosaur.ClientSecret,
 		},
 	}, nil
 }
