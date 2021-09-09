@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Kafka Service Fleet Manager Admin APIs
   description: The admin APIs for the fleet manager of Kafka service
-  version: 0.0.1
+  version: 0.0.2
 servers:
   - url: https://api.openshift.com
     description: Main (production) server
@@ -199,6 +199,10 @@ components:
     Kafka:
       allOf:
         - $ref: 'kas-fleet-manager.yaml#/components/schemas/ObjectReference'
+        - required:
+          - multi_az
+          - strimzi_upgrading
+          - kafka_upgrading
         - type: object
           properties:
             status:
