@@ -592,7 +592,6 @@ deploy/service: MAS_SSO_BASE_URL ?= "https://identity.api.stage.openshift.com"
 deploy/service: MAS_SSO_REALM ?= "rhoas"
 deploy/service: USER_NAME_CLAIM ?= "clientId"
 deploy/service: FALL_BACK_USER_NAME_CLAIM ?= "preferred_username"
-deploy/service: MAX_ALLOWED_SERVICE_ACCOUNTS ?= "2"
 deploy/service: MAX_LIMIT_FOR_SSO_GET_CLIENTS ?= "100"
 deploy/service: OSD_IDP_MAS_SSO_REALM ?= "rhoas-dinosaur-sre"
 deploy/service: TOKEN_ISSUER_URL ?= "https://sso.redhat.com/auth/realms/redhat-external"
@@ -637,7 +636,6 @@ deploy/service: deploy/envoy deploy/route
 		-p MAS_SSO_REALM="$(MAS_SSO_REALM)" \
 		-p USER_NAME_CLAIM="$(USER_NAME_CLAIM)" \
 		-p FALL_BACK_USER_NAME_CLAIM="$(FALL_BACK_USER_NAME_CLAIM)" \
-		-p MAX_ALLOWED_SERVICE_ACCOUNTS="${MAX_ALLOWED_SERVICE_ACCOUNTS}" \
 		-p MAX_LIMIT_FOR_SSO_GET_CLIENTS="${MAX_LIMIT_FOR_SSO_GET_CLIENTS}" \
 		-p OSD_IDP_MAS_SSO_REALM="$(OSD_IDP_MAS_SSO_REALM)" \
 		-p TOKEN_ISSUER_URL="${TOKEN_ISSUER_URL}" \
