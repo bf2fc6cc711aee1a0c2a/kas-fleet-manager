@@ -2,7 +2,6 @@ package dbapi
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/bf2fc6cc711aee1a0c2a/kas-fleet-manager/pkg/api"
 	"gorm.io/gorm"
@@ -78,30 +77,6 @@ func (k *KafkaRequest) GetRoutes() ([]DataPlaneKafkaRoute, error) {
 	} else {
 		return routes, nil
 	}
-}
-
-func (k *KafkaRequest) GetDefaultRoutes(clusterDNS string, numberOfBrokers int) []DataPlaneKafkaRoute {
-	clusterIngress := fmt.Sprintf("elb.%s", clusterDNS)
-
-	routes := []DataPlaneKafkaRoute{
-		{
-			Domain: k.BootstrapServerHost,
-			Router: clusterIngress,
-		},
-		{
-			Domain: fmt.Sprintf("admin-server-%s", k.BootstrapServerHost),
-			Router: clusterIngress,
-		},
-	}
-
-	for i := 0; i < numberOfBrokers; i++ {
-		r := DataPlaneKafkaRoute{
-			Domain: fmt.Sprintf("broker-%d-%s", i, k.BootstrapServerHost),
-			Router: clusterIngress,
-		}
-		routes = append(routes, r)
-	}
-	return routes
 }
 
 func (k *KafkaRequest) SetRoutes(routes []DataPlaneKafkaRoute) error {

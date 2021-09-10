@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
@@ -646,8 +645,6 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 		return
 	}
 
-	clusterDNS := strings.Replace(cluster.ClusterDNS, constants2.DefaultIngressDnsNamePrefix, constants2.ManagedKafkaIngressDnsNamePrefix, 1)
-
 	bootstrapServerHost := "prefix.some-bootstrap⁻host"
 	ssoClientID := "some-sso-client-id"
 	ssoSecret := "some-sso-secret"
@@ -688,12 +685,12 @@ func TestDataPlaneEndpoints_UpdateManagedKafkasWithRoutes(t *testing.T) {
 				{
 					Name:   "admin-api",
 					Prefix: "admin-api",
-					Router: fmt.Sprintf("router.%s", clusterDNS),
+					Router: fmt.Sprintf("router.%s", cluster.ClusterDNS),
 				},
 				{
 					Name:   "bootstrap",
 					Prefix: "",
-					Router: fmt.Sprintf("router.%s", clusterDNS),
+					Router: fmt.Sprintf("router.%s", cluster.ClusterDNS),
 				},
 			},
 		}
