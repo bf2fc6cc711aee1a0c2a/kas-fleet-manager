@@ -86,9 +86,7 @@ make binary
     Schema |        Name        | Type  |       Owner
     --------+--------------------+-------+-------------------
     public | clusters           | table | kas_fleet_manager
-    public | connector_clusters | table | kas_fleet_manager
-    public | connectors         | table | kas_fleet_manager
-    public | dinosaur_requests     | table | kas_fleet_manager
+    public | dinosaur_requests  | table | kas_fleet_manager
     public | leader_leases      | table | kas_fleet_manager
     public | migrations         | table | kas_fleet_manager
     ```
@@ -269,13 +267,6 @@ make db/teardown
 
 ### Running performance tests
 See this [README](./test/performance/README.md) for more info about performance tests
-
-### Connector Service
-
-The https://github.com/bf2fc6cc711aee1a0c2a/cos-fleet-manager is used to build the `cos-fleet-manager` 
-binary which is a fleet manager for connectors similar to how `fleet-manager` is fleet manager for Dinosaur 
-instances.  The `cos-fleet-manager` just imports most of the code from the `fleet-manager` enabling only
-connector APIs that are in this repo's `internal/connector` package.
 
 ## Additional documentation:
 * [fleet-manager Implementation](docs/implementation.md)

@@ -12,8 +12,7 @@ import (
 
 func TestMain(m *testing.M) {
 
-	// Startup all the services and mocks that are needed to test the
-	// connector features.
+	// Startup all the services and mocks that are needed to test the features.
 	ocmServer := mocks.NewMockConfigurableServerBuilder().Build()
 	defer ocmServer.Close()
 

@@ -12,15 +12,15 @@ require (
 	github.com/blang/semver v3.5.0+incompatible
 	github.com/bxcodec/faker/v3 v3.2.0
 	github.com/cenkalti/backoff/v4 v4.1.0 // indirect
-	github.com/chirino/graphql v0.0.0-20210707003802-dfaf250c773e
-	github.com/chirino/graphql-4-apis v0.0.0-20210708183827-e0ef9ee72fe3
+	github.com/chirino/graphql v0.0.0-20210707003802-dfaf250c773e // indirect
+	github.com/chirino/graphql-4-apis v0.0.0-20210708183827-e0ef9ee72fe3 // indirect
 	github.com/cucumber/godog v0.10.1-0.20210705192606-df8c6e49b40b
 	github.com/cucumber/messages-go/v10 v10.0.3
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dgrijalva/jwt-go/v4 v4.0.0-preview1
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/go-healthcheck v0.1.0
-	github.com/evanphx/json-patch v4.9.0+incompatible
+	github.com/evanphx/json-patch v4.9.0+incompatible // indirect
 	github.com/getsentry/sentry-go v0.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-gormigrate/gormigrate/v2 v2.0.0
