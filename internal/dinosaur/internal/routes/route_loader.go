@@ -68,7 +68,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 
 	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
-	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
 
@@ -115,22 +114,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1DinosaursCreateRouter := apiV1DinosaursRouter.NewRoute().Subrouter()
 	apiV1DinosaursCreateRouter.HandleFunc("", dinosaurHandler.Create).Methods(http.MethodPost)
 	apiV1DinosaursCreateRouter.Use(requireTermsAcceptance)
-
-	//  /service_accounts
-	v1Collections = append(v1Collections, api.CollectionMetadata{
-		ID:   "service_accounts",
-		Kind: "ServiceAccountList",
-	})
-	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/service_accounts").Subrouter()
-	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).Methods(http.MethodGet)
-	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).Methods(http.MethodPost)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).Methods(http.MethodDelete)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).Methods(http.MethodPost)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).Methods(http.MethodGet)
-
-	apiV1ServiceAccountsRouter.Use(requireIssuer)
-	apiV1ServiceAccountsRouter.Use(requireOrgID)
-	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
 
 	//  /dinosaurs/{id}/metrics
 	apiV1MetricsRouter := apiV1DinosaursRouter.PathPrefix("/{id}/metrics").Subrouter()

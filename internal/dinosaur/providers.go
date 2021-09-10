@@ -6,7 +6,6 @@ import (
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/cmd/dinosaur"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/cmd/errors"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/cmd/observatorium"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/cmd/serviceaccounts"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/config"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/environments"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/internal/handlers"
@@ -51,7 +50,6 @@ func ConfigProviders() di.Option {
 		di.Provide(cluster.NewClusterCommand),
 		di.Provide(dinosaur.NewDinosaurCommand),
 		di.Provide(observatorium.NewRunObservatoriumCommand),
-		di.Provide(serviceaccounts.NewServiceAccountCommand),
 		di.Provide(errors.NewErrorsCommand),
 		di.Provide(environments2.Func(ServiceProviders)),
 		di.Provide(migrations.New),
