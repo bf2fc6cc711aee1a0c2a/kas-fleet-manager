@@ -2,8 +2,9 @@ package routes
 
 import (
 	"fmt"
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
 	"net/http"
+
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/logger"
 
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/account"
 	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/services/authorization"
@@ -37,16 +38,16 @@ type options struct {
 	OCMConfig      *ocm.OCMConfig
 	ProviderConfig *config.ProviderConfig
 
-	AMSClient             ocm.AMSClient
+	AMSClient                ocm.AMSClient
 	Dinosaur                 services.DinosaurService
-	CloudProviders        services.CloudProvidersService
-	Observatorium         services.ObservatoriumService
-	Keycloak              coreServices.DinosaurKeycloakService
-	DataPlaneCluster      services.DataPlaneClusterService
+	CloudProviders           services.CloudProvidersService
+	Observatorium            services.ObservatoriumService
+	Keycloak                 coreServices.DinosaurKeycloakService
+	DataPlaneCluster         services.DataPlaneClusterService
 	DataPlaneDinosaurService services.DataPlaneDinosaurService
-	AccountService        account.AccountService
-	AuthService           authorization.Authorization
-	DB                    *db.ConnectionFactory
+	AccountService           account.AccountService
+	AuthService              authorization.Authorization
+	DB                       *db.ConnectionFactory
 
 	AccessControlListMiddleware *acl.AccessControlListMiddleware
 	AccessControlListConfig     *acl.AccessControlListConfig
@@ -75,7 +76,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	dinosaurHandler := handlers.NewDinosaurHandler(s.Dinosaur, s.ProviderConfig, s.AuthService)
 	cloudProvidersHandler := handlers.NewCloudProviderHandler(s.CloudProviders, s.ProviderConfig)
 	errorsHandler := coreHandlers.NewErrorsHandler()
-	serviceAccountsHandler := handlers.NewServiceAccountHandler(s.Keycloak)
 	metricsHandler := handlers.NewMetricsHandler(s.Observatorium)
 	serviceStatusHandler := handlers.NewServiceStatusHandler(s.Dinosaur, s.AccessControlListConfig)
 
@@ -150,32 +150,6 @@ func (s *options) buildApiBaseRouter(mainRouter *mux.Router, basePath string, op
 	apiV1MetricsFederateRouter.Use(auth.NewRequireIssuerMiddleware().RequireIssuer([]string{s.ServerConfig.TokenIssuerURL, s.Keycloak.GetConfig().DinosaurRealm.ValidIssuerURI}, errors.ErrorUnauthenticated))
 	apiV1MetricsFederateRouter.Use(requireOrgID)
 	apiV1MetricsFederateRouter.Use(authorizeMiddleware)
-
-	//  /service_accounts
-	v1Collections = append(v1Collections, api.CollectionMetadata{
-		ID:   "service_accounts",
-		Kind: "ServiceAccountList",
-	})
-	apiV1ServiceAccountsRouter := apiV1Router.PathPrefix("/service_accounts").Subrouter()
-	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.ListServiceAccounts).
-		Name(logger.NewLogEvent("list-service-accounts", "lists all service accounts").ToString()).
-		Methods(http.MethodGet)
-	apiV1ServiceAccountsRouter.HandleFunc("", serviceAccountsHandler.CreateServiceAccount).
-		Name(logger.NewLogEvent("create-service-accounts", "create a service accounts").ToString()).
-		Methods(http.MethodPost)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.DeleteServiceAccount).
-		Name(logger.NewLogEvent("delete-service-accounts", "delete a service accounts").ToString()).
-		Methods(http.MethodDelete)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}/reset_credentials", serviceAccountsHandler.ResetServiceAccountCredential).
-		Name(logger.NewLogEvent("reset-service-accounts", "reset a service accounts").ToString()).
-		Methods(http.MethodPost)
-	apiV1ServiceAccountsRouter.HandleFunc("/{id}", serviceAccountsHandler.GetServiceAccountById).
-		Name(logger.NewLogEvent("get-service-accounts", "get a service accounts").ToString()).
-		Methods(http.MethodGet)
-
-	apiV1ServiceAccountsRouter.Use(requireIssuer)
-	apiV1ServiceAccountsRouter.Use(requireOrgID)
-	apiV1ServiceAccountsRouter.Use(authorizeMiddleware)
 
 	//  /cloud_providers
 	v1Collections = append(v1Collections, api.CollectionMetadata{
