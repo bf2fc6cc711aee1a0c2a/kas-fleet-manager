@@ -11,7 +11,7 @@ const (
 	ClusterOperationDelete ClusterOperation = "delete"
 
 	// The DNS prefixes used for traffic ingress
-	ManagedKafkaIngressDnsNamePrefix = "mk"
+	ManagedKafkaIngressDnsNamePrefix = "kas"
 	DefaultIngressDnsNamePrefix      = "apps"
 )
 
