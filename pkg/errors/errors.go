@@ -2,11 +2,9 @@ package errors
 
 import (
 	"fmt"
+	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
 	"net/http"
 	"strconv"
-	"strings"
-
-	"github.com/bf2fc6cc711aee1a0c2a/fleet-manager/internal/dinosaur/compat"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -21,10 +19,6 @@ const (
 
 	// HREF for API errors
 	ERROR_HREF = "/api/dinosaurs_mgmt/v1/errors/"
-
-	// To support connector errors too..
-	CONNECTOR_MGMT_ERROR_CODE_PREFIX = "CONNECTOR-MGMT"
-	CONNECTOR_MGMT_ERROR_HREF        = "/api/connector_mgmt/v1/errors/"
 
 	// Forbidden occurs when a user is not allowed to access the service
 	ErrorForbidden       ServiceErrorCode = 4
@@ -436,11 +430,6 @@ func (e *ServiceError) IsFailedToCheckQuota() bool {
 func (e *ServiceError) AsOpenapiError(operationID string, basePath string) compat.Error {
 	href := Href(e.Code)
 	code := CodeStr(e.Code)
-
-	if strings.Contains(basePath, "/api/connector_mgmt/") {
-		href = strings.Replace(href, ERROR_HREF, CONNECTOR_MGMT_ERROR_HREF, 1)
-		code = strings.Replace(code, ERROR_CODE_PREFIX, CONNECTOR_MGMT_ERROR_CODE_PREFIX, 1)
-	}
 
 	// end-temporary code
 	return compat.Error{

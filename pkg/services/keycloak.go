@@ -25,7 +25,6 @@ const (
 	username                 = "username"
 	created_at               = "created_at"
 	clusterId                = "fleetshard-operator-cluster-id"
-	connectorClusterId       = "connector-fleetshard-operator-cluster-id"
 	UserServiceAccountPrefix = "srvc-acct-"
 )
 
@@ -44,7 +43,6 @@ type KeycloakService interface {
 	RegisterFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
 	DeRegisterFleetshardOperatorServiceAccount(agentClusterId string) *errors.ServiceError
 	GetServiceAccountById(ctx context.Context, id string) (*api.ServiceAccount, *errors.ServiceError)
-	RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError)
 	GetDinosaurClientSecret(clientId string) (string, *errors.ServiceError)
 	CreateServiceAccountInternal(request CompleteServiceAccountRequest) (*api.ServiceAccount, *errors.ServiceError)
 	DeleteServiceAccountInternal(clientId string) *errors.ServiceError
@@ -535,11 +533,6 @@ func (kc *keycloakService) DeRegisterFleetshardOperatorServiceAccount(agentClust
 		return errors.NewWithCause(errors.ErrorFailedToDeleteServiceAccount, err, "Failed to delete service account: %s", internalServiceAccountId)
 	}
 	return nil
-}
-
-func (kc *keycloakService) RegisterConnectorFleetshardOperatorServiceAccount(agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) { // (agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
-	serviceAccountId := fmt.Sprintf("connector-fleetshard-agent-%s", agentClusterId)
-	return kc.registerAgentServiceAccount(connectorClusterId, serviceAccountId, agentClusterId, roleName)
 }
 
 func (kc *keycloakService) registerAgentServiceAccount(clusterId string, serviceAccountId string, agentClusterId string, roleName string) (*api.ServiceAccount, *errors.ServiceError) {
