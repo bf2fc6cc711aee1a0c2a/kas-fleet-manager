@@ -13,8 +13,8 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedPineapple {
 			Name:      from.Name,
 			Namespace: from.Namespace,
 			Annotations: private.ManagedPineappleAllOfMetadataAnnotations{
-				Bf2OrgId:          from.Annotations["bf2.org/id"],
-				Bf2OrgPlacementId: from.Annotations["bf2.org/placementId"],
+				MasId:          from.Annotations["mas/id"],
+				MasPlacementId: from.Annotations["mas/placementId"],
 			},
 		},
 		Spec: private.ManagedPineappleAllOfSpec{

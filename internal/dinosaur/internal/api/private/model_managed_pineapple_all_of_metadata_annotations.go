@@ -11,6 +11,6 @@ package private
 
 // ManagedPineappleAllOfMetadataAnnotations struct for ManagedPineappleAllOfMetadataAnnotations
 type ManagedPineappleAllOfMetadataAnnotations struct {
-	Bf2OrgId          string `json:"bf2.org/id"`
-	Bf2OrgPlacementId string `json:"bf2.org/placementId"`
+	MasId          string `json:"mas/id"`
+	MasPlacementId string `json:"mas/placementId"`
 }

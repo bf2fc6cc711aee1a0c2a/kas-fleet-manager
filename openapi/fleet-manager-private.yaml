@@ -239,12 +239,12 @@ components:
                 annotations:
                   type: object
                   required:
-                    - bf2.org/placementId
-                    - bf2.org/id
+                    - mas/placementId
+                    - mas/id
                   properties:
-                    bf2.org/id:
+                    mas/id:
                       type: string
-                    bf2.org/placementId:
+                    mas/placementId:
                       type: string
 
             spec:
@@ -573,8 +573,8 @@ components:
           name: "example-pineapple"
           namespace: "example-pineapple-1rfpsqbvq1em2u9u0z54ymjcwac"
           annotations:
-            bf2.org/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
-            bf2.org/placementId: ""
+            mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
+            mas/placementId: ""
         spec:
           capacity:
             ingressEgressThroughputPerSec: 4Mi

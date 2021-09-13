@@ -1044,7 +1044,7 @@ func TestDinosaurDelete_DeleteDuringCreation(t *testing.T) {
 			dinosaurStatusList := make(map[string]private.DataPlanePineappleStatus)
 			for _, dinosaur := range dinosaurList.Items {
 				if dinosaur.Spec.Deleted {
-					dinosaurStatusList[dinosaur.Metadata.Annotations.Bf2OrgId] = kasfleetshardsync.GetDeletedDinosaurStatusResponse()
+					dinosaurStatusList[dinosaur.Metadata.Annotations.MasId] = kasfleetshardsync.GetDeletedDinosaurStatusResponse()
 				}
 			}
 

@@ -304,10 +304,10 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 
 	for _, k := range testDinosaurs {
 		if k.Status != constants2.DinosaurRequestStatusPreparing.String() {
-			if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.Bf2OrgId == k.ID }); mk != nil {
+			if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == k.ID }); mk != nil {
 				Expect(mk.Metadata.Name).To(Equal(k.Name))
-				Expect(mk.Metadata.Annotations.Bf2OrgPlacementId).To(Equal(k.PlacementId))
-				Expect(mk.Metadata.Annotations.Bf2OrgId).To(Equal(k.ID))
+				Expect(mk.Metadata.Annotations.MasPlacementId).To(Equal(k.PlacementId))
+				Expect(mk.Metadata.Annotations.MasId).To(Equal(k.ID))
 				Expect(mk.Metadata.Namespace).NotTo(BeEmpty())
 				Expect(mk.Spec.Deleted).To(Equal(k.Status == constants2.DinosaurRequestStatusDeprovision.String()))
 				Expect(mk.Spec.Versions.Pineapple).To(Equal(k.DesiredDinosaurVersion))
@@ -323,27 +323,27 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 	updates := map[string]private.DataPlanePineappleStatus{}
 	for _, item := range list.Items {
 		if !item.Spec.Deleted {
-			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlanePineappleStatus{
+			updates[item.Metadata.Annotations.MasId] = private.DataPlanePineappleStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "True",
 					Reason: "StrimziUpdating",
 				}},
 				Versions: private.DataPlanePineappleStatusVersions{
-					Pineapple:         fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
-					PineappleOperator: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					Pineapple:         fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.MasId),
+					PineappleOperator: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.MasId),
 				},
 			}
-			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
+			readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
 		} else {
-			updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlanePineappleStatus{
+			updates[item.Metadata.Annotations.MasId] = private.DataPlanePineappleStatus{
 				Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 					Type:   "Ready",
 					Status: "False",
 					Reason: "Deleted",
 				}},
 			}
-			deletedClusters = append(deletedClusters, item.Metadata.Annotations.Bf2OrgId)
+			deletedClusters = append(deletedClusters, item.Metadata.Annotations.MasId)
 		}
 	}
 
@@ -488,7 +488,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithTlsCerts(t *testing.
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		Expect(mk.Spec.Endpoint.Tls.Cert).To(Equal(cert))
 		Expect(mk.Spec.Endpoint.Tls.Key).To(Equal(key))
 	} else {
@@ -553,7 +553,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaursWithServiceAccounts(t *t
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		// check canary service account
 		Expect(mk.Spec.ServiceAccounts).To(HaveLen(1))
 		canaryServiceAccount := mk.Spec.ServiceAccounts[0]
@@ -619,7 +619,7 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithoutOAuthTLSCert(t *testing.T)
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).To(BeNil())
 	} else {
 		t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -679,7 +679,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 	var readyClusters []string
 	updates := map[string]private.DataPlanePineappleStatus{}
 	for _, item := range list.Items {
-		updates[item.Metadata.Annotations.Bf2OrgId] = private.DataPlanePineappleStatus{
+		updates[item.Metadata.Annotations.MasId] = private.DataPlanePineappleStatus{
 			Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{{
 				Type:   "Ready",
 				Status: "True",
@@ -697,7 +697,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaursWithRoutes(t *testing.T) {
 				},
 			},
 		}
-		readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
+		readyClusters = append(readyClusters, item.Metadata.Annotations.MasId)
 	}
 
 	// routes will be stored the first time status are updated
@@ -805,7 +805,7 @@ func TestDataPlaneEndpoints_GetManagedDinosaursWithOAuthTLSCert(t *testing.T) {
 		}
 		return nil
 	}
-	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.Bf2OrgId == testDinosaur.ID }); mk != nil {
+	if mk := find(list.Items, func(item private.ManagedPineapple) bool { return item.Metadata.Annotations.MasId == testDinosaur.ID }); mk != nil {
 		Expect(mk.Spec.Oauth.TlsTrustedCertificate).ToNot(BeNil())
 	} else {
 		t.Error("failed matching manageddinosaur id with dinosaurrequest id")
@@ -858,7 +858,7 @@ func TestDataPlaneEndpoints_UpdateManagedDinosaurWithErrorStatus(t *testing.T) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	Expect(len(list.Items)).To(Equal(1)) // we should have one managed dinosaur cr
-	dinosaurReqID := list.Items[0].Metadata.Annotations.Bf2OrgId
+	dinosaurReqID := list.Items[0].Metadata.Annotations.MasId
 
 	errMessage := "test-err-message"
 	updateReq := map[string]private.DataPlanePineappleStatus{
