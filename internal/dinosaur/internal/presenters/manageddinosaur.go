@@ -5,20 +5,20 @@ import (
 	v1 "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.bf2.org/v1"
 )
 
-func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
-	res := private.ManagedDinosaur{
+func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedPineapple {
+	res := private.ManagedPineapple{
 		Id:   from.Annotations["id"],
 		Kind: from.Kind,
-		Metadata: private.ManagedDinosaurAllOfMetadata{
+		Metadata: private.ManagedPineappleAllOfMetadata{
 			Name:      from.Name,
 			Namespace: from.Namespace,
-			Annotations: private.ManagedDinosaurAllOfMetadataAnnotations{
+			Annotations: private.ManagedPineappleAllOfMetadataAnnotations{
 				Bf2OrgId:          from.Annotations["bf2.org/id"],
 				Bf2OrgPlacementId: from.Annotations["bf2.org/placementId"],
 			},
 		},
-		Spec: private.ManagedDinosaurAllOfSpec{
-			Capacity: private.ManagedDinosaurCapacity{
+		Spec: private.ManagedPineappleAllOfSpec{
+			Capacity: private.ManagedPineappleCapacity{
 				IngressEgressThroughputPerSec: from.Spec.Capacity.IngressEgressThroughputPerSec,
 				TotalMaxConnections:           int32(from.Spec.Capacity.TotalMaxConnections),
 				MaxDataRetentionSize:          from.Spec.Capacity.MaxDataRetentionSize,
@@ -26,7 +26,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 				MaxDataRetentionPeriod:        from.Spec.Capacity.MaxDataRetentionPeriod,
 				MaxConnectionAttemptsPerSec:   int32(from.Spec.Capacity.MaxConnectionAttemptsPerSec),
 			},
-			Oauth: private.ManagedDinosaurAllOfSpecOauth{
+			Oauth: private.ManagedPineappleAllOfSpecOauth{
 				ClientId:               from.Spec.OAuth.ClientId,
 				ClientSecret:           from.Spec.OAuth.ClientSecret,
 				TokenEndpointURI:       from.Spec.OAuth.TokenEndpointURI,
@@ -36,13 +36,13 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 				TlsTrustedCertificate:  getOpenAPIManagedDinosaurOAuthTLSTrustedCertificate(&from.Spec.OAuth),
 				CustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
 			},
-			Endpoint: private.ManagedDinosaurAllOfSpecEndpoint{
+			Endpoint: private.ManagedPineappleAllOfSpecEndpoint{
 				Tls:                 getOpenAPIManagedDinosaurEndpointTLS(from.Spec.Endpoint.Tls),
 				BootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
 			},
-			Versions: private.ManagedDinosaurVersions{
-				Dinosaur:         from.Spec.Versions.Dinosaur,
-				DinosaurOperator: from.Spec.Versions.Strimzi,
+			Versions: private.ManagedPineappleVersions{
+				Pineapple:         from.Spec.Versions.Dinosaur,
+				PineappleOperator: from.Spec.Versions.Strimzi,
 			},
 			Deleted:         from.Spec.Deleted,
 			Owners:          from.Spec.Owners,
@@ -53,10 +53,10 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 	return res
 }
 
-func getOpenAPIManagedDinosaurEndpointTLS(from *v1.TlsSpec) *private.ManagedDinosaurAllOfSpecEndpointTls {
-	var res *private.ManagedDinosaurAllOfSpecEndpointTls
+func getOpenAPIManagedDinosaurEndpointTLS(from *v1.TlsSpec) *private.ManagedPineappleAllOfSpecEndpointTls {
+	var res *private.ManagedPineappleAllOfSpecEndpointTls
 	if from != nil {
-		res = &private.ManagedDinosaurAllOfSpecEndpointTls{
+		res = &private.ManagedPineappleAllOfSpecEndpointTls{
 			Cert: from.Cert,
 			Key:  from.Key,
 		}
@@ -72,10 +72,10 @@ func getOpenAPIManagedDinosaurOAuthTLSTrustedCertificate(from *v1.OAuthSpec) *st
 	return res
 }
 
-func getServiceAccounts(from []v1.ServiceAccount) []private.ManagedDinosaurAllOfSpecServiceAccounts {
-	accounts := []private.ManagedDinosaurAllOfSpecServiceAccounts{}
+func getServiceAccounts(from []v1.ServiceAccount) []private.ManagedPineappleAllOfSpecServiceAccounts {
+	accounts := []private.ManagedPineappleAllOfSpecServiceAccounts{}
 	for _, managedServiceAccount := range from {
-		accounts = append(accounts, private.ManagedDinosaurAllOfSpecServiceAccounts{
+		accounts = append(accounts, private.ManagedPineappleAllOfSpecServiceAccounts{
 			Name:      managedServiceAccount.Name,
 			Principal: managedServiceAccount.Principal,
 			Password:  managedServiceAccount.Password,

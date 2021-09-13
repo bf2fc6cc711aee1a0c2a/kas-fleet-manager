@@ -91,12 +91,12 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 	for _, dataplaneCluster := range dataplaneClusters {
 		ctx := NewAuthenticatedContextForDataPlaneCluster(helper, dataplaneCluster.ClusterID)
 
-		dinosaurList, _, err := privateClient.AgentClustersApi.GetDinosaurs(ctx, dataplaneCluster.ClusterID)
+		dinosaurList, _, err := privateClient.AgentClustersApi.GetPineapples(ctx, dataplaneCluster.ClusterID)
 		if err != nil {
 			return err
 		}
 
-		dinosaurStatusList := make(map[string]private.DataPlaneDinosaurStatus)
+		dinosaurStatusList := make(map[string]private.DataPlanePineappleStatus)
 		for _, dinosaur := range dinosaurList.Items {
 			id := dinosaur.Metadata.Annotations.Bf2OrgId
 			if dinosaur.Spec.Deleted {
@@ -107,7 +107,7 @@ var defaultUpdateDinosaurStatusFunc = func(helper *coreTest.Helper, privateClien
 			}
 		}
 
-		if _, err = privateClient.AgentClustersApi.UpdateDinosaurClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
+		if _, err = privateClient.AgentClustersApi.UpdatePineappleClusterStatus(ctx, dataplaneCluster.ClusterID, dinosaurStatusList); err != nil {
 			return err
 		}
 	}
@@ -253,7 +253,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		DinosaurOperator: []private.DataPlaneClusterUpdateStatusRequestDinosaurOperator{
+		PineappleOperator: []private.DataPlaneClusterUpdateStatusRequestPineappleOperator{
 			{
 				Ready:   true,
 				Version: "strimzi-cluster-operator.v0.23.0-0",
@@ -282,8 +282,8 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 }
 
 // Return a Dinosaur status for a deleted cluster
-func GetDeletedDinosaurStatusResponse() private.DataPlaneDinosaurStatus {
-	return private.DataPlaneDinosaurStatus{
+func GetDeletedDinosaurStatusResponse() private.DataPlanePineappleStatus {
+	return private.DataPlanePineappleStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
@@ -302,23 +302,23 @@ func GetDefaultReportedStrimziVersion() string {
 }
 
 // Return a dinosaur status for a ready cluster
-func GetReadyDinosaurStatusResponse() private.DataPlaneDinosaurStatus {
-	return private.DataPlaneDinosaurStatus{
+func GetReadyDinosaurStatusResponse() private.DataPlanePineappleStatus {
+	return private.DataPlanePineappleStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
 				Status: "True",
 			},
 		},
-		Versions: private.DataPlaneDinosaurStatusVersions{
-			Dinosaur:         GetDefaultReportedDinosaurVersion(),
-			DinosaurOperator: GetDefaultReportedStrimziVersion(),
+		Versions: private.DataPlanePineappleStatusVersions{
+			Pineapple:         GetDefaultReportedDinosaurVersion(),
+			PineappleOperator: GetDefaultReportedStrimziVersion(),
 		},
 	}
 }
 
-func GetErrorDinosaurStatusResponse() private.DataPlaneDinosaurStatus {
-	return private.DataPlaneDinosaurStatus{
+func GetErrorDinosaurStatusResponse() private.DataPlanePineappleStatus {
+	return private.DataPlanePineappleStatus{
 		Conditions: []private.DataPlaneClusterUpdateStatusRequestConditions{
 			{
 				Type:   "Ready",
@@ -329,7 +329,7 @@ func GetErrorDinosaurStatusResponse() private.DataPlaneDinosaurStatus {
 	}
 }
 
-func GetErrorWithCustomMessageDinosaurStatusResponse(message string) private.DataPlaneDinosaurStatus {
+func GetErrorWithCustomMessageDinosaurStatusResponse(message string) private.DataPlanePineappleStatus {
 	res := GetErrorDinosaurStatusResponse()
 	res.Conditions[0].Message = message
 	return res

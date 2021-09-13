@@ -9,8 +9,8 @@
 
 package private
 
-// PrivateObjectReference struct for PrivateObjectReference
-type PrivateObjectReference struct {
-	Id   string `json:"id,omitempty"`
-	Kind string `json:"kind,omitempty"`
+// ManagedPineappleAllOfMetadataAnnotations struct for ManagedPineappleAllOfMetadataAnnotations
+type ManagedPineappleAllOfMetadataAnnotations struct {
+	Bf2OrgId          string `json:"bf2.org/id"`
+	Bf2OrgPlacementId string `json:"bf2.org/placementId"`
 }

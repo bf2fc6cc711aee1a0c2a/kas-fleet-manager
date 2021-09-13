@@ -9,8 +9,8 @@
 
 package private
 
-// PrivateObjectReference struct for PrivateObjectReference
-type PrivateObjectReference struct {
-	Id   string `json:"id,omitempty"`
-	Kind string `json:"kind,omitempty"`
+// DataPlanePineappleStatusVersions Version information related to a Pineapple cluster
+type DataPlanePineappleStatusVersions struct {
+	Pineapple         string `json:"pineapple,omitempty"`
+	PineappleOperator string `json:"pineappleOperator,omitempty"`
 }

@@ -84,8 +84,8 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 
 	// We try to get the versions from status.Strimzi and if it has not been defined
 	// we try to fallback to status.StrimziVersions.
-	if status.DinosaurOperator != nil {
-		for _, val := range status.DinosaurOperator {
+	if status.PineappleOperator != nil {
+		for _, val := range status.PineappleOperator {
 			strimziVersion := api.StrimziVersion{
 				Version: val.Version,
 				Ready:   val.Ready,
@@ -94,7 +94,7 @@ func getAvailableStrimziVersions(status private.DataPlaneClusterUpdateStatusRequ
 		}
 
 	} else { // fall back to StrimziVersions.
-		for _, val := range status.DinosaurOperatorVersions {
+		for _, val := range status.PineappleOperatorVersions {
 			strimziVersion := api.StrimziVersion{
 				Version: val,
 				Ready:   true,
