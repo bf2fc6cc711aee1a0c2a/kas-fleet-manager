@@ -40,7 +40,7 @@ const (
 	mockDinosaurName      = "test-dinosaur1"
 	dinosaurReadyTimeout  = time.Minute * 10
 	dinosaurCheckInterval = time.Second * 1
-	testMultiAZ        = true
+	testMultiAZ           = true
 	invalidDinosaurName   = "Test_Cluster9"
 	longDinosaurName      = "thisisaninvaliddinosaurclusternamethatexceedsthenamesizelimit"
 )
@@ -181,7 +181,7 @@ func TestDinosaur_Update(t *testing.T) {
 	adminCtx := h.NewAuthenticatedContext(adminAccount, claims)
 
 	type args struct {
-		ctx                context.Context
+		ctx                   context.Context
 		dinosaurID            string
 		dinosaurUpdateRequest public.DinosaurUpdateRequest
 	}
@@ -193,7 +193,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "update with an empty body should not fail",
 			args: args{
-				ctx:                ctx,
+				ctx:                   ctx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: emptyDinosaurUpdate,
 			},
@@ -205,7 +205,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should fail if owner is empty",
 			args: args{
-				ctx:                ctx,
+				ctx:                   ctx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: emptyOwnerDinosaurUpdateReq,
 			},
@@ -216,7 +216,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should fail if trying to update owner as not an owner/ org_admin",
 			args: args{
-				ctx:                nonOwnerCtx,
+				ctx:                   nonOwnerCtx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: newOwnerDinosaurUpdateReq,
 			},
@@ -227,7 +227,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should fail if trying to update with an empty body as a non owner or org admin",
 			args: args{
-				ctx:                nonOwnerCtx,
+				ctx:                   nonOwnerCtx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: emptyDinosaurUpdate,
 			},
@@ -238,7 +238,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should fail when trying to update non-existent dinosaur",
 			args: args{
-				ctx:                ctx,
+				ctx:                   ctx,
 				dinosaurID:            "non-existent-id",
 				dinosaurUpdateRequest: sameOwnerDinosaurUpdateReq,
 			},
@@ -250,7 +250,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should succeed changing reauthentication enabled value to true",
 			args: args{
-				ctx:                ctx,
+				ctx:                   ctx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: reauthenticationUpdateToTrue,
 			},
@@ -263,7 +263,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should succeed changing reauthentication enabled value to false",
 			args: args{
-				ctx:                ctx,
+				ctx:                   ctx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: reauthenticationUpdateToFalse,
 			},
@@ -276,7 +276,7 @@ func TestDinosaur_Update(t *testing.T) {
 		{
 			name: "should succeed when passing a valid new username as an owner",
 			args: args{
-				ctx:                adminCtx,
+				ctx:                   adminCtx,
 				dinosaurID:            sampleDinosaurID,
 				dinosaurUpdateRequest: newOwnerDinosaurUpdateReq,
 			},
@@ -322,8 +322,8 @@ func TestDinosaur_Update(t *testing.T) {
 		OrganisationId:          orgId,
 		Status:                  constants.DinosaurRequestStatusReady.String(),
 		ClusterID:               cluster.ClusterID,
-		ActualDinosaurVersion:      "2.6.0",
-		DesiredDinosaurVersion:     "2.6.0",
+		ActualDinosaurVersion:   "2.6.0",
+		DesiredDinosaurVersion:  "2.6.0",
 		ActualStrimziVersion:    "v.23.0",
 		DesiredStrimziVersion:   "v0.23.0",
 		InstanceType:            types.STANDARD.String(),
@@ -925,9 +925,9 @@ func TestDinosaur_Delete(t *testing.T) {
 	userCtx := h.NewAuthenticatedContext(userAccount, nil)
 
 	type args struct {
-		ctx     context.Context
+		ctx        context.Context
 		dinosaurID string
-		async   bool
+		async      bool
 	}
 	tests := []struct {
 		name           string
@@ -937,9 +937,9 @@ func TestDinosaur_Delete(t *testing.T) {
 		{
 			name: "should fail when deleting dinosaur without async set to true",
 			args: args{
-				ctx:     userCtx,
+				ctx:        userCtx,
 				dinosaurID: sampleDinosaurID,
-				async:   false,
+				async:      false,
 			},
 			verifyResponse: func(resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -948,9 +948,9 @@ func TestDinosaur_Delete(t *testing.T) {
 		{
 			name: "should fail when deleting dinosaur with empty id",
 			args: args{
-				ctx:     userCtx,
+				ctx:        userCtx,
 				dinosaurID: "",
-				async:   true,
+				async:      true,
 			},
 			verifyResponse: func(resp *http.Response, err error) {
 				Expect(err).NotTo(BeNil())
@@ -959,9 +959,9 @@ func TestDinosaur_Delete(t *testing.T) {
 		{
 			name: "should succeed when deleting dinosaur with valid id and context",
 			args: args{
-				ctx:     userCtx,
+				ctx:        userCtx,
 				dinosaurID: sampleDinosaurID,
-				async:   true,
+				async:      true,
 			},
 			verifyResponse: func(resp *http.Response, err error) {
 				Expect(err).To(BeNil())
@@ -996,19 +996,19 @@ func TestDinosaur_Delete(t *testing.T) {
 		Meta: api.Meta{
 			ID: sampleDinosaurID,
 		},
-		MultiAZ:               true,
-		Owner:                 owner,
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-dinosaur",
-		OrganisationId:        orgId,
-		Status:                constants.DinosaurRequestStatusReady.String(),
-		ClusterID:             cluster.ClusterID,
-		ActualDinosaurVersion:    "2.6.0",
-		DesiredDinosaurVersion:   "2.6.0",
-		ActualStrimziVersion:  "v.23.0",
-		DesiredStrimziVersion: "v0.23.0",
-		InstanceType:          types.EVAL.String(),
+		MultiAZ:                true,
+		Owner:                  owner,
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-dinosaur",
+		OrganisationId:         orgId,
+		Status:                 constants.DinosaurRequestStatusReady.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualDinosaurVersion:  "2.6.0",
+		DesiredDinosaurVersion: "2.6.0",
+		ActualStrimziVersion:   "v.23.0",
+		DesiredStrimziVersion:  "v0.23.0",
+		InstanceType:           types.EVAL.String(),
 	}
 
 	if err := db.Create(dinosaur).Error; err != nil {
@@ -1058,7 +1058,7 @@ func TestDinosaurDelete_DeleteDuringCreation(t *testing.T) {
 			}
 			dinosaurStatusList := make(map[string]private.DataPlaneDinosaurStatus)
 			for _, dinosaur := range dinosaurList.Items {
-				id := dinosaur.Metadata.Annotations.Bf2OrgId
+				id := dinosaur.Metadata.Annotations.MasId
 				if dinosaur.Spec.Deleted {
 					dinosaurStatusList[id] = fleetshardsync.GetDeletedDinosaurStatusResponse()
 				}
@@ -1211,7 +1211,7 @@ func TestDinosaur_DeleteAdminNonOwner(t *testing.T) {
 	adminCtx := h.NewAuthenticatedContext(adminAccount, claims)
 
 	type args struct {
-		ctx     context.Context
+		ctx        context.Context
 		dinosaurID string
 	}
 	tests := []struct {
@@ -1222,7 +1222,7 @@ func TestDinosaur_DeleteAdminNonOwner(t *testing.T) {
 		{
 			name: "should fail when deleting dinosaur by other user within the same org (not an owner)",
 			args: args{
-				ctx:     otherUserCtx,
+				ctx:        otherUserCtx,
 				dinosaurID: sampleDinosaurID,
 			},
 			verifyResponse: func(resp *http.Response, err error) {
@@ -1232,7 +1232,7 @@ func TestDinosaur_DeleteAdminNonOwner(t *testing.T) {
 		{
 			name: "should not fail when deleting dinosaur by other user within the same org (not an owner but org admin)",
 			args: args{
-				ctx:     adminCtx,
+				ctx:        adminCtx,
 				dinosaurID: sampleDinosaurID,
 			},
 			verifyResponse: func(resp *http.Response, err error) {
@@ -1268,19 +1268,19 @@ func TestDinosaur_DeleteAdminNonOwner(t *testing.T) {
 		Meta: api.Meta{
 			ID: sampleDinosaurID,
 		},
-		MultiAZ:               false,
-		Owner:                 owner,
-		Region:                "test",
-		CloudProvider:         "test",
-		Name:                  "test-dinosaur",
-		OrganisationId:        "13640203",
-		Status:                constants.DinosaurRequestStatusReady.String(),
-		ClusterID:             cluster.ClusterID,
-		ActualDinosaurVersion:    "2.6.0",
-		DesiredDinosaurVersion:   "2.6.0",
-		ActualStrimziVersion:  "v.23.0",
-		DesiredStrimziVersion: "v0.23.0",
-		InstanceType:          types.STANDARD.String(),
+		MultiAZ:                false,
+		Owner:                  owner,
+		Region:                 "test",
+		CloudProvider:          "test",
+		Name:                   "test-dinosaur",
+		OrganisationId:         "13640203",
+		Status:                 constants.DinosaurRequestStatusReady.String(),
+		ClusterID:              cluster.ClusterID,
+		ActualDinosaurVersion:  "2.6.0",
+		DesiredDinosaurVersion: "2.6.0",
+		ActualStrimziVersion:   "v.23.0",
+		DesiredStrimziVersion:  "v0.23.0",
+		InstanceType:           types.STANDARD.String(),
 	}
 
 	if err := db.Create(dinosaur).Error; err != nil {
