@@ -11,6 +11,6 @@ package private
 
 // ManagedDinosaurAllOfMetadataAnnotations struct for ManagedDinosaurAllOfMetadataAnnotations
 type ManagedDinosaurAllOfMetadataAnnotations struct {
-	Bf2OrgId          string `json:"bf2.org/id"`
-	Bf2OrgPlacementId string `json:"bf2.org/placementId"`
+	MasId          string `json:"mas/id"`
+	MasPlacementId string `json:"mas/placementId"`
 }

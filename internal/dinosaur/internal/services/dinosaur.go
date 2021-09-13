@@ -20,7 +20,7 @@ import (
 
 	"github.com/golang/glog"
 
-	manageddinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.bf2.org/v1"
+	manageddinosaur "github.com/bf2fc6cc711aee1a0c2a/fleet-manager/pkg/api/manageddinosaurs.manageddinosaur.mas/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -861,14 +861,14 @@ func BuildManagedDinosaurCR(dinosaurRequest *dbapi.DinosaurRequest, dinosaurConf
 		Id: dinosaurRequest.ID,
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ManagedDinosaur",
-			APIVersion: "manageddinosaur.bf2.org/v1alpha1",
+			APIVersion: "manageddinosaur.mas/v1alpha1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      dinosaurRequest.Name,
 			Namespace: dinosaurRequest.Namespace,
 			Annotations: map[string]string{
-				"bf2.org/id":          dinosaurRequest.ID,
-				"bf2.org/placementId": dinosaurRequest.PlacementId,
+				"mas/id":          dinosaurRequest.ID,
+				"mas/placementId": dinosaurRequest.PlacementId,
 			},
 		},
 		Spec: manageddinosaur.ManagedDinosaurSpec{
