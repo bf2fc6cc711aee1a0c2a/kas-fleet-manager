@@ -464,7 +464,12 @@ func (k *kafkaService) Delete(kafkaRequest *dbapi.KafkaRequest) *errors.ServiceE
 			}
 		}
 
-		if k.kafkaConfig.EnableKafkaExternalCertificate {
+		routes, err := kafkaRequest.GetRoutes()
+		if err != nil {
+			return errors.NewWithCause(errors.ErrorGeneral, err, "failed to get routes")
+		}
+		// Only delete the routes when they are set
+		if routes != nil && k.kafkaConfig.EnableKafkaExternalCertificate {
 			_, err := k.ChangeKafkaCNAMErecords(kafkaRequest, KafkaRoutesActionDelete)
 			if err != nil {
 				return err
