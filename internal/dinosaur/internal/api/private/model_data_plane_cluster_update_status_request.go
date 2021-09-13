@@ -18,7 +18,7 @@ type DataPlaneClusterUpdateStatusRequest struct {
 	NodeInfo   *DatePlaneClusterUpdateStatusRequestNodeInfo    `json:"nodeInfo,omitempty"`
 	ResizeInfo *DatePlaneClusterUpdateStatusRequestResizeInfo  `json:"resizeInfo,omitempty"`
 	// A list of the dinosaur operator versions that can be installed on the data plane cluster
-	StrimziVersions []string `json:"strimziVersions,omitempty"`
+	DinosaurOperatorVersions []string `json:"dinosaurOperatorVersions,omitempty"`
 	// The status and version of the dinosaur operator
-	Strimzi []DataPlaneClusterUpdateStatusRequestStrimzi `json:"strimzi,omitempty"`
+	DinosaurOperator []DataPlaneClusterUpdateStatusRequestDinosaurOperator `json:"dinosaurOperator,omitempty"`
 }

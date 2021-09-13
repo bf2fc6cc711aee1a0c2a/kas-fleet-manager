@@ -9,8 +9,8 @@
 
 package private
 
-// DataPlaneClusterUpdateStatusRequestStrimzi struct for DataPlaneClusterUpdateStatusRequestStrimzi
-type DataPlaneClusterUpdateStatusRequestStrimzi struct {
+// DataPlaneClusterUpdateStatusRequestDinosaurOperator struct for DataPlaneClusterUpdateStatusRequestDinosaurOperator
+type DataPlaneClusterUpdateStatusRequestDinosaurOperator struct {
 	Ready   bool   `json:"ready"`
 	Version string `json:"version"`
 }

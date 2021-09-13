@@ -192,7 +192,7 @@ func (h *dataPlaneClusterHandler) validateRemaining(request *private.DataPlaneCl
 }
 
 func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	for idx, strimziElem := range request.StrimziVersions {
+	for idx, strimziElem := range request.DinosaurOperatorVersions {
 		if strimziElem == "" {
 			return errors.FieldValidationError(fmt.Sprintf(".status.strimziVersions[%d] cannot be empty", idx))
 		}
@@ -202,7 +202,7 @@ func (h *dataPlaneClusterHandler) validateStrimziVersions(request *private.DataP
 }
 
 func (h *dataPlaneClusterHandler) validateStrimzi(request *private.DataPlaneClusterUpdateStatusRequest) *errors.ServiceError {
-	for idx, strimziElem := range request.Strimzi {
+	for idx, strimziElem := range request.DinosaurOperator {
 		if strimziElem.Version == "" {
 			return errors.FieldValidationError(fmt.Sprintf(".status.strimzi[%d].version cannot be empty", idx))
 		}

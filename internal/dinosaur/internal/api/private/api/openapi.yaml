@@ -219,7 +219,7 @@ components:
               key: ""
           versions:
             dinosaur: 2.7.0
-            strimzi: 0.21.2
+            dinosaurOperator: 0.21.2
           deleted: false
     DataPlaneDinosaurStatusRequestExample:
       value:
@@ -238,7 +238,7 @@ components:
           maxConnectionAttemptsPerSec: 100
         versions:
           dinosaur: 2.4.1
-          strimzi: 0.21.2
+          dinosaurOperator: 0.21.2
     "400InvalidIdExample":
       value:
         id: "203"
@@ -293,7 +293,7 @@ components:
       properties:
         dinosaur:
           type: string
-        strimzi:
+        dinosaurOperator:
           type: string
       type: object
     ManagedDinosaur:
@@ -363,11 +363,9 @@ components:
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 0
           dataRetentionSize: dataRetentionSize
-        strimzi:
-        - ready: true
-          version: version
-        - ready: true
-          version: version
+        dinosaurOperatorVersions:
+        - dinosaurOperatorVersions
+        - dinosaurOperatorVersions
         resizeInfo:
           nodeDelta: 3
           delta:
@@ -389,14 +387,16 @@ components:
           type: type
           message: message
           status: status
+        dinosaurOperator:
+        - ready: true
+          version: version
+        - ready: true
+          version: version
         remaining:
           partitions: 5
           ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
           connections: 1
           dataRetentionSize: dataRetentionSize
-        strimziVersions:
-        - strimziVersions
-        - strimziVersions
       properties:
         conditions:
           description: The data plane cluster conditions
@@ -411,16 +411,16 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
+        dinosaurOperatorVersions:
           description: A list of the dinosaur operator versions that can be installed
             on the data plane cluster
           items:
             type: string
           type: array
-        strimzi:
+        dinosaurOperator:
           description: The status and version of the dinosaur operator
           items:
-            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_strimzi'
+            $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_dinosaurOperator'
           type: array
       type: object
     DataPlaneDinosaurStatus:
@@ -662,7 +662,7 @@ components:
         partitions:
           nullable: true
           type: integer
-    DataPlaneClusterUpdateStatusRequest_strimzi:
+    DataPlaneClusterUpdateStatusRequest_dinosaurOperator:
       example:
         ready: true
         version: version
@@ -700,7 +700,7 @@ components:
       properties:
         dinosaur:
           type: string
-        strimzi:
+        dinosaurOperator:
           type: string
     DataPlaneDinosaurStatus_routes:
       properties:

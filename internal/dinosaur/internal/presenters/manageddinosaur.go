@@ -41,8 +41,8 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedDinosaur {
 				BootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
 			},
 			Versions: private.ManagedDinosaurVersions{
-				Dinosaur: from.Spec.Versions.Dinosaur,
-				Strimzi:  from.Spec.Versions.Strimzi,
+				Dinosaur:         from.Spec.Versions.Dinosaur,
+				DinosaurOperator: from.Spec.Versions.Strimzi,
 			},
 			Deleted:         from.Spec.Deleted,
 			Owners:          from.Spec.Owners,

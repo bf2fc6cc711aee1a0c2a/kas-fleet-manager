@@ -32,7 +32,7 @@ func ConvertDataPlaneDinosaurStatus(status map[string]private.DataPlaneDinosaurS
 			Conditions:        c,
 			Routes:            routes,
 			DinosaurVersion:   v.Versions.Dinosaur,
-			StrimziVersion:    v.Versions.Strimzi,
+			StrimziVersion:    v.Versions.DinosaurOperator,
 		})
 	}
 

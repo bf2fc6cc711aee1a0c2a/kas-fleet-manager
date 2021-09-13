@@ -11,6 +11,6 @@ package private
 
 // ManagedDinosaurVersions struct for ManagedDinosaurVersions
 type ManagedDinosaurVersions struct {
-	Dinosaur string `json:"dinosaur,omitempty"`
-	Strimzi  string `json:"strimzi,omitempty"`
+	Dinosaur         string `json:"dinosaur,omitempty"`
+	DinosaurOperator string `json:"dinosaurOperator,omitempty"`
 }

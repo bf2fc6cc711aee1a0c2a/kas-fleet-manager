@@ -221,7 +221,7 @@ components:
       properties:
         dinosaur:
           type: string
-        strimzi:
+        dinosaurOperator:
           type: string
 
     ManagedDinosaur:
@@ -434,12 +434,12 @@ components:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo'
-        strimziVersions:
+        dinosaurOperatorVersions:
           description: "A list of the dinosaur operator versions that can be installed on the data plane cluster"
           type: array
           items:
             type: string
-        strimzi:
+        dinosaurOperator:
           description: "The status and version of the dinosaur operator"
           type: array
           items:
@@ -499,7 +499,7 @@ components:
           properties:
             dinosaur:
               type: string
-            strimzi:
+            dinosaurOperator:
               type: string
         routes:
           description: "Routes created for the dinosaur cluster"
@@ -599,7 +599,7 @@ components:
               key: ""
           versions:
             dinosaur: 2.7.0
-            strimzi: 0.21.2
+            dinosaurOperator: 0.21.2
           deleted: false
     DataPlaneDinosaurStatusRequestExample:
       value:
@@ -618,7 +618,7 @@ components:
           maxConnectionAttemptsPerSec: 100
         versions:
           dinosaur: 2.4.1
-          strimzi: 0.21.2
+          dinosaurOperator: 0.21.2
     400InvalidIdExample:
       value:
         id: "203"

@@ -330,8 +330,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 					Reason: "StrimziUpdating",
 				}},
 				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur: fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
-					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					Dinosaur:         fmt.Sprintf("dinosaur-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
+					DinosaurOperator: fmt.Sprintf("strimzi-new-version-%s", item.Metadata.Annotations.Bf2OrgId),
 				},
 			}
 			readyClusters = append(readyClusters, item.Metadata.Annotations.Bf2OrgId)
@@ -383,7 +383,7 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 		// Test version related reported fields
 		Expect(c.Status).To(Equal(constants2.DinosaurRequestStatusReady.String()))
 		Expect(c.ActualDinosaurVersion).To(Equal(sentUpdate.Versions.Dinosaur))
-		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.Strimzi))
+		Expect(c.ActualStrimziVersion).To(Equal(sentUpdate.Versions.DinosaurOperator))
 		Expect(c.StrimziUpgrading).To(BeTrue()) // should always be true since Condition.Reason is set to StrimziUpgrading
 
 		// TODO test when dinosaur is being upgraded when kas fleet shard operator side
@@ -408,8 +408,8 @@ func TestDataPlaneEndpoints_GetAndUpdateManagedDinosaurs(t *testing.T) {
 					Status: "True",
 				}},
 				Versions: private.DataPlaneDinosaurStatusVersions{
-					Dinosaur: fmt.Sprintf("dinosaur-new-version-%s", cid),
-					Strimzi:  fmt.Sprintf("strimzi-new-version-%s", cid),
+					Dinosaur:         fmt.Sprintf("dinosaur-new-version-%s", cid),
+					DinosaurOperator: fmt.Sprintf("strimzi-new-version-%s", cid),
 				},
 			},
 		})

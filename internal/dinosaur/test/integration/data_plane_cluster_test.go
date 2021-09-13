@@ -51,8 +51,8 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToReadySuccessfully(t *testing
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.Strimzi = nil
-	clusterStatusUpdateRequest.StrimziVersions = []string{
+	clusterStatusUpdateRequest.DinosaurOperator = nil
+	clusterStatusUpdateRequest.DinosaurOperatorVersions = []string{
 		"strimzi-cluster-operator.v.5.12.0-0",
 		"strimzi-cluster-operator.v.5.8.0-0",
 		"strimzi-cluster-operator.v.3.0.0-0",
@@ -598,8 +598,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = []string{}
-	clusterStatusUpdateRequest.Strimzi = nil
+	clusterStatusUpdateRequest.DinosaurOperatorVersions = []string{}
+	clusterStatusUpdateRequest.DinosaurOperator = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -641,8 +641,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = nil
-	clusterStatusUpdateRequest.Strimzi = nil
+	clusterStatusUpdateRequest.DinosaurOperatorVersions = nil
+	clusterStatusUpdateRequest.DinosaurOperator = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{}
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -683,8 +683,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsEmptyAndClusterStrimziVer
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.Strimzi = nil
-	clusterStatusUpdateRequest.StrimziVersions = []string{}
+	clusterStatusUpdateRequest.DinosaurOperator = nil
+	clusterStatusUpdateRequest.DinosaurOperatorVersions = []string{}
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
 		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
 		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
@@ -739,8 +739,8 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsIsNilAndClusterStrimziVersi
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.StrimziVersions = nil
-	clusterStatusUpdateRequest.Strimzi = nil
+	clusterStatusUpdateRequest.DinosaurOperatorVersions = nil
+	clusterStatusUpdateRequest.DinosaurOperator = nil
 	expectedAvailableStrimziVersions := []api.StrimziVersion{
 		{Version: "strimzi-cluster-operator.v.8.0.0-0", Ready: true},
 		{Version: "strimzi-cluster-operator.v.9.0.0-0", Ready: false},
@@ -800,7 +800,7 @@ func TestDataPlaneCluster_WhenReportedStrimziVersionsAreDifferentClusterStrimziV
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := kasfleetshardsync.SampleDataPlaneclusterStatusRequestWithAvailableCapacity()
-	clusterStatusUpdateRequest.Strimzi = []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+	clusterStatusUpdateRequest.DinosaurOperator = []private.DataPlaneClusterUpdateStatusRequestDinosaurOperator{
 		{Version: "strimzi-cluster-operator.v.5.0.0-0", Ready: false},
 		{Version: "strimzi-cluster-operator.v.7.0.0-0", Ready: false},
 		{Version: "strimzi-cluster-operator.v.3.0.0-0", Ready: true},

@@ -11,6 +11,6 @@ package private
 
 // DataPlaneDinosaurStatusVersions Version information related to a dinosaur cluster
 type DataPlaneDinosaurStatusVersions struct {
-	Dinosaur string `json:"dinosaur,omitempty"`
-	Strimzi  string `json:"strimzi,omitempty"`
+	Dinosaur         string `json:"dinosaur,omitempty"`
+	DinosaurOperator string `json:"dinosaurOperator,omitempty"`
 }

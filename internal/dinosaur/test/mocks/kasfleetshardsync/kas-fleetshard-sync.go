@@ -253,7 +253,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		Strimzi: []private.DataPlaneClusterUpdateStatusRequestStrimzi{
+		DinosaurOperator: []private.DataPlaneClusterUpdateStatusRequestDinosaurOperator{
 			{
 				Ready:   true,
 				Version: "strimzi-cluster-operator.v0.23.0-0",
@@ -311,8 +311,8 @@ func GetReadyDinosaurStatusResponse() private.DataPlaneDinosaurStatus {
 			},
 		},
 		Versions: private.DataPlaneDinosaurStatusVersions{
-			Dinosaur: GetDefaultReportedDinosaurVersion(),
-			Strimzi:  GetDefaultReportedStrimziVersion(),
+			Dinosaur:         GetDefaultReportedDinosaurVersion(),
+			DinosaurOperator: GetDefaultReportedStrimziVersion(),
 		},
 	}
 }
