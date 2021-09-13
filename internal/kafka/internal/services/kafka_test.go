@@ -773,39 +773,6 @@ func Test_kafkaService_Delete(t *testing.T) {
 			},
 			wantErr: true,
 		},
-		{
-			name: "fail to delete kafka request: error when deleting CNAME records",
-			fields: fields{
-				connectionFactory: db.NewMockConnectionFactory(nil),
-				clusterService: &ClusterServiceMock{
-					GetClusterDNSFunc: func(clusterID string) (string, *errors.ServiceError) {
-						return "", errors.GeneralError("failed to get cluster dns")
-					},
-				},
-				keycloakService: &services.KeycloakServiceMock{
-					DeRegisterClientInSSOFunc: func(kafkaClusterName string) *errors.ServiceError {
-						return nil
-					},
-					DeleteServiceAccountInternalFunc: func(clientId string) *errors.ServiceError {
-						return nil
-					},
-					GetConfigFunc: func() *keycloak.KeycloakConfig {
-						return &keycloak.KeycloakConfig{
-							EnableAuthenticationOnKafka: true,
-						}
-					},
-				},
-				kafkaConfig: &config.KafkaConfig{
-					EnableKafkaExternalCertificate: true,
-				},
-			},
-			args: args{
-				kafkaRequest: buildKafkaRequest(func(kafkaRequest *dbapi.KafkaRequest) {
-					kafkaRequest.ID = testID
-				}),
-			},
-			wantErr: true,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
