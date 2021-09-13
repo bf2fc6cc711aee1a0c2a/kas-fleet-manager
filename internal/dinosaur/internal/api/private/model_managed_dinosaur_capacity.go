@@ -9,7 +9,7 @@
 
 package private
 
-// ManagedDinosaurCapacity struct for ManagedDinosaurCapacity
+// ManagedDinosaurCapacity Capacity information of a dinosaur cluster
 type ManagedDinosaurCapacity struct {
 	IngressEgressThroughputPerSec string `json:"ingressEgressThroughputPerSec,omitempty"`
 	TotalMaxConnections           int32  `json:"totalMaxConnections,omitempty"`

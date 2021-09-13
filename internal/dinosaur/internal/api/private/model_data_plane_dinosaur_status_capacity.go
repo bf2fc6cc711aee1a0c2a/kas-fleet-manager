@@ -9,7 +9,7 @@
 
 package private
 
-// DataPlaneDinosaurStatusCapacity Capacity information of the data plane cluster
+// DataPlaneDinosaurStatusCapacity Capacity information of the dinosaur cluster
 type DataPlaneDinosaurStatusCapacity struct {
 	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
 	TotalMaxConnections           *int32  `json:"totalMaxConnections,omitempty"`

@@ -263,7 +263,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 				Version: "strimzi-cluster-operator.v0.21.0-0",
 			},
 		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
+		Remaining: private.DataPlaneClusterUpdateStatusRequestRemaining{
 			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
 			Partitions:                    &[]int32{1000000}[0],
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],

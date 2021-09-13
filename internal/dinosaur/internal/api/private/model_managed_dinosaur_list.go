@@ -9,7 +9,7 @@
 
 package private
 
-// ManagedDinosaurList A list of ManagedDinosaur
+// ManagedDinosaurList A list of ManagedDinosaur CRs
 type ManagedDinosaurList struct {
 	Kind  string            `json:"kind"`
 	Items []ManagedDinosaur `json:"items"`

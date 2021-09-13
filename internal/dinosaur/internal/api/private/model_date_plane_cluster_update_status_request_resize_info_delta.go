@@ -9,7 +9,7 @@
 
 package private
 
-// DatePlaneClusterUpdateStatusRequestResizeInfoDelta struct for DatePlaneClusterUpdateStatusRequestResizeInfoDelta
+// DatePlaneClusterUpdateStatusRequestResizeInfoDelta Description to show how the data plane cluster capacity will be affected by applying the nodeDelta
 type DatePlaneClusterUpdateStatusRequestResizeInfoDelta struct {
 	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
 	Connections                   *int32  `json:"connections,omitempty"`

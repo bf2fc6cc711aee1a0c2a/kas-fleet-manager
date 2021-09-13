@@ -11,12 +11,14 @@ package private
 
 // DataPlaneClusterUpdateStatusRequest Schema for the request to update a data plane cluster's status
 type DataPlaneClusterUpdateStatusRequest struct {
-	// The cluster data plane conditions
-	Conditions      []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
-	Total           DataPlaneClusterUpdateStatusRequestTotal        `json:"total,omitempty"`
-	Remaining       DataPlaneClusterUpdateStatusRequestTotal        `json:"remaining,omitempty"`
-	NodeInfo        *DatePlaneClusterUpdateStatusRequestNodeInfo    `json:"nodeInfo,omitempty"`
-	ResizeInfo      *DatePlaneClusterUpdateStatusRequestResizeInfo  `json:"resizeInfo,omitempty"`
-	StrimziVersions []string                                        `json:"strimziVersions,omitempty"`
-	Strimzi         []DataPlaneClusterUpdateStatusRequestStrimzi    `json:"strimzi,omitempty"`
+	// The data plane cluster conditions
+	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
+	Total      DataPlaneClusterUpdateStatusRequestTotal        `json:"total,omitempty"`
+	Remaining  DataPlaneClusterUpdateStatusRequestRemaining    `json:"remaining,omitempty"`
+	NodeInfo   *DatePlaneClusterUpdateStatusRequestNodeInfo    `json:"nodeInfo,omitempty"`
+	ResizeInfo *DatePlaneClusterUpdateStatusRequestResizeInfo  `json:"resizeInfo,omitempty"`
+	// A list of the dinosaur operator versions that can be installed on the data plane cluster
+	StrimziVersions []string `json:"strimziVersions,omitempty"`
+	// The status and version of the dinosaur operator
+	Strimzi []DataPlaneClusterUpdateStatusRequestStrimzi `json:"strimzi,omitempty"`
 }

@@ -212,7 +212,7 @@ func sampleValidDataPlaneClusterUpdateStatusRequest() *private.DataPlaneClusterU
 			Current:                &[]int32{5}[0],
 			CurrentWorkLoadMinimum: &[]int32{3}[0],
 		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestTotal{
+		Remaining: private.DataPlaneClusterUpdateStatusRequestRemaining{
 			Connections:                   &[]int32{1000000}[0],
 			Partitions:                    &[]int32{1000000}[0],
 			IngressEgressThroughputPerSec: &[]string{"test"}[0],

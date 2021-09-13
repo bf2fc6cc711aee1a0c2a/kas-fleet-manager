@@ -9,10 +9,14 @@
 
 package private
 
-// DatePlaneClusterUpdateStatusRequestNodeInfo struct for DatePlaneClusterUpdateStatusRequestNodeInfo
+// DatePlaneClusterUpdateStatusRequestNodeInfo Schema for the data plane cluster node info
 type DatePlaneClusterUpdateStatusRequestNodeInfo struct {
-	Ceiling                *int32 `json:"ceiling,omitempty"`
-	Floor                  *int32 `json:"floor,omitempty"`
-	Current                *int32 `json:"current,omitempty"`
+	// The maximum number of nodes required in order to provide the dinosaur service
+	Ceiling *int32 `json:"ceiling,omitempty"`
+	// The minimum number of nodes required in order to provide the dinosaur service
+	Floor *int32 `json:"floor,omitempty"`
+	// The number of nodes currently known to the agent
+	Current *int32 `json:"current,omitempty"`
+	// The minimum number of nodes required to support the current population of dinosaur clusters on the data plane cluster
 	CurrentWorkLoadMinimum *int32 `json:"currentWorkLoadMinimum,omitempty"`
 }

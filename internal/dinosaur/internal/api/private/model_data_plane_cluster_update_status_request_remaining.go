@@ -9,8 +9,8 @@
 
 package private
 
-// DataPlaneClusterUpdateStatusRequestTotal The total capacity of the data plane cluster for dinosaur clusters
-type DataPlaneClusterUpdateStatusRequestTotal struct {
+// DataPlaneClusterUpdateStatusRequestRemaining The remaining capacity of the data plane cluster for dinosaur clusters
+type DataPlaneClusterUpdateStatusRequestRemaining struct {
 	IngressEgressThroughputPerSec *string `json:"ingressEgressThroughputPerSec,omitempty"`
 	Connections                   *int32  `json:"connections,omitempty"`
 	DataRetentionSize             *string `json:"dataRetentionSize,omitempty"`

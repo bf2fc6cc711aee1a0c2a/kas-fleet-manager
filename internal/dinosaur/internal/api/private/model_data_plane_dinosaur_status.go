@@ -9,12 +9,12 @@
 
 package private
 
-// DataPlaneDinosaurStatus Schema of the status object for a Dinosaur cluster
+// DataPlaneDinosaurStatus Schema of the status object for a dinosaur cluster
 type DataPlaneDinosaurStatus struct {
-	// The status conditions of a Dinosaur cluster
+	// The status conditions of a dinosaur cluster
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
 	Capacity   DataPlaneDinosaurStatusCapacity                 `json:"capacity,omitempty"`
 	Versions   DataPlaneDinosaurStatusVersions                 `json:"versions,omitempty"`
-	// Routes created for a Dinosaur cluster
+	// Routes created for the dinosaur cluster
 	Routes *[]DataPlaneDinosaurStatusRoutes `json:"routes,omitempty"`
 }

@@ -26,7 +26,7 @@ var (
 type AgentClustersApiService service
 
 /*
-GetDinosaurAgent Get the spec of the ManagedDinosaurAgent CR spec
+GetDinosaurAgent Get the spec of the ManagedDinosaurAgent CR
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
 @return DataplaneClusterAgentConfig
@@ -122,7 +122,7 @@ func (a *AgentClustersApiService) GetDinosaurAgent(ctx _context.Context, id stri
 }
 
 /*
-GetDinosaurs Get the list of ManagedaDinosaurs for the specified agent cluster
+GetDinosaurs Get the list of ManagedaDinosaurs CR for the specified data plane cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
 @return ManagedDinosaurList
@@ -218,10 +218,10 @@ func (a *AgentClustersApiService) GetDinosaurs(ctx _context.Context, id string) 
 }
 
 /*
-UpdateAgentClusterStatus Update the status of an agent cluster
+UpdateAgentClusterStatus Update the status of a data plane cluster
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
- * @param dataPlaneClusterUpdateStatusRequest Cluster status update data
+ * @param dataPlaneClusterUpdateStatusRequest Data plane cluster status update data
 */
 func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context, id string, dataPlaneClusterUpdateStatusRequest DataPlaneClusterUpdateStatusRequest) (*_nethttp.Response, error) {
 	var (
@@ -306,7 +306,7 @@ func (a *AgentClustersApiService) UpdateAgentClusterStatus(ctx _context.Context,
 }
 
 /*
-UpdateDinosaurClusterStatus Update the status of Dinosaur clusters on an agent cluster
+UpdateDinosaurClusterStatus Update the status of Dinosaur clusters on the control plane
  * @param ctx _context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  * @param id The ID of record
  * @param requestBody Dinosaur clusters status update data
