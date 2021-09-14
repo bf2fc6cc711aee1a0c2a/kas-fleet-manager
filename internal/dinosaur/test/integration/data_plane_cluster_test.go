@@ -265,8 +265,6 @@ func TestDataPlaneCluster_ClusterStatusTransitionsToFullWhenNoMoreDinosaurCapaci
 	privateAPIClient := test.NewPrivateAPIClient(h)
 
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{1000000}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
 
 	resp, err := privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -362,13 +360,8 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 	Expect(err).ToNot(HaveOccurred())
 	expectedNodesAfterScaleUp := initialComputeNodes + 3
 
-	dinosaurCapacityConfig := DinosaurConfig(h).DinosaurCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(dinosaurCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(dinosaurCapacityConfig.MaxPartitions) * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{int32(dinosaurCapacityConfig.TotalMaxConnections) - 1}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(dinosaurCapacityConfig.MaxPartitions) - 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
@@ -419,8 +412,6 @@ func TestDataPlaneCluster_TestScaleUpAndDown(t *testing.T) {
 
 	// We force a scale-down by setting one of the remaining fields to be
 	// higher than the scale-down threshold.
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{*clusterStatusUpdateRequest.ResizeInfo.Delta.Connections + 1}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{int32(*clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions) + 1}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(expectedNodesAfterScaleUp)}[0]
 	resp, err = privateAPIClient.AgentClustersApi.UpdateAgentClusterStatus(ctx, testDataPlaneclusterID, *clusterStatusUpdateRequest)
 	Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
@@ -491,13 +482,8 @@ func TestDataPlaneCluster_TestOSDClusterScaleUp(t *testing.T) {
 	// Simulate there's no capacity and we've already reached ceiling to
 	// set status as full and force the cluster mgr reconciler to create a new
 	// OSD cluster
-	dinosaurCapacityConfig := DinosaurConfig(h).DinosaurCapacity
 	clusterStatusUpdateRequest := sampleValidBaseDataPlaneClusterStatusRequest()
 	clusterStatusUpdateRequest.ResizeInfo.NodeDelta = &[]int32{3}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Connections = &[]int32{int32(dinosaurCapacityConfig.TotalMaxConnections) * 30}[0]
-	clusterStatusUpdateRequest.ResizeInfo.Delta.Partitions = &[]int32{int32(dinosaurCapacityConfig.MaxPartitions) * 30}[0]
-	clusterStatusUpdateRequest.Remaining.Connections = &[]int32{0}[0]
-	clusterStatusUpdateRequest.Remaining.Partitions = &[]int32{0}[0]
 	clusterStatusUpdateRequest.NodeInfo.Ceiling = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.Current = &[]int32{int32(initialComputeNodes)}[0]
 	clusterStatusUpdateRequest.NodeInfo.CurrentWorkLoadMinimum = &[]int32{3}[0]
@@ -875,32 +861,17 @@ func sampleValidBaseDataPlaneClusterStatusRequest() *private.DataPlaneClusterUpd
 				Status: "True",
 			},
 		},
-		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{""}[0],
-			Connections:                   &[]int32{0}[0],
-			DataRetentionSize:             &[]string{""}[0],
-			Partitions:                    &[]int32{0}[0],
-		},
+		Total: map[string]interface{}{},
 		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{0}[0],
 			Floor:                  &[]int32{0}[0],
 			Current:                &[]int32{0}[0],
 			CurrentWorkLoadMinimum: &[]int32{0}[0],
 		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestRemaining{
-			Connections:                   &[]int32{0}[0],
-			Partitions:                    &[]int32{0}[0],
-			IngressEgressThroughputPerSec: &[]string{""}[0],
-			DataRetentionSize:             &[]string{""}[0],
-		},
+		Remaining: map[string]interface{}{},
 		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
-				Connections:                   &[]int32{0}[0],
-				Partitions:                    &[]int32{0}[0],
-				IngressEgressThroughputPerSec: &[]string{""}[0],
-				DataRetentionSize:             &[]string{""}[0],
-			},
+			Delta:     &map[string]interface{}{},
 		},
 	}
 }

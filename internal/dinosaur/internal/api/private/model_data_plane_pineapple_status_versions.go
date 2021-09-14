@@ -9,7 +9,7 @@
 
 package private
 
-// DataPlanePineappleStatusVersions Version information related to a Pineapple cluster
+// DataPlanePineappleStatusVersions Version information related to the Pineapple cluster
 type DataPlanePineappleStatusVersions struct {
 	Pineapple         string `json:"pineapple,omitempty"`
 	PineappleOperator string `json:"pineappleOperator,omitempty"`

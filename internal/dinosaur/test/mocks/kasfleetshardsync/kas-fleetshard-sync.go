@@ -241,12 +241,7 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 				Status: "True",
 			},
 		},
-		Total: private.DataPlaneClusterUpdateStatusRequestTotal{
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			Connections:                   &[]int32{1000000}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-			Partitions:                    &[]int32{1000000}[0],
-		},
+		Total: map[string]interface{}{},
 		NodeInfo: &private.DatePlaneClusterUpdateStatusRequestNodeInfo{
 			Ceiling:                &[]int32{20}[0],
 			Floor:                  &[]int32{3}[0],
@@ -263,20 +258,10 @@ func SampleDataPlaneclusterStatusRequestWithAvailableCapacity() *private.DataPla
 				Version: "strimzi-cluster-operator.v0.21.0-0",
 			},
 		},
-		Remaining: private.DataPlaneClusterUpdateStatusRequestRemaining{
-			Connections:                   &[]int32{1000000}[0], // TODO set the values taking the scale-up value if possible or a deterministic way to know we'll pass it
-			Partitions:                    &[]int32{1000000}[0],
-			IngressEgressThroughputPerSec: &[]string{"test"}[0],
-			DataRetentionSize:             &[]string{"test"}[0],
-		},
+		Remaining: map[string]interface{}{},
 		ResizeInfo: &private.DatePlaneClusterUpdateStatusRequestResizeInfo{
 			NodeDelta: &[]int32{3}[0],
-			Delta: &private.DatePlaneClusterUpdateStatusRequestResizeInfoDelta{
-				Connections:                   &[]int32{10000}[0],
-				Partitions:                    &[]int32{10000}[0],
-				IngressEgressThroughputPerSec: &[]string{"test"}[0],
-				DataRetentionSize:             &[]string{"test"}[0],
-			},
+			Delta:     &map[string]interface{}{},
 		},
 	}
 }

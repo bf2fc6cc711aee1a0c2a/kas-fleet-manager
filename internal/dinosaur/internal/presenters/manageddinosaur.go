@@ -18,14 +18,7 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedPineapple {
 			},
 		},
 		Spec: private.ManagedPineappleAllOfSpec{
-			Capacity: private.ManagedPineappleCapacity{
-				IngressEgressThroughputPerSec: from.Spec.Capacity.IngressEgressThroughputPerSec,
-				TotalMaxConnections:           int32(from.Spec.Capacity.TotalMaxConnections),
-				MaxDataRetentionSize:          from.Spec.Capacity.MaxDataRetentionSize,
-				MaxPartitions:                 int32(from.Spec.Capacity.MaxPartitions),
-				MaxDataRetentionPeriod:        from.Spec.Capacity.MaxDataRetentionPeriod,
-				MaxConnectionAttemptsPerSec:   int32(from.Spec.Capacity.MaxConnectionAttemptsPerSec),
-			},
+			Capacity: map[string]interface{}{},
 			Oauth: private.ManagedPineappleAllOfSpecOauth{
 				ClientId:               from.Spec.OAuth.ClientId,
 				ClientSecret:           from.Spec.OAuth.ClientSecret,

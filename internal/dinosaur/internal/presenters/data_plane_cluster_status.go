@@ -51,29 +51,14 @@ func getResizeInfo(status private.DataPlaneClusterUpdateStatusRequest) dbapi.Dat
 	if status.ResizeInfo != nil {
 		resizeInfo = dbapi.DataPlaneClusterStatusResizeInfo{
 			NodeDelta: int(*status.ResizeInfo.NodeDelta),
-			Delta: dbapi.DataPlaneClusterStatusCapacity{
-				IngressEgressThroughputPerSec: *status.ResizeInfo.Delta.IngressEgressThroughputPerSec,
-				Connections:                   int(*status.ResizeInfo.Delta.Connections),
-				DataRetentionSize:             *status.ResizeInfo.Delta.DataRetentionSize,
-				Partitions:                    int(*status.ResizeInfo.Delta.Partitions),
-			},
+			Delta:     dbapi.DataPlaneClusterStatusCapacity{},
 		}
 	}
 	return resizeInfo
 }
 
 func getRemaining(status private.DataPlaneClusterUpdateStatusRequest) dbapi.DataPlaneClusterStatusCapacity {
-	remaining := dbapi.DataPlaneClusterStatusCapacity{
-		Connections: int(*status.Remaining.Connections),
-		Partitions:  int(*status.Remaining.Partitions),
-	}
-	if status.Remaining.IngressEgressThroughputPerSec != nil {
-		remaining.IngressEgressThroughputPerSec = *status.Remaining.IngressEgressThroughputPerSec
-	}
-	if status.Remaining.DataRetentionSize != nil {
-		remaining.DataRetentionSize = *status.Remaining.DataRetentionSize
-	}
-	return remaining
+	return dbapi.DataPlaneClusterStatusCapacity{}
 }
 
 // getAvailableStrimziVersions returns a list of api.StrimziVersion sorted

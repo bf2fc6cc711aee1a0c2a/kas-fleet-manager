@@ -11,10 +11,11 @@ package private
 
 // DataPlanePineappleStatus Schema of the status object for a Pineapple cluster
 type DataPlanePineappleStatus struct {
-	// The status conditions of a Pineapple cluster
+	// The status conditions of the Pineapple cluster
 	Conditions []DataPlaneClusterUpdateStatusRequestConditions `json:"conditions,omitempty"`
-	Capacity   DataPlanePineappleStatusCapacity                `json:"capacity,omitempty"`
-	Versions   DataPlanePineappleStatusVersions                `json:"versions,omitempty"`
+	// Capacity information consumed by the Pineapple cluster
+	Capacity map[string]interface{}           `json:"capacity,omitempty"`
+	Versions DataPlanePineappleStatusVersions `json:"versions,omitempty"`
 	// Routes created for the Pineapple cluster
 	Routes *[]DataPlanePineappleStatusRoutes `json:"routes,omitempty"`
 }

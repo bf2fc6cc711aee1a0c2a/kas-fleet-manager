@@ -197,13 +197,7 @@ components:
             mas/id: 1rfpsqbvq1em2u9u0z54ymjcwac
             mas/placementId: ""
         spec:
-          capacity:
-            ingressEgressThroughputPerSec: 4Mi
-            totalMaxConnections: 500
-            maxDataRetentionSize: 100Gi
-            maxPartitions: 100
-            maxDataRetentionPeriod: P14D
-            maxConnectionAttemptsPerSec: 100
+          capacity: {}
           oauth:
             clientId: pineapple-1rfpsqbvq1em2u9u0z54ymjcwac
             clientSecret: example-client-secret
@@ -230,13 +224,7 @@ components:
           message: installing
           status: "False"
           lastTransitionTime: 2018-01-01T00:00:00Z
-        capacity:
-          ingressEgressThroughputPerSec: 4Mi
-          totalMaxConnections: 500
-          maxDataRetentionSize: 100Gi
-          maxPartitions: 100
-          maxDataRetentionPeriod: P14D
-          maxConnectionAttemptsPerSec: 100
+        capacity: {}
         versions:
           pineapple: 2.4.1
           pineappleOperator: 0.21.2
@@ -273,22 +261,7 @@ components:
       type: object
     ManagedPineappleCapacity:
       description: Capacity information of a Pineapple cluster
-      properties:
-        ingressEgressThroughputPerSec:
-          type: string
-        totalMaxConnections:
-          format: int
-          type: integer
-        maxDataRetentionSize:
-          type: string
-        maxPartitions:
-          format: int
-          type: integer
-        maxDataRetentionPeriod:
-          type: string
-        maxConnectionAttemptsPerSec:
-          format: int
-          type: integer
+      properties: {}
       type: object
     ManagedPineappleVersions:
       properties:
@@ -309,10 +282,10 @@ components:
     DatePlaneClusterUpdateStatusRequestNodeInfo:
       description: Schema for the data plane cluster node info
       example:
-        ceiling: 5
-        current: 7
-        currentWorkLoadMinimum: 9
-        floor: 2
+        ceiling: 0
+        current: 1
+        currentWorkLoadMinimum: 5
+        floor: 6
       nullable: true
       properties:
         ceiling:
@@ -337,12 +310,8 @@ components:
       type: object
     DatePlaneClusterUpdateStatusRequestResizeInfo:
       example:
-        nodeDelta: 3
-        delta:
-          partitions: 4
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 2
-          dataRetentionSize: dataRetentionSize
+        nodeDelta: 5
+        delta: '{}'
       nullable: true
       properties:
         nodeDelta:
@@ -354,16 +323,18 @@ components:
           nullable: true
           type: integer
         delta:
-          $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestResizeInfo_delta'
+          description: "Shows how the data plane cluster capacity will be affected\
+            \ by applying the nodeDelta. \n\nThis should state a list of data plane\
+            \ resources, consumed by Pineapple clusters, and the amount that they\
+            \ would be increased or decreased by applying the nodeDelta.\n"
+          nullable: true
+          properties: {}
+          type: object
       type: object
     DataPlaneClusterUpdateStatusRequest:
       description: Schema for the request to update a data plane cluster's status
       example:
-        total:
-          partitions: 6
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 0
-          dataRetentionSize: dataRetentionSize
+        total: '{}'
         pineappleOperatorVersions:
         - pineappleOperatorVersions
         - pineappleOperatorVersions
@@ -373,17 +344,13 @@ components:
         - ready: true
           version: version
         resizeInfo:
-          nodeDelta: 3
-          delta:
-            partitions: 4
-            ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-            connections: 2
-            dataRetentionSize: dataRetentionSize
+          nodeDelta: 5
+          delta: '{}'
         nodeInfo:
-          ceiling: 5
-          current: 7
-          currentWorkLoadMinimum: 9
-          floor: 2
+          ceiling: 0
+          current: 1
+          currentWorkLoadMinimum: 5
+          floor: 6
         conditions:
         - reason: reason
           type: type
@@ -393,11 +360,7 @@ components:
           type: type
           message: message
           status: status
-        remaining:
-          partitions: 5
-          ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-          connections: 1
-          dataRetentionSize: dataRetentionSize
+        remaining: '{}'
       properties:
         conditions:
           description: The data plane cluster conditions
@@ -405,9 +368,19 @@ components:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
         total:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_total'
+          description: |
+            The total capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the total amount of currently used and available data plane resources that can be consumed by Pineapple clusters.
+          properties: {}
+          type: object
         remaining:
-          $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_remaining'
+          description: |
+            The remaining capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the remaining amount of available data plane resources that can be consumed by Pineapple clusters.
+          properties: {}
+          type: object
         nodeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
@@ -430,12 +403,14 @@ components:
         $ref: '#/components/examples/DataPlanePineappleStatusRequestExample'
       properties:
         conditions:
-          description: The status conditions of a Pineapple cluster
+          description: The status conditions of the Pineapple cluster
           items:
             $ref: '#/components/schemas/DataPlaneClusterUpdateStatusRequest_conditions'
           type: array
         capacity:
-          $ref: '#/components/schemas/DataPlanePineappleStatus_capacity'
+          description: Capacity information consumed by the Pineapple cluster
+          properties: {}
+          type: object
         versions:
           $ref: '#/components/schemas/DataPlanePineappleStatus_versions'
         routes:
@@ -557,7 +532,9 @@ components:
             $ref: '#/components/schemas/ManagedPineapple_allOf_spec_serviceAccounts'
           type: array
         capacity:
-          $ref: '#/components/schemas/ManagedPineappleCapacity'
+          description: Capacity information of a Pineapple cluster
+          properties: {}
+          type: object
         oauth:
           $ref: '#/components/schemas/ManagedPineapple_allOf_spec_oauth'
         owners:
@@ -586,28 +563,6 @@ components:
             allOf:
             - $ref: '#/components/schemas/ManagedPineapple'
           type: array
-    DatePlaneClusterUpdateStatusRequestResizeInfo_delta:
-      description: Description to show how the data plane cluster capacity will be
-        affected by applying the nodeDelta
-      example:
-        partitions: 4
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 2
-        dataRetentionSize: dataRetentionSize
-      nullable: true
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
     DataPlaneClusterUpdateStatusRequest_conditions:
       example:
         reason: reason
@@ -623,47 +578,6 @@ components:
           type: string
         status:
           type: string
-    DataPlaneClusterUpdateStatusRequest_total:
-      description: The total capacity of the data plane cluster for Pineapple clusters
-      example:
-        partitions: 6
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 0
-        dataRetentionSize: dataRetentionSize
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
-    DataPlaneClusterUpdateStatusRequest_remaining:
-      description: The remaining capacity of the data plane cluster for Pineapple
-        clusters
-      example:
-        partitions: 5
-        ingressEgressThroughputPerSec: ingressEgressThroughputPerSec
-        connections: 1
-        dataRetentionSize: dataRetentionSize
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        connections:
-          nullable: true
-          type: integer
-        dataRetentionSize:
-          nullable: true
-          type: string
-        partitions:
-          nullable: true
-          type: integer
     DataPlaneClusterUpdateStatusRequest_pineappleOperator:
       example:
         ready: true
@@ -676,29 +590,8 @@ components:
       required:
       - ready
       - version
-    DataPlanePineappleStatus_capacity:
-      description: Capacity information of the Pineapple cluster
-      properties:
-        ingressEgressThroughputPerSec:
-          nullable: true
-          type: string
-        totalMaxConnections:
-          nullable: true
-          type: integer
-        maxDataRetentionSize:
-          nullable: true
-          type: string
-        maxPartitions:
-          nullable: true
-          type: integer
-        maxDataRetentionPeriod:
-          nullable: true
-          type: string
-        maxConnectionAttemptsPerSec:
-          nullable: true
-          type: integer
     DataPlanePineappleStatus_versions:
-      description: Version information related to a Pineapple cluster
+      description: Version information related to the Pineapple cluster
       properties:
         pineapple:
           type: string

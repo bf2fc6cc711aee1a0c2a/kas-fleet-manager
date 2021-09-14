@@ -199,22 +199,11 @@ components:
     ManagedPineappleCapacity:
       description: "Capacity information of a Pineapple cluster"
       type: object
-      properties:
-        ingressEgressThroughputPerSec:
-          type: string
-        totalMaxConnections:
-          type: integer
-          format: int
-        maxDataRetentionSize:
-          type: string
-        maxPartitions:
-          type: integer
-          format: int
-        maxDataRetentionPeriod:
-          type: string
-        maxConnectionAttemptsPerSec:
-          type: integer
-          format: int
+      properties: {
+            # A list of resources used up by a Pineapple cluster. For example:
+            # storage:
+            #   type: string
+          }
 
     ManagedPineappleVersions:
       type: object
@@ -363,22 +352,17 @@ components:
           type: integer
           nullable: true
         delta:
-          description: "Description to show how the data plane cluster capacity will be affected by applying the nodeDelta"
+          description: |
+            Shows how the data plane cluster capacity will be affected by applying the nodeDelta. 
+            
+            This should state a list of data plane resources, consumed by Pineapple clusters, and the amount that they would be increased or decreased by applying the nodeDelta.
           type: object
           nullable: true
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity.
-              nullable: true
-            connections:
-              type: integer # an example is 10000.
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
 
     DataPlaneClusterUpdateStatusRequest:
       description: "Schema for the request to update a data plane cluster's status"
@@ -399,37 +383,27 @@ components:
               status:
                 type: string
         total:
-          description: "The total capacity of the data plane cluster for Pineapple clusters"
+          description: |
+            The total capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the total amount of currently used and available data plane resources that can be consumed by Pineapple clusters.
           type: object
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string # an example is "40Gi", a k8s quantity.
-              nullable: true
-            connections:
-              type: integer # an example is 10000.
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
         remaining:
-          description: "The remaining capacity of the data plane cluster for Pineapple clusters"
+          description: |
+            The remaining capacity of the data plane cluster for Pineapple clusters.
+
+            This should state the remaining amount of available data plane resources that can be consumed by Pineapple clusters.
           type: object
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #an example is "40Gi", a k8s quantity.
-              nullable: true
-            connections:
-              type: integer # an example is 10000.
-              nullable: true
-            dataRetentionSize:
-              type: string
-              nullable: true
-            partitions:
-              type: integer
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
         nodeInfo:
           $ref: '#/components/schemas/DatePlaneClusterUpdateStatusRequestNodeInfo'
         resizeInfo:
@@ -457,7 +431,7 @@ components:
       type: object
       properties:
         conditions:
-          description: "The status conditions of a Pineapple cluster"
+          description: "The status conditions of the Pineapple cluster"
           type: array
           items:
             type: object
@@ -471,30 +445,16 @@ components:
               status:
                 type: string
         capacity:
-          description: "Capacity information of the Pineapple cluster"
+          description: "Capacity information consumed by the Pineapple cluster"
           type: object
-          properties:
-            ingressEgressThroughputPerSec:
-              type: string #example: 4Mi
-              nullable: true
-            totalMaxConnections:
-              type: integer #example: 500
-              nullable: true
-            maxDataRetentionSize:
-              type: string #example: 100Gi
-              nullable: true
-            maxPartitions:
-              type: integer #example: 100
-              nullable: true
-            maxDataRetentionPeriod:
-              type: string #example: P14D
-              nullable: true
-            maxConnectionAttemptsPerSec:
-              type: integer #example: 100
-              nullable: true
+          properties: {
+            # Example:
+            # storage:
+            #   type: string
+          }
 
         versions:
-          description: "Version information related to a Pineapple cluster"
+          description: "Version information related to the Pineapple cluster"
           type: object
           properties:
             pineapple:
@@ -576,13 +536,10 @@ components:
             mas/id: "1rfpsqbvq1em2u9u0z54ymjcwac"
             mas/placementId: ""
         spec:
-          capacity:
-            ingressEgressThroughputPerSec: 4Mi
-            totalMaxConnections: 500
-            maxDataRetentionSize: 100Gi
-            maxPartitions: 100
-            maxDataRetentionPeriod: P14D
-            maxConnectionAttemptsPerSec: 100
+          capacity: {
+            # For example:
+            # storage: 1Gi
+          }
           oauth:
             clientId: "pineapple-1rfpsqbvq1em2u9u0z54ymjcwac"
             clientSecret: "example-client-secret"
@@ -609,13 +566,10 @@ components:
             message: installing
             status: "False"
             lastTransitionTime: "2018-01-01T00:00:00Z"
-        capacity:
-          ingressEgressThroughputPerSec: 4Mi
-          totalMaxConnections: 500
-          maxDataRetentionSize: 100Gi
-          maxPartitions: 100
-          maxDataRetentionPeriod: P14D
-          maxConnectionAttemptsPerSec: 100
+        capacity: {
+          # For example:
+          # storage: 1Gi
+        }
         versions:
           pineapple: 2.4.1
           pineappleOperator: 0.21.2

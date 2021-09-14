@@ -12,10 +12,11 @@ package private
 // ManagedPineappleAllOfSpec struct for ManagedPineappleAllOfSpec
 type ManagedPineappleAllOfSpec struct {
 	ServiceAccounts []ManagedPineappleAllOfSpecServiceAccounts `json:"serviceAccounts,omitempty"`
-	Capacity        ManagedPineappleCapacity                   `json:"capacity,omitempty"`
-	Oauth           ManagedPineappleAllOfSpecOauth             `json:"oauth,omitempty"`
-	Owners          []string                                   `json:"owners,omitempty"`
-	Endpoint        ManagedPineappleAllOfSpecEndpoint          `json:"endpoint,omitempty"`
-	Versions        ManagedPineappleVersions                   `json:"versions,omitempty"`
-	Deleted         bool                                       `json:"deleted"`
+	// Capacity information of a Pineapple cluster
+	Capacity map[string]interface{}            `json:"capacity,omitempty"`
+	Oauth    ManagedPineappleAllOfSpecOauth    `json:"oauth,omitempty"`
+	Owners   []string                          `json:"owners,omitempty"`
+	Endpoint ManagedPineappleAllOfSpecEndpoint `json:"endpoint,omitempty"`
+	Versions ManagedPineappleVersions          `json:"versions,omitempty"`
+	Deleted  bool                              `json:"deleted"`
 }

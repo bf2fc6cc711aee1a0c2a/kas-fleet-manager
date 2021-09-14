@@ -12,6 +12,7 @@ package private
 // DatePlaneClusterUpdateStatusRequestResizeInfo struct for DatePlaneClusterUpdateStatusRequestResizeInfo
 type DatePlaneClusterUpdateStatusRequestResizeInfo struct {
 	// The minimum number of nodes that needs to be applied to the data plane cluster to reach the target capacity.   The control plane may increase or decrease the size of the data plane cluster in multiples of this number as long as it does not exceed the ceiling or floor defined in the node info
-	NodeDelta *int32                                              `json:"nodeDelta,omitempty"`
-	Delta     *DatePlaneClusterUpdateStatusRequestResizeInfoDelta `json:"delta,omitempty"`
+	NodeDelta *int32 `json:"nodeDelta,omitempty"`
+	// Shows how the data plane cluster capacity will be affected by applying the nodeDelta.   This should state a list of data plane resources, consumed by Pineapple clusters, and the amount that they would be increased or decreased by applying the nodeDelta.
+	Delta *map[string]interface{} `json:"delta,omitempty"`
 }
