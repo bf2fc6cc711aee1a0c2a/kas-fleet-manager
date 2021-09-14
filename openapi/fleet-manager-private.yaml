@@ -284,7 +284,7 @@ components:
                 endpoint:
                   type: object
                   properties:
-                    bootstrapServerHost:
+                    host:
                       type: string
                     tls:
                       type: object
@@ -550,7 +550,7 @@ components:
             tlsTrustedCertificate: ""
             customClaimCheck: ""
           endpoint:
-            bootstrapServerHost: "example-pineapple--rfpsqbvq-em-u-u-z--ymjcwac.pineapple.devshift.org"
+            host: "example.pineapple.com"
             tls:
               cert: ""
               key: ""

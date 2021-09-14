@@ -11,6 +11,6 @@ package private
 
 // ManagedPineappleAllOfSpecEndpoint struct for ManagedPineappleAllOfSpecEndpoint
 type ManagedPineappleAllOfSpecEndpoint struct {
-	BootstrapServerHost string                                `json:"bootstrapServerHost,omitempty"`
-	Tls                 *ManagedPineappleAllOfSpecEndpointTls `json:"tls,omitempty"`
+	Host string                                `json:"host,omitempty"`
+	Tls  *ManagedPineappleAllOfSpecEndpointTls `json:"tls,omitempty"`
 }

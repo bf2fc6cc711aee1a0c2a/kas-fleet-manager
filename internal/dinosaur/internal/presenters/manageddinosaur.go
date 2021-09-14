@@ -30,8 +30,8 @@ func PresentManagedDinosaur(from *v1.ManagedDinosaur) private.ManagedPineapple {
 				CustomClaimCheck:       from.Spec.OAuth.CustomClaimCheck,
 			},
 			Endpoint: private.ManagedPineappleAllOfSpecEndpoint{
-				Tls:                 getOpenAPIManagedDinosaurEndpointTLS(from.Spec.Endpoint.Tls),
-				BootstrapServerHost: from.Spec.Endpoint.BootstrapServerHost,
+				Tls:  getOpenAPIManagedDinosaurEndpointTLS(from.Spec.Endpoint.Tls),
+				Host: from.Spec.Endpoint.BootstrapServerHost,
 			},
 			Versions: private.ManagedPineappleVersions{
 				Pineapple:         from.Spec.Versions.Dinosaur,

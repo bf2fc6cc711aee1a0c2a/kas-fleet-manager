@@ -208,7 +208,7 @@ components:
             tlsTrustedCertificate: ""
             customClaimCheck: ""
           endpoint:
-            bootstrapServerHost: example-pineapple--rfpsqbvq-em-u-u-z--ymjcwac.pineapple.devshift.org
+            host: example.pineapple.com
             tls:
               cert: ""
               key: ""
@@ -521,7 +521,7 @@ components:
           type: string
     ManagedPineapple_allOf_spec_endpoint:
       properties:
-        bootstrapServerHost:
+        host:
           type: string
         tls:
           $ref: '#/components/schemas/ManagedPineapple_allOf_spec_endpoint_tls'
